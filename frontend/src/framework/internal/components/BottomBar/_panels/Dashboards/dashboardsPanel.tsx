@@ -1,8 +1,10 @@
 import React from "react";
 
+import { Tooltip as TooltipBase } from "@base-ui/react/tooltip";
 import { Add, ChevronLeft, ChevronRight } from "@mui/icons-material";
 
 import type { Dashboard } from "@framework/internal/Dashboard";
+import { useKeepAliveDashboardIds } from "@framework/internal/hooks/useKeepAliveDashboardIds";
 import { DashboardHotCacheTopic } from "@framework/internal/WorkbenchSession/DashboardHotCache";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { toastManager } from "@framework/toastManager";
@@ -16,12 +18,15 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useActiveSession } from "../../../ActiveSessionBoundary";
 
 import {
-    CannotRemoveLastDashboardDialog,
     ConfirmDeleteDashboardDialog,
     DashboardDragImage,
     DashboardTab,
     EditDashboardMetadataDialog,
 } from "./_components";
+import {
+    DASHBOARD_TAB_PREVIEW_CLOSE_DELAY_MS,
+    DASHBOARD_TAB_PREVIEW_OPEN_DELAY_MS,
+} from "./_components/dashboardTabPreview";
 import { useDashboardReorder, useDashboardTabStripScroll, useOptimisticActiveDashboard } from "./_hooks";
 
 export type DashboardsPanelProps = {
@@ -40,11 +45,11 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
         workbenchSession.getDashboardHotCache(),
         DashboardHotCacheTopic.HOT_DASHBOARD_IDS,
     );
+    const keepAliveIds = useKeepAliveDashboardIds(workbenchSession);
 
     const [editingDashboard, setEditingDashboard] = React.useState<Dashboard | null>(null);
     const [dashboardPendingDeleteConfirmation, setDashboardPendingDeleteConfirmation] =
         React.useState<Dashboard | null>(null);
-    const [showCannotRemoveDashboardDialog, setShowCannotRemoveDashboardDialog] = React.useState<boolean>(false);
 
     const reorder = useDashboardReorder(dashboards, workbenchSession);
     const { optimisticActiveDashboardId, selectDashboard } = useOptimisticActiveDashboard(
@@ -92,10 +97,6 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
             const dashboard = dashboards.find((d) => d.getId() === dashboardId);
             if (!dashboard) {
                 console.debug(`Dashboard with id ${dashboardId} not found`);
-                return;
-            }
-            if (dashboards.length === 1) {
-                setShowCannotRemoveDashboardDialog(true);
                 return;
             }
             if (dashboard.getLayoutForPreview().length === 0) {
@@ -157,7 +158,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
     );
 
     return (
-        <div className="gap-xs -mt-[2px] flex w-full items-center">
+        <div className="gap-xs pr-sm -mt-[2px] flex w-full items-center">
             <div className="gap-3xs flex min-w-0 items-center">
                 <Button
                     aria-label="Scroll to previous dashboard"
@@ -167,14 +168,15 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                     size="small"
                     disabled={!tabStripScroll.canScrollToPrevious}
                     onClick={tabStripScroll.scrollToPrevious}
-                    layoutClassName={tabStripScroll.canScrollToPrevious ? "" : "invisible"}
+                    layoutClassName={tabStripScroll.canScrollToPrevious ? "" : "hidden"}
                 >
-                    <ChevronLeft fontSize="small" />
+                    <ChevronLeft style={{ fontSize: 16 }} />
                 </Button>
                 <div
                     ref={tabStripScroll.scrollContainerRef}
                     className={resolveClassNames(
-                        "px-xs min-w-0 scrollbar-none overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+                        // `scrollbar-width: none` only supported in Webkit after Jan 2024 - keeping a fallback
+                        "px-xs min-w-0 scrollbar-none overflow-x-auto overflow-y-hidden [&::-webkit-scrollbar]:hidden",
                         {
                             // Only snap while the strip can actually scroll. With scroll-snap-type
                             // mandatory always on, removing a dashboard so the remaining tabs fit
@@ -195,40 +197,48 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                         layoutClassName="w-max"
                     >
                         <Tabs.List size="small" indicatorPosition="start">
-                            {dashboards.map((dashboard, index) => (
-                                <DashboardTab
-                                    key={dashboard.getId()}
-                                    dashboard={dashboard}
-                                    draggable={!isSnapshot}
-                                    isHot={
-                                        dashboard.getId() === activeDashboard?.getId() ||
-                                        hotDashboardIds.includes(dashboard.getId())
-                                    }
-                                    isEvictable={hotDashboardIds.includes(dashboard.getId())}
-                                    isDragged={reorder.draggedDashboardId === dashboard.getId()}
-                                    isSnapshot={isSnapshot}
-                                    previewDisabled={reorder.draggedDashboardId !== null}
-                                    dropIndicatorSide={
-                                        reorder.dropTarget?.dashboardId === dashboard.getId()
-                                            ? reorder.dropTarget.insertAfter
-                                                ? "after"
-                                                : "before"
-                                            : null
-                                    }
-                                    canMoveLeft={index > 0}
-                                    canMoveRight={index < dashboards.length - 1}
-                                    onRequestDelete={handleRequestDeleteDashboard}
-                                    onEdit={handleEditDashboardClick}
-                                    onDragStart={(e) => reorder.handleDragStart(dashboard.getId(), e)}
-                                    onDragOver={(e) => reorder.handleDragOver(dashboard.getId(), e)}
-                                    onDrop={(e) => reorder.handleDrop(dashboard.getId(), e)}
-                                    onDragEnd={reorder.handleDragEnd}
-                                    onClone={handleCloneDashboardClick}
-                                    onForceEviction={handleForceEvictionClick}
-                                    onMoveLeft={handleMoveDashboardLeftClick}
-                                    onMoveRight={handleMoveDashboardRightClick}
-                                />
-                            ))}
+                            {/*
+                                Shares one open/close delay across every tab's preview popover, so that
+                                once the pointer has opened one preview, brushing across neighbouring
+                                tabs opens theirs instantly instead of re-running the hover delay on each.
+                            */}
+                            <TooltipBase.Provider
+                                delay={DASHBOARD_TAB_PREVIEW_OPEN_DELAY_MS}
+                                closeDelay={DASHBOARD_TAB_PREVIEW_CLOSE_DELAY_MS}
+                            >
+                                {dashboards.map((dashboard, index) => (
+                                    <DashboardTab
+                                        key={dashboard.getId()}
+                                        dashboard={dashboard}
+                                        draggable={!isSnapshot}
+                                        isHot={keepAliveIds.has(dashboard.getId())}
+                                        isEvictable={hotDashboardIds.includes(dashboard.getId())}
+                                        isDragged={reorder.draggedDashboardId === dashboard.getId()}
+                                        isSnapshot={isSnapshot}
+                                        previewDisabled={reorder.draggedDashboardId !== null}
+                                        dropIndicatorSide={
+                                            reorder.dropTarget?.dashboardId === dashboard.getId()
+                                                ? reorder.dropTarget.insertAfter
+                                                    ? "after"
+                                                    : "before"
+                                                : null
+                                        }
+                                        canMoveLeft={index > 0}
+                                        canMoveRight={index < dashboards.length - 1}
+                                        canBeDeleted={dashboards.length > 1}
+                                        onRequestDelete={handleRequestDeleteDashboard}
+                                        onEdit={handleEditDashboardClick}
+                                        onDragStart={(e) => reorder.handleDragStart(dashboard.getId(), e)}
+                                        onDragOver={(e) => reorder.handleDragOver(dashboard.getId(), e)}
+                                        onDrop={(e) => reorder.handleDrop(dashboard.getId(), e)}
+                                        onDragEnd={reorder.handleDragEnd}
+                                        onClone={handleCloneDashboardClick}
+                                        onForceEviction={handleForceEvictionClick}
+                                        onMoveLeft={handleMoveDashboardLeftClick}
+                                        onMoveRight={handleMoveDashboardRightClick}
+                                    />
+                                ))}
+                            </TooltipBase.Provider>
                         </Tabs.List>
                     </Tabs.Root>
                 </div>
@@ -240,28 +250,27 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                     size="small"
                     disabled={!tabStripScroll.canScrollToNext}
                     onClick={tabStripScroll.scrollToNext}
-                    layoutClassName={tabStripScroll.canScrollToNext ? "" : "invisible"}
+                    layoutClassName={tabStripScroll.canScrollToNext ? "" : "hidden"}
                 >
-                    <ChevronRight fontSize="small" />
+                    <ChevronRight style={{ fontSize: 16 }} />
                 </Button>
             </div>
             <Tooltip
                 content={isSnapshot ? "Dashboards cannot be modified in snapshot mode" : "Add new dashboard"}
                 side="bottom"
             >
-                <span>
-                    <Button
-                        aria-label="Add new dashboard"
-                        disabled={isSnapshot}
-                        iconOnly
-                        onClick={handleAddDashboardClick}
-                        tone="accent"
-                        variant="ghost"
-                        size="small"
-                    >
-                        <Add fontSize="small" />
-                    </Button>
-                </span>
+                <Button
+                    aria-label="Add new dashboard"
+                    disabled={isSnapshot}
+                    focusableWhenDisabled
+                    iconOnly
+                    onClick={handleAddDashboardClick}
+                    tone="accent"
+                    variant="contained"
+                    size="small"
+                >
+                    <Add style={{ fontSize: 16 }} />
+                </Button>
             </Tooltip>
             {editingDashboard && (
                 <EditDashboardMetadataDialog
@@ -272,6 +281,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
             )}
             <ConfirmDeleteDashboardDialog
                 open={dashboardPendingDeleteConfirmation !== null}
+                dashboardName={dashboardPendingDeleteConfirmation?.getMetadata().name}
                 onConfirmDelete={() => {
                     if (dashboardPendingDeleteConfirmation) {
                         handleRemoveDashboardClick(dashboardPendingDeleteConfirmation.getId());
@@ -279,10 +289,6 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                     setDashboardPendingDeleteConfirmation(null);
                 }}
                 onClose={() => setDashboardPendingDeleteConfirmation(null)}
-            />
-            <CannotRemoveLastDashboardDialog
-                open={showCannotRemoveDashboardDialog}
-                onClose={() => setShowCannotRemoveDashboardDialog(false)}
             />
             <DashboardDragImage ref={reorder.dragImageRef} />
         </div>

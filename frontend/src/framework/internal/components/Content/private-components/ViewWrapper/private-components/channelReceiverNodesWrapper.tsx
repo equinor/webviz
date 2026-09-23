@@ -45,14 +45,9 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
     // otherwise never see its pointerup/HideDataChannelConnectionsRequest handlers again - this
     // dashboard's own effect run is skipped entirely while inactive - leaving the portal-rendered
     // overlay stuck visible the moment this dashboard becomes active again, with no drag actually in
-    // progress. Reset during render (rather than in the effect below) so switching away resets
-    // `visible` in the same commit instead of an extra render/effect cycle.
-    const previousIsActiveDashboardRef = React.useRef(isActiveDashboard);
-    if (previousIsActiveDashboardRef.current !== isActiveDashboard) {
-        previousIsActiveDashboardRef.current = isActiveDashboard;
-        if (!isActiveDashboard) {
-            setVisible(false);
-        }
+    // progress.
+    if (!isActiveDashboard && visible) {
+        setVisible(false);
     }
 
     React.useEffect(() => {

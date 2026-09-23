@@ -13,6 +13,7 @@ import { Typography } from "@lib/components/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { useActiveSession } from "../../ActiveSessionBoundary";
+import { dashboardsToPreviewCarouselItems } from "../../DashboardPreview/_utils";
 import { DashboardPreviewCarousel } from "../../DashboardPreview/dashboardPreviewCarousel";
 
 export type FormProps = {
@@ -45,15 +46,9 @@ export function Form(props: FormProps): React.ReactNode {
         HTMLInputElement | HTMLTextAreaElement | null
     >(props.titleInputRef, () => inputRef.current);
 
-    const dashboards = props.workbench
-        .getSessionManager()
-        .getActiveSession()
-        .getDashboards()
-        .map((dashboard) => ({
-            id: dashboard.getId(),
-            name: dashboard.getMetadata().name,
-            layout: dashboard.getLayoutForPreview(),
-        }));
+    const dashboards = dashboardsToPreviewCarouselItems(
+        props.workbench.getSessionManager().getActiveSession().getDashboards(),
+    );
 
     React.useEffect(function focusInput() {
         if (inputRef.current) {

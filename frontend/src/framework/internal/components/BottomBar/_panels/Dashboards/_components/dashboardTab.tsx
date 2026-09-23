@@ -21,6 +21,7 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { DashboardTabPreview } from "./dashboardTabPreview";
+import { Tooltip } from "@lib/components/Tooltip";
 
 export type DashboardTabProps = {
     dashboard: Dashboard;
@@ -33,6 +34,7 @@ export type DashboardTabProps = {
     dropIndicatorSide: "before" | "after" | null;
     canMoveLeft: boolean;
     canMoveRight: boolean;
+    canBeDeleted: boolean;
     onRequestDelete: (dashboardId: string) => void;
     onEdit: (dashboardId: string) => void;
     onDragStart: (event: React.DragEvent, dashboardId: string) => void;
@@ -182,7 +184,7 @@ export function DashboardTab(props: DashboardTabProps) {
                                 onClick={(e) => e.stopPropagation()}
                                 layoutClassName="absolute right-0"
                             >
-                                <MoreVert />
+                                <MoreVert style={{ fontSize: 16 }} />
                             </Button>
                         </Menu.Trigger>
                         <Menu.Popup>
@@ -210,9 +212,16 @@ export function DashboardTab(props: DashboardTabProps) {
                                     Move right
                                 </Menu.Item>
                                 <Menu.Separator />
-                                <Menu.Item onClick={handleDeleteClick} icon={<Close />} tone="danger">
-                                    Delete
-                                </Menu.Item>
+                                <Tooltip content="You cannot delete the last dashboard" disabled={props.canBeDeleted}>
+                                    <Menu.Item
+                                        onClick={handleDeleteClick}
+                                        icon={<Close />}
+                                        tone="danger"
+                                        disabled={!props.canBeDeleted}
+                                    >
+                                        Delete
+                                    </Menu.Item>
+                                </Tooltip>
                                 {isDevMode() && (
                                     <>
                                         <Menu.Separator />

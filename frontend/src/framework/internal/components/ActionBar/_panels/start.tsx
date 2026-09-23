@@ -33,18 +33,17 @@ export function StartPanel(props: StartPanelProps) {
             <EnsembleSettingsButton workbench={props.workbench} />
             <Separator orientation="vertical" />
             <Tooltip content="Open templates dialog" side="bottom">
-                <span>
-                    <Button
-                        aria-label="Open templates dialog"
-                        disabled={isSnapshot}
-                        iconOnly
-                        onClick={handleTemplatesListClick}
-                        tone="accent"
-                        variant="ghost"
-                    >
-                        <GridView />
-                    </Button>
-                </span>
+                <Button
+                    aria-label="Open templates dialog"
+                    disabled={isSnapshot}
+                    focusableWhenDisabled
+                    iconOnly
+                    onClick={handleTemplatesListClick}
+                    tone="accent"
+                    variant="ghost"
+                >
+                    <GridView />
+                </Button>
             </Tooltip>
         </>
     );
@@ -71,30 +70,29 @@ function EnsembleSettingsButton(props: EnsembleSettingsButtonProps): React.React
             content={isSnapshot ? "Ensembles cannot be changed in snapshot mode" : "Open ensemble selection dialog"}
             side="bottom"
         >
-            <span>
-                <Button
-                    aria-label="Open ensemble selection dialog"
-                    disabled={isSnapshot}
-                    iconOnly
-                    onClick={handleEnsembleDialogOpenClick}
+            <Button
+                aria-label="Open ensemble selection dialog"
+                disabled={isSnapshot}
+                focusableWhenDisabled
+                iconOnly
+                onClick={handleEnsembleDialogOpenClick}
+                tone="accent"
+                variant="ghost"
+            >
+                <Badge
+                    invisible={ensembleSet.getEnsembleArray().length === 0 && !isEnsembleSetLoading}
                     tone="accent"
-                    variant="ghost"
+                    badgeContent={
+                        isEnsembleSetLoading ? (
+                            <CircularProgress size={16} tone="on-emphasis" />
+                        ) : (
+                            ensembleSet.getEnsembleArray().length
+                        )
+                    }
                 >
-                    <Badge
-                        invisible={ensembleSet.getEnsembleArray().length === 0 && !isEnsembleSetLoading}
-                        tone="accent"
-                        badgeContent={
-                            isEnsembleSetLoading ? (
-                                <CircularProgress size={16} tone="on-emphasis" />
-                            ) : (
-                                ensembleSet.getEnsembleArray().length
-                            )
-                        }
-                    >
-                        <WindowListIcon />
-                    </Badge>
-                </Button>
-            </span>
+                    <WindowListIcon />
+                </Badge>
+            </Button>
         </Tooltip>
     );
 }

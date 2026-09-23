@@ -16,6 +16,7 @@ import { Typography } from "@lib/components/Typography";
 import { truncateString } from "@lib/utils/strings";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
+import { dashboardsToPreviewCarouselItems } from "../DashboardPreview/_utils";
 import { DashboardPreviewCarousel } from "../DashboardPreview/dashboardPreviewCarousel";
 
 export type SaveSessionDialogProps = {
@@ -88,16 +89,9 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
         [isOpen],
     );
 
-    const dashboards = props.workbench
-        .getSessionManager()
-        .getActiveSession()
-        .getDashboards()
-        .map((dashboard) => ({
-            id: dashboard.getId(),
-            name: dashboard.getMetadata().name,
-            description: dashboard.getMetadata().description,
-            layout: dashboard.getLayoutForPreview(),
-        }));
+    const dashboards = dashboardsToPreviewCarouselItems(
+        props.workbench.getSessionManager().getActiveSession().getDashboards(),
+    );
 
     return (
         <>

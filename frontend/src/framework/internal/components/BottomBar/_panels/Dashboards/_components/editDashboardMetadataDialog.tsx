@@ -43,7 +43,7 @@ export function EditDashboardMetadataDialog(props: EditDashboardMetadataDialogPr
         function handleSubmit(event: React.FormEvent) {
             event.preventDefault();
             const trimmedLength = name.trim().length;
-            if (trimmedLength === 0 || trimmedLength < MIN_TITLE_LENGTH || name.length > MAX_TITLE_LENGTH) {
+            if (trimmedLength < MIN_TITLE_LENGTH || name.length > MAX_TITLE_LENGTH) {
                 inputRef.current?.focus();
                 return;
             }

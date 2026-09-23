@@ -63,11 +63,9 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
             />
             {current && (
                 <div className="px-2xs gap-x-2xs flex items-center justify-center">
-                    <Tooltip content={tooltipContent}>
-                        <Typography size="sm" tone="neutral" layoutClassName="truncate" title={current.name}>
-                            {current.name}
-                        </Typography>
-                    </Tooltip>
+                    <Typography size="sm" tone="neutral" layoutClassName="truncate" title={current.name}>
+                        {current.name}
+                    </Typography>
                 </div>
             )}
             {props.dashboards.length > 1 && (
@@ -80,7 +78,6 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
                             tone="neutral"
                             size="small"
                             disabled={currentIndex === 0}
-                            layoutClassName={currentIndex === 0 ? "invisible" : ""}
                             onClick={() => setIndex(currentIndex - 1)}
                         >
                             <ChevronLeft fontSize="small" />
@@ -113,7 +110,6 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
                             tone="neutral"
                             size="small"
                             disabled={currentIndex === props.dashboards.length - 1}
-                            layoutClassName={currentIndex === props.dashboards.length - 1 ? "invisible" : ""}
                             onClick={() => setIndex(currentIndex + 1)}
                         >
                             <ChevronRight fontSize="small" />

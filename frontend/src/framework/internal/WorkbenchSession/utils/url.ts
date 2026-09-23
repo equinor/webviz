@@ -77,12 +77,6 @@ export function readWorkbenchUrlLocation(): WorkbenchUrlLocation {
     return { kind: "root" };
 }
 
-// Dashboards used to have uuid.v4()-shaped (36 char) IDs before switching to the shorter
-// DASHBOARD_ID_LENGTH nanoid shape, and existing persisted dashboards still carry those old IDs.
-// buildWorkbenchUrl writes whatever ID the Dashboard has into the URL, so a URL with a uuid-shaped
-// dashboard segment is not malformed - it is just an old dashboard. Accept both shapes here; only an
-// ID matching neither is treated as invalid and dropped (falling back to the default dashboard)
-// rather than as a hard URL error.
 function readDashboardSegment(pathParts: string[]): string | null {
     const dashboardIndex = pathParts.indexOf("dashboard");
     if (dashboardIndex === -1) {
@@ -94,6 +88,12 @@ function readDashboardSegment(pathParts: string[]): string | null {
         return null;
     }
 
+    // Dashboards used to have uuid.v4()-shaped (36 char) IDs before switching to the shorter
+    // DASHBOARD_ID_LENGTH nanoid shape, and existing persisted dashboards still carry those old IDs.
+    // buildWorkbenchUrl writes whatever ID the Dashboard has into the URL, so a URL with a uuid-shaped
+    // dashboard segment is not malformed - it is just an old dashboard. Accept both shapes here; only an
+    // ID matching neither is treated as invalid and dropped (falling back to the default dashboard)
+    // rather than as a hard URL error.
     if (!DASHBOARD_ID_REGEX.test(dashboardId) && !isUuid(dashboardId)) {
         console.warn(`Invalid dashboard ID in URL, ignoring: ${dashboardId}`);
         return null;

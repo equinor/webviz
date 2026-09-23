@@ -4,7 +4,7 @@ import { useActiveSession } from "@framework/internal/components/ActiveSessionBo
 import { DashboardContext } from "@framework/internal/components/DashboardContext";
 import type { Dashboard } from "@framework/internal/Dashboard";
 import { DashboardTopic } from "@framework/internal/Dashboard";
-import { DashboardHotCacheTopic } from "@framework/internal/WorkbenchSession/DashboardHotCache";
+import { useKeepAliveDashboardIds } from "@framework/internal/hooks/useKeepAliveDashboardIds";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -16,28 +16,19 @@ type ModuleSettingsStackProps = {
 };
 
 /**
- * Mirrors DashboardStack (see Content/private-components/dashboardStack.tsx): renders
- * ModuleSettings for every keep-alive dashboard's (active, plus whatever DashboardHotCache is
- * holding) modules simultaneously, instead of only the active dashboard's. Each module's settings
- * component owns a per-module-instance DataProviderManager (see usePersistedDataProviderManager)
- * that the corresponding view reads via a shared atom store - unmounting settings when switching
- * to a hot-but-inactive dashboard would tear that manager down and force the view to reinitialize
- * (e.g. recreate its WebGL/deck.gl instance) the next time the dashboard becomes active again.
- * Keeping settings mounted here, gated only by CSS visibility, avoids that.
+ * Renders ModuleSettings for every keep-alive dashboard's (active, plus whatever DashboardHotCache is
+ * holding) modules simultaneously.
  */
 export function ModuleSettingsStack(props: ModuleSettingsStackProps): React.ReactNode {
     const workbenchSession = useActiveSession();
-    const activeDashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
-    const hotDashboardIds = usePublishSubscribeTopicValue(
-        workbenchSession.getDashboardHotCache(),
-        DashboardHotCacheTopic.HOT_DASHBOARD_IDS,
+    const activeDashboard = usePublishSubscribeTopicValue(
+        workbenchSession,
+        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
-
-    const keepAliveIds = new Set(hotDashboardIds);
-    if (activeDashboard) {
-        keepAliveIds.add(activeDashboard.getId());
-    }
-    const keepAliveDashboards = workbenchSession.getDashboards().filter((dashboard) => keepAliveIds.has(dashboard.getId()));
+    const keepAliveIds = useKeepAliveDashboardIds(workbenchSession);
+    const keepAliveDashboards = workbenchSession
+        .getDashboards()
+        .filter((dashboard) => keepAliveIds.has(dashboard.getId()));
 
     return (
         <>

@@ -11,7 +11,6 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UserCreatedItems, UserCreatedItemsEvent } from "@framework/UserCreatedItems";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
-import { makeUniqueName } from "@lib/utils/uniqueName";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import {
@@ -422,8 +421,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     addDashboard(): void {
         this.assertIsNotSnapshot();
-        const name = makeUniqueName(new Set(this._dashboards.map((d) => d.getMetadata().name)), DEFAULT_DASHBOARD_NAME);
-        const newDashboard = new Dashboard(this._atomStoreMaster, name);
+        const newDashboard = new Dashboard(this._atomStoreMaster, this.makeNextDashboardName());
         this.registerDashboard(newDashboard);
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
         this.handleStateChange();
@@ -665,10 +663,30 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     private makeDefaultDashboard(): void {
-        const d = new Dashboard(this._atomStoreMaster);
+        const d = new Dashboard(this._atomStoreMaster, this.makeNextDashboardName());
         this.registerDashboard(d);
         this._activeDashboardId = d.getId();
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+    }
+
+    /**
+     * Next default dashboard name, following the same pattern as MS Excel's "Sheet1", "Sheet2", ...
+     * Not just "next free number": N is chosen greater than both the current dashboard count and the
+     * highest number among currently-named "Dashboard N" dashboards, so a number freed by deleting a
+     * dashboard isn't immediately handed to the next new one for as long as other dashboards (however
+     * named) still occupy that many slots.
+     */
+    private makeNextDashboardName(): string {
+        const pattern = new RegExp(`^${DEFAULT_DASHBOARD_NAME} (\\d+)$`);
+        let maxNamedNumber = 0;
+        for (const dashboard of this._dashboards) {
+            const match = pattern.exec(dashboard.getMetadata().name);
+            if (match) {
+                maxNamedNumber = Math.max(maxNamedNumber, Number(match[1]));
+            }
+        }
+        const nextNumber = Math.max(this._dashboards.length, maxNamedNumber) + 1;
+        return `${DEFAULT_DASHBOARD_NAME} ${nextNumber}`;
     }
 
     clear(): void {

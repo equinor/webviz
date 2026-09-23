@@ -3,7 +3,7 @@ import React from "react";
 import { useActiveSession } from "@framework/internal/components/ActiveSessionBoundary";
 import { DashboardContext } from "@framework/internal/components/DashboardContext";
 import type { Dashboard } from "@framework/internal/Dashboard";
-import { DashboardHotCacheTopic } from "@framework/internal/WorkbenchSession/DashboardHotCache";
+import { useKeepAliveDashboardIds } from "@framework/internal/hooks/useKeepAliveDashboardIds";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -31,15 +31,7 @@ type DashboardStackProps = {
 export function DashboardStack(props: DashboardStackProps): React.ReactNode {
     const workbenchSession = useActiveSession();
     const activeDashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
-    const hotDashboardIds = usePublishSubscribeTopicValue(
-        workbenchSession.getDashboardHotCache(),
-        DashboardHotCacheTopic.HOT_DASHBOARD_IDS,
-    );
-
-    const keepAliveIds = new Set(hotDashboardIds);
-    if (activeDashboard) {
-        keepAliveIds.add(activeDashboard.getId());
-    }
+    const keepAliveIds = useKeepAliveDashboardIds(workbenchSession);
     const keepAliveDashboards = workbenchSession.getDashboards().filter((dashboard) => keepAliveIds.has(dashboard.getId()));
 
     return (

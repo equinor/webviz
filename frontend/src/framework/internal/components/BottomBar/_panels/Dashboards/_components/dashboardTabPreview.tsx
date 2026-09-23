@@ -8,12 +8,14 @@ import { DashboardTopic } from "@framework/internal/Dashboard";
 import { Typography } from "@lib/components/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
-// How long the pointer has to rest on a tab before its preview opens.
-const HOVER_OPEN_DELAY_MS = 600;
+// How long the pointer has to rest on a tab before its preview opens. Shared across all dashboard
+// tab previews via a `TooltipBase.Provider` (see DashboardsPanel) so that, once one preview is
+// open, hovering a neighbouring tab opens its preview instantly instead of re-running the delay.
+export const DASHBOARD_TAB_PREVIEW_OPEN_DELAY_MS = 600;
 
 // How long the preview lingers after the pointer leaves the tab (and popup), so brushing past a
 // neighbouring tab or a small gap doesn't make it flicker.
-const HOVER_CLOSE_DELAY_MS = 300;
+export const DASHBOARD_TAB_PREVIEW_CLOSE_DELAY_MS = 300;
 
 const PREVIEW_WIDTH = 200;
 const PREVIEW_HEIGHT = 120;
@@ -30,6 +32,9 @@ export type DashboardTabPreviewProps = {
  * Wraps a dashboard tab so that hovering it for a moment reveals a popover with the dashboard's
  * name, description and a static preview of its layout. Built on a tooltip (hover/focus only) so
  * clicking a tab to select it never opens the preview.
+ *
+ * Relies on an ancestor `TooltipBase.Provider` (see DashboardsPanel) for its open/close delay, so
+ * that hovering across several tabs opens their previews instantly once the first one is shown.
  */
 export function DashboardTabPreview(props: DashboardTabPreviewProps): React.ReactNode {
     const { dashboard, disabled } = props;
@@ -40,11 +45,7 @@ export function DashboardTabPreview(props: DashboardTabPreviewProps): React.Reac
 
     return (
         <TooltipBase.Root disabled={disabled}>
-            <TooltipBase.Trigger
-                delay={HOVER_OPEN_DELAY_MS}
-                closeDelay={HOVER_CLOSE_DELAY_MS}
-                render={props.children}
-            />
+            <TooltipBase.Trigger render={props.children} />
             <TooltipBase.Portal>
                 <TooltipBase.Positioner className="z-tooltip" side="top" align="center" sideOffset={8}>
                     <TooltipBase.Popup className="bg-floating border-neutral gap-y-xs p-sm flex flex-col rounded-sm border shadow-md">
