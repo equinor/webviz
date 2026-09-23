@@ -2014,6 +2014,59 @@ export enum SortDirection_api {
 }
 
 /**
+ * SourceCoverageInterpolationMethod
+ */
+export enum SourceCoverageInterpolationMethod_api {
+    LINEAR = "LINEAR",
+}
+
+/**
+ * SourceCoverageInterval
+ *
+ * Coverage of values[i + 1] - values[i], bounded by timestampsUtcMs[i] and timestampsUtcMs[i + 1]
+ */
+export type SourceCoverageInterval_api = {
+    status: SourceCoverageIntervalStatus_api;
+    /**
+     * Supportedstartutcms
+     *
+     * Start of common source support in the interval; null if none
+     */
+    supportedStartUtcMs: number | null;
+    /**
+     * Supportedendutcms
+     *
+     * End of common source support in the interval; null if none
+     */
+    supportedEndUtcMs: number | null;
+};
+
+/**
+ * SourceCoverageIntervalStatus
+ *
+ * Evaluated in this order:
+ * UNSUPPORTED: no positive-duration overlap with the common support of all required sources.
+ * PARTIAL: positive overlap, but an interval boundary is outside at least one required source range.
+ * SOURCE_ALIGNED: fully supported, and both boundaries are raw sample timestamps in every required source.
+ * INTERPOLATED: fully supported, but at least one boundary is linearly interpolated.
+ */
+export enum SourceCoverageIntervalStatus_api {
+    SOURCE_ALIGNED = "SOURCE_ALIGNED",
+    INTERPOLATED = "INTERPOLATED",
+    PARTIAL = "PARTIAL",
+    UNSUPPORTED = "UNSUPPORTED",
+}
+
+/**
+ * SourceCoverageRole
+ */
+export enum SourceCoverageRole_api {
+    REGULAR = "REGULAR",
+    COMPARISON = "COMPARISON",
+    REFERENCE = "REFERENCE",
+}
+
+/**
  * StatisticFunction
  */
 export enum StatisticFunction_api {
@@ -2555,6 +2608,54 @@ export type VectorRealizationData_api = {
      */
     isRate: boolean;
     derivedVectorInfo?: DerivedVectorInfo_api | null;
+    /**
+     * Raw-source support for the returned cumulative values. Only present when include_source_coverage=true. Describes provenance of the returned values, not simulation completeness or forecast horizon.
+     */
+    sourceCoverage?: VectorSourceCoverage_api | null;
+};
+
+/**
+ * VectorSourceCoverage
+ */
+export type VectorSourceCoverage_api = {
+    interpolationMethod: SourceCoverageInterpolationMethod_api;
+    /**
+     * Sources
+     */
+    sources: Array<VectorSourceSummary_api>;
+    /**
+     * Intervals
+     *
+     * One entry per adjacent pair of returned timestamps, i.e. max(len(timestampsUtcMs) - 1, 0) entries
+     */
+    intervals: Array<SourceCoverageInterval_api>;
+};
+
+/**
+ * VectorSourceSummary
+ *
+ * Raw, validated source samples for this realization and vector (not ensemble-wide, not prediction start)
+ */
+export type VectorSourceSummary_api = {
+    role: SourceCoverageRole_api;
+    /**
+     * Firsttimestamputcms
+     */
+    firstTimestampUtcMs: number;
+    /**
+     * Lasttimestamputcms
+     */
+    lastTimestampUtcMs: number;
+    /**
+     * Samplecount
+     */
+    sampleCount: number;
+    /**
+     * Maxsamplegapms
+     *
+     * Largest gap between adjacent raw samples; null if < 2 samples
+     */
+    maxSampleGapMs: number | null;
 };
 
 /**
@@ -3714,6 +3815,12 @@ export type GetRealizationsVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        /**
+         * Include Source Coverage
+         *
+         * Include per-realization raw-source support (sourceCoverage) for the returned values. Currently only supported for MONTHLY resampling of native cumulative total vectors (not rates or derived vectors).
+         */
+        include_source_coverage?: boolean;
         zCacheBust?: string;
     };
     url: "/timeseries/realizations_vector_data/";
@@ -3785,6 +3892,12 @@ export type GetDeltaEnsembleRealizationsVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        /**
+         * Include Source Coverage
+         *
+         * Include per-realization raw-source support (sourceCoverage) for the returned values. Currently only supported for MONTHLY resampling of native cumulative total vectors (not rates or derived vectors).
+         */
+        include_source_coverage?: boolean;
         zCacheBust?: string;
     };
     url: "/timeseries/delta_ensemble_realizations_vector_data/";

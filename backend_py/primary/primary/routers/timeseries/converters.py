@@ -1,6 +1,7 @@
 from typing import Sequence
 
 from webviz_services.summary_vector_statistics import VectorStatistics
+from webviz_services.sumo_access.source_coverage import SourceCoverage
 from webviz_services.sumo_access.summary_access import RealizationVector
 from webviz_services.utils.statistic_function import StatisticFunction
 from webviz_services.summary_delta_vectors import RealizationDeltaVector
@@ -25,6 +26,36 @@ def to_api_derived_vector_info(derived_type: DerivedVectorType, source_vector: s
     )
 
 
+def to_api_vector_source_coverage(source_coverage: SourceCoverage | None) -> schemas.VectorSourceCoverage | None:
+    """
+    Create API VectorSourceCoverage from service layer SourceCoverage
+    """
+    if source_coverage is None:
+        return None
+
+    return schemas.VectorSourceCoverage(
+        interpolationMethod=schemas.SourceCoverageInterpolationMethod(source_coverage.interpolation_method.value),
+        sources=[
+            schemas.VectorSourceSummary(
+                role=schemas.SourceCoverageRole(src.role.value),
+                firstTimestampUtcMs=src.first_timestamp_utc_ms,
+                lastTimestampUtcMs=src.last_timestamp_utc_ms,
+                sampleCount=src.sample_count,
+                maxSampleGapMs=src.max_sample_gap_ms,
+            )
+            for src in source_coverage.sources
+        ],
+        intervals=[
+            schemas.SourceCoverageInterval(
+                status=schemas.SourceCoverageIntervalStatus(interval.status.value),
+                supportedStartUtcMs=interval.supported_start_utc_ms,
+                supportedEndUtcMs=interval.supported_end_utc_ms,
+            )
+            for interval in source_coverage.intervals
+        ],
+    )
+
+
 def realization_vector_list_to_api_vector_realization_data_list(
     realization_vector_list: list[RealizationVector],
 ) -> list[schemas.VectorRealizationData]:
@@ -38,6 +69,7 @@ def realization_vector_list_to_api_vector_realization_data_list(
             values=real_vec.values,
             unit=real_vec.metadata.unit,
             isRate=real_vec.metadata.is_rate,
+            sourceCoverage=to_api_vector_source_coverage(real_vec.source_coverage),
         )
         for real_vec in realization_vector_list
     ]
@@ -79,6 +111,7 @@ def realization_delta_vector_list_to_api_vector_realization_data_list(
             unit=real_vec.unit,
             isRate=real_vec.is_rate,
             derivedVectorInfo=derived_vector_info,
+            sourceCoverage=to_api_vector_source_coverage(real_vec.source_coverage),
         )
         for real_vec in realization_delta_vector_list
     ]

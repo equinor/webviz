@@ -3,6 +3,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from .source_coverage import SourceCoverage
+
 
 class Frequency(Enum):
     DAILY = "DAILY"
@@ -40,6 +42,7 @@ class RealizationVector(BaseModel):
     timestamps_utc_ms: List[int]
     values: List[float]
     metadata: VectorMetadata
+    source_coverage: Optional[SourceCoverage] = None
 
 
 class HistoricalVector(BaseModel):

@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional, Sequence, Tuple, Set
+from typing import Dict, List, Optional, Sequence, Tuple, Set
 
 import numpy as np
 import pyarrow as pa
@@ -25,6 +25,14 @@ from webviz_services.service_exceptions import (
 from ._field_metadata import create_vector_metadata_from_field_meta
 from ._resampling import resample_segmented_multi_real_table, resample_single_real_table
 from .generic_types import EnsembleScalarResponse
+from .source_coverage import (
+    RawSourceSamples,
+    SourceCoverage,
+    SourceCoverageRole,
+    create_source_coverage,
+    extract_raw_source_samples_per_realization,
+    validate_sorted_raw_vector_table_for_source_coverage,
+)
 from .summary_types import Frequency, VectorInfo, RealizationVector, HistoricalVector, VectorMetadata
 from ._arrow_table_loader import ArrowTableLoader
 from .sumo_client_factory import create_sumo_client
@@ -106,6 +114,35 @@ class SummaryAccess:
         The vector column will be of type float32.
         If `resampling_frequency` is None, the data will be returned with full/raw resolution.
         """
+        table, vector_metadata, _ = await self._get_vector_table_and_optional_raw_samples_async(
+            vector_name, resampling_frequency, realizations, capture_raw_source_samples=False
+        )
+        return table, vector_metadata
+
+    @otel_span_decorator()
+    async def get_vector_table_with_raw_source_samples_async(
+        self,
+        vector_name: str,
+        resampling_frequency: Optional[Frequency],
+        realizations: Optional[Sequence[int]],
+    ) -> Tuple[pa.Table, VectorMetadata, Dict[int, RawSourceSamples]]:
+        """
+        Same as `get_vector_table_async()`, but validates the raw samples strictly and also returns the raw sample
+        timestamps per realization, captured from the same loaded table before resampling.
+        """
+        table, vector_metadata, raw_samples = await self._get_vector_table_and_optional_raw_samples_async(
+            vector_name, resampling_frequency, realizations, capture_raw_source_samples=True
+        )
+        assert raw_samples is not None
+        return table, vector_metadata, raw_samples
+
+    async def _get_vector_table_and_optional_raw_samples_async(
+        self,
+        vector_name: str,
+        resampling_frequency: Optional[Frequency],
+        realizations: Optional[Sequence[int]],
+        capture_raw_source_samples: bool,
+    ) -> Tuple[pa.Table, VectorMetadata, Optional[Dict[int, RawSourceSamples]]]:
         timer = PerfTimer()
 
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
@@ -138,6 +175,11 @@ class SummaryAccess:
         if not vector_metadata:
             raise InvalidDataError(f"Did not find valid metadata for vector {vector_name}", Service.SUMO)
 
+        raw_samples: Optional[Dict[int, RawSourceSamples]] = None
+        if capture_raw_source_samples:
+            validate_sorted_raw_vector_table_for_source_coverage(table, vector_name)
+            raw_samples = extract_raw_source_samples_per_realization(table)
+
         # Do the actual resampling
         timer.lap_ms()
         if resampling_frequency is not None:
@@ -153,7 +195,7 @@ class SummaryAccess:
             f"({vector_name=} {resampling_frequency=} {table.shape=})"
         )
 
-        return table, vector_metadata
+        return table, vector_metadata, raw_samples
 
     @otel_span_decorator()
     async def get_vector_async(
@@ -163,30 +205,23 @@ class SummaryAccess:
         realizations: Optional[Sequence[int]],
     ) -> List[RealizationVector]:
         table, vector_metadata = await self.get_vector_table_async(vector_name, resampling_frequency, realizations)
+        return _create_realization_vector_list(table, vector_name, vector_metadata, None)
 
-        real_arr_np = table.column("REAL").to_numpy()
-        unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
-
-        whole_date_np_arr = table.column("DATE").to_numpy()
-        whole_value_np_arr = table.column(vector_name).to_numpy()
-
-        ret_arr: List[RealizationVector] = []
-        for i, real in enumerate(unique_reals):
-            start_row_idx = first_occurrence_idx[i]
-            row_count = real_counts[i]
-            date_np_arr = whole_date_np_arr[start_row_idx : start_row_idx + row_count]
-            value_np_arr = whole_value_np_arr[start_row_idx : start_row_idx + row_count]
-
-            ret_arr.append(
-                RealizationVector(
-                    realization=real,
-                    timestamps_utc_ms=date_np_arr.astype(int).tolist(),
-                    values=value_np_arr.tolist(),
-                    metadata=vector_metadata,
-                )
-            )
-
-        return ret_arr
+    @otel_span_decorator()
+    async def get_vector_with_source_coverage_async(
+        self,
+        vector_name: str,
+        resampling_frequency: Optional[Frequency],
+        realizations: Optional[Sequence[int]],
+    ) -> Tuple[List[RealizationVector], VectorMetadata]:
+        """
+        Same values as `get_vector_async()`, with source coverage attached to each realization vector.
+        The vector metadata is also returned so that callers can check eligibility even when no realizations exist.
+        """
+        table, vector_metadata, raw_samples = await self.get_vector_table_with_raw_source_samples_async(
+            vector_name, resampling_frequency, realizations
+        )
+        return _create_realization_vector_list(table, vector_name, vector_metadata, raw_samples), vector_metadata
 
     @otel_span_decorator()
     async def get_single_real_vectors_table_async(
@@ -346,6 +381,45 @@ class SummaryAccess:
         )
 
         return pc.unique(table.column("DATE")).to_numpy().astype(int).tolist()
+
+
+def _create_realization_vector_list(
+    table: pa.Table,
+    vector_name: str,
+    vector_metadata: VectorMetadata,
+    raw_samples_per_real: Optional[Dict[int, RawSourceSamples]],
+) -> List[RealizationVector]:
+    real_arr_np = table.column("REAL").to_numpy()
+    unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
+
+    whole_date_np_arr = table.column("DATE").to_numpy()
+    whole_value_np_arr = table.column(vector_name).to_numpy()
+
+    ret_arr: List[RealizationVector] = []
+    for i, real in enumerate(unique_reals):
+        start_row_idx = first_occurrence_idx[i]
+        row_count = real_counts[i]
+        date_np_arr = whole_date_np_arr[start_row_idx : start_row_idx + row_count]
+        value_np_arr = whole_value_np_arr[start_row_idx : start_row_idx + row_count]
+        timestamps_utc_ms = date_np_arr.astype(int).tolist()
+
+        source_coverage: Optional[SourceCoverage] = None
+        if raw_samples_per_real is not None:
+            source_coverage = create_source_coverage(
+                timestamps_utc_ms, [(SourceCoverageRole.REGULAR, raw_samples_per_real[int(real)])]
+            )
+
+        ret_arr.append(
+            RealizationVector(
+                realization=real,
+                timestamps_utc_ms=timestamps_utc_ms,
+                values=value_np_arr.tolist(),
+                metadata=vector_metadata,
+                source_coverage=source_coverage,
+            )
+        )
+
+    return ret_arr
 
 
 def _validate_single_vector_table(arrow_table: pa.Table, vector_name: str) -> None:

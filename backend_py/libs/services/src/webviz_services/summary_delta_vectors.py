@@ -1,10 +1,17 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import pyarrow as pa
 import pyarrow.compute as pc
 import numpy as np
 
-from webviz_services.utils.arrow_helpers import validate_summary_vector_table_pa
+from webviz_services.service_exceptions import InvalidDataError, Service
+from webviz_services.sumo_access.source_coverage import (
+    RawSourceSamples,
+    SourceCoverage,
+    SourceCoverageRole,
+    create_source_coverage,
+)
+from webviz_services.utils.arrow_helpers import sort_table_on_real_then_date, validate_summary_vector_table_pa
 
 
 @dataclass
@@ -20,6 +27,7 @@ class RealizationDeltaVector:
     values: list[float]
     is_rate: bool
     unit: str
+    source_coverage: SourceCoverage | None = None
 
 
 def create_delta_vector_table(
@@ -68,6 +76,9 @@ def create_realization_delta_vector_list(
     """
     validate_summary_vector_table_pa(delta_vector_table, vector_name)
 
+    # Join/derived outputs have no guaranteed row order; slicing below requires contiguous, date-sorted REAL segments
+    delta_vector_table = sort_table_on_real_then_date(delta_vector_table)
+
     real_arr_np = delta_vector_table.column("REAL").to_numpy()
     unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
 
@@ -90,5 +101,31 @@ def create_realization_delta_vector_list(
                 unit=unit,
             )
         )
+
+    return ret_arr
+
+
+def add_source_coverage_to_realization_delta_vectors(
+    realization_delta_vectors: list[RealizationDeltaVector],
+    comparison_raw_samples_per_real: dict[int, RawSourceSamples],
+    reference_raw_samples_per_real: dict[int, RawSourceSamples],
+) -> list[RealizationDeltaVector]:
+    """
+    Return copies of the delta vectors with source coverage classified on each vector's final (joined) timestamps,
+    requiring support from both the comparison and the reference source of the same realization.
+    """
+    ret_arr: list[RealizationDeltaVector] = []
+    for delta_vec in realization_delta_vectors:
+        real = int(delta_vec.realization)
+        comparison_samples = comparison_raw_samples_per_real.get(real)
+        reference_samples = reference_raw_samples_per_real.get(real)
+        if comparison_samples is None or reference_samples is None:
+            raise InvalidDataError(f"Missing raw source samples for delta realization {real}", Service.GENERAL)
+
+        source_coverage = create_source_coverage(
+            delta_vec.timestamps_utc_ms,
+            [(SourceCoverageRole.COMPARISON, comparison_samples), (SourceCoverageRole.REFERENCE, reference_samples)],
+        )
+        ret_arr.append(replace(delta_vec, source_coverage=source_coverage))
 
     return ret_arr
