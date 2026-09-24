@@ -67,14 +67,14 @@ function extractLayoutFromSerializedDashboard(
     return layout;
 }
 
-export type ExtractedDashboardPreview = {
+export type DashboardPreviewItem = {
     id: string;
     name: string;
     description?: string;
     layout: LayoutElement[];
 };
 
-export function extractLayouts(session: WorkbenchSessionDataContainer): ExtractedDashboardPreview[] {
+export function extractDashboardPreviewItems(session: WorkbenchSessionDataContainer): DashboardPreviewItem[] {
     return session.content.dashboards.map((dashboard) => ({
         id: dashboard.id,
         name: dashboard.name,

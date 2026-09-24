@@ -109,13 +109,23 @@ export class SyncSettingsService {
         }
 
         for (const { subscriberId, callbackFn } of subscribersSet) {
-            if (subscriberId === undefined || publisherId === undefined || subscriberId !== publisherId) {
+            if (publisherId === undefined || publisherId !== subscriberId) {
                 callbackFn(value);
             }
         }
     }
 }
 
+/**
+ * Subscribes to a {@link SyncSettingsService} topic only while `enable` is true, returning the
+ * latest published value (or `null` before anything has been published). Used by
+ * {@link SyncSettingsHelper.useValue} in `SyncSettings.ts`, where `enable` reflects whether the
+ * calling module currently has that particular sync key turned on.
+ *
+ * When `enable` flips to false, the subscription is torn down and the returned value is reset to
+ * `null` immediately - so a module that just opted out of a sync setting stops reacting to it in
+ * the same commit, instead of briefly rendering with the last synced value it no longer subscribes to.
+ */
 export function useSubscribedValueConditionally<T extends keyof SyncSettingsTopicDefinitions>(
     topic: T,
     enable: boolean,

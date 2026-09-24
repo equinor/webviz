@@ -13,7 +13,7 @@ import { Typography } from "@lib/components/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { useActiveSession } from "../../ActiveSessionBoundary";
-import { dashboardsToPreviewCarouselItems } from "../../DashboardPreview/_utils";
+import { dashboardsToPreviewItems } from "../../DashboardPreview/_utils";
 import { DashboardPreviewCarousel } from "../../DashboardPreview/dashboardPreviewCarousel";
 
 export type FormProps = {
@@ -21,8 +21,10 @@ export type FormProps = {
     workbench: Workbench;
     title: string;
     description: string;
+    activeDashboardId?: string;
     setTitle: (title: string) => void;
     setDescription: (description: string) => void;
+    setActiveDashboardId: (dashboardId: string) => void;
     titleInputRef: React.ForwardedRef<HTMLInputElement>;
     onSubmit: React.FormEventHandler<HTMLFormElement>;
 };
@@ -46,9 +48,7 @@ export function Form(props: FormProps): React.ReactNode {
         HTMLInputElement | HTMLTextAreaElement | null
     >(props.titleInputRef, () => inputRef.current);
 
-    const dashboards = dashboardsToPreviewCarouselItems(
-        props.workbench.getSessionManager().getActiveSession().getDashboards(),
-    );
+    const dashboards = dashboardsToPreviewItems(activeSession.getDashboards());
 
     React.useEffect(function focusInput() {
         if (inputRef.current) {
@@ -66,13 +66,23 @@ export function Form(props: FormProps): React.ReactNode {
 
     return (
         <>
+            <Banner tone="info" layoutClassName="mb-2xs">
+                <strong>Note:</strong> The snapshot will include all dashboards in the current session. You can select
+                the dashboard that will be displayed first when the snapshot is opened.
+            </Banner>
             {hasChanges && (
                 <Banner tone="warning" layoutClassName="mb-2xs">
                     There are unsaved changes in the current session. These changes will be included in the snapshot.
                 </Banner>
             )}
             <form id={props.id} className="gap-x-sm flex items-center" onSubmit={props.onSubmit}>
-                <DashboardPreviewCarousel height={220} width={150} dashboards={dashboards} />
+                <DashboardPreviewCarousel
+                    height={220}
+                    width={150}
+                    dashboards={dashboards}
+                    activeDashboardId={props.activeDashboardId}
+                    onActiveDashboardIdChange={props.setActiveDashboardId}
+                />
                 <div className="gap-y-sm flex min-w-0 grow flex-col">
                     <FieldCompositions.Default
                         label="Title"

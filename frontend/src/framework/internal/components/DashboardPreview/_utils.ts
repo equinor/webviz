@@ -1,8 +1,7 @@
 import type { Dashboard } from "@framework/internal/Dashboard";
+import type { DashboardPreviewItem } from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 
-import type { DashboardPreviewCarouselItem } from "./dashboardPreviewCarousel";
-
-export function dashboardsToPreviewCarouselItems(dashboards: Dashboard[]): DashboardPreviewCarouselItem[] {
+export function dashboardsToPreviewItems(dashboards: Dashboard[]): DashboardPreviewItem[] {
     return dashboards.map((dashboard) => ({
         id: dashboard.getId(),
         name: dashboard.getMetadata().name,

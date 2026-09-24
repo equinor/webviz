@@ -1,4 +1,4 @@
-import { objectToJsonString } from "@framework/internal/WorkbenchSession/utils/hash";
+import { hashSessionContentString, objectToJsonString } from "@framework/internal/WorkbenchSession/utils/hash";
 import type { Workbench } from "@framework/Workbench";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
@@ -6,6 +6,7 @@ import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunct
 import { WindowActivityObserver, WindowActivityObserverTopic, WindowActivityState } from "../../WindowActivityObserver";
 import type { PrivateWorkbenchSession } from "../../WorkbenchSession/PrivateWorkbenchSession";
 import { PrivateWorkbenchSessionTopic } from "../../WorkbenchSession/PrivateWorkbenchSession";
+import type { SerializedWorkbenchSessionContentState } from "../../WorkbenchSession/PrivateWorkbenchSession.schema";
 import { AUTO_SAVE_DEBOUNCE_MS, BACKEND_POLLING_INTERVAL_MS, MAX_CONTENT_SIZE_BYTES } from "../constants";
 
 import { BackendSyncManager } from "./BackendSyncManager";
@@ -133,7 +134,14 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         this._destroyed = true;
     }
 
-    async persistNow(): Promise<PersistResult> {
+    /**
+     * @param contentOverride Content to persist instead of the session's own default serialization
+     * This class has no notion of what an override represents or why one might be given; it only ever
+     * compares the content it's about to actually send against what's persisted (via
+     * SessionStateTracker.hasChangesRelativeTo()), so "no changes" is always correct for whatever
+     * content ends up here.
+     */
+    async persistNow(contentOverride?: SerializedWorkbenchSessionContentState): Promise<PersistResult> {
         if (this._destroyed) {
             throw new Error("Persistence service has been stopped.");
         }
@@ -150,14 +158,16 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         try {
             await this._tracker.refresh();
 
-            if (!this._tracker.hasChanges()) {
+            const content = contentOverride ?? this._session.serializeContentState();
+            const contentToSave = objectToJsonString(content);
+            const contentHash = await hashSessionContentString(contentToSave);
+
+            if (!this._tracker.hasChangesRelativeTo(contentHash)) {
                 return {
                     success: false,
                     reason: PersistFailureReason.NO_CHANGES,
                 };
             }
-
-            const contentToSave = objectToJsonString(this._session.serializeContentState());
 
             const size = new Blob([contentToSave]).size;
 
@@ -199,7 +209,12 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         }
     }
 
-    async createSnapshot(title: string, description: string): Promise<CreateSnapshotResult> {
+    /** @param contentOverride See persistNow()'s doc - same purpose, applies here too. */
+    async createSnapshot(
+        title: string,
+        description: string,
+        contentOverride?: SerializedWorkbenchSessionContentState,
+    ): Promise<CreateSnapshotResult> {
         if (this._destroyed) {
             throw new Error("Persistence service has been stopped.");
         }
@@ -207,10 +222,11 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         try {
             await this._tracker.refresh();
 
+            const content = contentOverride ?? this._session.serializeContentState();
             const snapshotId = await this._backendSync.createSnapshot({
                 title,
                 description,
-                content: objectToJsonString(this._session.serializeContentState()),
+                content: objectToJsonString(content),
             });
 
             return {

@@ -200,9 +200,16 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this.handleStateChange();
     }
 
-    serializeContentState(): SerializedWorkbenchSessionContentState {
+    /**
+     * @param activeDashboardIdOverride Dashboard id to serialize as `activeDashboardId` instead of
+     * this session's own live active dashboard - e.g. so a save/snapshot dialog can let the user
+     * pick which dashboard opens first without switching what's active in this (still in-use)
+     * session. Every dashboard's full state is serialized regardless, so this only ever affects
+     * which one is marked active in the output.
+     */
+    serializeContentState(activeDashboardIdOverride?: string): SerializedWorkbenchSessionContentState {
         return {
-            activeDashboardId: this._activeDashboardId,
+            activeDashboardId: activeDashboardIdOverride ?? this._activeDashboardId,
             settings: this._settings.serializeState(),
             userCreatedItems: this._userCreatedItems.serializeState(),
             dashboards: this._dashboards.map((d) => d.serializeState()),
@@ -512,7 +519,8 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     async cloneDashboard(dashboardId: string): Promise<void> {
         this.assertIsNotSnapshot();
-        const dashboardToClone = this._dashboards.find((d) => d.getId() === dashboardId);
+        const dashboardToCloneIndex = this._dashboards.findIndex((d) => d.getId() === dashboardId);
+        const dashboardToClone = this._dashboards[dashboardToCloneIndex];
         if (!dashboardToClone) {
             throw new Error("Dashboard not registered in this session");
         }
@@ -520,7 +528,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         const clonedDashboard = Dashboard.clone(dashboardToClone, this._atomStoreMaster);
 
         this.registerDashboard(clonedDashboard);
-        this.moveDashboard(clonedDashboard.getId(), this._dashboards.indexOf(dashboardToClone) + 1);
+        this.moveDashboard(clonedDashboard.getId(), dashboardToCloneIndex + 1);
 
         try {
             this.setActiveDashboard(clonedDashboard.getId());
@@ -689,7 +697,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return `${DEFAULT_DASHBOARD_NAME} ${nextNumber}`;
     }
 
-    clear(): void {
+    private clear(): void {
         for (const dashboard of this._dashboards) {
             this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${dashboard.getId()}`);
             dashboard.beforeDestroy();

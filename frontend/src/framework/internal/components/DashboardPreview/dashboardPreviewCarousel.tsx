@@ -1,30 +1,42 @@
 import React from "react";
 
-import { ChevronLeft, ChevronRight } from "@mui/icons-material";
+import { ChevronLeft, ChevronRight, PushPin, PushPinOutlined } from "@mui/icons-material";
 
-import type { LayoutElement } from "@framework/internal/Dashboard";
+import type { DashboardPreviewItem } from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Typography } from "@lib/components/Typography";
 import { useHorizontalStepScroll } from "@lib/hooks/useHorizontalStepScroll";
 
 import { DashboardPreview } from "./dashboardPreview";
-
-export type DashboardPreviewCarouselItem = {
-    id: string;
-    name: string;
-    description?: string;
-    layout: LayoutElement[];
-};
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type DashboardPreviewCarouselProps = {
-    dashboards: DashboardPreviewCarouselItem[];
+    dashboards: DashboardPreviewItem[];
     width: number;
     height: number;
+    /**
+     * Which dashboard is currently marked to open first the next time this saved session/snapshot
+     * is opened. Also seeds which dashboard the carousel starts browsing on. Deliberately
+     * independent from there on - browsing with the chevrons/indicators only moves which one is
+     * shown, never this; only the pin toggle (rendered when onActiveDashboardIdChange is given)
+     * changes it. Omit both props to hide the toggle and just start browsing from the first
+     * dashboard.
+     */
+    activeDashboardId?: string;
+    onActiveDashboardIdChange?: (dashboardId: string) => void;
 };
 
 export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): React.ReactNode {
-    const [index, setIndex] = React.useState(0);
+    // Lazy initializer: only ever used to pick where the carousel starts browsing on mount, not to
+    // react to activeDashboardId/dashboards changing afterward.
+    const [index, setIndex] = React.useState(() => {
+        if (!props.activeDashboardId) {
+            return 0;
+        }
+        const initialIndex = props.dashboards.findIndex((d) => d.id === props.activeDashboardId);
+        return initialIndex === -1 ? 0 : initialIndex;
+    });
 
     const currentIndex = props.dashboards.length > 0 ? index % props.dashboards.length : 0;
     const current = props.dashboards[currentIndex];
@@ -54,16 +66,51 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
 
     const tooltipContent = `${current?.name ?? ""}\n${current?.description ? `⎯⎯⎯⎯⎯\n${current.description}` : ""}`;
 
+    const isCurrentActive = current !== undefined && current.id === props.activeDashboardId;
+    const activeIndex = props.dashboards.findIndex((d) => d.id === props.activeDashboardId);
+
     return (
         <div className="bg-neutral gap-y-2xs flex flex-col" style={{ width: props.width, height: props.height }}>
-            <DashboardPreview
-                width={props.width}
-                height={props.height - controlsHeight}
-                layout={current?.layout ?? []}
-            />
+            <div className="relative" style={{ width: props.width, height: props.height - controlsHeight }}>
+                <DashboardPreview
+                    width={props.width}
+                    height={props.height - controlsHeight}
+                    layout={current?.layout ?? []}
+                />
+                {current && props.onActiveDashboardIdChange && (
+                    <div className="top-3xs right-3xs absolute">
+                        <Tooltip
+                            content={
+                                isCurrentActive
+                                    ? `"${current.name}" opens first when opening this session`
+                                    : `Open "${current.name}" first when session is opened`
+                            }
+                        >
+                            <Button
+                                aria-label={
+                                    isCurrentActive
+                                        ? `"${current.name}" opens when opening this session`
+                                        : `Open "${current.name}" first when session is opened`
+                                }
+                                iconOnly
+                                variant="contained"
+                                tone={isCurrentActive ? "accent" : "neutral"}
+                                size="small"
+                                onClick={() => props.onActiveDashboardIdChange?.(current.id)}
+                            >
+                                {isCurrentActive ? (
+                                    <PushPin style={{ fontSize: 16 }} />
+                                ) : (
+                                    <PushPinOutlined style={{ fontSize: 16 }} />
+                                )}
+                            </Button>
+                        </Tooltip>
+                    </div>
+                )}
+            </div>
             {current && (
                 <div className="px-2xs gap-x-2xs flex items-center justify-center">
-                    <Typography size="sm" tone="neutral" layoutClassName="truncate" title={current.name}>
+                    <Typography size="sm" tone="neutral" layoutClassName="truncate" title={tooltipContent}>
                         {current.name}
                     </Typography>
                 </div>
@@ -94,7 +141,15 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
                                     aria-current={i === currentIndex ? "true" : undefined}
                                     key={dashboard.id}
                                     data-carousel-indicator
-                                    className={`focusable text-body-xs flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full ${i === currentIndex ? "bg-accent-strong- bg-accent-strong-active text-accent-strong-on-emphasis" : "bg-accent hover:bg-accent-hover text-accent-on-emphasis"}`}
+                                    className={resolveClassNames(
+                                        "focusable text-body-xs flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full",
+                                        {
+                                            "bg-accent-active": i === activeIndex,
+                                            "bg-accent-strong text-accent-strong-on-emphasis": i === currentIndex,
+                                            "bg-accent hover:bg-accent-hover text-accent-on-emphasis":
+                                                i !== activeIndex && i !== currentIndex,
+                                        },
+                                    )}
                                     onClick={(e) => handleIndicatorClick(e, i)}
                                 >
                                     {i + 1}

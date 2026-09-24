@@ -3,7 +3,7 @@ import React from "react";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { loadWorkbenchSessionFromLocalStorage } from "@framework/internal/WorkbenchSession/utils/loaders";
 import {
-    extractLayouts,
+    extractDashboardPreviewItems,
     type WorkbenchSessionDataContainer,
 } from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import type { Workbench } from "@framework/Workbench";
@@ -73,7 +73,11 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
                 We found an unsaved version of your current session in your browser. You can either delete or recover
                 it.
                 <div className="gap-x-sm flex">
-                    <DashboardPreviewCarousel height={150} width={150} dashboards={extractLayouts(sessionData)} />
+                    <DashboardPreviewCarousel
+                        height={150}
+                        width={150}
+                        dashboards={extractDashboardPreviewItems(sessionData)}
+                    />
                     <div className="gap-y-xs flex flex-col">
                         <div className="gap-y-4xs flex flex-col">
                             <strong className="text-body-xs text-neutral-subtle">Title</strong>

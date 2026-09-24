@@ -131,8 +131,18 @@ export class SessionStateTracker {
     }
 
     hasChanges(): boolean {
+        return this.hasChangesRelativeTo(this._state.currentHash);
+    }
+
+    /**
+     * Same check as hasChanges(), but against a caller-supplied content hash instead of this
+     * tracker's own internally-tracked one - e.g. so persisting a deliberately different payload
+     * (see PersistenceOrchestrator.persistNow()'s contentOverride) is still correctly judged against
+     * what was actually last persisted, whatever that payload happens to be.
+     */
+    hasChangesRelativeTo(contentHash: string | null): boolean {
         // Check if content hash changed
-        const hashChanged = this._state.currentHash !== this._state.lastPersistedHash;
+        const hashChanged = contentHash !== this._state.lastPersistedHash;
 
         if (hashChanged) {
             return true;

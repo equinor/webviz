@@ -3,8 +3,8 @@ import React from "react";
 import {
     ChevronLeft,
     ChevronRight,
-    Close,
     ContentCopy,
+    Delete,
     DragIndicator,
     Edit,
     Eject,
@@ -215,7 +215,7 @@ export function DashboardTab(props: DashboardTabProps) {
                                 <Tooltip content="You cannot delete the last dashboard" disabled={props.canBeDeleted}>
                                     <Menu.Item
                                         onClick={handleDeleteClick}
-                                        icon={<Close />}
+                                        icon={<Delete />}
                                         tone="danger"
                                         disabled={!props.canBeDeleted}
                                     >

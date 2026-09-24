@@ -16,7 +16,7 @@ import { Typography } from "@lib/components/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { truncateString } from "@lib/utils/strings";
 
-import { dashboardsToPreviewCarouselItems } from "../DashboardPreview/_utils";
+import { dashboardsToPreviewItems } from "../DashboardPreview/_utils";
 import { DashboardPreviewCarousel } from "../DashboardPreview/dashboardPreviewCarousel";
 
 export type EditSessionMetadataDialogProps = {
@@ -131,7 +131,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
     const isEditingActiveSession =
         activeWorkbenchSession !== null && (activeWorkbenchSession.getId() === props.id || props.id === null);
     const dashboards = isEditingActiveSession
-        ? dashboardsToPreviewCarouselItems(activeWorkbenchSession.getDashboards())
+        ? dashboardsToPreviewItems(activeWorkbenchSession.getDashboards())
         : [];
 
     return (

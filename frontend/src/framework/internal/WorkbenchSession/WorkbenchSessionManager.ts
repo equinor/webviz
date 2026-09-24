@@ -249,7 +249,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         try {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
 
-            const url = buildWorkbenchUrl({ kind: "session", sessionId, dashboardId: null });
+            const url = buildWorkbenchUrl({ kind: "session", sessionId, dashboardId });
             this._workbench.getNavigationManager().pushState(url);
 
             const sessionData = await loadWorkbenchSessionFromBackend(this._queryClient, sessionId);
@@ -294,7 +294,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         try {
             this._guiMessageBroker.setState(GuiState.IsLoadingSnapshot, true);
 
-            const url = buildWorkbenchUrl({ kind: "snapshot", snapshotId, dashboardId: null });
+            const url = buildWorkbenchUrl({ kind: "snapshot", snapshotId, dashboardId });
             this._workbench.getNavigationManager().pushState(url);
 
             const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
@@ -382,7 +382,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 // Update GUI states based on possible loading errors
                 this.applyActiveSessionEnsembleLoadErrorsToGuiState();
 
-                const url = buildWorkbenchUrl({ kind: "session", sessionId, dashboardId: null });
+                const dashboardId = this._activeSession.getActiveDashboard()?.getId() ?? null;
+                const url = buildWorkbenchUrl({ kind: "session", sessionId, dashboardId });
                 this._workbench.getNavigationManager().pushState(url);
             } else {
                 const session = await PrivateWorkbenchSession.fromDataContainer(
@@ -668,7 +669,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     }
 
     // ========== Persistence Operations ==========
-    async maybeSaveSession(opts?: { saveAsNew?: boolean }) {
+    async maybeSaveSession(opts?: { saveAsNew?: boolean; activeDashboardId?: string }) {
         if (this._activeSession?.getIsPersisted()) return this.saveSession(opts);
 
         // The session has never been persisted before: open the metadata dialog to prompt the user to give the session a proper title
@@ -676,7 +677,12 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         return false;
     }
 
-    async saveSession(opts?: { saveAsNew?: boolean }): Promise<boolean> {
+    /**
+     * @param opts.activeDashboardId Dashboard to mark as active in the saved content instead of
+     * this session's own live active dashboard - lets a save dialog offer a different starting
+     * dashboard without switching what's active in this (still in-use) session.
+     */
+    async saveSession(opts?: { saveAsNew?: boolean; activeDashboardId?: string }): Promise<boolean> {
         if (!this._activeSession) {
             throw new Error("No active workbench session to save. This should not happen and indicates a logic error.");
         }
@@ -707,7 +713,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 sessionToSave = this._activeSession;
             }
 
-            const result = await this._persistenceOrchestrator.persistNow();
+            const contentOverride =
+                opts?.activeDashboardId !== undefined
+                    ? sessionToSave.serializeContentState(opts.activeDashboardId)
+                    : undefined;
+            const result = await this._persistenceOrchestrator.persistNow(contentOverride);
             this.dismissToast(progressToastId);
 
             if (result.success) {
@@ -757,7 +767,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         }
     }
 
-    async createSnapshot(title: string, description: string): Promise<string | null> {
+    /**
+     * @param activeDashboardId Dashboard to mark as active in the snapshot instead of this
+     * session's own live active dashboard - see saveSession()'s equivalent option.
+     */
+    async createSnapshot(title: string, description: string, activeDashboardId?: string): Promise<string | null> {
         if (!this._activeSession) {
             throw new Error(
                 "No active workbench session to create snapshot from. This should not happen and indicates a logic error.",
@@ -774,7 +788,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
         this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, true);
 
-        const result = await this._persistenceOrchestrator.createSnapshot(title, description);
+        const contentOverride =
+            activeDashboardId !== undefined
+                ? this._activeSession.serializeContentState(activeDashboardId)
+                : undefined;
+        const result = await this._persistenceOrchestrator.createSnapshot(title, description, contentOverride);
 
         this.dismissToast("createSnapshot");
 
@@ -788,7 +806,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this._guiMessageBroker.publishEvent(GuiEvent.SessionPersistenceError, {
                 action: SessionPersistenceAction.CREATE_SNAPSHOT,
                 error: new SessionPersistenceError(errorMsg),
-                retry: () => this.createSnapshot(title, description),
+                retry: () => this.createSnapshot(title, description, activeDashboardId),
             });
         }
 
@@ -960,7 +978,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
      */
     async handleNavigation(): Promise<boolean> {
         // When the user navigates with forward/backward buttons, they might want to load a snapshot/session.
-        // Read once, atomically - openSession/openSnapshot below rewrite the URL's whole path.
+        // Read once, atomically - openSession/openSnapshot below rewrites the URL's whole path.
         const location = readWorkbenchUrlLocation();
 
         const result = await this.maybeCloseCurrentSession();

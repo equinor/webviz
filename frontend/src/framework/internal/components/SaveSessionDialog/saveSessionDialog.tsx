@@ -16,7 +16,7 @@ import { Typography } from "@lib/components/Typography";
 import { truncateString } from "@lib/utils/strings";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
-import { dashboardsToPreviewCarouselItems } from "../DashboardPreview/_utils";
+import { dashboardsToPreviewItems } from "../DashboardPreview/_utils";
 import { DashboardPreviewCarousel } from "../DashboardPreview/dashboardPreviewCarousel";
 
 export type SaveSessionDialogProps = {
@@ -29,13 +29,18 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
 
     const originalTitle = activeSession.getMetadata().title;
     const originalDescription = activeSession.getMetadata().description ?? "";
+    const originalActiveDashboardId = activeSession.getActiveDashboard()?.getId();
 
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
+    const [selectedActiveDashboardId, setSelectedActiveDashboardId] = React.useState<string | undefined>(undefined);
     const [showConfirmationDialog, setShowConfirmationDialog] = React.useState<boolean>(false);
 
     const [prevOriginalTitle, setPrevOriginalTitle] = React.useState<string>("");
     const [prevOriginalDescription, setPrevOriginalDescription] = React.useState<string>("");
+    const [prevOriginalActiveDashboardId, setPrevOriginalActiveDashboardId] = React.useState<string | undefined>(
+        undefined,
+    );
 
     if (originalTitle !== prevOriginalTitle) {
         setPrevOriginalTitle(originalTitle);
@@ -44,6 +49,13 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
     if (originalDescription !== prevOriginalDescription) {
         setPrevOriginalDescription(originalDescription);
         setDescription(originalDescription);
+    }
+    // Re-syncs the picked "opens first" dashboard to whatever is actually active whenever that
+    // changes (including the first render) - picking one via the carousel's pin toggle otherwise
+    // never gets reset back, since it's plain useState.
+    if (originalActiveDashboardId !== prevOriginalActiveDashboardId) {
+        setPrevOriginalActiveDashboardId(originalActiveDashboardId);
+        setSelectedActiveDashboardId(originalActiveDashboardId);
     }
 
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.SaveSessionDialogOpen);
@@ -62,12 +74,16 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
         props.workbench.getSessionManager().getActiveSession().updateMetadata({ title, description });
         props.workbench
             .getSessionManager()
-            .saveSession({ saveAsNew: props.saveAsNew })
+            .saveSession({ saveAsNew: props.saveAsNew, activeDashboardId: selectedActiveDashboardId })
             .then((success) => setIsOpen(!success));
     }
 
     function handleCancel() {
-        if (title !== originalTitle || description !== originalDescription) {
+        if (
+            title !== originalTitle ||
+            description !== originalDescription ||
+            selectedActiveDashboardId !== originalActiveDashboardId
+        ) {
             setShowConfirmationDialog(true);
             return;
         }
@@ -77,6 +93,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
     function handleDiscardChanges() {
         setPrevOriginalTitle("");
         setPrevOriginalDescription("");
+        setPrevOriginalActiveDashboardId(undefined);
         setIsOpen(false);
     }
 
@@ -89,7 +106,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
         [isOpen],
     );
 
-    const dashboards = dashboardsToPreviewCarouselItems(
+    const dashboards = dashboardsToPreviewItems(
         props.workbench.getSessionManager().getActiveSession().getDashboards(),
     );
 
@@ -104,7 +121,13 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                         Sessions are not guaranteed to persist, as underlying data or module states may change.
                     </Banner>
                     <form id={formId} className="gap-x-sm flex items-center" onSubmit={handleSave}>
-                        <DashboardPreviewCarousel height={220} width={150} dashboards={dashboards} />
+                        <DashboardPreviewCarousel
+                            height={220}
+                            width={150}
+                            dashboards={dashboards}
+                            activeDashboardId={selectedActiveDashboardId}
+                            onActiveDashboardIdChange={setSelectedActiveDashboardId}
+                        />
                         <div className="gap-y-sm flex min-w-0 grow flex-col">
                             <FieldCompositions.Default
                                 label="Title"

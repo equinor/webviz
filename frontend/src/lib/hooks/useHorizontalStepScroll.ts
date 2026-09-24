@@ -31,19 +31,39 @@ export type UseHorizontalStepScrollOptions = {
     onItemsChange?: () => void;
 };
 
+/** Return value of {@link useHorizontalStepScroll}. */
 export type UseHorizontalStepScrollResult = {
+    /** Attach to the scrollable element itself. */
     scrollContainerRef: React.RefObject<HTMLDivElement>;
+    /** Attach to the (typically wider) content wrapper inside the scroll container. */
     contentRef: React.RefObject<HTMLDivElement>;
+    /** Whether there's an earlier item to scroll back to. */
     canScrollToPrevious: boolean;
+    /** Whether there's a later item to scroll forward to. */
     canScrollToNext: boolean;
+    /** Scrolls back by exactly one item. */
     scrollToPrevious: () => void;
+    /** Scrolls forward by exactly one item. */
     scrollToNext: () => void;
+    /** Scrolls the item at `index` into view, if it isn't already fully visible. */
     scrollItemIntoView: (index: number) => void;
 };
 
-// Owns the horizontal, item-by-item scroll behaviour of an overflowing strip: the state driving
-// previous/next chevrons, the observers that keep it fresh, and a layout-effect hook for callers
-// that need to react to the item set changing.
+/**
+ * Owns the horizontal, item-by-item scroll behaviour of an overflowing strip: the state driving
+ * previous/next chevrons, the observers that keep it fresh, and a layout-effect hook for callers
+ * that need to react to the item set changing.
+ *
+ * Attach {@link UseHorizontalStepScrollResult.scrollContainerRef} to the scrollable element and
+ * {@link UseHorizontalStepScrollResult.contentRef} to its (typically wider) content wrapper inside
+ * it; items are located within the scroll container via
+ * {@link UseHorizontalStepScrollOptions.itemSelector}. {@link UseHorizontalStepScrollResult.scrollToPrevious}
+ * and {@link UseHorizontalStepScrollResult.scrollToNext} each step by exactly one item rather than a
+ * full page, and {@link UseHorizontalStepScrollResult.canScrollToPrevious}/
+ * {@link UseHorizontalStepScrollResult.canScrollToNext} report whether there's anywhere left to step
+ * to - both accounting for the scroll container's own left padding (see
+ * {@link getItemLeftInScrollContainer}), which a naive `scrollLeft` comparison would not.
+ */
 export function useHorizontalStepScroll(options: UseHorizontalStepScrollOptions): UseHorizontalStepScrollResult {
     const { itemSelector, itemsKey } = options;
 
