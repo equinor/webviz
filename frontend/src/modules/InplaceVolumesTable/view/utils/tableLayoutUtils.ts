@@ -6,9 +6,9 @@ import type { TableColumnsConfig, TableHeading, TableRow } from "../types";
 import type { LeafColumn } from "./tableComponentUtils";
 import { collectLeafColumns } from "./tableComponentUtils";
 
-export const RESULT_COLUMN_WIDTH_PX = 96;
-export const CHAR_WIDTH_PX = 7.5;
-export const CATEGORY_COLUMN_CHROME_PX = 56;
+export const RESULT_COLUMN_WIDTH_PX = 108;
+export const CHAR_WIDTH_PX = 8.5;
+export const CATEGORY_COLUMN_CHROME_PX = 60;
 export const CATEGORY_COLUMN_MIN_WIDTH_PX = 72;
 export const CATEGORY_COLUMN_MAX_WIDTH_PX = 280;
 export const MAX_PINNED_WIDTH_FRACTION = 0.5;

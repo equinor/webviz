@@ -1,19 +1,10 @@
 import { expect, test } from "@playwright/experimental-ct-react";
-import type { Download } from "@playwright/test";
 
 import { makeRealizationFixture, makeStatisticalFixture } from "./support/inplaceVolumesTableFixtures";
 import { InplaceVolumesTableHarness } from "./support/InplaceVolumesTableHarness";
+import { readDownloadAsString } from "./support/readDownload";
 
 test.use({ viewport: { width: 1200, height: 800 } });
-
-async function readDownloadAsString(download: Download): Promise<string> {
-    const stream = await download.createReadStream();
-    const chunks: Buffer[] = [];
-    for await (const chunk of stream) {
-        chunks.push(chunk as Buffer);
-    }
-    return Buffer.concat(chunks).toString("utf-8");
-}
 
 test.describe("InplaceVolumesTable CSV download", () => {
     test("realization download contains all rows, including off-screen virtualized ones", async ({ mount, page }) => {

@@ -32,6 +32,59 @@ export function makeRealizationFixture(numRows: number): InplaceVolumesTableFixt
     return { columnsConfig, rows };
 }
 
+export const ALL_STATISTIC_LABELS = ["Mean", "Stddev", "P10", "P90", "Min", "Max"];
+export const FOUR_RESULT_NAMES = ["STOIIP", "GIIP", "BULK", "PORV"];
+
+const TABLE_NAMES = ["geogrid", "simgrid"];
+
+/**
+ * Statistical fixture shaped like the real builder output: constant ENSEMBLE and FLUID, two TABLE_NAMEs,
+ * three ZONEs, and one group per result with `${result}-${stat}` leaves.
+ */
+export function makeWideStatisticalFixture(
+    numRows: number,
+    resultNames: string[],
+    statisticLabels: string[],
+): InplaceVolumesTableFixture {
+    const columnsConfig: TableColumnsConfig = {
+        ENSEMBLE: { label: "ENSEMBLE", columnType: ColumnType.ENSEMBLE },
+        TABLE_NAME: { label: "TABLE_NAME", columnType: ColumnType.TABLE },
+        FLUID: { label: "FLUID", columnType: ColumnType.FLUID },
+        ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
+    };
+    for (const resultName of resultNames) {
+        const subHeading: TableColumnsConfig = {};
+        for (const statistic of statisticLabels) {
+            subHeading[`${resultName}-${statistic}`] = {
+                label: statistic,
+                columnType: ColumnType.RESULT,
+                hoverText: `${statistic} - ${resultName}`,
+            };
+        }
+        columnsConfig[resultName] = { label: resultName, hoverText: resultName, subHeading };
+    }
+
+    const rows: TableRow<TableColumnsConfig>[] = Array.from({ length: numRows }, (_, i) => {
+        const row: TableRow<TableColumnsConfig> = {
+            __id: `row-${i}`,
+            ENSEMBLE: "ens1",
+            TABLE_NAME: TABLE_NAMES[Math.floor(i / ZONES.length) % TABLE_NAMES.length],
+            FLUID: "gas + oil + water",
+            ZONE: ZONES[i % ZONES.length],
+        };
+        resultNames.forEach((resultName, resultIndex) => {
+            statisticLabels.forEach((statistic, statisticIndex) => {
+                // Wide, signed values ("-123 T") are the worst case for truncation
+                const sign = (i + statisticIndex) % 2 === 0 ? -1 : 1;
+                row[`${resultName}-${statistic}`] = sign * 123.456e12 * (1 + 0.01 * (resultIndex + statisticIndex));
+            });
+        });
+        return row;
+    });
+
+    return { columnsConfig, rows };
+}
+
 /** Statistical mode fixture: ENSEMBLE, TABLE_NAME, FLUID, ZONE non-statistical columns, STOIIP {Mean,P10,P90}. */
 export function makeStatisticalFixture(numRows: number): InplaceVolumesTableFixture {
     const columnsConfig: TableColumnsConfig = {
