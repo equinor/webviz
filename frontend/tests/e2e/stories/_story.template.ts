@@ -3,18 +3,14 @@
  *
  * How to use:
  *  1. Copy this file to `<yourStory>.test.ts` in this folder (the `.test.ts` suffix is what makes
- *     Playwright pick it up; this template is deliberately named so it is ignored).
+ *     Playwright pick it up).
  *  2. Capture the raw clicks/fills with `npm run test:e2e:codegen` (see tests/README.md). Codegen
  *     writes plain Playwright calls to `_recorded.gen.ts` — a starting point for the selectors.
  *  3. Port those actions into the body below, wrapping interactions in `smoothClick`/`smoothFill`
  *     and adding `narrate(...)` lines. These are no-ops unless RECORD=1, so the story still runs as
- *     a fast regression check with `npm run test:e2e`.
- *  4. Fill in `meta` below with a stable, kebab-case `slug` plus the category/title/description to
- *     show in the in-app Tutorials dialog, then run `npm run generate:tutorials-manifest`. Add a
- *     `captureThumbnail(page)` call at the moment that best represents the finished result.
- *
- * Requires the full docker stack running; the `authenticated-*` project loads the seeded session so
- * the app starts logged in.
+ *     a fast integration test with `npm run test:e2e`.
+ *  4. Fill in `meta` information below about the test/story, then run `npm run generate:tutorials-manifest`.
+ *  5. Add a `captureThumbnail(page)` call at the moment that best represents the finished result.
  */
 import { expect } from "@playwright/test";
 

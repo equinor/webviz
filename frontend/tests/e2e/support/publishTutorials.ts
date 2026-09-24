@@ -57,7 +57,7 @@ function resolveStepsFile(videoFile: string): string {
 export function publishTutorials(): void {
     const manifestDirs = findManifestDirs(RESULTS_DIR);
     if (manifestDirs.length === 0) {
-        console.log("[publish-tutorials] No recorded tutorials found in test-results; nothing to publish.");
+        console.info("[publish-tutorials] No recorded tutorials found in test-results; nothing to publish.");
         return;
     }
 
@@ -93,8 +93,8 @@ export function publishTutorials(): void {
             copyFileSync(stepsFile, join(PUBLISH_DIR, `${slug}${STEPS_SUFFIX}`));
         }
         publishedCount += 1;
-        console.log(`[publish-tutorials] ✅ Published "${slug}".`);
+        console.info(`[publish-tutorials] ✅ Published "${slug}".`);
     }
 
-    console.log(`[publish-tutorials] Done (${publishedCount} tutorial(s) published to ${PUBLISH_DIR}).`);
+    console.info(`[publish-tutorials] Done (${publishedCount} tutorial(s) published to ${PUBLISH_DIR}).`);
 }

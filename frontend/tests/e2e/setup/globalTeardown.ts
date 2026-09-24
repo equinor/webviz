@@ -9,8 +9,8 @@ const currentDir = dirname(fileURLToPath(import.meta.url));
 
 /**
  * Global teardown: after a recording run, mux the synthesized voiceover clips into each recorded
- * video (see support/add-narration.mjs) and publish the results under stable slug-based filenames
- * (see support/publishTutorials.ts). No-op unless RECORD is set, so normal runs are unaffected.
+ * video and publish the results under stable slug-based filenames.
+ * No-op unless RECORD is set, so normal test runs are unaffected.
  */
 async function globalTeardown(): Promise<void> {
     if (!process.env.RECORD) {
