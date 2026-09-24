@@ -11,12 +11,12 @@ export type InplaceVolumesTableFixture = {
 /** Realization mode fixture: ENSEMBLE, TABLE_NAME, FLUID, REAL, ZONE, STOIIP leaf columns. */
 export function makeRealizationFixture(numRows: number): InplaceVolumesTableFixture {
     const columnsConfig: TableColumnsConfig = {
-        ENSEMBLE: { label: "ENSEMBLE", sizeInPercent: 100 / 6, columnType: ColumnType.ENSEMBLE },
-        TABLE_NAME: { label: "TABLE_NAME", sizeInPercent: 100 / 6, columnType: ColumnType.TABLE },
-        FLUID: { label: "FLUID", sizeInPercent: 100 / 6, columnType: ColumnType.FLUID },
-        REAL: { label: "REAL", sizeInPercent: 100 / 6, columnType: ColumnType.REAL },
-        ZONE: { label: "ZONE", sizeInPercent: 100 / 6, columnType: ColumnType.INDEX },
-        STOIIP: { label: "STOIIP", sizeInPercent: 100 / 6, columnType: ColumnType.RESULT },
+        ENSEMBLE: { label: "ENSEMBLE", columnType: ColumnType.ENSEMBLE },
+        TABLE_NAME: { label: "TABLE_NAME", columnType: ColumnType.TABLE },
+        FLUID: { label: "FLUID", columnType: ColumnType.FLUID },
+        REAL: { label: "REAL", columnType: ColumnType.REAL },
+        ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
+        STOIIP: { label: "STOIIP", columnType: ColumnType.RESULT },
     };
 
     const rows: TableRow<TableColumnsConfig>[] = Array.from({ length: numRows }, (_, i) => ({
@@ -35,17 +35,16 @@ export function makeRealizationFixture(numRows: number): InplaceVolumesTableFixt
 /** Statistical mode fixture: ENSEMBLE, TABLE_NAME, FLUID, ZONE non-statistical columns, STOIIP {Mean,P10,P90}. */
 export function makeStatisticalFixture(numRows: number): InplaceVolumesTableFixture {
     const columnsConfig: TableColumnsConfig = {
-        ENSEMBLE: { label: "ENSEMBLE", sizeInPercent: 20, columnType: ColumnType.ENSEMBLE },
-        TABLE_NAME: { label: "TABLE_NAME", sizeInPercent: 20, columnType: ColumnType.TABLE },
-        FLUID: { label: "FLUID", sizeInPercent: 20, columnType: ColumnType.FLUID },
-        ZONE: { label: "ZONE", sizeInPercent: 20, columnType: ColumnType.INDEX },
+        ENSEMBLE: { label: "ENSEMBLE", columnType: ColumnType.ENSEMBLE },
+        TABLE_NAME: { label: "TABLE_NAME", columnType: ColumnType.TABLE },
+        FLUID: { label: "FLUID", columnType: ColumnType.FLUID },
+        ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
         STOIIP: {
             label: "STOIIP",
-            sizeInPercent: 20,
             subHeading: {
-                "STOIIP-Mean": { label: "Mean", sizeInPercent: 100 / 3, columnType: ColumnType.RESULT },
-                "STOIIP-P10": { label: "P10", sizeInPercent: 100 / 3, columnType: ColumnType.RESULT },
-                "STOIIP-P90": { label: "P90", sizeInPercent: 100 / 3, columnType: ColumnType.RESULT },
+                "STOIIP-Mean": { label: "Mean", columnType: ColumnType.RESULT },
+                "STOIIP-P10": { label: "P10", columnType: ColumnType.RESULT },
+                "STOIIP-P90": { label: "P90", columnType: ColumnType.RESULT },
             },
         },
     };

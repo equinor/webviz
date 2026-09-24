@@ -97,7 +97,6 @@ export function createTableHeadingsAndRowsFromTablesData(tablesData: InplaceVolu
             columnType: column.getType(),
             label: column.getName(),
             hoverText: createHoverTextForVolume(column.getName()),
-            sizeInPercent: 100 / dataTable.getNumColumns(),
         };
     }
 
@@ -123,20 +122,11 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
     const nonStatisticalColumns = columnData.nonStatisticalColumns;
     const resultStatisticalColumns = columnData.resultStatisticalColumns;
 
-    const numNonStatisticalColumns = nonStatisticalColumns.length;
-    const numStatisticalResultColumns = resultStatisticalColumns.size;
-    const numStatisticOptions = statisticOptions.length;
-
-    // Give non-statistical columns a total width of 40%
-    const nonStatisticalColumnSizePercentage = 40;
-    const statisticalColumnSizePercentage = 100 - nonStatisticalColumnSizePercentage;
-
     // Headings for non-statistical columns
     for (const column of nonStatisticalColumns) {
         tableHeadings[column.getName()] = {
             label: column.getName(),
             columnType: column.getType(),
-            sizeInPercent: nonStatisticalColumnSizePercentage / numNonStatisticalColumns,
         };
     }
 
@@ -164,20 +154,17 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
 
         const subHeading: TableColumnsConfig = {};
         resultStatisticalTable.getColumns().forEach((column) => {
-            const columnSize = 100 / numStatisticOptions; // Size relative to parent heading (i.e. resultName)
             const columnId = `${resultName}-${column.getName()}`;
             subHeading[columnId] = {
                 label: column.getName(),
                 columnType: column.getType(),
                 hoverText: `${column.getName()} - ${resultHoverText}`,
-                sizeInPercent: columnSize,
             };
         });
 
         tableHeadings[resultName] = {
             label: resultName,
             hoverText: resultHoverText,
-            sizeInPercent: statisticalColumnSizePercentage / numStatisticalResultColumns,
             subHeading: subHeading,
         };
 

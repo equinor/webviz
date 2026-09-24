@@ -10,6 +10,7 @@ import {
     createTableHeadingsAndRowsFromTablesData,
     sortTableRowsByCategoryOrder,
 } from "../utils/tableComponentUtils";
+import { sortStatisticsForDisplay } from "../utils/tableLayoutUtils";
 
 export function useTableBuilder(): {
     headings: TableColumnsConfig;
@@ -39,7 +40,7 @@ export function useTableBuilder(): {
     } else if (tableType === TableType.STATISTICAL) {
         const tableHeadingsAndRows = createStatisticalTableHeadingsAndRowsFromTablesData(
             statisticalTableDataResults.tablesData,
-            statisticOptions,
+            sortStatisticsForDisplay(statisticOptions),
         );
 
         headings = tableHeadingsAndRows.headings;

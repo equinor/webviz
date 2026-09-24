@@ -26,14 +26,13 @@ function expectedCategoryWidth(maxChars: number): number {
 
 function makeStatisticalConfig(): TableColumnsConfig {
     return {
-        ENSEMBLE: { label: "ENSEMBLE", sizeInPercent: 20, columnType: ColumnType.ENSEMBLE },
-        ZONE: { label: "ZONE", sizeInPercent: 20, columnType: ColumnType.INDEX },
+        ENSEMBLE: { label: "ENSEMBLE", columnType: ColumnType.ENSEMBLE },
+        ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
         STOIIP: {
             label: "STOIIP",
-            sizeInPercent: 60,
             subHeading: {
-                "STOIIP-Mean": { label: "Mean", sizeInPercent: 50, columnType: ColumnType.RESULT },
-                "STOIIP-P10": { label: "P10", sizeInPercent: 50, columnType: ColumnType.RESULT },
+                "STOIIP-Mean": { label: "Mean", columnType: ColumnType.RESULT },
+                "STOIIP-P10": { label: "P10", columnType: ColumnType.RESULT },
             },
         },
     };
@@ -51,10 +50,10 @@ describe("computeColumnLayout", () => {
     test("result leaves get the fixed width; category widths follow the formula and clamps", () => {
         const veryLong = "X".repeat(100);
         const columnsConfig: TableColumnsConfig = {
-            A: { label: "A", sizeInPercent: 25, columnType: ColumnType.INDEX },
-            ZONE: { label: "ZONE", sizeInPercent: 25, columnType: ColumnType.INDEX },
-            LONG: { label: "LONG", sizeInPercent: 25, columnType: ColumnType.INDEX },
-            STOIIP: { label: "STOIIP", sizeInPercent: 25, columnType: ColumnType.RESULT },
+            A: { label: "A", columnType: ColumnType.INDEX },
+            ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
+            LONG: { label: "LONG", columnType: ColumnType.INDEX },
+            STOIIP: { label: "STOIIP", columnType: ColumnType.RESULT },
         };
         const rows = [
             { __id: "1", A: "b", ZONE: "Valysar_Upper", LONG: veryLong, STOIIP: 1 },
@@ -73,11 +72,7 @@ describe("computeColumnLayout", () => {
 
     test("header label counts towards the category width", () => {
         const columnsConfig: TableColumnsConfig = {
-            A_VERY_LONG_HEADER_LABEL: {
-                label: "A_VERY_LONG_HEADER_LABEL",
-                sizeInPercent: 100,
-                columnType: ColumnType.INDEX,
-            },
+            A_VERY_LONG_HEADER_LABEL: { label: "A_VERY_LONG_HEADER_LABEL", columnType: ColumnType.INDEX },
         };
         const rows = [
             { __id: "1", A_VERY_LONG_HEADER_LABEL: "a" },
@@ -93,8 +88,8 @@ describe("computeColumnLayout", () => {
 
     test("constant columns are hidden only with at least two rows", () => {
         const columnsConfig: TableColumnsConfig = {
-            FLUID: { label: "FLUID", sizeInPercent: 50, columnType: ColumnType.FLUID },
-            ZONE: { label: "ZONE", sizeInPercent: 50, columnType: ColumnType.INDEX },
+            FLUID: { label: "FLUID", columnType: ColumnType.FLUID },
+            ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
         };
 
         const single = computeColumnLayout(
