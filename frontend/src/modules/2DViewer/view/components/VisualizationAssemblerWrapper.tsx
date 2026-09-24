@@ -1,7 +1,7 @@
 import type React from "react";
 
+import { makeDrilledWellTrajectoriesLayer2D } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer2D";
 import { makePlannedWellTrajectoriesLayer2D } from "@modules/2DViewer/DataProviderFramework/visualization/makePlannedWellTrajectoriesLayer2D";
-import { makeRichWellTrajectoriesLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRichWellTrajectoriesLayer";
 import { makeWellTrajectoriesHoverVisualizationFunctions } from "@modules/2DViewer/DataProviderFramework/visualization/makeWellTrajectoriesHoverVisualizationFunctions";
 import {
     DpfSubsurfaceViewerWrapper,
@@ -164,7 +164,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.DRILLED_WELL_TRAJECTORIES,
     DrilledWellboreTrajectoriesProvider,
     {
-        transformToVisualization: makeRichWellTrajectoriesLayer,
+        transformToVisualization: makeDrilledWellTrajectoriesLayer2D,
         transformToBoundingBox: makeWellTrajectoriesBoundingBox,
         transformToHoverVisualization: makeWellTrajectoriesHoverVisualizationFunctions,
     },

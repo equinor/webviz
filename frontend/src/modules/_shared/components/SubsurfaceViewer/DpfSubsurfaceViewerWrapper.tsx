@@ -10,8 +10,8 @@ import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
 import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
+import { WebvizWellsLayer } from "@modules/_shared/customDeckGlLayers/WebvizWellsLayer";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type {
     AssemblerProduct,
@@ -76,7 +76,7 @@ export type DpfSubsurfaceViewerWrapperProps = {
 };
 
 const HOVER_TRANSFORMATIONS = makeHoverTransformationLookup(
-    [AdjustedWellsLayer, transformToWellboreHoverData],
+    [WebvizWellsLayer, transformToWellboreHoverData],
     [MapLayer, transformToWorldPosHoverData],
     [Grid3DLayer, transformToWorldPosHoverData],
     [PolylinesLayer, transformPolylineToFenceHoverData],

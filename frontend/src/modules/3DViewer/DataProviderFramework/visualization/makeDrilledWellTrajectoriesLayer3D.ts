@@ -8,12 +8,12 @@ import type {
 import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-export function makeDrilledWellTrajectoriesLayer2D(
+export function makeDrilledWellTrajectoriesLayer3D(
     args: TransformerArgs<
         DrilledWellboreTrajectoriesSettings,
         DrilledWellboreTrajectoriesData,
         DrilledWellboreTrajectoriesStoredData
     >,
 ): WellsLayer | null {
-    return makeDrilledWellTrajectoriesLayer(args, { viewMode: "2D" });
+    return makeDrilledWellTrajectoriesLayer(args, { viewMode: "3D" });
 }
