@@ -202,11 +202,12 @@ function usePolylineHoverMarkerLayer(
     const hovered = useHoverValue(HoverTopic.FENCE, hoverService, instanceId);
     const polylineEditingMode = usePublishSubscribeTopicValue(polylinesPlugin, PolylinesPluginTopic.EDITING_MODE);
     const availablePolylines = usePublishSubscribeTopicValue(polylinesPlugin, PolylinesPluginTopic.POLYLINES);
+    const editingPolylineId = usePublishSubscribeTopicValue(polylinesPlugin, PolylinesPluginTopic.EDITING_POLYLINE_ID);
 
     let position: [number, number, number] | null = null;
 
     if (polylineEditingMode !== PolylineEditingMode.DISABLED && hovered) {
-        position = getPolylinePositionFromFenceLengthAlong(hovered, availablePolylines);
+        position = getPolylinePositionFromFenceLengthAlong(hovered, availablePolylines, editingPolylineId);
     }
 
     return new ScatterplotLayer({
@@ -232,10 +233,16 @@ function usePolylineHoverMarkerLayer(
 function getPolylinePositionFromFenceLengthAlong(
     fenceHoverData: HoverData[HoverTopic.FENCE],
     availablePolylines: Polyline[],
+    editingPolylineId: string | null,
 ) {
     if (!fenceHoverData) return null;
 
     const hoveredFenceId = getPolylineIdFromFenceId(fenceHoverData.fenceId);
+
+    if (hoveredFenceId === editingPolylineId) {
+        return null;
+    }
+
     const hoveredPolyline = availablePolylines.find((p) => p.id === hoveredFenceId);
 
     if (!hoveredPolyline) {
