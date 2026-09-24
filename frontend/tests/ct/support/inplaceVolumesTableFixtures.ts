@@ -85,6 +85,48 @@ export function makeWideStatisticalFixture(
     return { columnsConfig, rows };
 }
 
+/**
+ * "Responses as rows" fixture shaped like the long-format builder output: the identifier columns of
+ * `makeWideStatisticalFixture`, then RESPONSE, then one flat column per statistic.
+ */
+export function makeResponsesAsRowsFixture(
+    numBaseRows: number,
+    resultNames: string[],
+    statisticLabels: string[],
+): InplaceVolumesTableFixture {
+    const columnsConfig: TableColumnsConfig = {
+        ENSEMBLE: { label: "ENSEMBLE", columnType: ColumnType.ENSEMBLE },
+        TABLE_NAME: { label: "TABLE_NAME", columnType: ColumnType.TABLE },
+        FLUID: { label: "FLUID", columnType: ColumnType.FLUID },
+        ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
+        RESPONSE: { label: "RESPONSE", columnType: ColumnType.INDEX },
+    };
+    for (const statistic of statisticLabels) {
+        columnsConfig[statistic] = { label: statistic, columnType: ColumnType.RESULT, hoverText: statistic };
+    }
+
+    const rows: TableRow<TableColumnsConfig>[] = [];
+    for (let i = 0; i < numBaseRows; i++) {
+        resultNames.forEach((resultName, resultIndex) => {
+            const row: TableRow<TableColumnsConfig> = {
+                __id: `row-${i}-${resultName}`,
+                ENSEMBLE: "ens1",
+                TABLE_NAME: TABLE_NAMES[Math.floor(i / ZONES.length) % TABLE_NAMES.length],
+                FLUID: "gas + oil + water",
+                ZONE: ZONES[i % ZONES.length],
+                RESPONSE: resultName,
+            };
+            statisticLabels.forEach((statistic, statisticIndex) => {
+                // Scrambled per base row and interleaved across responses, so an unscoped sort would mix responses
+                row[statistic] = ((i * 5) % numBaseRows) * 10 + resultIndex + statisticIndex * 0.1;
+            });
+            rows.push(row);
+        });
+    }
+
+    return { columnsConfig, rows };
+}
+
 /** Statistical mode fixture: ENSEMBLE, TABLE_NAME, FLUID, ZONE non-statistical columns, STOIIP {Mean,P10,P90}. */
 export function makeStatisticalFixture(numRows: number): InplaceVolumesTableFixture {
     const columnsConfig: TableColumnsConfig = {

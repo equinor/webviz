@@ -20,6 +20,7 @@
 - **Top bar**: Clicking the FMU logo or the "FMU Analysis" title reloads the application and returns you to the start page.
 - **Inplace Volumes Table**: added CSV download of the displayed table (respects filters, sorting and table mode).
 - **Inplace Volumes Table**: wide tables now scroll horizontally with the grouping columns pinned, and columns with the same value on every row are summarised above the table.
+- **Inplace Volumes Table**: new "Statistics layout" option shows responses as rows, keeping the table narrow when many responses are selected.
 
 ## August 2026
 
