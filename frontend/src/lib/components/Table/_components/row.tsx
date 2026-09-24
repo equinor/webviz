@@ -35,7 +35,9 @@ export const Row = React.forwardRef<HTMLTableRowElement, TableRowProps>(function
             {...baseProps}
             ref={ref}
             data-selected={isSelected ? "" : undefined}
-            className={resolveClassNames(baseProps.className, "group/row", {
+            className={resolveClassNames(baseProps.className, {
+                // Pinned cells mirror the row's hover/selection background through this group
+                "group/row": isSelectable,
                 "font-normal": sectionContext === "body",
                 "font-extrabold": sectionContext !== "body",
                 "text-neutral-subtle": !isSelected,

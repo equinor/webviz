@@ -115,30 +115,37 @@ export function sortStatisticsForDisplay(statistics: InplaceVolumesStatistic_api
     return statistics.toSorted((a, b) => STATISTICS_DISPLAY_ORDER.indexOf(a) - STATISTICS_DISPLAY_ORDER.indexOf(b));
 }
 
+export type SortScope = {
+    columnKey: string;
+    /** Sorting by any of these columns is applied within each value of `columnKey` */
+    scopedColumnKeys: ReadonlySet<string>;
+};
+
 /**
- * Sorts rows by the table sort state. With `sortScopeColumnKey`, a non-empty sort that does not include
- * that column is applied within each of its values, keeping them in first-seen order.
+ * Sorts rows by the table sort state. With a `sortScope`, a sort that includes a scoped column but not the
+ * scope column itself is applied within each scope value, keeping those values in first-seen order.
  */
 export function applyTableSort<TRow extends TableRow<TableColumnsConfig>>(
     rows: TRow[],
     sortState: TableSortState[],
-    sortScopeColumnKey?: string,
+    sortScope?: SortScope,
 ): TRow[] {
     const iteratees: (string | ((row: TRow) => number))[] = sortState.map((s) => s.columnKey);
     const orders = sortState.map((s) => s.direction as "asc" | "desc");
 
     const isScoped =
-        sortScopeColumnKey !== undefined &&
-        sortState.length > 0 &&
-        !sortState.some((s) => s.columnKey === sortScopeColumnKey);
+        sortScope !== undefined &&
+        sortState.some((s) => sortScope.scopedColumnKeys.has(s.columnKey)) &&
+        !sortState.some((s) => s.columnKey === sortScope.columnKey);
 
     if (isScoped) {
+        const scopeKey = sortScope.columnKey;
         const positions = new Map<string | number | null, number>();
         for (const row of rows) {
-            const value = row[sortScopeColumnKey];
+            const value = row[scopeKey];
             if (!positions.has(value)) positions.set(value, positions.size);
         }
-        iteratees.unshift((row) => positions.get(row[sortScopeColumnKey]) ?? Number.MAX_SAFE_INTEGER);
+        iteratees.unshift((row) => positions.get(row[scopeKey]) ?? Number.MAX_SAFE_INTEGER);
         orders.unshift("asc");
     }
 

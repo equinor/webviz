@@ -16,7 +16,7 @@ import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 
 import type { TableColumnsConfig, TableHeading, TableRow } from "../types";
 import { collectLeafColumns, formatEnsembleIdent, isValidFluidType } from "../utils/tableComponentUtils";
-import type { ColumnLayout } from "../utils/tableLayoutUtils";
+import type { ColumnLayout, SortScope } from "../utils/tableLayoutUtils";
 import { applyTableSort, CATEGORY_COLUMN_MAX_WIDTH_PX, computeColumnLayout } from "../utils/tableLayoutUtils";
 
 export type InplaceVolumesTableProps = {
@@ -24,7 +24,7 @@ export type InplaceVolumesTableProps = {
     columnsConfig: TableColumnsConfig;
     rows: TableRow<TableColumnsConfig>[];
 
-    /** When set, sorting by other columns is applied within each value of this column */
+    /** When set, sorting by result columns is applied within each value of this column */
     sortScopeColumnKey?: string;
 
     onHover: (row: TableRow<TableColumnsConfig> | null) => void;
@@ -60,6 +60,15 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
         () => new Set(layout.visibleLeaves.map((leaf) => leaf.key)),
         [layout.visibleLeaves],
     );
+
+    const sortScope = React.useMemo<SortScope | undefined>(() => {
+        if (props.sortScopeColumnKey === undefined) return undefined;
+
+        const resultLeafKeys = layout.visibleLeaves
+            .filter((leaf) => leaf.heading.columnType === ColumnType.RESULT)
+            .map((leaf) => leaf.key);
+        return { columnKey: props.sortScopeColumnKey, scopedColumnKeys: new Set(resultLeafKeys) };
+    }, [props.sortScopeColumnKey, layout.visibleLeaves]);
 
     const tableColumns = React.useMemo(() => {
         function renderColumnRecursive(
@@ -123,8 +132,8 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
             });
         });
 
-        return applyTableSort(filteredRows, tableSortState, props.sortScopeColumnKey);
-    }, [tableFilterState, visibleLeafKeys, props.rows, tableSortState, props.sortScopeColumnKey]);
+        return applyTableSort(filteredRows, tableSortState, sortScope);
+    }, [tableFilterState, visibleLeafKeys, props.rows, tableSortState, sortScope]);
 
     const hasExportableColumns = React.useMemo(
         () => collectLeafColumns(props.columnsConfig).length > 0,

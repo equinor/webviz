@@ -274,6 +274,8 @@ describe("applyTableSort", () => {
         { __id: "6", ZONE: "C", RESPONSE: "STOIIP", Mean: 70 },
     ];
 
+    const responseScope = { columnKey: "RESPONSE", scopedColumnKeys: new Set(["Mean"]) };
+
     test("without a scope it matches a plain orderBy", () => {
         const sortState = [
             { columnKey: "ZONE", direction: SortDirection.DESC },
@@ -284,7 +286,7 @@ describe("applyTableSort", () => {
     });
 
     test("a scoped sort ranks within each response in first-seen order", () => {
-        const sorted = applyTableSort(rows, [{ columnKey: "Mean", direction: SortDirection.DESC }], "RESPONSE");
+        const sorted = applyTableSort(rows, [{ columnKey: "Mean", direction: SortDirection.DESC }], responseScope);
 
         expect(sorted.map((row) => `${row.RESPONSE}:${row.Mean}`)).toEqual([
             "BULK:9",
@@ -302,13 +304,29 @@ describe("applyTableSort", () => {
             { columnKey: "Mean", direction: SortDirection.ASC },
         ];
 
-        expect(applyTableSort(rows, sortState, "RESPONSE")).toEqual(
+        expect(applyTableSort(rows, sortState, responseScope)).toEqual(
             orderBy(rows, ["RESPONSE", "Mean"], ["desc", "asc"]),
         );
     });
 
+    test("sorting only by non-scoped columns is not scoped", () => {
+        const sortState = [{ columnKey: "ZONE", direction: SortDirection.DESC }];
+
+        const sorted = applyTableSort(rows, sortState, responseScope);
+
+        expect(sorted).toEqual(orderBy(rows, ["ZONE"], ["desc"]));
+        expect(sorted.map((row) => `${row.ZONE}:${row.RESPONSE}`)).toEqual([
+            "C:BULK",
+            "C:STOIIP",
+            "B:BULK",
+            "B:STOIIP",
+            "A:BULK",
+            "A:STOIIP",
+        ]);
+    });
+
     test("an empty sort state keeps the input order", () => {
-        expect(applyTableSort(rows, [], "RESPONSE").map((row) => row.__id)).toEqual(rows.map((row) => row.__id));
+        expect(applyTableSort(rows, [], responseScope).map((row) => row.__id)).toEqual(rows.map((row) => row.__id));
         expect(applyTableSort(rows, []).map((row) => row.__id)).toEqual(rows.map((row) => row.__id));
     });
 });
