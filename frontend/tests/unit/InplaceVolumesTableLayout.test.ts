@@ -1,6 +1,8 @@
+import { orderBy } from "lodash";
 import { describe, expect, test } from "vitest";
 
 import { InplaceVolumesStatistic_api } from "@api";
+import { SortDirection } from "@lib/components/Table/typesAndEnums";
 import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 import type { TableColumnsConfig, TableHeading, TableRow } from "@modules/InplaceVolumesTable/view/types";
 import {
@@ -9,6 +11,7 @@ import {
     CATEGORY_COLUMN_MIN_WIDTH_PX,
     CHAR_WIDTH_PX,
     RESULT_COLUMN_WIDTH_PX,
+    applyTableSort,
     computeColumnLayout,
     sortStatisticsForDisplay,
 } from "@modules/InplaceVolumesTable/view/utils/tableLayoutUtils";
@@ -257,5 +260,55 @@ describe("sortStatisticsForDisplay", () => {
 
         expect(input).toEqual([InplaceVolumesStatistic_api.MAX, InplaceVolumesStatistic_api.MEAN]);
         expect(result).not.toBe(input);
+    });
+});
+
+describe("applyTableSort", () => {
+    // Responses in first-seen order BULK, STOIIP; ZONE groups each response
+    const rows: TableRow<TableColumnsConfig>[] = [
+        { __id: "1", ZONE: "A", RESPONSE: "BULK", Mean: 5 },
+        { __id: "2", ZONE: "A", RESPONSE: "STOIIP", Mean: 50 },
+        { __id: "3", ZONE: "B", RESPONSE: "BULK", Mean: 9 },
+        { __id: "4", ZONE: "B", RESPONSE: "STOIIP", Mean: 10 },
+        { __id: "5", ZONE: "C", RESPONSE: "BULK", Mean: 1 },
+        { __id: "6", ZONE: "C", RESPONSE: "STOIIP", Mean: 70 },
+    ];
+
+    test("without a scope it matches a plain orderBy", () => {
+        const sortState = [
+            { columnKey: "ZONE", direction: SortDirection.DESC },
+            { columnKey: "Mean", direction: SortDirection.ASC },
+        ];
+
+        expect(applyTableSort(rows, sortState)).toEqual(orderBy(rows, ["ZONE", "Mean"], ["desc", "asc"]));
+    });
+
+    test("a scoped sort ranks within each response in first-seen order", () => {
+        const sorted = applyTableSort(rows, [{ columnKey: "Mean", direction: SortDirection.DESC }], "RESPONSE");
+
+        expect(sorted.map((row) => `${row.RESPONSE}:${row.Mean}`)).toEqual([
+            "BULK:9",
+            "BULK:5",
+            "BULK:1",
+            "STOIIP:70",
+            "STOIIP:50",
+            "STOIIP:10",
+        ]);
+    });
+
+    test("an explicit sort on the scope column disables the implicit scope", () => {
+        const sortState = [
+            { columnKey: "RESPONSE", direction: SortDirection.DESC },
+            { columnKey: "Mean", direction: SortDirection.ASC },
+        ];
+
+        expect(applyTableSort(rows, sortState, "RESPONSE")).toEqual(
+            orderBy(rows, ["RESPONSE", "Mean"], ["desc", "asc"]),
+        );
+    });
+
+    test("an empty sort state keeps the input order", () => {
+        expect(applyTableSort(rows, [], "RESPONSE").map((row) => row.__id)).toEqual(rows.map((row) => row.__id));
+        expect(applyTableSort(rows, []).map((row) => row.__id)).toEqual(rows.map((row) => row.__id));
     });
 });

@@ -1,4 +1,7 @@
+import { orderBy } from "lodash";
+
 import { InplaceVolumesStatistic_api } from "@api";
+import type { TableSortState } from "@lib/components/Table/typesAndEnums";
 import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 
 import type { TableColumnsConfig, TableHeading, TableRow } from "../types";
@@ -110,4 +113,34 @@ export function computeColumnLayout(
 
 export function sortStatisticsForDisplay(statistics: InplaceVolumesStatistic_api[]): InplaceVolumesStatistic_api[] {
     return statistics.toSorted((a, b) => STATISTICS_DISPLAY_ORDER.indexOf(a) - STATISTICS_DISPLAY_ORDER.indexOf(b));
+}
+
+/**
+ * Sorts rows by the table sort state. With `sortScopeColumnKey`, a non-empty sort that does not include
+ * that column is applied within each of its values, keeping them in first-seen order.
+ */
+export function applyTableSort<TRow extends TableRow<TableColumnsConfig>>(
+    rows: TRow[],
+    sortState: TableSortState[],
+    sortScopeColumnKey?: string,
+): TRow[] {
+    const iteratees: (string | ((row: TRow) => number))[] = sortState.map((s) => s.columnKey);
+    const orders = sortState.map((s) => s.direction as "asc" | "desc");
+
+    const isScoped =
+        sortScopeColumnKey !== undefined &&
+        sortState.length > 0 &&
+        !sortState.some((s) => s.columnKey === sortScopeColumnKey);
+
+    if (isScoped) {
+        const positions = new Map<string | number | null, number>();
+        for (const row of rows) {
+            const value = row[sortScopeColumnKey];
+            if (!positions.has(value)) positions.set(value, positions.size);
+        }
+        iteratees.unshift((row) => positions.get(row[sortScopeColumnKey]) ?? Number.MAX_SAFE_INTEGER);
+        orders.unshift("asc");
+    }
+
+    return orderBy(rows, iteratees, orders);
 }

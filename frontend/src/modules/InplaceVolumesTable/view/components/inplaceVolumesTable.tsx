@@ -1,7 +1,6 @@
 import React from "react";
 
 import { Clear, Download } from "@mui/icons-material";
-import { orderBy } from "lodash";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import { Button } from "@lib/components/Button";
@@ -18,12 +17,15 @@ import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 import type { TableColumnsConfig, TableHeading, TableRow } from "../types";
 import { collectLeafColumns, formatEnsembleIdent, isValidFluidType } from "../utils/tableComponentUtils";
 import type { ColumnLayout } from "../utils/tableLayoutUtils";
-import { CATEGORY_COLUMN_MAX_WIDTH_PX, computeColumnLayout } from "../utils/tableLayoutUtils";
+import { applyTableSort, CATEGORY_COLUMN_MAX_WIDTH_PX, computeColumnLayout } from "../utils/tableLayoutUtils";
 
 export type InplaceVolumesTableProps = {
     ensembleSet: EnsembleSet;
     columnsConfig: TableColumnsConfig;
     rows: TableRow<TableColumnsConfig>[];
+
+    /** When set, sorting by other columns is applied within each value of this column */
+    sortScopeColumnKey?: string;
 
     onHover: (row: TableRow<TableColumnsConfig> | null) => void;
 
@@ -121,12 +123,8 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
             });
         });
 
-        return orderBy(
-            filteredRows,
-            tableSortState.map((s) => s.columnKey),
-            tableSortState.map((s) => s.direction as "asc" | "desc"),
-        );
-    }, [tableFilterState, visibleLeafKeys, props.rows, tableSortState]);
+        return applyTableSort(filteredRows, tableSortState, props.sortScopeColumnKey);
+    }, [tableFilterState, visibleLeafKeys, props.rows, tableSortState, props.sortScopeColumnKey]);
 
     const hasExportableColumns = React.useMemo(
         () => collectLeafColumns(props.columnsConfig).length > 0,

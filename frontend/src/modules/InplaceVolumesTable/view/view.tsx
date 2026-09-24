@@ -28,7 +28,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     statusWriter.setLoading(isQueryFetching);
 
     // Build table headings and rows
-    const { headings: tableColumnConfig, tableRows } = useTableBuilder();
+    const { headings: tableColumnConfig, tableRows, sortScopeColumnKey } = useTableBuilder();
 
     const handleDownloadCsv = useDownloadCsv(tableColumnConfig, ensembleSet);
 
@@ -87,6 +87,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             <InplaceVolumesTable
                 columnsConfig={tableColumnConfig}
                 rows={tableRows}
+                sortScopeColumnKey={sortScopeColumnKey}
                 onHover={handleTableHover}
                 onDownload={handleDownloadCsv}
                 ensembleSet={ensembleSet}
