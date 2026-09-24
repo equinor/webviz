@@ -72,19 +72,20 @@ The production application is located at https://webviz.fmu.equinor.com
 (which is an alias for https://frontend-webviz-prod.c3.radix.equinor.com/,
 which again is promoted manually from the pre-prod application mentioned below).
 
-We have three applications in Radix built automatically and redeployed when pushing commits to the respective branch:
+We have four applications in Radix built automatically and redeployed when pushing commits to the respective branch:
 
 - [Pre-prod application](https://frontend-webviz-preprod.c3.radix.equinor.com/) built from the `main` branch.
 - [Review application](https://frontend-webviz-review.c3.radix.equinor.com/) built from the `review` branch.
-- [Dev application](https://frontend-webviz-dev.c3.radix.equinor.com/) built from the `dev` branch.
+- [Review2 application](https://frontend-webviz-review2.c3.radix.equinor.com/) built from the `review2` branch.
+- [Review3 application](https://frontend-webviz-review3.c3.radix.equinor.com/) built from the `review3` branch.
 
-You can push/update the `review` branch with state of another feature branch with e.g.:
+You can update, for example, the `review` branch with the state of another feature branch by running:
 
 ```
 git push upstream <featurebranchname>:review --force
 ```
 
-The `dev` branch is updated similarly. The `main` branch only accepts commits through pull requests.
+The `review2` and `review3` branches are updated similarly. The `main` branch only accepts commits through pull requests.
 
 NB: Note that Radix will always use the `radixconfig.yml` as it is in `main` branch (unless changed in Radix UI).
 
