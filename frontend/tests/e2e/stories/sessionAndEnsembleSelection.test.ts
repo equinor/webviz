@@ -1,12 +1,3 @@
-/**
- * Recorded walkthrough for the setup shared by every other story: creating a new session and
- * adding+applying an ensemble. Other stories reuse `createSessionAndSelectEnsemble` to reach this
- * same state, but without narrating it again as part of their own walkthrough.
- *
- * This story then goes further and shows the full lifecycle of a session: adding several modules to
- * the dashboard (choosing where each lands), saving the session, saving a copy, and creating and
- * sharing a snapshot — ending back on the landing page where the session and snapshot now appear.
- */
 import { expect } from "@playwright/test";
 
 import { DROGON_AHM } from "../support/drogonTestData";
@@ -37,14 +28,11 @@ test.describe("Session and ensemble selection", () => {
         test.setTimeout(300_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
-        // Titles the walkthrough saves under; kept human-readable for the recorded video and reused
-        // to assert they surface on the landing page afterwards.
         const SESSION_TITLE = "Drogon walkthrough session";
         const SESSION_COPY_TITLE = "Drogon walkthrough session (copy)";
         const SNAPSHOT_TITLE = "Drogon walkthrough snapshot";
 
         await installFakeCursor(page);
-        // Blur every case row in the ensemble case-selector except the Drogon case we use.
         await installCaseRowRedaction(page, [DROGON_AHM.caseUuid]);
         await hideDevOverlays(page);
 
@@ -59,34 +47,22 @@ test.describe("Session and ensemble selection", () => {
 
         await narrate("Both ensembles are now applied and ready to use in the session.");
 
-        // Bring a module's list item into view, opening the modules list first if it is collapsed.
-        async function ensureModuleListItemVisible(moduleTitle: string) {
-            const moduleListItem = page.locator(`[title="${moduleTitle}"]`).first();
-            if (!(await moduleListItem.isVisible())) {
-                await smoothClick(page, page.getByTestId("modules-list-open-button"));
-            }
-            await expect(moduleListItem).toBeVisible();
-        }
-
         markStep("Add modules to the dashboard");
         const addModulesNarration = narrate(
             "With the ensembles loaded, we can start building the dashboard. Modules are added by dragging them from the list on the right onto the canvas.",
         );
-        await ensureModuleListItemVisible("Simulation Time Series");
         await dragModuleOntoLayout(page, "Simulation Time Series");
         await addModulesNarration;
 
         const dropRightNarration = narrate(
             "You choose where a module goes by where you drop it. Dropping near the right edge places the next one beside the first, splitting the canvas.",
         );
-        await ensureModuleListItemVisible("Flow Network");
         await dragModuleOntoLayout(page, "Flow Network", "right");
         await dropRightNarration;
 
         const dropBottomNarration = narrate(
             "And dropping near the bottom edge stacks a module underneath, so you can arrange the layout exactly how you want it.",
         );
-        await ensureModuleListItemVisible("3D Viewer");
         await dragModuleOntoLayout(page, "3D Viewer", "bottom");
         await dropBottomNarration;
         await pace(page);
@@ -96,7 +72,6 @@ test.describe("Session and ensemble selection", () => {
             "New sessions start out unsaved. Clicking Save opens a dialog where we give the session a title before storing it.",
         );
         await smoothClick(page, page.getByRole("button", { name: "Save session" }));
-        // A new session has never been persisted, so its first save reuses the "Save session as ..." dialog.
         await expect(page.getByRole("heading", { name: "Save session as ...", exact: true })).toBeVisible();
         await smoothType(page, page.getByPlaceholder("Enter session title"), SESSION_TITLE);
         await saveNarration;
@@ -157,7 +132,7 @@ test.describe("Session and ensemble selection", () => {
         const landingNarration = narrate(
             "Back on the landing page, both the session we saved and the snapshot we just shared now show up under Recent sessions and Recent snapshots, ready to pick up again at any time.",
         );
-        // Locally, CosmosDB persists across runs so identically titled items accumulate; the newest is first.
+
         await expect(page.getByText(SESSION_COPY_TITLE, { exact: true }).first()).toBeVisible({ timeout: 60_000 });
         await expect(page.getByText(SNAPSHOT_TITLE, { exact: true }).first()).toBeVisible({ timeout: 60_000 });
         await landingNarration;

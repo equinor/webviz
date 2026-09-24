@@ -1,7 +1,3 @@
-/**
- * Recorded walkthrough introducing the Webviz landing page: the entry points for opening existing
- * sessions and snapshots, starting from a template, and finding help (changelog and tutorials).
- */
 import { expect } from "@playwright/test";
 
 import { test } from "../support/recordingFixtures";
@@ -21,7 +17,6 @@ test.describe("Landing page", () => {
         test.setTimeout(180_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
-        // Render a visible cursor and hide dev-only overlays so the recorded video stays clean.
         await installFakeCursor(page);
         await hideDevOverlays(page);
 
@@ -84,8 +79,7 @@ test.describe("Landing page", () => {
         const tutorialsNarration = narrate(
             "You'll also find a tutorials section with short videos like this one on selected topics.",
         );
-        // Point at the button rather than opening the dialog: its poster images are served from a
-        // private blob container that isn't populated during recording, so it would look empty.
+
         await smoothMoveToLocator(page, page.getByRole("button", { name: "Watch tutorials" }));
         await tutorialsNarration;
 

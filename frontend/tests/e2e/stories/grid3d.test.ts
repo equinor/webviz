@@ -1,18 +1,3 @@
-/**
- * Template for a recorded-walkthrough e2e story.
- *
- * How to use:
- *  1. Copy this file to `<yourStory>.test.ts` in this folder (the `.test.ts` suffix is what makes
- *     Playwright pick it up; this template is deliberately named so it is ignored).
- *  2. Capture the raw clicks/fills with `npm run test:e2e:codegen` (see tests/README.md). Codegen
- *     writes plain Playwright calls to `_recorded.gen.ts` — a starting point for the selectors.
- *  3. Port those actions into the body below, wrapping interactions in `smoothClick`/`smoothFill`
- *     and adding `narrate(...)` lines. These are no-ops unless RECORD=1, so the story still runs as
- *     a fast regression check with `npm run test:e2e`.
- *
- * Requires the full docker stack running; the `authenticated-*` project loads the seeded session so
- * the app starts logged in.
- */
 import { expect } from "@playwright/test";
 
 import { test } from "../support/recordingFixtures";
@@ -39,7 +24,6 @@ test.describe("My module", () => {
         test.setTimeout(180_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
-        // Render a visible cursor and hide dev-only overlays so the recorded video stays clean.
         await installFakeCursor(page);
         await hideDevOverlays(page);
 
@@ -68,8 +52,6 @@ test.describe("My module", () => {
         await smoothClick(page, page.getByRole('menuitem', { name: 'Grid Model 3D' }));
         await addViewNarration;
 
-        // Adding the layer kicks off a blob fetch + mesh build; wait for the module's own loading
-        // indicator to clear and the deck.gl canvas to actually mount before treating this as done.
         const moduleLayout = page.getByTestId("module-layout");
         const loadingBar = moduleLayout.getByRole("progressbar");
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });

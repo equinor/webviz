@@ -63,6 +63,7 @@ export function TutorialsDialog(props: TutorialsDialogProps): React.ReactNode {
             <Dialog.Body layoutClassName="grow min-h-0">
                 {selectedVideo ? (
                     <TutorialDetails
+                        key={selectedVideo.slug}
                         video={selectedVideo}
                         sasToken={sasToken}
                         onBack={() => runViewTransition(() => setSelectedSlug(null))}
@@ -188,13 +189,10 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
 
     React.useEffect(() => {
         if (!video || !sasToken) {
-            setSteps([]);
             return;
         }
 
         const controller = new AbortController();
-        setSteps([]);
-        setCurrentTime(0);
         fetch(`${getStepsUrl(video.slug)}?${sasToken}`, { signal: controller.signal })
             .then((response) => (response.ok ? response.json() : null))
             .then((payload: unknown) => {
