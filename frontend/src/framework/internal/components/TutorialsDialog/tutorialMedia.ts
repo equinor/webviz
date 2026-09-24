@@ -1,10 +1,8 @@
-// TUTORIAL_MEDIA_LOCAL_BASE_URL is injected by vite.config.ts: "/tutorial-videos" when that public folder
+// VITE_TUTORIAL_MEDIA_BASE_URL is set by vite.config.ts: "/tutorial-videos" when that public folder
 // exists, otherwise "" so the app falls back to the Azure blob container below.
-import { TUTORIAL_MEDIA_LOCAL_BASE_URL } from "virtual:tutorial-media-base-url";
-
 const DEFAULT_TUTORIAL_MEDIA_BASE_URL = "https://webviz.blob.core.windows.net/tutorial-videos";
 
-export const TUTORIAL_MEDIA_BASE_URL = TUTORIAL_MEDIA_LOCAL_BASE_URL || DEFAULT_TUTORIAL_MEDIA_BASE_URL;
+export const TUTORIAL_MEDIA_BASE_URL = import.meta.env.VITE_TUTORIAL_MEDIA_BASE_URL || DEFAULT_TUTORIAL_MEDIA_BASE_URL;
 
 export function getVideoUrl(slug: string): string {
     return `${TUTORIAL_MEDIA_BASE_URL}/${slug}.webm`;

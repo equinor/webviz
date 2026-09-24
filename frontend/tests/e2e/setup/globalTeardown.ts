@@ -31,7 +31,6 @@ async function globalTeardown(): Promise<void> {
         throw new Error(`Narration muxing failed (exit code ${result.status}); recordings may be silent or incomplete.`);
     }
 
-    // Publish the recorded tutorials under stable slug-based filenames.
     publishTutorials();
 }
 

@@ -19,10 +19,10 @@ import { tutorialMeta } from "../support/tutorialMeta";
 import { captureThumbnail, hideDevOverlays, installFakeCursor, smoothClick } from "../support/walkthroughHelpers";
 
 export const meta = tutorialMeta({
-    slug: "my-module-does-the-thing",
-    category: "Category",
-    title: "Do the thing with My module",
-    description: "A short, one-sentence description shown under the video title.",
+    slug: "some-short-id-name",
+    category: "Some Category",
+    title: "Some title",
+    description: "Some description.",
 });
 
 test.describe("My module", () => {

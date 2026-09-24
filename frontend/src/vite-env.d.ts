@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
-declare module "virtual:tutorial-media-base-url" {
-    export const TUTORIAL_MEDIA_LOCAL_BASE_URL: string;
+interface ImportMetaEnv {
+    // Base URL for tutorial media; "" (or unset) means fall back to the app's Azure default.
+    readonly VITE_TUTORIAL_MEDIA_BASE_URL?: string;
 }

@@ -20,26 +20,11 @@ const paths = {
     root: "./src",
 };
 
-const VIRTUAL_TUTORIAL_MEDIA_ID = "virtual:tutorial-media-base-url";
-const RESOLVED_VIRTUAL_TUTORIAL_MEDIA_ID = "\0" + VIRTUAL_TUTORIAL_MEDIA_ID;
-
-// Exposes the tutorial media base URL to the app: local public/tutorial-videos when it exists, else "" (Azure).
-// A virtual module is used instead of `define`, which rolldown-vite doesn't substitute during dev serve.
-function tutorialMediaBaseUrlPlugin() {
-    return {
-        name: "tutorial-media-base-url",
-        resolveId(id: string) {
-            return id === VIRTUAL_TUTORIAL_MEDIA_ID ? RESOLVED_VIRTUAL_TUTORIAL_MEDIA_ID : undefined;
-        },
-        load(id: string) {
-            if (id !== RESOLVED_VIRTUAL_TUTORIAL_MEDIA_ID) {
-                return undefined;
-            }
-            const localExists = fs.existsSync(path.resolve(__dirname, "public/tutorial-videos"));
-            return `export const TUTORIAL_MEDIA_LOCAL_BASE_URL = ${JSON.stringify(localExists ? "/tutorial-videos" : "")};`;
-        },
-    };
-}
+// Serves local recordings from public/tutorial-videos when that folder exists, otherwise "" so the app falls
+// back to its hardcoded Azure URL. An explicitly set VITE_TUTORIAL_MEDIA_BASE_URL takes precedence.
+process.env.VITE_TUTORIAL_MEDIA_BASE_URL ??= fs.existsSync(path.resolve(__dirname, "public/tutorial-videos"))
+    ? "/tutorial-videos"
+    : "";
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -51,7 +36,6 @@ export default defineConfig(() => {
 
     return {
         plugins: [
-            tutorialMediaBaseUrlPlugin(),
             plotlyWebglContextReleasePlugin(),
             tailwindPlugin(),
             react(),
