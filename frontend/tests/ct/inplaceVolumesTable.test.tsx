@@ -58,8 +58,7 @@ test.describe("InplaceVolumesTable CSV download", () => {
             <InplaceVolumesTableHarness mode="realization" columnsConfig={columnsConfig} rows={rows} />,
         );
 
-        // Leaf order: ENSEMBLE, TABLE_NAME, FLUID, REAL, ZONE, STOIIP -> ZONE filter is the 5th input
-        const zoneFilterInput = cmp.getByPlaceholder("Filter values...").nth(4);
+        const zoneFilterInput = cmp.getByLabel("Filter ZONE");
         await zoneFilterInput.fill("Valysar");
 
         // 30 rows cycling through 3 zones -> 10 rows match "Valysar"; the filter is debounced 250ms, so poll for
@@ -108,7 +107,7 @@ test.describe("InplaceVolumesTable CSV download", () => {
             <InplaceVolumesTableHarness mode="realization" columnsConfig={columnsConfig} rows={rows} />,
         );
 
-        const zoneFilterInput = cmp.getByPlaceholder("Filter values...").nth(4);
+        const zoneFilterInput = cmp.getByLabel("Filter ZONE");
         await zoneFilterInput.fill("NonExistentZone");
 
         await expect(cmp.getByText("No data found")).toBeVisible();
@@ -165,7 +164,7 @@ test.describe("InplaceVolumesTable CSV download", () => {
         const clearFiltersButton = cmp.getByRole("button", { name: "Clear filters" });
         await expect(clearFiltersButton).toBeDisabled();
 
-        const zoneFilterInput = cmp.getByPlaceholder("Filter values...").nth(4);
+        const zoneFilterInput = cmp.getByLabel("Filter ZONE");
         await zoneFilterInput.fill("Valysar");
 
         await expect(cmp.getByText("10 of 30 rows")).toBeVisible();

@@ -62,7 +62,8 @@ export function computeColumnLayout(
             continue;
         }
 
-        const displayValues = new Set(unfilteredRows.map((row) => formatDisplayValue(row[leaf.key], leaf.heading)));
+        const rawValues = new Set(unfilteredRows.map((row) => row[leaf.key]));
+        const displayValues = new Set(Array.from(rawValues, (value) => formatDisplayValue(value, leaf.heading)));
 
         if (unfilteredRows.length >= 2 && displayValues.size === 1) {
             const [displayValue] = displayValues;
