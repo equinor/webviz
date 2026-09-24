@@ -1,3 +1,5 @@
+import React from "react";
+
 import { useAtomValue } from "jotai";
 
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
@@ -20,47 +22,47 @@ export function useTableBuilder(): {
     tableRows: TableRow<TableColumnsConfig>[];
     sortScopeColumnKey?: string;
 } {
-    let headings: TableColumnsConfig = {};
-    let tableRows: TableRow<TableColumnsConfig>[] = [];
-
     const tableType = useAtomValue(tableTypeAtom);
     const statisticOptions = useAtomValue(statisticOptionsAtom);
     const statisticsLayout = useAtomValue(statisticsLayoutAtom);
     const filter = useAtomValue(filterAtom);
-    const perRealizationTableDataResults = useAtomValue(perRealizationTableDataResultsAtom);
-    const statisticalTableDataResults = useAtomValue(statisticalTableDataResultsAtom);
+    const perRealizationTablesData = useAtomValue(perRealizationTableDataResultsAtom).tablesData;
+    const statisticalTablesData = useAtomValue(statisticalTableDataResultsAtom).tablesData;
+    const indicesWithValues = filter.indicesWithValues;
 
-    if (tableType === TableType.PER_REALIZATION) {
-        const tableHeadingsAndRows = createTableHeadingsAndRowsFromTablesData(
-            perRealizationTableDataResults.tablesData,
-        );
-        headings = tableHeadingsAndRows.headings;
-        tableRows = sortTableRowsByCategoryOrder(
-            tableHeadingsAndRows.rows,
-            headings,
-            new Map(filter.indicesWithValues.map((index) => [index.indexColumn, index.values])),
-        );
+    // Rows get fresh ids when rebuilt, so rebuilding on every render would remount all table rows
+    return React.useMemo(() => {
+        const categoryOrder = new Map(indicesWithValues.map((index) => [index.indexColumn, index.values]));
 
-        return { headings, tableRows };
-    } else if (tableType === TableType.STATISTICAL) {
-        const isResponsesAsRows = statisticsLayout === StatisticsLayout.RESPONSES_AS_ROWS;
-        const buildHeadingsAndRows = isResponsesAsRows
-            ? createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData
-            : createStatisticalTableHeadingsAndRowsFromTablesData;
-        const tableHeadingsAndRows = buildHeadingsAndRows(
-            statisticalTableDataResults.tablesData,
-            sortStatisticsForDisplay(statisticOptions),
-        );
+        if (tableType === TableType.PER_REALIZATION) {
+            const { headings, rows } = createTableHeadingsAndRowsFromTablesData(perRealizationTablesData);
+            return { headings, tableRows: sortTableRowsByCategoryOrder(rows, headings, categoryOrder) };
+        }
 
-        headings = tableHeadingsAndRows.headings;
-        tableRows = sortTableRowsByCategoryOrder(
-            tableHeadingsAndRows.rows,
-            headings,
-            new Map(filter.indicesWithValues.map((index) => [index.indexColumn, index.values])),
-        );
+        if (tableType === TableType.STATISTICAL) {
+            const isResponsesAsRows = statisticsLayout === StatisticsLayout.RESPONSES_AS_ROWS;
+            const buildHeadingsAndRows = isResponsesAsRows
+                ? createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData
+                : createStatisticalTableHeadingsAndRowsFromTablesData;
+            const { headings, rows } = buildHeadingsAndRows(
+                statisticalTablesData,
+                sortStatisticsForDisplay(statisticOptions),
+            );
 
-        return { headings, tableRows, sortScopeColumnKey: isResponsesAsRows ? RESPONSE_COLUMN_KEY : undefined };
-    }
+            return {
+                headings,
+                tableRows: sortTableRowsByCategoryOrder(rows, headings, categoryOrder),
+                sortScopeColumnKey: isResponsesAsRows ? RESPONSE_COLUMN_KEY : undefined,
+            };
+        }
 
-    throw new Error("Not able to build table - Table type not supported");
+        throw new Error("Not able to build table - Table type not supported");
+    }, [
+        tableType,
+        statisticOptions,
+        statisticsLayout,
+        indicesWithValues,
+        perRealizationTablesData,
+        statisticalTablesData,
+    ]);
 }
