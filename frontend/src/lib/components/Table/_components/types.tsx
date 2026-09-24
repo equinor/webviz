@@ -12,4 +12,9 @@ export type TableCellProps = {
     rowSpan?: number;
     noPadding?: boolean;
     widthInPercent?: number;
+
+    /** Pins the cell to the left edge of the scroll container at this offset (px). */
+    stickyLeftPx?: number;
+    /** Draws a right border to mark the last pinned column. */
+    stickyEdge?: boolean;
 } & ComponentWrapperProps<React.TableHTMLAttributes<HTMLTableCellElement>>;

@@ -17,7 +17,15 @@ import { SortDirection } from "../typesAndEnums";
 import type { TableCellProps } from "./types";
 
 export const Cell = React.forwardRef<HTMLTableCellElement, TableCellProps>(function Cell(props, ref): React.ReactNode {
-    const baseProps = resolveWrapperProps(props, "colKey", "sortable", "widthInPercent", "noPadding");
+    const baseProps = resolveWrapperProps(
+        props,
+        "colKey",
+        "sortable",
+        "widthInPercent",
+        "noPadding",
+        "stickyLeftPx",
+        "stickyEdge",
+    );
 
     const sectionContext = useTableSectionContext();
     const rootContext = useTableRootContext();
@@ -43,6 +51,7 @@ export const Cell = React.forwardRef<HTMLTableCellElement, TableCellProps>(funct
     const activeCellWidth = props.width ?? percentWidth;
 
     const cellHeightPx = rootContext.compact ? ROW_HEIGHT_PX_COMPACT[componentSize] : ROW_HEIGHT_PX[componentSize];
+    const isSticky = props.stickyLeftPx !== undefined;
 
     function toggleSort(additive: boolean) {
         if (!isSortable) return;
@@ -58,11 +67,22 @@ export const Cell = React.forwardRef<HTMLTableCellElement, TableCellProps>(funct
             width={activeCellWidth}
             tabIndex={isSortable ? 0 : undefined}
             role={isSortable ? "button" : undefined}
-            style={{ fontWeight: "inherit", height: `${cellHeightPx}px`, ...baseProps.style }}
+            style={{
+                fontWeight: "inherit",
+                height: `${cellHeightPx}px`,
+                left: props.stickyLeftPx,
+                ...baseProps.style,
+            }}
             className={resolveClassNames(
                 baseProps.className,
-                "border-neutral-subtle group/cell relative text-left align-middle whitespace-nowrap",
+                "border-neutral-subtle group/cell text-left align-middle whitespace-nowrap",
                 {
+                    relative: !isSticky,
+                    "sticky z-[1]": isSticky,
+                    "bg-neutral-canvas": isSticky && sectionContext !== "body",
+                    "bg-surface group-hover/row:bg-neutral-hover group-data-selected/row:bg-accent-strong":
+                        isSticky && sectionContext === "body",
+                    "border-r": props.stickyEdge,
                     "truncate overflow-hidden": rootContext.fixed,
                     "border-b": sectionContext === "body",
                     "border-b-2": sectionContext !== "body",

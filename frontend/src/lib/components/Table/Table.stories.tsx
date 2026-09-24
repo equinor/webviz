@@ -389,6 +389,56 @@ export const WithVirtualization: Story = {
     },
 };
 
+export const PinnedColumns: Story = {
+    args: { compact: true, selectable: true },
+    parameters: {
+        docs: {
+            description: {
+                story: "Cells with `stickyLeftPx` stay pinned while scrolling horizontally. The consumer supplies the cumulative offsets; `stickyEdge` marks the last pinned column.",
+            },
+        },
+    },
+    render: function PinnedColumnsComp(args) {
+        const extraColumns = range(0, 8).map((i) => `metric${i}`);
+
+        return (
+            <Table.Root layoutClassName="w-full" height="50vh" {...args} fixed>
+                <Table.Head sticky>
+                    <Table.Column width={60} colKey="id" stickyLeftPx={0}>
+                        ID
+                    </Table.Column>
+                    <Table.Column width={160} colKey="name" stickyLeftPx={60} stickyEdge>
+                        Name
+                    </Table.Column>
+                    <Table.Column width={extraColumns.length * 120}>
+                        Metrics
+                        {extraColumns.map((key) => (
+                            <Table.Column key={key} width={120} colKey={key}>
+                                {key}
+                            </Table.Column>
+                        ))}
+                    </Table.Column>
+                </Table.Head>
+                <Table.Body>
+                    {range(0, 5)
+                        .flatMap(() => EXAMPLE_DATA)
+                        .map((datum, rowIndex) => (
+                            <Table.Row key={rowIndex} rowKey={String(rowIndex)}>
+                                <Table.Cell stickyLeftPx={0}>{datum.id}</Table.Cell>
+                                <Table.Cell stickyLeftPx={60} stickyEdge>
+                                    {datum.name}
+                                </Table.Cell>
+                                {extraColumns.map((key, i) => (
+                                    <Table.Cell key={key}>{(datum.id * 10 + i).toFixed(1)}</Table.Cell>
+                                ))}
+                            </Table.Row>
+                        ))}
+                </Table.Body>
+            </Table.Root>
+        );
+    },
+};
+
 export const WithSortableList: Story = {
     name: "With SortableList",
     render: function DraggableComponent(args) {
