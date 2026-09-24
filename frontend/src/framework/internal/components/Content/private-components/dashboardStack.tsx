@@ -4,6 +4,7 @@ import { useActiveSession } from "@framework/internal/components/ActiveSessionBo
 import { DashboardContext } from "@framework/internal/components/DashboardContext";
 import type { Dashboard } from "@framework/internal/Dashboard";
 import { useKeepAliveDashboardIds } from "@framework/internal/hooks/useKeepAliveDashboardIds";
+import { makeDashboardTabId, makeDashboardTabPanelId } from "@framework/internal/utils/dashboardAriaIds";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -63,6 +64,9 @@ function DashboardStackItem(props: DashboardStackItemProps): React.ReactNode {
     return (
         <DashboardContext.Provider value={contextValue}>
             <div
+                id={makeDashboardTabPanelId(props.dashboard.getId())}
+                role="tabpanel"
+                aria-labelledby={makeDashboardTabId(props.dashboard.getId())}
                 aria-hidden={!props.isActive}
                 className={resolveClassNames("absolute inset-0 h-full w-full", {
                     hidden: !props.isActive,

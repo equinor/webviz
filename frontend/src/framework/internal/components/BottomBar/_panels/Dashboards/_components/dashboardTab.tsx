@@ -13,6 +13,7 @@ import {
 
 import type { Dashboard } from "@framework/internal/Dashboard";
 import { DashboardTopic } from "@framework/internal/Dashboard";
+import { makeDashboardTabId, makeDashboardTabPanelId } from "@framework/internal/utils/dashboardAriaIds";
 import { Button } from "@lib/components/Button";
 import { Menu } from "@lib/components/Menu";
 import { Tooltip } from "@lib/components/Tooltip";
@@ -168,8 +169,12 @@ export function DashboardTab(props: DashboardTabProps) {
                 <DashboardTabPreview dashboard={props.dashboard} disabled={props.previewDisabled}>
                     <button
                         data-dashboard-tab={props.dashboard.getId()}
+                        id={makeDashboardTabId(props.dashboard.getId())}
+                        role="tab"
                         tabIndex={props.tabIndex}
-                        aria-current={props.isActive ? "true" : undefined}
+                        aria-selected={props.isActive}
+                        // Only keep-alive (hot) dashboards have a mounted tabpanel to point to
+                        aria-controls={props.isHot ? makeDashboardTabPanelId(props.dashboard.getId()) : undefined}
                         onClick={handleSelectClick}
                         // The ::after overlay stretches the click target over the whole tab, including its padding
                         className={resolveClassNames(

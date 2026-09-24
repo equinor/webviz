@@ -210,6 +210,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                 >
                     <div
                         ref={tabStripScroll.contentRef}
+                        role="tablist"
                         aria-label="Dashboards"
                         className="flex h-full w-max items-center pb-px"
                         onKeyDown={rovingFocus.onKeyDown}

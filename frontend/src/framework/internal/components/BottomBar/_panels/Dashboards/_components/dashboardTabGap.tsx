@@ -14,6 +14,8 @@ export type DashboardTabGapProps = {
 export function DashboardTabGap(props: DashboardTabGapProps) {
     return (
         <div
+            // Purely visual - also keeps the separator role out of the tablist
+            aria-hidden
             // Outer gaps get just enough width to fit the indicator without it being clipped by the scroll container
             className={resolveClassNames("relative flex shrink-0 self-stretch", {
                 "px-3xs": props.withSeparator,

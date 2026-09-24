@@ -32,7 +32,10 @@ export function StartPanel(props: StartPanelProps) {
         <>
             <EnsembleSettingsButton workbench={props.workbench} />
             <Separator orientation="vertical" />
-            <Tooltip content="Open templates dialog" side="bottom">
+            <Tooltip
+                content={isSnapshot ? "Templates cannot be opened in snapshot mode" : "Open templates dialog"}
+                side="bottom"
+            >
                 <Button
                     aria-label="Open templates dialog"
                     disabled={isSnapshot}

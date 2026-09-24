@@ -35,7 +35,7 @@ import {
     loadWorkbenchSessionFromLocalStorage,
 } from "./utils/loaders";
 import { localStorageKeyForSessionId } from "./utils/localStorageHelpers";
-import { buildWorkbenchUrl, readWorkbenchUrlLocation, UrlError } from "./utils/url";
+import { buildWorkbenchUrl, readWorkbenchUrlLocation, UrlError, type WorkbenchUrlLocation } from "./utils/url";
 import type { WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
 
 const SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT = 15;
@@ -659,8 +659,58 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             return;
         }
         const dashboardId = this._activeSession.getActiveDashboard()?.getId() ?? null;
+        if (currentLocation.dashboardId === dashboardId) {
+            // Already in sync, e.g. after back/forward navigation
+            return;
+        }
+
         const url = buildWorkbenchUrl({ ...currentLocation, dashboardId });
-        this._workbench.getNavigationManager().replaceState(url);
+
+        // Only switching between existing dashboards gets a history entry - on session open or after
+        // removing the active dashboard, the current entry is corrected instead
+        const previousDashboardStillExists =
+            currentLocation.dashboardId !== null &&
+            this._activeSession.getDashboards().some((d) => d.getId() === currentLocation.dashboardId);
+
+        if (previousDashboardStillExists) {
+            this._workbench.getNavigationManager().pushState(url);
+        } else {
+            this._workbench.getNavigationManager().replaceState(url);
+        }
+    }
+
+    private switchDashboardFromUrl(dashboardId: string | null): void {
+        const session = this.getActiveSession();
+        const dashboardExists = dashboardId !== null && session.getDashboards().some((d) => d.getId() === dashboardId);
+
+        if (dashboardExists) {
+            try {
+                session.setActiveDashboard(dashboardId);
+                return;
+            } catch (error) {
+                console.error(`Failed to switch to dashboard "${dashboardId}":`, error);
+                this.createToast("Failed to switch dashboard", "error");
+            }
+        }
+
+        // Dashboard is gone or failed to load - stay on the current one and fix up the URL
+        const currentLocation = readWorkbenchUrlLocation();
+        if (currentLocation.kind === "root") {
+            return;
+        }
+        const activeDashboardId = session.getActiveDashboard()?.getId() ?? null;
+        this._workbench
+            .getNavigationManager()
+            .replaceState(buildWorkbenchUrl({ ...currentLocation, dashboardId: activeDashboardId }));
+    }
+
+    private isActiveSessionLocation(location: WorkbenchUrlLocation): boolean {
+        const session = this._activeSession;
+        if (!session?.getIsPersisted() || location.kind === "root") {
+            return false;
+        }
+        const locationId = location.kind === "session" ? location.sessionId : location.snapshotId;
+        return session.isSnapshot() === (location.kind === "snapshot") && session.getId() === locationId;
     }
 
     private resetGuiStates(): void {
@@ -789,9 +839,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, true);
 
         const contentOverride =
-            activeDashboardId !== undefined
-                ? this._activeSession.serializeContentState(activeDashboardId)
-                : undefined;
+            activeDashboardId !== undefined ? this._activeSession.serializeContentState(activeDashboardId) : undefined;
         const result = await this._persistenceOrchestrator.createSnapshot(title, description, contentOverride);
 
         this.dismissToast("createSnapshot");
@@ -980,6 +1028,12 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         // When the user navigates with forward/backward buttons, they might want to load a snapshot/session.
         // Read once, atomically - openSession/openSnapshot below rewrites the URL's whole path.
         const location = readWorkbenchUrlLocation();
+
+        // Navigating between dashboards of the open session - no need to close and reopen it
+        if (location.kind !== "root" && this.isActiveSessionLocation(location)) {
+            this.switchDashboardFromUrl(location.dashboardId);
+            return true;
+        }
 
         const result = await this.maybeCloseCurrentSession();
         if (!result) {
