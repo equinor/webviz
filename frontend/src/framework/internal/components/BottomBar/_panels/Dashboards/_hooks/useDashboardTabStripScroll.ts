@@ -7,12 +7,8 @@ import { useHorizontalStepScroll } from "@lib/hooks/useHorizontalStepScroll";
 export type UseDashboardTabStripScrollResult = UseHorizontalStepScrollResult;
 
 // Owns the horizontal scroll behaviour of the dashboard tab strip. Thin wrapper around the generic
-// useHorizontalStepScroll: the tabs are base-ui's [role="tab"] elements, and every reorder needs an
-// extra render so <Tabs.Indicator/> (the active-tab underline) gets a post-commit chance to
-// remeasure - its own ResizeObserver never fires for a pure reorder of same-sized tabs.
-//
-// Key off the ordered id sequence so item additions, removals, and reorders are represented directly
-// in the dependency passed to useHorizontalStepScroll.
+// useHorizontalStepScroll, keyed off the ordered id sequence so item additions, removals, and
+// reorders are represented directly in the dependency passed to it.
 //
 // activeDashboardId should be the optimistic-or-actual selection (see useOptimisticActiveDashboard) -
 // whichever tab is highlighted is the one that gets scrolled into view, so a rapid click still scrolls
@@ -21,12 +17,9 @@ export function useDashboardTabStripScroll(
     dashboards: Dashboard[],
     activeDashboardId: string | null,
 ): UseDashboardTabStripScrollResult {
-    const [, forceIndicatorRemeasure] = React.useReducer((count: number) => count + 1, 0);
-
     const result = useHorizontalStepScroll({
-        itemSelector: '[role="tab"]',
+        itemSelector: "[data-dashboard-tab]",
         itemsKey: dashboards.map((dashboard) => dashboard.getId()).join("|"),
-        onItemsChange: forceIndicatorRemeasure,
     });
 
     const { scrollItemIntoView } = result;

@@ -10,7 +10,6 @@ import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSessi
 import { toastManager } from "@framework/toastManager";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
-import { Tabs } from "@lib/components/Tabs";
 import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -27,7 +26,12 @@ import {
     DASHBOARD_TAB_PREVIEW_CLOSE_DELAY_MS,
     DASHBOARD_TAB_PREVIEW_OPEN_DELAY_MS,
 } from "./_components/dashboardTabPreview";
-import { useDashboardReorder, useDashboardTabStripScroll, useOptimisticActiveDashboard } from "./_hooks";
+import {
+    useDashboardReorder,
+    useDashboardTabRovingFocus,
+    useDashboardTabStripScroll,
+    useOptimisticActiveDashboard,
+} from "./_hooks";
 
 export type DashboardsPanelProps = {
     workbench: Workbench;
@@ -56,9 +60,13 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
         props.workbench,
         workbenchSession,
     );
-    const tabStripScroll = useDashboardTabStripScroll(
+    const resolvedActiveDashboardId = optimisticActiveDashboardId ?? activeDashboard?.getId() ?? null;
+    const tabStripScroll = useDashboardTabStripScroll(dashboards, resolvedActiveDashboardId);
+    const rovingFocus = useDashboardTabRovingFocus(
         dashboards,
-        optimisticActiveDashboardId ?? activeDashboard?.getId() ?? null,
+        resolvedActiveDashboardId,
+        selectDashboard,
+        tabStripScroll.contentRef,
     );
 
     const handleAddDashboardClick = React.useCallback(
@@ -158,7 +166,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
     );
 
     return (
-        <div className="gap-xs pr-sm -mt-[2px] flex w-full items-center">
+        <div className="gap-xs px-sm -mt-[2px] flex w-full items-center">
             <div className="gap-3xs flex min-w-0 items-center">
                 <Button
                     aria-label="Scroll to previous dashboard"
@@ -190,57 +198,58 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                         },
                     )}
                 >
-                    <Tabs.Root
+                    <div
                         ref={tabStripScroll.contentRef}
-                        onValueChange={selectDashboard}
-                        value={optimisticActiveDashboardId ?? activeDashboard?.getId() ?? ""}
-                        layoutClassName="w-max"
+                        aria-label="Dashboards"
+                        className="gap-3xs flex w-max items-center"
+                        onKeyDown={rovingFocus.onKeyDown}
                     >
-                        <Tabs.List size="small" indicatorPosition="start">
-                            {/*
-                                Shares one open/close delay across every tab's preview popover, so that
-                                once the pointer has opened one preview, brushing across neighbouring
-                                tabs opens theirs instantly instead of re-running the hover delay on each.
-                            */}
-                            <TooltipBase.Provider
-                                delay={DASHBOARD_TAB_PREVIEW_OPEN_DELAY_MS}
-                                closeDelay={DASHBOARD_TAB_PREVIEW_CLOSE_DELAY_MS}
-                            >
-                                {dashboards.map((dashboard, index) => (
-                                    <DashboardTab
-                                        key={dashboard.getId()}
-                                        dashboard={dashboard}
-                                        draggable={!isSnapshot}
-                                        isHot={keepAliveIds.has(dashboard.getId())}
-                                        isEvictable={hotDashboardIds.includes(dashboard.getId())}
-                                        isDragged={reorder.draggedDashboardId === dashboard.getId()}
-                                        isSnapshot={isSnapshot}
-                                        previewDisabled={reorder.draggedDashboardId !== null}
-                                        dropIndicatorSide={
-                                            reorder.dropTarget?.dashboardId === dashboard.getId()
-                                                ? reorder.dropTarget.insertAfter
-                                                    ? "after"
-                                                    : "before"
-                                                : null
-                                        }
-                                        canMoveLeft={index > 0}
-                                        canMoveRight={index < dashboards.length - 1}
-                                        canBeDeleted={dashboards.length > 1}
-                                        onRequestDelete={handleRequestDeleteDashboard}
-                                        onEdit={handleEditDashboardClick}
-                                        onDragStart={(e) => reorder.handleDragStart(dashboard.getId(), e)}
-                                        onDragOver={(e) => reorder.handleDragOver(dashboard.getId(), e)}
-                                        onDrop={(e) => reorder.handleDrop(dashboard.getId(), e)}
-                                        onDragEnd={reorder.handleDragEnd}
-                                        onClone={handleCloneDashboardClick}
-                                        onForceEviction={handleForceEvictionClick}
-                                        onMoveLeft={handleMoveDashboardLeftClick}
-                                        onMoveRight={handleMoveDashboardRightClick}
-                                    />
-                                ))}
-                            </TooltipBase.Provider>
-                        </Tabs.List>
-                    </Tabs.Root>
+                        {/*
+                            Shares one open/close delay across every tab's preview popover, so that
+                            once the pointer has opened one preview, brushing across neighbouring
+                            tabs opens theirs instantly instead of re-running the hover delay on each.
+                        */}
+                        <TooltipBase.Provider
+                            delay={DASHBOARD_TAB_PREVIEW_OPEN_DELAY_MS}
+                            closeDelay={DASHBOARD_TAB_PREVIEW_CLOSE_DELAY_MS}
+                        >
+                            {dashboards.map((dashboard, index) => (
+                                <DashboardTab
+                                    key={dashboard.getId()}
+                                    dashboard={dashboard}
+                                    draggable={!isSnapshot}
+                                    isActive={dashboard.getId() === resolvedActiveDashboardId}
+                                    tabIndex={rovingFocus.getTabIndex(dashboard.getId())}
+                                    isHot={keepAliveIds.has(dashboard.getId())}
+                                    isEvictable={hotDashboardIds.includes(dashboard.getId())}
+                                    isDragged={reorder.draggedDashboardId === dashboard.getId()}
+                                    isSnapshot={isSnapshot}
+                                    previewDisabled={reorder.draggedDashboardId !== null}
+                                    dropIndicatorSide={
+                                        reorder.dropTarget?.dashboardId === dashboard.getId()
+                                            ? reorder.dropTarget.insertAfter
+                                                ? "after"
+                                                : "before"
+                                            : null
+                                    }
+                                    canMoveLeft={index > 0}
+                                    canMoveRight={index < dashboards.length - 1}
+                                    canBeDeleted={dashboards.length > 1}
+                                    onSelect={selectDashboard}
+                                    onRequestDelete={handleRequestDeleteDashboard}
+                                    onEdit={handleEditDashboardClick}
+                                    onDragStart={(e) => reorder.handleDragStart(dashboard.getId(), e)}
+                                    onDragOver={(e) => reorder.handleDragOver(dashboard.getId(), e)}
+                                    onDrop={(e) => reorder.handleDrop(dashboard.getId(), e)}
+                                    onDragEnd={reorder.handleDragEnd}
+                                    onClone={handleCloneDashboardClick}
+                                    onForceEviction={handleForceEvictionClick}
+                                    onMoveLeft={handleMoveDashboardLeftClick}
+                                    onMoveRight={handleMoveDashboardRightClick}
+                                />
+                            ))}
+                        </TooltipBase.Provider>
+                    </div>
                 </div>
                 <Button
                     aria-label="Scroll to next dashboard"
