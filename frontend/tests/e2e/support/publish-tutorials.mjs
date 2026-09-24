@@ -7,8 +7,8 @@
 // per-test `narration.json` (tests/e2e/support/narration.ts). This script scans test-results/ for those
 // manifests — the same on-disk source support/add-narration.mjs uses — and, for each recorded tutorial,
 // copies the narrated video (produced by add-narration.mjs), the thumbnail and the steps file into a flat
-// `<slug>.webm` / `<slug>.png` / `<slug>.steps.json` under the publish dir (default
-// frontend/public/tutorial-videos, override with TUTORIAL_PUBLISH_DIR). Reading from disk rather than the
+// `<slug>.webm` / `<slug>.png` / `<slug>.steps.json` under frontend/public/tutorial-videos (which Vite
+// serves locally and CI uploads to Azure from). Reading from disk rather than the
 // Playwright JSON report lets this run inside the recording run's global teardown, before the report is
 // finalized; a filtered single-story run simply finds one manifest and publishes just that story.
 //
@@ -23,10 +23,8 @@ import { fileURLToPath } from "node:url";
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const FRONTEND_ROOT = resolve(scriptDir, "../../..");
 const RESULTS_DIR = resolve(FRONTEND_ROOT, "test-results");
-// Default under public/ so Vite serves recordings locally; override with TUTORIAL_PUBLISH_DIR (CI uploads from tutorial-publish).
-const PUBLISH_DIR = process.env.TUTORIAL_PUBLISH_DIR
-    ? resolve(FRONTEND_ROOT, process.env.TUTORIAL_PUBLISH_DIR)
-    : resolve(FRONTEND_ROOT, "public/tutorial-videos");
+// Publish under public/ so Vite serves recordings locally and CI uploads them to Azure from here.
+const PUBLISH_DIR = resolve(FRONTEND_ROOT, "public/tutorial-videos");
 const MANIFEST_NAME = "narration.json";
 const NARRATED_SUFFIX = ".narrated.webm";
 const THUMBNAIL_NAME = "thumbnail.png";

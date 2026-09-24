@@ -78,8 +78,6 @@ jobs:
         working-directory: ./frontend
         env:
           CI: "true"
-          # Recording's global teardown publishes into this dir; Azure upload below reads from it.
-          TUTORIAL_PUBLISH_DIR: tutorial-publish
         run: npm run test:e2e:record
 
       - name: 🐳 Dump docker compose logs on failure
@@ -92,7 +90,7 @@ jobs:
         run: |
           az storage blob upload-batch \
             --destination tutorial-videos \
-            --source frontend/tutorial-publish \
+            --source frontend/public/tutorial-videos \
             --pattern "*" \
             --overwrite \
             --output none

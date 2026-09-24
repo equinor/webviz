@@ -123,8 +123,7 @@ playwright-report/
 test-results/
 playwright/.cache/
 
-# Published tutorial recordings (local preview under public/, CI staging dir)
-frontend/tutorial-publish/
+# Published tutorial recordings (local preview / CI upload source)
 frontend/public/tutorial-videos/
 
 # Cached narration audio (content-hash keyed)

@@ -31,6 +31,5 @@ fi
 echo "=== Building docker compose images ==="
 # Warms the build cache for both the plain and the Cosmos DB compose setups.
 docker compose -f docker-compose.yml -f docker-compose-cosmos-db.yml build
-docker compose -f docker-compose.yml -f docker-compose-cosmos-db.yml pull cosmos-db-emulator
 
 echo "=== Dev container setup complete ==="
