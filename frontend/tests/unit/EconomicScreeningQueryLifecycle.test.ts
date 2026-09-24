@@ -61,6 +61,20 @@ import {
 import { economicScreeningResultsAtom } from "@modules/EconomicScreening/view/atoms/derivedAtoms";
 
 import {
+    makeScaleRealizationIds,
+    makeScaleVectorResponse,
+    SCALE_BASE_INPUTS,
+    SCALE_CASE_UUID,
+    SCALE_LAST_YEAR,
+    SCALE_SHORT_OIL_INDEX,
+    scaleDeltaMonthlyGas,
+    scaleDeltaMonthlyOil,
+    scaleReferenceEconomics,
+    scaleServedMonthlyVolumes,
+    type ScaleEconomicInputs,
+} from "../ct/support/economicScreeningConnectedFixtures";
+
+import {
     createEconomicScreeningInstance,
     mountSettings,
     mountView,
@@ -828,3 +842,209 @@ async function waitForSavedState(instance: EconomicScreeningInstance) {
     }
     throw new Error("The module state was not serialized.");
 }
+
+function resolveScaleSources(caseKey: string, realizations: number[], delta: boolean) {
+    const keys = [...deferredResponses.keys()];
+    const resolve = (vectorName: "FOPT" | "FGST", order?: number[]) =>
+        deferredResponses.get(keys.find((key) => key.startsWith(`${caseKey}:${vectorName}:`))!)!.resolve(
+            makeScaleVectorResponse(realizations, vectorName, {
+                delta,
+                order,
+            }) as unknown as Api.VectorRealizationData_api[],
+        );
+    resolve("FOPT");
+    // Reversed sales-gas order: products must be joined by realization, not position.
+    resolve("FGST", [...realizations].reverse());
+}
+
+function setScaleInputs(store: Store, inputs: ScaleEconomicInputs) {
+    store.set(predictionStartYearAtom, inputs.predictionStartYear);
+    store.set(discountRatePercentAtom, inputs.discountRatePercent);
+    store.set(oilPriceAtom, inputs.oilPrice);
+    store.set(gasPriceAtom, inputs.gasPrice);
+    store.set(costProfileAtom, inputs.costs);
+}
+
+const nextTurn = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+describe("Economic Screening at scale", () => {
+    test("500 realizations x 360 months: rapid edits across turns settle to the expected channels without source work", async () => {
+        resetRequests();
+        const realizations = makeScaleRealizationIds(500);
+        const shortOil = realizations[SCALE_SHORT_OIL_INDEX];
+        const ensemble = makeEnsemble(SCALE_CASE_UUID, "Scale", realizations);
+        EnsembleFingerprintStore.setAll(new Map([[ensemble.getIdent().toString(), "scale-fingerprint"]]));
+        const { store, queryClient } = makeStore(new EnsembleSet([ensemble]));
+        setScaleInputs(store, SCALE_BASE_INPUTS);
+        store.set(earlyValueConfigurationAtom, { enabled: true, endYear: 2034 });
+        store.set(selectedEnsembleIdentAtom, ensemble.getIdent());
+        const { instance } = await createEconomicScreeningInstance(store);
+        const unmountView = mountView(store, instance);
+        const unmountSettings = mountSettings(store);
+        await waitFor(() => executedRequestKeys.length === 2);
+        resolveScaleSources(SCALE_CASE_UUID, realizations, false);
+        await waitFor(() => store.get(economicScreeningResultsAtom).results.length === 500);
+        const snapshot = store.get(settingsSourceSnapshotAtom);
+        expect(store.get(sourceHorizonAtom)).toEqual({ endYear: SCALE_LAST_YEAR, isLoading: false });
+
+        // Distinct edits, each in its own turn, then a batch written within a single turn.
+        store.set(oilPriceAtom, 45);
+        await nextTurn();
+        store.set(gasPriceAtom, 0.18);
+        await nextTurn();
+        store.set(isCostProfileDraftValidAtom, false);
+        await nextTurn();
+        store.set(discountRatePercentAtom, 7);
+        await nextTurn();
+        const costs = SCALE_BASE_INPUTS.costs.map((cost) =>
+            cost.year === 2025 ? { ...cost, capex: 4_200_000 } : cost.year === 2040 ? { ...cost, opex: 50_000 } : cost,
+        );
+        store.set(costProfileAtom, costs);
+        store.set(isCostProfileDraftValidAtom, true);
+        await nextTurn();
+        store.set(earlyValueConfigurationAtom, { enabled: true, endYear: 2060 });
+        await nextTurn();
+        expect(publishedEarlyThroughChannel(store, EarlyEconomicMeasure.DISCOUNTED_CASH_FLOW, 2060)).toEqual([]);
+        store.set(earlyValueConfigurationAtom, { enabled: true, endYear: 2036 });
+        store.set(oilPriceAtom, 47);
+        store.set(oilPriceAtom, 46);
+        await nextTurn();
+
+        const inputs = { ...SCALE_BASE_INPUTS, oilPrice: 46, gasPrice: 0.18, discountRatePercent: 7, costs };
+        const expected = realizations.map((realization) => ({
+            realization,
+            ...scaleReferenceEconomics(
+                scaleServedMonthlyVolumes(realizations, realization, "oil"),
+                scaleServedMonthlyVolumes(realizations, realization, "gas"),
+                inputs,
+                2036,
+            ),
+        }));
+        const fullOil = expected.filter((entry) => entry.realization !== shortOil);
+        const expectChannel = (
+            actual: { key: unknown; value: unknown }[],
+            entries: typeof expected,
+            valueOf: (entry: (typeof expected)[number]) => number,
+        ) => {
+            expect(actual.map((entry) => entry.key)).toEqual(entries.map((entry) => entry.realization));
+            actual.forEach((entry, index) => expect(entry.value).toBeCloseTo(valueOf(entries[index]), 4));
+        };
+        expectChannel(publishedNpv(store), fullOil, (entry) => entry.npv);
+        expectChannel(
+            publishedThroughChannel(store, EconomicMeasure.BREAK_EVEN_OIL_PRICE),
+            fullOil,
+            (entry) => entry.breakEvenOilPrice,
+        );
+        expectChannel(
+            publishedEarlyThroughChannel(store, EarlyEconomicMeasure.DISCOUNTED_CASH_FLOW, 2036),
+            expected,
+            (entry) => entry.earlyDcf,
+        );
+        expectChannel(
+            publishedEarlyThroughChannel(store, EarlyEconomicMeasure.DISCOUNTED_OIL_VOLUME, 2036),
+            expected,
+            (entry) => entry.earlyDiscountedOil,
+        );
+        const irr = publishedThroughChannel(store, EconomicMeasure.IRR);
+        expect(irr.map((entry) => entry.key)).toEqual(fullOil.map((entry) => entry.realization));
+        for (const { key, value } of [irr[0], irr[250], irr[irr.length - 1]]) {
+            const oil = scaleServedMonthlyVolumes(realizations, key as number, "oil");
+            const gas = scaleServedMonthlyVolumes(realizations, key as number, "gas");
+            const residual = scaleReferenceEconomics(oil, gas, inputs, null, (value as number) / 100).npv;
+            expect(Math.abs(residual) / 4_200_000).toBeLessThan(1e-6);
+        }
+
+        // Toggling draft validity masks financial values without recalculating the realizations.
+        const settled = store.get(economicScreeningResultsAtom);
+        store.set(isCostProfileDraftValidAtom, false);
+        const masked = store.get(economicScreeningResultsAtom);
+        expect(masked.results.every((result) => result.npv === null && result.irr === null)).toBe(true);
+        expect(masked.results.map((result) => result.discountedOilVolume)).toEqual(
+            settled.results.map((result) => result.discountedOilVolume),
+        );
+        store.set(isCostProfileDraftValidAtom, true);
+        expect(store.get(economicScreeningResultsAtom)).toBe(settled);
+
+        // Presentation choices do not recalculate; filtering narrows keys without rebasing values.
+        store.set(resultModeAtom, ResultMode.ALL_RESULTS);
+        store.set(selectedMeasureAtom, EconomicMeasure.IRR);
+        expect(store.get(economicScreeningResultsAtom)).toBe(settled);
+        const filtered = realizations.filter((_, index) => index % 3 !== 1);
+        store.set(RealizationFilterSetAtom, makeFilterSet(filtered));
+        await waitFor(() => store.get(economicScreeningResultsAtom).results.length === filtered.length);
+        expectChannel(
+            publishedNpv(store),
+            fullOil.filter((entry) => filtered.includes(entry.realization)),
+            (entry) => entry.npv,
+        );
+
+        expect(store.get(sourceHorizonAtom)).toEqual({ endYear: SCALE_LAST_YEAR, isLoading: false });
+        expect(store.get(settingsSourceSnapshotAtom)).toBe(snapshot);
+        expect(store.get(viewSourceSnapshotAtom)).toBe(snapshot);
+        expect(executedRequestKeys).toHaveLength(2);
+        expect(executedVectorListKeys).toHaveLength(1);
+
+        cleanUp(queryClient, unmountView, unmountSettings);
+    }, 60_000);
+
+    test("100 signed delta realizations x 360 months publish comparison-minus-reference values after edits", async () => {
+        resetRequests();
+        const realizations = makeScaleRealizationIds(100);
+        const comparison = makeEnsemble("7ca1e000-0000-4000-8000-000000000005", "Comparison", realizations);
+        const reference = makeEnsemble("8ca1e000-0000-4000-8000-000000000006", "Reference", realizations);
+        const delta = new DeltaEnsemble(comparison, reference, "#123456");
+        EnsembleFingerprintStore.setAll(
+            new Map([
+                [comparison.getIdent().toString(), "comparison-fingerprint"],
+                [reference.getIdent().toString(), "reference-fingerprint"],
+            ]),
+        );
+        const { store, queryClient } = makeStore(new EnsembleSet([comparison, reference], [delta]));
+        // Signed comparison-minus-reference costs: extra investment and an operating-cost saving.
+        const deltaInputs = {
+            ...SCALE_BASE_INPUTS,
+            costs: [
+                { year: 2025, capex: 500_000, opex: 0 },
+                { year: 2030, capex: 0, opex: -20_000 },
+            ],
+        };
+        setScaleInputs(store, deltaInputs);
+        store.set(selectedEnsembleIdentAtom, delta.getIdent());
+        const { instance } = await createEconomicScreeningInstance(store);
+        const unmountView = mountView(store, instance);
+        const caseKey = `delta-${comparison.getCaseUuid()}`;
+        await waitFor(() => executedRequestKeys.filter((key) => key.startsWith(caseKey)).length === 2);
+        resolveScaleSources(caseKey, realizations, true);
+        await waitFor(() => store.get(economicScreeningResultsAtom).results.length === 100);
+        const snapshot = store.get(settingsSourceSnapshotAtom);
+
+        store.set(oilPriceAtom, 55);
+        await nextTurn();
+        store.set(discountRatePercentAtom, 6);
+        store.set(earlyValueConfigurationAtom, { enabled: true, endYear: 2030 });
+        await nextTurn();
+
+        const inputs = { ...deltaInputs, oilPrice: 55, discountRatePercent: 6 };
+        const expected = realizations.map((realization) => ({
+            realization,
+            ...scaleReferenceEconomics(
+                scaleDeltaMonthlyOil(realization),
+                scaleDeltaMonthlyGas(realization),
+                inputs,
+                2030,
+            ),
+        }));
+        const npv = publishedNpv(store);
+        expect(npv.map((entry) => entry.key)).toEqual(realizations);
+        npv.forEach((entry, index) => expect(entry.value).toBeCloseTo(expected[index].npv, 4));
+        expect(
+            npv.some((entry) => (entry.value as number) < 0) && npv.some((entry) => (entry.value as number) > 0),
+        ).toBe(true);
+        const early = publishedEarlyThroughChannel(store, EarlyEconomicMeasure.DISCOUNTED_CASH_FLOW, 2030);
+        early.forEach((entry, index) => expect(entry.value).toBeCloseTo(expected[index].earlyDcf, 4));
+        expect(store.get(settingsSourceSnapshotAtom)).toBe(snapshot);
+        expect(executedRequestKeys.filter((key) => key.startsWith(caseKey))).toHaveLength(2);
+
+        cleanUp(queryClient, unmountView);
+    }, 60_000);
+});

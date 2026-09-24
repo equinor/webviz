@@ -66,7 +66,8 @@ export function getPredictionHorizonError(
     return null;
 }
 
-export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get) => {
+/** Everything except the cost-draft mask, so toggling draft validity does not recalculate every realization. */
+const unmaskedResultsAtom = atom<EconomicScreeningResults>((get) => {
     const snapshot = get(sourceSnapshotAtom);
     const salesGas = snapshot.salesGas;
     const ensembleIdent = snapshot.ensembleIdent;
@@ -76,7 +77,6 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
     const priceAssumptions = get(priceAssumptionsAtom);
     const costProfile = get(costProfileAtom);
     const earlyValueConfiguration = get(earlyValueConfigurationAtom);
-    const isCostProfileDraftValid = get(isCostProfileDraftValidAtom);
     const validRealizationNumbers = get(realizationNumbersAtom) ?? [];
 
     const warnings: string[] = [];
@@ -227,32 +227,32 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
         );
     }
 
-    if (!isCostProfileDraftValid) {
-        warnings.push("Financial results are unavailable until the cost schedule is valid.");
-        return {
-            results: results.map((result) => ({
-                ...result,
-                npv: null,
-                irr: null,
-                irrStatus: undefined,
-                breakEvenOilPrice: null,
-                breakEvenSlopeDirection: undefined,
-                annualProfile: result.annualProfile.map((entry) => ({
-                    ...entry,
-                    netCashFlow: null,
-                    discountedNetCashFlow: null,
-                    cumulativeDiscountedCashFlow: null,
-                })),
-                early: result.early ? { ...result.early, npv: null } : null,
-            })),
-            oilUnit,
-            gasUnit,
-            warnings,
-            errors,
-            isEarlyValueConfigurationValid,
-            horizon,
-        };
-    }
-
     return { results, oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid, horizon };
+});
+
+export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get) => {
+    const unmasked = get(unmaskedResultsAtom);
+    // Only a completed evaluation has a horizon; withheld results carry no financial values to mask.
+    if (get(isCostProfileDraftValidAtom) || unmasked.horizon === null) {
+        return unmasked;
+    }
+    return {
+        ...unmasked,
+        warnings: [...unmasked.warnings, "Financial results are unavailable until the cost schedule is valid."],
+        results: unmasked.results.map((result) => ({
+            ...result,
+            npv: null,
+            irr: null,
+            irrStatus: undefined,
+            breakEvenOilPrice: null,
+            breakEvenSlopeDirection: undefined,
+            annualProfile: result.annualProfile.map((entry) => ({
+                ...entry,
+                netCashFlow: null,
+                discountedNetCashFlow: null,
+                cumulativeDiscountedCashFlow: null,
+            })),
+            early: result.early ? { ...result.early, npv: null } : null,
+        })),
+    };
 });

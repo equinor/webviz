@@ -7,9 +7,10 @@ import { queryClientAtom } from "jotai-tanstack-query";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { EnsembleSet } from "@framework/EnsembleSet";
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
 import { ApplyInterfaceEffectsToView } from "@framework/internal/components/ApplyInterfaceEffects/applyInterfaceEffects";
 import type { ChannelManager } from "@framework/internal/DataChannels/ChannelManager";
+import { ChannelReceiverNotificationTopic } from "@framework/internal/DataChannels/ChannelReceiver";
 import { PrivateWorkbenchSettings } from "@framework/internal/PrivateWorkbenchSettings";
 import type {
     Module,
@@ -22,6 +23,7 @@ import type {
 import type { ViewContext } from "@framework/ModuleContext";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
+import type { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { ChannelDefinition, ChannelReceiverDefinition } from "@framework/types/dataChannnel";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
@@ -103,8 +105,12 @@ import {
     DESIGN_SENSITIVITIES,
     DISCOUNT_RATE_PERCENT,
     GAS_PRICE_USD_PER_SM3,
+    makeScaleRealizationIds,
     OIL_PRICE_USD_PER_SM3,
     PREDICTION_START_YEAR,
+    SCALE_CASE_UUID,
+    SCALE_ENSEMBLE_NAME,
+    type ScaleEconomicInputs,
 } from "./economicScreeningConnectedFixtures";
 
 const DESIGN = new RegularEnsemble(
@@ -134,8 +140,21 @@ const BASE = new RegularEnsemble(
     "#2ca02c",
 );
 const DELTA = new DeltaEnsemble(DESIGN, BASE, "#d62728");
-const ENSEMBLE_SET = new EnsembleSet([DESIGN, BASE], [DELTA]);
-const ENSEMBLES = { design: DESIGN, base: BASE, delta: DELTA };
+const SCALE = new RegularEnsemble(
+    "asset",
+    [],
+    SCALE_CASE_UUID,
+    "case",
+    SCALE_ENSEMBLE_NAME,
+    "",
+    makeScaleRealizationIds(500),
+    [],
+    null,
+    null,
+    "#9467bd",
+);
+const ENSEMBLE_SET = new EnsembleSet([DESIGN, BASE, SCALE], [DELTA]);
+const ENSEMBLES = { design: DESIGN, base: BASE, delta: DELTA, scale: SCALE };
 
 export type ProducerEnsemble = keyof typeof ENSEMBLES;
 
@@ -152,7 +171,16 @@ export type ConnectedConsumersHarnessProps = {
     distributionPlotType: PlotType;
     sensitivityResponse: string | null;
     sensitivityDisplay?: DisplayComponentType;
+    /** Mounts the producer's actual Settings component. */
+    producerSettingsOpen?: boolean;
+    /** Producer inputs set once at creation instead of the design defaults. */
+    initialEconomics?: ScaleEconomicInputs;
+    /** Workbench realization filter for the producer; null or absent keeps every realization. */
+    filteredRealizations?: number[] | null;
 };
+
+/** Test-only timeline of producer Settings commits and consumer receiver notifications. */
+export type HarnessObservation = { t: number; event: string; keys?: number };
 
 function makeWorkbenchSession(): WorkbenchSession {
     const delegate = new PublishSubscribeDelegate();
@@ -199,11 +227,12 @@ function makeInstance<TInterfaces extends ModuleInterfaceTypes, TState extends M
     return { store, module, instance };
 }
 
-function makeModules() {
+function makeModules(initialEconomics?: ScaleEconomicInputs) {
     EnsembleFingerprintStore.setAll(
         new Map([
             [DESIGN.getIdent().toString(), "design-fingerprint"],
             [BASE.getIdent().toString(), "base-fingerprint"],
+            [SCALE.getIdent().toString(), "scale-fingerprint"],
         ]),
     );
     const producer = makeInstance<EconomicInterfaces, EconomicSerializedState>({
@@ -239,6 +268,13 @@ function makeModules() {
     store.set(gasPriceAtom, GAS_PRICE_USD_PER_SM3);
     store.set(gasPriceBasisAtom, GasPriceBasis.PER_SM3);
     store.set(costProfileAtom, [{ year: PREDICTION_START_YEAR, capex: CAPEX_2030_USD, opex: 0 }]);
+    if (initialEconomics) {
+        store.set(predictionStartYearAtom, initialEconomics.predictionStartYear);
+        store.set(discountRatePercentAtom, initialEconomics.discountRatePercent);
+        store.set(oilPriceAtom, initialEconomics.oilPrice);
+        store.set(gasPriceAtom, initialEconomics.gasPrice);
+        store.set(costProfileAtom, initialEconomics.costs);
+    }
 
     const distribution = makeInstance<DistributionInterfaces, DistributionSerializedState>({
         moduleName: DISTRIBUTION_MODULE_NAME,
@@ -307,7 +343,7 @@ function SensitivityResponseProbe(props: {
  * modules as consumers, each with its own store, connected through the framework's channel receivers.
  */
 export function EconomicScreeningConnectedConsumersHarness(props: ConnectedConsumersHarnessProps) {
-    const [{ producer, distribution, sensitivity }] = useState(makeModules);
+    const [{ producer, distribution, sensitivity }] = useState(() => makeModules(props.initialEconomics));
     const [workbenchSession] = useState(makeWorkbenchSession);
     const [workbenchSettings] = useState(() => new PrivateWorkbenchSettings());
 
@@ -318,9 +354,71 @@ export function EconomicScreeningConnectedConsumersHarness(props: ConnectedConsu
     useEffect(() => {
         producerStore.set(isCostProfileDraftValidAtom, props.costDraftValid);
     }, [producerStore, props.costDraftValid]);
+    const { enabled: earlyEnabled, endYear: earlyEndYear } = props.early;
     useEffect(() => {
-        producerStore.set(earlyValueConfigurationAtom, props.early);
-    }, [producerStore, props.early]);
+        producerStore.set(earlyValueConfigurationAtom, { enabled: earlyEnabled, endYear: earlyEndYear });
+    }, [producerStore, earlyEnabled, earlyEndYear]);
+    const filterKey = props.filteredRealizations ? props.filteredRealizations.join(",") : null;
+    useEffect(() => {
+        const filtered = filterKey === null ? null : filterKey.split(",").map(Number);
+        producerStore.set(
+            RealizationFilterSetAtom,
+            filtered === null
+                ? null
+                : {
+                      filterSet: {
+                          getRealizationFilterForEnsembleIdent: () => ({ getFilteredRealizations: () => filtered }),
+                      } as unknown as RealizationFilterSet,
+                  },
+        );
+    }, [producerStore, filterKey]);
+
+    useEffect(() => {
+        const observations: HarnessObservation[] = [{ t: performance.now(), event: "observing" }];
+        const unsubscribers = [
+            ...Object.entries({
+                oilPriceAtom,
+                gasPriceAtom,
+                discountRatePercentAtom,
+                costProfileAtom,
+                earlyValueConfigurationAtom,
+                predictionStartYearAtom,
+                isCostProfileDraftValidAtom,
+                RealizationFilterSetAtom,
+            }).map(([name, observedAtom]) =>
+                producerStore.sub(observedAtom, () =>
+                    observations.push({ t: performance.now(), event: `commit:${name}` }),
+                ),
+            ),
+            ...(["channelX", "channelY"] as const).map((receiverId) => {
+                const receiver = distribution.instance.getChannelManager().getReceiver(receiverId)!;
+                return receiver.subscribe(ChannelReceiverNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE, () =>
+                    observations.push({
+                        t: performance.now(),
+                        event: `received:${receiverId}`,
+                        keys: receiver.getChannel()?.getContents()[0]?.getDataArray().length ?? 0,
+                    }),
+                );
+            }),
+        ];
+        Object.assign(window, {
+            economicScreeningObservations: observations,
+            readEconomicScreeningProducerChannels: () =>
+                producer.instance
+                    .getChannelManager()
+                    .getChannels()
+                    .map((channel) => ({
+                        channelIdString: channel.getIdString(),
+                        contents: channel.getContents().map((content) => ({
+                            contentIdString: content.getIdString(),
+                            displayName: content.getDisplayName(),
+                            metaData: content.getMetaData(),
+                            data: content.getDataArray().map((element) => [element.key, element.value]),
+                        })),
+                    })),
+        });
+        return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
+    }, [producerStore, producer.instance, distribution.instance]);
     useEffect(() => {
         if (props.producerDisplay) {
             producerStore.set(resultModeAtom, props.producerDisplay.resultMode);
@@ -359,12 +457,26 @@ export function EconomicScreeningConnectedConsumersHarness(props: ConnectedConsu
 
     const commonProps = { workbenchSession, workbenchServices: {}, workbenchSettings };
     const ProducerView = producer.module.viewFC;
+    const ProducerSettings = producer.module.settingsFC;
     const DistributionView = distribution.module.viewFC;
     const SensitivitySettings = sensitivity.module.settingsFC;
     const SensitivityView = sensitivity.module.viewFC;
 
     return (
         <div className="grid grid-cols-2 gap-2 bg-white p-2">
+            {props.producerSettingsOpen && (
+                <section aria-label="Producer settings" className="col-span-2 h-[420px] overflow-auto border">
+                    <Provider store={producer.store}>
+                        <ProducerSettings
+                            {...(commonProps as unknown as Omit<
+                                ModuleSettingsProps<EconomicInterfaces>,
+                                "settingsContext"
+                            >)}
+                            settingsContext={producer.instance.getContext()}
+                        />
+                    </Provider>
+                </section>
+            )}
             <section aria-label="Producer view" className="h-[420px] border">
                 <Provider store={producer.store}>
                     <ApplyInterfaceEffectsToView moduleInstance={producer.instance}>
