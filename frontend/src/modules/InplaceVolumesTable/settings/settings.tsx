@@ -26,8 +26,14 @@ import {
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
 import type { Interfaces } from "../interfaces";
+import { StatisticsLayout, StatisticsLayoutToStringMapping } from "../types";
 
-import { selectedIndexValueCriteriaAtom, selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./atoms/baseAtoms";
+import {
+    selectedIndexValueCriteriaAtom,
+    selectedStatisticOptionsAtom,
+    selectedStatisticsLayoutAtom,
+    selectedTableTypeAtom,
+} from "./atoms/baseAtoms";
 import { tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
 import {
     selectedEnsembleIdentsAtom,
@@ -64,6 +70,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedStatisticOptions, setStatisticOptionsChange] = useDebouncedOnChange(
         settledSelectedStatisticOptions,
         setSettledSelectedStatisticOptions,
+        DEBOUNCE_TIME_MS,
+    );
+
+    const [settledSelectedStatisticsLayout, setSettledSelectedStatisticsLayout] = useAtom(selectedStatisticsLayoutAtom);
+    const [selectedStatisticsLayout, setSelectedStatisticsLayoutChange] = useDebouncedOnChange<StatisticsLayout>(
+        settledSelectedStatisticsLayout,
+        setSettledSelectedStatisticsLayout,
         DEBOUNCE_TIME_MS,
     );
 
@@ -104,6 +117,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         if (value === null) throw new Error("Table type value cannot be null");
 
         setSelectedTableTypeChange(value as TableType);
+    }
+
+    function handleSelectedStatisticsLayoutChange(value: string | null) {
+        if (value === null) throw new Error("Statistics layout value cannot be null");
+
+        setSelectedStatisticsLayoutChange(value as StatisticsLayout);
     }
 
     const isGroupedByFluid = selectedGroupByIndices.includes(TableOriginKey.FLUID);
@@ -157,6 +176,17 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         multiple
                         showClearAllButton
                         onValueChange={setStatisticOptionsChange}
+                    />
+                </Setting.Field>
+            )}
+            {settledSelectedTableType === TableType.STATISTICAL && (
+                <Setting.Field label="Statistics layout" stacked>
+                    <Combobox
+                        value={selectedStatisticsLayout}
+                        items={Object.values(StatisticsLayout).map((val: StatisticsLayout) => {
+                            return { value: val, label: StatisticsLayoutToStringMapping[val] };
+                        })}
+                        onValueChange={handleSelectedStatisticsLayoutChange}
                     />
                 </Setting.Field>
             )}
