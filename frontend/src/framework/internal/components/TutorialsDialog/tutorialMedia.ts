@@ -15,3 +15,8 @@ export function getThumbnailUrl(slug: string): string {
 export function getStepsUrl(slug: string): string {
     return `${TUTORIAL_MEDIA_BASE_URL}/${slug}.steps.json`;
 }
+
+// The container is private; blob URLs need a short-lived read SAS token appended to be fetchable.
+export function appendSasToken(url: string, sasToken: string | undefined): string | undefined {
+    return sasToken ? `${url}?${sasToken}` : undefined;
+}
