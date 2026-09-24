@@ -162,12 +162,9 @@ export function DashboardTab(props: DashboardTabProps) {
                 since it's a real ancestor of whatever's hovered.
             */}
             <div
-                className={resolveClassNames(
-                    "gap-x-xs hover:bg-accent-hover relative flex snap-start items-center",
-                    {
-                        "opacity-50": props.isDragged,
-                    },
-                )}
+                className={resolveClassNames("gap-x-xs hover:bg-accent-hover relative flex snap-start items-center", {
+                    "opacity-50": props.isDragged,
+                })}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
             >
@@ -176,7 +173,7 @@ export function DashboardTab(props: DashboardTabProps) {
                         draggable={props.draggable}
                         onDragStart={handleDragStart}
                         onDragEnd={props.onDragEnd}
-                        className={resolveClassNames("flex items-center pl-xs", {
+                        className={resolveClassNames("pl-xs flex items-center", {
                             "cursor-grab": props.draggable,
                         })}
                     >
@@ -184,16 +181,12 @@ export function DashboardTab(props: DashboardTabProps) {
                     </span>
                 )}
                 <DashboardTabPreview dashboard={props.dashboard} disabled={props.previewDisabled}>
-                    <Button
+                    <button
                         data-dashboard-tab={props.dashboard.getId()}
                         tabIndex={props.tabIndex}
                         aria-current={props.isActive ? "true" : undefined}
-                        pressed={props.isActive}
-                        variant="ghost"
-                        tone="neutral"
-                        size="small"
                         onClick={handleSelectClick}
-                        layoutClassName="gap-x-xs"
+                        className="gap-x-xs flex items-center"
                     >
                         <span
                             className={resolveClassNames(
@@ -206,7 +199,7 @@ export function DashboardTab(props: DashboardTabProps) {
                             <span className="sr-only">{props.isHot ? "Recently viewed. " : ""}</span>
                         </span>
                         {metadata.name}
-                    </Button>
+                    </button>
                 </DashboardTabPreview>
                 {!props.isSnapshot && (
                     <Menu.Root>
