@@ -14,6 +14,7 @@ export class NavigationManager {
     private _currentUrl: string;
     private _boundHandleBeforeUnload: (event: BeforeUnloadEvent) => void;
     private _boundHandlePopState: () => void;
+    private _isStarted = false;
 
     // Callbacks for handling navigation logic
     private _onBeforeUnloadCallback: (() => boolean) | null = null;
@@ -25,8 +26,20 @@ export class NavigationManager {
         // Bind event handlers once in constructor for better traceability
         this._boundHandleBeforeUnload = this.handleBeforeUnload.bind(this);
         this._boundHandlePopState = this.handlePopState.bind(this);
+    }
 
-        // Register event listeners
+    /**
+     * Start listening to browser navigation. Kept out of the constructor so that constructing a
+     * Workbench has no side effects - StrictMode constructs and discards an extra instance, whose
+     * listeners would otherwise keep reacting to back/forward navigation.
+     */
+    start(): void {
+        if (this._isStarted) {
+            return;
+        }
+        this._isStarted = true;
+        this._currentUrl = window.location.href;
+
         window.addEventListener("beforeunload", this._boundHandleBeforeUnload);
         window.addEventListener("popstate", this._boundHandlePopState);
     }
@@ -117,6 +130,7 @@ export class NavigationManager {
     beforeDestroy(): void {
         window.removeEventListener("beforeunload", this._boundHandleBeforeUnload);
         window.removeEventListener("popstate", this._boundHandlePopState);
+        this._isStarted = false;
 
         this._onBeforeUnloadCallback = null;
         this._onNavigateCallback = null;

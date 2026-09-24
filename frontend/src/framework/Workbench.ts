@@ -73,6 +73,7 @@ export class Workbench {
         }
         this._isInitialized = true;
 
+        this._navigationManager.start();
         await this._sessionManager.maybeOpenFromUrl();
     }
 
