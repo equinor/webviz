@@ -27,6 +27,18 @@ export type Polyline = {
     version?: number;
 };
 
+enum PolylineDraftOrigin {
+    // Created from scratch - saving it must always append a new entry to `_polylines`.
+    NEW = "new",
+    // Started from a polyline that already existed in `_polylines` - saving it must always
+    // replace that entry, and it must be cancelled (not saved as new) if that entry disappears
+    // from `_polylines` before the draft is saved, e.g. deleted by another mounted viewer
+    // sharing the same store.
+    EXISTING = "existing",
+}
+
+type PolylineDraft = Polyline & { origin: PolylineDraftOrigin };
+
 export enum PolylineEditingMode {
     DRAW = "draw",
     ADD_POINT = "add_point",
@@ -40,6 +52,13 @@ export enum PolylinesPluginTopic {
     EDITING_MODE = "editing_mode",
     POLYLINES = "polylines",
     POLYLINE_HOVER = "polyline_hover",
+    // Fired when the committed `_polylines` set changes due to an explicit, deliberate
+    // action (save or delete) - never on a mere mode/selection change or draft edit.
+    POLYLINES_COMMITTED = "polylines_committed",
+    // Fired whenever the in-progress draft (returned by getActivePolyline()) changes,
+    // e.g. as points are added/removed/dragged. POLYLINES does not cover this, since the
+    // draft is kept out of `_polylines` until it is saved.
+    ACTIVE_POLYLINE = "active_polyline",
 }
 
 export type PolylineHoverData = { polylineId: string; lengthAlong: number; path: number[][] };
@@ -49,6 +68,8 @@ export type PolylinesPluginTopicPayloads = {
     [PolylinesPluginTopic.EDITING_POLYLINE_ID]: string | null;
     [PolylinesPluginTopic.POLYLINES]: Polyline[];
     [PolylinesPluginTopic.POLYLINE_HOVER]: PolylineHoverData | null;
+    [PolylinesPluginTopic.POLYLINES_COMMITTED]: void;
+    [PolylinesPluginTopic.ACTIVE_POLYLINE]: Polyline | undefined;
 };
 
 enum AppendToPathLocation {
@@ -76,6 +97,9 @@ function* defaultColorGenerator() {
 export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<PolylinesPluginTopicPayloads> {
     private _currentEditingPolylineId: string | null = null;
     private _currentEditingPolylinePathReferencePointIndex: number | null = null;
+    // Live, uncommitted copy of the polyline currently being drawn/edited - new or pre-existing.
+    // `_polylines` (the committed/persisted set) is only ever mutated by an explicit save or delete.
+    private _editingPolylineDraft: PolylineDraft | null = null;
     private _polylines: Polyline[] = [];
     private _editingMode: PolylineEditingMode = PolylineEditingMode.DISABLED;
     private _draggedPathPointIndex: number | null = null;
@@ -107,7 +131,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     }
 
     getActivePolyline(): Polyline | undefined {
-        return this._polylines.find((polyline) => polyline.id === this._currentEditingPolylineId);
+        return this._editingPolylineDraft ?? undefined;
     }
 
     getPolylines(): Polyline[] {
@@ -118,26 +142,23 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         if (isEqual(this._polylines, polylines)) {
             return;
         }
-        this._polylines = polylines;
-        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
-        this.requireRedraw();
-    }
 
-    setActivePolylineName(name: string): void {
-        const activePolyline = this.getActivePolyline();
-        if (!activePolyline) {
-            return;
+        // If the polyline the active draft was started from is no longer present in the
+        // incoming set (e.g. deleted by another mounted viewer sharing the same store), the
+        // draft is now orphaned - saving it would silently resurrect the polyline that was
+        // deleted elsewhere. Cancel it instead of letting it linger. A brand-new draft (not yet
+        // saved anywhere) has nothing to reconcile against and is left untouched.
+        const draft = this._editingPolylineDraft;
+        if (
+            draft &&
+            draft.origin === PolylineDraftOrigin.EXISTING &&
+            !polylines.some((polyline) => polyline.id === draft.id)
+        ) {
+            this.discardActivePolyline();
+            this.setEditingMode(PolylineEditingMode.IDLE);
         }
 
-        this._polylines = this._polylines.map((polyline) => {
-            if (polyline.id === activePolyline.id) {
-                return {
-                    ...polyline,
-                    name,
-                };
-            }
-            return polyline;
-        });
+        this._polylines = polylines;
         this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
         this.requireRedraw();
     }
@@ -155,13 +176,80 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINE_HOVER);
         }
         if (mode === PolylineEditingMode.DISABLED) {
-            this._currentEditingPolylinePathReferencePointIndex = null;
-            this.setCurrentEditingPolylineId(null);
+            this.discardActivePolyline();
         }
         this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.EDITING_MODE);
         if (mode === PolylineEditingMode.DISABLED) {
             this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
         }
+        this.requireRedraw();
+    }
+
+    /**
+     * Drops the in-progress edit/draft without touching the committed `_polylines` set.
+     * Safe to call unconditionally - a no-op when nothing is being edited.
+     */
+    discardActivePolyline(): void {
+        if (this._currentEditingPolylineId === null) {
+            return;
+        }
+        this._editingPolylineDraft = null;
+        this._currentEditingPolylinePathReferencePointIndex = null;
+        this._selectedPolylineId = null;
+        this.setCurrentEditingPolylineId(null);
+        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.ACTIVE_POLYLINE);
+    }
+
+    /**
+     * Ends the in-progress edit/draft the way clicking away from it should: saves it if it
+     * has enough points to be a valid polyline, otherwise discards it. Unlike
+     * `discardActivePolyline()`, this never silently throws away a completed edit.
+     */
+    private finishActivePolylineEditing(): void {
+        const draft = this._editingPolylineDraft;
+        if (draft && draft.path.length >= 2) {
+            this.saveActivePolyline(draft.name);
+        } else {
+            this.discardActivePolyline();
+            this.setEditingMode(PolylineEditingMode.IDLE);
+        }
+    }
+
+    /**
+     * Commits the in-progress edit/draft into the committed `_polylines` set and requests
+     * persistence. Requires at least two points and a non-empty name - otherwise this is a
+     * no-op (the caller should disable the save action in that case rather than relying on
+     * this guard alone), leaving the draft active rather than persisting invalid state.
+     */
+    saveActivePolyline(name: string): void {
+        const draft = this._editingPolylineDraft;
+        if (!draft || draft.path.length < 2 || name.trim().length === 0) {
+            return;
+        }
+
+        const finalizedPolyline: Polyline = {
+            id: draft.id,
+            name,
+            color: draft.color,
+            path: draft.path,
+            version: draft.version,
+        };
+        if (draft.origin === PolylineDraftOrigin.NEW) {
+            this._polylines = [...this._polylines, finalizedPolyline];
+        } else {
+            this._polylines = this._polylines.map((polyline) =>
+                polyline.id === draft.id ? finalizedPolyline : polyline,
+            );
+        }
+
+        this._editingPolylineDraft = null;
+        this._currentEditingPolylinePathReferencePointIndex = null;
+        this._selectedPolylineId = null;
+        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
+        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.ACTIVE_POLYLINE);
+        this.setEditingMode(PolylineEditingMode.IDLE);
+        this.setCurrentEditingPolylineId(null);
+        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES_COMMITTED);
         this.requireRedraw();
     }
 
@@ -200,9 +288,17 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 if (this._selectedPolylineId) {
                     this._polylines = this._polylines.filter((polyline) => polyline.id !== this._selectedPolylineId);
                     this._selectedPolylineId = null;
+                    this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
+                    this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES_COMMITTED);
                     this.requireRedraw();
                 }
                 return;
+            }
+            return;
+        }
+        if (key === "Enter") {
+            if (this._editingPolylineDraft) {
+                this.saveActivePolyline(this._editingPolylineDraft.name);
             }
         }
     }
@@ -256,11 +352,8 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             }
 
             if (newPath.length === 0) {
-                this._polylines = this._polylines.filter((polyline) => polyline.id !== activePolyline.id);
-                this.setCurrentEditingPolylineId(null);
-                this._currentEditingPolylinePathReferencePointIndex = null;
+                this.discardActivePolyline();
                 this.setEditingMode(PolylineEditingMode.IDLE);
-                this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
                 return;
             }
             this.updateActivePolylinePath(newPath);
@@ -299,28 +392,31 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         }
     }
 
+    /**
+     * Updates the in-progress draft's name as the user types it, so the draft always reflects
+     * the latest typed name (e.g. for `handleKeyUpEvent`'s Enter-to-save shortcut) even before
+     * the name is committed via `saveActivePolyline`.
+     */
+    updateActivePolylineName(name: string): void {
+        if (!this._editingPolylineDraft) {
+            return;
+        }
+        this._editingPolylineDraft = { ...this._editingPolylineDraft, name };
+        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.ACTIVE_POLYLINE);
+    }
+
     private updateActivePolylinePath(newPath: number[][]): void {
-        const activePolyline = this.getActivePolyline();
-        if (!activePolyline) {
+        if (!this._editingPolylineDraft || isEqual(this._editingPolylineDraft.path, newPath)) {
             return;
         }
 
-        if (isEqual(activePolyline.path, newPath)) {
-            return;
-        }
+        this._editingPolylineDraft = {
+            ...this._editingPolylineDraft,
+            path: newPath,
+            version: (this._editingPolylineDraft.version ?? 0) + 1,
+        };
 
-        this._polylines = this._polylines.map((polyline) => {
-            if (polyline.id === activePolyline.id) {
-                return {
-                    ...polyline,
-                    path: newPath,
-                    version: (polyline.version ?? 0) + 1,
-                };
-            }
-            return polyline;
-        });
-
-        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
+        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.ACTIVE_POLYLINE);
     }
 
     handleClickAway(): boolean {
@@ -332,8 +428,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             // The click terminated an active editing session. Consume it so it does not also
             // register as a pick/readout on whatever was under the cursor.
             const wasEditing = this._currentEditingPolylineId !== null;
-            this.setCurrentEditingPolylineId(null);
-            this.setEditingMode(PolylineEditingMode.IDLE);
+            this.finishActivePolylineEditing();
             return wasEditing;
         }
         this.requireRedraw();
@@ -405,21 +500,20 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         const activePolyline = this.getActivePolyline();
         if (!activePolyline && this._editingMode === PolylineEditingMode.DRAW) {
             const id = v4();
-            this._polylines.push({
+            this._editingPolylineDraft = {
                 id,
                 name: this.makeNewPolylineName(),
                 color: this._colorGenerator.next().value,
                 path: [[...pickingInfo.coordinate]],
                 version: 0,
-            });
-            this._polylines = [...this._polylines];
+                origin: PolylineDraftOrigin.NEW,
+            };
             this._currentEditingPolylinePathReferencePointIndex = 0;
             this.setCurrentEditingPolylineId(id, true);
-            this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
+            this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.ACTIVE_POLYLINE);
         } else if (activePolyline) {
             if (this._currentEditingPolylinePathReferencePointIndex === null) {
-                this.setCurrentEditingPolylineId(null);
-                this.setEditingMode(PolylineEditingMode.IDLE);
+                this.finishActivePolylineEditing();
                 return true;
             }
 
@@ -548,7 +642,28 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 icon: <Edit />,
                 label: "Edit",
                 onClick: () => {
-                    this.setCurrentEditingPolylineId(pickingInfo.polylineId ?? null, true);
+                    const polyline = this._polylines.find((p) => p.id === pickingInfo.polylineId);
+                    if (!polyline) {
+                        return;
+                    }
+
+                    // A draft can still be active while in IDLE mode (e.g. a drawing mode was
+                    // toggled off without saving) - other polylines stay pickable in that state.
+                    // Finish it first so it isn't silently overwritten; if it's still active
+                    // afterwards (e.g. save was blocked by an invalid name), leave it be rather
+                    // than replacing it.
+                    this.finishActivePolylineEditing();
+                    if (this._editingPolylineDraft) {
+                        return;
+                    }
+
+                    this._editingPolylineDraft = {
+                        ...polyline,
+                        path: polyline.path.map((point) => [...point]),
+                        origin: PolylineDraftOrigin.EXISTING,
+                    };
+                    this.setCurrentEditingPolylineId(polyline.id, true);
+                    this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.ACTIVE_POLYLINE);
                 },
             },
             {
@@ -557,8 +672,16 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 label: "Delete",
                 onClick: () => {
                     this._polylines = this._polylines.filter((polyline) => polyline.id !== pickingInfo.polylineId);
-                    this.setCurrentEditingPolylineId(null, true);
+                    // Deleting a polyline other than the one currently being edited must not
+                    // touch the active editing session/draft. This should only be able to match
+                    // the active id defensively, since the active polyline is excluded from the
+                    // pickable layer this context menu is opened from.
+                    if (pickingInfo.polylineId === this._currentEditingPolylineId) {
+                        this.discardActivePolyline();
+                    }
+                    this.requireRedraw();
                     this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
+                    this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES_COMMITTED);
                 },
             },
         ];
@@ -628,6 +751,12 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             }
             if (topic === PolylinesPluginTopic.POLYLINE_HOVER) {
                 return this._polylineHoverData;
+            }
+            if (topic === PolylinesPluginTopic.POLYLINES_COMMITTED) {
+                return undefined;
+            }
+            if (topic === PolylinesPluginTopic.ACTIVE_POLYLINE) {
+                return this._editingPolylineDraft ?? undefined;
             }
 
             throw new Error(`Unknown topic ${topic}`);
