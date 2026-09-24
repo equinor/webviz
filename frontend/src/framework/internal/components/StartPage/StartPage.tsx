@@ -89,8 +89,6 @@ export function StartPage(props: StartPageProps) {
                                     Start from template...
                                 </Button>
                             </Tooltip>
-
-                            
                         </section>
 
                         {/*

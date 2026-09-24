@@ -9,6 +9,11 @@ from azure.storage.blob.aio import BlobServiceClient
 
 LOGGER = logging.getLogger(__name__)
 
+# Private blob storage location holding tutorial media (videos/thumbnails/steps). The backend mints
+# short-lived user-delegation SAS URLs for these blobs so that only logged-in users can access them.
+_TUTORIAL_STORAGE_ACCOUNT_URL = "https://webviz.blob.core.windows.net"
+_TUTORIAL_BLOB_CONTAINER = "tutorial-videos"
+
 # User delegation keys are valid for up to 7 days; we refresh ours well before expiry.
 _DELEGATION_KEY_TTL = datetime.timedelta(hours=24)
 _DELEGATION_KEY_REFRESH_MARGIN = datetime.timedelta(hours=1)
@@ -77,8 +82,8 @@ class TutorialMediaSignerSingleton:
     _instance: TutorialMediaSigner | None = None
 
     @classmethod
-    def initialize(cls, account_url: str, container_name: str, credential: AsyncTokenCredential) -> None:
-        cls._instance = TutorialMediaSigner(account_url, container_name, credential)
+    def initialize(cls, credential: AsyncTokenCredential) -> None:
+        cls._instance = TutorialMediaSigner(_TUTORIAL_STORAGE_ACCOUNT_URL, _TUTORIAL_BLOB_CONTAINER, credential)
 
     @classmethod
     def get_instance(cls) -> TutorialMediaSigner | None:

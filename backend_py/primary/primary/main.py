@@ -124,12 +124,8 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
 
-    if config.TUTORIAL_STORAGE_ACCOUNT_URL and azure_services_credential is not None:
-        TutorialMediaSignerSingleton.initialize(
-            account_url=config.TUTORIAL_STORAGE_ACCOUNT_URL,
-            container_name=config.TUTORIAL_BLOB_CONTAINER,
-            credential=azure_services_credential,
-        )
+    if azure_services_credential is not None:
+        TutorialMediaSignerSingleton.initialize(credential=azure_services_credential)
 
     # This part, after the yield, will be executed after the application has finished.
     yield

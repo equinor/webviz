@@ -41,9 +41,3 @@ else:
 
 # Backend will use local cosmos DB emulator when this env. variable is set:
 COSMOS_DB_EMULATOR_HOST = os.getenv("WEBVIZ_COSMOS_DB_EMULATOR_HOST")
-
-# Private blob storage container holding tutorial media (videos/thumbnails/steps).
-# The backend mints short-lived user-delegation SAS URLs for these blobs so that only logged-in
-# users can access them. When the account URL is unset the tutorial-media feature is disabled.
-TUTORIAL_STORAGE_ACCOUNT_URL = os.getenv("WEBVIZ_TUTORIAL_STORAGE_ACCOUNT_URL", "https://webviz.blob.core.windows.net")
-TUTORIAL_BLOB_CONTAINER = os.getenv("WEBVIZ_TUTORIAL_BLOB_CONTAINER", "tutorial-videos")
