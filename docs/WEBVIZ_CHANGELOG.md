@@ -19,6 +19,7 @@
 - **Fluid contact surfaces**: Initial fluid contacts are now available as a separate layer in the 2D, 3D, and Intersection views.
 - **Top bar**: Clicking the FMU logo or the "FMU Analysis" title reloads the application and returns you to the start page.
 - **Inplace Volumes Table**: added CSV download of the displayed table (respects filters, sorting and table mode).
+- **Inplace Volumes Table**: wide tables now scroll horizontally with the grouping columns pinned, and columns with the same value on every row are summarised above the table.
 
 ## August 2026
 
