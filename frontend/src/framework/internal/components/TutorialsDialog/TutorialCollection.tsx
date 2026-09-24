@@ -71,7 +71,6 @@ function TutorialCard(props: TutorialCardProps): React.ReactNode {
                 className="bg-neutral-subtle relative aspect-video w-full overflow-hidden rounded-sm"
                 style={{ viewTransitionName: `tutorial-${props.video.slug}` } as React.CSSProperties}
             >
-                {/* loading="lazy" + no <video> here: only the poster image is fetched until a card is clicked. */}
                 <img
                     src={appendSasToken(getThumbnailUrl(props.video.slug), props.sasToken)}
                     alt=""

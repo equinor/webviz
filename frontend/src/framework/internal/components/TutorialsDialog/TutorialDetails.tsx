@@ -143,7 +143,6 @@ export function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
                 )}
             </aside>
             <div className="flex min-h-0 min-w-0 grow items-center justify-center overflow-hidden">
-                {/* key={slug} unmounts the previous player, so only the selected video is ever fetched. */}
                 <video
                     key={props.video.slug}
                     ref={videoRef}
@@ -162,11 +161,5 @@ export function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
 }
 
 function getCurrentStepIndex(steps: TutorialStep[], currentTime: number): number {
-    let currentIndex = -1;
-    steps.forEach((step, index) => {
-        if (step.startSeconds <= currentTime) {
-            currentIndex = index;
-        }
-    });
-    return currentIndex;
+    return steps.findLastIndex((step) => step.startSeconds <= currentTime);
 }
