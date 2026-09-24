@@ -91,6 +91,9 @@ export default defineConfig(
             "@typescript-eslint/no-explicit-any": "off",
             "no-console": ["error", { allow: ["debug", "info", "warn", "error"] }],
             "import-x/no-named-as-default-member": "off", // Conflicts with us requiring always using the react default
+            // Vite virtual modules (e.g. "virtual:tutorial-media-base-url") aren't resolvable on disk; they're
+            // typed via ambient declarations in vite-env.d.ts, so skip the on-disk resolution check for them.
+            "import-x/no-unresolved": ["error", { ignore: ["^virtual:"] }],
             "import-x/order": [
                 "warn",
                 {

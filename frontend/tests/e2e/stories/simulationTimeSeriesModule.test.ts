@@ -115,31 +115,33 @@ test.describe("Simulation Time Series module", () => {
         const hoverNarration = narrate(
             "And if we hover over a line, a tooltip tells us exactly which realization it belongs to.",
         );
-        // Plotly only shows a hover tooltip when the pointer is within a few pixels of a line, so we
-        // must land the cursor ON an actual curve — the plot centre can be empty space. Read a point
-        // from one realization line's SVG path and map it to viewport pixels. Best-effort: the hover
-        // is purely cosmetic for the recording, so never let it fail the walkthrough.
-        const hoverPoint = await plot.evaluate((plotEl) => {
-            const path = plotEl.querySelector(".scatterlayer .js-line") as SVGPathElement | null;
-            if (!path || typeof path.getTotalLength !== "function") {
-                return null;
+        // Plotly renders individual realizations with WebGL (scattergl), so there are no SVG line
+        // paths to read; instead we hover over the plot's drag area. With the default "closest"
+        // hovermode and many realizations densely covering the interior, sweeping a few points lands
+        // within Plotly's hover distance of a line and shows its "Realization: N" tooltip. Asserted,
+        // not best-effort: if no tooltip ever appears the walkthrough should fail.
+        const hoverTooltip = plot.locator(".hoverlayer .hovertext").first();
+        await expect(async () => {
+            const dragBox = await plot.locator(".nsewdrag").first().boundingBox();
+            if (!dragBox) {
+                throw new Error("Could not locate the plot's hover area");
             }
-            const totalLength = path.getTotalLength();
-            const screenMatrix = path.getScreenCTM();
-            if (!totalLength || !screenMatrix) {
-                return null;
+            const x = dragBox.x + dragBox.width * 0.45;
+            // Try several vertical positions; the realization band doesn't span the full plot height,
+            // so one of these should fall on (or very near) a line.
+            for (const yFraction of [0.5, 0.4, 0.6, 0.35, 0.65, 0.3, 0.7]) {
+                const y = dragBox.y + dragBox.height * yFraction;
+                // Glide onto the point (visible cursor motion), then nudge 1px so Plotly registers a
+                // fresh mousemove and computes the hover.
+                await page.mouse.move(x, y, { steps: 12 });
+                await page.mouse.move(x + 1, y, { steps: 2 });
+                await page.waitForTimeout(150);
+                if (await hoverTooltip.isVisible()) {
+                    return;
+                }
             }
-            // A point in the interior of the curve (avoid the very ends, which sit at the plot edge).
-            const screenPoint = path.getPointAtLength(totalLength * 0.45).matrixTransform(screenMatrix);
-            return { x: screenPoint.x, y: screenPoint.y };
-        });
-        if (hoverPoint) {
-            // Glide in steps so the injected fake cursor animates smoothly onto the line.
-            await page.mouse.move(hoverPoint.x, hoverPoint.y, { steps: 24 });
-        }
-        await expect(plot.locator(".hoverlayer .hovertext").first())
-            .toBeVisible({ timeout: 10_000 })
-            .catch(() => {});
+            throw new Error("Realization hover tooltip did not appear");
+        }).toPass({ timeout: 30_000, intervals: [500] });
         await pace(page, "long");
         await hoverNarration;
 
@@ -167,13 +169,14 @@ test.describe("Simulation Time Series module", () => {
         await smoothClick(page, page.getByRole("option", { name: "Weekly" }));
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
 
-        // Add more vectors, including a well vector that carries measured observations.
+        // Add more vectors, including well vectors that carry measured observations.
         markStep("Add more vectors");
         const multiVectorNarration = narrate(
-            "We can plot several vectors at once, each in its own subplot. Let's add the field gas-oil ratio, F G O R, and the gas-oil ratio for a well, which also has measured observations.",
+            "We can plot several vectors at once, each in its own subplot. Let's add the field gas-oil ratio, F G O R, the gas-oil ratio for a well, and the water cut for a well, both of which also have measured observations.",
         );
         await addVectorToSelector(page, "FGOR");
         await addVectorToSelector(page, "WGOR:A1");
+        await addVectorToSelector(page, "WWCT:A1");
         // Adding vectors refetches the vector lists; wait for that to settle so the toggles below are
         // neither inert (loading overlay) nor disabled before we click them.
         await expect(page.getByText("Loading vectors...")).toBeHidden({ timeout: 90_000 });

@@ -11,6 +11,7 @@ services:
     volumes:
       - ./frontend/public:/usr/src/app/frontend/public
       - ./frontend/src:/usr/src/app/frontend/src
+      - ./frontend/tests:/usr/src/app/frontend/tests
       - ./frontend/theme:/usr/src/app/frontend/theme
       - ./frontend/index.html:/usr/src/app/frontend/index.html
       - ./docs:/usr/src/app/docs
