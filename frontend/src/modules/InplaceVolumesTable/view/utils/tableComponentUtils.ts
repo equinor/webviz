@@ -16,6 +16,7 @@ import type {
     InplaceVolumesStatisticalTableData,
     InplaceVolumesTableData,
 } from "@modules/_shared/InplaceVolumes/types";
+import { InplaceVolumesStatisticEnumToStringMapping } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
 import type { TableColumnsConfig, TableHeading, TableRow } from "../types";
@@ -192,6 +193,80 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
 
     return { headings: tableHeadings, rows: tableRows };
 }
+
+export const RESPONSE_COLUMN_KEY = "RESPONSE";
+
+/**
+ * Long-format statistical table: identifier columns, then RESPONSE, then one column per statistic.
+ * Each base row is repeated once per response, in `sortResultNameStrings` order.
+ */
+export function createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData(
+    tablesData: InplaceVolumesStatisticalTableData[],
+    orderedStatistics: InplaceVolumesStatistic_api[],
+): {
+    headings: TableColumnsConfig;
+    rows: TableRow<any>[];
+} {
+    const tableHeadings: TableColumnsConfig = {};
+    const tableRows: TableRow<any>[] = [];
+
+    const columnData = makeStatisticalTableColumnDataFromApiData(tablesData, orderedStatistics);
+
+    for (const column of columnData.nonStatisticalColumns) {
+        if (column.getName() === RESPONSE_COLUMN_KEY) {
+            throw new Error(`Identifier column name "${RESPONSE_COLUMN_KEY}" collides with the response column.`);
+        }
+        tableHeadings[column.getName()] = {
+            label: column.getName(),
+            columnType: column.getType(),
+        };
+    }
+
+    tableHeadings[RESPONSE_COLUMN_KEY] = { label: RESPONSE_COLUMN_KEY, columnType: ColumnType.INDEX };
+
+    const statisticLabels = orderedStatistics.map((statistic) => InplaceVolumesStatisticEnumToStringMapping[statistic]);
+    for (const statisticLabel of statisticLabels) {
+        tableHeadings[statisticLabel] = {
+            label: statisticLabel,
+            columnType: ColumnType.RESULT,
+            hoverText: statisticLabel,
+        };
+    }
+
+    const baseRows = new Table(columnData.nonStatisticalColumns).getRows();
+    const numberOfRows = baseRows.length;
+
+    const sortedResultNames = sortResultNameStrings(Array.from(columnData.resultStatisticalColumns.keys()));
+    const statisticColumnsByResult = sortedResultNames.map((resultName) => {
+        const statisticalColumns = columnData.resultStatisticalColumns.get(resultName);
+        if (!statisticalColumns) {
+            throw new Error(`Statistical columns for result ${resultName} not found.`);
+        }
+
+        const numResultRows = Object.values(statisticalColumns)[0]?.getNumRows() ?? 0;
+        if (numResultRows > 0 && numResultRows !== numberOfRows) {
+            throw new Error(
+                "Number of rows in statistical table does not match the number of rows in the non-statistical table.",
+            );
+        }
+
+        return { resultName, statisticalColumns, hasRows: numResultRows > 0 };
+    });
+
+    for (let i = 0; i < numberOfRows; i++) {
+        for (const { resultName, statisticalColumns, hasRows } of statisticColumnsByResult) {
+            const row: TableRow<any> = { __id: v4(), ...baseRows[i], [RESPONSE_COLUMN_KEY]: resultName };
+            orderedStatistics.forEach((statistic, index) => {
+                const column = statisticalColumns[statistic];
+                row[statisticLabels[index]] = hasRows && column ? (column.getRowValue(i) ?? null) : null;
+            });
+            tableRows.push(row);
+        }
+    }
+
+    return { headings: tableHeadings, rows: tableRows };
+}
+
 export function isValidFluidType(type: string): type is keyof typeof PHASE_COLORS {
     return type in PHASE_COLORS;
 }
