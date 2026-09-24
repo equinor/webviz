@@ -1,5 +1,7 @@
 import path from "path";
 
+import fs from "fs";
+
 import babel from "@rolldown/plugin-babel";
 import tailwindPlugin from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -17,6 +19,12 @@ const paths = {
     publicHtmlFile: "./index.html",
     root: "./src",
 };
+
+// Serves local recordings from public/tutorial-videos when that folder exists, otherwise "" so the app falls
+// back to its hardcoded Azure URL. An explicitly set VITE_TUTORIAL_MEDIA_BASE_URL takes precedence.
+process.env.VITE_TUTORIAL_MEDIA_BASE_URL ??= fs.existsSync(path.resolve(__dirname, "public/tutorial-videos"))
+    ? "/tutorial-videos"
+    : "";
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {

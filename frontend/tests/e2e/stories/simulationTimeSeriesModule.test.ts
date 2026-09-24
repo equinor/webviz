@@ -3,82 +3,35 @@ import { expect } from "@playwright/test";
 import { DROGON_AHM } from "../support/drogonTestData";
 import { test } from "../support/recordingFixtures";
 import {
+    addVectorToSelector,
+    captureThumbnail,
+    createSessionAndSelectEnsemble,
     dragModuleOntoLayout,
     hideDevOverlays,
     installCaseRowRedaction,
     installFakeCursor,
     pace,
     smoothClick,
-    smoothFill,
 } from "../support/walkthroughHelpers";
 
-/**
- * Adds an instance of the "Simulation Time Series" module
- * to the dashboard and waits for a chart to render from real Sumo data.
- */
+import { meta } from "./simulationTimeSeriesModule.meta";
+
+
 test.describe("Simulation Time Series module", () => {
-    test("select a Drogon ensemble and render a Simulation Time Series chart", async ({ page, narrate }) => {
+    test("select a Drogon ensemble and render a Simulation Time Series chart", async ({ page, narrate, markStep }) => {
         test.setTimeout(180_000);
+        test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         const SIMULATION_TIME_SERIES = "Simulation Time Series";
 
-        // Render a cursor into the page so the mouse is visible in the recorded video
+
         await installFakeCursor(page);
-
-        // Blur every case row in the ensemble case-selector except the Drogon case we use
         await installCaseRowRedaction(page, [DROGON_AHM.caseUuid]);
-
-        // Hide developer-only floating overlays (e.g. React Query Devtools)
         await hideDevOverlays(page);
 
         await page.goto("/");
         await expect(page.getByText("FMU Analysis").first()).toBeVisible();
-
-        await narrate(
-            "In this walkthrough we'll add the Simulation Time Series module to a new dashboard.",
-        );
-
-        const newSessionNarration = narrate("Let's start by creating a new session...")
-        await smoothClick(page, page.getByRole("button", { name: "New session" }));
-        await newSessionNarration;
-
-        const ensembleNarration = narrate(
-            "...and then add an ensemble. We pick the Drogon asset and find the case we want.",
-        );
-        await expect(page.getByText("Ensembles used in this session")).toBeVisible({ timeout: 60_000 });
-        await smoothClick(page, page.getByTestId("add-regular-ensemble-button"));
-        await pace(page);
-
-        await smoothClick(page, page.getByRole("combobox", { name: "Asset" }));
-        await smoothClick(page, page.getByRole("option", { name: DROGON_AHM.assetName }));
-        await pace(page);
-
-        // Filter the case table by the test case UUID.
-        await smoothFill(page, page.getByPlaceholder("Filter ...").first(), DROGON_AHM.caseUuid);
-        await expect(page.getByText(DROGON_AHM.caseUuid)).toBeVisible({ timeout: 60_000 });
-        await pace(page);
-
-        await smoothClick(
-            page,
-            page
-                .locator("tbody")
-                .getByRole("row", { name: new RegExp(DROGON_AHM.caseUuid) })
-                .first(),
-        );
-
-        await expect(page.getByText(DROGON_AHM.ensembleName).first()).toBeVisible({ timeout: 60_000 });
-        await ensembleNarration;
-        await pace(page);
-
-        const applyNarration = narrate("We select the ensemble and apply it to load it into the session.");
-        await smoothClick(page, page.getByText(DROGON_AHM.ensembleName).first());
-
-        await smoothClick(page, page.getByRole("button", { name: "Apply" }).last());
-        await pace(page);
-
-        await smoothClick(page, page.getByRole("button", { name: "Apply" }));
-        await expect(page.getByText("Ensembles used in this session")).not.toBeVisible({ timeout: 120_000 });
-        await applyNarration;
+        await createSessionAndSelectEnsemble(page, { additionalEnsembleNames: [DROGON_AHM.secondEnsembleName] });
 
         const moduleListItem = page.locator(`[title="${SIMULATION_TIME_SERIES}"]`).first();
         if (!(await moduleListItem.isVisible())) {
@@ -88,53 +41,144 @@ test.describe("Simulation Time Series module", () => {
         await pace(page);
 
         const dragNarration = narrate(
-            "Now we drag the Simulation Time Series module from the list onto the dashboard and wait for the relevant data and settings to load.",
+            "We start by dragging the Simulation Time Series module from the list onto the dashboard and wait for the relevant data and settings to load.",
         );
+        markStep("Add the time series module");
         await dragModuleOntoLayout(page, SIMULATION_TIME_SERIES);
         await dragNarration;
 
-        // Confirm the drop actually created the module instance.
-        // The module header in the layout carries the module title.
         const moduleLayout = page.getByTestId("module-layout");
         await expect(moduleLayout.getByTitle(SIMULATION_TIME_SERIES).first()).toBeVisible({ timeout: 30_000 });
         await pace(page);
 
-        // Make sure the active module's settings panel is expanded
-        const expandSettingsButton = page.getByTitle("Expand settings panel");
-        if (await expandSettingsButton.isVisible()) {
-            await smoothClick(page, expandSettingsButton);
-            await pace(page);
-        }
-
-        // Select a vector so the chart has something to plot
-        const vectorSelectorContainer = page.getByTestId("vector-selector");
-        await expect(vectorSelectorContainer).toBeVisible();
-        const vectorInput = vectorSelectorContainer.locator("input").last();
-        const foprTag = vectorSelectorContainer.locator('li[title="FOPR"]');
-
+        markStep("Choose a vector");
         const vectorNarration = narrate(
-            "Finally, we choose a vector to plot \u2014 here, the field oil production rate, F O P R.",
+            "We start by choosing a vector to plot \u2014 here, the field oil production rate, F O P R.",
         );
-        await smoothClick(page, vectorInput);
-        await expect(async () => {
-            if ((await foprTag.count()) === 0) {
-                await vectorInput.fill("");
-                await vectorInput.pressSequentially("FOPR", { delay: 120 });
-                await vectorInput.press("Enter");
-            }
-            await expect(foprTag).toHaveCount(1);
-        }).toPass({ timeout: 60_000, intervals: [1_000] });
+        await addVectorToSelector(page, "FOPR");
         await vectorNarration;
 
-        // Assert a Plotly chart renders from the real Sumo data
+        // Assert a Plotly chart renders from the real Sumo data.
         const plot = page.locator(".js-plotly-plot").first();
         await expect(plot).toBeVisible({ timeout: 90_000 });
-        
-        // Plotly mounts the SVG container before the data is drawn, wait also for an actual trace line to be rendered:
         await expect(plot.locator(".scatterlayer .js-line").first()).toBeVisible({ timeout: 90_000 });
+
+        // The module shows a loading indicator whenever a setting change refetches data.
+        const loadingBar = moduleLayout.getByRole("progressbar");
+
         await narrate(
-            "And there's our chart. By default, it plots statistical curves over time, like min, P10, mean, P90 and max.",
+            "And there's our chart. By default, it plots a statistical fanchart over time, computed across all realizations. The single solid line is the mean, while the two shaded areas around it are the bands between P10 and P90 and between the minimum and maximum values.",
         );
+
+        // Walk through the three visualization modes.
+        markStep("Visualization modes");
+        const visualizationModeRow = page.locator(".setting-row").filter({ hasText: "Visualization mode" });
+
+        const individualNarration = narrate(
+            "Instead of statistics, we can show every individual realization as its own line, which reveals the physical behaviour of each realization, as well as any outliers.",
+        );
+        await smoothClick(page, visualizationModeRow.getByText("Individual realizations", { exact: true }));
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await individualNarration;
+
+        markStep("Hover a realization");
+        const hoverNarration = narrate(
+            "And if we hover over a line, a tooltip tells us exactly which realization it belongs to.",
+        );
+        // Plotly renders individual realizations with WebGL (scattergl), so there are no SVG line
+        // paths to read; instead we hover over the plot's drag area. With the default "closest"
+        // hovermode and many realizations densely covering the interior, sweeping a few points should show a hover tooltip
+        const hoverTooltip = plot.locator(".hoverlayer .hovertext").first();
+        await expect(async () => {
+            const dragBox = await plot.locator(".nsewdrag").first().boundingBox();
+            if (!dragBox) {
+                throw new Error("Could not locate the plot's hover area");
+            }
+            const x = dragBox.x + dragBox.width * 0.45;
+            // Try several vertical positions; the realization band doesn't span the full plot height,
+            // so one of these should fall on (or very near) a line.
+            for (const yFraction of [0.5, 0.4, 0.6, 0.35, 0.65, 0.3, 0.7]) {
+                const y = dragBox.y + dragBox.height * yFraction;
+                // Glide onto the point (visible cursor motion), then nudge 1px so Plotly registers a
+                // fresh mousemove and computes the hover.
+                await page.mouse.move(x, y, { steps: 12 });
+                await page.mouse.move(x + 1, y, { steps: 2 });
+                await page.waitForTimeout(150);
+                if (await hoverTooltip.isVisible()) {
+                    return;
+                }
+            }
+            throw new Error("Realization hover tooltip did not appear");
+        }).toPass({ timeout: 30_000, intervals: [500] });
+        await pace(page, "long");
+        await hoverNarration;
+
+        const linesNarration = narrate(
+            "Statistical lines plot the same statistics as the fanchart, but as plain lines rather than shaded bands.",
+        );
+        await smoothClick(page, visualizationModeRow.getByText("Statistical lines", { exact: true }));
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await linesNarration;
+
+        const fanchartNarration = narrate("Let's switch back to the fanchart.");
+        await smoothClick(page, visualizationModeRow.getByText("Statistical fanchart", { exact: true }));
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await fanchartNarration;
+
+        markStep("Resample the time axis");
+        const resamplingRow = page.locator(".setting-row").filter({ hasText: "Resampling frequency" });
+        const resamplingNarration = narrate(
+            "The resampling frequency controls the time axis. Raw shows the time steps exactly as written by the simulator, while every other option resamples the data onto a uniform grid \u2014 daily, weekly, monthly and so on. How the values are interpolated depends on the type of vector: rate vectors are backfilled, whereas cumulative vectors are linearly interpolated. Let's resample to weekly.",
+        );
+        await resamplingNarration;
+        await smoothClick(page, resamplingRow.getByRole("combobox"));
+        await smoothClick(page, page.getByRole("option", { name: "Weekly" }));
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+
+        markStep("Add more vectors");
+        const multiVectorNarration = narrate(
+            "We can plot several vectors at once, each in its own subplot. Let's add the field gas-oil ratio, F G O R, the gas-oil ratio for a well, and the water cut for a well, both of which also have measured observations.",
+        );
+        await addVectorToSelector(page, "FGOR");
+        await addVectorToSelector(page, "WGOR:A1");
+        await addVectorToSelector(page, "WWCT:A1");
+        await expect(page.getByText("Loading vectors...")).toBeHidden({ timeout: 90_000 });
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await multiVectorNarration;
+
+        markStep("Historical curves");
+        const historicalNarration = narrate(
+            "For vectors that have a historical counterpart, the Historical toggle overlays the actual production history alongside the simulated results.",
+        );
+        await smoothClick(page, page.getByText("Historical", { exact: true }));
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await historicalNarration;
+
+        markStep("Observations");
+        const observationsNarration = narrate(
+            "Observations are shown by default when available. They're the ones used in the assisted history matching that produced this ensemble, each error band showing the uncertainty assigned to that observation. Toggle them with the Observations switch.",
+        );
+        const observationsToggle = page.getByText("Observations", { exact: true });
+        await smoothClick(page, observationsToggle);
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await smoothClick(page, observationsToggle);
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await observationsNarration;
+
+        markStep("Compare multiple ensembles");
+        const compareNarration = narrate(
+            "Finally, we can select multiple of the ensembles loaded into the session. By selecting both, each vector's curves are drawn for both iterations, so we can compare them side by side.",
+        );
+        const ensemblesRow = page.locator(".setting-row").filter({ hasText: "Ensembles" });
+        await smoothClick(page, ensemblesRow.getByRole("combobox"));
+        await smoothClick(page, page.getByRole("option", { name: DROGON_AHM.secondEnsembleName }));
+        await page.keyboard.press("Escape");
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await compareNarration;
+
+        await captureThumbnail(page);
+
+        await narrate("And that concludes our walkthrough of the Simulation Time Series module.");
     });
 });
 
