@@ -2,7 +2,7 @@
 //
 // Playwright's own output folder names are auto-generated from the test title (and truncated with a
 // hash for long titles), so they aren't a stable basis for in-app video links. Instead, each story
-// declares a stable `slug` via `tutorialMeta(...)` and the recording fixture writes that slug into the
+// declares a stable `slug` in its `<story>.meta.ts` sidecar and the recording fixture writes that slug into the
 // per-test `narration.json` (tests/e2e/support/narration.ts). This scans test-results/ for those
 // manifests — the same on-disk source support/add-narration.mjs uses — and, for each recorded tutorial,
 // copies the narrated video (produced by add-narration.mjs), the thumbnail and the steps file into a flat

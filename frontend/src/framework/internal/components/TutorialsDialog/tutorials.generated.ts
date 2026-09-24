@@ -25,7 +25,7 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
         slug: "grid3d-viewer-3d-grid-model",
         category: "Modules",
         title: "3D Viewer",
-        description: "Add the 3D Viewer module to a session.",
+        description: "Covisualize different 3D data (grid models, seismic slices, well trajectories, surfaces...).",
     },
     {
         slug: "flow-network-module",
@@ -37,6 +37,6 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
         slug: "simulation-time-series-chart",
         category: "Modules",
         title: "Simulation Time Series",
-        description: "Add the Simulation Time Series module.",
+        description: "Visualize simulated time series data, together with observations used in the assisted history matching process",
     },
 ];

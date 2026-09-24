@@ -1,16 +1,9 @@
 import { expect } from "@playwright/test";
 
 import { test } from "../support/recordingFixtures";
-import { tutorialMeta } from "../support/tutorialMeta";
 import { captureThumbnail, hideDevOverlays, installFakeCursor, pace, smoothClick, smoothMoveToLocator } from "../support/walkthroughHelpers";
 
-export const meta = tutorialMeta({
-    slug: "landing-page-overview",
-    category: "Framework",
-    title: "Explore the landing page",
-    description: "A tour of the Webviz landing page and how to start working from it.",
-    order: 1,
-});
+import { meta } from "./landingPage.meta";
 
 test.describe("Landing page", () => {
     test("explore the landing page", async ({ page, narrate, markStep }) => {

@@ -2,7 +2,6 @@ import { expect } from "@playwright/test";
 
 import { DROGON_AHM } from "../support/drogonTestData";
 import { test } from "../support/recordingFixtures";
-import { tutorialMeta } from "../support/tutorialMeta";
 import {
     captureThumbnail,
     createSessionAndSelectEnsemble,
@@ -16,12 +15,7 @@ import {
     smoothType,
 } from "../support/walkthroughHelpers";
 
-export const meta = tutorialMeta({
-    slug: "session-and-ensemble-selection",
-    category: "Framework",
-    title: "Create, save and share a session",
-    description: "Start a session, add an ensemble and modules, then save it and share a snapshot.",
-});
+import { meta } from "./sessionAndEnsembleSelection.meta";
 
 test.describe("Session and ensemble selection", () => {
     test("create a session and select and apply an ensemble", async ({ page, narrate, markStep }) => {

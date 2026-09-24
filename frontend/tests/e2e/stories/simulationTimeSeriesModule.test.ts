@@ -2,7 +2,6 @@ import { expect } from "@playwright/test";
 
 import { DROGON_AHM } from "../support/drogonTestData";
 import { test } from "../support/recordingFixtures";
-import { tutorialMeta } from "../support/tutorialMeta";
 import {
     addVectorToSelector,
     captureThumbnail,
@@ -15,12 +14,7 @@ import {
     smoothClick,
 } from "../support/walkthroughHelpers";
 
-export const meta = tutorialMeta({
-    slug: "simulation-time-series-chart",
-    category: "Modules",
-    title: "Simulation Time Series",
-    description: "Visualize simulated time series data, together with observations used in the assisted history matching process",
-});
+import { meta } from "./simulationTimeSeriesModule.meta";
 
 
 test.describe("Simulation Time Series module", () => {

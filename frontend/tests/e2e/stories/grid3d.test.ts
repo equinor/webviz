@@ -1,7 +1,6 @@
 import { expect } from "@playwright/test";
 
 import { test } from "../support/recordingFixtures";
-import { tutorialMeta } from "../support/tutorialMeta";
 import {
     captureThumbnail,
     createSessionAndSelectEnsemble,
@@ -12,12 +11,7 @@ import {
     smoothClick,
 } from "../support/walkthroughHelpers";
 
-export const meta = tutorialMeta({
-    slug: "grid3d-viewer-3d-grid-model",
-    category: "Modules",
-    title: "3D Viewer",
-    description: "Covisualize different 3D data (grid models, seismic slices, well trajectories, surfaces...).",
-});
+import { meta } from "./grid3d.meta";
 
 test.describe("My module", () => {
     test("does the thing", async ({ page, narrate, markStep }) => {

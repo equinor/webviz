@@ -2,7 +2,6 @@ import { expect } from "@playwright/test";
 
 import { DROGON_AHM } from "../support/drogonTestData";
 import { test } from "../support/recordingFixtures";
-import { tutorialMeta } from "../support/tutorialMeta";
 import {
     captureThumbnail,
     createSessionAndSelectEnsemble,
@@ -19,12 +18,7 @@ import {
     expandAllGroupTreeNodes,
 } from "../support/walkthroughHelpers";
 
-export const meta = tutorialMeta({
-    slug: "flow-network-module",
-    category: "Modules",
-    title: "Flow Network",
-    description: "The Flow Network module visualizes the reservoir simulator's network tree as it evolves over time, along with the oil, gas, and water flowing through each branch.",
-});
+import { meta } from "./flowNetworkModule.meta";
 
 
 test.describe("Flow Network module", () => {
