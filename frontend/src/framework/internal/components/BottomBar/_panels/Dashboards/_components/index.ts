@@ -1,4 +1,5 @@
 export { DashboardTab } from "./dashboardTab";
+export { DashboardTabGap } from "./dashboardTabGap";
 export { DashboardDragImage } from "./dashboardDragImage";
 export { EditDashboardMetadataDialog } from "./editDashboardMetadataDialog";
 export { ConfirmDeleteDashboardDialog } from "./dashboardDeletionDialogs";

@@ -7,9 +7,9 @@ import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Typography } from "@lib/components/Typography";
 import { useHorizontalStepScroll } from "@lib/hooks/useHorizontalStepScroll";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { DashboardPreview } from "./dashboardPreview";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type DashboardPreviewCarouselProps = {
     dashboards: DashboardPreviewItem[];

@@ -33,7 +33,6 @@ export type DashboardTabProps = {
     isDragged: boolean;
     isSnapshot: boolean;
     previewDisabled: boolean;
-    dropIndicatorSide: "before" | "after" | null;
     canMoveLeft: boolean;
     canMoveRight: boolean;
     canBeDeleted: boolean;
@@ -143,28 +142,14 @@ export function DashboardTab(props: DashboardTabProps) {
 
     return (
         <>
-            <div className="relative w-0">
-                {props.dropIndicatorSide === "before" && (
-                    <div className="bg-accent-strong absolute top-0 -left-0.5 h-full w-1" />
-                )}
-            </div>
-            {/*
-                Every interactive piece (drag handle, select button, actions menu) is a normal flex
-                sibling in document flow here - deliberately not nested inside a single ARIA "tab"
-                element. The ARIA Authoring Practices Guide's own Tabs pattern requires a tab's action
-                button to be a DOM sibling rather than a descendant (a tab can't contain other
-                focusable widgets), and that restriction kept compounding: it forced the actions menu
-                out as an absolutely-positioned sibling, which in turn broke hover-state composition
-                (hovering the menu no longer kept the row's own hover background) and caused the menu
-                button to visibly jump when keyboard focus landed on the tab. Using plain flow layout
-                for every child sidesteps all of that by construction - nothing needs to coordinate
-                position with anything else, and hovering any child keeps :hover active on this row
-                since it's a real ancestor of whatever's hovered.
-            */}
             <div
-                className={resolveClassNames("gap-x-xs hover:bg-accent-hover relative flex snap-start items-center", {
+                className={resolveClassNames("px-xs relative flex snap-start items-center rounded-b border-t-2", {
                     "opacity-50": props.isDragged,
+                    "bg-surface shadow-elevation-raised font-bolder border-t-accent-strong": props.isActive,
+                    "hover:bg-accent border-t-transparent": !props.isActive,
                 })}
+                // The scroll-step item - must be the same element that carries snap-start
+                data-dashboard-tab-item
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
             >
@@ -173,7 +158,7 @@ export function DashboardTab(props: DashboardTabProps) {
                         draggable={props.draggable}
                         onDragStart={handleDragStart}
                         onDragEnd={props.onDragEnd}
-                        className={resolveClassNames("pl-xs flex items-center", {
+                        className={resolveClassNames("pl-xs relative z-10 flex items-center", {
                             "cursor-grab": props.draggable,
                         })}
                     >
@@ -186,90 +171,90 @@ export function DashboardTab(props: DashboardTabProps) {
                         tabIndex={props.tabIndex}
                         aria-current={props.isActive ? "true" : undefined}
                         onClick={handleSelectClick}
-                        className="gap-x-xs flex items-center"
+                        // The ::after overlay stretches the click target over the whole tab, including its padding
+                        className={resolveClassNames(
+                            "gap-x-xs py-2xs px-xs flex cursor-pointer items-center after:absolute after:inset-0 after:rounded",
+                            {
+                                "opacity-50": !props.isHot,
+                            },
+                        )}
                     >
-                        <span
-                            className={resolveClassNames(
-                                "bg-neutral border-neutral h-1.5 w-1.5 shrink-0 rounded-full border",
-                                {
-                                    "bg-accent-strong! border-accent-strong!": props.isHot,
-                                },
-                            )}
-                        >
-                            <span className="sr-only">{props.isHot ? "Recently viewed. " : ""}</span>
+                        <span className="grid">
+                            <span className="col-start-1 row-start-1">{metadata.name}</span>
+                            <span aria-hidden className="font-bolder invisible col-start-1 row-start-1">
+                                {metadata.name}
+                            </span>
                         </span>
-                        {metadata.name}
                     </button>
                 </DashboardTabPreview>
                 {!props.isSnapshot && (
-                    <Menu.Root>
-                        <Menu.Trigger>
-                            <Button
-                                aria-label={`Open actions for ${metadata.name}`}
-                                iconOnly
-                                variant="ghost"
-                                size="small"
-                                onClick={(e) => e.stopPropagation()}
-                                layoutClassName="mr-3xs"
-                            >
-                                <MoreVert style={{ fontSize: 16 }} />
-                            </Button>
-                        </Menu.Trigger>
-                        <Menu.Popup>
-                            <Menu.Group>
-                                <Menu.GroupLabel>{metadata.name}</Menu.GroupLabel>
-                                <Menu.Item onClick={handleEditClick} icon={<Edit />}>
-                                    Edit metadata
-                                </Menu.Item>
-                                <Menu.Item onClick={handleCloneClick} icon={<ContentCopy />}>
-                                    Create a copy
-                                </Menu.Item>
-                                <Menu.Separator />
-                                <Menu.Item
-                                    onClick={handleMoveLeftClick}
-                                    icon={<ChevronLeft />}
-                                    disabled={!props.canMoveLeft}
+                    <span className="relative z-10 flex">
+                        <Menu.Root>
+                            <Menu.Trigger>
+                                <Button
+                                    aria-label={`Open actions for ${metadata.name}`}
+                                    iconOnly
+                                    variant="ghost"
+                                    size="small"
+                                    onClick={(e) => e.stopPropagation()}
                                 >
-                                    Move left
-                                </Menu.Item>
-                                <Menu.Item
-                                    onClick={handleMoveRightClick}
-                                    icon={<ChevronRight />}
-                                    disabled={!props.canMoveRight}
-                                >
-                                    Move right
-                                </Menu.Item>
-                                <Menu.Separator />
-                                <Tooltip content="You cannot delete the last dashboard" disabled={props.canBeDeleted}>
-                                    <Menu.Item
-                                        onClick={handleDeleteClick}
-                                        icon={<Delete />}
-                                        tone="danger"
-                                        disabled={!props.canBeDeleted}
-                                    >
-                                        Delete
+                                    <MoreVert style={{ fontSize: 16 }} />
+                                </Button>
+                            </Menu.Trigger>
+                            <Menu.Popup>
+                                <Menu.Group>
+                                    <Menu.GroupLabel>{metadata.name}</Menu.GroupLabel>
+                                    <Menu.Item onClick={handleEditClick} icon={<Edit />}>
+                                        Edit metadata
                                     </Menu.Item>
-                                </Tooltip>
-                                {isDevMode() && (
-                                    <>
-                                        <Menu.Separator />
+                                    <Menu.Item onClick={handleCloneClick} icon={<ContentCopy />}>
+                                        Create a copy
+                                    </Menu.Item>
+                                    <Menu.Separator />
+                                    <Menu.Item
+                                        onClick={handleMoveLeftClick}
+                                        icon={<ChevronLeft />}
+                                        disabled={!props.canMoveLeft}
+                                    >
+                                        Move left
+                                    </Menu.Item>
+                                    <Menu.Item
+                                        onClick={handleMoveRightClick}
+                                        icon={<ChevronRight />}
+                                        disabled={!props.canMoveRight}
+                                    >
+                                        Move right
+                                    </Menu.Item>
+                                    <Menu.Separator />
+                                    <Tooltip
+                                        content="You cannot delete the last dashboard"
+                                        disabled={props.canBeDeleted}
+                                    >
                                         <Menu.Item
-                                            onClick={handleForceEviction}
-                                            icon={<Eject />}
-                                            disabled={!props.isEvictable}
+                                            onClick={handleDeleteClick}
+                                            icon={<Delete />}
+                                            tone="danger"
+                                            disabled={!props.canBeDeleted}
                                         >
-                                            Force eviction
+                                            Delete
                                         </Menu.Item>
-                                    </>
-                                )}
-                            </Menu.Group>
-                        </Menu.Popup>
-                    </Menu.Root>
-                )}
-            </div>
-            <div className="relative w-0">
-                {props.dropIndicatorSide === "after" && (
-                    <div className="bg-accent-strong absolute top-0 -left-0.5 h-full w-1" />
+                                    </Tooltip>
+                                    {isDevMode() && (
+                                        <>
+                                            <Menu.Separator />
+                                            <Menu.Item
+                                                onClick={handleForceEviction}
+                                                icon={<Eject />}
+                                                disabled={!props.isEvictable}
+                                            >
+                                                Force eviction
+                                            </Menu.Item>
+                                        </>
+                                    )}
+                                </Menu.Group>
+                            </Menu.Popup>
+                        </Menu.Root>
+                    </span>
                 )}
             </div>
         </>

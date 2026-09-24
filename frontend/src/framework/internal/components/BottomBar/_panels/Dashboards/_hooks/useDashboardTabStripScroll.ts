@@ -18,7 +18,9 @@ export function useDashboardTabStripScroll(
     activeDashboardId: string | null,
 ): UseDashboardTabStripScrollResult {
     const result = useHorizontalStepScroll({
-        itemSelector: "[data-dashboard-tab]",
+        // Must match the snap-start element (the whole tab), not the inner select button: stepping
+        // to a point inside a tab makes snap-mandatory pull the strip back to where it started.
+        itemSelector: "[data-dashboard-tab-item]",
         itemsKey: dashboards.map((dashboard) => dashboard.getId()).join("|"),
     });
 

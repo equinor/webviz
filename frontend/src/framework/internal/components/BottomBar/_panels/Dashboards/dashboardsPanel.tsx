@@ -20,6 +20,7 @@ import {
     ConfirmDeleteDashboardDialog,
     DashboardDragImage,
     DashboardTab,
+    DashboardTabGap,
     EditDashboardMetadataDialog,
 } from "./_components";
 import {
@@ -61,6 +62,15 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
         workbenchSession,
     );
     const resolvedActiveDashboardId = optimisticActiveDashboardId ?? activeDashboard?.getId() ?? null;
+
+    // Index of the gap (0 = before the first tab, dashboards.length = after the last) the dragged tab would drop into
+    let dropGapIndex: number | null = null;
+    if (reorder.dropTarget) {
+        const targetIndex = dashboards.findIndex((d) => d.getId() === reorder.dropTarget?.dashboardId);
+        if (targetIndex !== -1) {
+            dropGapIndex = targetIndex + (reorder.dropTarget.insertAfter ? 1 : 0);
+        }
+    }
     const tabStripScroll = useDashboardTabStripScroll(dashboards, resolvedActiveDashboardId);
     const rovingFocus = useDashboardTabRovingFocus(
         dashboards,
@@ -201,7 +211,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                     <div
                         ref={tabStripScroll.contentRef}
                         aria-label="Dashboards"
-                        className="gap-3xs flex w-max items-center"
+                        className="flex h-full w-max items-center pb-px"
                         onKeyDown={rovingFocus.onKeyDown}
                     >
                         {/*
@@ -214,40 +224,36 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                             closeDelay={DASHBOARD_TAB_PREVIEW_CLOSE_DELAY_MS}
                         >
                             {dashboards.map((dashboard, index) => (
-                                <DashboardTab
-                                    key={dashboard.getId()}
-                                    dashboard={dashboard}
-                                    draggable={!isSnapshot}
-                                    isActive={dashboard.getId() === resolvedActiveDashboardId}
-                                    tabIndex={rovingFocus.getTabIndex(dashboard.getId())}
-                                    isHot={keepAliveIds.has(dashboard.getId())}
-                                    isEvictable={hotDashboardIds.includes(dashboard.getId())}
-                                    isDragged={reorder.draggedDashboardId === dashboard.getId()}
-                                    isSnapshot={isSnapshot}
-                                    previewDisabled={reorder.draggedDashboardId !== null}
-                                    dropIndicatorSide={
-                                        reorder.dropTarget?.dashboardId === dashboard.getId()
-                                            ? reorder.dropTarget.insertAfter
-                                                ? "after"
-                                                : "before"
-                                            : null
-                                    }
-                                    canMoveLeft={index > 0}
-                                    canMoveRight={index < dashboards.length - 1}
-                                    canBeDeleted={dashboards.length > 1}
-                                    onSelect={selectDashboard}
-                                    onRequestDelete={handleRequestDeleteDashboard}
-                                    onEdit={handleEditDashboardClick}
-                                    onDragStart={(e) => reorder.handleDragStart(dashboard.getId(), e)}
-                                    onDragOver={(e) => reorder.handleDragOver(dashboard.getId(), e)}
-                                    onDrop={(e) => reorder.handleDrop(dashboard.getId(), e)}
-                                    onDragEnd={reorder.handleDragEnd}
-                                    onClone={handleCloneDashboardClick}
-                                    onForceEviction={handleForceEvictionClick}
-                                    onMoveLeft={handleMoveDashboardLeftClick}
-                                    onMoveRight={handleMoveDashboardRightClick}
-                                />
+                                <React.Fragment key={dashboard.getId()}>
+                                    <DashboardTabGap withSeparator={index > 0} isDropTarget={dropGapIndex === index} />
+                                    <DashboardTab
+                                        dashboard={dashboard}
+                                        draggable={!isSnapshot}
+                                        isActive={dashboard.getId() === resolvedActiveDashboardId}
+                                        tabIndex={rovingFocus.getTabIndex(dashboard.getId())}
+                                        isHot={keepAliveIds.has(dashboard.getId())}
+                                        isEvictable={hotDashboardIds.includes(dashboard.getId())}
+                                        isDragged={reorder.draggedDashboardId === dashboard.getId()}
+                                        isSnapshot={isSnapshot}
+                                        previewDisabled={reorder.draggedDashboardId !== null}
+                                        canMoveLeft={index > 0}
+                                        canMoveRight={index < dashboards.length - 1}
+                                        canBeDeleted={dashboards.length > 1}
+                                        onSelect={selectDashboard}
+                                        onRequestDelete={handleRequestDeleteDashboard}
+                                        onEdit={handleEditDashboardClick}
+                                        onDragStart={(e) => reorder.handleDragStart(dashboard.getId(), e)}
+                                        onDragOver={(e) => reorder.handleDragOver(dashboard.getId(), e)}
+                                        onDrop={(e) => reorder.handleDrop(dashboard.getId(), e)}
+                                        onDragEnd={reorder.handleDragEnd}
+                                        onClone={handleCloneDashboardClick}
+                                        onForceEviction={handleForceEvictionClick}
+                                        onMoveLeft={handleMoveDashboardLeftClick}
+                                        onMoveRight={handleMoveDashboardRightClick}
+                                    />
+                                </React.Fragment>
                             ))}
+                            <DashboardTabGap withSeparator={false} isDropTarget={dropGapIndex === dashboards.length} />
                         </TooltipBase.Provider>
                     </div>
                 </div>
