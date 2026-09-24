@@ -16,6 +16,7 @@ services:
       - ./docs:/usr/src/app/docs
       - ./frontend/tsconfig.json:/usr/src/app/frontend/tsconfig.json
       - ./frontend/tsconfig.node.json:/usr/src/app/frontend/tsconfig.node.json
+      - ./frontend/vite.config.ts:/usr/src/app/frontend/vite.config.ts
   backend-primary:
     build:
       context: .

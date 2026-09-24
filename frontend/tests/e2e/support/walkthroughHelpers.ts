@@ -585,6 +585,98 @@ export async function dragModuleOntoLayout(
 }
 
 /**
+ * Toggle whether the deck.gl scene reacts to the pointer, by flipping `pointer-events` on its
+ * `.deck-events-root` element.
+ *
+ * This must target `.deck-events-root`, not the `<canvas>`: deck.gl attaches its event manager to
+ * that wrapper div (see @deck.gl/core — `eventRoot = parent.querySelector('.deck-events-root') ||
+ * canvas`), so disabling pointer events on the canvas alone does nothing.
+ *
+ * deck.gl runs a GPU pick on every *hover* pointer-move to feed its readout. On machines without a
+ * real GPU (GitHub Codespaces / CI) that readback is punishingly slow, so simply gliding the cursor
+ * across the 3D scene makes the recording/test crawl (one slow pick per move). Making the events
+ * root ignore pointer events stops those hover picks entirely; re-enable it only for gestures that
+ * must reach the scene (e.g. a rotate drag). The `.deck-events-root` wraps only the canvas and its
+ * view overlays, so sibling controls like the toolbar stay interactive. Applies in every mode (not
+ * just recording), since CI lacks a GPU too.
+ */
+export async function setDeckGlEventsInteractive(eventsRoot: Locator, interactive: boolean): Promise<void> {
+    const count = await eventsRoot.count();
+    for (let i = 0; i < count; i++) {
+        await eventsRoot.nth(i).evaluate((el, value) => {
+            (el as HTMLElement).style.pointerEvents = value ? "" : "none";
+        }, interactive);
+    }
+}
+
+/**
+ * Rotate a deck.gl 3D scene by left-click dragging across it (the OrbitView camera orbits the model
+ * on drag — see the viewer's "Click and drag to rotate the view" help). Presses near the centre,
+ * walks the pointer through each segment in `segments`, then releases.
+ *
+ * `eventsRoot` must be the viewer's `.deck-events-root` element. It is kept non-interactive (see
+ * {@link setDeckGlEventsInteractive}) while the cursor glides into place, so approaching the scene
+ * doesn't trigger deck.gl's slow hover picking, and is enabled only for the pressed drag. It's
+ * restored to non-interactive afterwards so later cursor moves over the grid stay cheap too.
+ *
+ * deck.gl runs a synchronous pick on every pointer *down* (but not while a button is held), and on a
+ * GPU-less machine (CI / Codespaces) that single pick is the slow "freeze" at the start of a drag.
+ * So the whole gesture is done in ONE press: each entry in `segments` is a further drag offset (in
+ * px) applied in sequence without releasing, letting the camera spin several ways for the price of a
+ * single press-pick. `moves` controls how many intermediate steps each segment is split into.
+ */
+export async function dragToRotateView(
+    page: Page,
+    eventsRoot: Locator,
+    {
+        segments = [
+            { dx: 240, dy: -70 },
+            { dx: -200, dy: 60 },
+        ],
+        moves = 8,
+    }: { segments?: { dx: number; dy: number }[]; moves?: number } = {},
+): Promise<void> {
+    await eventsRoot.scrollIntoViewIfNeeded();
+    const box = await eventsRoot.boundingBox();
+    if (!box) {
+        return;
+    }
+    const startX = box.x + box.width / 2;
+    const startY = box.y + box.height / 2;
+
+    await setDeckGlEventsInteractive(eventsRoot, false);
+    await glideMouseTo(page, startX, startY);
+    await setDeckGlEventsInteractive(eventsRoot, true);
+    await page.mouse.down();
+    try {
+        let fromX = startX;
+        let fromY = startY;
+        for (const segment of segments) {
+            const toX = fromX + segment.dx;
+            const toY = fromY + segment.dy;
+            for (let i = 1; i <= moves; i++) {
+                const progress = i / moves;
+                await page.mouse.move(fromX + (toX - fromX) * progress, fromY + (toY - fromY) * progress);
+                // Button stays down, so deck.gl skips hover picking; this beat just paces the spin.
+                await page.waitForTimeout(RECORDING ? 70 : 16);
+            }
+            fromX = toX;
+            fromY = toY;
+        }
+        await page.mouse.up();
+        // Keep the tracked cursor position in sync so the next glide measures the right distance.
+        lastMousePosition.set(page, { x: fromX, y: fromY });
+    } catch (error) {
+        // Never leave the mouse button pressed on failure.
+        await page.mouse.up().catch(() => undefined);
+        throw error;
+    } finally {
+        // Restore the non-interactive state so later cursor moves across the grid stay cheap.
+        await setDeckGlEventsInteractive(eventsRoot, false);
+    }
+}
+
+/**
  * Slowly glide a slider's thumb from one end of the track to the other, so the motion is easy to
  * follow in a recorded tutorial. Playwright codegen can only capture discrete clicks on a slider,
  * which look abrupt; here we press the thumb at the start edge and drag it to the far edge with a

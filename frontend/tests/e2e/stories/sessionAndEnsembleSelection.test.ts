@@ -159,8 +159,9 @@ test.describe("Session and ensemble selection", () => {
         const landingNarration = narrate(
             "Back on the landing page, both the session we saved and the snapshot we just shared now show up under Recent sessions and Recent snapshots, ready to pick up again at any time.",
         );
-        await expect(page.getByText(SESSION_COPY_TITLE, { exact: true })).toBeVisible({ timeout: 60_000 });
-        await expect(page.getByText(SNAPSHOT_TITLE, { exact: true })).toBeVisible({ timeout: 60_000 });
+        // Locally, CosmosDB persists across runs so identically titled items accumulate; the newest is first.
+        await expect(page.getByText(SESSION_COPY_TITLE, { exact: true }).first()).toBeVisible({ timeout: 60_000 });
+        await expect(page.getByText(SNAPSHOT_TITLE, { exact: true }).first()).toBeVisible({ timeout: 60_000 });
         await landingNarration;
 
         await captureThumbnail(page);

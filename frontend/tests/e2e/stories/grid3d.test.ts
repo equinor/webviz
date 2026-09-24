@@ -21,6 +21,7 @@ import {
     captureThumbnail,
     createSessionAndSelectEnsemble,
     dragModuleOntoLayout,
+    dragToRotateView,
     hideDevOverlays,
     installFakeCursor,
     pace,
@@ -82,5 +83,37 @@ test.describe("My module", () => {
         await captureThumbnail(page);
         markStep("View the grid model");
         await narrate("And there we see our 3D model grid");
+
+        // deck.gl attaches its pointer handling to `.deck-events-root` (the wrapper around the
+        // canvas), so the rotate helper toggles interactivity there to avoid slow hover picking.
+        const gridEventsRoot = moduleLayout.locator(".deck-events-root").first();
+
+        markStep("Rotate the grid");
+        const rotateNarration = narrate(
+            "Clicking and dragging on the view rotates the camera around the grid, so we can inspect it from any angle.",
+        );
+        // Both sweeps happen in a single press so there's only one (slow, GPU-less) press-pick.
+        await dragToRotateView(page, gridEventsRoot);
+        await rotateNarration;
+        await pace(page, "long");
+
+        markStep("Adjust the vertical scale");
+        const verticalScaleNarration = narrate(
+            "The toolbar lets us exaggerate the vertical scale, stretching the grid in the z-direction to bring out subtle structure, and shrink it back down again.",
+        );
+        // The vertical-scale controls live in the toolbar's collapsed section; expand it first.
+        await smoothClick(page, moduleLayout.getByTitle("Expand toolbar"));
+        const increaseVerticalScale = moduleLayout.getByTitle("Increase vertical scale");
+        const decreaseVerticalScale = moduleLayout.getByTitle("Decrease vertical scale");
+        await expect(increaseVerticalScale).toBeVisible();
+        for (let i = 0; i < 3; i++) {
+            await smoothClick(page, increaseVerticalScale);
+        }
+        await pace(page, "long");
+        for (let i = 0; i < 3; i++) {
+            await smoothClick(page, decreaseVerticalScale);
+        }
+        await verticalScaleNarration;
+        await pace(page, "long");
     });
 });

@@ -78,15 +78,13 @@ jobs:
         working-directory: ./frontend
         env:
           CI: "true"
+          # Recording's global teardown publishes into this dir; Azure upload below reads from it.
+          TUTORIAL_PUBLISH_DIR: tutorial-publish
         run: npm run test:e2e:record
 
       - name: 🐳 Dump docker compose logs on failure
         if: failure()
         run: docker compose logs --no-color
-
-      - name: 📦 Publish tutorial recordings under stable slugs
-        working-directory: ./frontend
-        run: node tests/e2e/support/publish-tutorials.mjs
 
       - name: ☁️ Upload recordings to Azure Blob Storage  
         env:
