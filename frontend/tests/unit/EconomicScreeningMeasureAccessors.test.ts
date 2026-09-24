@@ -1,7 +1,11 @@
 import { describe, expect, test } from "vitest";
 
-import { EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
-import { getMeasureDisplayName, getMeasureDisplayScale } from "@modules/EconomicScreening/utils/measureAccessors";
+import { EconomicMeasure, OilPriceBasis } from "@modules/EconomicScreening/typesAndEnums";
+import {
+    getMeasureDisplayName,
+    getMeasureDisplayScale,
+    getMeasureUnit,
+} from "@modules/EconomicScreening/utils/measureAccessors";
 
 describe("getMeasureDisplayName", () => {
     test("labels financial Delta measures as incremental", () => {
@@ -15,6 +19,18 @@ describe("getMeasureDisplayName", () => {
     test("keeps regular measure labels unchanged", () => {
         expect(getMeasureDisplayName(EconomicMeasure.NPV)).toBe("Net present value");
         expect(getMeasureDisplayName(EconomicMeasure.DISCOUNTED_OIL_VOLUME, true)).toBe("Discounted oil volume");
+    });
+});
+
+describe("getMeasureUnit", () => {
+    test("labels the break-even price with currency and volume basis like the price inputs", () => {
+        const context = { oilUnit: "SM3", gasUnit: "SM3", currency: "USD" };
+        expect(
+            getMeasureUnit(EconomicMeasure.BREAK_EVEN_OIL_PRICE, { ...context, oilPriceBasis: OilPriceBasis.PER_SM3 }),
+        ).toBe("USD per Sm³");
+        expect(
+            getMeasureUnit(EconomicMeasure.BREAK_EVEN_OIL_PRICE, { ...context, oilPriceBasis: OilPriceBasis.PER_BBL }),
+        ).toBe("USD per bbl");
     });
 });
 

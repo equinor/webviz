@@ -87,7 +87,7 @@ export function getMeasureUnit(measure: EconomicMeasure, context: MeasureUnitCon
         case EconomicMeasure.IRR:
             return "%";
         case EconomicMeasure.BREAK_EVEN_OIL_PRICE:
-            return `${context.currency}/${OilPriceBasisEnumToStringMapping[context.oilPriceBasis]}`;
+            return `${context.currency} ${OilPriceBasisEnumToStringMapping[context.oilPriceBasis]}`;
         case EconomicMeasure.DISCOUNTED_OIL_VOLUME:
         case EconomicMeasure.UNDISCOUNTED_OIL_VOLUME:
         case EconomicMeasure.DISCOUNTED_OIL_EQUIVALENTS:

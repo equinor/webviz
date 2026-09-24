@@ -170,7 +170,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     enabled={
                         !isFetching &&
                         hasResults &&
-                        isCostProfileDraftValid &&
+                        (isCostProfileDraftValid || measure !== EarlyEconomicMeasure.DISCOUNTED_CASH_FLOW) &&
                         earlyValueConfiguration.enabled &&
                         isEarlyValueConfigurationValid &&
                         earlyValueEndYear !== null
