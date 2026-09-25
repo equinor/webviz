@@ -376,8 +376,21 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     setActiveDashboard(dashboardId: string | null): void {
-        if (this._activeDashboardId === dashboardId) {
+        if (!this.activateDashboard(dashboardId)) {
             return;
+        }
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        this.handleStateChange();
+    }
+
+    /**
+     * Everything setActiveDashboard() does except notifying subscribers - lets removeDashboard()
+     * only announce the new active dashboard once the removed one is gone.
+     * @returns Whether the active dashboard changed.
+     */
+    private activateDashboard(dashboardId: string | null): boolean {
+        if (this._activeDashboardId === dashboardId) {
+            return false;
         }
 
         // Validated before touching the hot cache below: otherwise an unregistered dashboardId
@@ -422,8 +435,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             this._dashboardHotCache.deferEviction(previouslyActiveDashboard);
         }
         this._activeDashboardId = dashboard ? dashboard.getId() : null;
-        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
-        this.handleStateChange();
+        return true;
     }
 
     addDashboard(): void {
@@ -466,7 +478,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             let switched = false;
             for (const candidateId of new Set(candidateIds)) {
                 try {
-                    this.setActiveDashboard(candidateId);
+                    this.activateDashboard(candidateId);
                     switched = true;
                     break;
                 } catch (error) {
@@ -485,10 +497,16 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         }
 
         // The removed dashboard is only ever torn down once it's no longer the active one (either it
-        // never was, or the switch above already moved activation off of it) - setActiveDashboard()
+        // never was, or the switch above already moved activation off of it) - activateDashboard()
         // above hot-cached it via the same deferred-eviction path as any other switch, so this just
         // cancels that and finishes the teardown for good.
         this.unregisterDashboard(dashboard);
+
+        // Announced only now, so subscribers never see the new active dashboard while the removed one
+        // still exists - the URL sync would otherwise treat this as a regular switch and add a history entry
+        if (wasActive) {
+            this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        }
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
     }
 
