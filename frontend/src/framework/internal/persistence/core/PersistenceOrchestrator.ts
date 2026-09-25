@@ -1,4 +1,4 @@
-import { hashSessionContentString, objectToJsonString } from "@framework/internal/WorkbenchSession/utils/hash";
+import { objectToJsonString } from "@framework/internal/WorkbenchSession/utils/hash";
 import type { Workbench } from "@framework/Workbench";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
@@ -134,14 +134,7 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         this._destroyed = true;
     }
 
-    /**
-     * @param contentOverride Content to persist instead of the session's own default serialization
-     * This class has no notion of what an override represents or why one might be given; it only ever
-     * compares the content it's about to actually send against what's persisted (via
-     * SessionStateTracker.hasChangesRelativeTo()), so "no changes" is always correct for whatever
-     * content ends up here.
-     */
-    async persistNow(contentOverride?: SerializedWorkbenchSessionContentState): Promise<PersistResult> {
+    async persistNow(): Promise<PersistResult> {
         if (this._destroyed) {
             throw new Error("Persistence service has been stopped.");
         }
@@ -158,16 +151,14 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         try {
             await this._tracker.refresh();
 
-            const content = contentOverride ?? this._session.serializeContentState();
-            const contentToSave = objectToJsonString(content);
-            const contentHash = await hashSessionContentString(contentToSave);
-
-            if (!this._tracker.hasChangesRelativeTo(contentHash)) {
+            if (!this._tracker.hasChanges()) {
                 return {
                     success: false,
                     reason: PersistFailureReason.NO_CHANGES,
                 };
             }
+
+            const contentToSave = objectToJsonString(this._session.serializeContentState());
 
             const size = new Blob([contentToSave]).size;
 
@@ -209,7 +200,7 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         }
     }
 
-    /** @param contentOverride See persistNow()'s doc - same purpose, applies here too. */
+    /** @param contentOverride Content to snapshot instead of the session's own serialization */
     async createSnapshot(
         title: string,
         description: string,

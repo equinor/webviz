@@ -719,7 +719,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     }
 
     // ========== Persistence Operations ==========
-    async maybeSaveSession(opts?: { saveAsNew?: boolean; activeDashboardId?: string }) {
+    async maybeSaveSession(opts?: { saveAsNew?: boolean }) {
         if (this._activeSession?.getIsPersisted()) return this.saveSession(opts);
 
         // The session has never been persisted before: open the metadata dialog to prompt the user to give the session a proper title
@@ -727,12 +727,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         return false;
     }
 
-    /**
-     * @param opts.activeDashboardId Dashboard to mark as active in the saved content instead of
-     * this session's own live active dashboard - lets a save dialog offer a different starting
-     * dashboard without switching what's active in this (still in-use) session.
-     */
-    async saveSession(opts?: { saveAsNew?: boolean; activeDashboardId?: string }): Promise<boolean> {
+    async saveSession(opts?: { saveAsNew?: boolean }): Promise<boolean> {
         if (!this._activeSession) {
             throw new Error("No active workbench session to save. This should not happen and indicates a logic error.");
         }
@@ -763,11 +758,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 sessionToSave = this._activeSession;
             }
 
-            const contentOverride =
-                opts?.activeDashboardId !== undefined
-                    ? sessionToSave.serializeContentState(opts.activeDashboardId)
-                    : undefined;
-            const result = await this._persistenceOrchestrator.persistNow(contentOverride);
+            const result = await this._persistenceOrchestrator.persistNow();
             this.dismissToast(progressToastId);
 
             if (result.success) {
@@ -818,8 +809,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     }
 
     /**
-     * @param activeDashboardId Dashboard to mark as active in the snapshot instead of this
-     * session's own live active dashboard - see saveSession()'s equivalent option.
+     * @param activeDashboardId Dashboard the snapshot opens on, instead of this session's active
+     * dashboard - lets the user pick one without switching dashboards in the live session.
      */
     async createSnapshot(title: string, description: string, activeDashboardId?: string): Promise<string | null> {
         if (!this._activeSession) {

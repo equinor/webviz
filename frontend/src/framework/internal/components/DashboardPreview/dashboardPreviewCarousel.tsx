@@ -16,7 +16,7 @@ export type DashboardPreviewCarouselProps = {
     width: number;
     height: number;
     /**
-     * Which dashboard is currently marked to open first the next time this saved session/snapshot
+     * Which dashboard is currently marked to open first the next time this snapshot
      * is opened. Also seeds which dashboard the carousel starts browsing on. Deliberately
      * independent from there on - browsing with the chevrons/indicators only moves which one is
      * shown, never this; only the pin toggle (rendered when onActiveDashboardIdChange is given)
@@ -82,15 +82,15 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
                         <Tooltip
                             content={
                                 isCurrentActive
-                                    ? `"${current.name}" opens first when opening this session`
-                                    : `Open "${current.name}" first when session is opened`
+                                    ? `"${current.name}" opens first when opening`
+                                    : `Open "${current.name}" first when opened`
                             }
                         >
                             <Button
                                 aria-label={
                                     isCurrentActive
-                                        ? `"${current.name}" opens when opening this session`
-                                        : `Open "${current.name}" first when session is opened`
+                                        ? `"${current.name}" opens first when opening`
+                                        : `Open "${current.name}" first when opened`
                                 }
                                 iconOnly
                                 variant="contained"
