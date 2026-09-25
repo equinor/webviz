@@ -520,7 +520,7 @@ export class ModuleInstance<
         this._settingsToViewInterfaceEffectsAtom = null;
         this._viewToSettingsInterfaceEffectsAtom = null;
         this._serializer?.beforeDestroy();
-        this._module.removeInstance(this._id);
+        this._module.removeInstance(this);
     }
 }
 

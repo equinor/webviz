@@ -7,10 +7,11 @@ import { WindowActivityObserver, WindowActivityObserverTopic, WindowActivityStat
 import type { PrivateWorkbenchSession } from "../../WorkbenchSession/PrivateWorkbenchSession";
 import { PrivateWorkbenchSessionTopic } from "../../WorkbenchSession/PrivateWorkbenchSession";
 import type { SerializedWorkbenchSessionContentState } from "../../WorkbenchSession/PrivateWorkbenchSession.schema";
-import { AUTO_SAVE_DEBOUNCE_MS, BACKEND_POLLING_INTERVAL_MS, MAX_CONTENT_SIZE_BYTES } from "../constants";
+import { AUTO_SAVE_DEBOUNCE_MS, BACKEND_POLLING_INTERVAL_MS } from "../constants";
 
 import { BackendSyncManager } from "./BackendSyncManager";
 import { LocalBackupManager } from "./LocalBackupManager";
+import { PersistFailureReason, persistSessionToBackend, type PersistResult } from "./persistSessionToBackend";
 import { SessionStateTracker, type WorkbenchSessionPersistenceInfo } from "./SessionStateTracker";
 
 export enum PersistenceOrchestratorTopic {
@@ -20,24 +21,6 @@ export enum PersistenceOrchestratorTopic {
 export type PersistenceOrchestratorTopicPayloads = {
     [PersistenceOrchestratorTopic.PERSISTENCE_INFO]: WorkbenchSessionPersistenceInfo;
 };
-
-export enum PersistFailureReason {
-    SAVE_IN_PROGRESS = "SAVE_IN_PROGRESS", // A save is already in progress
-    NO_CHANGES = "NO_CHANGES", // There are no changes to persist
-    CONTENT_TOO_LARGE = "CONTENT_TOO_LARGE", // The session content exceeds the maximum allowed size
-    ERROR = "ERROR", // An error occurred
-}
-
-export type PersistResult =
-    | {
-          success: true;
-          sessionId: string;
-      }
-    | {
-          success: false;
-          reason: PersistFailureReason;
-          message?: string;
-      };
 
 export type CreateSnapshotResult =
     | {
@@ -57,6 +40,7 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
     private readonly _publishSubscribeDelegate = new PublishSubscribeDelegate<PersistenceOrchestratorTopicPayloads>();
     private readonly _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
 
+    private readonly _workbench: Workbench;
     private readonly _session: PrivateWorkbenchSession;
 
     private _refreshStateDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -66,6 +50,7 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
     private _isInitializing: boolean = false;
 
     constructor(workbench: Workbench, session: PrivateWorkbenchSession) {
+        this._workbench = workbench;
         this._session = session;
 
         this._tracker = new SessionStateTracker(session);
@@ -158,35 +143,21 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
                 };
             }
 
-            const contentToSave = objectToJsonString(this._session.serializeContentState());
+            // The backup is stored under the id from before the save - none, if the save creates the session
+            const sessionIdBeforeSave = this._session.getId();
 
-            const size = new Blob([contentToSave]).size;
-
-            if (size > MAX_CONTENT_SIZE_BYTES) {
-                return {
-                    success: false,
-                    reason: PersistFailureReason.CONTENT_TOO_LARGE,
-                    message: `Session too large: ${(size / 1_048_576).toFixed(2)} MB (max ${(MAX_CONTENT_SIZE_BYTES / 1_048_576).toFixed(1)} MB).`,
-                };
+            const result = await persistSessionToBackend(this._workbench, this._session);
+            if (!result.success) {
+                return result;
             }
-
-            const newId = await this._backendSync.persist(this._session, contentToSave);
 
             // Remove recovery backup after successful save
-            this._localBackup.remove();
-
-            if (newId && !this._session.getIsPersisted()) {
-                this._session.setId(newId);
-                this._session.setIsPersisted(true);
-            }
+            this._localBackup.remove(sessionIdBeforeSave);
 
             this._tracker.markPersisted();
             this.notifyPersistenceInfoChanged();
 
-            return {
-                success: true,
-                sessionId: this._session.getId()!,
-            };
+            return result;
         } catch (err) {
             console.error("Failed to persist session:", err);
             return {

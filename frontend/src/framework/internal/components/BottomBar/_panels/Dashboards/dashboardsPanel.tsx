@@ -62,15 +62,6 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
         workbenchSession,
     );
     const resolvedActiveDashboardId = optimisticActiveDashboardId ?? activeDashboard?.getId() ?? null;
-
-    // Index of the gap (0 = before the first tab, dashboards.length = after the last) the dragged tab would drop into
-    let dropGapIndex: number | null = null;
-    if (reorder.dropTarget) {
-        const targetIndex = dashboards.findIndex((d) => d.getId() === reorder.dropTarget?.dashboardId);
-        if (targetIndex !== -1) {
-            dropGapIndex = targetIndex + (reorder.dropTarget.insertAfter ? 1 : 0);
-        }
-    }
     const tabStripScroll = useDashboardTabStripScroll(dashboards, resolvedActiveDashboardId);
     const rovingFocus = useDashboardTabRovingFocus(
         dashboards,
@@ -226,7 +217,12 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                         >
                             {dashboards.map((dashboard, index) => (
                                 <React.Fragment key={dashboard.getId()}>
-                                    <DashboardTabGap withSeparator={index > 0} isDropTarget={dropGapIndex === index} />
+                                    <DashboardTabGap
+                                        withSeparator={index > 0}
+                                        isDropTarget={reorder.dropGapIndex === index}
+                                        onDragOver={(e) => reorder.handleGapDragOver(index, e)}
+                                        onDrop={reorder.handleDrop}
+                                    />
                                     <DashboardTab
                                         dashboard={dashboard}
                                         draggable={!isSnapshot}
@@ -244,8 +240,8 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                                         onRequestDelete={handleRequestDeleteDashboard}
                                         onEdit={handleEditDashboardClick}
                                         onDragStart={(e) => reorder.handleDragStart(dashboard.getId(), e)}
-                                        onDragOver={(e) => reorder.handleDragOver(dashboard.getId(), e)}
-                                        onDrop={(e) => reorder.handleDrop(dashboard.getId(), e)}
+                                        onDragOver={(e) => reorder.handleTabDragOver(dashboard.getId(), e)}
+                                        onDrop={(e) => reorder.handleDrop(e)}
                                         onDragEnd={reorder.handleDragEnd}
                                         onClone={handleCloneDashboardClick}
                                         onForceEviction={handleForceEvictionClick}
@@ -254,7 +250,12 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                                     />
                                 </React.Fragment>
                             ))}
-                            <DashboardTabGap withSeparator={false} isDropTarget={dropGapIndex === dashboards.length} />
+                            <DashboardTabGap
+                                withSeparator={false}
+                                isDropTarget={reorder.dropGapIndex === dashboards.length}
+                                onDragOver={(e) => reorder.handleGapDragOver(dashboards.length, e)}
+                                onDrop={reorder.handleDrop}
+                            />
                         </TooltipBase.Provider>
                     </div>
                 </div>

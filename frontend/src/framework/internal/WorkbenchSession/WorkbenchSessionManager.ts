@@ -22,7 +22,12 @@ import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunct
 import { Dashboard } from "../Dashboard";
 import { EnsembleUpdateMonitor } from "../EnsembleUpdateMonitor";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "../persistence/constants";
-import { PersistenceOrchestrator, PersistFailureReason } from "../persistence/core/PersistenceOrchestrator";
+import { PersistenceOrchestrator } from "../persistence/core/PersistenceOrchestrator";
+import {
+    PersistFailureReason,
+    persistSessionToBackend,
+    type PersistResult,
+} from "../persistence/core/persistSessionToBackend";
 
 import { PrivateWorkbenchSession, PrivateWorkbenchSessionTopic } from "./PrivateWorkbenchSession";
 import { removeSessionQueryData, removeSnapshotQueryData, replaceSessionQueryData } from "./utils/crudHelpers";
@@ -730,7 +735,14 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         return false;
     }
 
-    async saveSession(opts?: { saveAsNew?: boolean }): Promise<boolean> {
+    /**
+     * @param opts.metadata Title/description to save with - with saveAsNew, applied to the new session
+     * only, so the current session is unaffected if saving fails.
+     */
+    async saveSession(opts?: {
+        saveAsNew?: boolean;
+        metadata?: { title: string; description?: string };
+    }): Promise<boolean> {
         if (!this._activeSession) {
             throw new Error("No active workbench session to save. This should not happen and indicates a logic error.");
         }
@@ -745,23 +757,18 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
 
         try {
-            let sessionToSave;
+            let result: PersistResult;
 
             if (opts?.saveAsNew) {
                 this.createLoadingToast(progressToastId, "Saving new session...");
-
-                // Make the copy the active session
-                sessionToSave = await PrivateWorkbenchSession.createCopy(this._queryClient, this._activeSession);
-
-                // Replace the active session with the new copy, since persistence orchestrator references it
-                this.unloadSession();
-                await this.setActiveSession(sessionToSave);
+                result = await this.persistCopyAsNewSession(opts.metadata);
             } else {
                 this.createLoadingToast(progressToastId, "Saving session...");
-                sessionToSave = this._activeSession;
+                if (opts?.metadata) {
+                    this._activeSession.updateMetadata(opts.metadata);
+                }
+                result = await this._persistenceOrchestrator.persistNow();
             }
-
-            const result = await this._persistenceOrchestrator.persistNow();
             this.dismissToast(progressToastId);
 
             if (result.success) {
@@ -793,12 +800,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this.dismissToast(progressToastId);
             console.error("Failed to save session:", error);
 
-            // Return to the original session
-            if (opts?.saveAsNew) {
-                this.unloadSession();
-                await this.setActiveSession(initialActiveSession);
-            }
-
             this._guiMessageBroker.publishEvent(GuiEvent.SessionPersistenceError, {
                 action: SessionPersistenceAction.SAVE,
                 error,
@@ -809,6 +810,27 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         } finally {
             this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
         }
+    }
+
+    /**
+     * Saves a copy of the active session as a new session, and only replaces the active session with
+     * the copy once that succeeded - on failure, the active session is left untouched.
+     */
+    private async persistCopyAsNewSession(metadata?: { title: string; description?: string }): Promise<PersistResult> {
+        const copy = await PrivateWorkbenchSession.createCopy(this._queryClient, this.getActiveSession());
+        if (metadata) {
+            copy.updateMetadata(metadata);
+        }
+
+        const result = await persistSessionToBackend(this._workbench, copy);
+        if (!result.success) {
+            copy.beforeDestroy();
+            return result;
+        }
+
+        this.unloadSession();
+        await this.setActiveSession(copy);
+        return result;
     }
 
     /**

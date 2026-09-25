@@ -320,8 +320,9 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
         return instance;
     }
 
-    removeInstance(id: string): void {
-        this._moduleInstances = this._moduleInstances.filter((instance) => instance.getId() !== id);
+    removeInstance(instanceToRemove: ModuleInstance<TInterfaceTypes, TSerializedState>): void {
+        // By identity, not id - a copied session's instances share their ids with the original's
+        this._moduleInstances = this._moduleInstances.filter((instance) => instance !== instanceToRemove);
     }
 
     notifyInstanceUnload(instanceId: string) {

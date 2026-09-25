@@ -59,10 +59,9 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
             return;
         }
 
-        props.workbench.getSessionManager().getActiveSession().updateMetadata({ title, description });
         props.workbench
             .getSessionManager()
-            .saveSession({ saveAsNew: props.saveAsNew })
+            .saveSession({ saveAsNew: props.saveAsNew, metadata: { title, description } })
             .then((success) => setIsOpen(!success));
     }
 

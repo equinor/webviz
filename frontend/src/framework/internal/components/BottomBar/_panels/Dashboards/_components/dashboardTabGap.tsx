@@ -1,3 +1,5 @@
+import type React from "react";
+
 import { Separator } from "@lib/components/Separator";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -5,6 +7,8 @@ export type DashboardTabGapProps = {
     /** Inner gaps (between two tabs) show a separator; the two outer gaps don't. */
     withSeparator: boolean;
     isDropTarget: boolean;
+    onDragOver: (event: React.DragEvent) => void;
+    onDrop: (event: React.DragEvent) => void;
 };
 
 /**
@@ -21,6 +25,8 @@ export function DashboardTabGap(props: DashboardTabGapProps) {
                 "px-3xs": props.withSeparator,
                 "w-1": !props.withSeparator,
             })}
+            onDragOver={props.onDragOver}
+            onDrop={props.onDrop}
         >
             {props.withSeparator && (
                 <Separator
