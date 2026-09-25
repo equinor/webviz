@@ -102,6 +102,10 @@ async function routeSourceFixtures(
         (route) => {
             const url = new URL(route.request().url());
             const vectorName = url.searchParams.get("vector_name") ?? "";
+            if (!(options.vectorNames ?? ["FOPT", "FGST"]).includes(vectorName)) {
+                state.unexpectedApiRequests.push(route.request().url());
+                return route.abort();
+            }
             state.vectorDataRequests.push(vectorName);
             if (options.failSalesGas && vectorName === "FGST") {
                 return route.fulfill({ status: 500, json: { detail: "fixture failure" } });
@@ -406,7 +410,135 @@ function setupStatus(page: Page) {
 }
 
 async function setupItems(page: Page): Promise<string[]> {
+    const details = setupStatus(page).locator("details");
+    if ((await details.count()) && !(await details.evaluate((element) => element.hasAttribute("open")))) {
+        await details.locator("summary").click();
+    }
     return (await setupStatus(page).getByRole("listitem").allTextContents()).map((text) => text.trim());
+}
+
+test("keeps compact setup status visible and reveals a closed field section", async ({ mount, page }) => {
+    const fixtures = await routeSourceFixtures(page);
+    await mount(
+        <EconomicScreeningModuleHarness
+            settingsOpen
+            viewWidth={900}
+            viewHeight={640}
+            initialState={{ predictionStartYear: null }}
+        />,
+    );
+    const settings = settingsRegion(page);
+    const status = setupStatus(page);
+    await expect(status.locator("summary")).toContainText("1 issue for");
+    await settings.getByRole("button", { name: "Data and valuation", exact: true }).click();
+    await settings.locator("[data-collapsible-scroll-area]").evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+    });
+    await expect(status).toBeInViewport();
+    await status.locator("summary").click();
+    await status.getByRole("button", { name: "Enter a prediction start year." }).click();
+    const year = settings.getByRole("combobox", { name: "Prediction start year", exact: true });
+    await expect(year).toBeFocused();
+    await expect(year).toBeInViewport();
+    await page.keyboard.type("2030");
+    await page.keyboard.press("Tab");
+    await expect(status).toHaveText("Setup ready");
+    await expect(status.locator("details")).toHaveCount(0);
+    expect(fixtures.vectorDataRequests.sort()).toEqual(["FGST", "FOPT"]);
+    expect(fixtures.unexpectedApiRequests).toEqual([]);
+});
+
+for (const layout of [
+    { name: "desktop", width: 1320, settingsWidth: 400, viewWidth: 880 },
+    { name: "narrow", width: 720, settingsWidth: 320, viewWidth: 360 },
+]) {
+    test(`separates optional early cash flow from break-even in ${layout.name} Settings`, async ({ mount, page }) => {
+        const fixtures = await routeSourceFixtures(page, { vectorNames: ["FOPT", "FGPT", "FGIT"] });
+        await page.setViewportSize({ width: layout.width, height: 700 });
+        await mount(
+            <EconomicScreeningModuleHarness
+                settingsOpen
+                settingsWidth={layout.settingsWidth}
+                viewWidth={layout.viewWidth}
+                viewHeight={640}
+                initialState={{
+                    gasPrice: 0,
+                    costProfile: [{ year: 2030, capex: 1000, opex: 0 }],
+                    selectedMeasure: EconomicMeasure.BREAK_EVEN_OIL_PRICE,
+                    earlyValue: { enabled: true, endYear: null },
+                }}
+            />,
+        );
+        const settings = settingsRegion(page);
+        const status = setupStatus(page);
+        await expect.poll(() => setupItems(page)).toEqual(["Early value: enter a Calculate through year."]);
+        await expect(status.locator("summary")).toHaveText("Optional early comparison");
+        await expect(status).toContainText("full results unchanged");
+        await expect
+            .poll(
+                async () =>
+                    channelEntries(
+                        await readPublishedChannels(page),
+                        MEASURE_CHANNEL_ID_MAP[EconomicMeasure.BREAK_EVEN_OIL_PRICE],
+                    ).length,
+            )
+            .toBe(3);
+        const fullBefore = (await readPublishedChannels(page)).filter((channel) =>
+            Object.values(MEASURE_CHANNEL_ID_MAP).includes(channel.channelIdString),
+        );
+        await expect(settings.getByRole("button", { name: "Advanced", exact: true })).toHaveCount(0);
+        await expect(
+            settings.getByText("Gas revenue excluded; gas-volume outputs still require resolved gas data."),
+        ).toBeVisible();
+        await expect(settings.getByRole("checkbox", { name: "Assume no gas consumption" })).not.toBeChecked();
+
+        for (const label of ["Discount rate [%]", "Oil price [USD per Sm³]", "Gas price [USD per Sm³]"]) {
+            const input = settings.getByRole("textbox", { name: label, exact: true });
+            await input.scrollIntoViewIfNeeded();
+            const labelBox = (await settings.getByText(label, { exact: true }).boundingBox())!;
+            const inputBox = (await input.boundingBox())!;
+            expect(labelBox.y + labelBox.height).toBeLessThanOrEqual(inputBox.y);
+            expect(await input.evaluate((element) => getComputedStyle(element).textAlign)).toBe("right");
+        }
+        const section = settings.getByRole("button", { name: "Early cash-flow comparison", exact: true });
+        await section.click();
+        await status.getByRole("button", { name: "Early value: enter a Calculate through year.", exact: true }).click();
+        const throughYear = settings.getByRole("textbox", { name: "Calculate through year", exact: true });
+        await expect(throughYear).toBeFocused();
+        await expect(throughYear).toBeInViewport();
+        await expect(status).toBeInViewport();
+        expect((await status.boundingBox())!.height).toBeLessThanOrEqual((await settings.boundingBox())!.height * 0.4);
+        expect(await fitsHorizontally(status)).toBe(true);
+        await page.screenshot({
+            path: `test-results/economic-screening-presentation/${layout.name}-optional-status.png`,
+        });
+        await page.keyboard.type("2030");
+        await page.keyboard.press("Tab");
+        await expect(status).toHaveText("Setup ready");
+        await expect(earlyComparison(page)).toContainText("Early discounted cash flow");
+        await expect(earlyComparison(page)).not.toContainText("Break-even");
+        expect(
+            (await readPublishedChannels(page)).filter((channel) =>
+                Object.values(MEASURE_CHANNEL_ID_MAP).includes(channel.channelIdString),
+            ),
+        ).toEqual(fullBefore);
+        await settings.getByRole("checkbox", { name: "Early value", exact: true }).uncheck();
+        await expect(earlyComparison(page)).toHaveCount(0);
+        await expect
+            .poll(async () =>
+                (await readPublishedChannels(page))
+                    .filter((channel) => Object.values(EARLY_MEASURE_CHANNEL_ID_MAP).includes(channel.channelIdString))
+                    .flatMap((channel) => channel.contents.flat()),
+            )
+            .toEqual([]);
+        expect(
+            (await readPublishedChannels(page)).filter((channel) =>
+                Object.values(MEASURE_CHANNEL_ID_MAP).includes(channel.channelIdString),
+            ),
+        ).toEqual(fullBefore);
+        expect(fixtures.vectorDataRequests.sort()).toEqual(["FGIT", "FGPT", "FOPT"]);
+        expect(fixtures.unexpectedApiRequests).toEqual([]);
+    });
 }
 
 /** Base UI keeps the previous filter if a single combobox is reopened before its close has completed. */
@@ -519,7 +651,7 @@ test("applies an explicit missing-component assumption to gas revenue without au
     await expect.poll(async () => (await npvValues()).length).toBe(0);
 
     await consumption.check();
-    await expect(setupStatus(page)).toContainText("All known inputs for net present value are set.");
+    await expect(setupStatus(page)).toHaveText("Setup ready");
     await expect.poll(async () => (await npvValues()).length).toBe(3);
     const withGasRevenue = await npvValues();
     withGasRevenue.forEach((value, index) => expect(value).toBeGreaterThan(withoutGasRevenue[index]));
@@ -807,7 +939,7 @@ test("reports missing source coverage for the selected realizations in the setup
 
     await expect.poll(() => setupItems(page)).toEqual([coverageBefore("Oil"), coverageBefore("Sales gas")]);
     await expect(setupStatus(page)).toContainText("Source data:");
-    await expect(setupStatus(page)).not.toContainText("All known inputs");
+    await expect(setupStatus(page)).not.toContainText("Setup ready");
     expect(await npvCount()).toBe(0);
     await expect(settings.getByRole("combobox", { name: "Prediction start year" })).toHaveValue("2016");
 
@@ -817,7 +949,7 @@ test("reports missing source coverage for the selected realizations in the setup
     await expect.poll(() => setupItems(page)).toEqual([coverageBefore("Oil")]);
 
     await typeAndTabAway(page, settings.getByRole("combobox", { name: "Prediction start year" }), "2018");
-    await expect(setupStatus(page)).toContainText("All known inputs for net present value are set.");
+    await expect(setupStatus(page)).toHaveText("Setup ready");
     await expect.poll(npvCount).toBe(2);
 
     // Only realization 21 is selected, and its oil ends in January 2020.
@@ -869,12 +1001,12 @@ test("requires the needed products to be covered in the same selected realizatio
     await expect
         .poll(() => setupItems(page))
         .toEqual(["No selected realization has both oil and sales gas source coverage between Jan 2018 and Jun 2020."]);
-    await expect(setupStatus(page)).not.toContainText("All known inputs");
+    await expect(setupStatus(page)).not.toContainText("Setup ready");
     expect(await npvKeys()).toEqual([]);
 
     // Without gas revenue, realization 3's complete oil is enough.
     await typeAndTabAway(page, settingsRegion(page).getByRole("textbox", { name: /^Gas price/ }), "0");
-    await expect(setupStatus(page)).toContainText("All known inputs for net present value are set.");
+    await expect(setupStatus(page)).toHaveText("Setup ready");
     await expect.poll(npvKeys).toEqual([3]);
     expect(fixtures.vectorDataRequests.sort()).toEqual(["FGST", "FOPT"]);
     expect(fixtures.unexpectedApiRequests).toEqual([]);
@@ -1032,7 +1164,7 @@ test("keeps the early comparison, marker and setup summary contained in a narrow
     const gasPrice = settingsRegion(page).getByRole("textbox", { name: /^Gas price/ });
     await gasPrice.fill("0.2");
     await gasPrice.blur();
-    await expect(setupStatus(page)).toContainText("All known inputs for cumulative discounted cash flow are set.");
+    await expect(setupStatus(page)).toHaveText("Setup ready");
     await waitForPlottedData(page);
     await expect(viewRegion(page).locator(".annotation-text")).toHaveText("Early value through 2019");
 
@@ -1072,7 +1204,9 @@ test("names Settings cost inputs by year without step buttons while other number
     const capex2030 = settings.getByRole("textbox", { name: "CAPEX 2030", exact: true });
     await expect(capex2030).toBeVisible();
     await expect(settings.getByRole("textbox", { name: "OPEX 2031", exact: true })).toBeVisible();
-    const costTable = settings.getByRole("table").filter({ has: capex2030 });
+    const costTable = settings
+        .getByRole("table")
+        .filter({ has: page.getByRole("textbox", { name: "CAPEX 2030", exact: true }) });
     await expect(costTable.getByRole("button")).toHaveCount(0);
     await expect(settings.getByRole("status").filter({ hasText: "No non-zero costs included." })).toBeVisible();
 
@@ -1088,4 +1222,161 @@ test("names Settings cost inputs by year without step buttons while other number
     await expect(capex2030).toHaveValue("1,000");
     await expect(settings.getByRole("status").filter({ hasText: "No non-zero costs included." })).toHaveCount(0);
     await page.screenshot({ path: `${UX_SCREENSHOT_DIR}/desktop-settings-costs.png` });
+});
+
+test("cost paste preserves channels until Apply and matches independent full and early cash flows", async ({
+    mount,
+    page,
+}) => {
+    const fixtures = await routeSourceFixtures(page, { seriesFor: earlySeriesFor });
+    await page.setViewportSize({ width: 1320, height: 700 });
+    const initialState = {
+        ...EARLY_INPUTS,
+        costProfile: [{ year: 2016, capex: 7, opex: 0 }, ...EARLY_INPUTS.costProfile],
+        earlyValue: { enabled: true, endYear: 2019 },
+        selectedMeasure: EconomicMeasure.BREAK_EVEN_OIL_PRICE,
+        resultMode: ResultMode.ALL_RESULTS,
+        selectedRealization: 3,
+    };
+    const component = await mount(
+        <EconomicScreeningModuleHarness
+            settingsOpen
+            settingsWidth={400}
+            viewWidth={880}
+            viewHeight={640}
+            initialState={initialState}
+        />,
+    );
+    await expect.poll(async () => channelEntries(await readPublishedChannels(page), NPV_CHANNEL).length).toBe(2);
+    const original = await readPublishedChannels(page);
+    const readCosts = () =>
+        page.evaluate(() =>
+            (window as unknown as { readEconomicScreeningCosts: () => unknown }).readEconomicScreeningCosts(),
+        );
+    await expect.poll(readCosts).toEqual(initialState.costProfile);
+    const settings = settingsRegion(page);
+    await expect(settings.getByText("Annual costs", { exact: true })).toBeVisible();
+    await expect(settings.getByRole("columnheader", { name: "CAPEX [USD]", exact: true })).toBeVisible();
+    await expect(settings.getByRole("columnheader", { name: "OPEX [USD]", exact: true })).toBeVisible();
+    const trigger = settings.getByRole("button", { name: "Paste costs...", exact: true });
+    await trigger.click();
+    const dialog = page.getByRole("dialog", { name: "Paste costs", exact: true });
+    await dialog.getByRole("textbox").fill("2019\t600\t2400\n2020\t\t");
+    await expect(dialog.getByRole("table")).toBeVisible();
+    expect(await readPublishedChannels(page)).toEqual(original);
+    expect(await readCosts()).toEqual(initialState.costProfile);
+    await page.screenshot({ path: "test-results/economic-screening-presentation/desktop-paste.png" });
+    await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    expect(await readPublishedChannels(page)).toEqual(original);
+    await trigger.click();
+    await dialog.getByRole("textbox").fill("2019\t-600\t2400");
+    await expect(dialog.getByRole("button", { name: "Apply", exact: true })).toBeDisabled();
+    expect(await readPublishedChannels(page)).toEqual(original);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    expect(await readPublishedChannels(page)).toEqual(original);
+    await trigger.click();
+    await dialog.getByRole("textbox").fill("2019\t600\t2400\n2020\t\t");
+    await dialog.getByRole("button", { name: "Apply", exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect.poll(readCosts).toEqual([
+        { year: 2016, capex: 7, opex: 0 },
+        { year: 2018, capex: 20000, opex: 0 },
+        { year: 2019, capex: 600, opex: 2400 },
+    ]);
+    const costPv = (year: number, capex: number, opex: number) =>
+        capex / 1.1 ** (year - 2018 + 0.5) +
+        Array.from({ length: 12 }, (_, month) => opex / 12 / 1.1 ** (year - 2018 + (month + 0.5) / 12)).reduce(
+            (total, value) => total + value,
+            0,
+        );
+    const earlyChange = -costPv(2019, 600, 1200);
+    const fullChange = earlyChange + costPv(2020, 500, 1200);
+    await expect
+        .poll(async () => channelEntries(await readPublishedChannels(page), NPV_CHANNEL)[0]?.value)
+        .toBeCloseTo(referenceDiscountedCashFlow(3, 2020) + fullChange, 7);
+    const actual = await readPublishedChannels(page);
+    for (const entry of channelEntries(actual, NPV_CHANNEL))
+        expect(entry.value).toBeCloseTo(referenceDiscountedCashFlow(entry.key, 2020) + fullChange, 7);
+    for (const entry of channelEntries(actual, EARLY_DCF_CHANNEL))
+        expect(entry.value).toBeCloseTo(referenceDiscountedCashFlow(entry.key, 2019) + earlyChange, 7);
+    for (const measure of [
+        EconomicMeasure.DISCOUNTED_OIL_VOLUME,
+        EconomicMeasure.UNDISCOUNTED_OIL_VOLUME,
+        EconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME,
+        EconomicMeasure.UNDISCOUNTED_SALES_GAS_VOLUME,
+        EconomicMeasure.DISCOUNTED_OIL_EQUIVALENTS,
+    ]) {
+        expect(channelEntries(actual, MEASURE_CHANNEL_ID_MAP[measure])).toEqual(
+            channelEntries(original, MEASURE_CHANNEL_ID_MAP[measure]),
+        );
+    }
+    await test.info().attach("independent-cost-channel-evidence", {
+        contentType: "application/json",
+        body: JSON.stringify(
+            {
+                expectedNpv3: referenceDiscountedCashFlow(3, 2020) + fullChange,
+                actualNpv3: channelEntries(actual, NPV_CHANNEL)[0],
+                expectedEarly3: referenceDiscountedCashFlow(3, 2019) + earlyChange,
+                actualEarly3: channelEntries(actual, EARLY_DCF_CHANNEL)[0],
+                costs: await readCosts(),
+            },
+            null,
+            2,
+        ),
+    });
+
+    for (const layout of [
+        { name: "desktop", width: 1320, settingsWidth: 400, viewWidth: 880 },
+        { name: "narrow", width: 720, settingsWidth: 320, viewWidth: 360 },
+    ]) {
+        await page.setViewportSize({ width: layout.width, height: 700 });
+        await component.update(
+            <EconomicScreeningModuleHarness
+                settingsOpen
+                settingsWidth={layout.settingsWidth}
+                viewWidth={layout.viewWidth}
+                viewHeight={640}
+                initialState={initialState}
+            />,
+        );
+        const capex = settings.getByRole("textbox", { name: "CAPEX 2019", exact: true });
+        await capex.scrollIntoViewIfNeeded();
+        const table = settings
+            .getByRole("table")
+            .filter({ has: page.getByRole("textbox", { name: "CAPEX 2019", exact: true }) });
+        expect(await fitsHorizontally(settings)).toBe(true);
+        expect(await fitsHorizontally(table)).toBe(true);
+        expect(await capex.evaluate((element) => getComputedStyle(element).textAlign)).toBe("right");
+        const tableBox = (await table.boundingBox())!;
+        const settingsBox = (await settings.boundingBox())!;
+        expect(tableBox.width).toBeGreaterThan(settingsBox.width - 40);
+        expect(tableBox.x + tableBox.width).toBeLessThanOrEqual(settingsBox.x + settingsBox.width);
+        expect(
+            overlaps(
+                (await setupStatus(page).boundingBox())!,
+                (await settings.locator("[data-collapsible-scroll-area]").boundingBox())!,
+            ),
+        ).toBe(false);
+        await page.screenshot({ path: `test-results/economic-screening-presentation/${layout.name}-costs.png` });
+        await trigger.click();
+        await dialog.getByRole("textbox").fill("2019\t600\t2400");
+        const dialogBox = (await dialog.boundingBox())!;
+        expect(dialogBox.x).toBeGreaterThanOrEqual(0);
+        expect(dialogBox.x + dialogBox.width).toBeLessThanOrEqual(layout.width);
+        expect(dialogBox.y + dialogBox.height).toBeLessThanOrEqual(700);
+        expect(await fitsHorizontally(dialog)).toBe(true);
+        expect(
+            overlaps(
+                (await dialog.getByRole("textbox").boundingBox())!,
+                (await dialog.getByRole("table").boundingBox())!,
+            ),
+        ).toBe(false);
+        await page.screenshot({ path: `test-results/economic-screening-presentation/${layout.name}-paste.png` });
+        await page.keyboard.press("Escape");
+        await expect(dialog).toHaveCount(0);
+    }
+    expect(fixtures.vectorDataRequests.sort()).toEqual(["FGST", "FOPT"]);
+    expect(fixtures.unexpectedApiRequests).toEqual([]);
 });

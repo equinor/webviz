@@ -16,6 +16,8 @@ export type SectionProps = {
     adornment?: React.ReactNode;
     /** When true, the section starts in the open state. */
     defaultOpen?: boolean;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
     /** When true, prevents the section from being opened or closed. */
     disabled?: boolean;
     /** The settings content rendered inside the collapsible panel. */
@@ -38,6 +40,8 @@ export function Section(props: SectionProps) {
     return (
         <Collapsible.Root
             defaultOpen={props.defaultOpen}
+            open={props.open}
+            onOpenChange={props.onOpenChange}
             disabled={disabled}
             className="group/settingsSection contents"
         >

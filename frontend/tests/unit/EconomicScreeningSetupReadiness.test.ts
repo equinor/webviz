@@ -99,11 +99,20 @@ describe("getSetupReadiness", () => {
         expect(getSetupReadiness(readyInput())).toEqual({
             isLoading: false,
             issues: [
-                { kind: SetupIssueKind.INPUT, message: "Enter a prediction start year." },
-                { kind: SetupIssueKind.INPUT, message: "Enter an oil price, or 0 to omit oil revenue." },
-                { kind: SetupIssueKind.INPUT, message: "Enter a gas price, or 0 to omit gas revenue." },
+                { kind: SetupIssueKind.INPUT, message: "Enter a prediction start year.", field: "predictionYear" },
                 {
                     kind: SetupIssueKind.INPUT,
+                    message: "Enter an oil price, or 0 to omit oil revenue.",
+                    field: "oilPrice",
+                },
+                {
+                    kind: SetupIssueKind.INPUT,
+                    message: "Enter a gas price, or 0 to omit gas revenue.",
+                    field: "gasPrice",
+                },
+                {
+                    kind: SetupIssueKind.INPUT,
+                    field: "consumption",
                     message:
                         "Gas consumption (FGCT) is missing: accept “Assume no gas consumption” or enter a gas price of 0.",
                 },
@@ -189,7 +198,9 @@ describe("getSetupReadiness", () => {
         });
         expect(getSetupReadiness(loading)).toEqual({
             isLoading: true,
-            issues: [{ kind: SetupIssueKind.INPUT, message: "Enter a prediction start year." }],
+            issues: [
+                { kind: SetupIssueKind.INPUT, message: "Enter a prediction start year.", field: "predictionYear" },
+            ],
         });
         const dataLoading = readyInput({
             snapshot: {
@@ -295,6 +306,7 @@ describe("getSetupReadiness", () => {
             {
                 kind: SetupIssueKind.SOURCE,
                 message: "Sales gas is unavailable: enter a gas price of 0 to calculate without gas revenue.",
+                field: "gasPrice",
             },
         ]);
         expect(messages({ ...unavailable, gasPrice: 0 })).toEqual([]);
@@ -316,6 +328,7 @@ describe("getSetupReadiness", () => {
             {
                 kind: SetupIssueKind.SOURCE,
                 message: "The prediction start year 2021 is after the supported simulation end (Jun 2020).",
+                field: "predictionYear",
             },
         ]);
     });

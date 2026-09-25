@@ -10,11 +10,15 @@ export function CostProfileEditorHarness({
     isDelta = false,
     startYear = 2020,
     endYear = 2022,
+    ensembleKey = "regular-a",
+    isHorizonLoading = false,
 }: {
     initialCostProfile?: CostProfileEntry[];
     isDelta?: boolean;
     startYear?: number | null;
     endYear?: number | null;
+    ensembleKey?: string;
+    isHorizonLoading?: boolean;
 }) {
     const [costProfile, setCostProfile] = useState<CostProfileEntry[]>(initialCostProfile);
     const [isReady, setIsReady] = useState(true);
@@ -27,6 +31,8 @@ export function CostProfileEditorHarness({
                 isDelta={isDelta}
                 startYear={startYear}
                 endYear={endYear}
+                ensembleKey={ensembleKey}
+                isHorizonLoading={isHorizonLoading}
                 onValueChange={setCostProfile}
                 onValidityChange={setIsReady}
             />

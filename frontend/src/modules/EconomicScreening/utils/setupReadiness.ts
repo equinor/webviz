@@ -133,7 +133,17 @@ export enum SetupIssueKind {
     SOURCE = "SOURCE",
 }
 
-export type SetupIssue = { kind: SetupIssueKind; message: string };
+export type SetupField =
+    | "ensemble"
+    | "predictionYear"
+    | "oilPrice"
+    | "gasPrice"
+    | "injection"
+    | "consumption"
+    | "costs"
+    | "earlyYear";
+
+export type SetupIssue = { kind: SetupIssueKind; message: string; field?: SetupField };
 
 export type ProductSupport = {
     /** Every selected realization has the product established and zero in every evaluated month. */
@@ -242,12 +252,17 @@ function missingComponentMessage(componentLabel: string, checkboxLabel: string, 
  */
 export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
     if (!input.hasEnsemble) {
-        return { isLoading: false, issues: [{ kind: SetupIssueKind.INPUT, message: "Select an ensemble." }] };
+        return {
+            isLoading: false,
+            issues: [{ kind: SetupIssueKind.INPUT, message: "Select an ensemble.", field: "ensemble" }],
+        };
     }
     const { snapshot, requirement, predictionStartYear, oilPrice, gasPrice } = input;
     const issues: SetupIssue[] = [];
-    const addInput = (message: string) => issues.push({ kind: SetupIssueKind.INPUT, message });
-    const addSource = (message: string) => issues.push({ kind: SetupIssueKind.SOURCE, message });
+    const addInput = (message: string, field: SetupField) =>
+        issues.push({ kind: SetupIssueKind.INPUT, message, field });
+    const addSource = (message: string, field?: SetupField) =>
+        issues.push({ kind: SetupIssueKind.SOURCE, message, ...(field && { field }) });
 
     const isLoading =
         input.vectorListStatus === "LOADING" || snapshot.status === SourceStatus.LOADING || snapshot.isFetching;
@@ -260,11 +275,11 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
         monthIndexOf(predictionStartYear, 1) <= envelopeEndMonthIndex;
 
     if (predictionStartYear === null) {
-        addInput("Enter a prediction start year.");
+        addInput("Enter a prediction start year.", "predictionYear");
     } else if (isReady) {
         const horizonError = getPredictionHorizonError(predictionStartYear, envelopeEndMonthIndex);
         if (horizonError) {
-            addSource(horizonError);
+            addSource(horizonError, "predictionYear");
         }
     }
 
@@ -294,7 +309,7 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
             }
         } else {
             if (isFinancial && oilPrice === null && !support?.oil.isConfirmedAbsent) {
-                addInput("Enter an oil price, or 0 to omit oil revenue.");
+                addInput("Enter an oil price, or 0 to omit oil revenue.", "oilPrice");
             }
             if (
                 needsOilCoverage &&
@@ -314,11 +329,14 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
             if (needsGasVolume) {
                 addSource("Sales gas is unavailable: neither FGST nor FGPT is available.");
             } else if (gasRevenueNeedsSource) {
-                addSource("Sales gas is unavailable: enter a gas price of 0 to calculate without gas revenue.");
+                addSource(
+                    "Sales gas is unavailable: enter a gas price of 0 to calculate without gas revenue.",
+                    "gasPrice",
+                );
             }
         } else {
             if (gasRevenueNeedsSource && gasPrice === null && !support?.gas.isConfirmedAbsent) {
-                addInput("Enter a gas price, or 0 to omit gas revenue.");
+                addInput("Enter a gas price, or 0 to omit gas revenue.", "gasPrice");
             }
             let hasUnresolvedComponent = false;
             if (strategy.kind === "DERIVED" && needsGasSource) {
@@ -327,12 +345,14 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
                     hasUnresolvedComponent = true;
                     addInput(
                         missingComponentMessage("Gas injection (FGIT)", "Assume no gas injection", needsGasVolume),
+                        "injection",
                     );
                 }
                 if (!strategy.hasGasConsumption && !assumptions?.assumeMissingConsumptionAsZero) {
                     hasUnresolvedComponent = true;
                     addInput(
                         missingComponentMessage("Gas consumption (FGCT)", "Assume no gas consumption", needsGasVolume),
+                        "consumption",
                     );
                 }
             }
@@ -367,7 +387,7 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
     }
 
     if (needsGasRevenue && !input.isCostProfileDraftValid) {
-        addInput("Finish or correct the cost schedule.");
+        addInput("Finish or correct the cost schedule.", "costs");
     }
     if (
         requirement === ResultRequirement.BREAK_EVEN &&
@@ -375,13 +395,13 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
         evaluationEndYear !== null &&
         !hasIncludedNonZeroCost(input.costProfile, predictionStartYear, evaluationEndYear)
     ) {
-        addInput("Enter a non-zero CAPEX or OPEX within the evaluation.");
+        addInput("Enter a non-zero CAPEX or OPEX within the evaluation.", "costs");
     }
 
     if (input.earlyValue.enabled) {
         const earlyEndYear = input.earlyValue.endYear;
         if (earlyEndYear === null) {
-            addInput("Early value: enter a Calculate through year.");
+            addInput("Early value: enter a Calculate through year.", "earlyYear");
         } else if (
             isStartWithinSource &&
             evaluationEndYear !== null &&
@@ -389,6 +409,7 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
         ) {
             addInput(
                 `Early value: choose a Calculate through year within ${predictionStartYear}-${evaluationEndYear}.`,
+                "earlyYear",
             );
         }
     }

@@ -162,6 +162,7 @@ export type EconomicScreeningModuleHarnessProps = {
     settingsOpen: boolean;
     viewWidth: number;
     viewHeight: number;
+    settingsWidth?: number;
     initialState?: EconomicScreeningHarnessInitialState;
     /** Workbench realization filter; null or absent keeps every realization. */
     filteredRealizations?: number[] | null;
@@ -180,10 +181,10 @@ export function EconomicScreeningModuleHarness(props: EconomicScreeningModuleHar
             filtered === null
                 ? null
                 : {
-                      filterSet: {
-                          getRealizationFilterForEnsembleIdent: () => ({ getFilteredRealizations: () => filtered }),
-                      } as unknown as RealizationFilterSet,
-                  },
+                    filterSet: {
+                        getRealizationFilterForEnsembleIdent: () => ({ getFilteredRealizations: () => filtered }),
+                    } as unknown as RealizationFilterSet,
+                },
         );
     }, [store, filterKey]);
 
@@ -193,6 +194,7 @@ export function EconomicScreeningModuleHarness(props: EconomicScreeningModuleHar
 
     useEffect(() => {
         // Lets the test read the contents the view has published on the instance's own channels.
+        (window as unknown as Record<string, unknown>).readEconomicScreeningCosts = () => store.get(costProfileAtom);
         (window as unknown as Record<string, unknown>).readEconomicScreeningChannels = () =>
             instance
                 .getChannelManager()
@@ -205,7 +207,7 @@ export function EconomicScreeningModuleHarness(props: EconomicScreeningModuleHar
                             content.getDataArray().map((element) => ({ key: element.key, value: element.value })),
                         ),
                 }));
-    }, [instance]);
+    }, [instance, store]);
 
     const SettingsComponent = module.settingsFC;
     const ViewComponent = module.viewFC;
@@ -219,7 +221,11 @@ export function EconomicScreeningModuleHarness(props: EconomicScreeningModuleHar
         <Provider store={store}>
             <div className="flex gap-2 bg-white p-2">
                 {props.settingsOpen && (
-                    <section aria-label="Module settings" className="h-[640px] w-80 shrink-0 overflow-auto border">
+                    <section
+                        aria-label="Module settings"
+                        className="h-[640px] shrink-0 overflow-auto border"
+                        style={{ width: props.settingsWidth ?? 320 }}
+                    >
                         <SettingsComponent
                             {...(commonProps as unknown as Omit<ModuleSettingsProps<Interfaces>, "settingsContext">)}
                             settingsContext={instance.getContext()}

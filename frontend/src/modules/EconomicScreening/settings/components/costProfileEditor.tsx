@@ -1,7 +1,12 @@
 import React from "react";
 
+import { ContentPaste } from "@mui/icons-material";
+
+import { Button } from "@lib/components/Button";
+import { Dialog } from "@lib/components/Dialog";
 import { NumberInput } from "@lib/components/NumberInput";
 import { Table } from "@lib/components/Table";
+import { TextArea } from "@lib/components/TextArea";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import type { CostProfileEntry } from "@modules/EconomicScreening/typesAndEnums";
 import { hasIncludedNonZeroCost } from "@modules/EconomicScreening/utils/setupReadiness";
@@ -19,6 +24,7 @@ export type CostProfileEditorProps = {
     startYear: number | null;
     endYear: number | null;
     isHorizonLoading?: boolean;
+    ensembleKey?: string;
     onValueChange: (costProfile: CostProfileEntry[]) => void;
     onValidityChange: (isValid: boolean) => void;
 };
@@ -127,13 +133,22 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
     const [immediateValue, setImmediateValue] = React.useState<CostProfileEntry[]>(() => sortedByYear(value));
     const [previousValue, setPreviousValue] = React.useState<CostProfileEntry[]>(value);
     const [pasteError, setPasteError] = React.useState<string | null>(null);
+    const [pasteDraft, setPasteDraft] = React.useState<{ text: string; ensembleKey: string | undefined } | null>(null);
+    const pasteButtonRef = React.useRef<HTMLButtonElement>(null);
+
+    if (
+        pasteDraft &&
+        (pasteDraft.ensembleKey !== props.ensembleKey || startYear === null || endYear === null || startYear > endYear)
+    ) {
+        setPasteDraft(null);
+    }
 
     const debouncedOnValueChange = useDebouncedFunction(onValueChange, COST_INPUT_DEBOUNCE_MS);
 
     React.useEffect(() => {
         onValidityChange(
             validateCostProfile(immediateValue, isDelta) === null &&
-                costProfilesMatch(immediateValue, sortedByYear(value)),
+            costProfilesMatch(immediateValue, sortedByYear(value)),
         );
     }, [immediateValue, isDelta, onValidityChange, value]);
 
@@ -178,6 +193,35 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
         );
     }
 
+    function pastePreview() {
+        if (!pasteDraft || pasteDraft.ensembleKey !== props.ensembleKey)
+            return { error: "Paste costs for the current ensemble." };
+        if (startYear === null || endYear === null || startYear > endYear || props.isHorizonLoading)
+            return { error: "Cost years must be available before applying costs." };
+        const parsed = parseCostProfilePaste(pasteDraft.text);
+        if ("error" in parsed) return parsed;
+        if (parsed.entries.length === 0) return { error: "Paste at least one year of costs." };
+        const error =
+            validatePastedCostYears(parsed.entries, startYear, endYear) ?? validateCostProfile(parsed.entries, isDelta);
+        if (error) return { error };
+        const updated = parsed.entries.reduce(
+            (profile, entry) => setCostEntry(profile, entry as CostProfileEntry),
+            immediateValue,
+        );
+        const scheduleError = validateCostProfile(updated, isDelta);
+        return scheduleError ? { error: scheduleError } : { entries: parsed.entries, updated };
+    }
+
+    function applyPaste() {
+        const preview = pastePreview();
+        if ("error" in preview) return;
+        debouncedOnValueChange.cancel();
+        setImmediateValue(preview.updated);
+        setPasteError(null);
+        onValueChange(preview.updated);
+        setPasteDraft(null);
+    }
+
     const excludedCostYears = getCostYearsOutsideRange(immediateValue, startYear, endYear);
     const excludedNotice = excludedCostYears.length > 0 && (
         <span className="text-body-xs text-warning" role="status">
@@ -194,10 +238,10 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
                     {startYear === null
                         ? "Enter a prediction start year to generate cost years."
                         : props.isHorizonLoading
-                          ? "Cost years are generated when the simulation data has loaded."
-                          : endYear === null
-                            ? "Cost years are unavailable until source coverage establishes the simulation end."
-                            : `The prediction start year is after the simulation end (${endYear}).`}
+                            ? "Cost years are generated when the simulation data has loaded."
+                            : endYear === null
+                                ? "Cost years are unavailable until source coverage establishes the simulation end."
+                                : `The prediction start year is after the simulation end (${endYear}).`}
                 </span>
                 {excludedNotice}
             </div>
@@ -207,23 +251,43 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
     const years = Array.from({ length: endYear - startYear + 1 }, (_, index) => startYear + index);
     const entryByYear = new Map(immediateValue.map((entry) => [entry.year, entry]));
     const validationError = validateCostProfile(immediateValue, isDelta);
+    const preview = pastePreview();
 
     return (
-        <div className="gap-y-xs flex flex-col items-start" onPaste={handlePaste}>
-            <span className="text-body-xs text-subtle">
-                {isDelta
-                    ? "Costs are comparison minus reference; negative values are savings. Blank cells are zero."
-                    : "Blank cells are zero. Paste year, CAPEX and OPEX columns to fill several years."}
-            </span>
-            <Table.Root size="small" compact maxHeight={260}>
+        <div className="gap-y-xs flex w-full min-w-0 flex-col">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-body-xs text-subtle">
+                    {isDelta ? "Signed changes; blank is zero." : "Blank is zero."}
+                </span>
+                <Button
+                    ref={pasteButtonRef}
+                    variant="ghost"
+                    size="small"
+                    icon={<ContentPaste />}
+                    onClick={() => setPasteDraft({ text: "", ensembleKey: props.ensembleKey })}
+                >
+                    Paste costs...
+                </Button>
+            </div>
+            <Table.Root
+                size="small"
+                compact
+                fixed
+                width="100%"
+                maxHeight={260}
+                onPaste={handlePaste}
+                layoutClassName="[&_input]:text-right [&_th]:whitespace-normal [&_td]:min-w-0"
+            >
                 <Table.Head>
                     <Table.Row>
-                        <Table.Cell colKey="year">Year</Table.Cell>
+                        <Table.Cell colKey="year" widthInPercent={18}>
+                            Year
+                        </Table.Cell>
                         <Table.Cell colKey="capex">
-                            {isDelta ? "Change in investment" : "Investment (CAPEX)"} [{props.currency}]
+                            {isDelta ? "Delta CAPEX" : "CAPEX"} [{props.currency}]
                         </Table.Cell>
                         <Table.Cell colKey="opex">
-                            {isDelta ? "Change in operating cost" : "Operating cost (OPEX)"} [{props.currency}]
+                            {isDelta ? "Delta OPEX" : "OPEX"} [{props.currency}]
                         </Table.Cell>
                     </Table.Row>
                 </Table.Head>
@@ -238,6 +302,7 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
                                 <Table.Cell>
                                     <NumberInput
                                         size="small"
+                                        layoutClassName="min-w-0"
                                         aria-label={`CAPEX ${year}`}
                                         value={entry?.capex ? entry.capex : null}
                                         placeholder="0"
@@ -249,6 +314,7 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
                                 <Table.Cell>
                                     <NumberInput
                                         size="small"
+                                        layoutClassName="min-w-0"
                                         aria-label={`OPEX ${year}`}
                                         value={entry?.opex ? entry.opex : null}
                                         placeholder="0"
@@ -273,6 +339,88 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
                 </span>
             )}
             {excludedNotice}
+            <Dialog.Popup
+                open={pasteDraft !== null && pasteDraft.ensembleKey === props.ensembleKey}
+                onOpenChange={(open) => {
+                    if (!open) setPasteDraft(null);
+                }}
+                width="min(640px, calc(100vw - 32px))"
+                height="min(680px, calc(100vh - 32px))"
+                finalFocus={pasteButtonRef}
+            >
+                <Dialog.Header>
+                    <Dialog.Title>Paste costs</Dialog.Title>
+                    <Dialog.Close />
+                </Dialog.Header>
+                <Dialog.Body layoutClassName="min-h-0 grow overflow-y-auto">
+                    <div className="flex min-w-0 flex-col gap-3">
+                        <Dialog.Description>
+                            Paste three tab-separated columns: Year, CAPEX, OPEX. No header row or thousands separators;
+                            use plain numeric values. Empty costs are zero.{" "}
+                            {isDelta ? "Signed delta costs are allowed." : "Costs must be non-negative."} Amounts are in{" "}
+                            {props.currency}.
+                        </Dialog.Description>
+                        <TextArea
+                            aria-label="Year, CAPEX, OPEX rows"
+                            rows={5}
+                            value={pasteDraft?.text ?? ""}
+                            placeholder={`${startYear}\t1000\t200\n${Math.min(startYear + 1, endYear)}\t0\t200`}
+                            onChange={(event) =>
+                                setPasteDraft({ text: event.target.value, ensembleKey: props.ensembleKey })
+                            }
+                        />
+                        {pasteDraft?.text && "error" in preview && (
+                            <span role="alert" className="text-body-xs text-danger">
+                                {preview.error}
+                            </span>
+                        )}
+                        {"entries" in preview && (
+                            <>
+                                <span className="text-body-xs">
+                                    Preview: {preview.entries.length} years. Apply replaces both amounts for these
+                                    years; other stored years are kept.
+                                </span>
+                                <Table.Root
+                                    size="small"
+                                    fixed
+                                    width="100%"
+                                    maxHeight={220}
+                                    aria-label="Cost paste preview"
+                                >
+                                    <Table.Head>
+                                        <Table.Row>
+                                            <Table.Cell>Year</Table.Cell>
+                                            <Table.Cell>CAPEX [{props.currency}]</Table.Cell>
+                                            <Table.Cell>OPEX [{props.currency}]</Table.Cell>
+                                        </Table.Row>
+                                    </Table.Head>
+                                    <Table.Body>
+                                        {preview.entries.map((entry) => (
+                                            <Table.Row key={entry.year}>
+                                                <Table.Cell>{entry.year}</Table.Cell>
+                                                <Table.Cell layoutClassName="text-right">{entry.capex}</Table.Cell>
+                                                <Table.Cell layoutClassName="text-right">{entry.opex}</Table.Cell>
+                                            </Table.Row>
+                                        ))}
+                                    </Table.Body>
+                                </Table.Root>
+                            </>
+                        )}
+                    </div>
+                </Dialog.Body>
+                <Dialog.Actions>
+                    <Button variant="ghost" onClick={() => setPasteDraft(null)}>
+                        Cancel
+                    </Button>
+                    <Button
+                        disabled={!("entries" in preview)}
+                        aria-disabled={!("entries" in preview)}
+                        onClick={applyPaste}
+                    >
+                        Apply
+                    </Button>
+                </Dialog.Actions>
+            </Dialog.Popup>
         </div>
     );
 }

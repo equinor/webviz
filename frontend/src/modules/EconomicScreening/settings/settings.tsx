@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
@@ -35,7 +35,7 @@ import {
 } from "../typesAndEnums";
 import { getMeasureDisplayName } from "../utils/measureAccessors";
 import { monthIndexOf } from "../utils/monthlyProduction";
-import { getResultRequirement, getSetupReadiness } from "../utils/setupReadiness";
+import { getResultRequirement, getSetupReadiness, type SetupField } from "../utils/setupReadiness";
 import type { MissingComponentAssumptions, SalesGasStrategy } from "../utils/vectorResolution";
 import { CalculationHelpDialog } from "../view/components/calculationHelpDialog";
 
@@ -77,6 +77,17 @@ import { SetupSummary } from "./components/setupSummary";
 
 const NUMBER_INPUT_DEBOUNCE_MS = 500;
 
+const FIELD_SECTIONS: Record<SetupField, string> = {
+    ensemble: "Data and valuation",
+    predictionYear: "Data and valuation",
+    oilPrice: "Prices",
+    gasPrice: "Prices",
+    injection: "Prices",
+    consumption: "Prices",
+    costs: "Costs",
+    earlyYear: "Early cash-flow comparison",
+};
+
 const DISTRIBUTION_PLOT_TYPE_ITEMS = [DistributionPlotType.EXCEEDANCE, DistributionPlotType.HISTOGRAM].map((value) => ({
     value,
     label: DistributionPlotTypeEnumToStringMapping[value],
@@ -87,6 +98,34 @@ function toCalendarYear(value: number | null): number | null {
 }
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
+    const settingsRef = useRef<HTMLDivElement>(null);
+    const [closedSections, setClosedSections] = useState<string[]>([]);
+    const [focusTarget, setFocusTarget] = useState<SetupField | null>(null);
+
+    useEffect(() => {
+        if (!focusTarget) return;
+        const frame = requestAnimationFrame(() => {
+            const field = settingsRef.current?.querySelector(`.setup-field-${focusTarget}`);
+            const input =
+                field?.querySelector<HTMLElement>("input, [role=checkbox]") ??
+                field?.querySelector<HTMLElement>("button");
+            input?.focus();
+            input?.scrollIntoView({ block: "center" });
+            setFocusTarget(null);
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [focusTarget]);
+
+    function sectionProps(title: string) {
+        return {
+            title,
+            open: !closedSections.includes(title),
+            onOpenChange: (open: boolean) =>
+                setClosedSections((current) =>
+                    open ? current.filter((section) => section !== title) : [...current, title],
+                ),
+        };
+    }
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
@@ -218,9 +257,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
         .map((realization) => ({ value: realization, label: realization.toString() }));
     const selectedMissingComponentAssumptions =
         missingComponentAssumptionsByEnsemble[selectedEnsembleIdent.value?.toString() ?? ""];
-    const hasMissingGasComponent =
-        salesGasStrategy.kind === "DERIVED" &&
-        (!salesGasStrategy.hasGasInjection || !salesGasStrategy.hasGasConsumption);
 
     const setupReadiness = getSetupReadiness({
         hasEnsemble: selectedEnsembleIdent.value !== null,
@@ -241,346 +277,387 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
         resultMode === ResultMode.TIME_PROFILE
             ? CashFlowProfileTypeEnumToStringMapping[cashFlowProfileType].toLowerCase()
             : resultMode === ResultMode.ALL_RESULTS
-              ? "all results"
-              : getMeasureDisplayName(selectedMeasure, isDeltaEnsembleSelected).toLowerCase();
+                ? "all results"
+                : getMeasureDisplayName(selectedMeasure, isDeltaEnsembleSelected).toLowerCase();
     const envelopeEndMonthIndex = sourceSnapshot.envelopeEndMonthIndex;
     const isPredictionStartAfterSource =
         predictionStartYear !== null &&
         envelopeEndMonthIndex !== null &&
         monthIndexOf(predictionStartYear, 1) > envelopeEndMonthIndex;
 
-    return (
-        <Setting.ScrollArea>
-            <Setting.Panel>
-                <SetupSummary readiness={setupReadiness} resultLabel={resultLabel} />
-                <Setting.Section title="Data and valuation" defaultOpen>
-                    <div className="flex justify-end">
-                        <CalculationHelpDialog />
-                    </div>
-                    <Setting.Field label="Ensemble" annotations={selectedEnsembleIdentAnnotations} stacked>
-                        <EnsembleDropdown
-                            ensembles={ensembleSet.getEnsembleArray()}
-                            allowDeltaEnsembles={true}
-                            value={selectedEnsembleIdent.value}
-                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                            onValueChange={handleEnsembleChange}
-                        />
-                    </Setting.Field>
-                    <Setting.Field
-                        label="Prediction start year"
-                        help={{
-                            title: "Prediction start year",
-                            content:
-                                "Required. Evaluation and valuation both start on 1 January of this year and run through the supported simulation end. It may precede production to include forecast investment. Suggestions are years with source data from 1 January for the full ensemble, including covered years without production; any whole year can be typed. The historical simulation start is not suggested as a default.",
-                        }}
-                        contentClassName="flex flex-col gap-y-3xs"
-                        stacked
-                    >
-                        <>
-                            <PredictionYearSelector
-                                value={predictionStartYear}
-                                suggestedYears={predictionStartYearSuggestions}
-                                isLoading={sourceHorizon.isLoading}
-                                onValueChange={setPredictionStartYear}
-                            />
-                            {predictionStartYear !== null && !isPredictionStartAfterSource && (
-                                <span className="text-body-xs text-subtle">
-                                    Valuation: 1 January {predictionStartYear}
-                                </span>
-                            )}
-                        </>
-                    </Setting.Field>
-                    <Setting.Field
-                        label="Discount rate [%]"
-                        help={{
-                            title: "Discount rate",
-                            content: "Annual rate used to discount future volumes and cash flow to the valuation date.",
-                        }}
-                    >
-                        <NumberInput
-                            value={immediateDiscountRate}
-                            min={0}
-                            max={25}
-                            step={1}
-                            onValueChange={(newValue) => setImmediateDiscountRate(newValue ?? 0)}
-                        />
-                    </Setting.Field>
-                </Setting.Section>
+    function fieldAnnotation(field: SetupField) {
+        return (
+            setupReadiness.issues
+                .filter((issue) => issue.field === field)
+                .map((issue) => issue.message)
+                .join(" ") || undefined
+        );
+    }
 
-                <Setting.Section title="Prices" defaultOpen>
-                    <Setting.Field
-                        label="Currency"
-                        help={{
-                            title: "Currency",
-                            content:
-                                "Enter all prices and costs in this currency. Changing it does not convert entered values.",
-                        }}
-                    >
-                        <NamedRadioGroup
-                            value={currency}
-                            options={Object.values(Currency).map((value) => ({ value, label: value }))}
-                            onValueChange={handleCurrencyChange}
-                        />
-                    </Setting.Field>
-                    {hasOilProductionVector && (
+    return (
+        <div ref={settingsRef} className="flex h-full min-h-0 min-w-0 flex-col [&_input]:scroll-mt-12">
+            <SetupSummary
+                readiness={setupReadiness}
+                resultLabel={resultLabel}
+                onIssueClick={(field) => {
+                    setClosedSections((current) => current.filter((section) => section !== FIELD_SECTIONS[field]));
+                    setFocusTarget(field);
+                }}
+            />
+            <Setting.ScrollArea className="flex-1">
+                <Setting.Panel>
+                    <Setting.Section {...sectionProps("Data and valuation")}>
+                        <div className="flex justify-end">
+                            <CalculationHelpDialog />
+                        </div>
                         <Setting.Field
-                            label={`Oil price [${currency} ${OilPriceBasisEnumToStringMapping[oilPriceBasis]}]`}
+                            label="Ensemble"
+                            annotations={[
+                                ...selectedEnsembleIdentAnnotations,
+                                ...(fieldAnnotation("ensemble")
+                                    ? [{ type: "warning" as const, message: fieldAnnotation("ensemble")! }]
+                                    : []),
+                            ]}
+                            contentClassName="setup-field-ensemble"
+                            stacked
+                        >
+                            <EnsembleDropdown
+                                ensembles={ensembleSet.getEnsembleArray()}
+                                allowDeltaEnsembles={true}
+                                value={selectedEnsembleIdent.value}
+                                ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(
+                                    props.workbenchSession,
+                                )}
+                                onValueChange={handleEnsembleChange}
+                            />
+                        </Setting.Field>
+                        <Setting.Field
+                            label="Prediction start year"
                             help={{
-                                title: "Oil price",
+                                title: "Prediction start year",
                                 content:
-                                    "Constant oil sales price over the evaluation. Blank means unspecified; enter 0 to intentionally omit oil revenue. A price of 0 does not turn missing oil data into zero volume. Volume results and break-even oil price do not need an oil price.",
+                                    "Required. Evaluation and valuation both start on 1 January of this year and run through the supported simulation end. It may precede production to include forecast investment. Suggestions are years with source data from 1 January for the full ensemble, including covered years without production; any whole year can be typed. The historical simulation start is not suggested as a default.",
                             }}
-                            contentClassName="flex gap-x-xs"
+                            contentClassName="setup-field-predictionYear flex flex-col gap-y-3xs"
+                            warningAnnotation={fieldAnnotation("predictionYear")}
+                            stacked
+                        >
+                            <>
+                                <PredictionYearSelector
+                                    value={predictionStartYear}
+                                    suggestedYears={predictionStartYearSuggestions}
+                                    isLoading={sourceHorizon.isLoading}
+                                    onValueChange={setPredictionStartYear}
+                                />
+                                {predictionStartYear !== null && !isPredictionStartAfterSource && (
+                                    <span className="text-body-xs text-subtle">
+                                        Valuation: 1 January {predictionStartYear}
+                                    </span>
+                                )}
+                            </>
+                        </Setting.Field>
+                        <Setting.Field
+                            label="Discount rate [%]"
+                            stacked
+                            contentClassName="max-w-40"
+                            help={{
+                                title: "Discount rate",
+                                content:
+                                    "Annual rate used to discount future volumes and cash flow to the valuation date.",
+                            }}
+                        >
+                            <NumberInput
+                                value={immediateDiscountRate}
+                                layoutClassName="[&_input]:text-right"
+                                min={0}
+                                max={25}
+                                step={1}
+                                onValueChange={(newValue) => setImmediateDiscountRate(newValue ?? 0)}
+                            />
+                        </Setting.Field>
+                    </Setting.Section>
+
+                    <Setting.Section {...sectionProps("Prices")}>
+                        <Setting.Field
+                            label="Currency"
+                            stacked
+                            help={{
+                                title: "Currency",
+                                content:
+                                    "Enter all prices and costs in this currency. Changing it does not convert entered values.",
+                            }}
+                        >
+                            <NamedRadioGroup
+                                value={currency}
+                                options={Object.values(Currency).map((value) => ({ value, label: value }))}
+                                onValueChange={handleCurrencyChange}
+                            />
+                        </Setting.Field>
+                        {hasOilProductionVector && (
+                            <Setting.Field
+                                label={`Oil price [${currency} ${OilPriceBasisEnumToStringMapping[oilPriceBasis]}]`}
+                                help={{
+                                    title: "Oil price",
+                                    content:
+                                        "Constant oil sales price over the evaluation. Blank means unspecified; enter 0 to intentionally omit oil revenue. A price of 0 does not turn missing oil data into zero volume. Volume results and break-even oil price do not need an oil price.",
+                                }}
+                                contentClassName="setup-field-oilPrice flex gap-x-xs [&>div]:min-w-0"
+                                warningAnnotation={fieldAnnotation("oilPrice")}
+                                stacked
+                            >
+                                <>
+                                    <NumberInput
+                                        value={immediateOilPrice}
+                                        layoutClassName="[&_input]:text-right"
+                                        placeholder="Enter price"
+                                        onValueChange={setImmediateOilPrice}
+                                    />
+                                    <div className="w-32 shrink-0">
+                                        <Combobox
+                                            items={Object.values(OilPriceBasis).map((value) => ({
+                                                value,
+                                                label: OilPriceBasisEnumToStringMapping[value],
+                                            }))}
+                                            value={oilPriceBasis}
+                                            onValueChange={handleOilPriceBasisChange}
+                                        />
+                                    </div>
+                                </>
+                            </Setting.Field>
+                        )}
+                        <Setting.Field
+                            label={`Gas price [${currency} ${GasPriceBasisEnumToStringMapping[gasPriceBasis]}]`}
+                            help={{
+                                title: "Gas price",
+                                content:
+                                    "Constant sales-gas price over the evaluation. Blank means unspecified; enter 0 to intentionally omit gas revenue. A price of 0 does not turn missing gas data into zero volume, and sales-gas volume results still need the gas source. Volume results do not need a price.",
+                            }}
+                            contentClassName="setup-field-gasPrice flex gap-x-xs [&>div]:min-w-0"
+                            warningAnnotation={fieldAnnotation("gasPrice")}
+                            infoAnnotation={
+                                gasPrice === 0
+                                    ? "Gas revenue excluded; gas-volume outputs still require resolved gas data."
+                                    : undefined
+                            }
                             stacked
                         >
                             <>
                                 <NumberInput
-                                    value={immediateOilPrice}
+                                    value={immediateGasPrice}
+                                    layoutClassName="[&_input]:text-right"
                                     placeholder="Enter price"
-                                    onValueChange={setImmediateOilPrice}
+                                    onValueChange={setImmediateGasPrice}
                                 />
                                 <div className="w-32 shrink-0">
                                     <Combobox
-                                        items={Object.values(OilPriceBasis).map((value) => ({
+                                        items={Object.values(GasPriceBasis).map((value) => ({
                                             value,
-                                            label: OilPriceBasisEnumToStringMapping[value],
+                                            label: GasPriceBasisEnumToStringMapping[value],
                                         }))}
-                                        value={oilPriceBasis}
-                                        onValueChange={handleOilPriceBasisChange}
+                                        value={gasPriceBasis}
+                                        onValueChange={handleGasPriceBasisChange}
                                     />
                                 </div>
                             </>
                         </Setting.Field>
-                    )}
-                    <Setting.Field
-                        label={`Gas price [${currency} ${GasPriceBasisEnumToStringMapping[gasPriceBasis]}]`}
-                        help={{
-                            title: "Gas price",
-                            content:
-                                "Constant sales-gas price over the evaluation. Blank means unspecified; enter 0 to intentionally omit gas revenue. A price of 0 does not turn missing gas data into zero volume, and sales-gas volume results still need the gas source. Volume results do not need a price.",
-                        }}
-                        contentClassName="flex gap-x-xs"
-                        stacked
-                    >
-                        <>
-                            <NumberInput
-                                value={immediateGasPrice}
-                                placeholder="Enter price"
-                                onValueChange={setImmediateGasPrice}
-                            />
-                            <div className="w-32 shrink-0">
-                                <Combobox
-                                    items={Object.values(GasPriceBasis).map((value) => ({
-                                        value,
-                                        label: GasPriceBasisEnumToStringMapping[value],
-                                    }))}
-                                    value={gasPriceBasis}
-                                    onValueChange={handleGasPriceBasisChange}
-                                />
-                            </div>
-                        </>
-                    </Setting.Field>
-                    <Setting.Field
-                        label="Sales gas source"
-                        help={{ title: "Sales gas source", content: salesGasDescription }}
-                        loadingOverlay={vectorListQuery.isFetching}
-                        errorOverlay={vectorListQuery.isError ? "Could not load the vector list." : undefined}
-                        contentClassName="flex flex-col gap-y-3xs"
-                        stacked
-                    >
-                        <>
-                            <span className="text-sm">{makeSalesGasStatus(salesGasStrategy)}</span>
-                            {hasMissingGasComponent && (
-                                <span className="text-body-xs text-subtle">
-                                    A missing vector is not proof of zero. Accepting treats it as zero for this ensemble
-                                    only, which can increase sales gas and NPV.
-                                </span>
-                            )}
-                        </>
-                    </Setting.Field>
-                    {/* Label-less rows, so each checkbox is named by its own label rather than the field's. */}
-                    {salesGasStrategy.kind === "DERIVED" && !salesGasStrategy.hasGasInjection && (
-                        <Setting.Field>
-                            <CheckboxCompositions.WithLabel
-                                label="Assume no gas injection"
-                                checked={selectedMissingComponentAssumptions?.assumeMissingInjectionAsZero ?? false}
-                                onCheckedChange={(checked) =>
-                                    setMissingComponentAssumption("assumeMissingInjectionAsZero", checked)
-                                }
-                                size="small"
-                            />
-                        </Setting.Field>
-                    )}
-                    {salesGasStrategy.kind === "DERIVED" && !salesGasStrategy.hasGasConsumption && (
-                        <Setting.Field>
-                            <CheckboxCompositions.WithLabel
-                                label="Assume no gas consumption"
-                                checked={selectedMissingComponentAssumptions?.assumeMissingConsumptionAsZero ?? false}
-                                onCheckedChange={(checked) =>
-                                    setMissingComponentAssumption("assumeMissingConsumptionAsZero", checked)
-                                }
-                                size="small"
-                            />
-                        </Setting.Field>
-                    )}
-                </Setting.Section>
-
-                <Setting.Section title="Costs" defaultOpen>
-                    <Setting.Field
-                        label={`CAPEX and OPEX per year [${currency}]`}
-                        help={{
-                            title: "Annual costs",
-                            content: isDeltaEnsembleSelected
-                                ? "One row per year from the prediction start through the simulation end. For a delta ensemble, costs are comparison minus reference; negative values are savings. Blank cells are zero. OPEX is paid in twelve equal monthly amounts; CAPEX at mid-year."
-                                : "One row per year from the prediction start through the simulation end. Blank cells are zero. Each year's OPEX is paid in twelve equal monthly amounts and CAPEX at mid-year; the full annual amount applies even in a final year that ends early.",
-                        }}
-                        stacked
-                    >
-                        <CostProfileEditor
-                            value={costProfile}
-                            currency={currency}
-                            isDelta={isDeltaEnsembleSelected}
-                            startYear={predictionStartYear}
-                            endYear={sourceHorizon.endYear}
-                            isHorizonLoading={sourceHorizon.isLoading}
-                            onValueChange={setCostProfile}
-                            onValidityChange={setIsCostProfileDraftValid}
-                        />
-                    </Setting.Field>
-                </Setting.Section>
-
-                <Setting.Section title="Results" defaultOpen>
-                    <Setting.Field
-                        label="Show"
-                        help={{
-                            title: "Results",
-                            content:
-                                "Chooses what the view displays. Display choices do not change calculations or published channels.",
-                        }}
-                        stacked
-                    >
-                        <NamedRadioGroup
-                            value={resultMode}
-                            options={Object.values(ResultMode).map((value) => ({
-                                value,
-                                label: ResultModeEnumToStringMapping[value],
-                            }))}
-                            onValueChange={setResultMode}
-                        />
-                    </Setting.Field>
-                    {resultMode === ResultMode.DISTRIBUTION && (
-                        <>
-                            <Setting.Field label="Measure" stacked>
-                                <Combobox
-                                    items={Object.values(EconomicMeasure).map((value) => ({
-                                        value,
-                                        label: EconomicMeasureEnumToStringMapping[value],
-                                    }))}
-                                    value={selectedMeasure}
-                                    onValueChange={(value) => value !== null && setSelectedMeasure(value)}
-                                />
-                            </Setting.Field>
-                            <Setting.Field label="Plot type" stacked>
-                                <Combobox<DistributionPlotType>
-                                    items={DISTRIBUTION_PLOT_TYPE_ITEMS}
-                                    value={distributionPlotType}
-                                    onValueChange={(value) => value !== null && setDistributionPlotType(value)}
-                                />
-                            </Setting.Field>
-                        </>
-                    )}
-                    {resultMode === ResultMode.TIME_PROFILE && (
-                        <Setting.Field label="Time profile" stacked>
-                            <Combobox<CashFlowProfileType>
-                                items={Object.values(CashFlowProfileType).map((value) => ({
-                                    value,
-                                    label: CashFlowProfileTypeEnumToStringMapping[value],
-                                }))}
-                                value={cashFlowProfileType}
-                                onValueChange={(value) => value !== null && setCashFlowProfileType(value)}
-                            />
-                        </Setting.Field>
-                    )}
-                    {resultMode !== ResultMode.DISTRIBUTION && (
                         <Setting.Field
-                            label="Realization"
+                            label="Sales gas source"
                             help={{
-                                title: "Realization",
-                                content:
-                                    "Highlights one realization over the aggregate. Clear the selection to show only the aggregate.",
+                                title: "Sales gas source",
+                                content: `${salesGasDescription} A missing vector is not proof of zero. Accepting treats it as zero for this ensemble only, which can increase sales gas and NPV.`,
+                            }}
+                            loadingOverlay={vectorListQuery.isFetching}
+                            errorOverlay={vectorListQuery.isError ? "Could not load the vector list." : undefined}
+                            contentClassName="flex flex-col gap-y-3xs"
+                            stacked
+                        >
+                            <>
+                                <span className="text-sm">{makeSalesGasStatus(salesGasStrategy)}</span>
+                            </>
+                        </Setting.Field>
+                        {/* Label-less rows, so each checkbox is named by its own label rather than the field's. */}
+                        {salesGasStrategy.kind === "DERIVED" && !salesGasStrategy.hasGasInjection && (
+                            <Setting.Field
+                                contentClassName="setup-field-injection"
+                                warningAnnotation={fieldAnnotation("injection")}
+                            >
+                                <CheckboxCompositions.WithLabel
+                                    label="Assume no gas injection"
+                                    checked={selectedMissingComponentAssumptions?.assumeMissingInjectionAsZero ?? false}
+                                    onCheckedChange={(checked) =>
+                                        setMissingComponentAssumption("assumeMissingInjectionAsZero", checked)
+                                    }
+                                    size="small"
+                                />
+                            </Setting.Field>
+                        )}
+                        {salesGasStrategy.kind === "DERIVED" && !salesGasStrategy.hasGasConsumption && (
+                            <Setting.Field
+                                contentClassName="setup-field-consumption"
+                                warningAnnotation={fieldAnnotation("consumption")}
+                            >
+                                <CheckboxCompositions.WithLabel
+                                    label="Assume no gas consumption"
+                                    checked={
+                                        selectedMissingComponentAssumptions?.assumeMissingConsumptionAsZero ?? false
+                                    }
+                                    onCheckedChange={(checked) =>
+                                        setMissingComponentAssumption("assumeMissingConsumptionAsZero", checked)
+                                    }
+                                    size="small"
+                                />
+                            </Setting.Field>
+                        )}
+                    </Setting.Section>
+
+                    <Setting.Section {...sectionProps("Costs")}>
+                        <Setting.Field
+                            label="Annual costs"
+                            contentClassName="setup-field-costs min-w-0"
+                            warningAnnotation={fieldAnnotation("costs")}
+                            help={{
+                                title: "Annual costs",
+                                content: isDeltaEnsembleSelected
+                                    ? "One row per year from the prediction start through the simulation end. For a delta ensemble, costs are comparison minus reference; negative values are savings. Blank cells are zero. OPEX is paid in twelve equal monthly amounts; CAPEX at mid-year. The full annual amount applies even in a final year that ends early."
+                                    : "One row per year from the prediction start through the simulation end. Blank cells are zero. Each year's OPEX is paid in twelve equal monthly amounts and CAPEX at mid-year; the full annual amount applies even in a final year that ends early.",
                             }}
                             stacked
                         >
-                            <Combobox<number>
-                                items={realizationItems}
-                                value={displayedRealization}
-                                onValueChange={handleRealizationChange}
-                                showClearAllButton
-                                placeholder="Aggregate"
+                            <CostProfileEditor
+                                ensembleKey={selectedEnsembleIdent.value?.toString()}
+                                value={costProfile}
+                                currency={currency}
+                                isDelta={isDeltaEnsembleSelected}
+                                startYear={predictionStartYear}
+                                endYear={sourceHorizon.endYear}
+                                isHorizonLoading={sourceHorizon.isLoading}
+                                onValueChange={setCostProfile}
+                                onValidityChange={setIsCostProfileDraftValid}
                             />
                         </Setting.Field>
-                    )}
+                    </Setting.Section>
 
-                    <Setting.Field
-                        help={{
-                            title: "Early value",
-                            content:
-                                "Optional. Accumulated discounted cash flow and volumes from 1 January of the prediction start year through the end of the chosen year, valued on the same date as the full evaluation. It is not remaining future value and does not move the valuation date. The final year stops at supported production coverage, while its full annual costs still apply. Full results are unchanged.",
-                        }}
-                    >
-                        <CheckboxCompositions.WithLabel
-                            label="Early value"
-                            checked={earlyValueConfiguration.enabled}
-                            onCheckedChange={(enabled) =>
-                                setEarlyValueConfiguration((current) => ({ ...current, enabled }))
-                            }
-                            size="small"
-                        />
-                    </Setting.Field>
-                    <Setting.Field
-                        label="Calculate through year"
-                        help={{
-                            title: "Calculate through year",
-                            content:
-                                "Inclusive last calendar year of the early value, within the evaluation years. Through the final evaluation year, it equals the full result for a fully eligible realization.",
-                        }}
-                        stacked
-                    >
-                        <NumberInput
-                            value={earlyValueConfiguration.endYear}
-                            placeholder="Enter year"
-                            min={1900}
-                            max={2200}
-                            step={1}
-                            format={{ useGrouping: false }}
-                            disabled={!earlyValueConfiguration.enabled}
-                            onValueChange={(endYear) =>
-                                setEarlyValueConfiguration((current) => ({
-                                    ...current,
-                                    endYear: toCalendarYear(endYear),
-                                }))
-                            }
-                        />
-                    </Setting.Field>
-                </Setting.Section>
-
-                <Setting.Section title="Advanced">
-                    <Setting.Field
-                        label="Fixed assumptions"
-                        help={{
-                            title: "Fixed assumptions",
-                            content:
-                                "Production, revenue and one twelfth of each year's OPEX are discounted at each month's midpoint; annual CAPEX at mid-year. Oil equivalents use SODIR's 1000 Sm3 gas per Sm3 oil equivalent after unit conversion.",
-                        }}
-                        stacked
-                    >
-                        <span className="text-body-xs">
-                            Monthly midpoint production, revenue and OPEX; mid-year CAPEX; 1000 Sm3 gas per Sm3 oe.
-                        </span>
-                    </Setting.Field>
-                </Setting.Section>
-            </Setting.Panel>
-        </Setting.ScrollArea>
+                    <Setting.Section {...sectionProps("Results")}>
+                        <Setting.Field
+                            label="Show"
+                            help={{
+                                title: "Results",
+                                content:
+                                    "Chooses what the view displays. Display choices do not change calculations or published channels.",
+                            }}
+                            stacked
+                        >
+                            <NamedRadioGroup
+                                value={resultMode}
+                                options={Object.values(ResultMode).map((value) => ({
+                                    value,
+                                    label: ResultModeEnumToStringMapping[value],
+                                }))}
+                                onValueChange={setResultMode}
+                            />
+                        </Setting.Field>
+                        {resultMode === ResultMode.DISTRIBUTION && (
+                            <>
+                                <Setting.Field label="Measure" stacked>
+                                    <Combobox
+                                        items={Object.values(EconomicMeasure).map((value) => ({
+                                            value,
+                                            label: EconomicMeasureEnumToStringMapping[value],
+                                        }))}
+                                        value={selectedMeasure}
+                                        onValueChange={(value) => value !== null && setSelectedMeasure(value)}
+                                    />
+                                </Setting.Field>
+                                <Setting.Field label="Plot type" stacked>
+                                    <Combobox<DistributionPlotType>
+                                        items={DISTRIBUTION_PLOT_TYPE_ITEMS}
+                                        value={distributionPlotType}
+                                        onValueChange={(value) => value !== null && setDistributionPlotType(value)}
+                                    />
+                                </Setting.Field>
+                            </>
+                        )}
+                        {resultMode === ResultMode.TIME_PROFILE && (
+                            <Setting.Field label="Time profile" stacked>
+                                <Combobox<CashFlowProfileType>
+                                    items={Object.values(CashFlowProfileType).map((value) => ({
+                                        value,
+                                        label: CashFlowProfileTypeEnumToStringMapping[value],
+                                    }))}
+                                    value={cashFlowProfileType}
+                                    onValueChange={(value) => value !== null && setCashFlowProfileType(value)}
+                                />
+                            </Setting.Field>
+                        )}
+                        {resultMode !== ResultMode.DISTRIBUTION && (
+                            <Setting.Field
+                                label="Realization"
+                                help={{
+                                    title: "Realization",
+                                    content:
+                                        "Highlights one realization over the aggregate. Clear the selection to show only the aggregate.",
+                                }}
+                                stacked
+                            >
+                                <Combobox<number>
+                                    items={realizationItems}
+                                    value={displayedRealization}
+                                    onValueChange={handleRealizationChange}
+                                    showClearAllButton
+                                    placeholder="Aggregate"
+                                />
+                            </Setting.Field>
+                        )}
+                    </Setting.Section>
+                    <Setting.Section {...sectionProps("Early cash-flow comparison")}>
+                        <Setting.Field
+                            help={{
+                                title: "Early value",
+                                content:
+                                    "Optional cash-flow and volume comparison, independent of the primary measure. No early IRR or break-even price is calculated. Accumulated discounted cash flow and volumes from 1 January of the prediction start year through the end of the chosen year, valued on the same date as the full evaluation. It is not remaining future value and does not move the valuation date. The final year stops at supported production coverage, while its full annual costs still apply. Full results are unchanged.",
+                            }}
+                        >
+                            <CheckboxCompositions.WithLabel
+                                label="Early value"
+                                checked={earlyValueConfiguration.enabled}
+                                onCheckedChange={(enabled) =>
+                                    setEarlyValueConfiguration((current) => ({ ...current, enabled }))
+                                }
+                                size="small"
+                            />
+                        </Setting.Field>
+                        <Setting.Field
+                            label="Calculate through year"
+                            contentClassName="setup-field-earlyYear max-w-40"
+                            warningAnnotation={fieldAnnotation("earlyYear")}
+                            help={{
+                                title: "Calculate through year",
+                                content:
+                                    "Inclusive last calendar year of the early value, within the evaluation years. Through the final evaluation year, it equals the full result for a fully eligible realization.",
+                            }}
+                            stacked
+                        >
+                            <NumberInput
+                                value={earlyValueConfiguration.endYear}
+                                layoutClassName="[&_input]:text-right"
+                                placeholder="Enter year"
+                                min={1900}
+                                max={2200}
+                                step={1}
+                                format={{ useGrouping: false }}
+                                disabled={!earlyValueConfiguration.enabled}
+                                onValueChange={(endYear) =>
+                                    setEarlyValueConfiguration((current) => ({
+                                        ...current,
+                                        endYear: toCalendarYear(endYear),
+                                    }))
+                                }
+                            />
+                        </Setting.Field>
+                    </Setting.Section>
+                </Setting.Panel>
+            </Setting.ScrollArea>
+        </div>
     );
 }
 

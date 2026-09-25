@@ -1,6 +1,115 @@
 import { CostProfileEditorHarness } from "./support/CostProfileEditorHarness";
 import { expect, test } from "./support/offlineComponentTest";
 
+test("previews year-keyed costs without committing until Apply", async ({ mount, page }) => {
+    await mount(
+        <CostProfileEditorHarness
+            initialCostProfile={[
+                { year: 2016, capex: 7, opex: 0 },
+                { year: 2020, capex: 100, opex: 20 },
+                { year: 2021, capex: 30, opex: 2 },
+            ]}
+        />,
+    );
+    const committed = page.getByTestId("committed-cost-profile");
+    const original = await committed.textContent();
+    await page.getByRole("button", { name: "Paste costs...", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "Paste costs", exact: true });
+    await expect(dialog.getByRole("button", { name: "Apply", exact: true })).toBeDisabled();
+    await dialog.getByRole("textbox").fill("2022\t50\t5\n2020\t\t10");
+    await expect(dialog.getByRole("table", { name: "Cost paste preview" })).toBeVisible();
+    await expect(committed).toHaveText(original!);
+    await expect(page.getByTestId("cost-schedule-ready")).toHaveText("ready");
+    await dialog.getByRole("button", { name: "Apply", exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(committed).toHaveText(
+        '[{"year":2016,"capex":7,"opex":0},{"year":2020,"capex":0,"opex":10},{"year":2021,"capex":30,"opex":2},{"year":2022,"capex":50,"opex":5}]',
+    );
+});
+
+test("rejects malformed, duplicate, excluded and negative regular paste without changing costs", async ({
+    mount,
+    page,
+}) => {
+    await mount(<CostProfileEditorHarness />);
+    const original = await page.getByTestId("committed-cost-profile").textContent();
+    await page.getByRole("button", { name: "Paste costs...", exact: true }).click();
+    const dialog = page.getByRole("dialog");
+    for (const [text, error] of [
+        ["Year\tCAPEX\tOPEX", "numeric costs"],
+        ["2020\t1", "three tab-separated columns"],
+        ["2020\t1,000\t0", "numeric costs"],
+        ["2020\t1\t0\n2020\t2\t0", "appears more than once"],
+        ["2019\t1\t0", "outside the cost years"],
+        ["2020\t-1\t0", "zero or greater"],
+    ]) {
+        await dialog.getByRole("textbox").fill(text);
+        await expect(dialog.getByRole("alert")).toContainText(error);
+        await expect(dialog.getByRole("button", { name: "Apply", exact: true })).toBeDisabled();
+        await expect(page.getByTestId("committed-cost-profile")).toHaveText(original!);
+        await expect(page.getByTestId("cost-schedule-ready")).toHaveText("ready");
+    }
+});
+
+test("Cancel and Escape discard a valid preview and restore focus", async ({ mount, page }) => {
+    await mount(<CostProfileEditorHarness />);
+    const original = await page.getByTestId("committed-cost-profile").textContent();
+    const trigger = page.getByRole("button", { name: "Paste costs...", exact: true });
+    for (const action of ["Cancel", "Escape"]) {
+        await trigger.click();
+        const dialog = page.getByRole("dialog");
+        await dialog.getByRole("textbox").fill("2020\t3\t4");
+        await expect(dialog.getByRole("table")).toBeVisible();
+        if (action === "Cancel") await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+        else await page.keyboard.press("Escape");
+        await expect(dialog).toHaveCount(0);
+        await expect(trigger).toBeFocused();
+        await expect(page.getByTestId("committed-cost-profile")).toHaveText(original!);
+    }
+    await trigger.click();
+    await expect(page.getByRole("dialog").getByRole("textbox")).toHaveValue("");
+});
+
+test("revalidates a preview against changed years, loading and ensemble identity", async ({ mount, page }) => {
+    const component = await mount(<CostProfileEditorHarness />);
+    const original = await page.getByTestId("committed-cost-profile").textContent();
+    await page.getByRole("button", { name: "Paste costs...", exact: true }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("textbox").fill("2022\t3\t4");
+    await expect(dialog.getByRole("button", { name: "Apply", exact: true })).toBeEnabled();
+    await component.update(<CostProfileEditorHarness endYear={2021} />);
+    await expect(dialog.getByRole("alert")).toContainText("outside the cost years 2020-2021");
+    await expect(dialog.getByRole("button", { name: "Apply", exact: true })).toBeDisabled();
+    await component.update(<CostProfileEditorHarness isHorizonLoading />);
+    await expect(dialog.getByRole("alert")).toContainText("Cost years must be available");
+    await component.update(<CostProfileEditorHarness ensembleKey="regular-b" />);
+    await expect(dialog).toHaveCount(0);
+    await page.getByRole("button", { name: "Paste costs...", exact: true }).click();
+    await expect(dialog.getByRole("textbox")).toHaveValue("");
+    await expect(page.getByTestId("committed-cost-profile")).toHaveText(original!);
+    await dialog.getByRole("textbox").fill("2020\t3\t4");
+    await component.update(<CostProfileEditorHarness ensembleKey="regular-b" startYear={null} />);
+    await expect(dialog).toHaveCount(0);
+    await component.update(<CostProfileEditorHarness ensembleKey="regular-b" />);
+    await expect(dialog).toHaveCount(0);
+    await page.getByRole("button", { name: "Paste costs...", exact: true }).click();
+    await expect(dialog.getByRole("textbox")).toHaveValue("");
+    await expect(page.getByTestId("committed-cost-profile")).toHaveText(original!);
+});
+
+test("allows signed delta preview but revalidates when the cost rules change", async ({ mount, page }) => {
+    const component = await mount(<CostProfileEditorHarness isDelta />);
+    await page.getByRole("button", { name: "Paste costs...", exact: true }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("textbox").fill("2020\t-40\t-5");
+    await expect(dialog.getByRole("button", { name: "Apply", exact: true })).toBeEnabled();
+    await component.update(<CostProfileEditorHarness isDelta={false} />);
+    await expect(dialog.getByRole("button", { name: "Apply", exact: true })).toBeDisabled();
+    await component.update(<CostProfileEditorHarness isDelta />);
+    await dialog.getByRole("button", { name: "Apply", exact: true }).click();
+    await expect(page.getByTestId("committed-cost-profile")).toHaveText('[{"year":2020,"capex":-40,"opex":-5}]');
+});
+
 test("names each editable cost input by its year and shows no step buttons", async ({ mount, page }) => {
     await mount(<CostProfileEditorHarness />);
 
