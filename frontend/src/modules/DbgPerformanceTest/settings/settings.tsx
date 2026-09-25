@@ -54,15 +54,21 @@ export function Settings(): React.ReactNode {
         [storeInSettingsState, sizeMb],
     );
 
-    // Bumped on each button press so the query below re-runs with a fresh key.
-    const [longTaskRunId, setLongTaskRunId] = React.useState(0);
+    // Set on each button press - the duration is captured then, so editing the input afterwards doesn't
+    // fire a new request. The run id gives each press a fresh query key.
+    const [longTaskRequest, setLongTaskRequest] = React.useState<{ runId: number; durationS: number } | null>(null);
 
-    const longTaskDurationClamped = Math.max(0, Math.floor(longTaskDurationS));
+    function handleSendLongTaskClick() {
+        setLongTaskRequest((prev) => ({
+            runId: (prev?.runId ?? 0) + 1,
+            durationS: Math.max(0, Math.floor(longTaskDurationS)),
+        }));
+    }
 
     const longTaskQuery = useQuery({
-        queryKey: ["dbg-perf-test-longtask", longTaskRunId, longTaskDurationClamped],
-        queryFn: ({ signal }) => fetchLongTask(longTaskDurationClamped, signal),
-        enabled: longTaskRunId > 0,
+        queryKey: ["dbg-perf-test-longtask", longTaskRequest?.runId, longTaskRequest?.durationS],
+        queryFn: ({ signal }) => fetchLongTask(longTaskRequest?.durationS ?? 0, signal),
+        enabled: longTaskRequest !== null,
         retry: false,
         staleTime: Infinity,
         gcTime: 0,
@@ -121,15 +127,15 @@ export function Settings(): React.ReactNode {
                     <Setting.Field label="Trigger request" stacked>
                         <Button
                             variant="contained"
-                            onClick={() => setLongTaskRunId((id) => id + 1)}
+                            onClick={handleSendLongTaskClick}
                             disabled={longTaskQuery.isFetching}
                         >
                             {longTaskQuery.isFetching ? "Waiting for backend…" : "Send GET /dev/longtask"}
                         </Button>
                     </Setting.Field>
                     <div className="text-sm text-gray-600">
-                        {longTaskRunId === 0 && "No request sent yet."}
-                        {longTaskRunId > 0 && longTaskQuery.isFetching && "Request in flight…"}
+                        {longTaskRequest === null && "No request sent yet."}
+                        {longTaskRequest !== null && longTaskQuery.isFetching && "Request in flight…"}
                         {longTaskQuery.isSuccess &&
                             !longTaskQuery.isFetching &&
                             `Done in ${longTaskQuery.data.elapsedMs} ms: ${longTaskQuery.data.response}`}

@@ -241,6 +241,13 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
                     Dashboard.makeLayoutElement(moduleInstanceState.id, moduleInstanceState.name, layoutState),
                 );
             }
+
+            let activeModuleInstanceId = serializedDashboard.activeModuleInstanceId;
+            if (activeModuleInstanceId !== null && !this.getModuleInstance(activeModuleInstanceId)) {
+                // Stale id, e.g. from old or corrupted persisted data - not worth failing the whole dashboard for
+                activeModuleInstanceId = this._moduleInstances.at(-1)?.getId() ?? null;
+            }
+            this.setActiveModuleInstanceId(activeModuleInstanceId);
         } catch (error) {
             // A throw partway through (e.g. an old persisted dashboard referencing a module that's
             // no longer registered) must not leave the module instances/atom stores already created
@@ -251,8 +258,6 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             this.clearLayout();
             throw error;
         }
-
-        this.setActiveModuleInstanceId(serializedDashboard.activeModuleInstanceId);
 
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.LAYOUT);
     }
@@ -310,7 +315,14 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         const atomStore = this._atomStoreMaster.makeAtomStoreForModuleInstance(id);
 
-        const moduleInstance = module.makeInstance(id, atomStore);
+        let moduleInstance: ModuleInstance<any, any>;
+        try {
+            moduleInstance = module.makeInstance(id, atomStore);
+        } catch (error) {
+            // Not registered in _moduleInstances yet, so clearLayout() wouldn't clean this up
+            this._atomStoreMaster.removeAtomStoreForModuleInstance(id);
+            throw error;
+        }
 
         this._moduleInstances = [...this._moduleInstances, moduleInstance];
 
