@@ -13,6 +13,10 @@ test("opens the calculation guide and returns focus after Escape", async ({ moun
     await expect(page.getByText("Worked example", { exact: true })).toBeVisible();
     await expect(dialog.locator("pre").last()).toContainText("450.93 USD");
     await expect(dialog.locator("pre").last()).toContainText("-0.06366 USD/Sm3");
+    await expect(dialog.getByRole("heading", { name: "Example: January 2018 to July 2020" })).toBeVisible();
+    await expect(dialog.getByText(/The 1 July 2020 source date closes June 2020/)).toBeVisible();
+    await expect(dialog.getByRole("heading", { name: "Checking a value by hand" })).toBeVisible();
+    await expect(dialog.getByRole("listitem").filter({ hasText: "Set Calculate through year to 2020." })).toBeVisible();
 
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog", { name: "How calculations work" })).toBeHidden();

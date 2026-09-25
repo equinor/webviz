@@ -37,6 +37,7 @@ import {
 import { economicScreeningResultsAtom } from "./atoms/derivedAtoms";
 import { CashFlowPlot, hasRealizationProfile } from "./components/cashFlowPlot";
 import { EarlyMeasureChannelPublisher } from "./components/earlyMeasureChannelPublisher";
+import { EarlyValueComparison } from "./components/earlyValueComparison";
 import { MeasureChannelPublisher } from "./components/measureChannelPublisher";
 import { MeasureDistributionPlot } from "./components/measureDistributionPlot";
 import { RealizationResultsTable } from "./components/realizationResultsTable";
@@ -126,6 +127,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         economicAssumptions.predictionStartYear === null
             ? "Enter a prediction start year in the settings to calculate results."
             : null;
+    const shownEarlyEndYear =
+        earlyValueConfiguration.enabled && isEarlyValueConfigurationValid && horizon !== null
+            ? earlyValueEndYear
+            : null;
 
     return (
         <div className="h-full w-full overflow-auto">
@@ -196,6 +201,16 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             {!isFetching && hasResults && (
                 <div className="gap-y-sm flex h-full min-h-0 flex-col p-2">
                     <div className="text-body-xs text-subtle">{activeAssumptions.join(" | ")}</div>
+                    {shownEarlyEndYear !== null && horizon !== null && (
+                        <EarlyValueComparison
+                            results={results}
+                            horizon={horizon}
+                            endYear={shownEarlyEndYear}
+                            currency={currency}
+                            selectedRealization={resultMode === ResultMode.DISTRIBUTION ? null : selectedRealization}
+                            isDelta={isDeltaEnsemble}
+                        />
+                    )}
                     {resultMode === ResultMode.DISTRIBUTION && (
                         <>
                             <ResultsStatisticsTable
@@ -242,6 +257,11 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                                         currency={currency}
                                         profileType={cashFlowProfileType}
                                         selectedRealization={selectedRealization}
+                                        earlyMarkerYear={
+                                            cashFlowProfileType === CashFlowProfileType.CUMULATIVE_DISCOUNTED_CASH_FLOW
+                                                ? shownEarlyEndYear
+                                                : null
+                                        }
                                         oilUnit={oilUnit}
                                         gasUnit={gasUnit}
                                         color={ensembleColor}

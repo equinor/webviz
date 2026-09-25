@@ -1,6 +1,85 @@
 import { CostProfileEditorHarness } from "./support/CostProfileEditorHarness";
 import { expect, test } from "./support/offlineComponentTest";
 
+test("names each editable cost input by its year and shows no step buttons", async ({ mount, page }) => {
+    await mount(<CostProfileEditorHarness />);
+
+    await expect(page.getByRole("textbox", { name: "CAPEX 2020", exact: true })).toHaveValue("100");
+    await expect(page.getByRole("button", { name: /^(Increase|Decrease)$/ })).toHaveCount(0);
+    const opex2021 = page.getByRole("textbox", { name: "OPEX 2021", exact: true });
+    await opex2021.click();
+    await page.keyboard.type("1250.5");
+    await opex2021.blur();
+    await expect(opex2021).toHaveValue("1,250.5");
+    await expect(page.getByTestId("committed-cost-profile")).toHaveText(
+        '[{"year":2020,"capex":100,"opex":0},{"year":2021,"capex":0,"opex":1250.5}]',
+        { timeout: 2_000 },
+    );
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("textbox", { name: "CAPEX 2022", exact: true })).toBeFocused();
+});
+
+test("accepts signed delta costs typed into a field without step buttons", async ({ mount, page }) => {
+    await mount(<CostProfileEditorHarness isDelta />);
+
+    const capex2021 = page.getByRole("textbox", { name: "CAPEX 2021", exact: true });
+    await capex2021.click();
+    await page.keyboard.type("-40");
+    await capex2021.blur();
+    await expect(page.getByTestId("committed-cost-profile")).toHaveText(
+        '[{"year":2020,"capex":100,"opex":0},{"year":2021,"capex":-40,"opex":0}]',
+        { timeout: 2_000 },
+    );
+    await expect(page.getByRole("status").filter({ hasText: "No non-zero costs included." })).toHaveCount(0);
+});
+
+test("shows neutral zero-cost context until an included cost is entered", async ({ mount, page }) => {
+    const zeroNotice = page.getByRole("status").filter({ hasText: "No non-zero costs included." });
+    await mount(<CostProfileEditorHarness initialCostProfile={[]} />);
+    await expect(zeroNotice).toBeVisible();
+
+    const opex2020 = page.getByRole("textbox", { name: "OPEX 2020", exact: true });
+    await opex2020.click();
+    await page.keyboard.type("5");
+    await opex2020.blur();
+    await expect(zeroNotice).toHaveCount(0);
+});
+
+test("does not count an excluded stored entry as an included cost", async ({ mount, page }) => {
+    await mount(<CostProfileEditorHarness initialCostProfile={[{ year: 2016, capex: 7, opex: 0 }]} />);
+    await expect(page.getByRole("status").filter({ hasText: "No non-zero costs included." })).toBeVisible();
+    await expect(
+        page.getByText("Costs entered for 2016 are outside 2020-2022. They are kept but not used."),
+    ).toBeVisible();
+});
+
+test("does not treat signed cancellation or an invalid draft as zero costs", async ({ mount, page }) => {
+    const zeroNotice = page.getByRole("status").filter({ hasText: "No non-zero costs included." });
+    const component = await mount(
+        <CostProfileEditorHarness
+            isDelta
+            initialCostProfile={[
+                { year: 2020, capex: 100, opex: 0 },
+                { year: 2021, capex: -100, opex: 0 },
+            ]}
+        />,
+    );
+    await expect(page.getByRole("textbox", { name: "CAPEX 2021", exact: true })).toHaveValue("-100");
+    await expect(zeroNotice).toHaveCount(0);
+
+    await component.update(
+        <CostProfileEditorHarness
+            isDelta={false}
+            initialCostProfile={[
+                { year: 2020, capex: 100, opex: 0 },
+                { year: 2021, capex: -100, opex: 0 },
+            ]}
+        />,
+    );
+    await expect(page.getByRole("alert")).toHaveText("Investment and operating costs must be zero or greater.");
+    await expect(zeroNotice).toHaveCount(0);
+});
+
 test("keeps an edited cost schedule unavailable until its debounced commit", async ({ mount, page }) => {
     await mount(<CostProfileEditorHarness />);
 

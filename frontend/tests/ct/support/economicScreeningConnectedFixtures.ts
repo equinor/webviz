@@ -98,7 +98,7 @@ export function makeMonthlySeries(
  * Cumulative series from January of `firstYear`, one boundary per month start. Intervals are source-aligned
  * up to `sourceEndUtcMs`, partial across it and unsupported after it; values are used as given.
  */
-function makeSeriesFromMonthlyVolumes(
+export function makeSeriesFromMonthlyVolumes(
     realization: number,
     firstYear: number,
     monthlyVolumes: number[],

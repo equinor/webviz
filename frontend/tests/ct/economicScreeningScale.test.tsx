@@ -232,17 +232,13 @@ const inputs = {
     oilPrice: (page: Page) => settingsRegion(page).getByRole("textbox", { name: /^Oil price/ }),
     gasPrice: (page: Page) => settingsRegion(page).getByRole("textbox", { name: /^Gas price/ }),
     discountRate: (page: Page) => settingsRegion(page).getByRole("textbox", { name: /^Discount rate/ }),
-    earlyYear: (page: Page) =>
-        settingsRegion(page).getByRole("textbox", { name: /^Publish cumulative results through year/ }),
-    // The cell's aria-label names its group; the input itself is named by the enclosing field label.
+    earlyYear: (page: Page) => settingsRegion(page).getByRole("textbox", { name: /^Calculate through year/ }),
     cost: (page: Page, kind: "CAPEX" | "OPEX", year: number) =>
-        settingsRegion(page)
-            .getByRole("group", { name: `${kind} ${year}`, exact: true })
-            .getByRole("textbox"),
+        settingsRegion(page).getByRole("textbox", { name: `${kind} ${year}`, exact: true }),
 };
 
 async function openEditableSections(page: Page) {
-    for (const title of ["Advanced", "Prices", "Costs"]) {
+    for (const title of ["Prices", "Costs", "Results"]) {
         await openSection(page, title);
     }
     await expect(inputs.oilPrice(page)).toBeVisible();

@@ -33,7 +33,10 @@ import {
     ResultMode,
     ResultModeEnumToStringMapping,
 } from "../typesAndEnums";
-import type { MissingComponentAssumptions } from "../utils/vectorResolution";
+import { getMeasureDisplayName } from "../utils/measureAccessors";
+import { monthIndexOf } from "../utils/monthlyProduction";
+import { getResultRequirement, getSetupReadiness } from "../utils/setupReadiness";
+import type { MissingComponentAssumptions, SalesGasStrategy } from "../utils/vectorResolution";
 import { CalculationHelpDialog } from "../view/components/calculationHelpDialog";
 
 import {
@@ -61,9 +64,16 @@ import {
 } from "./atoms/derivedAtoms";
 import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./atoms/persistableFixableAtoms";
 import { validRealizationNumbersAtom } from "./atoms/sourceQueryAtoms";
-import { sourceHorizonAtom } from "./atoms/sourceSnapshotAtoms";
+import {
+    predictionStartYearSuggestionsAtom,
+    selectedProductSupportAtom,
+    sourceHorizonAtom,
+    sourceSnapshotAtom,
+} from "./atoms/sourceSnapshotAtoms";
 import { CostProfileEditor } from "./components/costProfileEditor";
 import { NamedRadioGroup } from "./components/namedRadioGroup";
+import { PredictionYearSelector } from "./components/predictionYearSelector";
+import { SetupSummary } from "./components/setupSummary";
 
 const NUMBER_INPUT_DEBOUNCE_MS = 500;
 
@@ -90,7 +100,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     const [gasPrice, setGasPrice] = useAtom(gasPriceAtom);
     const [gasPriceBasis, setGasPriceBasis] = useAtom(gasPriceBasisAtom);
     const [costProfile, setCostProfile] = useAtom(costProfileAtom);
-    const [, setIsCostProfileDraftValid] = useAtom(isCostProfileDraftValidAtom);
+    const [isCostProfileDraftValid, setIsCostProfileDraftValid] = useAtom(isCostProfileDraftValidAtom);
     const [selectedMeasure, setSelectedMeasure] = useAtom(selectedMeasureAtom);
     const [cashFlowProfileType, setCashFlowProfileType] = useAtom(cashFlowProfileTypeAtom);
     const [resultMode, setResultMode] = useAtom(resultModeAtom);
@@ -102,6 +112,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
         missingComponentAssumptionsAtom,
     );
     const sourceHorizon = useAtomValue(sourceHorizonAtom);
+    const sourceSnapshot = useAtomValue(sourceSnapshotAtom);
+    const predictionStartYearSuggestions = useAtomValue(predictionStartYearSuggestionsAtom);
+    const selectedProductSupport = useAtomValue(selectedProductSupportAtom);
 
     const vectorListQuery = useAtomValue(activeVectorListQueryAtom);
     const hasOilProductionVector = useAtomValue(hasOilProductionVectorAtom);
@@ -110,11 +123,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     const [immediateDiscountRate, setImmediateDiscountRate] = useDebouncedOnChange(
         discountRatePercent,
         (newValue: number) => setDiscountRatePercent(newValue),
-        NUMBER_INPUT_DEBOUNCE_MS,
-    );
-    const [immediatePredictionStartYear, setImmediatePredictionStartYear] = useDebouncedOnChange(
-        predictionStartYear,
-        (newValue: number | null) => setPredictionStartYear(newValue),
         NUMBER_INPUT_DEBOUNCE_MS,
     );
     const [immediateOilPrice, setImmediateOilPrice] = useDebouncedOnChange(
@@ -208,11 +216,44 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     const realizationItems = [...(validRealizationNumbers ?? [])]
         .sort((first, second) => first - second)
         .map((realization) => ({ value: realization, label: realization.toString() }));
+    const selectedMissingComponentAssumptions =
+        missingComponentAssumptionsByEnsemble[selectedEnsembleIdent.value?.toString() ?? ""];
+    const hasMissingGasComponent =
+        salesGasStrategy.kind === "DERIVED" &&
+        (!salesGasStrategy.hasGasInjection || !salesGasStrategy.hasGasConsumption);
+
+    const setupReadiness = getSetupReadiness({
+        hasEnsemble: selectedEnsembleIdent.value !== null,
+        vectorListStatus: vectorListQuery.isError ? "ERROR" : vectorListQuery.isSuccess ? "READY" : "LOADING",
+        snapshot: sourceSnapshot,
+        hasOilVector: hasOilProductionVector,
+        productSupport: selectedProductSupport,
+        missingComponentAssumptions: selectedMissingComponentAssumptions,
+        predictionStartYear,
+        oilPrice,
+        gasPrice,
+        costProfile,
+        isCostProfileDraftValid,
+        earlyValue: earlyValueConfiguration,
+        requirement: getResultRequirement(resultMode, selectedMeasure, cashFlowProfileType),
+    });
+    const resultLabel =
+        resultMode === ResultMode.TIME_PROFILE
+            ? CashFlowProfileTypeEnumToStringMapping[cashFlowProfileType].toLowerCase()
+            : resultMode === ResultMode.ALL_RESULTS
+              ? "all results"
+              : getMeasureDisplayName(selectedMeasure, isDeltaEnsembleSelected).toLowerCase();
+    const envelopeEndMonthIndex = sourceSnapshot.envelopeEndMonthIndex;
+    const isPredictionStartAfterSource =
+        predictionStartYear !== null &&
+        envelopeEndMonthIndex !== null &&
+        monthIndexOf(predictionStartYear, 1) > envelopeEndMonthIndex;
 
     return (
         <Setting.ScrollArea>
             <Setting.Panel>
-                <Setting.Section title="Data" defaultOpen>
+                <SetupSummary readiness={setupReadiness} resultLabel={resultLabel} />
+                <Setting.Section title="Data and valuation" defaultOpen>
                     <div className="flex justify-end">
                         <CalculationHelpDialog />
                     </div>
@@ -230,19 +271,24 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                         help={{
                             title: "Prediction start year",
                             content:
-                                "Required. Evaluation and valuation both start on 1 January of this year and run through the supported simulation end. It may precede production to include forecast investment.",
+                                "Required. Evaluation and valuation both start on 1 January of this year and run through the supported simulation end. It may precede production to include forecast investment. Suggestions are years with source data from 1 January for the full ensemble, including covered years without production; any whole year can be typed. The historical simulation start is not suggested as a default.",
                         }}
+                        contentClassName="flex flex-col gap-y-3xs"
                         stacked
                     >
-                        <NumberInput
-                            value={immediatePredictionStartYear}
-                            placeholder="Enter year"
-                            min={1900}
-                            max={2200}
-                            step={1}
-                            format={{ useGrouping: false }}
-                            onValueChange={(newValue) => setImmediatePredictionStartYear(toCalendarYear(newValue))}
-                        />
+                        <>
+                            <PredictionYearSelector
+                                value={predictionStartYear}
+                                suggestedYears={predictionStartYearSuggestions}
+                                isLoading={sourceHorizon.isLoading}
+                                onValueChange={setPredictionStartYear}
+                            />
+                            {predictionStartYear !== null && !isPredictionStartAfterSource && (
+                                <span className="text-body-xs text-subtle">
+                                    Valuation: 1 January {predictionStartYear}
+                                </span>
+                            )}
+                        </>
                     </Setting.Field>
                     <Setting.Field
                         label="Discount rate [%]"
@@ -259,45 +305,148 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                             onValueChange={(newValue) => setImmediateDiscountRate(newValue ?? 0)}
                         />
                     </Setting.Field>
+                </Setting.Section>
+
+                <Setting.Section title="Prices" defaultOpen>
                     <Setting.Field
-                        label="Sales gas"
-                        help={{ title: "Sales gas", content: salesGasDescription }}
-                        loadingOverlay={vectorListQuery.isFetching}
-                        errorOverlay={vectorListQuery.isError ? "Could not load the vector list." : undefined}
+                        label="Currency"
+                        help={{
+                            title: "Currency",
+                            content:
+                                "Enter all prices and costs in this currency. Changing it does not convert entered values.",
+                        }}
+                    >
+                        <NamedRadioGroup
+                            value={currency}
+                            options={Object.values(Currency).map((value) => ({ value, label: value }))}
+                            onValueChange={handleCurrencyChange}
+                        />
+                    </Setting.Field>
+                    {hasOilProductionVector && (
+                        <Setting.Field
+                            label={`Oil price [${currency} ${OilPriceBasisEnumToStringMapping[oilPriceBasis]}]`}
+                            help={{
+                                title: "Oil price",
+                                content:
+                                    "Constant oil sales price over the evaluation. Blank means unspecified; enter 0 to intentionally omit oil revenue. A price of 0 does not turn missing oil data into zero volume. Volume results and break-even oil price do not need an oil price.",
+                            }}
+                            contentClassName="flex gap-x-xs"
+                            stacked
+                        >
+                            <>
+                                <NumberInput
+                                    value={immediateOilPrice}
+                                    placeholder="Enter price"
+                                    onValueChange={setImmediateOilPrice}
+                                />
+                                <div className="w-32 shrink-0">
+                                    <Combobox
+                                        items={Object.values(OilPriceBasis).map((value) => ({
+                                            value,
+                                            label: OilPriceBasisEnumToStringMapping[value],
+                                        }))}
+                                        value={oilPriceBasis}
+                                        onValueChange={handleOilPriceBasisChange}
+                                    />
+                                </div>
+                            </>
+                        </Setting.Field>
+                    )}
+                    <Setting.Field
+                        label={`Gas price [${currency} ${GasPriceBasisEnumToStringMapping[gasPriceBasis]}]`}
+                        help={{
+                            title: "Gas price",
+                            content:
+                                "Constant sales-gas price over the evaluation. Blank means unspecified; enter 0 to intentionally omit gas revenue. A price of 0 does not turn missing gas data into zero volume, and sales-gas volume results still need the gas source. Volume results do not need a price.",
+                        }}
+                        contentClassName="flex gap-x-xs"
                         stacked
                     >
-                        <span className="text-sm">
-                            {salesGasStrategy.kind === "DIRECT" ? "Reported" : "Calculated"}
-                        </span>
+                        <>
+                            <NumberInput
+                                value={immediateGasPrice}
+                                placeholder="Enter price"
+                                onValueChange={setImmediateGasPrice}
+                            />
+                            <div className="w-32 shrink-0">
+                                <Combobox
+                                    items={Object.values(GasPriceBasis).map((value) => ({
+                                        value,
+                                        label: GasPriceBasisEnumToStringMapping[value],
+                                    }))}
+                                    value={gasPriceBasis}
+                                    onValueChange={handleGasPriceBasisChange}
+                                />
+                            </div>
+                        </>
                     </Setting.Field>
+                    <Setting.Field
+                        label="Sales gas source"
+                        help={{ title: "Sales gas source", content: salesGasDescription }}
+                        loadingOverlay={vectorListQuery.isFetching}
+                        errorOverlay={vectorListQuery.isError ? "Could not load the vector list." : undefined}
+                        contentClassName="flex flex-col gap-y-3xs"
+                        stacked
+                    >
+                        <>
+                            <span className="text-sm">{makeSalesGasStatus(salesGasStrategy)}</span>
+                            {hasMissingGasComponent && (
+                                <span className="text-body-xs text-subtle">
+                                    A missing vector is not proof of zero. Accepting treats it as zero for this ensemble
+                                    only, which can increase sales gas and NPV.
+                                </span>
+                            )}
+                        </>
+                    </Setting.Field>
+                    {/* Label-less rows, so each checkbox is named by its own label rather than the field's. */}
                     {salesGasStrategy.kind === "DERIVED" && !salesGasStrategy.hasGasInjection && (
-                        <CheckboxCompositions.WithLabel
-                            label="Assume no gas injection"
-                            checked={
-                                missingComponentAssumptionsByEnsemble[
-                                    selectedEnsembleIdent.value?.toString() ?? ""
-                                ]?.assumeMissingInjectionAsZero ?? false
-                            }
-                            onCheckedChange={(checked) =>
-                                setMissingComponentAssumption("assumeMissingInjectionAsZero", checked)
-                            }
-                            size="small"
-                        />
+                        <Setting.Field>
+                            <CheckboxCompositions.WithLabel
+                                label="Assume no gas injection"
+                                checked={selectedMissingComponentAssumptions?.assumeMissingInjectionAsZero ?? false}
+                                onCheckedChange={(checked) =>
+                                    setMissingComponentAssumption("assumeMissingInjectionAsZero", checked)
+                                }
+                                size="small"
+                            />
+                        </Setting.Field>
                     )}
                     {salesGasStrategy.kind === "DERIVED" && !salesGasStrategy.hasGasConsumption && (
-                        <CheckboxCompositions.WithLabel
-                            label="Assume no gas consumption"
-                            checked={
-                                missingComponentAssumptionsByEnsemble[
-                                    selectedEnsembleIdent.value?.toString() ?? ""
-                                ]?.assumeMissingConsumptionAsZero ?? false
-                            }
-                            onCheckedChange={(checked) =>
-                                setMissingComponentAssumption("assumeMissingConsumptionAsZero", checked)
-                            }
-                            size="small"
-                        />
+                        <Setting.Field>
+                            <CheckboxCompositions.WithLabel
+                                label="Assume no gas consumption"
+                                checked={selectedMissingComponentAssumptions?.assumeMissingConsumptionAsZero ?? false}
+                                onCheckedChange={(checked) =>
+                                    setMissingComponentAssumption("assumeMissingConsumptionAsZero", checked)
+                                }
+                                size="small"
+                            />
+                        </Setting.Field>
                     )}
+                </Setting.Section>
+
+                <Setting.Section title="Costs" defaultOpen>
+                    <Setting.Field
+                        label={`CAPEX and OPEX per year [${currency}]`}
+                        help={{
+                            title: "Annual costs",
+                            content: isDeltaEnsembleSelected
+                                ? "One row per year from the prediction start through the simulation end. For a delta ensemble, costs are comparison minus reference; negative values are savings. Blank cells are zero. OPEX is paid in twelve equal monthly amounts; CAPEX at mid-year."
+                                : "One row per year from the prediction start through the simulation end. Blank cells are zero. Each year's OPEX is paid in twelve equal monthly amounts and CAPEX at mid-year; the full annual amount applies even in a final year that ends early.",
+                        }}
+                        stacked
+                    >
+                        <CostProfileEditor
+                            value={costProfile}
+                            currency={currency}
+                            isDelta={isDeltaEnsembleSelected}
+                            startYear={predictionStartYear}
+                            endYear={sourceHorizon.endYear}
+                            isHorizonLoading={sourceHorizon.isLoading}
+                            onValueChange={setCostProfile}
+                            onValidityChange={setIsCostProfileDraftValid}
+                        />
+                    </Setting.Field>
                 </Setting.Section>
 
                 <Setting.Section title="Results" defaultOpen>
@@ -371,6 +520,48 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                             />
                         </Setting.Field>
                     )}
+
+                    <Setting.Field
+                        help={{
+                            title: "Early value",
+                            content:
+                                "Optional. Accumulated discounted cash flow and volumes from 1 January of the prediction start year through the end of the chosen year, valued on the same date as the full evaluation. It is not remaining future value and does not move the valuation date. The final year stops at supported production coverage, while its full annual costs still apply. Full results are unchanged.",
+                        }}
+                    >
+                        <CheckboxCompositions.WithLabel
+                            label="Early value"
+                            checked={earlyValueConfiguration.enabled}
+                            onCheckedChange={(enabled) =>
+                                setEarlyValueConfiguration((current) => ({ ...current, enabled }))
+                            }
+                            size="small"
+                        />
+                    </Setting.Field>
+                    <Setting.Field
+                        label="Calculate through year"
+                        help={{
+                            title: "Calculate through year",
+                            content:
+                                "Inclusive last calendar year of the early value, within the evaluation years. Through the final evaluation year, it equals the full result for a fully eligible realization.",
+                        }}
+                        stacked
+                    >
+                        <NumberInput
+                            value={earlyValueConfiguration.endYear}
+                            placeholder="Enter year"
+                            min={1900}
+                            max={2200}
+                            step={1}
+                            format={{ useGrouping: false }}
+                            disabled={!earlyValueConfiguration.enabled}
+                            onValueChange={(endYear) =>
+                                setEarlyValueConfiguration((current) => ({
+                                    ...current,
+                                    endYear: toCalendarYear(endYear),
+                                }))
+                            }
+                        />
+                    </Setting.Field>
                 </Setting.Section>
 
                 <Setting.Section title="Advanced">
@@ -387,145 +578,20 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                             Monthly midpoint production, revenue and OPEX; mid-year CAPEX; 1000 Sm3 gas per Sm3 oe.
                         </span>
                     </Setting.Field>
-                    <Setting.Field
-                        label="Publish cumulative results through year"
-                        help={{
-                            title: "Publish cumulative results through year",
-                            content:
-                                "Publishes separate discounted values from 1 January of the prediction start year through the end of this year, using the same valuation date. Full-evaluation results remain unchanged.",
-                        }}
-                        contentClassName="flex gap-x-xs"
-                        stacked
-                    >
-                        <>
-                            <CheckboxCompositions.WithLabel
-                                label="Enable"
-                                checked={earlyValueConfiguration.enabled}
-                                onCheckedChange={(enabled) =>
-                                    setEarlyValueConfiguration((current) => ({ ...current, enabled }))
-                                }
-                                size="small"
-                            />
-                            <NumberInput
-                                value={earlyValueConfiguration.endYear}
-                                placeholder="End year"
-                                min={1900}
-                                max={2200}
-                                step={1}
-                                format={{ useGrouping: false }}
-                                disabled={!earlyValueConfiguration.enabled}
-                                onValueChange={(endYear) =>
-                                    setEarlyValueConfiguration((current) => ({
-                                        ...current,
-                                        endYear: toCalendarYear(endYear),
-                                    }))
-                                }
-                            />
-                        </>
-                    </Setting.Field>
-                </Setting.Section>
-
-                <Setting.Section title="Prices">
-                    <Setting.Field
-                        label="Currency"
-                        help={{
-                            title: "Currency",
-                            content:
-                                "Enter all prices and costs in this currency. Changing it does not convert entered values.",
-                        }}
-                    >
-                        <NamedRadioGroup
-                            value={currency}
-                            options={Object.values(Currency).map((value) => ({ value, label: value }))}
-                            onValueChange={handleCurrencyChange}
-                        />
-                    </Setting.Field>
-                    {hasOilProductionVector && (
-                        <Setting.Field
-                            label={`Oil price [${currency} ${OilPriceBasisEnumToStringMapping[oilPriceBasis]}]`}
-                            help={{
-                                title: "Oil price",
-                                content:
-                                    "Constant oil sales price over the evaluation. Blank means unspecified; enter 0 to intentionally omit oil revenue. Volume results do not need a price.",
-                            }}
-                            contentClassName="flex gap-x-xs"
-                            stacked
-                        >
-                            <>
-                                <NumberInput
-                                    value={immediateOilPrice}
-                                    placeholder="Enter price"
-                                    onValueChange={setImmediateOilPrice}
-                                />
-                                <div className="w-32 shrink-0">
-                                    <Combobox
-                                        items={Object.values(OilPriceBasis).map((value) => ({
-                                            value,
-                                            label: OilPriceBasisEnumToStringMapping[value],
-                                        }))}
-                                        value={oilPriceBasis}
-                                        onValueChange={handleOilPriceBasisChange}
-                                    />
-                                </div>
-                            </>
-                        </Setting.Field>
-                    )}
-                    <Setting.Field
-                        label={`Gas price [${currency} ${GasPriceBasisEnumToStringMapping[gasPriceBasis]}]`}
-                        help={{
-                            title: "Gas price",
-                            content:
-                                "Constant sales-gas price over the evaluation. Blank means unspecified; enter 0 to intentionally omit gas revenue. Volume results do not need a price.",
-                        }}
-                        contentClassName="flex gap-x-xs"
-                        stacked
-                    >
-                        <>
-                            <NumberInput
-                                value={immediateGasPrice}
-                                placeholder="Enter price"
-                                onValueChange={setImmediateGasPrice}
-                            />
-                            <div className="w-32 shrink-0">
-                                <Combobox
-                                    items={Object.values(GasPriceBasis).map((value) => ({
-                                        value,
-                                        label: GasPriceBasisEnumToStringMapping[value],
-                                    }))}
-                                    value={gasPriceBasis}
-                                    onValueChange={handleGasPriceBasisChange}
-                                />
-                            </div>
-                        </>
-                    </Setting.Field>
-                </Setting.Section>
-
-                <Setting.Section title="Costs">
-                    <Setting.Field
-                        label={`CAPEX and OPEX per year [${currency}]`}
-                        help={{
-                            title: "Annual costs",
-                            content: isDeltaEnsembleSelected
-                                ? "One row per year from the prediction start through the simulation end. For a delta ensemble, costs are comparison minus reference; negative values are savings. Blank cells are zero. OPEX is paid in twelve equal monthly amounts; CAPEX at mid-year."
-                                : "One row per year from the prediction start through the simulation end. Blank cells are zero. Each year's OPEX is paid in twelve equal monthly amounts and CAPEX at mid-year; the full annual amount applies even in a final year that ends early.",
-                        }}
-                        stacked
-                    >
-                        <CostProfileEditor
-                            value={costProfile}
-                            currency={currency}
-                            isDelta={isDeltaEnsembleSelected}
-                            startYear={predictionStartYear}
-                            endYear={sourceHorizon.endYear}
-                            isHorizonLoading={sourceHorizon.isLoading}
-                            onValueChange={setCostProfile}
-                            onValidityChange={setIsCostProfileDraftValid}
-                        />
-                    </Setting.Field>
                 </Setting.Section>
             </Setting.Panel>
         </Setting.ScrollArea>
     );
+}
+
+function makeSalesGasStatus(strategy: SalesGasStrategy): string {
+    if (strategy.kind === "DIRECT") {
+        return "Reported (FGST)";
+    }
+    if (strategy.kind === "DERIVED") {
+        return "Calculated (FGPT - FGIT - FGCT)";
+    }
+    return "Unavailable";
 }
 
 function makeSalesGasDescription(kind: "DIRECT" | "DERIVED" | "UNAVAILABLE"): string {

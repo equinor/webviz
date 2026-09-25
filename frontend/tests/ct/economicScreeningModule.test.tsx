@@ -1,8 +1,14 @@
 import type { Page } from "@playwright/test";
 
-import { MEASURE_CHANNEL_ID_MAP } from "@modules/EconomicScreening/channelDefs";
-import { EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
+import { EARLY_MEASURE_CHANNEL_ID_MAP, MEASURE_CHANNEL_ID_MAP } from "@modules/EconomicScreening/channelDefs";
+import {
+    CashFlowProfileType,
+    EarlyEconomicMeasure,
+    EconomicMeasure,
+    ResultMode,
+} from "@modules/EconomicScreening/typesAndEnums";
 
+import { makeSeriesFromMonthlyVolumes } from "./support/economicScreeningConnectedFixtures";
 import { EconomicScreeningModuleHarness } from "./support/EconomicScreeningModuleHarness";
 import { expect, test } from "./support/offlineComponentTest";
 
@@ -14,6 +20,7 @@ test.describe.configure({ timeout: 30_000 });
 
 type SourceFixtureState = {
     vectorDataRequests: string[];
+    unexpectedApiRequests: string[];
 };
 
 function monthStartUtcMs(year: number, month: number): number {
@@ -63,17 +70,31 @@ function monthlySeries(realization: number, monthlyVolume: number, partialLastMo
 /** Serves the module's own API requests from fixtures on the loopback component-test origin. */
 async function routeSourceFixtures(
     page: Page,
-    options: { failSalesGas?: boolean; partialOilRealization?: number } = {},
+    options: {
+        failSalesGas?: boolean;
+        partialOilRealization?: number;
+        vectorNames?: string[];
+        seriesFor?: (vectorName: string) => unknown[];
+    } = {},
 ): Promise<SourceFixtureState> {
-    const state: SourceFixtureState = { vectorDataRequests: [] };
+    const state: SourceFixtureState = { vectorDataRequests: [], unexpectedApiRequests: [] };
+    // Registered first so the specific fixture routes below take precedence.
+    await page.route(
+        (url) => url.pathname.startsWith("/api/"),
+        (route) => {
+            state.unexpectedApiRequests.push(route.request().url());
+            return route.abort();
+        },
+    );
     await page.route(
         (url) => url.pathname.startsWith("/api/timeseries/vector_list/"),
         (route) =>
             route.fulfill({
-                json: [
-                    { name: "FOPT", descriptiveName: "FOPT", hasHistorical: false },
-                    { name: "FGST", descriptiveName: "FGST", hasHistorical: false },
-                ],
+                json: (options.vectorNames ?? ["FOPT", "FGST"]).map((name) => ({
+                    name,
+                    descriptiveName: name,
+                    hasHistorical: false,
+                })),
             }),
     );
     await page.route(
@@ -85,7 +106,10 @@ async function routeSourceFixtures(
             if (options.failSalesGas && vectorName === "FGST") {
                 return route.fulfill({ status: 500, json: { detail: "fixture failure" } });
             }
-            const monthlyVolume = vectorName === "FOPT" ? 100 : 20_000;
+            if (options.seriesFor) {
+                return route.fulfill({ json: options.seriesFor(vectorName) });
+            }
+            const monthlyVolume = vectorName === "FOPT" ? 100 : vectorName === "FGIT" ? 2_000 : 20_000;
             return route.fulfill({
                 json: REALIZATIONS.map((realization, index) =>
                     monthlySeries(
@@ -372,4 +396,696 @@ test("shows a selected realization without complete profile data as unavailable"
     await expect(view.locator(".scatterlayer .trace")).toHaveCount(traceCountBefore + 1);
     expect(await readPublishedChannels(page)).toEqual(publishedBefore);
     expect(fixtures.vectorDataRequests).toHaveLength(2);
+});
+
+// --- Domain/UX pass: setup guidance, prediction-year selection, early value and cost fields. ---
+const UX_SCREENSHOT_DIR = "test-results/economic-screening-ux";
+
+function setupStatus(page: Page) {
+    return settingsRegion(page).getByRole("status", { name: "Setup status" });
+}
+
+async function setupItems(page: Page): Promise<string[]> {
+    return (await setupStatus(page).getByRole("listitem").allTextContents()).map((text) => text.trim());
+}
+
+/** Base UI keeps the previous filter if a single combobox is reopened before its close has completed. */
+async function expectPopupClosed(page: Page) {
+    await expect(page.getByRole("listbox")).toHaveCount(0);
+}
+
+async function typeAndTabAway(page: Page, input: ReturnType<Page["getByRole"]>, year: string) {
+    await input.click();
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.type(year);
+    await page.keyboard.press("Tab");
+}
+
+test("lists every known NPV setup requirement together before any price edit", async ({ mount, page }) => {
+    const fixtures = await routeSourceFixtures(page, { vectorNames: ["FOPT", "FGPT", "FGIT"] });
+    await page.setViewportSize({ width: 1320, height: 700 });
+    await mount(
+        <EconomicScreeningModuleHarness
+            settingsOpen
+            viewWidth={900}
+            viewHeight={640}
+            initialState={{
+                predictionStartYear: null,
+                oilPrice: null,
+                gasPrice: null,
+                selectedMeasure: EconomicMeasure.NPV,
+            }}
+        />,
+    );
+
+    await expect(setupStatus(page)).toContainText("Needed for net present value");
+    await expect
+        .poll(() => setupItems(page))
+        .toEqual([
+            "Enter a prediction start year.",
+            "Enter an oil price, or 0 to omit oil revenue.",
+            "Enter a gas price, or 0 to omit gas revenue.",
+            "Gas consumption (FGCT) is missing: accept “Assume no gas consumption” or enter a gas price of 0.",
+        ]);
+    await page.screenshot({ path: `${UX_SCREENSHOT_DIR}/desktop-initial-setup.png` });
+
+    const settings = settingsRegion(page);
+    const oilPrice = settings.getByRole("textbox", { name: /^Oil price/ });
+    const gasPrice = settings.getByRole("textbox", { name: /^Gas price/ });
+    await oilPrice.fill("50");
+    await oilPrice.blur();
+    await expect
+        .poll(() => setupItems(page))
+        .toEqual([
+            "Enter a prediction start year.",
+            "Enter a gas price, or 0 to omit gas revenue.",
+            "Gas consumption (FGCT) is missing: accept “Assume no gas consumption” or enter a gas price of 0.",
+        ]);
+
+    // Zero gas price resolves gas revenue only; sales-gas volume still needs the missing component.
+    await gasPrice.fill("0");
+    await gasPrice.blur();
+    await expect.poll(() => setupItems(page)).toEqual(["Enter a prediction start year."]);
+    await expect(settings.getByRole("checkbox", { name: "Assume no gas consumption" })).not.toBeChecked();
+
+    await settings.getByRole("combobox", { name: "Measure" }).click();
+    await page.getByRole("option", { name: "Discounted sales gas volume" }).click();
+    await expect(setupStatus(page)).toContainText("Needed for discounted sales gas volume");
+    await expect
+        .poll(() => setupItems(page))
+        .toEqual([
+            "Enter a prediction start year.",
+            "Gas consumption (FGCT) is missing: accept “Assume no gas consumption” to calculate sales gas.",
+        ]);
+    await settings.getByRole("combobox", { name: "Measure" }).click();
+    await page.getByRole("option", { name: "Break-even oil price" }).click();
+    await expect(setupStatus(page)).toContainText("Needed for break-even oil price");
+    await expect.poll(() => setupItems(page)).toEqual(["Enter a prediction start year."]);
+    expect(fixtures.vectorDataRequests.sort()).toEqual(["FGIT", "FGPT", "FOPT"]);
+    expect(fixtures.unexpectedApiRequests).toEqual([]);
+});
+
+test("applies an explicit missing-component assumption to gas revenue without auto-accepting it", async ({
+    mount,
+    page,
+}) => {
+    const fixtures = await routeSourceFixtures(page, { vectorNames: ["FOPT", "FGPT", "FGIT"] });
+    await mount(
+        <EconomicScreeningModuleHarness
+            settingsOpen
+            viewWidth={900}
+            viewHeight={640}
+            initialState={{ gasPrice: 0, selectedMeasure: EconomicMeasure.NPV }}
+        />,
+    );
+    const settings = settingsRegion(page);
+    const npvValues = async () =>
+        (await readPublishedChannels(page))
+            .find((channel) => channel.channelIdString === MEASURE_CHANNEL_ID_MAP[EconomicMeasure.NPV])!
+            .contents.flat()
+            .map((element) => element.value as number);
+
+    await expect.poll(async () => (await npvValues()).length).toBe(3);
+    const withoutGasRevenue = await npvValues();
+    const consumption = settings.getByRole("checkbox", { name: "Assume no gas consumption" });
+    await expect(consumption).not.toBeChecked();
+
+    const gasPrice = settings.getByRole("textbox", { name: /^Gas price/ });
+    await gasPrice.fill("0.2");
+    await gasPrice.blur();
+    await expect
+        .poll(() => setupItems(page))
+        .toEqual(["Gas consumption (FGCT) is missing: accept “Assume no gas consumption” or enter a gas price of 0."]);
+    await expect.poll(async () => (await npvValues()).length).toBe(0);
+
+    await consumption.check();
+    await expect(setupStatus(page)).toContainText("All known inputs for net present value are set.");
+    await expect.poll(async () => (await npvValues()).length).toBe(3);
+    const withGasRevenue = await npvValues();
+    withGasRevenue.forEach((value, index) => expect(value).toBeGreaterThan(withoutGasRevenue[index]));
+
+    await gasPrice.fill("0");
+    await gasPrice.blur();
+    await expect.poll(async () => npvValues()).toEqual(withoutGasRevenue);
+    // A zero gas price does not clear the stored ensemble-scoped assumption.
+    await expect(consumption).toBeChecked();
+    expect(fixtures.vectorDataRequests.sort()).toEqual(["FGIT", "FGPT", "FOPT"]);
+    expect(fixtures.unexpectedApiRequests).toEqual([]);
+});
+
+// Deterministic source from 1 January 2018 to 1 July 2020: 2018 is covered with zero production, and the
+// 1 July terminal boundary closes June 2020. Realization 21's oil ends on 1 January 2020.
+const EARLY_MONTH_COUNT = 30;
+const EARLY_MONTHLY_OIL: Record<number, number> = { 3: 100, 8: 150, 21: 120 };
+const EARLY_SHORT_OIL_REALIZATION = 21;
+const EARLY_INPUTS = {
+    predictionStartYear: 2018,
+    discountRatePercent: 10,
+    oilPrice: 50,
+    gasPrice: 0.2,
+    costProfile: [
+        { year: 2018, capex: 20_000, opex: 0 },
+        { year: 2019, capex: 0, opex: 1_200 },
+        { year: 2020, capex: 500, opex: 1_200 },
+    ],
+};
+
+function earlyMonthlyOil(realization: number): number[] {
+    return Array.from({ length: EARLY_MONTH_COUNT }, (_, month) => {
+        if (month < 12) return 0;
+        if (realization === EARLY_SHORT_OIL_REALIZATION && month >= 24) return 0;
+        return EARLY_MONTHLY_OIL[realization];
+    });
+}
+
+function earlyMonthlyGas(realization: number): number[] {
+    return Array.from({ length: EARLY_MONTH_COUNT }, (_, month) =>
+        month < 12 ? 0 : 100 * EARLY_MONTHLY_OIL[realization],
+    );
+}
+
+function earlySeriesFor(vectorName: string) {
+    return REALIZATIONS.map((realization) => {
+        const isShortOil = vectorName === "FOPT" && realization === EARLY_SHORT_OIL_REALIZATION;
+        return makeSeriesFromMonthlyVolumes(
+            realization,
+            2018,
+            vectorName === "FOPT" ? earlyMonthlyOil(realization) : earlyMonthlyGas(realization),
+            ["REGULAR"],
+            isShortOil ? monthStartUtcMs(2020, 1) : monthStartUtcMs(2020, 7),
+        );
+    });
+}
+
+/**
+ * Independent reference from the documented conventions: valuation 1 January 2018, monthly midpoint revenue
+ * and OPEX (annual/12, all twelve months even in 2020), mid-year CAPEX, through the end of `throughYear`.
+ */
+function referenceDiscountedCashFlow(realization: number, throughYear: number): number {
+    const rate = EARLY_INPUTS.discountRatePercent / 100;
+    const factor = (time: number) => Math.pow(1 + rate, -time);
+    const oil = earlyMonthlyOil(realization);
+    const gas = earlyMonthlyGas(realization);
+    let value = 0;
+    for (let month = 0; month < EARLY_MONTH_COUNT; month++) {
+        const year = 2018 + Math.floor(month / 12);
+        if (year > throughYear) continue;
+        const time = year - 2018 + ((month % 12) + 0.5) / 12;
+        value += (EARLY_INPUTS.oilPrice * oil[month] + EARLY_INPUTS.gasPrice * gas[month]) * factor(time);
+    }
+    for (const cost of EARLY_INPUTS.costProfile) {
+        if (cost.year > throughYear) continue;
+        value -= cost.capex * factor(cost.year - 2018 + 0.5);
+        for (let month = 1; month <= 12; month++) {
+            value -= (cost.opex / 12) * factor(cost.year - 2018 + (month - 0.5) / 12);
+        }
+    }
+    return value;
+}
+
+function channelEntries(channels: PublishedChannel[], channelIdString: string): { key: number; value: number }[] {
+    return (channels.find((channel) => channel.channelIdString === channelIdString)?.contents.flat() ?? []) as {
+        key: number;
+        value: number;
+    }[];
+}
+
+function earlyComparison(page: Page) {
+    return viewRegion(page).getByRole("region", { name: "Early value comparison" });
+}
+
+/** The displayed comparison value in currency units, undoing the display scale shown in the header. */
+async function comparisonValue(page: Page, rowLabel: string): Promise<number | "Unavailable"> {
+    const header = await earlyComparison(page).getByRole("columnheader").nth(2).textContent();
+    const scale = header!.includes("thousand") ? 1e3 : header!.includes("million") ? 1e6 : 1;
+    const text = (await earlyComparison(page)
+        .getByRole("row", { name: rowLabel })
+        .getByRole("cell")
+        .nth(2)
+        .textContent())!;
+    return text.trim() === "Unavailable" ? "Unavailable" : Number(text) * scale;
+}
+
+function expectDisplayedClose(actual: number | "Unavailable", expected: number) {
+    expect(actual).not.toBe("Unavailable");
+    expect(Math.abs((actual as number) - expected)).toBeLessThanOrEqual(1e-5 * Math.abs(expected) + 1e-6);
+}
+
+async function plottedValue(page: Page, traceName: string, year: number): Promise<number | null> {
+    return viewRegion(page)
+        .locator(".js-plotly-plot")
+        .first()
+        .evaluate(
+            (element, args) => {
+                const trace = (element as unknown as { data: { name: string; x: number[]; y: number[] }[] }).data.find(
+                    (candidate) => candidate.name === args.traceName,
+                );
+                const index = trace ? Array.from(trace.x).indexOf(args.year) : -1;
+                return index < 0 ? null : trace!.y[index];
+            },
+            { traceName, year },
+        );
+}
+
+const EARLY_DCF_CHANNEL = EARLY_MEASURE_CHANNEL_ID_MAP[EarlyEconomicMeasure.DISCOUNTED_CASH_FLOW];
+const NPV_CHANNEL = MEASURE_CHANNEL_ID_MAP[EconomicMeasure.NPV];
+
+test("suggests covered years, accepts typed years and keeps the choice under filtering", async ({ mount, page }) => {
+    const fixtures = await routeSourceFixtures(page, { seriesFor: earlySeriesFor });
+    await page.setViewportSize({ width: 1320, height: 700 });
+    const component = await mount(
+        <EconomicScreeningModuleHarness
+            settingsOpen
+            viewWidth={900}
+            viewHeight={640}
+            initialState={{ predictionStartYear: null }}
+        />,
+    );
+    const settings = settingsRegion(page);
+    const year = settings.getByRole("combobox", { name: "Prediction start year" });
+    await expect(year).toHaveValue("");
+    await expect(settings.getByText(/^Valuation:/)).toHaveCount(0);
+
+    // Keyboard search: covered zero-production 2018 is suggested; no history is selected automatically.
+    await year.click();
+    await expect(page.getByRole("option")).toHaveText(["2018", "2019", "2020"]);
+    await page.keyboard.type("2019");
+    await expect(page.getByRole("option")).toHaveText(["2019"]);
+    await page.keyboard.press("Enter");
+    await expect(year).toHaveValue("2019");
+    await expectPopupClosed(page);
+    await expect(settings.getByText("Valuation: 1 January 2019")).toBeVisible();
+    await expect(settings.getByRole("cell", { name: "2019", exact: true })).toBeVisible();
+
+    // A typed year outside the suggestions is accepted and explained through the existing validation.
+    await year.click();
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.type("2031");
+    await expect(page.getByRole("option", { name: /2031/ })).toContainText("No source data from 1 January");
+    await page.keyboard.press("Enter");
+    await expect(year).toHaveValue("2031");
+    await expectPopupClosed(page);
+    await expect(settings.getByText(/^Valuation:/)).toHaveCount(0);
+    await expect(setupStatus(page)).toContainText(
+        "The prediction start year 2031 is after the supported simulation end (Jun 2020).",
+    );
+
+    // Pointer selection, then clearing back to blank.
+    await settings.getByRole("button", { name: "Prediction start year" }).click();
+    await page.getByRole("option", { name: "2018", exact: true }).click();
+    await expect(year).toHaveValue("2018");
+    await expectPopupClosed(page);
+    await expect(settings.getByText("Valuation: 1 January 2018")).toBeVisible();
+    await settings.getByRole("button", { name: "Clear selection" }).first().click();
+    await expect(year).toHaveValue("");
+    await expect(settings.getByText(/^Valuation:/)).toHaveCount(0);
+    await expect.poll(() => setupItems(page)).toContain("Enter a prediction start year.");
+
+    await year.click();
+    await page.keyboard.type("2019");
+    await page.keyboard.press("Enter");
+    await expectPopupClosed(page);
+    await component.update(
+        <EconomicScreeningModuleHarness
+            settingsOpen
+            viewWidth={900}
+            viewHeight={640}
+            initialState={{ predictionStartYear: null }}
+            filteredRealizations={[8]}
+        />,
+    );
+    const npvKeys = async () =>
+        channelEntries(await readPublishedChannels(page), NPV_CHANNEL).map((entry) => entry.key);
+    await expect.poll(npvKeys).toEqual([8]);
+    await expect(year).toHaveValue("2019");
+    await settings.getByRole("button", { name: "Prediction start year" }).click();
+    await expect(page.getByRole("option")).toHaveText(["2018", "2019", "2020"]);
+    await page.keyboard.press("Escape");
+    await expect(year).toHaveValue("2019");
+    expect(fixtures.vectorDataRequests.sort()).toEqual(["FGST", "FOPT"]);
+    expect(fixtures.unexpectedApiRequests).toEqual([]);
+});
+
+test("keeps a stored prediction start year that is outside the suggestions", async ({ mount, page }) => {
+    await routeSourceFixtures(page, { seriesFor: earlySeriesFor });
+    await mount(
+        <EconomicScreeningModuleHarness
+            settingsOpen
+            viewWidth={900}
+            viewHeight={640}
+            initialState={{ predictionStartYear: 2016 }}
+        />,
+    );
+    const year = settingsRegion(page).getByRole("combobox", { name: "Prediction start year" });
+    await expect(settingsRegion(page).getByRole("cell", { name: "2016", exact: true })).toBeVisible();
+    await expect(year).toHaveValue("2016");
+    await expect(settingsRegion(page).getByText("Valuation: 1 January 2016")).toBeVisible();
+    await year.click();
+    await expect(page.getByRole("option")).toHaveText(["2016No source data from 1 January", "2018", "2019", "2020"]);
+});
+
+test("commits a typed whole year when focus leaves, and Escape cancels the edit", async ({ mount, page }) => {
+    const fixtures = await routeSourceFixtures(page, { seriesFor: earlySeriesFor });
+    await mount(
+        <EconomicScreeningModuleHarness
+            settingsOpen
+            viewWidth={900}
+            viewHeight={640}
+            initialState={{ predictionStartYear: 2019 }}
+        />,
+    );
+    const settings = settingsRegion(page);
+    const year = settings.getByRole("combobox", { name: "Prediction start year" });
+    await expect(settings.getByText("Valuation: 1 January 2019")).toBeVisible();
+
+    await typeAndTabAway(page, year, "2018");
+    await expectPopupClosed(page);
+    await expect(year).toHaveValue("2018");
+    await expect(settings.getByText("Valuation: 1 January 2018")).toBeVisible();
+    await expect(settings.getByRole("cell", { name: "2018", exact: true })).toBeVisible();
+
+    // Tab also commits a typed year outside the suggestions.
+    await year.click();
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.type("2017");
+    await page.keyboard.press("Tab");
+    await expectPopupClosed(page);
+    await expect(year).toHaveValue("2017");
+    await expect(settings.getByText("Valuation: 1 January 2017")).toBeVisible();
+
+    await year.click();
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.type("2020");
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Tab");
+    await expectPopupClosed(page);
+    await expect(year).toHaveValue("2017");
+    await expect(settings.getByText("Valuation: 1 January 2017")).toBeVisible();
+
+    // Text that is not a whole year is discarded.
+    await typeAndTabAway(page, year, "20");
+    await expectPopupClosed(page);
+    await expect(year).toHaveValue("2017");
+    await expect(settings.getByText("Valuation: 1 January 2017")).toBeVisible();
+
+    await settings.getByRole("button", { name: "Clear selection" }).first().click();
+    await expect(year).toHaveValue("");
+    await expect(settings.getByText(/^Valuation:/)).toHaveCount(0);
+    expect(fixtures.unexpectedApiRequests).toEqual([]);
+});
+
+test("reports missing source coverage for the selected realizations in the setup summary", async ({ mount, page }) => {
+    const fixtures = await routeSourceFixtures(page, { seriesFor: earlySeriesFor });
+    const initialState = { ...EARLY_INPUTS, predictionStartYear: 2016, selectedMeasure: EconomicMeasure.NPV };
+    const component = await mount(
+        <EconomicScreeningModuleHarness settingsOpen viewWidth={900} viewHeight={640} initialState={initialState} />,
+    );
+    const settings = settingsRegion(page);
+    const npvCount = async () => channelEntries(await readPublishedChannels(page), NPV_CHANNEL).length;
+    const coverageBefore = (product: string) =>
+        `${product} source coverage is incomplete between Jan 2016 and Jun 2020 for every selected realization; supported data starts Jan 2018.`;
+
+    await expect.poll(() => setupItems(page)).toEqual([coverageBefore("Oil"), coverageBefore("Sales gas")]);
+    await expect(setupStatus(page)).toContainText("Source data:");
+    await expect(setupStatus(page)).not.toContainText("All known inputs");
+    expect(await npvCount()).toBe(0);
+    await expect(settings.getByRole("combobox", { name: "Prediction start year" })).toHaveValue("2016");
+
+    // A zero price removes only that product's coverage requirement.
+    const gasPrice = settings.getByRole("textbox", { name: /^Gas price/ });
+    await typeAndTabAway(page, gasPrice, "0");
+    await expect.poll(() => setupItems(page)).toEqual([coverageBefore("Oil")]);
+
+    await typeAndTabAway(page, settings.getByRole("combobox", { name: "Prediction start year" }), "2018");
+    await expect(setupStatus(page)).toContainText("All known inputs for net present value are set.");
+    await expect.poll(npvCount).toBe(2);
+
+    // Only realization 21 is selected, and its oil ends in January 2020.
+    await component.update(
+        <EconomicScreeningModuleHarness
+            settingsOpen
+            viewWidth={900}
+            viewHeight={640}
+            initialState={initialState}
+            filteredRealizations={[21]}
+        />,
+    );
+    await expect
+        .poll(() => setupItems(page))
+        .toEqual(["Oil source coverage is incomplete between Jan 2018 and Jun 2020 for every selected realization."]);
+    await expect.poll(npvCount).toBe(0);
+    expect(fixtures.vectorDataRequests.sort()).toEqual(["FGST", "FOPT"]);
+    expect(fixtures.unexpectedApiRequests).toEqual([]);
+});
+
+/** Realization 3 lacks complete gas and 8 lacks complete oil; 21 is complete and sets the ensemble horizon. */
+function disjointCoverageSeriesFor(vectorName: string) {
+    return REALIZATIONS.map((realization) => {
+        const isShort = vectorName === "FOPT" ? realization === 8 : realization === 3;
+        return makeSeriesFromMonthlyVolumes(
+            realization,
+            2018,
+            vectorName === "FOPT" ? earlyMonthlyOil(3) : earlyMonthlyGas(3),
+            ["REGULAR"],
+            isShort ? monthStartUtcMs(2020, 1) : monthStartUtcMs(2020, 7),
+        );
+    });
+}
+
+test("requires the needed products to be covered in the same selected realization", async ({ mount, page }) => {
+    const fixtures = await routeSourceFixtures(page, { seriesFor: disjointCoverageSeriesFor });
+    await mount(
+        <EconomicScreeningModuleHarness
+            settingsOpen
+            viewWidth={900}
+            viewHeight={640}
+            initialState={{ ...EARLY_INPUTS, selectedMeasure: EconomicMeasure.NPV }}
+            filteredRealizations={[3, 8]}
+        />,
+    );
+    const npvKeys = async () =>
+        channelEntries(await readPublishedChannels(page), NPV_CHANNEL).map((entry) => entry.key);
+
+    await expect
+        .poll(() => setupItems(page))
+        .toEqual(["No selected realization has both oil and sales gas source coverage between Jan 2018 and Jun 2020."]);
+    await expect(setupStatus(page)).not.toContainText("All known inputs");
+    expect(await npvKeys()).toEqual([]);
+
+    // Without gas revenue, realization 3's complete oil is enough.
+    await typeAndTabAway(page, settingsRegion(page).getByRole("textbox", { name: /^Gas price/ }), "0");
+    await expect(setupStatus(page)).toContainText("All known inputs for net present value are set.");
+    await expect.poll(npvKeys).toEqual([3]);
+    expect(fixtures.vectorDataRequests.sort()).toEqual(["FGST", "FOPT"]);
+    expect(fixtures.unexpectedApiRequests).toEqual([]);
+});
+
+test("shows early and full discounted cash flow from the computed results with a labeled profile marker", async ({
+    mount,
+    page,
+}) => {
+    const fixtures = await routeSourceFixtures(page, { seriesFor: earlySeriesFor });
+    await page.setViewportSize({ width: 1320, height: 760 });
+    await mount(
+        <EconomicScreeningModuleHarness
+            settingsOpen
+            viewWidth={900}
+            viewHeight={700}
+            initialState={{
+                ...EARLY_INPUTS,
+                earlyValue: { enabled: true, endYear: 2019 },
+                resultMode: ResultMode.TIME_PROFILE,
+                cashFlowProfileType: CashFlowProfileType.CUMULATIVE_DISCOUNTED_CASH_FLOW,
+                selectedRealization: 3,
+            }}
+        />,
+    );
+    const view = viewRegion(page);
+    const settings = settingsRegion(page);
+    await waitForPlottedData(page);
+
+    const expected2018 = referenceDiscountedCashFlow(3, 2018);
+    const expected2019 = referenceDiscountedCashFlow(3, 2019);
+    const expectedFull = referenceDiscountedCashFlow(3, 2020);
+    expect(expected2018).toBeLessThan(0);
+
+    // Through 2019: rendered comparison, plotted 2019 point and published channel agree with the reference.
+    await expect(earlyComparison(page)).toContainText(
+        "Early value through 2019 | Valuation 1 January 2018 | Currency USD",
+    );
+    await expect(earlyComparison(page).getByRole("row", { name: /Early discounted cash flow/ })).toContainText(
+        "Jan 2018-Dec 2019",
+    );
+    await expect(earlyComparison(page).getByRole("row", { name: /Net present value/ })).toContainText(
+        "Jan 2018-Jun 2020",
+    );
+    await expect(earlyComparison(page).getByRole("columnheader").nth(2)).toContainText("Realization 3");
+    expectDisplayedClose(await comparisonValue(page, "Early discounted cash flow"), expected2019);
+    expectDisplayedClose(await comparisonValue(page, "Net present value"), expectedFull);
+    expect(Math.abs((await plottedValue(page, "Realization 3", 2019))! - expected2019)).toBeLessThan(1e-6);
+    await expect(view.locator(".annotation-text")).toHaveText("Early value through 2019");
+    let channels = await readPublishedChannels(page);
+    const fullNpv = channelEntries(channels, NPV_CHANNEL);
+    expect(fullNpv.map((entry) => entry.key)).toEqual([3, 8]);
+    for (const entry of fullNpv) {
+        expect(Math.abs(entry.value - referenceDiscountedCashFlow(entry.key, 2020))).toBeLessThan(1e-6);
+    }
+    const early2019 = channelEntries(channels, EARLY_DCF_CHANNEL);
+    expect(early2019.map((entry) => entry.key)).toEqual([3, 8, 21]);
+    for (const entry of early2019) {
+        expect(Math.abs(entry.value - referenceDiscountedCashFlow(entry.key, 2019))).toBeLessThan(1e-6);
+    }
+    await page.screenshot({ path: `${UX_SCREENSHOT_DIR}/desktop-early-2019-realization.png` });
+
+    const throughYear = settings.getByRole("textbox", { name: "Calculate through year" });
+    await typeAndTabAway(page, throughYear, "2018");
+    await expect(view.locator(".annotation-text")).toHaveText("Early value through 2018");
+    expectDisplayedClose(await comparisonValue(page, "Early discounted cash flow"), expected2018);
+    await expect
+        .poll(async () => channelEntries(await readPublishedChannels(page), EARLY_DCF_CHANNEL)[0]?.value)
+        .toBeCloseTo(expected2018, 6);
+
+    // Through the final year: equals full NPV and includes the full 2020 costs; short-oil 21 is unavailable.
+    await typeAndTabAway(page, throughYear, "2020");
+    await expect(earlyComparison(page).getByRole("row", { name: /Early discounted cash flow/ })).toContainText(
+        "Jan 2018-Jun 2020",
+    );
+    expectDisplayedClose(await comparisonValue(page, "Early discounted cash flow"), expectedFull);
+    await expect
+        .poll(async () =>
+            channelEntries(await readPublishedChannels(page), EARLY_DCF_CHANNEL).map((entry) => entry.key),
+        )
+        .toEqual([3, 8]);
+    channels = await readPublishedChannels(page);
+    const early2020 = channelEntries(channels, EARLY_DCF_CHANNEL);
+    expect(Math.abs(early2020[0].value - fullNpv[0].value)).toBeLessThan(1e-6);
+    expect(channelEntries(channels, NPV_CHANNEL)).toEqual(fullNpv);
+
+    // Aggregate: labeled P50 per horizon with each horizon's own valid count.
+    await typeAndTabAway(page, throughYear, "2019");
+    await realizationCombobox(page).click();
+    await page.keyboard.press("Escape");
+    await settings.getByRole("button", { name: "Clear selection" }).last().click();
+    await expect(earlyComparison(page).getByRole("columnheader").nth(2)).toContainText("P50");
+    await expect(earlyComparison(page).getByRole("row", { name: /Early discounted cash flow/ })).toContainText("3/3");
+    await expect(earlyComparison(page).getByRole("row", { name: /Net present value/ })).toContainText("2/3");
+    await expect(earlyComparison(page)).toContainText("need not come from the same realization");
+    const earlyMedian = [3, 8, 21]
+        .map((realization) => referenceDiscountedCashFlow(realization, 2019))
+        .sort((a, b) => a - b)[1];
+    const fullMedian = (referenceDiscountedCashFlow(3, 2020) + referenceDiscountedCashFlow(8, 2020)) / 2;
+    expectDisplayedClose(await comparisonValue(page, "Early discounted cash flow"), earlyMedian);
+    expectDisplayedClose(await comparisonValue(page, "Net present value"), fullMedian);
+    await page.screenshot({ path: `${UX_SCREENSHOT_DIR}/desktop-early-2019-aggregate.png` });
+
+    // Disabled early value withdraws only early context and contents.
+    await settings.getByRole("checkbox", { name: "Early value" }).uncheck();
+    await expect(earlyComparison(page)).toHaveCount(0);
+    await expect(view.locator(".annotation-text")).toHaveCount(0);
+    await expect.poll(async () => channelEntries(await readPublishedChannels(page), EARLY_DCF_CHANNEL)).toEqual([]);
+    expect(channelEntries(await readPublishedChannels(page), NPV_CHANNEL)).toEqual(fullNpv);
+    await waitForPlottedData(page);
+
+    // An out-of-range year does the same and is reported in the setup summary.
+    await settings.getByRole("checkbox", { name: "Early value" }).check();
+    await typeAndTabAway(page, throughYear, "2025");
+    await expect(setupStatus(page)).toContainText("Early value: choose a Calculate through year within 2018-2020.");
+    await expect(earlyComparison(page)).toHaveCount(0);
+    await expect(view.locator(".annotation-text")).toHaveCount(0);
+    await expect.poll(async () => channelEntries(await readPublishedChannels(page), EARLY_DCF_CHANNEL)).toEqual([]);
+    expect(channelEntries(await readPublishedChannels(page), NPV_CHANNEL)).toEqual(fullNpv);
+    await expectNoConfigurationInputsInView(page);
+    expect(fixtures.vectorDataRequests.sort()).toEqual(["FGST", "FOPT"]);
+    expect(fixtures.unexpectedApiRequests).toEqual([]);
+});
+
+/** True when the element's content fits its own box horizontally, i.e. nothing is clipped or scrolled. */
+async function fitsHorizontally(locator: ReturnType<Page["getByRole"]>): Promise<boolean> {
+    return locator.evaluate((element) => element.scrollWidth <= element.clientWidth + 1);
+}
+
+test("keeps the early comparison, marker and setup summary contained in a narrow layout", async ({ mount, page }) => {
+    await routeSourceFixtures(page, { seriesFor: earlySeriesFor });
+    await page.setViewportSize({ width: 720, height: 700 });
+    await mount(
+        <EconomicScreeningModuleHarness
+            settingsOpen
+            viewWidth={360}
+            viewHeight={640}
+            initialState={{
+                ...EARLY_INPUTS,
+                gasPrice: null,
+                earlyValue: { enabled: true, endYear: 2019 },
+                resultMode: ResultMode.TIME_PROFILE,
+                cashFlowProfileType: CashFlowProfileType.CUMULATIVE_DISCOUNTED_CASH_FLOW,
+                selectedRealization: 3,
+            }}
+        />,
+    );
+    // A blank gas price withholds financial results, so the summary is shown while volumes stay available.
+    await expect.poll(() => setupItems(page)).toEqual(["Enter a gas price, or 0 to omit gas revenue."]);
+    const summaryBox = (await setupStatus(page).boundingBox())!;
+    const settingsBox = (await settingsRegion(page).boundingBox())!;
+    expect(summaryBox.x + summaryBox.width).toBeLessThanOrEqual(settingsBox.x + settingsBox.width);
+    expect(await fitsHorizontally(setupStatus(page))).toBe(true);
+
+    const gasPrice = settingsRegion(page).getByRole("textbox", { name: /^Gas price/ });
+    await gasPrice.fill("0.2");
+    await gasPrice.blur();
+    await expect(setupStatus(page)).toContainText("All known inputs for cumulative discounted cash flow are set.");
+    await waitForPlottedData(page);
+    await expect(viewRegion(page).locator(".annotation-text")).toHaveText("Early value through 2019");
+
+    const view = viewRegion(page);
+    const viewBox = (await view.boundingBox())!;
+    const comparisonBox = (await earlyComparison(page).boundingBox())!;
+    expect(comparisonBox.x + comparisonBox.width).toBeLessThanOrEqual(viewBox.x + viewBox.width);
+    for (const cell of await earlyComparison(page).getByRole("cell").all()) {
+        const cellBox = (await cell.boundingBox())!;
+        expect(cellBox.x + cellBox.width, `cell "${await cell.textContent()}"`).toBeLessThanOrEqual(
+            viewBox.x + viewBox.width,
+        );
+    }
+    const annotation = (await view.locator(".annotation").first().boundingBox())!;
+    const legend = (await view.locator(".legend").first().boundingBox())!;
+    const plot = (await view.locator(".main-svg").first().boundingBox())!;
+    expect(overlaps(annotation, legend)).toBe(false);
+    for (const label of [...(await view.locator(".xtick text").all()), view.locator(".xtitle").first()]) {
+        expect(overlaps(annotation, (await label.boundingBox())!)).toBe(false);
+    }
+    expect(annotation.x).toBeGreaterThanOrEqual(plot.x);
+    expect(annotation.x + annotation.width).toBeLessThanOrEqual(plot.x + plot.width);
+    await expectLegendClearOfYearAxis(page);
+    await page.mouse.move(0, 0);
+    await page.screenshot({ path: `${UX_SCREENSHOT_DIR}/narrow-early-time-profile.png` });
+});
+
+test("names Settings cost inputs by year without step buttons while other number fields keep them", async ({
+    mount,
+    page,
+}) => {
+    await routeSourceFixtures(page);
+    await page.setViewportSize({ width: 1320, height: 700 });
+    await mount(<EconomicScreeningModuleHarness settingsOpen viewWidth={900} viewHeight={640} />);
+    const settings = settingsRegion(page);
+
+    const capex2030 = settings.getByRole("textbox", { name: "CAPEX 2030", exact: true });
+    await expect(capex2030).toBeVisible();
+    await expect(settings.getByRole("textbox", { name: "OPEX 2031", exact: true })).toBeVisible();
+    const costTable = settings.getByRole("table").filter({ has: capex2030 });
+    await expect(costTable.getByRole("button")).toHaveCount(0);
+    await expect(settings.getByRole("status").filter({ hasText: "No non-zero costs included." })).toBeVisible();
+
+    const discountRate = settings.getByRole("textbox", { name: /^Discount rate/ });
+    await expect(discountRate).toHaveValue("8");
+    await discountRate.locator("..").getByRole("button", { name: "Increase" }).click();
+    await expect(discountRate).toHaveValue("9");
+    await expect(viewRegion(page).getByText(/Discount rate 9%/)).toBeVisible({ timeout: 2_000 });
+
+    await capex2030.click();
+    await page.keyboard.type("1000");
+    await capex2030.blur();
+    await expect(capex2030).toHaveValue("1,000");
+    await expect(settings.getByRole("status").filter({ hasText: "No non-zero costs included." })).toHaveCount(0);
+    await page.screenshot({ path: `${UX_SCREENSHOT_DIR}/desktop-settings-costs.png` });
 });

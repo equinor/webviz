@@ -4,6 +4,7 @@ import { NumberInput } from "@lib/components/NumberInput";
 import { Table } from "@lib/components/Table";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import type { CostProfileEntry } from "@modules/EconomicScreening/typesAndEnums";
+import { hasIncludedNonZeroCost } from "@modules/EconomicScreening/utils/setupReadiness";
 
 const COST_INPUT_DEBOUNCE_MS = 500;
 
@@ -42,9 +43,7 @@ export function validateCostProfile(costProfile: EditableCostProfileEntry[], isD
     return null;
 }
 
-export function parseCostProfilePaste(
-    text: string,
-): { entries: EditableCostProfileEntry[] } | { error: string } {
+export function parseCostProfilePaste(text: string): { entries: EditableCostProfileEntry[] } | { error: string } {
     const rows = text.replaceAll("\r", "").split("\n").filter(Boolean);
     const entries: EditableCostProfileEntry[] = [];
 
@@ -101,9 +100,7 @@ export function getCostYearsOutsideRange(
 ): number[] {
     return costProfile
         .filter((entry) => entry.capex !== 0 || entry.opex !== 0)
-        .filter(
-            (entry) => startYear === null || endYear === null || entry.year < startYear || entry.year > endYear,
-        )
+        .filter((entry) => startYear === null || endYear === null || entry.year < startYear || entry.year > endYear)
         .map((entry) => entry.year)
         .sort((first, second) => first - second);
 }
@@ -177,10 +174,7 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
             return;
         }
         updateProfile(
-            parsed.entries.reduce(
-                (profile, entry) => setCostEntry(profile, entry as CostProfileEntry),
-                immediateValue,
-            ),
+            parsed.entries.reduce((profile, entry) => setCostEntry(profile, entry as CostProfileEntry), immediateValue),
         );
     }
 
@@ -248,6 +242,7 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
                                         value={entry?.capex ? entry.capex : null}
                                         placeholder="0"
                                         min={isDelta ? undefined : 0}
+                                        showStepButtons={false}
                                         onValueChange={(newValue) => handleCostChange(year, "capex", newValue)}
                                     />
                                 </Table.Cell>
@@ -258,6 +253,7 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
                                         value={entry?.opex ? entry.opex : null}
                                         placeholder="0"
                                         min={isDelta ? undefined : 0}
+                                        showStepButtons={false}
                                         onValueChange={(newValue) => handleCostChange(year, "opex", newValue)}
                                     />
                                 </Table.Cell>
@@ -269,6 +265,11 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
             {(pasteError ?? validationError) && (
                 <span className="text-body-xs text-danger" role="alert">
                     {pasteError ?? validationError}
+                </span>
+            )}
+            {!pasteError && !validationError && !hasIncludedNonZeroCost(immediateValue, startYear, endYear) && (
+                <span className="text-body-xs text-subtle" role="status">
+                    No non-zero costs included.
                 </span>
             )}
             {excludedNotice}

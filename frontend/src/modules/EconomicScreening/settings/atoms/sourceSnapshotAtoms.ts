@@ -4,9 +4,15 @@ import type { SourceHorizon } from "@modules/EconomicScreening/typesAndEnums";
 import {
     computeMonthlyVolumesFromCumulative,
     lastSupportedMonthIndex,
+    monthIndexOf,
     SourceKind,
 } from "@modules/EconomicScreening/utils/monthlyProduction";
 import type { MonthlyProductionProfile } from "@modules/EconomicScreening/utils/monthlyProduction";
+import {
+    suggestPredictionStartYears,
+    summarizeSelectedProductSupport,
+    type SelectedProductSupport,
+} from "@modules/EconomicScreening/utils/setupReadiness";
 import {
     NO_SALES_GAS_DIAGNOSTICS,
     SourceStatus,
@@ -22,7 +28,7 @@ import {
     toRealizationCumulativeSeries,
 } from "@modules/EconomicScreening/utils/vectorResolution";
 
-import { missingComponentAssumptionsAtom } from "./baseAtoms";
+import { missingComponentAssumptionsAtom, predictionStartYearAtom } from "./baseAtoms";
 import { activeVectorListQueryAtom, isSelectedEnsembleDeltaAtom, salesGasStrategyAtom } from "./derivedAtoms";
 import { selectedEnsembleIdentAtom } from "./persistableFixableAtoms";
 import {
@@ -226,6 +232,32 @@ export const sourceHorizonAtom = atom<SourceHorizon>((get) => {
         endYear: snapshot.envelopeEndMonthIndex === null ? null : Math.floor(snapshot.envelopeEndMonthIndex / 12),
         isLoading: snapshot.isFetching || snapshot.status === SourceStatus.LOADING,
     };
+});
+
+/** From the full-ensemble snapshot, so realization filtering does not change the suggestions. */
+export const predictionStartYearSuggestionsAtom = atom<number[]>((get) => {
+    const snapshot = get(sourceSnapshotAtom);
+    if (snapshot.envelopeEndMonthIndex === null) {
+        return [];
+    }
+    return suggestPredictionStartYears(snapshot.realizationProfiles, snapshot.envelopeEndMonthIndex);
+});
+
+/** Coverage and confirmed absence of each product over the evaluation for the filtered realizations; null until known. */
+export const selectedProductSupportAtom = atom<SelectedProductSupport | null>((get) => {
+    const snapshot = get(sourceSnapshotAtom);
+    const predictionStartYear = get(predictionStartYearAtom);
+    const endMonthIndex = snapshot.envelopeEndMonthIndex;
+    if (predictionStartYear === null || endMonthIndex === null) {
+        return null;
+    }
+    const startMonthIndex = monthIndexOf(predictionStartYear, 1);
+    const realizations = new Set(get(validRealizationNumbersAtom) ?? []);
+    const profiles = snapshot.realizationProfiles.filter((profile) => realizations.has(profile.realization));
+    if (startMonthIndex > endMonthIndex || profiles.length === 0) {
+        return null;
+    }
+    return summarizeSelectedProductSupport(profiles, startMonthIndex, endMonthIndex);
 });
 
 /** Delta constituents' FGCT is reported for context only; it never gates results. */

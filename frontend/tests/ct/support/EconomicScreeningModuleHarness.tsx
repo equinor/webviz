@@ -6,11 +6,12 @@ import { queryClientAtom } from "jotai-tanstack-query";
 
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { EnsembleSet } from "@framework/EnsembleSet";
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
 import { ApplyInterfaceEffectsToView } from "@framework/internal/components/ApplyInterfaceEffects/applyInterfaceEffects";
 import type { Module, ModuleSettingsProps, ModuleViewProps } from "@framework/Module";
 import { ModuleInstance, ModuleInstanceTopic } from "@framework/ModuleInstance";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
+import type { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
@@ -20,15 +21,45 @@ import "@modules/EconomicScreening/loadModule";
 import { serializeStateFunctions, type SerializedState } from "@modules/EconomicScreening/persistence";
 import { MODULE_NAME } from "@modules/EconomicScreening/registerModule";
 import {
+    cashFlowProfileTypeAtom,
+    costProfileAtom,
     currencyAtom,
+    discountRatePercentAtom,
+    earlyValueConfigurationAtom,
     gasPriceAtom,
     gasPriceBasisAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
     predictionStartYearAtom,
+    resultModeAtom,
+    selectedMeasureAtom,
 } from "@modules/EconomicScreening/settings/atoms/baseAtoms";
-import { selectedEnsembleIdentAtom } from "@modules/EconomicScreening/settings/atoms/persistableFixableAtoms";
+import {
+    selectedEnsembleIdentAtom,
+    selectedRealizationAtom,
+} from "@modules/EconomicScreening/settings/atoms/persistableFixableAtoms";
+import type {
+    CashFlowProfileType,
+    CostProfileEntry,
+    EarlyValueConfiguration,
+    EconomicMeasure,
+    ResultMode,
+} from "@modules/EconomicScreening/typesAndEnums";
 import { Currency, GasPriceBasis, OilPriceBasis } from "@modules/EconomicScreening/typesAndEnums";
+
+/** Serializable overrides of the harness defaults; an absent key keeps the default. */
+export type EconomicScreeningHarnessInitialState = {
+    predictionStartYear?: number | null;
+    oilPrice?: number | null;
+    gasPrice?: number | null;
+    discountRatePercent?: number;
+    costProfile?: CostProfileEntry[];
+    earlyValue?: EarlyValueConfiguration;
+    resultMode?: ResultMode;
+    selectedMeasure?: EconomicMeasure;
+    cashFlowProfileType?: CashFlowProfileType;
+    selectedRealization?: number | null;
+};
 
 const HARNESS_CASE_UUID = "99999999-aaaa-4444-aaaa-aaaaaaaaaaaa";
 const HARNESS_REALIZATIONS = [3, 8, 21];
@@ -66,7 +97,7 @@ function makeWorkbenchSession(): WorkbenchSession {
  * Builds a module instance the way the framework initializes one, with the module's registered
  * components and its settings-to-view interface. Settings and view share one per-module store.
  */
-function makeModuleInstance() {
+function makeModuleInstance(initialState: EconomicScreeningHarnessInitialState = {}) {
     EnsembleFingerprintStore.setAll(new Map([[ENSEMBLE.getIdent().toString(), "harness-fingerprint"]]));
     const store = createStore();
     // Same query defaults as the application's QueryClientProvider.
@@ -93,6 +124,23 @@ function makeModuleInstance() {
     store.set(oilPriceBasisAtom, OilPriceBasis.PER_SM3);
     store.set(gasPriceAtom, 0.2);
     store.set(gasPriceBasisAtom, GasPriceBasis.PER_SM3);
+    if ("predictionStartYear" in initialState) store.set(predictionStartYearAtom, initialState.predictionStartYear!);
+    if ("oilPrice" in initialState) store.set(oilPriceAtom, initialState.oilPrice!);
+    if ("gasPrice" in initialState) store.set(gasPriceAtom, initialState.gasPrice!);
+    if (initialState.discountRatePercent !== undefined) {
+        store.set(discountRatePercentAtom, initialState.discountRatePercent);
+    }
+    if (initialState.costProfile) store.set(costProfileAtom, initialState.costProfile);
+    if (initialState.earlyValue) store.set(earlyValueConfigurationAtom, initialState.earlyValue);
+    if (initialState.resultMode) store.set(resultModeAtom, initialState.resultMode);
+    if (initialState.selectedMeasure) store.set(selectedMeasureAtom, initialState.selectedMeasure);
+    if (initialState.cashFlowProfileType) store.set(cashFlowProfileTypeAtom, initialState.cashFlowProfileType);
+    if ("selectedRealization" in initialState) {
+        store.set(selectedRealizationAtom, {
+            ensembleIdentString: ENSEMBLE.getIdent().toString(),
+            realization: initialState.selectedRealization!,
+        });
+    }
 
     const module = ModuleRegistry.getModule(MODULE_NAME) as Module<Interfaces, SerializedState>;
     const instance = new ModuleInstance<Interfaces, SerializedState>({
@@ -114,12 +162,30 @@ export type EconomicScreeningModuleHarnessProps = {
     settingsOpen: boolean;
     viewWidth: number;
     viewHeight: number;
+    initialState?: EconomicScreeningHarnessInitialState;
+    /** Workbench realization filter; null or absent keeps every realization. */
+    filteredRealizations?: number[] | null;
 };
 
 export function EconomicScreeningModuleHarness(props: EconomicScreeningModuleHarnessProps) {
-    const [{ store, module, instance }] = useState(makeModuleInstance);
+    const [{ store, module, instance }] = useState(() => makeModuleInstance(props.initialState));
     const [workbenchSession] = useState(makeWorkbenchSession);
     const [title, setTitle] = useState(instance.getTitle());
+
+    const filterKey = props.filteredRealizations ? props.filteredRealizations.join(",") : null;
+    useEffect(() => {
+        const filtered = filterKey === null ? null : filterKey.split(",").map(Number);
+        store.set(
+            RealizationFilterSetAtom,
+            filtered === null
+                ? null
+                : {
+                      filterSet: {
+                          getRealizationFilterForEnsembleIdent: () => ({ getFilteredRealizations: () => filtered }),
+                      } as unknown as RealizationFilterSet,
+                  },
+        );
+    }, [store, filterKey]);
 
     useEffect(() => {
         return instance.makeSubscriberFunction(ModuleInstanceTopic.TITLE)(() => setTitle(instance.getTitle()));

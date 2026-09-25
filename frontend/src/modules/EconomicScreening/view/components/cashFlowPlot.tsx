@@ -16,6 +16,8 @@ export type CashFlowPlotProps = {
     gasUnit: string;
     profileType: CashFlowProfileType;
     selectedRealization: number | null;
+    /** Year-end marker for the early value; only drawn when the year is on the plotted axis. */
+    earlyMarkerYear?: number | null;
     color: string;
     width: number;
     height: number;
@@ -115,27 +117,36 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
         props.profileType === CashFlowProfileType.ANNUAL_OIL_VOLUME && oilAggregate
             ? { aggregate: oilAggregate, band: oilAggregate, name: "Annual oil volume", unit: props.oilUnit }
             : props.profileType === CashFlowProfileType.ANNUAL_SALES_GAS_VOLUME && salesGasAggregate
-                ? { aggregate: salesGasAggregate, band: salesGasAggregate, name: "Annual sales gas volume", unit: props.gasUnit }
-                : props.profileType === CashFlowProfileType.ANNUAL_NET_CASH_FLOW && cashFlowAggregate
-                    ? {
+              ? {
+                    aggregate: salesGasAggregate,
+                    band: salesGasAggregate,
+                    name: "Annual sales gas volume",
+                    unit: props.gasUnit,
+                }
+              : props.profileType === CashFlowProfileType.ANNUAL_NET_CASH_FLOW && cashFlowAggregate
+                ? {
+                      aggregate: cashFlowAggregate,
+                      band: cashFlowAggregate.annualNetCashFlow,
+                      name: "Annual net cash flow",
+                      unit: props.currency,
+                  }
+                : props.profileType === CashFlowProfileType.CUMULATIVE_DISCOUNTED_CASH_FLOW && cashFlowAggregate
+                  ? {
                         aggregate: cashFlowAggregate,
-                        band: cashFlowAggregate.annualNetCashFlow,
-                        name: "Annual net cash flow",
+                        band: cashFlowAggregate.cumulativeDiscountedCashFlow,
+                        name: "Cumulative discounted cash flow",
                         unit: props.currency,
                     }
-                    : props.profileType === CashFlowProfileType.CUMULATIVE_DISCOUNTED_CASH_FLOW && cashFlowAggregate
-                        ? {
-                            aggregate: cashFlowAggregate,
-                            band: cashFlowAggregate.cumulativeDiscountedCashFlow,
-                            name: "Cumulative discounted cash flow",
-                            unit: props.currency,
-                        }
-                        : null;
+                  : null;
     if (!selectedProfile) {
         return <ContentInfo>No complete profile data is available for the selected time profile.</ContentInfo>;
     }
 
-    const selectedRealizationProfile = findRealizationProfile(props.results, props.profileType, props.selectedRealization);
+    const selectedRealizationProfile = findRealizationProfile(
+        props.results,
+        props.profileType,
+        props.selectedRealization,
+    );
 
     const data: Partial<PlotData>[] = [
         {
@@ -167,20 +178,27 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
         },
         ...(selectedRealizationProfile
             ? [
-                {
-                    x: selectedRealizationProfile.series.years,
-                    y: selectedRealizationProfile.values,
-                    type: "scatter" as const,
-                    mode: "lines+markers" as const,
-                    name: `Realization ${selectedRealizationProfile.series.realization}`,
-                    line: { color: "#111827", width: 3 },
-                },
-            ]
+                  {
+                      x: selectedRealizationProfile.series.years,
+                      y: selectedRealizationProfile.values,
+                      type: "scatter" as const,
+                      mode: "lines+markers" as const,
+                      name: `Realization ${selectedRealizationProfile.series.realization}`,
+                      line: { color: "#111827", width: 3 },
+                  },
+              ]
             : []),
     ];
 
     // Whole calendar years only, without thousands separators, in ticks and hover labels.
-    const yearTickStep = Math.max(1, Math.ceil(selectedProfile.aggregate.years.length / 12));
+    const years = selectedProfile.aggregate.years;
+    const yearTickStep = Math.max(1, Math.ceil(years.length / 12));
+    // Each plotted point is the cumulative value at the end of its year, so the marker sits on that point.
+    const markerYear =
+        props.earlyMarkerYear !== null && props.earlyMarkerYear !== undefined && years.includes(props.earlyMarkerYear)
+            ? props.earlyMarkerYear
+            : null;
+    const isMarkerInRightHalf = markerYear !== null && markerYear - years[0] > (years[years.length - 1] - years[0]) / 2;
     const layout: Partial<Layout> = {
         width: props.width,
         height: props.height,
@@ -190,6 +208,39 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
         showlegend: true,
         // Above the plot area, where it cannot cover the year ticks or axis title; the top margin grows to fit it.
         legend: { x: 0, xanchor: "left", y: 1, yanchor: "bottom" },
+        shapes:
+            markerYear === null
+                ? []
+                : [
+                      {
+                          type: "line",
+                          xref: "x",
+                          yref: "paper",
+                          x0: markerYear,
+                          x1: markerYear,
+                          y0: 0,
+                          y1: 1,
+                          line: { color: "#6b7280", width: 1, dash: "dot" },
+                      },
+                  ],
+        annotations:
+            markerYear === null
+                ? []
+                : [
+                      {
+                          xref: "x",
+                          yref: "paper",
+                          x: markerYear,
+                          y: 1,
+                          xanchor: isMarkerInRightHalf ? "right" : "left",
+                          xshift: isMarkerInRightHalf ? -4 : 4,
+                          yanchor: "top",
+                          text: `Early value through ${markerYear}`,
+                          showarrow: false,
+                          font: { size: 11, color: "#374151" },
+                          bgcolor: "rgba(255, 255, 255, 0.85)",
+                      },
+                  ],
     };
 
     return <Plot data={data} layout={layout} />;

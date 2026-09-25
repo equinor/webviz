@@ -8,7 +8,7 @@ import {
     type MonthlyRealizationEconomicResult,
     type ResolvedMonthlyAssumptions,
 } from "@modules/EconomicScreening/utils/monthlyEconomics";
-import { monthIndexOf } from "@modules/EconomicScreening/utils/monthlyProduction";
+import { formatMonthIndex, getPredictionHorizonError } from "@modules/EconomicScreening/utils/setupReadiness";
 import { SourceStatus } from "@modules/EconomicScreening/utils/sourceSnapshot";
 import {
     convertGasPriceToSimulatorUnit,
@@ -42,29 +42,6 @@ export type EconomicScreeningResults = {
     isEarlyValueConfigurationValid: boolean;
     horizon: EvaluationHorizon | null;
 };
-
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-function formatMonthIndex(monthIndex: number): string {
-    return `${MONTH_NAMES[monthIndex % 12]} ${Math.floor(monthIndex / 12)}`;
-}
-
-/** The prediction start must fall inside the source envelope; there is no evaluation otherwise. */
-export function getPredictionHorizonError(
-    predictionStartYear: number | null,
-    envelopeEndMonthIndex: number | null,
-): string | null {
-    if (predictionStartYear === null) {
-        return "Enter a prediction start year to calculate results.";
-    }
-    if (envelopeEndMonthIndex === null) {
-        return "Source coverage is unavailable, so the simulation end cannot be established.";
-    }
-    if (monthIndexOf(predictionStartYear, 1) > envelopeEndMonthIndex) {
-        return `The prediction start year ${predictionStartYear} is after the supported simulation end (${formatMonthIndex(envelopeEndMonthIndex)}).`;
-    }
-    return null;
-}
 
 /** Everything except the cost-draft mask, so toggling draft validity does not recalculate every realization. */
 const unmaskedResultsAtom = atom<EconomicScreeningResults>((get) => {

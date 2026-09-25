@@ -183,6 +183,28 @@ function isConfirmedAbsentThrough(product: EvaluatedProduct, startMonthIndex: nu
     return true;
 }
 
+/** The coverage rule the full results apply: every month of the inclusive range is established. */
+export function isProductEstablished(
+    profile: MonthlyProductionProfile | null,
+    startMonthIndex: number,
+    endMonthIndex: number,
+): boolean {
+    return isEstablishedThrough(evaluateProduct(profile, startMonthIndex, endMonthIndex), endMonthIndex);
+}
+
+/** The confirmed-absence rule the financial results apply, over an inclusive month range. */
+export function isProductConfirmedAbsent(
+    profile: MonthlyProductionProfile | null,
+    startMonthIndex: number,
+    endMonthIndex: number,
+): boolean {
+    return isConfirmedAbsentThrough(
+        evaluateProduct(profile, startMonthIndex, endMonthIndex),
+        startMonthIndex,
+        endMonthIndex,
+    );
+}
+
 /** A zero price omits the revenue; otherwise the product needs established data and a price unless absent. */
 function isRevenueResolved(price: number | null, isDataEstablished: boolean, isConfirmedAbsent: boolean): boolean {
     return price === 0 || (isDataEstablished && (price !== null || isConfirmedAbsent));

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { monthIndexOf } from "@modules/EconomicScreening/utils/monthlyProduction";
-import { getPredictionHorizonError } from "@modules/EconomicScreening/view/atoms/derivedAtoms";
+import { getPredictionHorizonError } from "@modules/EconomicScreening/utils/setupReadiness";
 
 describe("getPredictionHorizonError", () => {
     test("requires an explicit prediction start year", () => {
