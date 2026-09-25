@@ -345,7 +345,13 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         this._unsubscribeFunctionsManagerDelegate.unsubscribe(moduleInstanceId);
 
-        moduleInstance.unload();
+        try {
+            moduleInstance.unload();
+        } catch (error) {
+            // Removed regardless - stopping here would leave it and its atom store registered, and a
+            // teardown (clearLayout()) half done, colliding with the instance's re-creation on the next load()
+            console.error(`Failed to unload module instance "${moduleInstanceId}":`, error);
+        }
 
         this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
 
@@ -415,6 +421,9 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
      * later `load()` can bring it back. Use when the dashboard is only being switched away from
      * (e.g. hot-cache eviction), not when it's being removed from the session for good - for that,
      * use `beforeDestroy()`, which skips the caching since there's no future `load()` to serve.
+     *
+     * Only throws if serializing the state fails - before anything is torn down, so the dashboard stays
+     * fully loaded and no state is lost.
      */
     unload(): void {
         this._cachedState = this.serializeState();

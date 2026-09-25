@@ -3,13 +3,13 @@ import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/Publ
 
 // How long a dashboard stays fully mounted (module instances + atom stores intact) after being
 // switched away from, before it's actually torn down.
-const DASHBOARD_HOT_CACHE_TIMEOUT_MS = 5 * 60 * 1000;
+export const DASHBOARD_HOT_CACHE_TIMEOUT_MS = 5 * 60 * 1000;
 
 // Upper bound on how many dashboards can be hot (pending eviction) at once, independent of the
 // timeout above - keeps memory and, more importantly, simultaneous WebGL contexts bounded even if
 // the user cycles through many dashboards within the timeout window. Oldest hot dashboard is
 // evicted first once this is exceeded.
-const DASHBOARD_HOT_CACHE_MAX_COUNT = 4;
+export const DASHBOARD_HOT_CACHE_MAX_COUNT = 4;
 
 export enum DashboardHotCacheTopic {
     HOT_DASHBOARD_IDS = "HotDashboardIds",
@@ -124,7 +124,15 @@ export class DashboardHotCache implements PublishSubscribe<DashboardHotCacheTopi
         }
         const [{ dashboard, timer }] = this._pendingEvictions.splice(index, 1);
         clearTimeout(timer);
-        dashboard.unload();
+        try {
+            dashboard.unload();
+        } catch (error) {
+            // Dropped regardless, so the published hot ids keep matching what's tracked here - and
+            // throwing would abort a dashboard switch halfway (see deferEviction()) or escape the timer.
+            // Dashboard.unload() only throws before tearing anything down, so the dashboard stays
+            // loaded and can still be activated again.
+            console.error(`Failed to evict dashboard "${dashboardId}":`, error);
+        }
     }
 
     private notify(): void {
