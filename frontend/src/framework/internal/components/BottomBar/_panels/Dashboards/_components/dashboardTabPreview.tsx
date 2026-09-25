@@ -26,15 +26,17 @@ export type DashboardTabPreviewProps = {
     disabled?: boolean;
     /** The tab element the preview anchors to and opens on hover of. */
     children: React.ReactElement;
+    /**
+     * The tab element's id. Must be passed here too, not only set on the element: base-ui tracks which
+     * trigger opened the preview by this id, and never shows it if the element's id differs.
+     */
+    triggerId: string;
 };
 
 /**
- * Wraps a dashboard tab so that hovering it for a moment reveals a popover with the dashboard's
- * name, description and a static preview of its layout. Built on a tooltip (hover/focus only) so
- * clicking a tab to select it never opens the preview.
- *
- * Relies on an ancestor `TooltipBase.Provider` (see DashboardsPanel) for its open/close delay, so
- * that hovering across several tabs opens their previews instantly once the first one is shown.
+ * Shows the dashboard's name, description and layout preview when hovering or focusing its tab. A
+ * tooltip, so clicking the tab never opens it. The delays come from a `TooltipBase.Provider` in
+ * DashboardsPanel.
  */
 export function DashboardTabPreview(props: DashboardTabPreviewProps): React.ReactNode {
     const { dashboard, disabled } = props;
@@ -45,7 +47,7 @@ export function DashboardTabPreview(props: DashboardTabPreviewProps): React.Reac
 
     return (
         <TooltipBase.Root disabled={disabled}>
-            <TooltipBase.Trigger render={props.children} />
+            <TooltipBase.Trigger id={props.triggerId} render={props.children} />
             <TooltipBase.Portal>
                 <TooltipBase.Positioner className="z-tooltip" side="top" align="center" sideOffset={8}>
                     <TooltipBase.Popup className="bg-floating border-neutral gap-y-xs p-sm flex flex-col rounded-sm border shadow-md">

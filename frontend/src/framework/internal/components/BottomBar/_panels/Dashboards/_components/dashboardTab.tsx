@@ -27,7 +27,7 @@ export type DashboardTabProps = {
     dashboard: Dashboard;
     draggable: boolean;
     isActive: boolean;
-    /** tabIndex for the select button - see useDashboardTabRovingFocus. */
+    /** tabIndex for the select and actions buttons - see useDashboardTabRovingFocus. */
     tabIndex: 0 | -1;
     isHot: boolean;
     isEvictable: boolean;
@@ -166,7 +166,11 @@ export function DashboardTab(props: DashboardTabProps) {
                         <DragIndicator fontSize="inherit" className="pointer-events-none" />
                     </span>
                 )}
-                <DashboardTabPreview dashboard={props.dashboard} disabled={props.previewDisabled}>
+                <DashboardTabPreview
+                    dashboard={props.dashboard}
+                    disabled={props.previewDisabled}
+                    triggerId={makeDashboardTabId(props.dashboard.getId())}
+                >
                     <button
                         data-dashboard-tab={props.dashboard.getId()}
                         id={makeDashboardTabId(props.dashboard.getId())}
@@ -180,7 +184,8 @@ export function DashboardTab(props: DashboardTabProps) {
                         className={resolveClassNames(
                             "gap-x-xs py-2xs px-xs flex cursor-pointer items-center after:absolute after:inset-0 after:rounded",
                             {
-                                "opacity-50": !props.isHot,
+                                // Not loaded - opening it takes longer. Italic rather than dimmed, to keep the contrast
+                                italic: !props.isHot,
                             },
                         )}
                     >
@@ -198,6 +203,8 @@ export function DashboardTab(props: DashboardTabProps) {
                             <Menu.Trigger>
                                 <Button
                                     aria-label={`Open actions for ${metadata.name}`}
+                                    // Only the current tab's actions are in the tab order, keeping the strip at two tab stops
+                                    tabIndex={props.tabIndex}
                                     iconOnly
                                     variant="ghost"
                                     size="small"

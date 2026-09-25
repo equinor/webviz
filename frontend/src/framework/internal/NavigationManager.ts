@@ -33,7 +33,7 @@ export class NavigationManager {
     private _isStarted = false;
 
     private _currentIndex = 0;
-    // Newest existing entry - pushing a new entry discards all entries after the current one
+    // Newest entry known to exist - pushing a new entry discards all entries after the current one
     private _maxIndex = 0;
     // Index difference of the latest popstate, null if unknown (entry not created by this page)
     private _lastStep: number | null = null;
@@ -63,10 +63,17 @@ export class NavigationManager {
         this._isStarted = true;
         this._currentUrl = window.location.href;
 
-        // Renumber the page-load entry - after a reload, it still carries the previous page's number
-        this._currentIndex = 0;
-        this._maxIndex = 0;
-        window.history.replaceState(makeHistoryState(0), "", window.location.href);
+        // After a reload, entries from before it still fire popstate - so carry on from the reloaded
+        // entry's number instead of starting over, keeping all numbers one consistent sequence
+        const existingIndex = readEntryIndex(window.history.state);
+        if (existingIndex !== null) {
+            this._currentIndex = existingIndex;
+        } else {
+            this._currentIndex = 0;
+            window.history.replaceState(makeHistoryState(0), "", window.location.href);
+        }
+        // Later entries might exist (reload in the middle of the history), but aren't known until reached
+        this._maxIndex = this._currentIndex;
 
         window.addEventListener("beforeunload", this._boundHandleBeforeUnload);
         window.addEventListener("popstate", this._boundHandlePopState);
@@ -112,6 +119,7 @@ export class NavigationManager {
         this._lastStep = landedIndex === null ? null : landedIndex - this._currentIndex;
         if (landedIndex !== null) {
             this._currentIndex = landedIndex;
+            this._maxIndex = Math.max(this._maxIndex, landedIndex);
         }
 
         if (!this._onNavigateCallback) {
@@ -135,10 +143,9 @@ export class NavigationManager {
     }
 
     /**
-     * Moves on past the entry just navigated to (e.g. one pointing at a deleted dashboard), in the
-     * same direction. Only done after a single back/forward step - an entry picked further away was
-     * chosen deliberately - and only onto an entry created by this page, so it never leaves the app.
-     * Must be called from within the navigate callback.
+     * Moves on past the entry just navigated to (e.g. a deleted dashboard's), in the same direction. Only
+     * after a single step - an entry picked further away was chosen deliberately - and never beyond the
+     * app's own entries. Call from within the navigate callback.
      * @returns Whether the skip was started.
      */
     skipEntry(): boolean {
@@ -167,6 +174,12 @@ export class NavigationManager {
      * Use this instead of calling window.history.pushState() directly.
      */
     pushState(url: string): void {
+        // An entry identical to the current one would only add a back/forward step that does nothing
+        if (new URL(url, window.location.href).href === window.location.href) {
+            this.replaceState(url);
+            return;
+        }
+
         this._currentIndex += 1;
         this._maxIndex = this._currentIndex;
         window.history.pushState(makeHistoryState(this._currentIndex), "", url);

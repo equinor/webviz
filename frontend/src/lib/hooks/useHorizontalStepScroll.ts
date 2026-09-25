@@ -4,14 +4,9 @@ function getItems(scrollContainer: HTMLElement, itemSelector: string): HTMLEleme
     return Array.from(scrollContainer.querySelectorAll<HTMLElement>(itemSelector));
 }
 
-// An item's own offsetLeft is relative to its offsetParent, not to the scroll container - so it
-// doesn't account for the scroll container's own left padding. Computing scroll targets from raw
-// offsetLeft therefore undershoots by exactly that padding amount, which - combined with
-// scroll-snap-type: x mandatory - can make the browser reject the scroll outright (a mandatory
-// snap container won't land on a position that isn't a valid snap point), leaving scrollLeft
-// stuck. Measuring via getBoundingClientRect deltas against the scroll container itself is
-// padding/offsetParent-agnostic and gives the item's true position in the container's own
-// scrollable coordinate space.
+// Measured against the scroll container itself: offsetLeft is relative to the offsetParent and ignores the
+// container's left padding - a target off by that much can be rejected by mandatory scroll snapping,
+// leaving the strip stuck.
 function getItemLeftInScrollContainer(item: HTMLElement, scrollContainer: HTMLElement): number {
     return (
         item.getBoundingClientRect().left - scrollContainer.getBoundingClientRect().left + scrollContainer.scrollLeft
@@ -22,13 +17,10 @@ export type UseHorizontalStepScrollOptions = {
     // CSS selector, evaluated within the scroll container, matching each item that the
     // previous/next steps and scrollItemIntoView() operate on.
     itemSelector: string;
-    // When this string changes the hook recomputes its scroll state and runs onItemsChange() in a
-    // layout effect. Pass a value derived from the item set/order (e.g. their ids joined) - a bare
-    // array reference won't register as changed if it's mutated in place.
+    // When this string changes the hook recomputes its scroll state in a layout effect. Pass a value
+    // derived from the item set/order (e.g. their ids joined) - a bare array reference won't register
+    // as changed if it's mutated in place.
     itemsKey?: string;
-    // Runs in a layout effect whenever itemsKey changes, after the forced recompute. Use it to make
-    // a dependent measurement-based component remeasure.
-    onItemsChange?: () => void;
 };
 
 /** Return value of {@link useHorizontalStepScroll}. */
@@ -50,19 +42,11 @@ export type UseHorizontalStepScrollResult = {
 };
 
 /**
- * Owns the horizontal, item-by-item scroll behaviour of an overflowing strip: the state driving
- * previous/next chevrons, the observers that keep it fresh, and a layout-effect hook for callers
- * that need to react to the item set changing.
+ * Item-by-item horizontal scrolling of an overflowing strip: steps of exactly one item, and whether
+ * there's anywhere left to step to (e.g. for previous/next chevrons).
  *
- * Attach {@link UseHorizontalStepScrollResult.scrollContainerRef} to the scrollable element and
- * {@link UseHorizontalStepScrollResult.contentRef} to its (typically wider) content wrapper inside
- * it; items are located within the scroll container via
- * {@link UseHorizontalStepScrollOptions.itemSelector}. {@link UseHorizontalStepScrollResult.scrollToPrevious}
- * and {@link UseHorizontalStepScrollResult.scrollToNext} each step by exactly one item rather than a
- * full page, and {@link UseHorizontalStepScrollResult.canScrollToPrevious}/
- * {@link UseHorizontalStepScrollResult.canScrollToNext} report whether there's anywhere left to step
- * to - both accounting for the scroll container's own left padding (see
- * {@link getItemLeftInScrollContainer}), which a naive `scrollLeft` comparison would not.
+ * Attach `scrollContainerRef` to the scrollable element and `contentRef` to its content wrapper; items
+ * are found in it via `itemSelector`.
  */
 export function useHorizontalStepScroll(options: UseHorizontalStepScrollOptions): UseHorizontalStepScrollResult {
     const { itemSelector, itemsKey } = options;
@@ -71,11 +55,6 @@ export function useHorizontalStepScroll(options: UseHorizontalStepScrollOptions)
     const contentRef = React.useRef<HTMLDivElement>(null);
     const [canScrollToPrevious, setCanScrollToPrevious] = React.useState<boolean>(false);
     const [canScrollToNext, setCanScrollToNext] = React.useState<boolean>(false);
-
-    // Keep the caller's callback in a ref so it doesn't have to be a stable reference or a hook
-    // dependency.
-    const onItemsChangeRef = React.useRef(options.onItemsChange);
-    onItemsChangeRef.current = options.onItemsChange;
 
     const updateScrollOptions = React.useCallback(
         function updateScrollOptions() {
@@ -87,12 +66,7 @@ export function useHorizontalStepScroll(options: UseHorizontalStepScrollOptions)
 
             const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
 
-            // The first item's true resting scrollLeft isn't necessarily 0 - the scroll container's
-            // own left padding means the natural, fully-scrolled-left position sits at the first
-            // item's actual left edge, not exactly 0. Comparing against a bare `> 1` threshold would
-            // leave the left chevron visible even when there's nothing left to scroll to.
-            // getItemLeftInScrollContainer already accounts for this (used by the scroll handlers
-            // below), so reuse it here for consistency.
+            // Fully scrolled left isn't necessarily 0 - with left padding, it's at the first item's left edge
             const items = getItems(el, itemSelector);
             const firstItemLeft = items.length > 0 ? getItemLeftInScrollContainer(items[0], el) : 0;
             const prev = el.scrollLeft > firstItemLeft + 1;
@@ -110,7 +84,6 @@ export function useHorizontalStepScroll(options: UseHorizontalStepScrollOptions)
 
     React.useLayoutEffect(
         function recomputeOnItemsChange() {
-            onItemsChangeRef.current?.();
             updateScrollOptions();
         },
         [itemsKey, updateScrollOptions],

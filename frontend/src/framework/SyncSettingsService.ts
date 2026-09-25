@@ -10,12 +10,8 @@ import type { Viewport } from "./types/viewport";
 import type { Wellbore } from "./types/wellbore";
 
 /**
- * Topics carried by the {@link SyncSettingsService}.
- *
- * These are the module "sync settings" - values a module opts into sharing with the other
- * modules of the same dashboard (see {@link SyncSettingsHelper} in `SyncSettings.ts`). One
- * {@link SyncSettingsService} instance is owned per `Dashboard`, so syncing never crosses
- * dashboard boundaries.
+ * Topics carried by the {@link SyncSettingsService} - values a module opts into sharing with the other
+ * modules of its dashboard (see {@link SyncSettingsHelper} in `SyncSettings.ts`).
  */
 export type SyncSettingsTopicDefinitions = {
     "global.syncValue.ensembles": RegularEnsembleIdent[];
@@ -49,16 +45,11 @@ type SubscriberCallbackElement<T extends keyof SyncSettingsTopicDefinitions> = {
 };
 
 /**
- * Per-dashboard publish/subscribe bus for module sync settings.
+ * Publish/subscribe bus for module sync settings - one per `Dashboard`, so syncing stays within a
+ * dashboard even while several are mounted.
  *
- * One instance is owned by each `Dashboard` (see `Dashboard.getSyncSettingsService`), which
- * keeps synced values scoped to a single dashboard even when several dashboards are mounted
- * at once by the dashboard hot-cache.
- *
- * Publishing carries an optional `publisherId` (the module instance id). A subscriber that
- * passes the same id as `subscriberId` is not notified of its own publishes - this keeps
- * high-frequency bidirectional sync (e.g. camera position during a drag) from fighting the
- * user's live input.
+ * A subscriber passing its module instance id as `subscriberId` isn't notified of its own publishes
+ * (`publisherId`), so high-frequency two-way sync (e.g. a camera drag) doesn't fight the user's input.
  */
 export class SyncSettingsService {
     private _subscribersMap: Map<string, Set<SubscriberCallbackElement<any>>> = new Map();
@@ -117,14 +108,9 @@ export class SyncSettingsService {
 }
 
 /**
- * Subscribes to a {@link SyncSettingsService} topic only while `enable` is true, returning the
- * latest published value (or `null` before anything has been published). Used by
- * {@link SyncSettingsHelper.useValue} in `SyncSettings.ts`, where `enable` reflects whether the
- * calling module currently has that particular sync key turned on.
- *
- * When `enable` flips to false, the subscription is torn down and the returned value is reset to
- * `null` immediately - so a module that just opted out of a sync setting stops reacting to it in
- * the same commit, instead of briefly rendering with the last synced value it no longer subscribes to.
+ * Subscribes to a {@link SyncSettingsService} topic while `enable` (the module's sync key being on) is
+ * true, returning the latest value (`null` before any publish). Disabling resets the value right away,
+ * so a module that opts out stops using the synced value in the same render.
  */
 export function useSubscribedValueConditionally<T extends keyof SyncSettingsTopicDefinitions>(
     topic: T,

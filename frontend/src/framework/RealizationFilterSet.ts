@@ -67,10 +67,7 @@ export class RealizationFilterSet {
     }
 
     /**
-     * Check whether a filter instance exists for the given ensembleIdent.
-     *
-     * Useful for callers that may receive ensembleIdents that are stale (e.g. from a not-yet-fixed-up
-     * persisted selection) and referring to an ensemble no longer present in the ensemble set.
+     * Whether a filter exists for the given ensemble - e.g. for a stale ident from a persisted selection.
      */
     hasRealizationFilterForEnsembleIdent(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent): boolean {
         return this._ensembleIdentStringRealizationFilterMap.has(ensembleIdent.toString());

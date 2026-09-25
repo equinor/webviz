@@ -17,17 +17,10 @@ type DashboardStackProps = {
 };
 
 /**
- * Renders every keep-alive dashboard's (active, plus whatever DashboardHotCache is holding, see
- * PrivateWorkbenchSession.setActiveDashboard) own full Layout - chrome, ViewWrapper, view content,
- * all of it - simultaneously, each in a fixed position in the tree for as long as it stays
- * keep-alive. Only the active one is visible and interactive; the rest are toggled to
- * display:none + pointer-events:none. display:none is used instead of visibility:hidden because
- * module content can set an explicit inline visibility on its own descendant nodes (e.g. canvas/SVG
- * elements), which would otherwise override an inherited visibility:hidden and paint through on top
- * of the active dashboard. display:none cannot be overridden this way. Switching dashboards is then
- * a pure CSS display swap with no mount/unmount, avoiding the WebGL/canvas reinitialization that both
- * a separate
- * "active vs hidden" tree branch and a portal-retargeting approach caused.
+ * Renders the full layout of every keep-alive dashboard (the active one plus the hot ones) at a fixed
+ * place in the tree, so switching is a CSS display swap - no remount, no WebGL/canvas reinitialization.
+ * Inactive ones get display:none rather than visibility:hidden, which module content can override on
+ * its own elements (e.g. canvas/SVG) and so paint through.
  */
 export function DashboardStack(props: DashboardStackProps): React.ReactNode {
     const workbenchSession = useActiveSession();

@@ -41,12 +41,9 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
         GuiState.EditDataChannelConnections,
     );
 
-    // A channel-connect drag left in progress (visible=true) when the user switches dashboards would
-    // otherwise never see its pointerup/HideDataChannelConnectionsRequest handlers again - this
-    // dashboard's own effect run is skipped entirely while inactive - leaving the portal-rendered
-    // overlay stuck visible the moment this dashboard becomes active again, with no drag actually in
-    // progress. An open channel selector is closed too - it renders into its own portal (with a scrim),
-    // so it would otherwise stay on top of whichever dashboard is switched to.
+    // Reset when the dashboard goes inactive: the effect below doesn't run then, so a drag in progress
+    // would never end and reappear stuck later. An open channel selector (own portal, with a scrim) would
+    // otherwise stay on top of the dashboard switched to.
     if (!isActiveDashboard && (visible || channelSelectorCenterPoint !== null)) {
         setVisible(false);
         setChannelSelectorCenterPoint(null);

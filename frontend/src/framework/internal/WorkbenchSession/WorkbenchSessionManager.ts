@@ -9,6 +9,7 @@ import {
     type SessionUpdate_api,
 } from "@api";
 import { ConfirmationService } from "@framework/ConfirmationService";
+import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, RightDrawerContent } from "@framework/GuiMessageBroker";
 import type { Template } from "@framework/TemplateRegistry";
@@ -240,10 +241,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         return session;
     }
 
-    // dashboardId, when given (e.g. from a deep-linked URL), is passed straight through to
-    // deserialization so the session activates that dashboard directly - instead of activating the
-    // persisted "last active" dashboard first (instantiating its module instances) only to
-    // immediately switch away from it once the caller applies the deep-linked id.
+    // dashboardId (e.g. from a deep link) is activated directly, instead of first loading the persisted
+    // active dashboard only to switch away from it
     async openSession(sessionId: string, dashboardId: string | null = null): Promise<boolean> {
         if (this._activeSession) {
             throw new Error(
@@ -640,6 +639,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         }
 
         this._activeSession.beforeDestroy();
+        // Global, so only cleared along with the active session - not when destroying e.g. a save-as copy
+        EnsembleFingerprintStore.clear();
 
         if (this._persistenceOrchestrator) {
             this._persistenceOrchestrator.stop();
@@ -686,6 +687,15 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     private switchDashboardFromUrl(dashboardId: string | null): void {
         const session = this.getActiveSession();
+        const activeDashboardId = session.getActiveDashboard()?.getId() ?? null;
+
+        if (dashboardId !== null && dashboardId === activeDashboardId) {
+            // Already shown, e.g. a duplicate entry left by removing the active dashboard - move on, so
+            // the step doesn't look like it did nothing. Otherwise the URL already matches.
+            this._workbench.getNavigationManager().skipEntry();
+            return;
+        }
+
         const dashboardExists = dashboardId !== null && session.getDashboards().some((d) => d.getId() === dashboardId);
 
         if (dashboardExists) {
@@ -706,7 +716,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         if (currentLocation.kind === "root") {
             return;
         }
-        const activeDashboardId = session.getActiveDashboard()?.getId() ?? null;
         this._workbench
             .getNavigationManager()
             .replaceState(buildWorkbenchUrl({ ...currentLocation, dashboardId: activeDashboardId }));
@@ -752,7 +761,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         }
 
         const progressToastId = "saveSession";
-        const initialActiveSession = this._activeSession;
+        // Captured as a value: a session's first save assigns the id to this same session object
+        const initialSessionId = this._activeSession.getId();
 
         this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
 
@@ -774,10 +784,12 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             if (result.success) {
                 this.createToast("Session saved successfully", "success");
 
-                const newId = this._activeSession.getId();
-                // Update URL if session id changed. This happens when you save-as
-                if (newId && newId !== initialActiveSession.getId()) {
-                    const dashboardId = this._activeSession.getActiveDashboard()?.getId() ?? null;
+                // Update URL if session id changed. This happens on save-as, and on a session's first save -
+                // unless the user moved on to another session while saving
+                const activeSession = this._activeSession;
+                const newId = result.sessionId;
+                if (activeSession?.getId() === newId && newId !== initialSessionId) {
+                    const dashboardId = activeSession.getActiveDashboard()?.getId() ?? null;
                     const url = buildWorkbenchUrl({ kind: "session", sessionId: newId, dashboardId });
                     this._workbench.getNavigationManager().pushState(url);
                 }
@@ -817,13 +829,15 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
      * the copy once that succeeded - on failure, the active session is left untouched.
      */
     private async persistCopyAsNewSession(metadata?: { title: string; description?: string }): Promise<PersistResult> {
-        const copy = await PrivateWorkbenchSession.createCopy(this._queryClient, this.getActiveSession());
+        const sourceSession = this.getActiveSession();
+        const copy = await PrivateWorkbenchSession.createCopy(this._queryClient, sourceSession);
         if (metadata) {
             copy.updateMetadata(metadata);
         }
 
         const result = await persistSessionToBackend(this._workbench, copy);
-        if (!result.success) {
+        // Not activated if the user moved on to another session in the meantime - it's saved, though
+        if (!result.success || this._activeSession !== sourceSession) {
             copy.beforeDestroy();
             return result;
         }

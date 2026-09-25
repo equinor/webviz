@@ -24,12 +24,8 @@ type LongTaskResult = {
     response: string;
 };
 
-// The dev "longtask" endpoint is not part of the generated OpenAPI schema (include_in_schema=False),
-// so it has no generated SDK function - but the request still goes through TanStack Query (queryFn
-// below) rather than being fired imperatively, so its lifecycle is tied to this component: the
-// `signal` is forwarded to axios, and when the module instance unmounts (e.g. its dashboard is
-// evicted from the hot cache) TanStack Query aborts the in-flight request instead of letting it run
-// to completion.
+// The dev "longtask" endpoint has no generated SDK function (not in the OpenAPI schema), but still goes
+// through TanStack Query with the abort `signal` - so evicting the dashboard cancels a request in flight
 async function fetchLongTask(durationS: number, signal: AbortSignal): Promise<LongTaskResult> {
     const startedAt = performance.now();
     const { data, error } = await client.get<string>({ url: `/dev/longtask/${durationS}`, signal });

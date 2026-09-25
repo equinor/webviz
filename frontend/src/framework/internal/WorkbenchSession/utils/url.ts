@@ -12,10 +12,8 @@ export class UrlError extends Error {
     }
 }
 
-// A single type for everything the workbench URL can express, so building or reading a URL always
-// considers the whole entity (session/snapshot + dashboard) in one call. Keeping session/snapshot
-// and dashboard as separately buildable/readable segments let them drift out of sync - e.g. a
-// session-id URL rewrite silently dropping a dashboard segment nobody remembered to re-add.
+// Everything the workbench URL can express, built and read as a whole - so e.g. rewriting the session id
+// can't silently drop the dashboard segment
 export type WorkbenchUrlLocation =
     | { kind: "root" }
     | { kind: "session"; sessionId: string; dashboardId: string | null }
@@ -40,10 +38,7 @@ export function buildWorkbenchUrl(location: WorkbenchUrlLocation): string {
     return url.toString();
 }
 
-// Parses the whole current URL in one pass, so session/snapshot/dashboard ids are always read as a
-// single consistent snapshot of the URL - never as separate reads that a URL rewrite in between
-// could invalidate (a past source of bugs: code reading the dashboard id had to run "before" code
-// reading the session id purely because the latter rewrote the whole path as a side effect).
+// Reads all ids in one pass, so a URL rewrite in between can't make them inconsistent
 export function readWorkbenchUrlLocation(): WorkbenchUrlLocation {
     const url = new URL(window.location.href);
     const pathParts = url.pathname.split("/").filter(Boolean);
@@ -88,12 +83,8 @@ function readDashboardSegment(pathParts: string[]): string | null {
         return null;
     }
 
-    // Dashboards used to have uuid.v4()-shaped (36 char) IDs before switching to the shorter
-    // DASHBOARD_ID_LENGTH nanoid shape, and existing persisted dashboards still carry those old IDs.
-    // buildWorkbenchUrl writes whatever ID the Dashboard has into the URL, so a URL with a uuid-shaped
-    // dashboard segment is not malformed - it is just an old dashboard. Accept both shapes here; only an
-    // ID matching neither is treated as invalid and dropped (falling back to the default dashboard)
-    // rather than as a hard URL error.
+    // Older persisted dashboards still have uuid ids (from before the shorter nanoid ones), so accept both.
+    // Anything else is ignored, falling back to the default dashboard.
     if (!DASHBOARD_ID_REGEX.test(dashboardId) && !isUuid(dashboardId)) {
         console.warn(`Invalid dashboard ID in URL, ignoring: ${dashboardId}`);
         return null;

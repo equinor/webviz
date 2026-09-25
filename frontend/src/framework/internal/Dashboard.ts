@@ -14,7 +14,7 @@ import { ModuleInstanceTopic, type ModuleInstance } from "../ModuleInstance";
 import { ModuleRegistry } from "../ModuleRegistry";
 
 import type { SerializedDashboardState } from "./Dashboard.schema";
-import { DASHBOARD_ID_LENGTH, DEFAULT_DASHBOARD_NAME, MAX_TITLE_LENGTH } from "./persistence/constants";
+import { DASHBOARD_ID_LENGTH, DEFAULT_DASHBOARD_NAME, MAX_DASHBOARD_NAME_LENGTH } from "./persistence/constants";
 
 export type LayoutElement = {
     moduleInstanceId: string;
@@ -128,10 +128,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     }
 
     /**
-     * Layout to render a read-only preview from. Returns the live layout when the dashboard is
-     * loaded, and otherwise reconstructs it from the cached serialized state - an unloaded
-     * dashboard (never activated, or evicted from the hot cache) keeps `_layout` empty until
-     * `load()`, so a plain `getLayout()` would make every inactive dashboard preview as empty.
+     * Layout for a read-only preview - also for an unloaded dashboard, whose `getLayout()` stays empty
+     * until `load()`.
      */
     getLayoutForPreview(): LayoutElement[] {
         if (this._layout.length > 0 || !this._cachedState) {
@@ -249,12 +247,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             }
             this.setActiveModuleInstanceId(activeModuleInstanceId);
         } catch (error) {
-            // A throw partway through (e.g. an old persisted dashboard referencing a module that's
-            // no longer registered) must not leave the module instances/atom stores already created
-            // by this attempt behind: this._cachedState is left untouched by the caller on a throw,
-            // so a retry re-runs this same loop over the same serialized instance ids -
-            // and would collide with those orphaned atom stores/module instances instead of the clean
-            // slate it expects.
+            // Remove what this attempt created - a retry recreates the same instance ids from the cached
+            // state, and would collide with leftovers
             this.clearLayout();
             throw error;
         }
@@ -298,12 +292,9 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     }
 
     /**
-     * Creates a module instance and wires it into internal bookkeeping only (atom store,
-     * `_moduleInstances`, state-change subscription) - no layout entry, no MODULE_INSTANCES/LAYOUT
-     * notifications, no active-instance change. Building block for callers that add several
-     * instances at once and want to notify/activate once at
-     * the end rather than per instance. For adding a single instance to the live dashboard, use
-     * `makeAndAddModuleInstance` instead.
+     * Creates a module instance with its bookkeeping only (atom store, subscription) - no layout entry,
+     * notifications or activation, so callers adding several at once can do those once. For a single
+     * instance, use `makeAndAddModuleInstance`.
      */
     private instantiateModuleInstance(moduleName: string, predefinedId?: string): ModuleInstance<any, any> {
         const module = ModuleRegistry.getModule(moduleName);
@@ -406,10 +397,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     }
 
     /**
-     * Loads the dashboard's layout and initializes its module instances from cached state. Called
-     * while *attempting* to make the dashboard active, not as a result of it already being active:
-     * this can throw (e.g. a persisted dashboard referencing a module that's no longer registered),
-     * and PrivateWorkbenchSession.setActiveDashboard() only commits the switch if this succeeds.
+     * Creates the module instances from the cached state. Can throw - PrivateWorkbenchSession only
+     * switches to the dashboard if this succeeds.
      */
     load(): void {
         this.initializeModuleInstancesFromCachedState();
@@ -417,13 +406,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     }
 
     /**
-     * Tears down the dashboard's module instances but caches their serialized state first, so a
-     * later `load()` can bring it back. Use when the dashboard is only being switched away from
-     * (e.g. hot-cache eviction), not when it's being removed from the session for good - for that,
-     * use `beforeDestroy()`, which skips the caching since there's no future `load()` to serve.
+     * Tears down the module instances, caching their state for a later `load()` (e.g. on hot-cache
+     * eviction). For a dashboard removed for good, use `beforeDestroy()`.
      *
-     * Only throws if serializing the state fails - before anything is torn down, so the dashboard stays
-     * fully loaded and no state is lost.
+     * Only throws if serializing the state fails - before anything is torn down, so no state is lost.
      */
     unload(): void {
         this._cachedState = this.serializeState();
@@ -438,13 +424,6 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this.clearLayout();
     }
 
-    // Note: the dashboard created here starts with a fresh, empty RealizationFilterSet (not yet
-    // synced against any ensembles), so module instances created below transiently get an empty
-    // wrapped filter set pushed into their atom stores at creation time. This is corrected
-    // synchronously afterwards by PrivateWorkbenchSession.replaceDashboard()/setDashboards()
-    // (called from WorkbenchSessionManager.applyTemplate()), which re-syncs and re-pushes the
-    // now-correct filter set into every one of this dashboard's module instances before anything
-    // renders. Do not "fix" this method in a way that breaks that ordering.
     static fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster, id?: string): Dashboard {
         const dashboard = new Dashboard(atomStoreMaster);
         // Callers applying a template to an existing dashboard (rather than creating a brand new
@@ -531,9 +510,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         // Truncate the source name before appending the suffix, not after - appending first and
         // truncating the result could cut the suffix itself off, leaving a copy that doesn't read as
         // one, and truncating without accounting for the suffix at all could push the final name past
-        // MAX_TITLE_LENGTH (the same bound EditDashboardMetadataDialog enforces on user edits).
+        // MAX_DASHBOARD_NAME_LENGTH (the same bound EditDashboardMetadataDialog enforces on user edits).
         const adjustedName =
-            name ?? `${truncateString(source.getMetadata().name, MAX_TITLE_LENGTH - copySuffix.length)}${copySuffix}`;
+            name ??
+            `${truncateString(source.getMetadata().name, MAX_DASHBOARD_NAME_LENGTH - copySuffix.length)}${copySuffix}`;
         const clonedDashboard = new Dashboard(atomStoreMaster, adjustedName);
         const serializedState = cloneDeep(source.serializeState());
 

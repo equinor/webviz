@@ -101,7 +101,12 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                         Sessions are not guaranteed to persist, as underlying data or module states may change.
                     </Banner>
                     <form id={formId} className="gap-x-sm flex items-center" onSubmit={handleSave}>
-                        <DashboardPreviewCarousel height={220} width={150} dashboards={dashboards} />
+                        <DashboardPreviewCarousel
+                            height={220}
+                            width={150}
+                            dashboards={dashboards}
+                            activeDashboardId={activeSession.getActiveDashboard()?.getId()}
+                        />
                         <div className="gap-y-sm flex min-w-0 grow flex-col">
                             <FieldCompositions.Default
                                 label="Title"

@@ -9,20 +9,17 @@ export type UseDashboardTabRovingFocusResult = {
     onKeyDown: (event: React.KeyboardEvent) => void;
 };
 
-// Arrow-key navigation for the dashboard tab strip, replacing what base-ui's Tabs.Root gave for
-// free before this strip moved off it (see DashboardTab's own comment for why). Follows the
-// standard roving-tabindex pattern: exactly one tab is ever part of the page's normal Tab-key
-// order (tabIndex=0), everything else is tabIndex=-1, and Left/Right/Home/End move both DOM focus
-// and that single tab-stop directly, without going through Tab-key order at all.
+// Arrow-key navigation for the dashboard tab strip, replacing what base-ui's Tabs.Root gave for free
+// before this strip moved off it. Follows the standard roving-tabindex pattern: exactly one tab (plus
+// its actions button) is in the page's normal Tab-key order (tabIndex=0), everything else is
+// tabIndex=-1, and Left/Right/Home/End move both DOM focus and that tab stop directly.
 //
-// Uses "automatic activation" - moving to a tab selects it immediately - matching base-ui's own
-// default, which is what this strip's keyboard behaviour looked like before the rewrite.
-// selectDashboard() already coalesces rapid repeated calls (see useOptimisticActiveDashboard), so
-// holding an arrow key down is safe.
+// Uses "manual activation": arrow keys only move focus, and Enter/Space (the tab buttons' own click)
+// opens the focused dashboard. Switching dashboards isn't instant, so it shouldn't happen for every
+// tab passed on the way.
 export function useDashboardTabRovingFocus(
     dashboards: Dashboard[],
     activeDashboardId: string | null,
-    onSelect: (dashboardId: string) => void,
     contentRef: React.RefObject<HTMLDivElement>,
 ): UseDashboardTabRovingFocusResult {
     // Defaults to the active dashboard, but tracks the last arrow-key-navigated-to one from then on,
@@ -55,8 +52,18 @@ export function useDashboardTabRovingFocus(
             if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
                 return;
             }
+            // Leave modified keys to the browser/OS, e.g. Alt+ArrowLeft for history back
+            if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+                return;
+            }
 
-            const currentId = rovingDashboardId ?? dashboards[0].getId();
+            // Only keys pressed on a tab itself - the strip also contains each tab's actions button,
+            // and events from its menu bubble up here through the portal (e.g. Home/End in the menu)
+            const currentId = event.target instanceof HTMLElement ? event.target.dataset.dashboardTab : undefined;
+            if (currentId === undefined) {
+                return;
+            }
+
             const currentIndex = dashboards.findIndex((dashboard) => dashboard.getId() === currentId);
             const safeIndex = currentIndex === -1 ? 0 : currentIndex;
 
@@ -71,13 +78,11 @@ export function useDashboardTabRovingFocus(
                 nextIndex = dashboards.length - 1;
             }
 
-            // Prevent the page from scrolling on Home/End/arrows - the tab strip itself already
-            // scrolls the newly-current tab into view (via the same mechanism the click path uses).
+            // Prevent the page from scrolling on Home/End/arrows - focusing the tab below scrolls it into view
             event.preventDefault();
 
             const nextDashboard = dashboards[nextIndex];
             setRovingDashboardId(nextDashboard.getId());
-            onSelect(nextDashboard.getId());
 
             // Move actual DOM focus, not just the internal roving-tabindex state - otherwise
             // Tab/Shift+Tab from here would still leave from wherever focus originally was, and the
@@ -87,7 +92,7 @@ export function useDashboardTabRovingFocus(
             );
             nextEl?.focus();
         },
-        [dashboards, rovingDashboardId, onSelect, contentRef],
+        [dashboards, contentRef],
     );
 
     return { getTabIndex, onKeyDown };

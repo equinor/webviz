@@ -6,13 +6,8 @@ import { useHorizontalStepScroll } from "@lib/hooks/useHorizontalStepScroll";
 
 export type UseDashboardTabStripScrollResult = UseHorizontalStepScrollResult;
 
-// Owns the horizontal scroll behaviour of the dashboard tab strip. Thin wrapper around the generic
-// useHorizontalStepScroll, keyed off the ordered id sequence so item additions, removals, and
-// reorders are represented directly in the dependency passed to it.
-//
-// activeDashboardId should be the optimistic-or-actual selection (see useOptimisticActiveDashboard) -
-// whichever tab is highlighted is the one that gets scrolled into view, so a rapid click still scrolls
-// immediately instead of waiting for the (deferred) real switch to land.
+// Scroll behaviour of the dashboard tab strip - useHorizontalStepScroll keyed by the ordered dashboard ids.
+// activeDashboardId should include the optimistic selection, so a clicked tab scrolls into view right away.
 export function useDashboardTabStripScroll(
     dashboards: Dashboard[],
     activeDashboardId: string | null,

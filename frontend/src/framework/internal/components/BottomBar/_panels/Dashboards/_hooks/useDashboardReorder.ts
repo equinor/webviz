@@ -18,11 +18,9 @@ export type UseDashboardReorderResult = {
     handleDragEnd: () => void;
 };
 
-// Native HTML5 drag-and-drop, not SortableList: SortableList's ghost-clone mechanism duplicates
-// the dragged element into a portal, which breaks Tabs.Tab (a stateful base-ui component that
-// registers with Tabs.Root/Tabs.Indicator) - two simultaneously-mounted instances with the same
-// value fight over the active-tab indicator's positioning and cause a render loop. Native DnD
-// never clones the element, so it doesn't hit that problem.
+// Native HTML5 drag-and-drop, not SortableList: SortableList's ghost clone duplicates the dragged tab
+// into a portal - including its element id and data attributes, which the tab/tabpanel linking and the
+// roving focus rely on being unique. Native DnD never clones the element.
 export function useDashboardReorder(
     dashboards: Dashboard[],
     workbenchSession: PrivateWorkbenchSession,

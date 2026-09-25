@@ -5,10 +5,8 @@ import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/Publ
 // switched away from, before it's actually torn down.
 export const DASHBOARD_HOT_CACHE_TIMEOUT_MS = 5 * 60 * 1000;
 
-// Upper bound on how many dashboards can be hot (pending eviction) at once, independent of the
-// timeout above - keeps memory and, more importantly, simultaneous WebGL contexts bounded even if
-// the user cycles through many dashboards within the timeout window. Oldest hot dashboard is
-// evicted first once this is exceeded.
+// Max number of hot dashboards at once, regardless of the timeout - bounds memory and, above all, the
+// number of WebGL contexts. The oldest is evicted first.
 export const DASHBOARD_HOT_CACHE_MAX_COUNT = 4;
 
 export enum DashboardHotCacheTopic {
@@ -25,10 +23,8 @@ type PendingEviction = {
 };
 
 /**
- * Tracks dashboards that have been switched away from but are kept fully mounted for a while, so
- * switching back to one is instant instead of paying the full teardown/recreate cost again.
- * Publishes its current hot-dashboard-id list so React components (e.g. a view-keep-alive renderer)
- * can subscribe and stay in sync.
+ * Keeps dashboards that were switched away from mounted for a while, so switching back is instant.
+ * Publishes the ids of these "hot" dashboards, e.g. for rendering them.
  */
 export class DashboardHotCache implements PublishSubscribe<DashboardHotCacheTopicPayloads> {
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<DashboardHotCacheTopicPayloads>();
@@ -73,12 +69,8 @@ export class DashboardHotCache implements PublishSubscribe<DashboardHotCacheTopi
     }
 
     /**
-     * Stops tracking a dashboard's pending eviction, if it has one, without unloading it. Covers two
-     * cases: switching back to a still-hot dashboard (its module instances are untouched either way -
-     * Dashboard.load()'s own "nothing cached" early-return already makes reactivating a still-hot
-     * dashboard a no-op) and a dashboard being removed from the session or the session itself being
-     * torn down (it's being destroyed through a different path already, so this just avoids a stale
-     * timer later acting on an already-removed dashboard).
+     * Cancels a dashboard's pending eviction, if any, without unloading it - when switching back to it,
+     * or when it's being destroyed another way (so a stale timer doesn't act on it later).
      */
     release(dashboardId: string): void {
         this.releaseInternal(dashboardId);
@@ -127,10 +119,8 @@ export class DashboardHotCache implements PublishSubscribe<DashboardHotCacheTopi
         try {
             dashboard.unload();
         } catch (error) {
-            // Dropped regardless, so the published hot ids keep matching what's tracked here - and
-            // throwing would abort a dashboard switch halfway (see deferEviction()) or escape the timer.
-            // Dashboard.unload() only throws before tearing anything down, so the dashboard stays
-            // loaded and can still be activated again.
+            // Dropped regardless, keeping the published ids in sync - rethrowing would abort a switch halfway
+            // or escape the timer. unload() throws before any teardown, so the dashboard stays usable.
             console.error(`Failed to evict dashboard "${dashboardId}":`, error);
         }
     }

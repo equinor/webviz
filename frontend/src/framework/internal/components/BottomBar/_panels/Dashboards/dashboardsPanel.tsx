@@ -63,12 +63,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
     );
     const resolvedActiveDashboardId = optimisticActiveDashboardId ?? activeDashboard?.getId() ?? null;
     const tabStripScroll = useDashboardTabStripScroll(dashboards, resolvedActiveDashboardId);
-    const rovingFocus = useDashboardTabRovingFocus(
-        dashboards,
-        resolvedActiveDashboardId,
-        selectDashboard,
-        tabStripScroll.contentRef,
-    );
+    const rovingFocus = useDashboardTabRovingFocus(dashboards, resolvedActiveDashboardId, tabStripScroll.contentRef);
 
     const handleAddDashboardClick = React.useCallback(
         function handleAddDashboardClick() {
@@ -89,11 +84,8 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
             try {
                 workbenchSession.removeDashboard(dashboardId);
             } catch (error) {
-                // removeDashboard() throws rather than proceeding if the dashboard being removed is
-                // active and none of the remaining dashboards could be activated as its replacement
-                // (see its own comment) - an edge case, but this is a plain event handler, not a
-                // render/lifecycle path React's error boundary can catch, so report it instead of
-                // letting it go uncaught.
+                // Throws if no other dashboard can replace the removed active one - an event handler
+                // isn't covered by React's error boundary, so report it here
                 console.error(`Failed to remove dashboard "${dashboardId}":`, error);
                 toastManager.add({ title: "Failed to remove dashboard", type: "error" });
             }
@@ -119,11 +111,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
 
     const handleCloneDashboardClick = React.useCallback(
         function handleCloneDashboardClick(dashboardId: string) {
-            // cloneDashboard() is async and can reject (e.g. activating the clone fails to load, see
-            // setActiveDashboard()'s own try/catch) - dropping the returned promise here would leave
-            // that rejection unhandled: React error boundaries don't catch async rejections any more
-            // than they catch plain event-handler throws, so report it the same way the adjacent
-            // dashboard removal failure is.
+            // Rejects if the clone fails to load - report it, like a failed removal above
             workbenchSession
                 .cloneDashboard(dashboardId)
                 .then(() => {
@@ -187,13 +175,8 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                         // `scrollbar-width: none` only supported in Webkit after Jan 2024 - keeping a fallback
                         "px-xs min-w-0 scrollbar-none overflow-x-auto overflow-y-hidden [&::-webkit-scrollbar]:hidden",
                         {
-                            // Only snap while the strip can actually scroll. With scroll-snap-type
-                            // mandatory always on, removing a dashboard so the remaining tabs fit
-                            // without scrolling left the browser's own snap-correction machinery
-                            // fighting to "settle" scrollLeft (observed via logging: it oscillated
-                            // between the old scroll position and 0 over ~150-200ms) - there's
-                            // nothing to snap between once everything already fits, so there's
-                            // nothing left to correct.
+                            // Only snap while the strip can scroll - otherwise, once all tabs fit (e.g.
+                            // after removing one), the browser's snap correction keeps moving the strip
                             "snap-x snap-mandatory":
                                 tabStripScroll.canScrollToPrevious || tabStripScroll.canScrollToNext,
                         },
@@ -206,11 +189,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                         className="flex h-full w-max items-center pb-px"
                         onKeyDown={rovingFocus.onKeyDown}
                     >
-                        {/*
-                            Shares one open/close delay across every tab's preview popover, so that
-                            once the pointer has opened one preview, brushing across neighbouring
-                            tabs opens theirs instantly instead of re-running the hover delay on each.
-                        */}
+                        {/* Shared preview delay - once one preview is open, neighbouring tabs open theirs instantly */}
                         <TooltipBase.Provider
                             delay={DASHBOARD_TAB_PREVIEW_OPEN_DELAY_MS}
                             closeDelay={DASHBOARD_TAB_PREVIEW_CLOSE_DELAY_MS}
@@ -291,7 +270,6 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
             </Tooltip>
             {editingDashboard && (
                 <EditDashboardMetadataDialog
-                    workbench={props.workbench}
                     dashboard={editingDashboard}
                     onClose={() => setEditingDashboard(null)}
                 />

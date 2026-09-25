@@ -16,12 +16,9 @@ export type DashboardPreviewCarouselProps = {
     width: number;
     height: number;
     /**
-     * Which dashboard is currently marked to open first the next time this snapshot
-     * is opened. Also seeds which dashboard the carousel starts browsing on. Deliberately
-     * independent from there on - browsing with the chevrons/indicators only moves which one is
-     * shown, never this; only the pin toggle (rendered when onActiveDashboardIdChange is given)
-     * changes it. Omit both props to hide the toggle and just start browsing from the first
-     * dashboard.
+     * Dashboard marked to open first when this session/snapshot is opened, and where browsing starts.
+     * Browsing never changes it - only the pin toggle, shown when onActiveDashboardIdChange is given.
+     * Omit both to start browsing at the first dashboard without a mark.
      */
     activeDashboardId?: string;
     onActiveDashboardIdChange?: (dashboardId: string) => void;

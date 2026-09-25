@@ -144,6 +144,12 @@ export class ModuleInstance<
     }
 
     serializeState(): SerializedModuleInstanceState {
+        // Not applied yet (module code still loading, or failed to load) - serializing the live, still
+        // empty state would silently drop it
+        if (this._storedSerializedState) {
+            return this._storedSerializedState;
+        }
+
         return {
             id: this._id,
             name: this._module.getName(),

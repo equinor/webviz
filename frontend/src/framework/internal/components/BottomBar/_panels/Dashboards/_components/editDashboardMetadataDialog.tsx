@@ -1,13 +1,14 @@
 import React from "react";
 
-import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import type { Dashboard } from "@framework/internal/Dashboard";
 import { DashboardTopic } from "@framework/internal/Dashboard";
-import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MIN_TITLE_LENGTH } from "@framework/internal/persistence/constants";
-import type { Workbench } from "@framework/Workbench";
+import {
+    MAX_DASHBOARD_DESCRIPTION_LENGTH,
+    MAX_DASHBOARD_NAME_LENGTH,
+    MIN_DASHBOARD_NAME_LENGTH,
+} from "@framework/internal/persistence/constants";
 import { AlertDialog } from "@lib/components/AlertDialog";
 import { Button } from "@lib/components/Button";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { FieldCompositions } from "@lib/components/Field/compositions";
 import { Form } from "@lib/components/Form";
@@ -17,20 +18,15 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { Typography } from "@lib/components/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
-import { useActiveSession } from "../../../../ActiveSessionBoundary";
-
 export type EditDashboardMetadataDialogProps = {
-    workbench: Workbench;
     dashboard: Dashboard;
     onClose: () => void;
 };
 
 export function EditDashboardMetadataDialog(props: EditDashboardMetadataDialogProps) {
     const { onClose } = props;
-    const workbenchSession = useActiveSession();
 
     const metadata = usePublishSubscribeTopicValue(props.dashboard, DashboardTopic.METADATA);
-    const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
 
     const [name, setName] = React.useState(props.dashboard?.getMetadata().name || "");
     const [description, setDescription] = React.useState<string>(props.dashboard?.getMetadata().description ?? "");
@@ -43,28 +39,16 @@ export function EditDashboardMetadataDialog(props: EditDashboardMetadataDialogPr
         function handleSubmit(event: React.FormEvent) {
             event.preventDefault();
             const trimmedLength = name.trim().length;
-            if (trimmedLength < MIN_TITLE_LENGTH || name.length > MAX_TITLE_LENGTH) {
+            if (trimmedLength < MIN_DASHBOARD_NAME_LENGTH || name.length > MAX_DASHBOARD_NAME_LENGTH) {
                 inputRef.current?.focus();
                 return;
             }
 
-            if (workbenchSession) {
-                props.dashboard.updateMetadata({ name, description });
-                props.workbench
-                    .getSessionManager()
-                    .saveSession()
-                    .then((result) => {
-                        if (result) {
-                            onClose?.();
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Failed to save session:", error);
-                    });
-                return;
-            }
+            // Not saved here - like any other dashboard edit, it's part of the session's unsaved changes
+            props.dashboard.updateMetadata({ name, description });
+            onClose();
         },
-        [name, description, props.dashboard, props.workbench, workbenchSession, onClose],
+        [name, description, props.dashboard, onClose],
     );
 
     function handleCancel() {
@@ -92,12 +76,12 @@ export function EditDashboardMetadataDialog(props: EditDashboardMetadataDialogPr
                         <FieldCompositions.Default
                             label="Name"
                             indicator="(Required)"
-                            info={`Enter a descriptive name for your dashboard. This must be between ${MIN_TITLE_LENGTH} and ${MAX_TITLE_LENGTH} characters.`}
+                            info={`Enter a descriptive name for your dashboard. This must be between ${MIN_DASHBOARD_NAME_LENGTH} and ${MAX_DASHBOARD_NAME_LENGTH} characters.`}
                             validationMode="onSubmit"
                         >
                             <TextInput
-                                minLength={MIN_TITLE_LENGTH}
-                                maxLength={MAX_TITLE_LENGTH}
+                                minLength={MIN_DASHBOARD_NAME_LENGTH}
+                                maxLength={MAX_DASHBOARD_NAME_LENGTH}
                                 ref={inputRef}
                                 value={name}
                                 onValueChange={(val) => setName(val)}
@@ -106,44 +90,44 @@ export function EditDashboardMetadataDialog(props: EditDashboardMetadataDialogPr
                                 required
                                 endAdornment={
                                     <Tooltip
-                                        content={`Your name is currently using ${name.length} out of the maximum ${MAX_TITLE_LENGTH} characters.`}
+                                        content={`Your name is currently using ${name.length} out of the maximum ${MAX_DASHBOARD_NAME_LENGTH} characters.`}
                                     >
                                         <Typography
                                             size="sm"
                                             family="body"
                                             tone="neutral"
-                                        >{`${name.length}/${MAX_TITLE_LENGTH}`}</Typography>
+                                        >{`${name.length}/${MAX_DASHBOARD_NAME_LENGTH}`}</Typography>
                                     </Tooltip>
                                 }
                             />
                         </FieldCompositions.Default>
                         <FieldCompositions.Default label="Description" indicator="(Optional)">
                             <TextArea
-                                maxLength={MAX_DESCRIPTION_LENGTH}
+                                maxLength={MAX_DASHBOARD_DESCRIPTION_LENGTH}
                                 value={description}
                                 onValueChange={(val) => setDescription(val)}
                                 placeholder="Enter dashboard description"
                                 rows={3}
                                 bottomAdornment={
                                     <Tooltip
-                                        content={`Your description is currently using ${description.length} out of the maximum ${MAX_DESCRIPTION_LENGTH} characters.`}
+                                        content={`Your description is currently using ${description.length} out of the maximum ${MAX_DASHBOARD_DESCRIPTION_LENGTH} characters.`}
                                     >
                                         <Typography
                                             size="sm"
                                             family="body"
                                             tone="neutral"
-                                        >{`${description.length}/${MAX_DESCRIPTION_LENGTH}`}</Typography>
+                                        >{`${description.length}/${MAX_DASHBOARD_DESCRIPTION_LENGTH}`}</Typography>
                                     </Tooltip>
                                 }
                             />
                         </FieldCompositions.Default>
                     </Dialog.Body>
                     <Dialog.Actions>
-                        <Button tone="neutral" variant="ghost" onClick={handleCancel} disabled={isSaving}>
+                        <Button tone="neutral" variant="ghost" onClick={handleCancel}>
                             Cancel
                         </Button>
-                        <Button type="submit" tone="accent" disabled={isSaving}>
-                            {isSaving ? <CircularProgress size="em" /> : "Save"}
+                        <Button type="submit" tone="accent">
+                            Apply
                         </Button>
                     </Dialog.Actions>
                 </Form>
