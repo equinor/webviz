@@ -10,11 +10,34 @@
  * Unlike WindowActivityObserver, this is NOT a singleton because each Workbench
  * instance needs its own navigation handling (important for testing and isolation).
  */
+
+// Each history entry created by this page is numbered, so that a popstate tells how far and in which
+// direction the user moved - no matter if via back/forward buttons or by picking an entry directly
+type NavigationHistoryState = { entryIndex: number };
+
+function makeHistoryState(entryIndex: number): NavigationHistoryState {
+    return { entryIndex };
+}
+
+function readEntryIndex(state: unknown): number | null {
+    if (typeof state === "object" && state !== null && "entryIndex" in state) {
+        return typeof state.entryIndex === "number" ? state.entryIndex : null;
+    }
+    return null;
+}
+
 export class NavigationManager {
     private _currentUrl: string;
     private _boundHandleBeforeUnload: (event: BeforeUnloadEvent) => void;
-    private _boundHandlePopState: () => void;
+    private _boundHandlePopState: (event: PopStateEvent) => void;
     private _isStarted = false;
+
+    private _currentIndex = 0;
+    // Newest existing entry - pushing a new entry discards all entries after the current one
+    private _maxIndex = 0;
+    // Index difference of the latest popstate, null if unknown (entry not created by this page)
+    private _lastStep: number | null = null;
+    private _isSkipping = false;
 
     // Callbacks for handling navigation logic
     private _onBeforeUnloadCallback: (() => boolean) | null = null;
@@ -39,6 +62,11 @@ export class NavigationManager {
         }
         this._isStarted = true;
         this._currentUrl = window.location.href;
+
+        // Renumber the page-load entry - after a reload, it still carries the previous page's number
+        this._currentIndex = 0;
+        this._maxIndex = 0;
+        window.history.replaceState(makeHistoryState(0), "", window.location.href);
 
         window.addEventListener("beforeunload", this._boundHandleBeforeUnload);
         window.addEventListener("popstate", this._boundHandlePopState);
@@ -79,7 +107,13 @@ export class NavigationManager {
     /**
      * Handle popstate event (browser back/forward navigation)
      */
-    private async handlePopState(): Promise<void> {
+    private async handlePopState(event: PopStateEvent): Promise<void> {
+        const landedIndex = readEntryIndex(event.state);
+        this._lastStep = landedIndex === null ? null : landedIndex - this._currentIndex;
+        if (landedIndex !== null) {
+            this._currentIndex = landedIndex;
+        }
+
         if (!this._onNavigateCallback) {
             this._currentUrl = window.location.href;
             return;
@@ -89,12 +123,35 @@ export class NavigationManager {
         const result = await this._onNavigateCallback();
 
         if (!result) {
-            // Navigation was cancelled - restore previous URL without creating new history entry
-            window.history.pushState(null, "", previousUrl);
+            // Navigation was cancelled - restore previous URL
+            this.pushState(previousUrl);
+        } else if (this._isSkipping) {
+            // The skipped entry was never shown - previousUrl stays current until the skip lands
+            this._isSkipping = false;
         } else {
             // Navigation succeeded - update current URL
             this._currentUrl = window.location.href;
         }
+    }
+
+    /**
+     * Moves on past the entry just navigated to (e.g. one pointing at a deleted dashboard), in the
+     * same direction. Only done after a single back/forward step - an entry picked further away was
+     * chosen deliberately - and only onto an entry created by this page, so it never leaves the app.
+     * Must be called from within the navigate callback.
+     * @returns Whether the skip was started.
+     */
+    skipEntry(): boolean {
+        if (this._lastStep !== 1 && this._lastStep !== -1) {
+            return false;
+        }
+        const targetIndex = this._currentIndex + this._lastStep;
+        if (targetIndex < 0 || targetIndex > this._maxIndex) {
+            return false;
+        }
+        this._isSkipping = true;
+        window.history.go(this._lastStep);
+        return true;
     }
 
     /**
@@ -110,7 +167,9 @@ export class NavigationManager {
      * Use this instead of calling window.history.pushState() directly.
      */
     pushState(url: string): void {
-        window.history.pushState(null, "", url);
+        this._currentIndex += 1;
+        this._maxIndex = this._currentIndex;
+        window.history.pushState(makeHistoryState(this._currentIndex), "", url);
         this._currentUrl = url;
     }
 
@@ -120,7 +179,7 @@ export class NavigationManager {
      * Use this instead of calling window.history.replaceState() directly.
      */
     replaceState(url: string): void {
-        window.history.replaceState(null, "", url);
+        window.history.replaceState(makeHistoryState(this._currentIndex), "", url);
         this._currentUrl = url;
     }
 

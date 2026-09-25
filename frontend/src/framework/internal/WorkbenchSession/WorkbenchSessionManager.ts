@@ -691,9 +691,12 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 console.error(`Failed to switch to dashboard "${dashboardId}":`, error);
                 this.createToast("Failed to switch dashboard", "error");
             }
+        } else if (dashboardId !== null && this._workbench.getNavigationManager().skipEntry()) {
+            // Dashboard no longer exists, e.g. deleted - move on to the next entry
+            return;
         }
 
-        // Dashboard is gone or failed to load - stay on the current one and fix up the URL
+        // Dashboard failed to load or can't be skipped - stay on the current one and fix up the URL
         const currentLocation = readWorkbenchUrlLocation();
         if (currentLocation.kind === "root") {
             return;
