@@ -2,6 +2,8 @@ import React from "react";
 
 import { useAtomValue } from "jotai";
 
+import type { HoverData } from "@framework/HoverService";
+import { HoverTopic, usePublishHoverValues } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -29,38 +31,42 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     // Build table headings and rows
     const { headings: tableColumnConfig, tableRows } = useTableBuilder();
 
+    const publishHoverValues = usePublishHoverValues(props.hoverService, props.viewContext.getInstanceIdString());
+
     const handleTableHover = React.useCallback(
         function handleTableHover(row: TableRow<TableColumnsConfig> | null) {
             if (!row) {
-                props.workbenchServices.publishGlobalData("global.hoverRegion", null);
-                props.workbenchServices.publishGlobalData("global.hoverZone", null);
-                props.workbenchServices.publishGlobalData("global.hoverFacies", null);
+                publishHoverValues({});
                 return;
             }
+
+            const updates: Partial<HoverData> = {};
 
             const regionColumnKey = Object.keys(row).find((key) => key.toUpperCase() === "REGION");
             if (regionColumnKey) {
                 const regionName = row[regionColumnKey]?.toString();
                 if (regionName) {
-                    props.workbenchServices.publishGlobalData("global.hoverRegion", { regionName });
+                    updates[HoverTopic.REGION] = regionName;
                 }
             }
             const zoneColumnKey = Object.keys(row).find((key) => key.toUpperCase() === "ZONE");
             if (zoneColumnKey) {
                 const zoneName = row[zoneColumnKey]?.toString();
                 if (zoneName) {
-                    props.workbenchServices.publishGlobalData("global.hoverZone", { zoneName });
+                    updates[HoverTopic.ZONE] = zoneName;
                 }
             }
             const faciesColumnKey = Object.keys(row).find((key) => key.toUpperCase() === "FACIES");
             if (faciesColumnKey) {
                 const faciesName = row[faciesColumnKey]?.toString();
                 if (faciesName) {
-                    props.workbenchServices.publishGlobalData("global.hoverFacies", { faciesName });
+                    updates[HoverTopic.FACIES] = faciesName;
                 }
             }
+
+            publishHoverValues(updates);
         },
-        [props.workbenchServices],
+        [publishHoverValues],
     );
 
     function createErrorMessage(): string | null {

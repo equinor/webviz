@@ -47,7 +47,6 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             hoverService={props.hoverService}
             workbenchSession={props.workbenchSession}
             workbenchSettings={props.workbenchSettings}
-            workbenchServices={props.workbenchServices}
             getInitialVerticalScale={getVerticalScale}
             onVerticalScaleChange={setVerticalScale}
             getInitialViewState={getViewState}

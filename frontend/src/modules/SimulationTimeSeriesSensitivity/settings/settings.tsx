@@ -60,7 +60,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const [showHistorical, setShowHistorical] = useAtom(showHistoricalAtom);
 
     const syncHelper = useRefStableSyncSettingsHelper({
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         moduleContext: props.settingsContext,
     });
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");

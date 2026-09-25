@@ -4,7 +4,7 @@ import { AddLink } from "@mui/icons-material";
 
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
-import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
+import { buildWorkbenchUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
 import { AlertDialog } from "@lib/components/AlertDialog";
 import { Button } from "@lib/components/Button";
@@ -28,9 +28,11 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
     const sessionDescription = activeSession.getMetadata().description ?? "";
     const initialTitle = `Snapshot: ${truncateString(sessionTitle, MAX_TITLE_LENGTH)}`;
     const initialDescription = sessionDescription;
+    const initialActiveDashboardId = activeSession.getActiveDashboard()?.getId();
 
     const [workingTitle, setWorkingTitle] = React.useState<string | null>(null);
     const [workingDescription, setWorkingDescription] = React.useState<string | null>(null);
+    const [workingActiveDashboardId, setWorkingActiveDashboardId] = React.useState<string | null>(null);
     const [showConfirmationDialog, setShowConfirmationDialog] = React.useState<boolean>(false);
     const [snapshotUrl, setSnapshotUrl] = React.useState<string | null>(null);
 
@@ -42,6 +44,7 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
 
     const activeTitle = workingTitle ?? initialTitle;
     const activeDescription = workingDescription ?? initialDescription;
+    const activeDashboardId = workingActiveDashboardId ?? initialActiveDashboardId;
 
     function handleCreateSnapshot(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -52,12 +55,12 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
 
         props.workbench
             .getSessionManager()
-            .createSnapshot(activeTitle, activeDescription)
+            .createSnapshot(activeTitle, activeDescription, activeDashboardId)
             .then((snapshotId) => {
                 if (!snapshotId) {
                     return;
                 }
-                setSnapshotUrl(buildSnapshotUrl(snapshotId));
+                setSnapshotUrl(buildWorkbenchUrl({ kind: "snapshot", snapshotId, dashboardId: activeDashboardId ?? null }));
             })
             .catch((error) => {
                 console.error("Failed to save session:", error);
@@ -65,7 +68,12 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
     }
 
     function handleCancel() {
-        if (!snapshotUrl && (activeTitle !== initialTitle || activeDescription !== initialDescription)) {
+        if (
+            !snapshotUrl &&
+            (activeTitle !== initialTitle ||
+                activeDescription !== initialDescription ||
+                activeDashboardId !== initialActiveDashboardId)
+        ) {
             setShowConfirmationDialog(true);
             return;
         }
@@ -77,6 +85,7 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
         setSnapshotUrl(null);
         setWorkingTitle(null);
         setWorkingDescription(null);
+        setWorkingActiveDashboardId(null);
     }
 
     if (activeSession.isSnapshot()) {
@@ -94,8 +103,10 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                 workbench={props.workbench}
                 title={activeTitle}
                 description={activeDescription}
+                activeDashboardId={activeDashboardId}
                 setTitle={setWorkingTitle}
                 setDescription={setWorkingDescription}
+                setActiveDashboardId={setWorkingActiveDashboardId}
                 onSubmit={handleCreateSnapshot}
             />
         );

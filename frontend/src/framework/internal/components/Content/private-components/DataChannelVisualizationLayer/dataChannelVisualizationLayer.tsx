@@ -51,6 +51,29 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
+    // A dashboard switch ends any data channel interaction - the effect below only removes its
+    // listeners on a switch, which would leave drag/edit lines of the previous dashboard showing
+    const [prevDashboard, setPrevDashboard] = React.useState(dashboard);
+    if (dashboard !== prevDashboard) {
+        setPrevDashboard(dashboard);
+        setVisible(false);
+        setHighlightedDataChannelConnection(null);
+        setEditDataChannelConnectionsForModuleInstanceId(null);
+    }
+
+    const prevDashboardRef = React.useRef(dashboard);
+    React.useEffect(
+        function resetGlobalDataChannelStateOnDashboardSwitch() {
+            if (prevDashboardRef.current === dashboard) {
+                return;
+            }
+            prevDashboardRef.current = dashboard;
+            guiMessageBroker.setState(GuiState.DataChannelConnectionLayerVisible, false);
+            guiMessageBroker.setState(GuiState.EditDataChannelConnections, false);
+        },
+        [dashboard, guiMessageBroker],
+    );
+
     React.useEffect(() => {
         let localMousePressed = false;
         let localCurrentOriginPoint: Vec2 = { x: 0, y: 0 };

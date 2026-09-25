@@ -3,9 +3,9 @@ import React from "react";
 import { useAtomValue } from "jotai";
 import { orderBy } from "lodash";
 
+import { HoverTopic, useHoverValue } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
@@ -29,9 +29,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
     const colorSet = useColorSet(props.workbenchSettings);
 
-    const hoveredRegion = useSubscribedValue("global.hoverRegion", props.workbenchServices);
-    const hoveredZone = useSubscribedValue("global.hoverZone", props.workbenchServices);
-    const hoveredFacies = useSubscribedValue("global.hoverFacies", props.workbenchServices);
+    const moduleInstanceId = props.viewContext.getInstanceIdString();
+    const hoveredRegion = useHoverValue(HoverTopic.REGION, props.hoverService, moduleInstanceId);
+    const hoveredZone = useHoverValue(HoverTopic.ZONE, props.hoverService, moduleInstanceId);
+    const hoveredFacies = useHoverValue(HoverTopic.FACIES, props.hoverService, moduleInstanceId);
 
     const plotDivRef = React.useRef<HTMLDivElement>(null);
     const plotDivBoundingRect = useElementBoundingRect(plotDivRef);
@@ -54,9 +55,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         colorSet,
         plotDivBoundingRect.width,
         plotDivBoundingRect.height,
-        hoveredRegion?.regionName ?? null,
-        hoveredZone?.zoneName ?? null,
-        hoveredFacies?.faciesName ?? null,
+        hoveredRegion,
+        hoveredZone,
+        hoveredFacies,
     );
 
     const table = plotAndTableData?.table;

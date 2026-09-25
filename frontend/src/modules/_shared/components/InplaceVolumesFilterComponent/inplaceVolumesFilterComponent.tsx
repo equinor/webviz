@@ -9,9 +9,9 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { SettingsContext } from "@framework/ModuleContext";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
+import type { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Banner } from "@lib/components/Banner";
 import { Select } from "@lib/components/Select";
@@ -25,7 +25,7 @@ export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
     settingsContext: SettingsContext<any>;
     workbenchSession: WorkbenchSession;
-    workbenchServices: WorkbenchServices;
+    syncSettingsService: SyncSettingsService;
     availableTableNames: string[];
     availableIndicesWithValues: InplaceVolumesIndexWithValues_api[];
     selectedEnsembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
@@ -95,7 +95,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     }
 
     const syncHelper = useRefStableSyncSettingsHelper({
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         moduleContext: props.settingsContext,
     });
 
