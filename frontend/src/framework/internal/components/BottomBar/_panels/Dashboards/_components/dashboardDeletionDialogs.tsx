@@ -1,16 +1,19 @@
-import { AlertDialog } from "@lib/components/AlertDialog";
+import { AlertDialog, type AlertDialogProps } from "@lib/components/AlertDialog";
 
 export type ConfirmDeleteDashboardDialogProps = {
     open: boolean;
     dashboardName?: string;
     onConfirmDelete: () => void;
     onClose: () => void;
+    /** Where focus goes on close - the element focused before may be the deleted dashboard's tab. */
+    finalFocus?: AlertDialogProps["finalFocus"];
 };
 
 export function ConfirmDeleteDashboardDialog(props: ConfirmDeleteDashboardDialogProps) {
     return (
         <AlertDialog
             open={props.open}
+            finalFocus={props.finalFocus}
             onOpenChange={(open) => {
                 if (!open) {
                     props.onClose();

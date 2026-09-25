@@ -5,6 +5,8 @@ import type { Dashboard } from "@framework/internal/Dashboard";
 export type UseDashboardTabRovingFocusResult = {
     /** tabIndex for a given dashboard's select button - exactly one dashboard ever gets 0. */
     getTabIndex: (dashboardId: string) => 0 | -1;
+    /** The tab currently in the tab order, read from the DOM - e.g. to return focus to. */
+    getTabStopElement: () => HTMLElement | null;
     /** Attach to the tab strip container. */
     onKeyDown: (event: React.KeyboardEvent) => void;
 };
@@ -26,22 +28,53 @@ export function useDashboardTabRovingFocus(
     // so tabbing away and back doesn't reset it.
     const [rovingDashboardId, setRovingDashboardId] = React.useState<string | null>(activeDashboardId);
 
-    // Keeps the roving tab-stop in sync whenever the active dashboard changes for a reason other
-    // than arrow-key navigation here (clicking a different tab, adding/removing dashboards) - it
-    // should follow the active one rather than keep pointing at a dashboard that's no longer active
-    // or no longer exists.
+    // Follows the active dashboard whenever that changes (e.g. clicking a tab)
     const [prevActiveDashboardId, setPrevActiveDashboardId] = React.useState(activeDashboardId);
     if (activeDashboardId !== prevActiveDashboardId) {
         setPrevActiveDashboardId(activeDashboardId);
         setRovingDashboardId(activeDashboardId);
     }
 
+    // The stored tab stop can point at a removed dashboard (e.g. an inactive one navigated to with the
+    // arrow keys, then deleted) - fall back to the active, then the first dashboard, so there's always one
+    const tabStopDashboardId =
+        [rovingDashboardId, activeDashboardId].find(
+            (id) => id !== null && dashboards.some((dashboard) => dashboard.getId() === id),
+        ) ??
+        dashboards[0]?.getId() ??
+        null;
+
     const getTabIndex = React.useCallback(
         function getTabIndex(dashboardId: string): 0 | -1 {
-            const rovingId = rovingDashboardId ?? dashboards[0]?.getId() ?? null;
-            return dashboardId === rovingId ? 0 : -1;
+            return dashboardId === tabStopDashboardId ? 0 : -1;
         },
-        [rovingDashboardId, dashboards],
+        [tabStopDashboardId],
+    );
+
+    const getTabStopElement = React.useCallback(
+        function getTabStopElement(): HTMLElement | null {
+            return contentRef.current?.querySelector<HTMLElement>('[data-dashboard-tab][tabindex="0"]') ?? null;
+        },
+        [contentRef],
+    );
+
+    // Removing the tab stop's dashboard (e.g. from its actions menu) loses focus - move it to the new tab
+    // stop. Not if focus is elsewhere, e.g. in the delete confirmation dialog, which returns it itself.
+    const prevTabStopDashboardIdRef = React.useRef(tabStopDashboardId);
+    React.useEffect(
+        function restoreFocusAfterTabStopRemoval() {
+            const prevTabStopDashboardId = prevTabStopDashboardIdRef.current;
+            prevTabStopDashboardIdRef.current = tabStopDashboardId;
+
+            const wasRemoved =
+                prevTabStopDashboardId !== null &&
+                !dashboards.some((dashboard) => dashboard.getId() === prevTabStopDashboardId);
+            const isFocusLost = document.activeElement === null || document.activeElement === document.body;
+            if (wasRemoved && isFocusLost) {
+                getTabStopElement()?.focus();
+            }
+        },
+        [tabStopDashboardId, dashboards, getTabStopElement],
     );
 
     const onKeyDown = React.useCallback(
@@ -95,5 +128,5 @@ export function useDashboardTabRovingFocus(
         [dashboards, contentRef],
     );
 
-    return { getTabIndex, onKeyDown };
+    return { getTabIndex, getTabStopElement, onKeyDown };
 }

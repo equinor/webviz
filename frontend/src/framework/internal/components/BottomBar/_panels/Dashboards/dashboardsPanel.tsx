@@ -55,6 +55,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
     const [editingDashboard, setEditingDashboard] = React.useState<Dashboard | null>(null);
     const [dashboardPendingDeleteConfirmation, setDashboardPendingDeleteConfirmation] =
         React.useState<Dashboard | null>(null);
+    const isDeletionConfirmedRef = React.useRef(false);
 
     const reorder = useDashboardReorder(dashboards, workbenchSession);
     const { optimisticActiveDashboardId, selectDashboard } = useOptimisticActiveDashboard(
@@ -280,10 +281,18 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                 onConfirmDelete={() => {
                     if (dashboardPendingDeleteConfirmation) {
                         handleRemoveDashboardClick(dashboardPendingDeleteConfirmation.getId());
+                        isDeletionConfirmedRef.current = true;
                     }
                     setDashboardPendingDeleteConfirmation(null);
                 }}
                 onClose={() => setDashboardPendingDeleteConfirmation(null)}
+                // The element focused before may belong to the deleted dashboard - return focus to the tab
+                // strip instead. When cancelled, null keeps the default.
+                finalFocus={() => {
+                    const isDeletionConfirmed = isDeletionConfirmedRef.current;
+                    isDeletionConfirmedRef.current = false;
+                    return isDeletionConfirmed ? rovingFocus.getTabStopElement() : null;
+                }}
             />
             <DashboardDragImage ref={reorder.dragImageRef} />
         </div>
