@@ -23,7 +23,7 @@ import type {
 import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
+import { SurfaceAddressBuilder, dedupeSurfaceAttributes, isSameAttribute } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr, type AnySurfaceAddress } from "@modules/_shared/Surface/surfaceAddress";
 
@@ -42,7 +42,7 @@ const surfaceSettings = [
     Setting.REALIZATION,
     Setting.STATISTIC_FUNCTION,
     Setting.SENSITIVITY,
-    Setting.ATTRIBUTE,
+    Setting.SURFACE_ATTRIBUTE,
     Setting.FORMATION_NAME,
     Setting.TIME_POINT,
     Setting.TIME_INTERVAL,
@@ -246,7 +246,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
             },
         });
 
-        setting(Setting.ATTRIBUTE).bindValueConstraints({
+        setting(Setting.SURFACE_ATTRIBUTE).bindValueConstraints({
             read(read) {
                 return { data: read.sharedResult(surfaceMetadataDep) };
             },
@@ -276,14 +276,14 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
                     );
                 }
 
-                return [...new Set(filteredSurfaceMetadata.map((surface) => surface.attribute_name))];
+                return dedupeSurfaceAttributes(filteredSurfaceMetadata.map((surface) => surface.attribute));
             },
         });
 
         setting(Setting.FORMATION_NAME).bindValueConstraints({
             read(read) {
                 return {
-                    attribute: read.localSetting(Setting.ATTRIBUTE),
+                    attribute: read.localSetting(Setting.SURFACE_ATTRIBUTE),
                     data: read.sharedResult(surfaceMetadataDep),
                 };
             },
@@ -294,7 +294,9 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
 
                 const availableSurfaceNames = [
                     ...new Set(
-                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name),
+                        data.surfaces
+                            .filter((surface) => isSameAttribute(surface.attribute, attribute))
+                            .map((el) => el.name),
                     ),
                 ];
                 return sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order);
@@ -304,7 +306,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
         setting(Setting.TIME_POINT).bindValueConstraints({
             read(read) {
                 return {
-                    attribute: read.localSetting(Setting.ATTRIBUTE),
+                    attribute: read.localSetting(Setting.SURFACE_ATTRIBUTE),
                     formationName: read.localSetting(Setting.FORMATION_NAME),
                     data: read.sharedResult(surfaceMetadataDep),
                 };
@@ -325,7 +327,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
         setting(Setting.TIME_INTERVAL).bindValueConstraints({
             read(read) {
                 return {
-                    attribute: read.localSetting(Setting.ATTRIBUTE),
+                    attribute: read.localSetting(Setting.SURFACE_ATTRIBUTE),
                     formationName: read.localSetting(Setting.FORMATION_NAME),
                     data: read.sharedResult(surfaceMetadataDep),
                 };
@@ -382,7 +384,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         let filteredRealizations = getStoredData("realizations") ?? [];
         const formationName = getSetting(Setting.FORMATION_NAME);
-        const attribute = getSetting(Setting.ATTRIBUTE);
+        const attribute = getSetting(Setting.SURFACE_ATTRIBUTE);
 
         const representation = getSetting(Setting.REPRESENTATION);
         const workbenchSession = getWorkbenchSession();
@@ -392,7 +394,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
             const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(ensembleIdent);
             addrBuilder.withName(formationName);
-            addrBuilder.withTagNameAttribute(attribute);
+            addrBuilder.withAttribute(attribute);
             if (this.isTimePointSurface()) {
                 const timeOrInterval = getSetting(Setting.TIME_POINT);
                 addrBuilder.withTimeOrInterval(timeOrInterval);

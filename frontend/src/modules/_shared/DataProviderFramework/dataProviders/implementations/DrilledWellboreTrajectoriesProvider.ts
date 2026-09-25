@@ -26,7 +26,7 @@ import {
 } from "@api";
 import { sortStringArray } from "@lib/utils/arrays";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
+import { SurfaceAddressBuilder, dedupeSurfaceAttributes, isSameAttribute } from "@modules/_shared/Surface";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 import { handleOptionalDpfQueryError } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
@@ -186,7 +186,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
             const topSurfaceAddress = addrBuilder
                 .withEnsembleIdent(ensembleIdent)
                 .withName(formationFilter.topSurfaceName)
-                .withTagNameAttribute(surfaceAttribute)
+                .withAttribute(surfaceAttribute)
                 .withRealization(formationFilter.realizationNum)
                 .buildRealizationAddress();
 
@@ -412,15 +412,11 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                     return [];
                 }
 
-                const availableAttributes = [
-                    ...new Set(
-                        realizationSurfaceMetadata.surfaces
-                            .filter((surface) => surface.attribute_type === SurfaceAttributeType_api.DEPTH)
-                            .map((surface) => surface.attribute_name),
-                    ),
-                ];
+                const availableAttributes = realizationSurfaceMetadata.surfaces.filter(
+                    (surface) => surface.attribute_type === SurfaceAttributeType_api.DEPTH,
+                );
 
-                return availableAttributes;
+                return dedupeSurfaceAttributes(availableAttributes.map((surface) => surface.attribute));
             },
         });
 
@@ -460,7 +456,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                     const availableSurfaceNames = [
                         ...new Set(
                             realizationSurfaceMetadata.surfaces
-                                .filter((surface) => surface.attribute_name === attribute)
+                                .filter((surface) => isSameAttribute(surface.attribute, attribute))
                                 .map((el) => el.name),
                         ),
                     ];
