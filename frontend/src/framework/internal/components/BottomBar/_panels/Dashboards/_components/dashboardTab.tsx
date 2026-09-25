@@ -23,6 +23,15 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { DashboardTabPreview } from "./dashboardTabPreview";
 
+// Every look the name can take - bolder when active, italic when not loaded. Invisible copies in all of
+// them reserve the widest, so the tab never changes width (bolder isn't always wider in this font).
+const NAME_FONT_VARIANTS = [
+    "font-normal not-italic",
+    "font-normal italic",
+    "font-bolder not-italic",
+    "font-bolder italic",
+] as const;
+
 export type DashboardTabProps = {
     dashboard: Dashboard;
     draggable: boolean;
@@ -191,9 +200,15 @@ export function DashboardTab(props: DashboardTabProps) {
                     >
                         <span className="grid">
                             <span className="col-start-1 row-start-1">{metadata.name}</span>
-                            <span aria-hidden className="font-bolder invisible col-start-1 row-start-1">
-                                {metadata.name}
-                            </span>
+                            {NAME_FONT_VARIANTS.map((variant) => (
+                                <span
+                                    key={variant}
+                                    aria-hidden
+                                    className={`${variant} invisible col-start-1 row-start-1`}
+                                >
+                                    {metadata.name}
+                                </span>
+                            ))}
                         </span>
                     </button>
                 </DashboardTabPreview>
