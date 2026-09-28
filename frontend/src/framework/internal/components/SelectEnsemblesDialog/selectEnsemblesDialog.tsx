@@ -92,16 +92,23 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const hasUnappliedChanges = currentHash !== ensembleSetHash;
 
     // Dialog confirmation actions
-    const handleClose = React.useCallback(
-        function handleClose() {
-            resetStatesFromEnsembleSet();
+    const closeDialog = React.useCallback(
+        function closeDialog() {
             setIsOpen(false);
             setShowEnsembleExplorer(false);
             setHasExplorerBeenOpened(false);
             setShowCancelDialog(false);
             setShowEnsemblesLoadingErrorDialog(false);
         },
-        [resetStatesFromEnsembleSet, setIsOpen],
+        [setIsOpen],
+    );
+
+    const handleClose = React.useCallback(
+        function handleClose() {
+            resetStatesFromEnsembleSet();
+            closeDialog();
+        },
+        [resetStatesFromEnsembleSet, closeDialog],
     );
 
     const handleCancel = React.useCallback(
@@ -141,7 +148,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 guiMessageBroker.setState(GuiState.EnsemblesLoadingWarningInfoMap, warningInfoMap);
                 guiMessageBroker.setState(GuiState.EnsembleLoadingWarningInfoDialogOpen, true);
             },
-            onSuccess: handleClose,
+            // Don't reset here: this callback is stale, and useEnsembleStateSync resyncs on the new set
+            onSuccess: closeDialog,
         });
 
     const handleFormSubmit = React.useCallback(
