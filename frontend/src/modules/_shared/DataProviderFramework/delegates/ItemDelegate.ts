@@ -4,10 +4,7 @@ import { v4 } from "uuid";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
-import {
-    type DataProviderManager,
-    DataProviderManagerTopic,
-} from "../framework/DataProviderManager/DataProviderManager";
+import type { DataProviderManager } from "../framework/DataProviderManager/DataProviderManager";
 import type { SerializedItem } from "../interfacesAndTypes/serialization";
 
 import type { GroupDelegate } from "./GroupDelegate";
@@ -68,7 +65,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
         this._name = name;
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.NAME);
         if (this._dataProviderManager) {
-            this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
+            this._dataProviderManager.increaseDataRevisionNumber();
         }
     }
 
@@ -100,7 +97,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
         this._visible = visible;
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.VISIBILITY);
         if (this._dataProviderManager) {
-            this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
+            this._dataProviderManager.increaseDataRevisionNumber();
         }
     }
 
@@ -168,7 +165,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
         this._deserializationErrors = [];
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.DESERIALIZATION_ERRORS);
         if (this._dataProviderManager) {
-            this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
+            this._dataProviderManager.increaseDataRevisionNumber();
         }
     }
 

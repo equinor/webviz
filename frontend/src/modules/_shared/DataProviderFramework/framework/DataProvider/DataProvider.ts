@@ -26,7 +26,7 @@ import { type SerializedDataProvider, SerializedType } from "../../interfacesAnd
 import type { NullableStoredData, StoredData } from "../../interfacesAndTypes/sharedTypes";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { Settings } from "../../settings/settingsDefinitions";
-import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
+import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import { makeSettings } from "../utils/makeSettings";
 
 export enum DataProviderTopic {
@@ -502,7 +502,7 @@ export class DataProvider<
     private incrementRevisionNumber(): void {
         this._revisionNumber += 1;
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.REVISION_NUMBER);
-        this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
+        this._dataProviderManager.increaseDataRevisionNumber();
     }
 
     private setStatus(status: DataProviderStatus): void {
