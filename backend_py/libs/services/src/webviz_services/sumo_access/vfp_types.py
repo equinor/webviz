@@ -10,6 +10,13 @@ class VfpType(Enum):
     VFPINJ = "VFPINJ"
 
 
+# Identifies a single VFP table within a realization. VFPPROD and VFPINJ use separate table-number
+# namespaces, so the type is required in addition to the number to uniquely identify a table.
+class VfpTableInfo(BaseModel):
+    vfp_type: VfpType
+    table_number: int
+
+
 class VfpParam(Enum):
     FLOWRATE = "FLOWRATE"
     THP = "THP"
