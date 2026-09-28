@@ -51,8 +51,9 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
-    // A dashboard switch ends any data channel interaction - the effect below only removes its
-    // listeners on a switch, which would leave drag/edit lines of the previous dashboard showing
+    // A dashboard switch ends any data channel interaction. The listener effect further down only
+    // unsubscribes on a switch, so a drag or edit started on the previous dashboard would stay drawn.
+    // Hence, the state is reset here whenever the dashboard changes.
     const [prevDashboard, setPrevDashboard] = React.useState(dashboard);
     if (dashboard !== prevDashboard) {
         setPrevDashboard(dashboard);
