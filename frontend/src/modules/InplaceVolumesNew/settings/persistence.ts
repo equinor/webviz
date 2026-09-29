@@ -19,6 +19,7 @@ import {
     selectedResultNameAtom,
     selectedIndicesWithValuesAtom,
     selectedSelectorColumnAtom,
+    selectedSensitivityCasesAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
 } from "./atoms/persistableFixableAtoms";
@@ -35,6 +36,7 @@ export type SerializedSettings = {
     plotOptions: InplaceVolumesPlotOptions;
     indexValueCriteria: IndexValueCriteria;
     showTable: boolean;
+    sensitivityCases?: { sensitivityName: string; caseName: string }[];
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
@@ -64,6 +66,16 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
         },
         showTable: { type: "boolean" },
     },
+    optionalProperties: {
+        sensitivityCases: {
+            elements: {
+                properties: {
+                    sensitivityName: { type: "string" },
+                    caseName: { type: "string" },
+                },
+            },
+        },
+    },
 }));
 
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
@@ -86,6 +98,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         plotType: get(selectedPlotTypeAtom),
         plotOptions: get(plotOptionsAtom),
         showTable: get(showTableAtom),
+        sensitivityCases: get(selectedSensitivityCasesAtom).value,
     };
 };
 
@@ -104,4 +117,5 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedPlotTypeAtom, raw.plotType);
     setIfDefined(set, plotOptionsAtom, raw.plotOptions);
     setIfDefined(set, showTableAtom, raw.showTable);
+    setIfDefined(set, selectedSensitivityCasesAtom, raw.sensitivityCases);
 };

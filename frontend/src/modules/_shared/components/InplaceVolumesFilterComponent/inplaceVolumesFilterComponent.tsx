@@ -20,9 +20,7 @@ import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { filterAndOrderSelectedIndexValues } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
-import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
-
-export type SensitivityCaseOption = { ref: SensitivityCaseRef; label: string };
+import type { SensitivityCaseOption, SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 function makeSensitivityCaseKey(ref: SensitivityCaseRef): string {
     return JSON.stringify([ref.sensitivityName, ref.caseName]);

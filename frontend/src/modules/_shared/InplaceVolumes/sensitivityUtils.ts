@@ -18,7 +18,12 @@ export type SensitivityCaseRef = { sensitivityName: string; caseName: string };
 
 export type SensitivitySelection = { ensembleIdent: RegularEnsembleIdent; selectedCases: SensitivityCaseRef[] };
 
-export type SensitivityMode = { kind: "off" } | { kind: "active"; ensemble: RegularEnsemble } | { kind: "blocked" };
+export type SensitivityMode =
+    | { kind: "off" }
+    | { kind: "active"; ensemble: RegularEnsemble; sensitivities: EnsembleSensitivities }
+    | { kind: "blocked" };
+
+export type SensitivityCaseOption = { ref: SensitivityCaseRef; label: string };
 
 const REAL_COLUMN_NAME = "REAL";
 const CASE_LIGHTNESS_STEP = 0.12;
@@ -32,10 +37,14 @@ export function makeSensitivityCaseLabel(sensitivity: Sensitivity, caseName: str
 }
 
 export function getSensitivityCaseRefs(sensitivities: EnsembleSensitivities): SensitivityCaseRef[] {
+    return getSensitivityCaseOptions(sensitivities).map((option) => option.ref);
+}
+
+export function getSensitivityCaseOptions(sensitivities: EnsembleSensitivities): SensitivityCaseOption[] {
     return sensitivities.getSensitivityArr().flatMap((sensitivity) =>
         sensitivity.cases.map((sensitivityCase) => ({
-            sensitivityName: sensitivity.name,
-            caseName: sensitivityCase.name,
+            ref: { sensitivityName: sensitivity.name, caseName: sensitivityCase.name },
+            label: makeSensitivityCaseLabel(sensitivity, sensitivityCase.name),
         })),
     );
 }
@@ -215,8 +224,9 @@ export function resolveSensitivityMode(
 ): SensitivityMode {
     if (selectedEnsembleIdents.length === 1 && isEnsembleIdentOfType(selectedEnsembleIdents[0], RegularEnsembleIdent)) {
         const ensemble = ensembleSet.findEnsemble(selectedEnsembleIdents[0]);
-        if (ensemble && ensemble.getSensitivities() !== null) {
-            return { kind: "active", ensemble };
+        const sensitivities = ensemble?.getSensitivities() ?? null;
+        if (ensemble && sensitivities) {
+            return { kind: "active", ensemble, sensitivities };
         }
     }
 

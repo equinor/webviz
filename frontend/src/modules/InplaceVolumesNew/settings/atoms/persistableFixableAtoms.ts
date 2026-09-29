@@ -9,12 +9,14 @@ import {
     fixupUserSelectedIndexValues,
     isSelectedIndicesWithValuesValidSubset,
 } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
+import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { filterValidSensitivityCases } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { makeUniqueTableNamesIntersection } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
 import { makeColorByOptions, makeSubplotByOptions } from "../utils/plotDimensionUtils";
 
-import { tableDefinitionsAccessorAtom } from "./derivedAtoms";
+import { availableSensitivityCasesAtom, tableDefinitionsAccessorAtom } from "./derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
 export const selectedEnsembleIdentsAtom = persistableFixableAtom<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>({
@@ -145,6 +147,19 @@ export const selectedColorByAtom = persistableFixableAtom<string, string[]>({
     fixupFunction: ({ value, precomputedValue }) => {
         const fixedSelection = fixupUserSelection([value], precomputedValue);
         return fixedSelection[0] || TableOriginKey.TABLE_NAME;
+    },
+});
+
+export const selectedSensitivityCasesAtom = persistableFixableAtom<SensitivityCaseRef[], SensitivityCaseRef[]>({
+    initialValue: [],
+    precomputeFunction: ({ get }) => get(availableSensitivityCasesAtom),
+    isValidFunction: ({ value, precomputedValue: availableCases }) => {
+        const allAvailable = filterValidSensitivityCases(value, availableCases).length === value.length;
+        return allAvailable && (availableCases.length === 0 || value.length > 0);
+    },
+    fixupFunction: ({ value, precomputedValue: availableCases }) => {
+        const validCases = filterValidSensitivityCases(value ?? [], availableCases);
+        return validCases.length > 0 ? validCases : [...availableCases];
     },
 });
 
