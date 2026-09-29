@@ -31,7 +31,7 @@ import {
     selectedPlotTypeAtom,
     showTableAtom,
 } from "./atoms/baseAtoms";
-import { tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
+import { sensitivityModeAtom, tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
 import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
@@ -53,6 +53,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const tableDefinitionsQueryResult = useAtomValue(tableDefinitionsQueryAtom);
     const tableDefinitionsAccessor = useAtomValue(tableDefinitionsAccessorAtom);
+    const isSensitivityModeActive = useAtomValue(sensitivityModeAtom).kind === "active";
 
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
 
@@ -105,12 +106,20 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectorOptions: ComboboxItem<string>[] = [
         ...tableDefinitionsAccessor.getCommonSelectorColumns().map((name) => ({ label: name, value: name })),
     ];
+    if (isSensitivityModeActive) {
+        selectorOptions.push({ label: "SENSITIVITY", value: TableOriginKey.SENSITIVITY });
+    }
 
-    const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames.value);
+    const subplotOptions = makeSubplotByOptions(
+        tableDefinitionsAccessor,
+        selectedTableNames.value,
+        isSensitivityModeActive,
+    );
     const colorByOptions = makeColorByOptions(
         tableDefinitionsAccessor,
         selectedSubplotBy.value,
         selectedTableNames.value,
+        isSensitivityModeActive,
     );
     const plotTypeOptions: ComboboxItem<PlotType>[] = [];
     for (const [type, label] of Object.entries(plotTypeToStringMapping)) {
@@ -144,14 +153,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             <Setting.Section title="Data Visualization" defaultOpen>
                 {requiredFluid !== undefined && (
                     <Banner layoutClassName="col-span-3" tone={isRequiredFluidSelected ? "info" : "warning"}>
-                        {selectedFirstResultName.value} is calculated per fluid. Data is automatically grouped by
-                        FLUID. {!isRequiredFluidSelected && `Include ${requiredFluid} in the FLUID filter to see data.`}
+                        {selectedFirstResultName.value} is calculated per fluid. Data is automatically grouped by FLUID.{" "}
+                        {!isRequiredFluidSelected && `Include ${requiredFluid} in the FLUID filter to see data.`}
                     </Banner>
                 )}
                 {showFaciesFractionGroupingWarning && (
                     <Banner layoutClassName="col-span-3" tone="warning">
-                        FACIES_FRACTION is only meaningful when FACIES is used as &quot;Subplot by&quot; or
-                        &quot;Color by&quot;; otherwise every fraction collapses to 1.
+                        FACIES_FRACTION is only meaningful when FACIES is used as &quot;Subplot by&quot; or &quot;Color
+                        by&quot;; otherwise every fraction collapses to 1.
                     </Banner>
                 )}
                 <Setting.Field label="Response" annotations={selectedFirstResultNameAnnotations}>
@@ -258,13 +267,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     {[PlotType.HISTOGRAM, PlotType.BAR, PlotType.BOX, PlotType.DISTRIBUTION].includes(
                         selectedPlotType,
                     ) && (
-                            <SwitchCompositions.WithLabel
-                                label="Show statistical markers"
-                                checked={plotOptions.showStatisticalMarkers}
-                                onCheckedChange={handleOptionChange("showStatisticalMarkers")}
-                                size="small"
-                            />
-                        )}
+                        <SwitchCompositions.WithLabel
+                            label="Show statistical markers"
+                            checked={plotOptions.showStatisticalMarkers}
+                            onCheckedChange={handleOptionChange("showStatisticalMarkers")}
+                            size="small"
+                        />
+                    )}
                     {[PlotType.HISTOGRAM, PlotType.DISTRIBUTION].includes(selectedPlotType) && (
                         <SwitchCompositions.WithLabel
                             label="Show statistical marker labels"
