@@ -6,6 +6,7 @@ import { useAtomValue } from "jotai";
 import { InplaceVolumesStatistic_api } from "@api";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
+import { makeSensitivityCaseLabelForRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import type { InplaceVolumesStatisticalTableData } from "@modules/_shared/InplaceVolumes/types";
 
 import {
@@ -30,7 +31,7 @@ import {
     getRequiredFluidForWaterfallTarget,
     isWaterfallTargetResultName,
 } from "../utils/computeVolumeChangeDecomposition";
-import { findTableDataForSource, makeSourceLabels } from "../utils/waterfallSources";
+import { findTableDataForSource, makeSourceLabels, type WaterfallSource } from "../utils/waterfallSources";
 
 export interface UseBuildWaterfallPlotResult {
     plots: React.ReactNode | null;
@@ -103,6 +104,14 @@ type GroupStatistics = {
 function formatGroupList(groupLabels: string[]): string {
     const listed = groupLabels.slice(0, MAX_LISTED_SKIPPED_GROUPS).join(", ");
     return groupLabels.length > MAX_LISTED_SKIPPED_GROUPS ? `${listed}, ...` : listed;
+}
+
+function makeSourceCaseLabel(ensembleSet: EnsembleSet, source: WaterfallSource): string | null {
+    const sensitivities = ensembleSet.findEnsemble(source.ensembleIdent)?.getSensitivities() ?? null;
+    if (!source.sensitivityCase || !sensitivities) {
+        return null;
+    }
+    return makeSensitivityCaseLabelForRef(sensitivities, source.sensitivityCase);
 }
 
 function makeSkippedGroupsWarning(skippedGroupLabels: string[]): string | null {
@@ -201,8 +210,11 @@ function extractRequiredStatisticsByGroup(
         // value and P90 the low. Min/max guards against that convention ever changing.
         const p10 = targetP10Array?.[row];
         const p90 = targetP90Array?.[row];
+        // Percentiles can be NaN or missing, e.g. for a single-realization sensitivity case.
         const targetBand =
-            p10 !== undefined && p90 !== undefined ? { low: Math.min(p10, p90), high: Math.max(p10, p90) } : null;
+            Number.isFinite(p10) && Number.isFinite(p90)
+                ? { low: Math.min(p10!, p90!), high: Math.max(p10!, p90!) }
+                : null;
 
         statisticsByGroup.set(groupKey, { means, targetBand });
     }
@@ -241,13 +253,18 @@ export function useBuildWaterfallPlot(
                 return { kind: "message", result: makeInfoResult("Select a reference and a comparison ensemble.") };
             }
             if (!waterfallSources) {
-                return { kind: "message", result: makeInfoResult("Select a table source for both ensembles.") };
+                return {
+                    kind: "message",
+                    result: makeInfoResult(
+                        "Select a table source, and a sensitivity case where required, for both ensembles.",
+                    ),
+                };
             }
             if (!areSourcesDistinct) {
                 return {
                     kind: "message",
                     result: makeInfoResult(
-                        "The reference and comparison must differ in either ensemble or table source.",
+                        "The reference and comparison must differ in ensemble, table source or sensitivity case.",
                     ),
                 };
             }
@@ -414,6 +431,7 @@ export function useBuildWaterfallPlot(
                         ensembleSet.getRegularEnsembleArray(),
                     ),
                     tableName: waterfallSources.reference.tableName,
+                    caseLabel: makeSourceCaseLabel(ensembleSet, waterfallSources.reference),
                 },
                 {
                     ensembleName: makeDistinguishableEnsembleDisplayName(
@@ -421,6 +439,7 @@ export function useBuildWaterfallPlot(
                         ensembleSet.getRegularEnsembleArray(),
                     ),
                     tableName: waterfallSources.comparison.tableName,
+                    caseLabel: makeSourceCaseLabel(ensembleSet, waterfallSources.comparison),
                 },
             );
 

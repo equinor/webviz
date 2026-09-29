@@ -230,6 +230,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                     <br />
                                     Each side has its own table source, so the same ensemble can be used on both sides
                                     to compare two table sources against each other.
+                                    <br />
+                                    <br />
+                                    For an ensemble with sensitivities, each side also selects a sensitivity case and
+                                    only that case&apos;s realizations are used, e.g. to compare a case against the base
+                                    case (rms_seed) of the same ensemble.
                                 </>
                             ),
                         }}

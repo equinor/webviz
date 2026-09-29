@@ -1,7 +1,8 @@
-import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import type { InplaceVolumesSource } from "@modules/_shared/InplaceVolumes/queryHooks";
 import { makeAggregatedStatisticalTableDataQueryOptionsFromSources } from "@modules/_shared/InplaceVolumes/queryHooks";
+import { getRealizationsForSensitivityCases } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 import { FLUID_INDEX_COLUMN } from "../utils/computeVolumeChangeDecomposition";
 
@@ -19,13 +20,25 @@ export const waterfallStatisticalDataQueriesAtom = atomWithQueries((get) => {
     const indicesWithValues = get(indicesWithValuesAtom);
     const isEnabled = get(isWaterfallComputableAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+    const ensembleSet = get(EnsembleSetAtom);
 
     const sources: InplaceVolumesSource[] = waterfallSources
-        ? [waterfallSources.reference, waterfallSources.comparison].map((source) => ({
-              ensembleIdent: source.ensembleIdent,
-              tableName: source.tableName,
-              realizations: [...validEnsembleRealizationsFunction(source.ensembleIdent)],
-          }))
+        ? [waterfallSources.reference, waterfallSources.comparison].map((source) => {
+              let realizations = [...validEnsembleRealizationsFunction(source.ensembleIdent)];
+              const sensitivities = ensembleSet.findEnsemble(source.ensembleIdent)?.getSensitivities() ?? null;
+              if (source.sensitivityCase && sensitivities) {
+                  const caseRealizations = new Set(
+                      getRealizationsForSensitivityCases(sensitivities, [source.sensitivityCase]),
+                  );
+                  realizations = realizations.filter((realization) => caseRealizations.has(realization));
+              }
+              return {
+                  ensembleIdent: source.ensembleIdent,
+                  tableName: source.tableName,
+                  sensitivityCase: source.sensitivityCase,
+                  realizations,
+              };
+          })
         : [];
 
     // Group by FLUID so the volumes belong to a single fluid zone. Summing fluids would mix the oil
