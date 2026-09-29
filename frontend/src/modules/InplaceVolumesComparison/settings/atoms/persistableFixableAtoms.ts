@@ -1,6 +1,7 @@
 import type { Getter } from "jotai";
 
 import type { InplaceVolumesIndexWithValues_api } from "@api";
+import type { EnsembleSensitivities } from "@framework/EnsembleSensitivities";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
@@ -11,6 +12,12 @@ import {
     fixupUserSelectedIndexValues,
     isSelectedIndicesWithValuesValidSubset,
 } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
+import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import {
+    hasSensitivityCase,
+    pickDefaultComparisonSensitivityCase,
+    pickDefaultReferenceSensitivityCase,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 import {
     availableComparisonTableNamesAtom,
@@ -18,8 +25,20 @@ import {
     availableReferenceTableNamesAtom,
     availableResultNamesAtom,
     commonIndicesWithValuesAtom,
+    comparisonSensitivitiesAtom,
+    referenceSensitivitiesAtom,
 } from "./derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
+
+function isValidSensitivityCase(
+    value: SensitivityCaseRef | null,
+    sensitivities: EnsembleSensitivities | null,
+): boolean {
+    if (!sensitivities) {
+        return value === null;
+    }
+    return value !== null && hasSensitivityCase(sensitivities, value);
+}
 
 function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
     const tableDefinitions = get(tableDefinitionsQueryAtom);
@@ -71,6 +90,41 @@ export const selectedComparisonTableNameAtom = persistableFixableAtom<string | n
     precomputeFunction: ({ get }) => get(availableComparisonTableNamesAtom),
     isValidFunction: ({ value, precomputedValue }) => value !== null && precomputedValue.includes(value),
     fixupFunction: ({ value, precomputedValue }) => fixupUserSelection([value ?? null], precomputedValue)[0] ?? null,
+});
+
+export const selectedReferenceSensitivityCaseAtom = persistableFixableAtom<
+    SensitivityCaseRef | null,
+    EnsembleSensitivities | null
+>({
+    initialValue: null,
+    precomputeFunction: ({ get }) => get(referenceSensitivitiesAtom),
+    isValidFunction: ({ value, precomputedValue }) => isValidSensitivityCase(value, precomputedValue),
+    fixupFunction: ({ precomputedValue }) =>
+        precomputedValue ? pickDefaultReferenceSensitivityCase(precomputedValue) : null,
+});
+
+export const selectedComparisonSensitivityCaseAtom = persistableFixableAtom<
+    SensitivityCaseRef | null,
+    EnsembleSensitivities | null
+>({
+    initialValue: null,
+    precomputeFunction: ({ get }) => get(comparisonSensitivitiesAtom),
+    isValidFunction: ({ value, precomputedValue }) => isValidSensitivityCase(value, precomputedValue),
+    fixupFunction: ({ get, precomputedValue }) => {
+        if (!precomputedValue) {
+            return null;
+        }
+        // Within one ensemble, default to a case other than the reference so the pair is usable directly.
+        const referenceEnsembleIdent = get(selectedReferenceEnsembleIdentAtom).value;
+        const comparisonEnsembleIdent = get(selectedComparisonEnsembleIdentAtom).value;
+        if (referenceEnsembleIdent && comparisonEnsembleIdent?.equals(referenceEnsembleIdent)) {
+            return pickDefaultComparisonSensitivityCase(
+                precomputedValue,
+                get(selectedReferenceSensitivityCaseAtom).value,
+            );
+        }
+        return pickDefaultReferenceSensitivityCase(precomputedValue);
+    },
 });
 
 export const selectedResultNameAtom = persistableFixableAtom<string | null, string[]>({

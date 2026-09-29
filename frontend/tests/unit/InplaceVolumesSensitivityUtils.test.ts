@@ -24,6 +24,8 @@ import {
     makeRealizationToSensitivityCaseLabelMap,
     makeSensitivityCaseLabel,
     makeSensitivityCaseLabelOrder,
+    pickDefaultComparisonSensitivityCase,
+    pickDefaultReferenceSensitivityCase,
     resolveSensitivityMode,
 } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
@@ -214,6 +216,42 @@ describe("resolveSensitivityMode", () => {
 
     test("blocked with a delta whose constituent has sensitivities", () => {
         expect(resolveSensitivityMode(ensembleSet, [sensDelta.getIdent()]).kind).toBe("blocked");
+    });
+});
+
+describe("default comparison cases", () => {
+    const scenario = (name: string): Sensitivity => ({
+        name,
+        type: SensitivityType.SCENARIO,
+        cases: [
+            { name: "low", realizations: [0] },
+            { name: "high", realizations: [1] },
+        ],
+    });
+
+    test("reference prefers rms_seed, then rms, then the first sensitivity", () => {
+        expect(pickDefaultReferenceSensitivityCase(SENSITIVITIES)).toEqual({
+            sensitivityName: "rms_seed",
+            caseName: "p10_p90",
+        });
+        expect(
+            pickDefaultReferenceSensitivityCase(new EnsembleSensitivities([scenario("faults"), scenario("rms")])),
+        ).toEqual({ sensitivityName: "rms", caseName: "low" });
+        expect(pickDefaultReferenceSensitivityCase(new EnsembleSensitivities([scenario("faults")]))).toEqual({
+            sensitivityName: "faults",
+            caseName: "low",
+        });
+    });
+
+    test("comparison is the first case that differs from the reference", () => {
+        const reference = pickDefaultReferenceSensitivityCase(SENSITIVITIES);
+        expect(pickDefaultComparisonSensitivityCase(SENSITIVITIES, reference)).toEqual({
+            sensitivityName: "faults",
+            caseName: "low",
+        });
+        expect(
+            pickDefaultComparisonSensitivityCase(SENSITIVITIES, { sensitivityName: "faults", caseName: "low" }),
+        ).toEqual({ sensitivityName: "rms_seed", caseName: "p10_p90" });
     });
 });
 

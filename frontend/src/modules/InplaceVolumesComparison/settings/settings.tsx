@@ -3,6 +3,7 @@ import type React from "react";
 import { useAtom, useAtomValue } from "jotai";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import type { EnsembleSensitivities } from "@framework/EnsembleSensitivities";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
@@ -15,6 +16,8 @@ import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { getSensitivityCaseOptions, makeSensitivityCaseKey } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
@@ -30,18 +33,22 @@ import {
     availableReferenceTableNamesAtom,
     availableResultNamesAtom,
     commonIndicesWithValuesAtom,
+    comparisonSensitivitiesAtom,
     indexColumnDifferencesAtom,
     indexColumnsWithNoSelectedValuesAtom,
     isCrossTableComparisonAtom,
     isIndexValueIntersectionActiveAtom,
     isSingleEnsembleComparisonAtom,
+    referenceSensitivitiesAtom,
     waterfallFactorSpecAtom,
 } from "./atoms/derivedAtoms";
 import {
     selectedComparisonEnsembleIdentAtom,
+    selectedComparisonSensitivityCaseAtom,
     selectedComparisonTableNameAtom,
     selectedIndicesWithValuesAtom,
     selectedReferenceEnsembleIdentAtom,
+    selectedReferenceSensitivityCaseAtom,
     selectedReferenceTableNameAtom,
     selectedResultNameAtom,
     selectedSubplotByAtom,
@@ -58,6 +65,29 @@ function formatIndexValueList(values: string[]): string {
     return values.length > MAX_LISTED_INDEX_VALUES ? `${listed}, ... (${values.length} in total)` : listed;
 }
 
+function makeSensitivityCaseItems(sensitivities: EnsembleSensitivities | null): ComboboxItem<string>[] {
+    if (!sensitivities) {
+        return [];
+    }
+    return getSensitivityCaseOptions(sensitivities).map((option) => ({
+        label: option.label,
+        value: makeSensitivityCaseKey(option.ref),
+    }));
+}
+
+function findSensitivityCaseByKey(
+    sensitivities: EnsembleSensitivities | null,
+    key: string | null,
+): SensitivityCaseRef | null {
+    if (!sensitivities || key === null) {
+        return null;
+    }
+    return (
+        getSensitivityCaseOptions(sensitivities).find((option) => makeSensitivityCaseKey(option.ref) === key)?.ref ??
+        null
+    );
+}
+
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
@@ -69,6 +99,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [comparisonEnsembleIdent, setComparisonEnsembleIdent] = useAtom(selectedComparisonEnsembleIdentAtom);
     const [selectedReferenceTableName, setSelectedReferenceTableName] = useAtom(selectedReferenceTableNameAtom);
     const [selectedComparisonTableName, setSelectedComparisonTableName] = useAtom(selectedComparisonTableNameAtom);
+    const [selectedReferenceSensitivityCase, setSelectedReferenceSensitivityCase] = useAtom(
+        selectedReferenceSensitivityCaseAtom,
+    );
+    const [selectedComparisonSensitivityCase, setSelectedComparisonSensitivityCase] = useAtom(
+        selectedComparisonSensitivityCaseAtom,
+    );
+    const referenceSensitivities = useAtomValue(referenceSensitivitiesAtom);
+    const comparisonSensitivities = useAtomValue(comparisonSensitivitiesAtom);
     const [selectedResultName, setSelectedResultName] = useAtom(selectedResultNameAtom);
     const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(selectedSubplotByAtom);
     const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
@@ -99,6 +137,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     );
     const referenceTableNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedReferenceTableNameAtom);
     const comparisonTableNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedComparisonTableNameAtom);
+    const referenceSensitivityCaseAnnotations = useMakePersistableFixableAtomAnnotations(
+        selectedReferenceSensitivityCaseAtom,
+    );
+    const comparisonSensitivityCaseAnnotations = useMakePersistableFixableAtomAnnotations(
+        selectedComparisonSensitivityCaseAtom,
+    );
     const resultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedResultNameAtom);
     const subplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
 
@@ -119,10 +163,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const referenceSourceAnnotations: SettingAnnotation[] = [
         ...persistedReferenceEnsembleAnnotations,
         ...referenceTableNameAnnotations,
+        ...referenceSensitivityCaseAnnotations,
     ];
     const comparisonSourceAnnotations: SettingAnnotation[] = [
         ...comparisonEnsembleAnnotations,
         ...comparisonTableNameAnnotations,
+        ...comparisonSensitivityCaseAnnotations,
     ];
 
     if (areSourcesDistinct && !areSelectedTablesComparable) {
@@ -192,8 +238,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                                referenceEnsembleIdent.value &&
-                                referenceTableNameOptions.length === 0
+                            referenceEnsembleIdent.value &&
+                            referenceTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
@@ -212,6 +258,26 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                 items={referenceTableNameOptions}
                                 onValueChange={(v) => setSelectedReferenceTableName(v)}
                             />
+                            {referenceSensitivities && (
+                                <>
+                                    {" "}
+                                    <Combobox
+                                        aria-label="Reference sensitivity case"
+                                        placeholder="Sensitivity case"
+                                        value={
+                                            selectedReferenceSensitivityCase.value
+                                                ? makeSensitivityCaseKey(selectedReferenceSensitivityCase.value)
+                                                : null
+                                        }
+                                        items={makeSensitivityCaseItems(referenceSensitivities)}
+                                        onValueChange={(v) =>
+                                            setSelectedReferenceSensitivityCase(
+                                                findSensitivityCaseByKey(referenceSensitivities, v),
+                                            )
+                                        }
+                                    />
+                                </>
+                            )}
                         </>
                     </Setting.Field>
 
@@ -223,8 +289,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                                comparisonEnsembleIdent.value &&
-                                comparisonTableNameOptions.length === 0
+                            comparisonEnsembleIdent.value &&
+                            comparisonTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
@@ -243,6 +309,26 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                 items={comparisonTableNameOptions}
                                 onValueChange={(v) => setSelectedComparisonTableName(v)}
                             />
+                            {comparisonSensitivities && (
+                                <>
+                                    {" "}
+                                    <Combobox
+                                        aria-label="Comparison sensitivity case"
+                                        placeholder="Sensitivity case"
+                                        value={
+                                            selectedComparisonSensitivityCase.value
+                                                ? makeSensitivityCaseKey(selectedComparisonSensitivityCase.value)
+                                                : null
+                                        }
+                                        items={makeSensitivityCaseItems(comparisonSensitivities)}
+                                        onValueChange={(v) =>
+                                            setSelectedComparisonSensitivityCase(
+                                                findSensitivityCaseByKey(comparisonSensitivities, v),
+                                            )
+                                        }
+                                    />
+                                </>
+                            )}
                         </>
                     </Setting.Field>
 

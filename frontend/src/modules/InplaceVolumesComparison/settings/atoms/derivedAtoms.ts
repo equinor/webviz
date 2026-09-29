@@ -2,7 +2,11 @@ import type { Getter } from "jotai";
 import { atom } from "jotai";
 
 import type { InplaceVolumesIndexWithValues_api, InplaceVolumesTableDefinition_api } from "@api";
+import type { EnsembleSensitivities } from "@framework/EnsembleSensitivities";
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { isSameSensitivityCase } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria, TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
 import {
@@ -17,13 +21,41 @@ import type { WaterfallSource } from "../../view/utils/waterfallSources";
 import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
 import {
     selectedComparisonEnsembleIdentAtom,
+    selectedComparisonSensitivityCaseAtom,
     selectedComparisonTableNameAtom,
     selectedIndicesWithValuesAtom,
     selectedReferenceEnsembleIdentAtom,
+    selectedReferenceSensitivityCaseAtom,
     selectedReferenceTableNameAtom,
     selectedResultNameAtom,
 } from "./persistableFixableAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
+
+function getEnsembleSensitivities(
+    get: Getter,
+    ensembleIdent: RegularEnsembleIdent | null,
+): EnsembleSensitivities | null {
+    return ensembleIdent ? (get(EnsembleSetAtom).findEnsemble(ensembleIdent)?.getSensitivities() ?? null) : null;
+}
+
+export const referenceSensitivitiesAtom = atom<EnsembleSensitivities | null>((get) =>
+    getEnsembleSensitivities(get, get(selectedReferenceEnsembleIdentAtom).value),
+);
+
+export const comparisonSensitivitiesAtom = atom<EnsembleSensitivities | null>((get) =>
+    getEnsembleSensitivities(get, get(selectedComparisonEnsembleIdentAtom).value),
+);
+
+/** Selected case per side; always null for an ensemble without sensitivities. */
+function getEffectiveSensitivityCases(get: Getter): {
+    reference: SensitivityCaseRef | null;
+    comparison: SensitivityCaseRef | null;
+} {
+    return {
+        reference: get(referenceSensitivitiesAtom) ? get(selectedReferenceSensitivityCaseAtom).value : null,
+        comparison: get(comparisonSensitivitiesAtom) ? get(selectedComparisonSensitivityCaseAtom).value : null,
+    };
+}
 
 type TableDefinitionsPerEnsemble = {
     ensembleIdent: RegularEnsembleIdent;
@@ -231,22 +263,38 @@ export const areSelectedIndicesWithValuesValidAtom = atom<boolean>((get) => {
 });
 
 /**
- * The reference and comparison sources, or null when either is incompletely selected. Computed once
- * here so settings and view read the same combination of ensemble and table.
+ * The reference and comparison sources, or null when either is incompletely selected, including a
+ * missing case for an ensemble with sensitivities. Computed once here so settings and view read the
+ * same combination of ensemble, table and case.
  */
 export const waterfallSourcesAtom = atom<{ reference: WaterfallSource; comparison: WaterfallSource } | null>((get) => {
     const referenceEnsembleIdent = get(selectedReferenceEnsembleIdentAtom).value;
     const comparisonEnsembleIdent = get(selectedComparisonEnsembleIdentAtom).value;
     const referenceTableName = get(selectedReferenceTableNameAtom).value;
     const comparisonTableName = get(selectedComparisonTableNameAtom).value;
+    const sensitivityCases = getEffectiveSensitivityCases(get);
 
     if (!referenceEnsembleIdent || !comparisonEnsembleIdent || !referenceTableName || !comparisonTableName) {
         return null;
     }
+    if (
+        (get(referenceSensitivitiesAtom) && !sensitivityCases.reference) ||
+        (get(comparisonSensitivitiesAtom) && !sensitivityCases.comparison)
+    ) {
+        return null;
+    }
 
     return {
-        reference: { ensembleIdent: referenceEnsembleIdent, tableName: referenceTableName, sensitivityCase: null },
-        comparison: { ensembleIdent: comparisonEnsembleIdent, tableName: comparisonTableName, sensitivityCase: null },
+        reference: {
+            ensembleIdent: referenceEnsembleIdent,
+            tableName: referenceTableName,
+            sensitivityCase: sensitivityCases.reference,
+        },
+        comparison: {
+            ensembleIdent: comparisonEnsembleIdent,
+            tableName: comparisonTableName,
+            sensitivityCase: sensitivityCases.comparison,
+        },
     };
 });
 
@@ -290,7 +338,7 @@ export const areSelectedTablesComparableAtom = atom((get) => {
     return get(tableDefinitionsAccessorAtom).getAreTablesComparable();
 });
 
-/** True when the two selected sources are both complete and not the same ensemble/table pair. */
+/** True when the two selected sources are both complete and differ in ensemble, table or case. */
 export const areSourcesDistinctAtom = atom((get) => {
     const referenceEnsembleIdent = get(selectedReferenceEnsembleIdentAtom).value;
     const comparisonEnsembleIdent = get(selectedComparisonEnsembleIdentAtom).value;
@@ -301,8 +349,13 @@ export const areSourcesDistinctAtom = atom((get) => {
         return false;
     }
 
+    const sensitivityCases = getEffectiveSensitivityCases(get);
     const isSameEnsemble = referenceEnsembleIdent.equals(comparisonEnsembleIdent);
-    return !(isSameEnsemble && referenceTableName === comparisonTableName);
+    return !(
+        isSameEnsemble &&
+        referenceTableName === comparisonTableName &&
+        isSameSensitivityCase(sensitivityCases.reference, sensitivityCases.comparison)
+    );
 });
 
 /** True when both sides use the same ensemble, i.e. the comparison is purely between table sources. */

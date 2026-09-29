@@ -8,13 +8,17 @@ import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 import { selectedIndexValueCriteriaAtom, showTableAtom } from "./atoms/baseAtoms";
 import {
     selectedComparisonEnsembleIdentAtom,
+    selectedComparisonSensitivityCaseAtom,
     selectedComparisonTableNameAtom,
     selectedIndicesWithValuesAtom,
     selectedReferenceEnsembleIdentAtom,
+    selectedReferenceSensitivityCaseAtom,
     selectedReferenceTableNameAtom,
     selectedResultNameAtom,
     selectedSubplotByAtom,
 } from "./atoms/persistableFixableAtoms";
+
+type SerializedSensitivityCase = { sensitivityName: string; caseName: string } | null;
 
 export type SerializedSettings = {
     referenceEnsembleIdentString: string | null;
@@ -26,7 +30,17 @@ export type SerializedSettings = {
     indicesWithValues: InplaceVolumesIndexWithValuesAsStrings[];
     indexValueCriteria: IndexValueCriteria;
     showTable: boolean;
+    referenceSensitivityCase?: SerializedSensitivityCase;
+    comparisonSensitivityCase?: SerializedSensitivityCase;
 };
+
+const SENSITIVITY_CASE_SCHEMA = {
+    properties: {
+        sensitivityName: { type: "string" },
+        caseName: { type: "string" },
+    },
+    nullable: true,
+} as const;
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
     properties: {
@@ -39,6 +53,10 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
         indicesWithValues: { ...inject("InplaceVolumesIndexWithValues") },
         indexValueCriteria: { enum: Object.values(IndexValueCriteria) },
         showTable: { type: "boolean" },
+    },
+    optionalProperties: {
+        referenceSensitivityCase: SENSITIVITY_CASE_SCHEMA,
+        comparisonSensitivityCase: SENSITIVITY_CASE_SCHEMA,
     },
 }));
 
@@ -58,6 +76,8 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         })),
         indexValueCriteria: get(selectedIndexValueCriteriaAtom),
         showTable: get(showTableAtom),
+        referenceSensitivityCase: get(selectedReferenceSensitivityCaseAtom).value,
+        comparisonSensitivityCase: get(selectedComparisonSensitivityCaseAtom).value,
     };
 };
 
@@ -85,4 +105,6 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedIndicesWithValuesAtom, raw.indicesWithValues);
     setIfDefined(set, selectedIndexValueCriteriaAtom, raw.indexValueCriteria);
     setIfDefined(set, showTableAtom, raw.showTable);
+    setIfDefined(set, selectedReferenceSensitivityCaseAtom, raw.referenceSensitivityCase);
+    setIfDefined(set, selectedComparisonSensitivityCaseAtom, raw.comparisonSensitivityCase);
 };

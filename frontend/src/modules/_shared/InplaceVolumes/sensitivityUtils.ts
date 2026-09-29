@@ -69,6 +69,40 @@ export function filterValidSensitivityCases(
     );
 }
 
+/** Stable string key for a case, e.g. as a select option value. */
+export function makeSensitivityCaseKey(ref: SensitivityCaseRef): string {
+    return JSON.stringify([ref.sensitivityName, ref.caseName]);
+}
+
+export function hasSensitivityCase(sensitivities: EnsembleSensitivities, ref: SensitivityCaseRef): boolean {
+    return getSensitivityCaseRefs(sensitivities).some((available) => isSameSensitivityCase(available, ref));
+}
+
+export function makeSensitivityCaseLabelForRef(sensitivities: EnsembleSensitivities, ref: SensitivityCaseRef): string {
+    const sensitivity = sensitivities.getSensitivityArr().find((sens) => sens.name === ref.sensitivityName);
+    return sensitivity ? makeSensitivityCaseLabel(sensitivity, ref.caseName) : `${ref.sensitivityName}:${ref.caseName}`;
+}
+
+/** The base case to compare against: `rms_seed`, else `rms`, else the first sensitivity; its first case. */
+export function pickDefaultReferenceSensitivityCase(sensitivities: EnsembleSensitivities): SensitivityCaseRef | null {
+    const sensitivityArr = sensitivities.getSensitivityArr();
+    const sensitivity =
+        sensitivityArr.find((sens) => sens.name === "rms_seed") ??
+        sensitivityArr.find((sens) => sens.name === "rms") ??
+        sensitivityArr[0];
+    const firstCase = sensitivity?.cases[0];
+    return sensitivity && firstCase ? { sensitivityName: sensitivity.name, caseName: firstCase.name } : null;
+}
+
+/** The first case, in ensemble order, that differs from the reference case. */
+export function pickDefaultComparisonSensitivityCase(
+    sensitivities: EnsembleSensitivities,
+    referenceCase: SensitivityCaseRef | null,
+): SensitivityCaseRef | null {
+    const refs = getSensitivityCaseRefs(sensitivities);
+    return refs.find((ref) => !isSameSensitivityCase(ref, referenceCase)) ?? refs[0] ?? null;
+}
+
 function getSelectedCasesInEnsembleOrder(
     sensitivities: EnsembleSensitivities,
     cases: SensitivityCaseRef[],
