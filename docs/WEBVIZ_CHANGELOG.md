@@ -9,6 +9,7 @@
 
 ### Changed
 
+- **Experimental modules**: In the module list, experimental modules are now shown by default.
 - **Leaving a session**: The close (✕) button has been removed. Instead, a "Start" breadcrumb now appears in front of the session name in the top bar — click it to leave the current session or snapshot and return to the start page.
 
 ### Fixed
