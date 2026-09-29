@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getSessionMetadataOptions } from "@api";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { loadAllWorkbenchSessionsFromLocalStorage } from "@framework/internal/WorkbenchSession/utils/loaders";
-import { buildSessionUrl } from "@framework/internal/WorkbenchSession/utils/url";
+import { buildWorkbenchUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import {
     isPersisted,
     type WorkbenchSessionDataContainer,
@@ -69,7 +69,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
     }
 
     function handleOpenInNewTab(sessionId: string | undefined) {
-        const url = buildSessionUrl(sessionId ?? "");
+        const url = buildWorkbenchUrl({ kind: "session", sessionId: sessionId ?? "", dashboardId: null });
         window.open(url, "_blank");
     }
 
