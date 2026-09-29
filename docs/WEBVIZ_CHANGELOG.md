@@ -14,6 +14,7 @@
 ### Fixed
 
 - **Well trajectories**: Failures when fetching well perforations or completions/screens no longer prevent drilled wellbore trajectories from loading; error details are now surfaced via the provider status indicator while still displaying trajectories.
+- **Intersection seismic readout**: The value shown when hovering over a seismic slice in the Intersection view is now interpolated between neighboring samples instead of taken from a single cell, giving a smoother, more accurate readout.
 
 ### Added
 
