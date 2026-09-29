@@ -3,6 +3,8 @@ import React from "react";
 import type { Point2D, Point3D } from "@webviz/subsurface-viewer";
 import { isEqual } from "lodash-es";
 
+import type { StdResAttribute_api, TagNameAttribute_api } from "@api";
+
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import type { InplaceVolumesFilterSettings } from "./types/inplaceVolumesFilterSettings";
 import type { Intersection } from "./types/intersection";
@@ -27,7 +29,7 @@ export type GlobalTopicDefinitions = {
     "global.syncValue.ensembles": RegularEnsembleIdent[];
     "global.syncValue.date": { timeOrInterval: string };
     "global.syncValue.timeSeries": { vectorName: string };
-    "global.syncValue.surface": { name: string; attribute: string };
+    "global.syncValue.surface": { name: string; attribute: TagNameAttribute_api | StdResAttribute_api };
     "global.syncValue.cameraPositionMap": {
         target: Point2D | Point3D | undefined;
         zoom: number;

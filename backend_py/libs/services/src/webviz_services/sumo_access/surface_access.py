@@ -29,9 +29,16 @@ from webviz_services.service_exceptions import (
     ServiceTimeoutError,
 )
 
-from .surface_types import InitialFluidContactSurfaceMeta, SurfaceAttribute, SurfaceMeta, SurfaceMetaSet
+from .surface_types import (
+    InitialFluidContactSurfaceMeta,
+    StdResAttribute,
+    SurfaceAttribute,
+    SurfaceMeta,
+    SurfaceMetaSet,
+    SurfaceStandardResult,
+    TagNameAttribute,
+)
 from .surface_search_context import (
-    LEGACY_STD_RES_ATTRIBUTE_SUFFIX,
     attribute_to_log_str,
     make_observed_surface_search_context,
     make_realization_surface_search_context,
@@ -629,7 +636,7 @@ def _build_surface_meta_arr(
             continue
 
         content_str = info.content
-        attribute_str: str | None = None
+        attribute: SurfaceAttribute | None = None
         if not info.tagname and not info.standard_result:
             LOGGER.warning(
                 f"Surface {info.name} (content={content_str})  has empty tagname and standard_result, ignoring the surface"
@@ -642,10 +649,15 @@ def _build_surface_meta_arr(
             continue
 
         if info.standard_result:
-            attribute_str = f"{info.standard_result}{LEGACY_STD_RES_ATTRIBUTE_SUFFIX}"
-
+            try:
+                attribute = StdResAttribute(std_res_name=SurfaceStandardResult(info.standard_result), sub_name=None)
+            except ValueError:
+                LOGGER.warning(
+                    f"Surface {info.name} has standard_result={info.standard_result}, which is not a surface standard result, ignoring the surface"
+                )
+                continue
         else:
-            attribute_str = info.tagname
+            attribute = TagNameAttribute(tag_name=info.tagname)
 
         content_enum = SumoContent.UNKNOWN
         if not content_str:
@@ -666,7 +678,7 @@ def _build_surface_meta_arr(
         ret_arr.append(
             SurfaceMeta(
                 name=info.name,
-                attribute_name=attribute_str,
+                attribute=attribute,
                 content=content_enum,
                 time_type=time_type,
                 is_observation=are_observations,

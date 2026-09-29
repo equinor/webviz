@@ -17,11 +17,14 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
-import type { AnySurfaceAddress } from "@modules/_shared/Surface";
+import type { AnySurfaceAddress, SurfaceAttribute } from "@modules/_shared/Surface";
 import {
     SurfaceAddressBuilder,
     SurfaceDirectory,
     SurfaceTimeType,
+    getSurfaceAttributeDisplayLabel,
+    isSameAttribute,
+    surfaceAttributeKey,
     useObservedSurfacesMetadataQuery,
     useRealizationSurfacesMetadataQuery,
 } from "@modules/_shared/Surface";
@@ -46,7 +49,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
     const [selectedSurfaceName, setSelectedSurfaceName] = React.useState<string | null>(null);
-    const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = React.useState<string | null>(null);
+    const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = React.useState<SurfaceAttribute | null>(null);
     const [realizationNum, setRealizationNum] = React.useState<number>(0);
     const [selectedTimeOrInterval, setSelectedTimeOrInterval] = React.useState<string | null>(null);
     const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction_api | null>(null);
@@ -98,7 +101,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     if (computedSurfaceName && computedSurfaceName !== selectedSurfaceName) {
         setSelectedSurfaceName(computedSurfaceName);
     }
-    if (computedSurfaceAttribute && computedSurfaceAttribute !== selectedSurfaceAttribute) {
+    if (computedSurfaceAttribute && !isSameAttribute(computedSurfaceAttribute, selectedSurfaceAttribute)) {
         setSelectedSurfaceAttribute(computedSurfaceAttribute);
     }
     if (computedTimeOrInterval && computedTimeOrInterval !== selectedTimeOrInterval) {
@@ -111,7 +114,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
             const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(computedEnsembleIdent);
             addrBuilder.withName(computedSurfaceName);
-            addrBuilder.withTagNameAttribute(computedSurfaceAttribute);
+            addrBuilder.withAttribute(computedSurfaceAttribute);
             if (computedTimeOrInterval) {
                 addrBuilder.withTimeOrInterval(computedTimeOrInterval);
             }
@@ -153,9 +156,12 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
         }
     }
 
-    function handleSurfAttributeSelectionChange(selectedSurfAttributes: string[]) {
+    function handleSurfAttributeSelectionChange(selectedSurfAttributeKeys: string[]) {
         console.debug("handleSurfAttributeSelectionChange()");
-        const newAttr = selectedSurfAttributes[0] ?? null;
+        const selectedKey = selectedSurfAttributeKeys[0] ?? null;
+        const newAttr = selectedKey
+            ? (surfaceDirectory.getAttributeNames(computedSurfaceName).find((a) => surfaceAttributeKey(a) === selectedKey) ?? null)
+            : null;
         setSelectedSurfaceAttribute(newAttr);
         if (newAttr && computedSurfaceName) {
             syncHelper.publishValue(SyncSettingKey.SURFACE, "global.syncValue.surface", {
@@ -197,8 +203,8 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
         label: name,
     }));
     const surfAttributeOptions = surfaceDirectory.getAttributeNames(computedSurfaceName).map<SelectOption>((attr) => ({
-        value: attr,
-        label: attr,
+        value: surfaceAttributeKey(attr),
+        label: getSurfaceAttributeDisplayLabel(attr),
     }));
 
     let timeOrIntervalOptions: SelectOption[] = [];
@@ -273,7 +279,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
                 >
                     <Select
                         options={surfAttributeOptions}
-                        value={computedSurfaceAttribute ? [computedSurfaceAttribute] : []}
+                        value={computedSurfaceAttribute ? [surfaceAttributeKey(computedSurfaceAttribute)] : []}
                         onValueChange={handleSurfAttributeSelectionChange}
                         size={5}
                     />
@@ -310,7 +316,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
 
 type PartialSurfSpec = {
     surfaceName: string | null;
-    surfaceAttribute: string | null;
+    surfaceAttribute: SurfaceAttribute | null;
     timeOrInterval: string | null;
 };
 
@@ -325,7 +331,7 @@ function fixupSurface(
         selectedSurface.surfaceName,
         surfaceNames,
     );
-    let finalSurfaceAttribute: string | null = null;
+    let finalSurfaceAttribute: SurfaceAttribute | null = null;
     let finalTimeOrInterval: string | null = null;
     if (finalSurfaceName) {
         const surfaceAttributes = surfaceDirectory.getAttributeNames(finalSurfaceName);
@@ -333,6 +339,7 @@ function fixupSurface(
             syncedSurface.surfaceAttribute,
             selectedSurface.surfaceAttribute,
             surfaceAttributes,
+            isSameAttribute,
         );
     }
     if (finalSurfaceName && finalSurfaceAttribute) {
@@ -350,15 +357,16 @@ function fixupSurface(
     };
 }
 
-function fixupSyncedOrSelectedOrFirstValue(
-    syncedValue: string | null,
-    selectedValue: string | null,
-    values: string[],
-): string | null {
-    if (syncedValue && values.includes(syncedValue)) {
+function fixupSyncedOrSelectedOrFirstValue<T>(
+    syncedValue: T | null,
+    selectedValue: T | null,
+    values: T[],
+    isEqualFunc: (a: T, b: T) => boolean = (a, b) => a === b,
+): T | null {
+    if (syncedValue && values.some((value) => isEqualFunc(value, syncedValue))) {
         return syncedValue;
     }
-    if (selectedValue && values.includes(selectedValue)) {
+    if (selectedValue && values.some((value) => isEqualFunc(value, selectedValue))) {
         return selectedValue;
     }
     if (values.length) {
