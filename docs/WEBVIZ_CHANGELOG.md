@@ -21,6 +21,9 @@
 - **Inplace Volumes Table**: added CSV download of the displayed table (respects filters, sorting and table mode).
 - **Inplace Volumes Table**: wide tables now scroll horizontally with the grouping columns pinned, and columns with the same value on every row are summarised above the table.
 - **Inplace Volumes Table**: new "Statistics layout" option shows responses as rows, keeping the table narrow when many responses are selected.
+- **In-place volumes plots**: For an ensemble with sensitivities (design matrix), all plots and the statistics table are split per sensitivity case and coloured by case by default. A new "Sensitivity cases" filter selects which cases are included.
+- **Inplace Volumes Table**: For an ensemble with sensitivities, a SENSITIVITY column is added and statistics are computed per sensitivity case.
+- **Inplace Volumes Comparison**: For an ensemble with sensitivities, each side selects a sensitivity case, so a case can be compared against the base case of the same ensemble.
 
 ## August 2026
 
