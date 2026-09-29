@@ -13,6 +13,8 @@ import { isDevMode } from "@lib/utils/devMode";
 import { ModuleDetailsPopover } from "./moduleDetailsPopover";
 import { DevStateIcon } from "./moduleIcons";
 import { ModulesListItem } from "./moduleListItem";
+import { useActiveSession } from "../ActiveSessionBoundary";
+import { Paragraph } from "@lib/components/Typography/compositions";
 
 export type ModulesListProps = {
     workbench: Workbench;
@@ -38,6 +40,8 @@ if (isDevMode()) {
 
 export const ModulesList = React.memo(function ModulesList(props: ModulesListProps) {
     const ref = React.useRef<HTMLDivElement>(null);
+
+    const activeSession = useActiveSession();
 
     const [searchQuery, setSearchQuery] = React.useState("");
     const [optionalDevStates, setOptionalDevStates] =
@@ -106,6 +110,7 @@ export const ModulesList = React.memo(function ModulesList(props: ModulesListPro
                 ]}
                 onFilterItemSelectionChange={setOptionalDevStates}
             >
+                {!activeSession.isSnapshot() && (
                 <Collapsible.ScrollArea>
                     {visibleModuleCategories.map((el) => (
                         <Collapsible.Group key={el.category} title={el.label} defaultOpen>
@@ -129,6 +134,12 @@ export const ModulesList = React.memo(function ModulesList(props: ModulesListPro
                         </Collapsible.Group>
                     ))}
                 </Collapsible.ScrollArea>
+                )}
+                {activeSession.isSnapshot() && (
+                    <Paragraph size="sm" tone="neutral" layoutClassName="text-center">
+                        Modules cannot be added in snapshot mode.
+                    </Paragraph>
+                )}
             </Drawer>
 
             <ModuleDetailsPopover
