@@ -1,17 +1,79 @@
 import { atom } from "jotai";
 
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import type { EnsembleSensitivities } from "@framework/EnsembleSensitivities";
+import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import type {
     DeltaEnsembleIdentWithRealizations,
     EnsembleIdentWithRealizations,
 } from "@modules/_shared/InplaceVolumes/queryHooks";
+import {
+    getRealizationsForSensitivityCases,
+    makeRealizationToSensitivityCaseLabelMap,
+    makeSensitivityCaseLabelOrder,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { isFluidSpecificResultName, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
-import { colorByAtom, filterAtom, plotTypeAtom, resultNameAtom, selectorColumnAtom, subplotByAtom } from "./baseAtoms";
+import {
+    colorByAtom,
+    filterAtom,
+    plotTypeAtom,
+    resultNameAtom,
+    selectorColumnAtom,
+    sensitivitySelectionAtom,
+    subplotByAtom,
+} from "./baseAtoms";
+
+export const selectedEnsembleSensitivitiesAtom = atom<EnsembleSensitivities | null>((get) => {
+    const sensitivitySelection = get(sensitivitySelectionAtom);
+    if (!sensitivitySelection) {
+        return null;
+    }
+    return get(EnsembleSetAtom).findEnsemble(sensitivitySelection.ensembleIdent)?.getSensitivities() ?? null;
+});
+
+export const realizationToSensitivityCaseLabelMapAtom = atom<Map<number, string> | null>((get) => {
+    const sensitivities = get(selectedEnsembleSensitivitiesAtom);
+    const sensitivitySelection = get(sensitivitySelectionAtom);
+    if (!sensitivities || !sensitivitySelection) {
+        return null;
+    }
+    return makeRealizationToSensitivityCaseLabelMap(sensitivities, sensitivitySelection.selectedCases);
+});
+
+export const sensitivityCaseLabelOrderAtom = atom<string[] | null>((get) => {
+    const sensitivities = get(selectedEnsembleSensitivitiesAtom);
+    const sensitivitySelection = get(sensitivitySelectionAtom);
+    if (!sensitivities || !sensitivitySelection) {
+        return null;
+    }
+    return makeSensitivityCaseLabelOrder(sensitivities, sensitivitySelection.selectedCases);
+});
+
+/** Labels of selected cases that have no valid realization after the realization filter. */
+export const sensitivityCasesWithoutRealizationsAtom = atom<string[]>((get) => {
+    const sensitivities = get(selectedEnsembleSensitivitiesAtom);
+    const sensitivitySelection = get(sensitivitySelectionAtom);
+    if (!sensitivities || !sensitivitySelection) {
+        return [];
+    }
+    const validRealizations = new Set(get(ValidEnsembleRealizationsFunctionAtom)(sensitivitySelection.ensembleIdent));
+    const realizationToLabel = makeRealizationToSensitivityCaseLabelMap(
+        sensitivities,
+        sensitivitySelection.selectedCases,
+    );
+    const labelsWithRealizations = new Set(
+        Array.from(realizationToLabel.entries())
+            .filter(([realization]) => validRealizations.has(realization))
+            .map(([, label]) => label),
+    );
+    return makeSensitivityCaseLabelOrder(sensitivities, sensitivitySelection.selectedCases).filter(
+        (label) => !labelsWithRealizations.has(label),
+    );
+});
 
 export const tableNamesAtom = atom((get) => {
     const filter = get(filterAtom);
@@ -68,16 +130,22 @@ export const ensembleIdentsWithRealizationsAtom = atom((get) => {
     const filter = get(filterAtom);
     const ensembleIdents = filter?.ensembleIdents ?? [];
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+    const sensitivitySelection = get(sensitivitySelectionAtom);
+    const sensitivities = get(selectedEnsembleSensitivitiesAtom);
 
     // NOTE: Delta ensembles are handled separately in `deltaEnsembleIdentsWithRealizationsAtom`.
     const regularEnsembleIdents = filterEnsembleIdentsByType(ensembleIdents, RegularEnsembleIdent);
 
     const ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[] = [];
     for (const ensembleIdent of regularEnsembleIdents) {
-        ensembleIdentsWithRealizations.push({
-            ensembleIdent,
-            realizations: [...validEnsembleRealizationsFunction(ensembleIdent)],
-        });
+        let realizations = [...validEnsembleRealizationsFunction(ensembleIdent)];
+        if (sensitivitySelection && sensitivities && sensitivitySelection.ensembleIdent.equals(ensembleIdent)) {
+            const caseRealizations = new Set(
+                getRealizationsForSensitivityCases(sensitivities, sensitivitySelection.selectedCases),
+            );
+            realizations = realizations.filter((realization) => caseRealizations.has(realization));
+        }
+        ensembleIdentsWithRealizations.push({ ensembleIdent, realizations });
     }
 
     return ensembleIdentsWithRealizations;

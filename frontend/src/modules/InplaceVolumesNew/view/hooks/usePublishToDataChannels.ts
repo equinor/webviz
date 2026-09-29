@@ -16,7 +16,13 @@ import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
 import { colorByAtom, resultNameAtom, plotTypeAtom, subplotByAtom } from "../atoms/baseAtoms";
 
-const STANDARD_ORIGIN_KEYS = [TableOriginKey.ENSEMBLE, TableOriginKey.TABLE_NAME, TableOriginKey.FLUID];
+// SENSITIVITY is never split: the SensitivityPlot tornado needs the whole per-realization response.
+const STANDARD_ORIGIN_KEYS = [
+    TableOriginKey.ENSEMBLE,
+    TableOriginKey.TABLE_NAME,
+    TableOriginKey.FLUID,
+    TableOriginKey.SENSITIVITY,
+];
 
 interface ContentContext {
     ensembleName: string;

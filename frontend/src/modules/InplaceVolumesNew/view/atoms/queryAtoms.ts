@@ -5,6 +5,7 @@ import {
     makeAggregatedPerRealizationDeltaTableDataQueryOptions,
     makeAggregatedPerRealizationTableDataQueryOptions,
 } from "@modules/_shared/InplaceVolumes/queryHooks";
+import { addSensitivityColumnToPerRealizationDataMemoized } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 import { areTableDefinitionSelectionsValidAtom, resultNameAtom } from "./baseAtoms";
 import {
@@ -13,6 +14,7 @@ import {
     ensembleIdentsWithRealizationsAtom,
     groupByIndicesAtom,
     indicesWithValuesAtom,
+    realizationToSensitivityCaseLabelMapAtom,
     tableNamesAtom,
 } from "./derivedAtoms";
 
@@ -77,8 +79,21 @@ const deltaAggregatedTableDataQueriesAtom = atomWithQueries((get) => {
 export const aggregatedTableDataQueriesAtom = atom((get) => {
     const regular = get(regularAggregatedTableDataQueriesAtom);
     const delta = get(deltaAggregatedTableDataQueriesAtom);
+    const realizationToSensitivityCaseLabel = get(realizationToSensitivityCaseLabelMapAtom);
 
-    const tablesData = [...regular.tablesData, ...delta.tablesData];
+    let numDroppedSensitivityRows = 0;
+    const regularTablesData = realizationToSensitivityCaseLabel
+        ? regular.tablesData.map((tableData) => {
+              const result = addSensitivityColumnToPerRealizationDataMemoized(
+                  tableData.data,
+                  realizationToSensitivityCaseLabel,
+              );
+              numDroppedSensitivityRows += result.numDroppedRows;
+              return { ...tableData, data: result.data };
+          })
+        : regular.tablesData;
+
+    const tablesData = [...regularTablesData, ...delta.tablesData];
 
     return {
         tablesData,
@@ -88,5 +103,6 @@ export const aggregatedTableDataQueriesAtom = atom((get) => {
         errors: [...regular.errors, ...delta.errors],
         droppedFluidSelections: delta.droppedFluidSelections,
         unmatchedRows: delta.unmatchedRows,
+        numDroppedSensitivityRows,
     };
 });

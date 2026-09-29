@@ -3,12 +3,15 @@ import { useAtomValue } from "jotai";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { ColorSet } from "@lib/utils/ColorSet";
+import { createSensitivityCaseColorMap } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { makeTableFromApiData } from "@modules/_shared/InplaceVolumes/tableUtils";
+import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import type { Interfaces } from "@modules/InplaceVolumesNew/interfaces";
 import { PlotType, type InplaceVolumesPlotOptions } from "@modules/InplaceVolumesNew/typesAndEnums";
 
 import { colorByAtom, resultNameAtom, plotTypeAtom, selectorColumnAtom, subplotByAtom } from "../atoms/baseAtoms";
+import { selectedEnsembleSensitivitiesAtom, sensitivityCaseLabelOrderAtom } from "../atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "../atoms/queryAtoms";
 import { makeInplaceVolumesPlotTitle } from "../utils/createTitle";
 import { GroupedTableData } from "../utils/GroupedTableData";
@@ -33,6 +36,8 @@ export function useBuildPlotAndTable(
     const selectorColumn = useAtomValue(selectorColumnAtom);
     const subplotBy = useAtomValue(subplotByAtom);
     const colorBy = useAtomValue(colorByAtom);
+    const sensitivities = useAtomValue(selectedEnsembleSensitivitiesAtom);
+    const sensitivityCaseLabelOrder = useAtomValue(sensitivityCaseLabelOrderAtom);
     const filter = viewContext.useSettingsToViewInterfaceValue("filter");
     const {
         histogramType,
@@ -72,13 +77,24 @@ export function useBuildPlotAndTable(
     viewContext.setInstanceTitle(title);
 
     // Create GroupedTableData - shared data structure for plot and table
+    const categoryOrder = new Map<string, readonly string[]>(
+        filter.indicesWithValues.map((index) => [index.indexColumn, index.values]),
+    );
+    if (sensitivityCaseLabelOrder) {
+        categoryOrder.set(TableOriginKey.SENSITIVITY, sensitivityCaseLabelOrder);
+    }
+    const colorOverrides =
+        sensitivities && colorBy === TableOriginKey.SENSITIVITY
+            ? createSensitivityCaseColorMap(sensitivities, colorSet)
+            : undefined;
     const groupedData = new GroupedTableData({
         table,
         subplotBy,
         colorBy,
         ensembleSet,
         colorSet,
-        categoryOrder: new Map(filter.indicesWithValues.map((index) => [index.indexColumn, index.values])),
+        categoryOrder,
+        colorOverrides,
     });
 
     // Filter out grouped entries where all values are constant (zero variance)
