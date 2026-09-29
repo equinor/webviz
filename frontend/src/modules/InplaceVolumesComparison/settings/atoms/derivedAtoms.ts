@@ -245,8 +245,8 @@ export const waterfallSourcesAtom = atom<{ reference: WaterfallSource; compariso
     }
 
     return {
-        reference: { ensembleIdent: referenceEnsembleIdent, tableName: referenceTableName },
-        comparison: { ensembleIdent: comparisonEnsembleIdent, tableName: comparisonTableName },
+        reference: { ensembleIdent: referenceEnsembleIdent, tableName: referenceTableName, sensitivityCase: null },
+        comparison: { ensembleIdent: comparisonEnsembleIdent, tableName: comparisonTableName, sensitivityCase: null },
     };
 });
 
