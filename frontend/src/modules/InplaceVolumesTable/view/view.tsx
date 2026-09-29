@@ -6,9 +6,11 @@ import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
+import { SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 import type { Interfaces } from "../interfaces";
 
+import { isSensitivityEnsembleSelectionBlockedAtom } from "./atoms/baseAtoms";
 import { areSelectedTablesComparableAtom, haveAllQueriesFailedAtom, isQueryFetchingAtom } from "./atoms/derivedAtoms";
 import { InplaceVolumesTable } from "./components/inplaceVolumesTable";
 import { useDownloadCsv } from "./hooks/useDownloadCsv";
@@ -23,6 +25,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const haveAllQueriesFailed = useAtomValue(haveAllQueriesFailedAtom);
     const isQueryFetching = useAtomValue(isQueryFetchingAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
+    const isSensitivityEnsembleSelectionBlocked = useAtomValue(isSensitivityEnsembleSelectionBlockedAtom);
 
     useMakeViewStatusWriterMessages(statusWriter, ensembleSet);
     statusWriter.setLoading(isQueryFetching);
@@ -67,6 +70,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     );
 
     function createErrorMessage(): string | null {
+        if (isSensitivityEnsembleSelectionBlocked) {
+            return SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE;
+        }
         if (haveAllQueriesFailed) {
             return "Failed to load inplace volumes table data";
         }

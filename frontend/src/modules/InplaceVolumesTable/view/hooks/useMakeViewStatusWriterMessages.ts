@@ -12,9 +12,14 @@ import {
     makeDroppedFluidSelectionWarnings,
     makeUnmatchedDeltaRowWarnings,
 } from "@modules/_shared/InplaceVolumes/deltaEnsembleWarnings";
+import { SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
-import { filterAtom, resultNamesAtom } from "../atoms/baseAtoms";
-import { activeQueriesResultAtom, indicesWithValuesAtom } from "../atoms/derivedAtoms";
+import { filterAtom, isSensitivityEnsembleSelectionBlockedAtom, resultNamesAtom } from "../atoms/baseAtoms";
+import {
+    activeQueriesResultAtom,
+    indicesWithValuesAtom,
+    sensitivityCasesWithoutRealizationsAtom,
+} from "../atoms/derivedAtoms";
 
 // Type guard for InplaceVolumesTableData
 function isInplaceVolumesTableData(
@@ -35,8 +40,26 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter, 
     const indicesValues = useAtomValue(indicesWithValuesAtom);
     const resultNames = useAtomValue(resultNamesAtom);
     const filter = useAtomValue(filterAtom);
+    const isSensitivityEnsembleSelectionBlocked = useAtomValue(isSensitivityEnsembleSelectionBlockedAtom);
+    const sensitivityCasesWithoutRealizations = useAtomValue(sensitivityCasesWithoutRealizationsAtom);
 
     usePropagateAllApiErrorsToStatusWriter(activeQueriesResult.errors, statusWriter);
+
+    if (isSensitivityEnsembleSelectionBlocked) {
+        statusWriter.addError(SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE);
+    }
+
+    if (activeQueriesResult.numDroppedSensitivityRows > 0) {
+        statusWriter.addWarning(
+            `${activeQueriesResult.numDroppedSensitivityRows} rows were excluded because their realization belongs to no sensitivity case.`,
+        );
+    }
+
+    if (sensitivityCasesWithoutRealizations.length > 0) {
+        statusWriter.addWarning(
+            `No valid realizations for sensitivity cases: ${sensitivityCasesWithoutRealizations.join(", ")}. Check the realization filter.`,
+        );
+    }
 
     for (const elm of indicesValues) {
         if (elm.values.length === 0) {
