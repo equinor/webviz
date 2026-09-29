@@ -127,6 +127,26 @@ export function makeResponsesAsRowsFixture(
     return { columnsConfig, rows };
 }
 
+/** Statistical fixture with a SENSITIVITY identifier column cycling through `caseLabels`, then ZONE. */
+export function makeSensitivityStatisticalFixture(
+    numRows: number,
+    caseLabels: string[],
+    resultNames: string[],
+    statisticLabels: string[],
+): InplaceVolumesTableFixture {
+    const wide = makeWideStatisticalFixture(numRows, resultNames, statisticLabels);
+    const { ENSEMBLE, TABLE_NAME, FLUID, ...rest } = wide.columnsConfig;
+    const columnsConfig: TableColumnsConfig = {
+        ENSEMBLE,
+        TABLE_NAME,
+        FLUID,
+        SENSITIVITY: { label: "SENSITIVITY", columnType: ColumnType.SENSITIVITY },
+        ...rest,
+    };
+    const rows = wide.rows.map((row, i) => ({ ...row, SENSITIVITY: caseLabels[i % caseLabels.length] }));
+    return { columnsConfig, rows };
+}
+
 /** Statistical mode fixture: ENSEMBLE, TABLE_NAME, FLUID, ZONE non-statistical columns, STOIIP {Mean,P10,P90}. */
 export function makeStatisticalFixture(numRows: number): InplaceVolumesTableFixture {
     const columnsConfig: TableColumnsConfig = {
