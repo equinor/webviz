@@ -15,6 +15,7 @@ import {
 } from "@framework/GuiMessageBroker";
 import { useDashboard } from "@framework/internal/components/DashboardContext";
 import { DashboardTopic, type LayoutElement } from "@framework/internal/Dashboard";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
@@ -34,6 +35,7 @@ import {
     vec2FromPointerEvent,
 } from "@lib/utils/vec2";
 
+import { useActiveSession } from "../../ActiveSessionBoundary";
 import {
     SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
     SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT,
@@ -41,7 +43,6 @@ import {
 
 import { ViewWrapper } from "./ViewWrapper";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
-import { useActiveSession } from "../../ActiveSessionBoundary";
 
 type LayoutProps = {
     workbench: Workbench;
@@ -482,9 +483,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     // Covers the outgoing dashboard's content the instant a tab switch is
                     // requested (before the still-synchronous switch itself runs and blocks the
                     // main thread for a moment)
-                    (<div className="bg-surface/80 z-overlay absolute inset-0 flex items-center justify-center backdrop-blur-xs">
+                    <div className="bg-surface/80 z-overlay absolute inset-0 flex items-center justify-center backdrop-blur-xs">
                         <CircularProgress size={40} />
-                    </div>)
+                    </div>
                 )}
             </div>
         </div>
@@ -503,6 +504,7 @@ function EmptyLayout(props: EmptyLayoutProps) {
         GuiState.RightSettingsPanelWidthInPercent,
     );
     const activeSession = useActiveSession();
+    const isSnapshot = usePublishSubscribeTopicValue(activeSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     function openModulesList() {
         setRightDrawerContent(RightDrawerContent.ModulesList);
@@ -512,33 +514,32 @@ function EmptyLayout(props: EmptyLayoutProps) {
     }
 
     function makeContent() {
-        if (activeSession.isSnapshot()) {
+        if (isSnapshot) {
             return (
                 <Paragraph size="md" weight="bolder" tone="neutral" layoutClassName="text-center">
-                This dashboard does not contain any modules.
-            </Paragraph>
+                    This dashboard does not contain any modules.
+                </Paragraph>
             );
         }
         return (
-            <><Paragraph size="md" weight="bolder" tone="neutral" layoutClassName="text-center">
-                No modules added
-            </Paragraph>
-            <Paragraph size="sm" tone="neutral" layoutClassName="text-center">
-                Drag modules here from the modules list.
-            </Paragraph>
-            {rightDrawerContent !== RightDrawerContent.ModulesList && (
-                <Button onClick={openModulesList}>Open Modules List</Button>
-            )}
-            </>);
+            <>
+                <Paragraph size="md" weight="bolder" tone="neutral" layoutClassName="text-center">
+                    No modules added
+                </Paragraph>
+                <Paragraph size="sm" tone="neutral" layoutClassName="text-center">
+                    Drag modules here from the modules list.
+                </Paragraph>
+                {rightDrawerContent !== RightDrawerContent.ModulesList && (
+                    <Button onClick={openModulesList}>Open Modules List</Button>
+                )}
+            </>
+        );
     }
 
     return (
         <div className="text-neutral-subtle gap-y-sm absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center select-none">
             <WebAssetOff fontSize="large" />
             {makeContent()}
-            {rightDrawerContent !== RightDrawerContent.ModulesList && (
-                <Button onClick={openModulesList}>Open Modules List</Button>
-            )}
         </div>
     );
 }
