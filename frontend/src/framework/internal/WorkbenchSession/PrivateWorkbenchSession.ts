@@ -1,10 +1,10 @@
 import type { QueryClient } from "@tanstack/query-core";
 
 import { AtomStoreMaster } from "@framework/AtomStoreMaster";
-import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
 import { Dashboard, DashboardTopic } from "@framework/internal/Dashboard";
+import { DEFAULT_DASHBOARD_NAME } from "@framework/internal/persistence/constants";
 import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UserCreatedItems, UserCreatedItemsEvent } from "@framework/UserCreatedItems";
@@ -21,6 +21,7 @@ import {
 } from "../EnsembleSetLoader";
 import { PrivateWorkbenchSettings, PrivateWorkbenchSettingsTopic } from "../PrivateWorkbenchSettings";
 
+import { DashboardHotCache } from "./DashboardHotCache";
 import type { SerializedWorkbenchSessionContentState } from "./PrivateWorkbenchSession.schema";
 import {
     isPersisted,
@@ -89,6 +90,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     private _queryClient: QueryClient;
     private _dashboards: Dashboard[] = [];
     private _activeDashboardId: string | null = null;
+    private _dashboardHotCache = new DashboardHotCache();
     private _ensembleSet: EnsembleSet = new EnsembleSet([]);
     private _realizationFilterSet = new RealizationFilterSet();
     private _wrappedRealizationFilterSet = {
@@ -197,9 +199,13 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this.handleStateChange();
     }
 
-    serializeContentState(): SerializedWorkbenchSessionContentState {
+    /**
+     * @param activeDashboardIdOverride Dashboard to mark as active in the output instead of the live
+     * active one - e.g. the dashboard picked to open first in the snapshot dialog.
+     */
+    serializeContentState(activeDashboardIdOverride?: string): SerializedWorkbenchSessionContentState {
         return {
-            activeDashboardId: this._activeDashboardId,
+            activeDashboardId: activeDashboardIdOverride ?? this._activeDashboardId,
             settings: this._settings.serializeState(),
             userCreatedItems: this._userCreatedItems.serializeState(),
             dashboards: this._dashboards.map((d) => d.serializeState()),
@@ -227,9 +233,12 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         };
     }
 
-    async deserializeContentState(contentState: SerializedWorkbenchSessionContentState): Promise<void> {
+    async deserializeContentState(
+        contentState: SerializedWorkbenchSessionContentState,
+        preferredActiveDashboardId?: string | null,
+    ): Promise<void> {
         this._isPersisted = this._id !== null;
-        this._activeDashboardId = contentState.activeDashboardId;
+        this._activeDashboardId = null;
 
         this.clearDashboards();
 
@@ -276,10 +285,45 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         for (const dashboard of contentState.dashboards) {
             const newDashboard = new Dashboard(this._atomStoreMaster);
-            this.registerDashboard(newDashboard);
+            // Deserialize before registering - registerDashboard() keys the subscription by the dashboard's
+            // id, which deserializeState() only sets to the persisted one
             newDashboard.deserializeState(dashboard);
+            this.registerDashboard(newDashboard);
         }
 
+        // Prefer a requested dashboard (e.g. from a deep link) over the persisted active one, so the latter
+        // isn't loaded only to be switched away from right after. Ids not in this session (e.g. a stale
+        // link) are ignored.
+        const dashboardIds = new Set(this._dashboards.map((d) => d.getId()));
+        const validPreferredId =
+            preferredActiveDashboardId && dashboardIds.has(preferredActiveDashboardId)
+                ? preferredActiveDashboardId
+                : null;
+        const validPersistedId =
+            contentState.activeDashboardId && dashboardIds.has(contentState.activeDashboardId)
+                ? contentState.activeDashboardId
+                : null;
+        // A dashboard failing to load (e.g. a broken persisted module state) shouldn't keep the whole session
+        // from opening - fall back to the next candidate, like removeDashboard() does
+        const candidateIds = new Set(
+            [validPreferredId, validPersistedId, ...this._dashboards.map((d) => d.getId())].filter(
+                (id): id is string => id !== null,
+            ),
+        );
+        let firstError: unknown = null;
+        for (const candidateId of candidateIds) {
+            try {
+                this.setActiveDashboard(candidateId);
+                firstError = null;
+                break;
+            } catch (error) {
+                console.error(`Failed to activate dashboard "${candidateId}" while opening the session:`, error);
+                firstError ??= error;
+            }
+        }
+        if (firstError !== null) {
+            throw firstError;
+        }
         this._settings.deserializeState(contentState.settings);
         this._userCreatedItems.deserializeState(contentState.userCreatedItems);
     }
@@ -331,11 +375,180 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     getActiveDashboard(): Dashboard | null {
-        if (!this._activeDashboardId && this._dashboards.length > 0) {
-            this._activeDashboardId = this._dashboards[0].getId();
-        }
         const found = this._dashboards.find((d) => d.getId() === this._activeDashboardId);
         return found ?? null;
+    }
+
+    getDashboardHotCache(): DashboardHotCache {
+        return this._dashboardHotCache;
+    }
+
+    setActiveDashboard(dashboardId: string | null): void {
+        if (!this.activateDashboard(dashboardId)) {
+            return;
+        }
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        this.handleStateChange();
+    }
+
+    /**
+     * Everything setActiveDashboard() does except notifying subscribers - lets removeDashboard()
+     * only announce the new active dashboard once the removed one is gone.
+     * @param options.keepPreviousHot Whether to keep the dashboard switched away from mounted for a while
+     * (see DashboardHotCache). Pass false when the caller tears it down itself. Defaults to true.
+     * @returns Whether the active dashboard changed.
+     */
+    private activateDashboard(dashboardId: string | null, options?: { keepPreviousHot?: boolean }): boolean {
+        if (this._activeDashboardId === dashboardId) {
+            return false;
+        }
+
+        // Validated before touching the hot cache, so an unknown id (e.g. a deferred switch racing a
+        // removal) can't leave the still-displayed dashboard scheduled for eviction
+        const dashboard = this._dashboards.find((d) => d.getId() === dashboardId);
+        if (dashboardId && !dashboard) {
+            throw new Error("Dashboard not registered in this session");
+        }
+
+        // Loaded before any state below is touched: Dashboard.load() can throw, and a failed switch must
+        // leave the previous dashboard active and untouched
+        try {
+            // No-op if the dashboard is still hot - nothing cached to load
+            dashboard?.load();
+        } catch (error) {
+            console.error(`Failed to load dashboard "${dashboardId}":`, error);
+            throw error;
+        }
+
+        if (dashboard) {
+            // Released before the outgoing dashboard is deferred below - on a full cache, that evicts the
+            // oldest hot dashboard, which could otherwise be the very one being switched to
+            this._dashboardHotCache.release(dashboard.getId());
+        }
+
+        const previouslyActiveDashboard = this.getActiveDashboard();
+        if (previouslyActiveDashboard && options?.keepPreviousHot !== false) {
+            // Deferred instead of unloading immediately: the dashboard stays fully mounted for a
+            // while in case the user switches back to it, instead of paying the full teardown/
+            // recreate cost on every switch. See DashboardHotCache.
+            this._dashboardHotCache.deferEviction(previouslyActiveDashboard);
+        }
+        this._activeDashboardId = dashboard ? dashboard.getId() : null;
+        return true;
+    }
+
+    addDashboard(): void {
+        this.assertIsNotSnapshot();
+        const newDashboard = new Dashboard(this._atomStoreMaster, this.makeNextDashboardName());
+        this.registerDashboard(newDashboard);
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+        this.handleStateChange();
+
+        this.setActiveDashboard(newDashboard.getId());
+    }
+
+    removeDashboard(dashboardId: string): void {
+        this.assertIsNotSnapshot();
+        const dashboard = this._dashboards.find((d) => d.getId() === dashboardId);
+        if (!dashboard) {
+            throw new Error("Dashboard not registered in this session");
+        }
+        if (this._dashboards.length <= 1) {
+            throw new Error("Cannot remove the last dashboard in a session");
+        }
+        const wasActive = this._activeDashboardId === dashboardId;
+
+        if (wasActive) {
+            // Switch to a replacement that loads BEFORE tearing the active dashboard down: without an active
+            // dashboard nothing is rendered, tab strip included, leaving the user stuck. If none loads, the
+            // removal is aborted and the current dashboard stays.
+            const index = this._dashboards.findIndex((d) => d.getId() === dashboardId);
+            const preferredCandidateId = index > 0 ? this._dashboards[index - 1].getId() : null;
+            const candidateIds = [
+                ...(preferredCandidateId ? [preferredCandidateId] : []),
+                ...this._dashboards.filter((d) => d.getId() !== dashboardId).map((d) => d.getId()),
+            ];
+
+            let switched = false;
+            for (const candidateId of new Set(candidateIds)) {
+                try {
+                    // Not kept hot - it's torn down below, and would otherwise push another dashboard out of the cache
+                    this.activateDashboard(candidateId, { keepPreviousHot: false });
+                    switched = true;
+                    break;
+                } catch (error) {
+                    console.error(
+                        `Failed to activate dashboard "${candidateId}" while removing the active dashboard:`,
+                        error,
+                    );
+                }
+            }
+
+            if (!switched) {
+                throw new Error(
+                    "Cannot remove the active dashboard: none of the remaining dashboards could be activated as a replacement.",
+                );
+            }
+        }
+
+        // The removed dashboard is only ever torn down once it's no longer the active one (either it
+        // never was, or the switch above already moved activation off of it). If it was hot, this also
+        // cancels its pending eviction.
+        this.unregisterDashboard(dashboard);
+
+        // Announced only now, so subscribers never see the new active dashboard while the removed one
+        // still exists - the URL sync would otherwise treat this as a regular switch and add a history entry
+        if (wasActive) {
+            this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        }
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+    }
+
+    moveDashboard(dashboardId: string, newIndex: number): void {
+        this.assertIsNotSnapshot();
+        const currentIndex = this._dashboards.findIndex((d) => d.getId() === dashboardId);
+        if (currentIndex === -1) {
+            throw new Error("Dashboard not registered in this session");
+        }
+
+        const clampedIndex = Math.max(0, Math.min(newIndex, this._dashboards.length - 1));
+        if (clampedIndex === currentIndex) {
+            return;
+        }
+
+        // A new array, not an in-place splice - the snapshot getter returns this._dashboards, and React
+        // only re-renders when that reference changes
+        const dashboards = [...this._dashboards];
+        const [dashboard] = dashboards.splice(currentIndex, 1);
+        dashboards.splice(clampedIndex, 0, dashboard);
+        this._dashboards = dashboards;
+
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+        this.handleStateChange();
+    }
+
+    async cloneDashboard(dashboardId: string): Promise<void> {
+        this.assertIsNotSnapshot();
+        const dashboardToCloneIndex = this._dashboards.findIndex((d) => d.getId() === dashboardId);
+        const dashboardToClone = this._dashboards[dashboardToCloneIndex];
+        if (!dashboardToClone) {
+            throw new Error("Dashboard not registered in this session");
+        }
+
+        const clonedDashboard = Dashboard.clone(dashboardToClone, this._atomStoreMaster);
+
+        this.registerDashboard(clonedDashboard);
+        this.moveDashboard(clonedDashboard.getId(), dashboardToCloneIndex + 1);
+
+        try {
+            this.setActiveDashboard(clonedDashboard.getId());
+        } catch (error) {
+            // The clone failed to load but is already registered - roll that back, so it doesn't linger as a
+            // broken dashboard in the tab strip and saved session
+            this.unregisterDashboard(clonedDashboard);
+            this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+            throw error;
+        }
     }
 
     getDashboards(): Dashboard[] {
@@ -356,9 +569,14 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     private unregisterDashboard(dashboard: Dashboard): void {
+        // Stop tracking any pending hot-cache eviction for this dashboard before tearing it down
+        // directly below - otherwise a stale timer would later call unload() on a dashboard that's
+        // no longer part of the session.
+        this._dashboardHotCache.release(dashboard.getId());
         this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${dashboard.getId()}`);
-        dashboard.beforeUnload();
+        dashboard.beforeDestroy();
         this._dashboards = this._dashboards.filter((d) => d.getId() !== dashboard.getId());
+        this.handleStateChange();
     }
 
     private clearDashboards() {
@@ -384,6 +602,43 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        this.handleStateChange();
+    }
+
+    /**
+     * Replaces a single dashboard in place, preserving its position and the rest of the session's
+     * dashboards. Used when applying a template so that only the targeted dashboard is affected.
+     */
+    replaceDashboard(dashboardId: string, newDashboard: Dashboard): void {
+        this.assertIsNotSnapshot();
+        const index = this._dashboards.findIndex((d) => d.getId() === dashboardId);
+        if (index === -1) {
+            throw new Error("Dashboard not registered in this session");
+        }
+        const oldDashboard = this._dashboards[index];
+        const wasActive = this._activeDashboardId === dashboardId;
+
+        // Like unregisterDashboard(): a pending eviction would otherwise later unload the detached old
+        // dashboard, and keep reporting its id as hot
+        this._dashboardHotCache.release(oldDashboard.getId());
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${oldDashboard.getId()}`);
+        oldDashboard.beforeDestroy();
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            `dashboard-${newDashboard.getId()}`,
+            newDashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.SERIALIZED_STATE)(
+                this.handleStateChange.bind(this),
+            ),
+        );
+
+        this._dashboards = [...this._dashboards.slice(0, index), newDashboard, ...this._dashboards.slice(index + 1)];
+
+        if (wasActive) {
+            this._activeDashboardId = newDashboard.getId();
+            this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        }
+
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
         this.handleStateChange();
     }
 
@@ -420,20 +675,44 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     private makeDefaultDashboard(): void {
-        const d = new Dashboard(this._atomStoreMaster);
+        const d = new Dashboard(this._atomStoreMaster, this.makeNextDashboardName());
         this.registerDashboard(d);
         this._activeDashboardId = d.getId();
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
     }
 
-    clear(): void {
+    /**
+     * Next default dashboard name, "Dashboard N" - like spreadsheet sheet names, N is one above both the
+     * dashboard count and the highest existing "Dashboard N".
+     */
+    private makeNextDashboardName(): string {
+        const pattern = new RegExp(`^${DEFAULT_DASHBOARD_NAME} (\\d+)$`);
+        let maxNamedNumber = 0;
+        for (const dashboard of this._dashboards) {
+            const match = pattern.exec(dashboard.getMetadata().name);
+            if (match) {
+                maxNamedNumber = Math.max(maxNamedNumber, Number(match[1]));
+            }
+        }
+        const nextNumber = Math.max(this._dashboards.length, maxNamedNumber) + 1;
+        return `${DEFAULT_DASHBOARD_NAME} ${nextNumber}`;
+    }
+
+    private clear(): void {
+        for (const dashboard of this._dashboards) {
+            this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${dashboard.getId()}`);
+            dashboard.beforeDestroy();
+        }
         this._dashboards = [];
         this._activeDashboardId = null;
         this._ensembleSet = new EnsembleSet([]);
-        EnsembleFingerprintStore.clear();
     }
 
     beforeDestroy(): void {
+        // clear() doesn't route through unregisterDashboard(), so any pending hot-cache evictions
+        // wouldn't otherwise be cancelled - cancel them explicitly here to avoid a stale timer
+        // referencing a dashboard whose atom stores etc. may already be gone.
+        this._dashboardHotCache.clear();
         this.clear();
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
@@ -441,6 +720,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     static async fromDataContainer(
         queryClient: QueryClient,
         dataContainer: WorkbenchSessionDataContainer,
+        preferredActiveDashboardId?: string | null,
     ): Promise<PrivateWorkbenchSession> {
         const session = new PrivateWorkbenchSession(queryClient);
 
@@ -452,7 +732,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         session.setLoadedFromLocalStorage(dataContainer.source === WorkbenchSessionSource.LOCAL_STORAGE);
         session.setMetadata(dataContainer.metadata);
-        await session.deserializeContentState(dataContainer.content);
+        await session.deserializeContentState(dataContainer.content, preferredActiveDashboardId);
 
         return session;
     }
@@ -487,7 +767,13 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         });
 
         // Deserialize content state from source (this properly clones all internal structures)
-        await newSession.deserializeContentState(sourceSession.serializeContentState());
+        try {
+            await newSession.deserializeContentState(sourceSession.serializeContentState());
+        } catch (error) {
+            // Tear down whatever was already created, e.g. module instances of dashboards registered so far
+            newSession.beforeDestroy();
+            throw error;
+        }
 
         // Ensure the new session is not persisted and has no ID
         newSession._id = null;

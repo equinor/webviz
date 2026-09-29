@@ -28,12 +28,11 @@ const MODULE_CATEGORIES: { category: ModuleCategory; label: string }[] = [
     { category: ModuleCategory.DEBUG, label: "Debug modules" },
 ];
 
-// Opt-in dev and deprecated modules (included by default in dev mode)
+// Dev modules are shown by default; deprecated modules are opt-in (included by default in dev mode)
 type RequiredModuleDevState = ModuleDevState.PROD;
 type OptionalModuleDevState = Exclude<ModuleDevState, RequiredModuleDevState>;
-const INITIAL_OPTIONAL_DEV_STATES: OptionalModuleDevState[] = [];
+const INITIAL_OPTIONAL_DEV_STATES: OptionalModuleDevState[] = [ModuleDevState.DEV];
 if (isDevMode()) {
-    INITIAL_OPTIONAL_DEV_STATES.push(ModuleDevState.DEV);
     INITIAL_OPTIONAL_DEV_STATES.push(ModuleDevState.DEPRECATED);
 }
 
