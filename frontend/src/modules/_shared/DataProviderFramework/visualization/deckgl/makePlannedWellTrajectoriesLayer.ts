@@ -2,7 +2,7 @@ import type { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import type { WellboreTrajectory_api } from "@api";
 import { DEFAULT_WELLS_LAYER_PROPS, PLANNED_WELL_COLOR } from "@modules/_shared/constants/wellsLayer";
-import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
+import { WebvizWellsLayer } from "@modules/_shared/customDeckGlLayers/WebvizWellsLayer";
 import { wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
 
 import type { TransformerArgs } from "../VisualizationAssembler";
@@ -26,7 +26,7 @@ export function makePlannedWellTrajectoriesLayer({
         return feature;
     });
 
-    const wellsLayer = new AdjustedWellsLayer({
+    const wellsLayer = new WebvizWellsLayer({
         ...DEFAULT_WELLS_LAYER_PROPS,
         id,
         name,

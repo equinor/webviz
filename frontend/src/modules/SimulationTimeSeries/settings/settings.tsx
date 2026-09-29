@@ -103,7 +103,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
 
     // Receive global parameter string and update local state if different
     useSyncSetting({
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         moduleContext: props.settingsContext,
         syncSettingKey: SyncSettingKey.PARAMETER,
         topic: "global.syncValue.parameter",

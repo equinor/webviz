@@ -7,9 +7,9 @@ import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { ViewStatusWriter } from "@framework/StatusWriter";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import {
-    usePropagateAllApiErrorsToStatusWriter,
-    usePropagateQueryErrorsToStatusWriter,
-} from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+    propagateAllApiErrorsToStatusWriter,
+    propagateQueryErrorsToStatusWriter,
+} from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import {
     resampleFrequencyAtom,
@@ -44,10 +44,10 @@ export function useMakeViewStatusWriterMessages(
     statusWriter.setLoading(isQueryFetching);
 
     // Query errors
-    usePropagateQueryErrorsToStatusWriter(vectorRealizationsQueries, statusWriter);
-    usePropagateQueryErrorsToStatusWriter(vectorStatisticsQueries, statusWriter);
-    usePropagateAllApiErrorsToStatusWriter(vectorHistoricalQueries?.errors ?? [], statusWriter);
-    usePropagateAllApiErrorsToStatusWriter(vectorObservationsQueries?.errors ?? [], statusWriter);
+    propagateQueryErrorsToStatusWriter(vectorRealizationsQueries, statusWriter);
+    propagateQueryErrorsToStatusWriter(vectorStatisticsQueries, statusWriter);
+    propagateAllApiErrorsToStatusWriter(vectorHistoricalQueries?.errors ?? [], statusWriter);
+    propagateAllApiErrorsToStatusWriter(vectorObservationsQueries?.errors ?? [], statusWriter);
 
     // Warning for vectors without historical data (not query error, but history vector does not exist)
     if (showHistorical) {
