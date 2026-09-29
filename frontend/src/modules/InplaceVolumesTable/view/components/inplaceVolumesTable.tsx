@@ -100,7 +100,6 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
                     icon={<Download fontSize="inherit" />}
                     disabled={isDownloadDisabled}
                     onClick={() => props.onDownload?.(collatedRows)}
-                    size="small"
                 >
                     Download CSV
                 </Button>
@@ -149,7 +148,7 @@ function TableFilterRow(props: {
     onFilterChange: (columnKey: string, filterValue: string | null) => void;
 }) {
     // ! As with sorting, the keys/sub-keys should match the property key path in the data object
-    const flattenedLeafColumns = React.useMemo(() => {
+    const leafColumnMap = React.useMemo(() => {
         const leafColumns: { [key: string]: TableHeading } = {};
         for (const leaf of collectLeafColumns(props.columnConfig)) {
             leafColumns[leaf.key] = leaf.heading;
@@ -159,7 +158,7 @@ function TableFilterRow(props: {
 
     return (
         <Table.Row sortable={false}>
-            {Object.entries(flattenedLeafColumns).map(([colKey, heading]) => (
+            {Object.entries(leafColumnMap).map(([colKey, heading]) => (
                 <TableFilterCell
                     key={colKey}
                     filterValue={props.filterState[colKey] ?? null}
