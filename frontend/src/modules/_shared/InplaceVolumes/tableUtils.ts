@@ -23,6 +23,8 @@ export function makeTableFromApiData(data: InplaceVolumesTableData[]): Table {
                     let type = ColumnType.INDEX;
                     if (selectorColumn.columnName === "REAL") {
                         type = ColumnType.REAL;
+                    } else if (selectorColumn.columnName === TableOriginKey.SENSITIVITY) {
+                        type = ColumnType.SENSITIVITY;
                     }
                     columns.set(selectorColumn.columnName, new Column(selectorColumn.columnName, type));
                 }
@@ -125,10 +127,13 @@ export function makeStatisticalTableColumnDataFromApiData(
             for (const selectorColumn of perFluidTableData.selectorColumns) {
                 allSelectorColumns.add(selectorColumn.columnName);
                 if (!nonStatisticalColumns.has(selectorColumn.columnName)) {
-                    const type = ColumnType.INDEX;
                     if (selectorColumn.columnName === "REAL") {
                         throw new Error("REAL column should not be present in statistical tables");
                     }
+                    const type =
+                        selectorColumn.columnName === TableOriginKey.SENSITIVITY
+                            ? ColumnType.SENSITIVITY
+                            : ColumnType.INDEX;
                     nonStatisticalColumns.set(selectorColumn.columnName, new Column(selectorColumn.columnName, type));
                 }
             }
