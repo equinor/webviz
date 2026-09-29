@@ -25,6 +25,9 @@ export type SensitivityMode =
 
 export type SensitivityCaseOption = { ref: SensitivityCaseRef; label: string };
 
+export const SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE =
+    "Ensembles with sensitivities can only be analysed one at a time. Select a single ensemble.";
+
 const REAL_COLUMN_NAME = "REAL";
 const CASE_LIGHTNESS_STEP = 0.12;
 const MAX_CASE_LIGHTNESS = 0.95;

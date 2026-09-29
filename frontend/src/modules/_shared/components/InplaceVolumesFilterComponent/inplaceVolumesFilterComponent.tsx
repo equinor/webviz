@@ -292,6 +292,15 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     return (
         <>
             <Setting.Section title="Data" defaultOpen>
+                {props.dataAnnotations?.map((annotation, index) => (
+                    <Banner
+                        layoutClassName="col-span-3"
+                        key={index}
+                        tone={({ info: "info", warning: "warning", error: "danger" } as const)[annotation.type]}
+                    >
+                        {annotation.message}
+                    </Banner>
+                ))}
                 <Setting.Field label="Ensembles" stacked>
                     {props.allowDeltaEnsembles ? (
                         <EnsemblePicker

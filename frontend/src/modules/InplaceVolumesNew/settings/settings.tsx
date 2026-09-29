@@ -17,6 +17,10 @@ import { InplaceVolumesFilterComponent } from "@modules/_shared/components/Inpla
 import { HistogramType } from "@modules/_shared/histogram";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import {
+    getSensitivityCaseOptions,
+    SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { FLUID_SPECIFIC_RESULT_NAMES, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
@@ -38,6 +42,7 @@ import {
     selectedIndicesWithValuesAtom,
     selectedResultNameAtom,
     selectedSelectorColumnAtom,
+    selectedSensitivityCasesAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
 } from "./atoms/persistableFixableAtoms";
@@ -53,7 +58,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const tableDefinitionsQueryResult = useAtomValue(tableDefinitionsQueryAtom);
     const tableDefinitionsAccessor = useAtomValue(tableDefinitionsAccessorAtom);
-    const isSensitivityModeActive = useAtomValue(sensitivityModeAtom).kind === "active";
+    const sensitivityMode = useAtomValue(sensitivityModeAtom);
+    const isSensitivityModeActive = sensitivityMode.kind === "active";
+    const [selectedSensitivityCases, setSelectedSensitivityCases] = useAtom(selectedSensitivityCasesAtom);
 
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
 
@@ -84,6 +91,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 ? IndexValueCriteria.ALLOW_INTERSECTION
                 : IndexValueCriteria.REQUIRE_EQUALITY,
         );
+        if (newFilter.sensitivityCases) {
+            setSelectedSensitivityCases(newFilter.sensitivityCases);
+        }
     }
 
     const resultNameOptions: ComboboxItem<string>[] = tableDefinitionsAccessor
@@ -267,13 +277,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     {[PlotType.HISTOGRAM, PlotType.BAR, PlotType.BOX, PlotType.DISTRIBUTION].includes(
                         selectedPlotType,
                     ) && (
-                        <SwitchCompositions.WithLabel
-                            label="Show statistical markers"
-                            checked={plotOptions.showStatisticalMarkers}
-                            onCheckedChange={handleOptionChange("showStatisticalMarkers")}
-                            size="small"
-                        />
-                    )}
+                            <SwitchCompositions.WithLabel
+                                label="Show statistical markers"
+                                checked={plotOptions.showStatisticalMarkers}
+                                onCheckedChange={handleOptionChange("showStatisticalMarkers")}
+                                size="small"
+                            />
+                        )}
                     {[PlotType.HISTOGRAM, PlotType.DISTRIBUTION].includes(selectedPlotType) && (
                         <SwitchCompositions.WithLabel
                             label="Show statistical marker labels"
@@ -336,6 +346,17 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     selectedTableNames={selectedTableNames.value}
                     selectedAllowIndicesValuesIntersection={
                         selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
+                    }
+                    availableSensitivityCases={
+                        sensitivityMode.kind === "active"
+                            ? getSensitivityCaseOptions(sensitivityMode.sensitivities)
+                            : []
+                    }
+                    selectedSensitivityCases={selectedSensitivityCases.value}
+                    dataAnnotations={
+                        sensitivityMode.kind === "blocked"
+                            ? [{ type: "error", message: SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE }]
+                            : undefined
                     }
                     additionalSettings={plotSettings}
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
