@@ -12,18 +12,21 @@ NonEmptyBytes = Annotated[bytes, Len(min_length=1)]
 NonEmptyList = Annotated[list[T], Len(min_length=1)]
 
 
+# Enumeration of the known worker operations
+# These represent the possible values for the "subject" field in ServiceBus messages
 class WorkerOperation(StrEnum):
-    DUMMY = "dummy"
-    CREATE_DERIVED_SMRY_TABLE = "create-derived-smry-table"
+    DEV_TEST = "dev-test"
 
 
+# Base class for tracked user tasks.
+# These are tasks that are associated with a specific user and can be tracked using the TaskMetaTracker.
 class UserTaskMsgHeader(BaseModel):
     user_id: NonEmptyStr
     task_id: NonEmptyStr
 
 
-class CreateDerivedSmryTableMsg(UserTaskMsgHeader):
-    case_uuid: NonEmptyStr
-    ensemble_name: NonEmptyStr
-    vector_names: NonEmptyList[NonEmptyStr]
-    encrypted_access_token: NonEmptyBytes
+# Dummy dev test message to test scaffolding
+class DevTestMsg(BaseModel):
+    text: NonEmptyStr
+    encrypted_text: NonEmptyBytes
+    sleep_duration_s: float

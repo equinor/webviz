@@ -17,10 +17,5 @@ def main() -> int:
         return 1
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# https://chatgpt.com/c/68dfbb72-2c78-8325-88f6-f86f68ae51bc
-
-
 if __name__ == "__main__":
     raise SystemExit(main())

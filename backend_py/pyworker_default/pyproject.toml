@@ -13,10 +13,12 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
-aiohttp = "^3.13.4"
+azure-identity = "^1.25.1"
 azure-servicebus = "^7.14.3"
-azure-storage-blob = "^12.28.0"
-azure-monitor-opentelemetry = "^1.8.6"
+aiohttp = "^3.13.4"  # async transport for azure.servicebus.aio
+
+### We have experienced unexpected behavioral changes in patch versions of 'azure-monitor-opentelemetry', so pin it.
+azure-monitor-opentelemetry = "1.8.10"
 
 # Currently used in docker compose
 watchfiles = "^1.1.0"

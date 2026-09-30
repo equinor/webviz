@@ -29,8 +29,8 @@ and do not affect the settlement behaviour.
 
 class TaskFailedError(Exception):
     """
-    The task failed in a final, user-facing way and the end user should be informed. Returning it to the message queue
-    for automatic retrying would not help.
+    The task failed in a final, user-facing way and the end user should be informed.
+    Returning it to the message queue for automatic retrying would not help.
 
     Raise this to report an expected/business failure the user cares about (e.g. invalid input, requested
     data not found, not authorized). `status_message` is surfaced to the user, while the optional

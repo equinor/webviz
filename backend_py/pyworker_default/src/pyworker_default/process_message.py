@@ -11,9 +11,8 @@ from webviz_server_schemas.pyworker.messages import WorkerOperation
 
 from .utils.worker_logging import LogScope
 from .utils.abort_signal import AbortSignal
-from .task_exceptions import TaskFailedError, TaskRetryError, TaskAbortedError, TaskInternalError
-from .task_runner import run_tracked_user_task_async
-from .tasks.dummy_task import dummy_task_async
+from .task_exceptions import TaskFailedError, TaskDeferredError, TaskAbortedError, TaskInternalError
+from .tasks.dev_test_task import dev_test_task_async
 
 
 _logger = logging.getLogger(__name__)
@@ -25,30 +24,26 @@ async def process_message_async(receiver: ServiceBusReceiver, msg: ServiceBusRec
     Processes a single Service Bus message, dispatching to the appropriate handler based on the
     worker operation, which is determined by the 'subject' property of the message.
     """
-    _logger.debug(f"process_message_async(): {msg.subject=}, {msg.message_id=}, {msg.sequence_number=}, {msg.delivery_count=}")
-    _logger.debug(f"process_message_async(): {msg.enqueued_time_utc=}, {msg.expires_at_utc=}")
-    _logger.debug(f"process_message_async(): {msg.application_properties=}")
-
-    parent_otel_ctx: Context = _extract_trace_context_from_message(msg)
-
     queue_name = receiver.entity_path
     worker_op = msg.subject or "UNKNOWN"
     message_id = msg.message_id or "UNKNOWN"
 
-    with LogScope(queue_name=queue_name, message_id=message_id, worker_op=worker_op):
+    parent_otel_ctx: Context = _extract_trace_context_from_message(msg)
+    with _tracer.start_as_current_span(f"process_message: {worker_op}", context=parent_otel_ctx, kind=trace.SpanKind.CONSUMER) as span:
+        _logger.debug(f"process_message_async(): {msg.subject=}, {msg.message_id=}, {msg.sequence_number=}, {msg.delivery_count=}")
+        _logger.debug(f"process_message_async(): {msg.enqueued_time_utc=}, {msg.expires_at_utc=}")
+        _logger.debug(f"process_message_async(): {msg.application_properties=}")
 
-        with _tracer.start_as_current_span(f"process_message: {worker_op}", context=parent_otel_ctx, kind=trace.SpanKind.CONSUMER) as span:
+        span.set_attribute("app.message_queue_name", queue_name)
+        span.set_attribute("app.message_id", message_id)
+        span.set_attribute("app.worker_op", worker_op)
 
+        with LogScope(queue_name=queue_name, message_id=message_id, worker_op=worker_op):
             _logger.info(f"Processing message: {worker_op=}, {message_id=}, {msg.sequence_number=}, {msg.delivery_count=}")
-
-            span.set_attribute("app.message_queue_name", queue_name)
-            span.set_attribute("app.message_id", message_id)
-            span.set_attribute("app.worker_op", worker_op)
-
             try:
                 match worker_op:
-                    case WorkerOperation.DUMMY:
-                        await dummy_task_async(msg)
+                    case WorkerOperation.DEV_TEST:
+                        await dev_test_task_async(msg)
 
                     case _:
                         err_msg = f"Unknown worker operation: {worker_op}"
@@ -76,21 +71,23 @@ async def process_message_async(receiver: ServiceBusReceiver, msg: ServiceBusRec
                 _logger.error(f"Task reported a user-facing failure: {exc.status_message!r}, {repr(exc)}\n{"".join(traceback.format_exception(exc))}")
                 await receiver.complete_message(msg)
 
-            except TaskAbortedError as exc:
-                # Cooperative shutdown/cancellation, not an error.
-                # Return the message to the queue so it is retried (by another worker or this one after restart).
-                # For now log this as warning and don't set a status on the span
-                _logger.warning(f"Task aborted due to shutdown, abandoning message for retry: {repr(exc)}")
-                await receiver.abandon_message(msg)
+            except TaskDeferredError as exc:
+                # Handles the TaskDeferredError exception family
+                # Always abandon message so the message is retried later (bounded by the queue's maxDeliveryCount).
+                # The subtype only affects logging and telemetry, not the message settlement.
+                if isinstance(exc, TaskAbortedError):
+                    # Cooperative shutdown/cancellation, not an error.
+                    # For now log this as warning and don't set a status on the span
+                    _logger.warning(f"Task aborted due to shutdown, abandoning message for retry: {repr(exc)}")
+                else:
+                    span.record_exception(exc)
+                    span.set_status(trace.StatusCode.ERROR)
+                    _logger.error(f"Transient failure processing Service Bus message, abandoning for retry: {repr(exc)}\n{"".join(traceback.format_exception(exc))}")
 
-            except TaskRetryError as exc:
-                # Return message to the queue so it can be retried later (bounded by the queue's maxDeliveryCount).
-                span.record_exception(exc)
-                span.set_status(trace.StatusCode.ERROR)
-                _logger.error(f"Transient failure processing Service Bus message, abandoning for retry: {repr(exc)}\n{"".join(traceback.format_exception(exc))}")
                 await receiver.abandon_message(msg)
 
             except TaskInternalError as exc:
+                # Handles the TaskInternalError exception family
                 span.record_exception(exc)
                 span.set_status(trace.StatusCode.ERROR)
                 _logger.error(f"Internal error processing Service Bus message, sending to DLQ: {repr(exc)}\n{"".join(traceback.format_exception(exc))}")

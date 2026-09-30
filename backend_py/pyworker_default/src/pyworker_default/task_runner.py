@@ -19,8 +19,8 @@ _logger = logging.getLogger(__name__)
 class TaskSuccess:
     status_message: str | None = None
 
-# A task work function performs the actual work for a single message. It receives the task tracker, the raw Service Bus
-# message and an abort signal.
+# A task work function performs the actual work for a single message.
+# It receives the task tracker, the raw Service Bus message and an abort signal.
 # On success it returns a TaskSuccess (optionally carrying an end-user status message stored as the final status).
 # It signals other outcomes by raising an exception (see task_exceptions for the full taxonomy):
 UserTaskWorkFn = Callable[[TaskMetaTracker, ServiceBusReceivedMessage, AbortSignal], Awaitable[TaskSuccess]]
@@ -29,7 +29,7 @@ UserTaskWorkFn = Callable[[TaskMetaTracker, ServiceBusReceivedMessage, AbortSign
 async def run_tracked_user_task_async(sb_msg: ServiceBusReceivedMessage, work_fn: UserTaskWorkFn, abort_signal: AbortSignal) -> None:
     """
     Owns the task lifecycle and maps the work outcome onto the task state. 
-    Message settlement is performed in process_message_async, based on any exception that propagates out of here:
+    Message settlement is performed in process_message_async(), based on any exception that propagates out of here:
     
       | Outcome of work_fn                      | Task state| Message settlement |
       |-----------------------------------------|-----------|--------------------|
