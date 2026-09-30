@@ -18,6 +18,7 @@ import { useGlobalErrorBoundaryContext } from "../../../../GlobalErrorBoundary";
 import { ActionBar } from "../ActionBar/actionBar";
 import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
+import { BottomBar } from "../BottomBar";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
 import { DocumentTitleSync } from "../DocumentTitleSync";
 import { InitialEnsemblesLoadingErrorInfoDialog } from "../InitialEnsemblesLoadingErrorInfoDialog";
@@ -37,7 +38,7 @@ export function WorkbenchWrapper() {
     const queryClient = useQueryClient();
     const { registerActiveWorkbench } = useGlobalErrorBoundaryContext();
 
-    const [workbench] = React.useState(new Workbench(queryClient));
+    const [workbench] = React.useState(() => new Workbench(queryClient));
     const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
     const isSessionLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
     const isSnapshotLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSnapshot);
@@ -96,6 +97,7 @@ export function WorkbenchWrapper() {
                             <RightSideBar workbench={workbench} />
                         </div>
                     </div>
+                    <BottomBar workbench={workbench} />
                 </ActiveDashboardBoundary>
             </ActiveSessionBoundary>
             {content}

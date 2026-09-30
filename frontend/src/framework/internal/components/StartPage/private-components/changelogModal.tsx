@@ -31,10 +31,12 @@ export function ChangelogDialog(): React.ReactNode {
 
     React.useEffect(() => {
         if (!hasSeenRelease && !disableChangelogPopup) {
+            // User setting setters update provider state, so this needs to be in a use-effect to avoid bad set-states. Re-render is trivial, so we disable the rule here
+            // eslint-disable-next-line @eslint-react/set-state-in-effect
             setOpen(true);
             setLastSeenChangelog(currentRelease);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- should only check on mount
+        // eslint-disable-next-line @eslint-react/exhaustive-deps -- should only check on mount
     }, []);
 
     return (

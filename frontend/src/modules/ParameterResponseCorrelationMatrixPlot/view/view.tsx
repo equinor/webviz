@@ -49,7 +49,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const [prevShowLabels, setPrevShowLabels] = React.useState<boolean | null>(null);
     const [prevSize, setPrevSize] = React.useState<Size2D | null>(null);
     const [prevParameterIdents, setPrevParameterIdents] = React.useState<ParameterIdent[]>([]);
-    const [prevUseFixedColorRange, setPrevUseFixedColorRange] = React.useState<boolean>(true);
+    const [prevFixedColorRange, setPrevFixedColorRange] = React.useState<boolean>(true);
     const [prevColorScaleWithGradient, setPrevColorScaleWithGradient] = React.useState<[number, string][]>([]);
     const [prevPlotType, setPrevPlotType] = React.useState<PlotType>(PlotType.ParameterResponseMatrix);
     const [prevCorrelationThreshold, setPrevCorrelationThreshold] = React.useState<number | null>(null);
@@ -60,7 +60,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const parameterIdents = viewContext.useSettingsToViewInterfaceValue("parameterIdents");
     const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
-    const useFixedColorRange = viewContext.useSettingsToViewInterfaceValue("useFixedColorRange");
+    const fixedColorRange = viewContext.useSettingsToViewInterfaceValue("fixedColorRangeEnabled");
     const correlationThreshold = viewContext.useSettingsToViewInterfaceValue("correlationThreshold");
     const hideIndividualCells = viewContext.useSettingsToViewInterfaceValue("hideIndividualCells");
     const filterColumns = viewContext.useSettingsToViewInterfaceValue("filterColumns");
@@ -101,7 +101,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         hasParameterIdentsChanged ||
         showLabels !== prevShowLabels ||
         wrapperDivSize !== prevSize ||
-        useFixedColorRange !== prevUseFixedColorRange ||
+        fixedColorRange !== prevFixedColorRange ||
         !isEqual(colorScaleWithGradient, prevColorScaleWithGradient) ||
         plotType !== prevPlotType ||
         correlationThreshold !== prevCorrelationThreshold ||
@@ -114,7 +114,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         setPrevParameterIdents(parameterIdents);
         setPrevShowLabels(showLabels);
         setPrevSize(wrapperDivSize);
-        setPrevUseFixedColorRange(useFixedColorRange);
+        setPrevFixedColorRange(fixedColorRange);
         setPrevColorScaleWithGradient(colorScaleWithGradient);
         setPrevPlotType(plotType);
         setPrevCorrelationThreshold(correlationThreshold);
@@ -231,7 +231,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 numCols,
                 numRows,
                 showLabels,
-                useFixedColorRange,
+                fixedColorRange,
             });
             for (const ensembleIdentString of receiveResponsesPerEnsembleIdent.keys()) {
                 const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
@@ -255,11 +255,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 plotType,
                 { threshold: correlationThreshold, hideIndividualCells, filterColumns, filterRows },
             );
-            setContent(
-                <>
-                    <Plot layout={figure.makePlotLayout()} data={figure.makePlotData()} />;
-                </>,
-            );
+            setContent(<Plot layout={figure.makePlotLayout()} data={figure.makePlotData()} />);
             return;
         });
     }

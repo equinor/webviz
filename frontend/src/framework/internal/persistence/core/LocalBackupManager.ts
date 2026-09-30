@@ -50,9 +50,10 @@ export class LocalBackupManager {
     /**
      * Removes the localStorage entry for this session.
      * Called after a successful backend persist or when session closes.
+     * @param sessionId Id the backup is stored under, if not the session's current one - e.g. its id
+     * before a save that assigned it a new one.
      */
-    remove(): void {
-        const sessionId = this._session.getId();
+    remove(sessionId: string | null = this._session.getId()): void {
         const key = localStorageKeyForSessionId(sessionId);
 
         try {

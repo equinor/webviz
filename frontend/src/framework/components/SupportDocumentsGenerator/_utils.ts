@@ -51,7 +51,7 @@ Pixel Ratio: ${window.devicePixelRatio}`,
 export async function makeSessionStateFile(session: PrivateWorkbenchSession | null): Promise<DownloadFile | null> {
     if (!session) return null;
 
-    let content = "No session loaded";
+    let content: string;
 
     try {
         const serializedState = session.serializeContentState();

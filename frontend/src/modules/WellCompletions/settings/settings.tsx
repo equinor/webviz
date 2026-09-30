@@ -77,7 +77,7 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
     const [prevStratigraphyColorSet, setPrevStratigraphyColorSet] = React.useState<ColorSet | null>(null);
 
     const syncHelper = useRefStableSyncSettingsHelper({
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         moduleContext: props.settingsContext,
     });
     const syncedEnsembleIdents = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");

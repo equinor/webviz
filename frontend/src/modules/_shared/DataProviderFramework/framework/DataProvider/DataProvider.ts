@@ -88,12 +88,12 @@ export type DataProviderParams<
  * It also manages the status of the provider (loading, success, error).
  */
 export class DataProvider<
-        TSettings extends Settings,
-        TData,
-        TStoredData extends StoredData = Record<string, never>,
-        TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-        TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-    >
+    TSettings extends Settings,
+    TData,
+    TStoredData extends StoredData = Record<string, never>,
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+>
     implements Item, PublishSubscribe<DataProviderPayloads<TData>>
 {
     private readonly [DATA_PROVIDER_BRAND] = true;
@@ -215,9 +215,9 @@ export class DataProvider<
             return;
         }
 
-        let refetchRequired = false;
-
         this.tidyUpFetchRelatedResources();
+
+        let refetchRequired;
 
         if (this._customDataProviderImpl.doSettingsChangesRequireDataRefetch) {
             refetchRequired = this._customDataProviderImpl.doSettingsChangesRequireDataRefetch(

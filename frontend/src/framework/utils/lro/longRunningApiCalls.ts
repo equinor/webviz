@@ -141,7 +141,7 @@ export function useLroProgress(
     callback?: (message: string | null) => void,
 ): string | null {
     const serializedKey = hashKey(queryKey);
-    const prevProgressMessage = React.useRef<string | null>(null);
+    const prevProgressMessageRef = React.useRef<string | null>(null);
     const getSnapshot = React.useCallback(() => lroProgressBus.getLast(serializedKey) ?? null, [serializedKey]);
 
     const progressMessage = React.useSyncExternalStore(
@@ -152,9 +152,9 @@ export function useLroProgress(
 
     React.useEffect(
         function maybeCallCallbackOnMessageChange() {
-            if (progressMessage !== prevProgressMessage.current) {
+            if (progressMessage !== prevProgressMessageRef.current) {
                 callback?.(progressMessage);
-                prevProgressMessage.current = progressMessage;
+                prevProgressMessageRef.current = progressMessage;
             }
         },
         [progressMessage, callback],

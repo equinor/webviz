@@ -183,8 +183,7 @@ export function createFanchartTraces({
 
     validateFanchartData(data);
 
-    // False positive
-    // eslint-disable-next-line react-hooks/rules-of-hooks
+    // eslint-disable-next-line @eslint-react/rules-of-hooks -- False positive
     const convertRgb = useMode(modeRgb);
     const rgb = convertRgb(hexColor);
     if (rgb === undefined) {
