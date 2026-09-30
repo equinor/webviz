@@ -127,16 +127,34 @@ services:
       - WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING # For local development only
       - WEBVIZ_WORKER_MAX_CONCURRENT_TASKS
       - APPLICATIONINSIGHTS_CONNECTION_STRING
-      # For debugging instrumentation
-      - OTEL_LOG_LEVEL=debug
-      - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
     volumes:
       - ./backend_py/pyworker_default/src:/home/appuser/backend_py/pyworker_default/src
       - ./backend_py/libs:/home/appuser/backend_py/libs
     command: ["watchfiles", "python -m pyworker_default.worker_main", "/home/appuser/backend_py/pyworker_default/src"]
     #command: ["python", "-m", "pyworker_default.worker_main"]
     #restart: on-failure
-    #stop_grace_period: 30s
     restart: always
-    # depends_on:
-    #   - sb-emulator
+    depends_on:
+      - sb-emulator
+
+  sb-emulator:
+    image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+    environment:
+      ACCEPT_EULA: Y
+      SQL_SERVER: mssql
+      MSSQL_SA_PASSWORD: NotSoSecretPassw0rd
+    volumes:
+      - ./docker/sb-emulator/SbEmulatorConfig.json:/ServiceBus_Emulator/ConfigFiles/Config.json
+    ports:
+      - "5672:5672"
+    depends_on:
+      - mssql
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: NotSoSecretPassw0rd
+    # Stop Compose from streaming SQL Server's noisy startup logs; still available via `docker compose logs mssql`.
+    attach: false
+

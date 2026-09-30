@@ -34,6 +34,7 @@ REDIS_CACHE_PASSWORD = os.environ["WEBVIZ_REDIS_CACHE_PASSWORD"]
 REDIS_CACHE_URL = f"redis://:{REDIS_CACHE_PASSWORD}@redis-cache:6379"
 
 _is_on_radix_platform = is_running_on_radix_platform()
+
 if _is_on_radix_platform:
     COSMOS_DB_URL = os.getenv("WEBVIZ_COSMOS_DB_URL", "https://webviz-db.documents.azure.com:443/")
 else:
@@ -42,9 +43,17 @@ else:
 # Backend will use local cosmos DB emulator when this env. variable is set:
 COSMOS_DB_EMULATOR_HOST = os.getenv("WEBVIZ_COSMOS_DB_EMULATOR_HOST")
 
-SERVICE_BUS_FQ_NAMESPACE = os.environ["WEBVIZ_SERVICE_BUS_FQ_NAMESPACE"]
-SERVICE_BUS_QUEUE_NAME = os.environ["WEBVIZ_SERVICE_BUS_QUEUE_NAME"]
-SERVICE_BUS_PAYLOAD_FERNET_KEY = os.environ["WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY"]
-SERVICE_BUS_EMULATOR_CONNECTION_STRING: str | None = None
-if not _is_on_radix_platform:
+if _is_on_radix_platform:
+    SERVICE_BUS_FQ_NAMESPACE = os.environ["WEBVIZ_SERVICE_BUS_FQ_NAMESPACE"]
+    SERVICE_BUS_QUEUE_NAME = os.environ["WEBVIZ_SERVICE_BUS_QUEUE_NAME"]
+else:
     SERVICE_BUS_EMULATOR_CONNECTION_STRING = os.getenv("WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING")
+    if SERVICE_BUS_EMULATOR_CONNECTION_STRING:
+        SERVICE_BUS_FQ_NAMESPACE = "NotInUse"
+        SERVICE_BUS_QUEUE_NAME = "emulator-queue"
+    else:
+        SERVICE_BUS_FQ_NAMESPACE = os.environ["WEBVIZ_SERVICE_BUS_FQ_NAMESPACE"]
+        SERVICE_BUS_QUEUE_NAME = os.environ["WEBVIZ_SERVICE_BUS_QUEUE_NAME"]
+
+SERVICE_BUS_PAYLOAD_FERNET_KEY = os.environ["WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY"]
+
