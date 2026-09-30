@@ -1,7 +1,9 @@
 from enum import Enum
 from typing import Any, Dict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
+
+from webviz_services.service_exceptions import InvalidDataError, Service
 
 
 # Type of VFP curve
@@ -111,6 +113,24 @@ class VfpProdTable(BaseModel):
     alq_unit: str
     bhp_unit: str
 
+    @model_validator(mode="after")
+    def _check_complete_grid(self) -> "VfpProdTable":
+        # The frontend addresses bhp_values by position, so the table must be a complete grid.
+        expected = (
+            len(self.thp_values)
+            * len(self.wfr_values)
+            * len(self.gfr_values)
+            * len(self.alq_values)
+            * len(self.flow_rate_values)
+        )
+        if len(self.bhp_values) != expected:
+            raise InvalidDataError(
+                f"VFP table bhp_values length {len(self.bhp_values)} does not match expected "
+                f"complete-grid size {expected}.",
+                Service.SUMO,
+            )
+        return self
+
 
 class VfpInjTable(BaseModel):
     table_number: int
@@ -124,6 +144,18 @@ class VfpInjTable(BaseModel):
     flow_rate_unit: str
     thp_unit: str
     bhp_unit: str
+
+    @model_validator(mode="after")
+    def _check_complete_grid(self) -> "VfpInjTable":
+        # The frontend addresses bhp_values by position, so the table must be a complete grid.
+        expected = len(self.thp_values) * len(self.flow_rate_values)
+        if len(self.bhp_values) != expected:
+            raise InvalidDataError(
+                f"VFP table bhp_values length {len(self.bhp_values)} does not match expected "
+                f"complete-grid size {expected}.",
+                Service.SUMO,
+            )
+        return self
 
 
 # Unit definitions for VFPPROD
