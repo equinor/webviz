@@ -4,12 +4,11 @@ import { Icon } from "@equinor/eds-core-react";
 import { file_description } from "@equinor/eds-icons";
 import { Circle } from "@mui/icons-material";
 
-import { MarkdownWrapper } from "@framework/internal/MarkdownWrapper";
+import { extractMarkdownMetadata, MarkdownWrapper } from "@framework/internal/MarkdownWrapper";
 import { useUserSettings } from "@framework/internal/providers/UserSettingsProvider";
 import { Button } from "@lib/components/Button";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Dialog } from "@lib/components/Dialog";
-import { calcFnv1aHash } from "@lib/utils/hashUtils";
 
 import ChangelogMd from "@docs/WEBVIZ_CHANGELOG.md?raw";
 
@@ -19,26 +18,28 @@ export function ChangelogDialog(): React.ReactNode {
     const [open, setOpen] = React.useState(false);
 
     const {
-        settings: { disableChangelogPopup, lastSeenChangelogHash },
+        settings: { disableChangelogPopup, lastSeenChangelog },
         setDisableChangelogPopup,
-        setLastSeenChangelogHash,
+        setLastSeenChangelog,
     } = useUserSettings();
 
-    const currentHash = calcFnv1aHash(ChangelogMd);
+    const [markdown, metadata] = extractMarkdownMetadata(ChangelogMd);
 
-    const hasSeenRelease = lastSeenChangelogHash === currentHash;
+    const currentRelease = Number(metadata.get("changelog_counter") ?? -1);
+
+    const hasSeenRelease = lastSeenChangelog !== null && currentRelease <= lastSeenChangelog;
 
     React.useEffect(() => {
-        // First visit: silently record the hash so the changelog isn't the first thing the user sees.
-        if (lastSeenChangelogHash === null) {
-            setLastSeenChangelogHash(currentHash);
+        // First visit: silently record the current release so the changelog isn't the first thing a new user sees.
+        if (lastSeenChangelog === null) {
+            setLastSeenChangelog(currentRelease);
             return;
         }
         if (!hasSeenRelease && !disableChangelogPopup) {
             // User setting setters update provider state, so this needs to be in a use-effect to avoid bad set-states. Re-render is trivial, so we disable the rule here
             // eslint-disable-next-line @eslint-react/set-state-in-effect
             setOpen(true);
-            setLastSeenChangelogHash(currentHash);
+            setLastSeenChangelog(currentRelease);
         }
         // eslint-disable-next-line @eslint-react/exhaustive-deps -- should only check on mount
     }, []);
@@ -50,7 +51,7 @@ export function ChangelogDialog(): React.ReactNode {
                 tone="accent"
                 variant="ghost"
                 onClick={() => {
-                    setLastSeenChangelogHash(currentHash);
+                    setLastSeenChangelog(currentRelease);
                     setOpen(true);
                 }}
             >
@@ -73,7 +74,7 @@ export function ChangelogDialog(): React.ReactNode {
             <Dialog.Popup
                 open={open}
                 onOpenChange={(newValue) => {
-                    if (newValue) setLastSeenChangelogHash(currentHash);
+                    if (newValue) setLastSeenChangelog(currentRelease);
                     setOpen(newValue);
                 }}
             >
@@ -83,7 +84,7 @@ export function ChangelogDialog(): React.ReactNode {
                 </Dialog.Header>
                 <div className="max-h-[80vh] overflow-y-auto">
                     <Dialog.Body>
-                        <MarkdownWrapper disallowedElements={["h1"]}>{ChangelogMd}</MarkdownWrapper>
+                        <MarkdownWrapper disallowedElements={["h1"]}>{markdown}</MarkdownWrapper>
                     </Dialog.Body>
                 </div>
                 <Dialog.Actions>
