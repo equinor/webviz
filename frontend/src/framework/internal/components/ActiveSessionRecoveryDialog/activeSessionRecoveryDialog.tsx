@@ -3,15 +3,15 @@ import React from "react";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { loadWorkbenchSessionFromLocalStorage } from "@framework/internal/WorkbenchSession/utils/loaders";
 import {
-    extractLayout,
+    extractDashboardPreviewItems,
     type WorkbenchSessionDataContainer,
 } from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import type { Workbench } from "@framework/Workbench";
 import { AlertDialog } from "@lib/components/AlertDialog";
-import { timeAgo } from "@lib/utils/dates";
+import { TimeAgo } from "@lib/components/TimeAgo";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
-import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { DashboardPreviewCarousel } from "../DashboardPreview/dashboardPreviewCarousel";
 
 export type ActiveSessionRecoveryDialogProps = {
     workbench: Workbench;
@@ -73,7 +73,11 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
                 We found an unsaved version of your current session in your browser. You can either delete or recover
                 it.
                 <div className="gap-x-sm flex">
-                    <DashboardPreview height={150} width={150} layout={extractLayout(sessionData)} />
+                    <DashboardPreviewCarousel
+                        height={150}
+                        width={150}
+                        dashboards={extractDashboardPreviewItems(sessionData)}
+                    />
                     <div className="gap-y-xs flex flex-col">
                         <div className="gap-y-4xs flex flex-col">
                             <strong className="text-body-xs text-neutral-subtle">Title</strong>
@@ -81,11 +85,11 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
                         </div>
                         <div className="gap-y-4xs flex flex-col">
                             <strong className="text-body-xs text-neutral-subtle">Last modified</strong>
-                            {timeAgo(Date.now() - sessionData.metadata.lastModifiedMs)}
+                            <TimeAgo datetimeMs={sessionData.metadata.lastModifiedMs} />
                         </div>
                         <div className="gap-y-4xs flex flex-col">
                             <strong className="text-body-xs text-neutral-subtle">Last persisted</strong>
-                            {timeAgo(Date.now() - activeSession.getMetadata().lastModifiedMs)}
+                            <TimeAgo datetimeMs={activeSession.getMetadata().lastModifiedMs} />
                         </div>
                     </div>
                 </div>

@@ -9,8 +9,9 @@ export function createContinuousValueSliderStep(min: number, max: number): numbe
     // Determine the number of steps based on the magnitude of the range
     const magnitude = Math.floor(Math.log10(range));
 
-    let numberOfSteps = 100;
     let digitPrecision = 3;
+    let numberOfSteps;
+
     if (magnitude < 1) {
         numberOfSteps = 100;
         digitPrecision = 4;

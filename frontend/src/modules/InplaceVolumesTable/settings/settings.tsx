@@ -14,7 +14,6 @@ import { Setting } from "@lib/components/Setting";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import {
     InplaceVolumesStatisticEnumToStringMapping,
@@ -24,6 +23,7 @@ import {
     TableTypeToStringMapping,
 } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { StatisticsLayout, StatisticsLayoutToStringMapping } from "../types";
@@ -94,7 +94,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         DEBOUNCE_TIME_MS,
     );
 
-    usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
 
     useApplyInitialSettingsToState(
         props.initialSettings,
@@ -222,7 +222,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     ensembleSet={ensembleSet}
                     settingsContext={props.settingsContext}
                     workbenchSession={props.workbenchSession}
-                    workbenchServices={props.workbenchServices}
+                    syncSettingsService={props.syncSettingsService}
                     isPending={tableDefinitionsQuery.isLoading}
                     availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
                     availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}

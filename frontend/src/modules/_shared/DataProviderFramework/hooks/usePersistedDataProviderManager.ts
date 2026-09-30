@@ -29,48 +29,28 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
         queryClient,
     } = options;
 
-    const [internalDataProviderManager, setInternalDataProviderManager] = React.useState<DataProviderManager | null>(
-        null,
-    );
-
     // Ref to track last persisted serialized state - to avoid redundant applications of same state to manager
+    const currentSerializedStateRef = React.useRef(serializedState);
+    const setSerializedStateRef = React.useRef(setSerializedState);
+    currentSerializedStateRef.current = serializedState;
+    setSerializedStateRef.current = setSerializedState; // updated every render, no effect needed
+
+    const dataProviderManagerRef = React.useRef<DataProviderManager | null>(null);
     const dataProviderSerializedStateRef = React.useRef<string | null>(null);
 
     /**
      * Persist DataProviderManager state to external storage.
      */
-    const persistDataProviderManagerState = React.useCallback(
-        function persistDataProviderManagerState() {
-            if (!internalDataProviderManager) {
-                return;
-            }
+    const persistDataProviderManagerState = React.useCallback(function persistDataProviderManagerState() {
+        const manager = dataProviderManagerRef.current;
+        if (!manager) {
+            return;
+        }
 
-            const serializedState = JSON.stringify(internalDataProviderManager.serializeState());
-            dataProviderSerializedStateRef.current = serializedState;
-
-            setSerializedState(serializedState);
-        },
-        [internalDataProviderManager, setSerializedState],
-    );
-
-    /**
-     * Apply persisted serialized state to DataProviderManager.
-     * This should only apply the state once per manager, when the serialized state changes.
-     */
-    React.useEffect(
-        function persistedDataChangeEffect() {
-            if (!internalDataProviderManager || !serializedState) {
-                return;
-            }
-
-            if (serializedState === dataProviderSerializedStateRef.current) {
-                return;
-            }
-
-            internalDataProviderManager.deserializeState(JSON.parse(serializedState));
-        },
-        [serializedState, internalDataProviderManager],
-    );
+        const serializedState = JSON.stringify(manager.serializeState());
+        dataProviderSerializedStateRef.current = serializedState;
+        setSerializedStateRef.current(serializedState);
+    }, []);
 
     /**
      * Setup DataProviderManager on mount, and clean up on unmount.
@@ -82,45 +62,56 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
     React.useEffect(
         function setupDataProviderManagerEffect() {
             const manager = new DataProviderManager(workbenchSession, workbenchSettings, queryClient);
-            setInternalDataProviderManager(manager);
+            dataProviderManagerRef.current = manager;
             setDataProviderManager(manager);
 
             // Reset ref tracking last persisted state
             dataProviderSerializedStateRef.current = null;
 
-            return function cleanup() {
-                manager.beforeDestroy();
-            };
-        },
-        [workbenchSession, workbenchSettings, queryClient, setDataProviderManager],
-    );
-
-    /**
-     * Subscribe to DataProviderManager state changes to persist state.
-     * Dependencies: internalDataProviderManager, persistDataProviderManagerState
-     * - When the manager changes, we re-subscribe to the new instance
-     * - persistDataProviderManagerState includes setSerializedState in its dependencies
-     */
-    React.useEffect(
-        function subscribeToDataProviderManagerStateChangesEffect() {
-            if (!internalDataProviderManager) {
-                return;
+            // If there is an existing state, make sure we apply it when we create a new manager
+            // ! Currently, *all* dependencies are technically static, so this arguably not relevant
+            // ! as we, effectively, will always run this effect, followed by persistedDataChangeEffect below
+            if (currentSerializedStateRef.current) {
+                const serializedState = currentSerializedStateRef.current;
+                dataProviderManagerRef.current.deserializeState(JSON.parse(serializedState));
+                dataProviderSerializedStateRef.current = serializedState;
             }
 
-            const unsubscribeDataRev = internalDataProviderManager
+            // Subscribe to DataProviderManager state changes to persist state.
+            const unsubscribeDataRev = manager
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION)(persistDataProviderManagerState);
-
-            const unsubscribeExpands = internalDataProviderManager
+            const unsubscribeExpands = manager
                 .getGroupDelegate()
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(persistDataProviderManagerState);
 
-            return function onUnmountEffect() {
+            return function cleanup() {
                 unsubscribeDataRev();
                 unsubscribeExpands();
+                manager.beforeDestroy();
             };
         },
-        [internalDataProviderManager, persistDataProviderManagerState],
+        [persistDataProviderManagerState, queryClient, setDataProviderManager, workbenchSession, workbenchSettings],
+    );
+
+    /**
+     * Apply persisted serialized state to DataProviderManager.
+     * This should only apply the state once per manager, when the serialized state changes.
+     * ! Effects run in order! Ensure this effect always runs after the effect that initializes the manager!
+     */
+    React.useEffect(
+        function persistedDataChangeEffect() {
+            if (!dataProviderManagerRef.current || !serializedState) {
+                return;
+            }
+
+            if (serializedState === dataProviderSerializedStateRef.current) {
+                return;
+            }
+
+            dataProviderManagerRef.current.deserializeState(JSON.parse(serializedState));
+        },
+        [serializedState],
     );
 }

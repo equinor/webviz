@@ -39,6 +39,7 @@ export function useMakeDragGhostElement(
     };
 
     if (!isTableRow) {
+        // eslint-disable-next-line @eslint-react/no-clone-element -- Special use case to attach ghost styles
         return React.cloneElement(element, {
             className: resolveClassNames(element.props.className, "shadow-sm"),
             "aria-hidden": true,
@@ -49,6 +50,7 @@ export function useMakeDragGhostElement(
         });
     }
 
+    // eslint-disable-next-line @eslint-react/no-clone-element -- Special use case to attach ghost styles
     const rowClone = React.cloneElement(element, {
         "aria-hidden": true,
         className: resolveClassNames(element.props.className, "shadow-sm"),
@@ -57,17 +59,18 @@ export function useMakeDragGhostElement(
 
     const colWidths: number[] = [];
     if (ref.current) {
-        for (const cell of ref.current.children) {
+        for (const cell of Array.from(ref.current.children)) {
             colWidths.push((cell as HTMLElement).getBoundingClientRect().width);
         }
     }
 
     return (
         <div style={baseStyle} className="bg-transparent" aria-hidden>
-            <table className="table-fixed border-collapse w-[inherit]">
+            <table className="w-[inherit] table-fixed border-collapse">
                 {colWidths.length > 0 && (
                     <colgroup>
                         {colWidths.map((w, i) => (
+                            // eslint-disable-next-line @eslint-react/no-array-index-key -- Placeholder, trivial rerender
                             <col key={i} style={{ width: w }} />
                         ))}
                     </colgroup>

@@ -16,6 +16,7 @@ export type GroupProps = {
 export const Group = React.forwardRef<HTMLElement, GroupProps>(function Group(props, externalRef): React.ReactElement {
     assertSafeId(props.id);
 
+    // eslint-disable-next-line @eslint-react/no-children-only -- Special use case
     const onlyChild = React.Children.only(props.children) as React.ReactElement;
 
     const groupElementRef = React.useRef<HTMLElement | null>(null);
@@ -38,6 +39,7 @@ export const Group = React.forwardRef<HTMLElement, GroupProps>(function Group(pr
 
     return (
         <>
+            {/* eslint-disable-next-line @eslint-react/no-clone-element -- Special use case */}
             {React.cloneElement(onlyChild, {
                 ref: mergedRef,
                 "data-sortable": "group",

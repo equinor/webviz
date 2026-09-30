@@ -14,9 +14,9 @@ import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { FLUID_INDEX_COLUMN } from "../view/utils/computeVolumeChangeDecomposition";
@@ -89,7 +89,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const isCrossTableComparison = useAtomValue(isCrossTableComparisonAtom);
     const isIndexValueIntersectionActive = useAtomValue(isIndexValueIntersectionActiveAtom);
 
-    usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
 
     const persistedReferenceEnsembleAnnotations = useMakePersistableFixableAtomAnnotations(
         selectedReferenceEnsembleIdentAtom,
@@ -115,15 +115,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const comparisonEnsembleAnnotations: SettingAnnotation[] = isSameSourceSelectedTwice
         ? [...persistedComparisonEnsembleAnnotations, { type: "error", message: "Must differ from the reference" }]
         : persistedComparisonEnsembleAnnotations;
-
-    const referenceSourceAnnotations: SettingAnnotation[] = [
-        ...persistedReferenceEnsembleAnnotations,
-        ...referenceTableNameAnnotations,
-    ];
-    const comparisonSourceAnnotations: SettingAnnotation[] = [
-        ...comparisonEnsembleAnnotations,
-        ...comparisonTableNameAnnotations,
-    ];
 
     if (areSourcesDistinct && !areSelectedTablesComparable) {
         statusWriter.addWarning("The selected table sources share no index columns and are not comparable.");
@@ -169,8 +160,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             <Setting.Panel>
                 <Setting.Section title="Sources" defaultOpen>
                     <Setting.Field
-                        label="Reference source"
-                        description="Ensemble and table the change is measured from."
+                        label="Reference ensemble"
+
                         help={{
                             title: "Reference and comparison",
                             content: (
@@ -187,8 +178,19 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                 </>
                             ),
                         }}
-                        annotations={referenceSourceAnnotations}
-                        stacked
+                        annotations={persistedReferenceEnsembleAnnotations}
+                    >
+                        <EnsembleDropdown
+                            aria-label="Reference ensemble"
+                            ensembles={ensembleSet.getRegularEnsembleArray()}
+                            value={referenceEnsembleIdent.value}
+                            ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                            onValueChange={setReferenceEnsembleIdent}
+                        />
+                    </Setting.Field>
+                    <Setting.Field
+                        label="Reference table"
+                        annotations={referenceTableNameAnnotations}
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
@@ -198,28 +200,27 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                 : undefined
                         }
                     >
-                        <>
-                            <EnsembleDropdown
-                                aria-label="Reference ensemble"
-                                ensembles={ensembleSet.getRegularEnsembleArray()}
-                                value={referenceEnsembleIdent.value}
-                                ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                                onValueChange={setReferenceEnsembleIdent}
-                            />{" "}
-                            <Combobox
-                                aria-label="Reference table"
-                                value={selectedReferenceTableName.value}
-                                items={referenceTableNameOptions}
-                                onValueChange={(v) => setSelectedReferenceTableName(v)}
-                            />
-                        </>
+                        <Combobox
+                            aria-label="Reference table"
+                            value={selectedReferenceTableName.value}
+                            items={referenceTableNameOptions}
+                            onValueChange={(v) => setSelectedReferenceTableName(v)}
+                        />
                     </Setting.Field>
 
+                    <Setting.Field label="Comparison ensemble" annotations={comparisonEnsembleAnnotations}>
+                        <EnsembleDropdown
+                            aria-label="Comparison ensemble"
+                            ensembles={ensembleSet.getRegularEnsembleArray()}
+                            value={comparisonEnsembleIdent.value}
+                            ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                            onValueChange={setComparisonEnsembleIdent}
+
+                        />
+                    </Setting.Field>
                     <Setting.Field
-                        label="Comparison source"
-                        description="Ensemble and table the change is measured to."
-                        annotations={comparisonSourceAnnotations}
-                        stacked
+                        label="Comparison table"
+                        annotations={comparisonTableNameAnnotations}
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
@@ -229,21 +230,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                 : undefined
                         }
                     >
-                        <>
-                            <EnsembleDropdown
-                                aria-label="Comparison ensemble"
-                                ensembles={ensembleSet.getRegularEnsembleArray()}
-                                value={comparisonEnsembleIdent.value}
-                                ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                                onValueChange={setComparisonEnsembleIdent}
-                            />{" "}
-                            <Combobox
-                                aria-label="Comparison table"
-                                value={selectedComparisonTableName.value}
-                                items={comparisonTableNameOptions}
-                                onValueChange={(v) => setSelectedComparisonTableName(v)}
-                            />
-                        </>
+                        <Combobox
+                            aria-label="Comparison table"
+                            value={selectedComparisonTableName.value}
+                            items={comparisonTableNameOptions}
+                            onValueChange={(v) => setSelectedComparisonTableName(v)}
+                        />
                     </Setting.Field>
 
                     {isCrossTableComparison && (

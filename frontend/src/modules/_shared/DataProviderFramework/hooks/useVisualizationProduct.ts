@@ -36,7 +36,7 @@ export function useVisualizationAssemblerProduct<
             return visualizationAssembler.make(dataProviderManager, options);
         },
         // ! "latestRevision" is included in the array to trigger recomputes
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line @eslint-react/exhaustive-deps
         [latestRevision, dataProviderManager, visualizationAssembler, options],
     );
 

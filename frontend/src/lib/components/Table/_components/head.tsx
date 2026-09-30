@@ -17,43 +17,47 @@ export type TableHeadProps = {
     children?: React.ReactNode;
 };
 
-export const Head = React.forwardRef<HTMLTableSectionElement, TableHeadProps>(function Head(props, ref): React.ReactNode {
-    const columnContext = useTableColumnContext();
+export const Head = React.forwardRef<HTMLTableSectionElement, TableHeadProps>(
+    function Head(props, ref): React.ReactNode {
+        const columnContext = useTableColumnContext();
 
-    const tableRows = React.useMemo(
-        () => recursivelyBuildHeaderRows(columnContext.columns, columnContext.maxDepth),
-        [columnContext.columns, columnContext.maxDepth],
-    );
+        const tableRows = React.useMemo(
+            () => recursivelyBuildHeaderRows(columnContext.columns, columnContext.maxDepth),
+            [columnContext.columns, columnContext.maxDepth],
+        );
 
-    return (
-        <TableSectionContext.Provider value="head">
-            <thead
-                ref={ref}
-                className={resolveClassNames("bg-neutral-canvas text-neutral-strong border-neutral-subtle", {
-                    "z-elevated sticky top-0": props.sticky,
-                })}
-            >
-                {tableRows.map((row, rowIndex) => (
-                    <Row key={rowIndex}>
-                        {row.map((cell, cellIndex) => (
-                            <Cell
-                                {...cell.cellProps}
-                                key={`${rowIndex}-${cellIndex}`}
-                                rowSpan={cell.rowSpan}
-                                colSpan={cell.colSpan}
-                                // Explicitly avoid sortable group headers
-                                sortable={cell.isLeaf ? cell.cellProps.sortable : false}
-                            >
-                                {cell.content}
-                            </Cell>
-                        ))}
-                    </Row>
-                ))}
-                {columnContext.content}
-            </thead>
-        </TableSectionContext.Provider>
-    );
-});
+        return (
+            <TableSectionContext.Provider value="head">
+                <thead
+                    ref={ref}
+                    className={resolveClassNames("bg-neutral-canvas text-neutral-strong border-neutral-subtle", {
+                        "z-elevated sticky top-0": props.sticky,
+                    })}
+                >
+                    {tableRows.map((row, rowIndex) => (
+                        // eslint-disable-next-line @eslint-react/no-array-index-key -- Once built, we assume this as stable
+                        <Row key={rowIndex}>
+                            {row.map((cell, cellIndex) => (
+                                <Cell
+                                    // eslint-disable-next-line @eslint-react/no-array-index-key -- Once built, we assume this as stable
+                                    key={`${rowIndex}-${cellIndex}`}
+                                    {...cell.cellProps}
+                                    rowSpan={cell.rowSpan}
+                                    colSpan={cell.colSpan}
+                                    // Explicitly avoid sortable group headers
+                                    sortable={cell.isLeaf ? cell.cellProps.sortable : false}
+                                >
+                                    {cell.content}
+                                </Cell>
+                            ))}
+                        </Row>
+                    ))}
+                    {columnContext.content}
+                </thead>
+            </TableSectionContext.Provider>
+        );
+    },
+);
 
 type HeaderCellDef = {
     colSpan: number;
@@ -104,4 +108,3 @@ function doRecursivelyBuildHeaderRows(
 
     return headerCellAcc;
 }
-

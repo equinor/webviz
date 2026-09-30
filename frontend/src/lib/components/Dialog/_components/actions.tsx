@@ -9,11 +9,13 @@ export type ActionsProps = {
 };
 
 export const Actions = React.forwardRef<HTMLDivElement, ActionsProps>(function Actions(props, ref) {
+    // eslint-disable-next-line @eslint-react/no-children-to-array -- Special use case
     const children = React.Children.toArray(props.children);
     const last = children.length - 1;
 
     const withFocus = children.map((child, i) => {
         if (i === last && props.withAutoFocus && React.isValidElement(child)) {
+            // eslint-disable-next-line @eslint-react/no-clone-element -- Special use case
             return React.cloneElement(child as React.ReactElement<{ autoFocus?: boolean }>, { autoFocus: true });
         }
         return child;
