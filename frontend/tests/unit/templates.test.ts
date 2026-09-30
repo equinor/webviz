@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { Dashboard } from "@framework/internal/Dashboard";
+import { Module } from "@framework/Module";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
 
 import "@modules/registerAllModules";
@@ -12,6 +13,14 @@ import "../../src/templates/registerAllTemplates";
 vi.hoisted(() => {
     vi.stubGlobal("localStorage", { getItem: () => null });
 });
+
+// Creating a module instance fires off a lazy, un-awaited import of the module's code (`loadModule.tsx`), which
+// would still be in flight when the test environment is torn down. Template wiring only depends on the module
+// registration, so skip the import.
+vi.spyOn(
+    Module.prototype as unknown as { maybeImportSelf: () => Promise<void> },
+    "maybeImportSelf",
+).mockResolvedValue();
 
 describe("Templates", () => {
     const templates = TemplateRegistry.getRegisteredTemplates();
