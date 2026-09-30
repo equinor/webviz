@@ -4,11 +4,13 @@
 #   900ed417-a860-4970-bd37-73b059ca6f0d  -  Prod application ID (webviz)
 #   025fe044-5ee8-4b27-bf83-aefb548f14fa  -  NonProd application ID (webviz-nonprod)
 #   cabb1ac4-d5a7-4017-b6bf-c883c503c95e  -  Managed identity for access to KeyVault (id-webviz-keyvault-shared)
+#   779de183-9805-47cb-8da6-bca425f6e64f  -  Managed identity for NonProd Keda scaler (id-webviz-keda-nonprod-sweden)
 
 _anchors:
-  identityProdApp:        &identityProdApp        { azure: { clientId: 900ed417-a860-4970-bd37-73b059ca6f0d } }
-  identityNonProdApp:     &identityNonProdApp     { azure: { clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa } }
-  identityKeyVaultReader: &identityKeyVaultReader { azure: { clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e } }
+  identityProdApp:           &identityProdAppId         { azure: { clientId: 900ed417-a860-4970-bd37-73b059ca6f0d } }
+  identityNonProdApp:        &identityNonProdAppId      { azure: { clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa } }
+  identityKeyVaultReader:    &identityKeyVaultReader    { azure: { clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e } }
+  identityNonProdKedaScaler: &identityNonProdKedaScaler { azure: { clientId: 779de183-9805-47cb-8da6-bca425f6e64f } }
 
 apiVersion: radix.equinor.com/v1
 kind: RadixApplication
@@ -172,11 +174,6 @@ spec:
         requests:
           memory: 8Gi
           cpu: 2000m
-        limits:
-          # Even though the general advice is to leave cpu limit unspecified, here we set it to the same as requests.
-          # As of now, it seems that it's the cpu limit value that will be picked up by automaxprocs utilized in the go service.
-          memory: 8Gi
-          cpu: 2000m
       horizontalScaling:
         minReplicas: 1
         maxReplicas: 4
@@ -194,7 +191,7 @@ spec:
     - name: pyworker-default
       dockerFileName: ./backend_py/pyworker_default/Dockerfile
       # Set non-prod clientId as default, prod overrides below
-      identity: { azure: { clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa } }
+      identity: *identityNonProdAppId
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
@@ -217,7 +214,7 @@ spec:
       environmentConfig:
         - environment: prod
           # Override with prod clientId
-          identity: { azure: { clientId: 900ed417-a860-4970-bd37-73b059ca6f0d } }
+          identity: *identityProdAppId
 
         - environment: review3
           variables:
@@ -232,8 +229,8 @@ spec:
                 azureServiceBus:
                   namespace: sbns-webviz-nonprod
                   queueName: review3-default
-                  messageCount: 1
-                  authentication: { identity: { azure: { clientId: 779de183-9805-47cb-8da6-bca425f6e64f } } }
+                  messageCount: 2
+                  authentication: { identity: *identityNonProdKedaScaler }
 
 
     # -----------------------------------------------------------------
