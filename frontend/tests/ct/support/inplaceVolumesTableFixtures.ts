@@ -106,7 +106,6 @@ export function makeResponsesAsRowsFixture(
         columnsConfig[makeStatisticColumnKey(statistic)] = {
             label: statistic,
             columnType: ColumnType.RESULT,
-            hoverText: statistic,
         };
     }
 

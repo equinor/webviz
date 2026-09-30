@@ -235,7 +235,6 @@ export function createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData(
         tableHeadings[statisticKeys[index]] = {
             label: statisticLabel,
             columnType: ColumnType.RESULT,
-            hoverText: statisticLabel,
         };
     });
 

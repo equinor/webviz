@@ -63,7 +63,7 @@ describe("createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData", () => 
             MAX_KEY,
         ]);
         expect(headings.RESPONSE).toEqual({ label: "RESPONSE", columnType: ColumnType.INDEX });
-        expect(headings[MEAN_KEY]).toEqual({ label: "Mean", columnType: ColumnType.RESULT, hoverText: "Mean" });
+        expect(headings[MEAN_KEY]).toEqual({ label: "Mean", columnType: ColumnType.RESULT });
         expect(headings[MEAN_KEY].subHeading).toBeUndefined();
     });
 

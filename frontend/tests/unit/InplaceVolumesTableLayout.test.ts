@@ -5,6 +5,7 @@ import { InplaceVolumesStatistic_api } from "@api";
 import { SortDirection } from "@lib/components/Table/typesAndEnums";
 import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 import type { TableColumnsConfig, TableHeading, TableRow } from "@modules/InplaceVolumesTable/view/types";
+import type { ColumnLayout } from "@modules/InplaceVolumesTable/view/utils/tableLayoutUtils";
 import {
     CATEGORY_COLUMN_CHROME_PX,
     CATEGORY_COLUMN_MAX_WIDTH_PX,
@@ -12,7 +13,8 @@ import {
     CHAR_WIDTH_PX,
     RESULT_COLUMN_WIDTH_PX,
     applyTableSort,
-    computeColumnLayout,
+    computeColumnPinning,
+    computeColumnWidths,
     pruneHiddenColumnFilters,
     sortStatisticsForDisplay,
 } from "@modules/InplaceVolumesTable/view/utils/tableLayoutUtils";
@@ -21,6 +23,16 @@ const WIDE_WRAPPER_PX = 10_000;
 
 function formatPlain(value: string | number | null): string {
     return value === null ? "-" : String(value);
+}
+
+function computeColumnLayout(
+    columnsConfig: TableColumnsConfig,
+    rows: TableRow<TableColumnsConfig>[],
+    formatDisplayValue: (value: string | number | null, heading: TableHeading) => string,
+    wrapperWidthPx: number,
+): ColumnLayout {
+    const widths = computeColumnWidths(columnsConfig, rows, formatDisplayValue);
+    return { ...widths, ...computeColumnPinning(widths, wrapperWidthPx) };
 }
 
 function expectedCategoryWidth(maxChars: number): number {
@@ -214,17 +226,20 @@ describe("computeColumnLayout", () => {
         expect(narrow.lastPinnedKey).toBeNull();
     });
 
-    test("total width equals the sum of the visible leaf widths", () => {
-        const layout = computeColumnLayout(
-            makeStatisticalConfig(),
-            makeStatisticalRows(),
-            formatPlain,
-            WIDE_WRAPPER_PX,
-        );
+    test("pinning is computed from the widths alone, so a resize does not rescan the rows", () => {
+        const rowsSeen: number[] = [];
+        const countingFormat = (value: string | number | null) => {
+            rowsSeen.push(1);
+            return formatPlain(value);
+        };
 
-        const sum = layout.visibleLeaves.reduce((acc, leaf) => acc + (layout.widthPxByKey.get(leaf.key) ?? 0), 0);
-        expect(layout.totalWidthPx).toBe(sum);
-        expect(layout.totalWidthPx).toBeGreaterThan(2 * RESULT_COLUMN_WIDTH_PX);
+        const widths = computeColumnWidths(makeStatisticalConfig(), makeStatisticalRows(), countingFormat);
+        const callsAfterWidths = rowsSeen.length;
+        expect(callsAfterWidths).toBeGreaterThan(0);
+
+        computeColumnPinning(widths, WIDE_WRAPPER_PX);
+        computeColumnPinning(widths, 1);
+        expect(rowsSeen.length).toBe(callsAfterWidths);
     });
 });
 

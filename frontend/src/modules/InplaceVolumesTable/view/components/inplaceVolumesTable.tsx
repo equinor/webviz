@@ -20,7 +20,8 @@ import type { ColumnLayout, FilterState, SortScope } from "../utils/tableLayoutU
 import {
     applyTableSort,
     CATEGORY_COLUMN_MAX_WIDTH_PX,
-    computeColumnLayout,
+    computeColumnPinning,
+    computeColumnWidths,
     pruneHiddenColumnFilters,
 } from "../utils/tableLayoutUtils";
 
@@ -56,14 +57,25 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
     );
 
     // Constant columns are detected on the unfiltered rows, so typing a filter never hides a column
-    const layout = React.useMemo(
-        () => computeColumnLayout(props.columnsConfig, props.rows, formatDisplayValue, tableWrapperWidthPx),
-        [props.columnsConfig, props.rows, formatDisplayValue, tableWrapperWidthPx],
+    const columnWidths = React.useMemo(
+        () => computeColumnWidths(props.columnsConfig, props.rows, formatDisplayValue),
+        [props.columnsConfig, props.rows, formatDisplayValue],
+    );
+
+    // Pinning is the only part of the layout that depends on the wrapper width, so resizing does not rescan the rows
+    const columnPinning = React.useMemo(
+        () => computeColumnPinning(columnWidths, tableWrapperWidthPx),
+        [columnWidths, tableWrapperWidthPx],
+    );
+
+    const layout = React.useMemo<ColumnLayout>(
+        () => ({ ...columnWidths, ...columnPinning }),
+        [columnWidths, columnPinning],
     );
 
     const visibleLeafKeys = React.useMemo(
-        () => new Set(layout.visibleLeaves.map((leaf) => leaf.key)),
-        [layout.visibleLeaves],
+        () => new Set(columnWidths.visibleLeaves.map((leaf) => leaf.key)),
+        [columnWidths.visibleLeaves],
     );
 
     // Filters on columns that become hidden (constant, or gone after a layout switch) are dropped, not kept invisibly
@@ -76,11 +88,11 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
     const sortScope = React.useMemo<SortScope | undefined>(() => {
         if (props.sortScopeColumnKey === undefined) return undefined;
 
-        const resultLeafKeys = layout.visibleLeaves
+        const resultLeafKeys = columnWidths.visibleLeaves
             .filter((leaf) => leaf.heading.columnType === ColumnType.RESULT)
             .map((leaf) => leaf.key);
         return { columnKey: props.sortScopeColumnKey, scopedColumnKeys: new Set(resultLeafKeys) };
-    }, [props.sortScopeColumnKey, layout.visibleLeaves]);
+    }, [props.sortScopeColumnKey, columnWidths.visibleLeaves]);
 
     const tableColumns = React.useMemo(() => {
         function renderColumnRecursive(
@@ -392,7 +404,7 @@ function TableCellComp(props: {
         return (
             <Table.Cell {...cellProps}>
                 <span style={{ color: isValidFluidType(fluidType) ? PHASE_COLORS[fluidType] : undefined }}>
-                    {props.value}
+                    {props.displayValue}
                 </span>
             </Table.Cell>
         );
@@ -406,9 +418,5 @@ function TableCellComp(props: {
         );
     }
 
-    if (props.columnType === ColumnType.ENSEMBLE) {
-        return <Table.Cell {...cellProps}>{props.displayValue}</Table.Cell>;
-    }
-
-    return <Table.Cell {...cellProps}>{props.value}</Table.Cell>;
+    return <Table.Cell {...cellProps}>{props.displayValue}</Table.Cell>;
 }

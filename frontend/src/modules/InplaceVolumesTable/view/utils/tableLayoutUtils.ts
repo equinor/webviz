@@ -27,17 +27,21 @@ const STATISTICS_DISPLAY_ORDER: readonly InplaceVolumesStatistic_api[] = [
 
 export type ConstantColumn = { key: string; label: string; displayValue: string };
 
-export type ColumnLayout = {
+export type ColumnWidths = {
     /** Visible leaf columns in on-screen order */
     visibleLeaves: LeafColumn[];
     /** Hidden constant columns with their single display value, in on-screen order */
     constantColumns: ConstantColumn[];
     widthPxByKey: Map<string, number>;
+};
+
+export type ColumnPinning = {
     /** Present only for pinned leaf keys */
     stickyLeftPxByKey: Map<string, number>;
     lastPinnedKey: string | null;
-    totalWidthPx: number;
 };
+
+export type ColumnLayout = ColumnWidths & ColumnPinning;
 
 function isResultLeaf(leaf: LeafColumn): boolean {
     return leaf.heading.columnType === ColumnType.RESULT;
@@ -48,12 +52,12 @@ function computeCategoryColumnWidthPx(maxChars: number): number {
     return Math.min(Math.max(width, CATEGORY_COLUMN_MIN_WIDTH_PX), CATEGORY_COLUMN_MAX_WIDTH_PX);
 }
 
-export function computeColumnLayout(
+/** Decides which leaf columns are shown and how wide they are. Depends on the data only, not on the viewport. */
+export function computeColumnWidths(
     columnsConfig: TableColumnsConfig,
     unfilteredRows: TableRow<TableColumnsConfig>[],
     formatDisplayValue: (value: string | number | null, heading: TableHeading) => string,
-    wrapperWidthPx: number,
-): ColumnLayout {
+): ColumnWidths {
     const visibleLeaves: LeafColumn[] = [];
     const constantColumns: ConstantColumn[] = [];
     const widthPxByKey = new Map<string, number>();
@@ -83,10 +87,12 @@ export function computeColumnLayout(
         widthPxByKey.set(leaf.key, computeCategoryColumnWidthPx(maxChars));
     }
 
-    let totalWidthPx = 0;
-    for (const leaf of visibleLeaves) {
-        totalWidthPx += widthPxByKey.get(leaf.key) ?? 0;
-    }
+    return { visibleLeaves, constantColumns, widthPxByKey };
+}
+
+/** Pins the leading identifier columns that fit within half the wrapper width. */
+export function computeColumnPinning(columnWidths: ColumnWidths, wrapperWidthPx: number): ColumnPinning {
+    const { visibleLeaves, widthPxByKey } = columnWidths;
 
     // Only a leading run of identifier columns can be pinned with cumulative offsets
     const pinnableLeaves: LeafColumn[] = [];
@@ -109,7 +115,7 @@ export function computeColumnLayout(
         offsetPx += widthPx;
     }
 
-    return { visibleLeaves, constantColumns, widthPxByKey, stickyLeftPxByKey, lastPinnedKey, totalWidthPx };
+    return { stickyLeftPxByKey, lastPinnedKey };
 }
 
 export type FilterState = { [columnKey: string]: string | null };
