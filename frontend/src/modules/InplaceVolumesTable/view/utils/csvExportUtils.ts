@@ -28,7 +28,7 @@ export function buildCsvRowsFromTable(
 ): CsvRows {
     const leaves = collectLeafColumns(columnsConfig);
     if (leaves.length === 0) {
-        return { headerRows: [[]], dataRows: [] };
+        return { headerRows: [], dataRows: [] };
     }
 
     const headers = leaves.map((leaf) => leaf.labelPath.join(HEADER_PATH_SEPARATOR));

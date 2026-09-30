@@ -178,7 +178,6 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
                     icon={<Download fontSize="inherit" />}
                     disabled={isDownloadDisabled}
                     onClick={() => props.onDownload?.(collatedRows)}
-                    size="small"
                 >
                     Download CSV
                 </Button>
