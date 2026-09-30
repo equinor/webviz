@@ -100,7 +100,7 @@ test.describe("InplaceVolumesTable layout", () => {
         expect(resultHeaderAfter?.x ?? NaN).toBeLessThan(resultHeaderBefore?.x ?? NaN);
     });
 
-    test("few statistics fit without horizontal scroll", async ({ mount }) => {
+    test("few statistics fit without horizontal scroll and pinned columns do not overlap", async ({ mount }) => {
         const { columnsConfig, rows } = makeWideStatisticalFixture(NUM_ROWS, ["STOIIP"], ["Mean", "P10", "P90"]);
         const cmp = await mount(
             <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />,
@@ -113,6 +113,17 @@ test.describe("InplaceVolumesTable layout", () => {
             .evaluate((el) => ({ scrollWidth: el.scrollWidth, clientWidth: el.clientWidth }));
 
         expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+
+        // The stretched table renders pinned columns wider than requested; sticky offsets must not pull the
+        // second pinned column back over the first
+        const tableNameHeaderLocator = cmp.getByRole("button", { name: "TABLE_NAME" });
+        const declaredTableNameWidth = Number(await tableNameHeaderLocator.getAttribute("width"));
+        const tableNameHeader = await tableNameHeaderLocator.boundingBox();
+        const zoneHeader = await cmp.getByRole("button", { name: "ZONE" }).boundingBox();
+        expect(tableNameHeader).not.toBeNull();
+        expect(zoneHeader).not.toBeNull();
+        expect(tableNameHeader!.width).toBeGreaterThan(declaredTableNameWidth + 1);
+        expect(zoneHeader!.x).toBeGreaterThanOrEqual(tableNameHeader!.x + tableNameHeader!.width - 1);
     });
 
     test("constant columns are summarised above the table but still exported", async ({ mount, page }) => {
