@@ -47,9 +47,7 @@ spec:
         - name: http
           port: 5000
       # Set non-prod clientId as default, prod overrides below
-      identity:
-        azure:
-          clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa
+      identity: *identityNonProdAppId
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
@@ -71,13 +69,13 @@ spec:
       variables:
         UVICORN_PORT: "5000"
         WEBVIZ_VDS_HOST_ADDRESS: "https://server-oneseismic-prod.radix.equinor.com"
+        # !!!!!
+        # !!!!!
         WEBVIZ_DUMMY_OPERATION_GENERATION: "125"
       environmentConfig:
         - environment: prod
-          identity:
-            azure:
-              # Override with prod clientId
-              clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
+          # Override with prod clientId
+          identity: *identityProdAppId
           resources:
             requests:
               memory: 8Gi
@@ -218,6 +216,22 @@ spec:
           # Override with prod clientId
           identity: *identityProdAppId
 
+        - environment: review2
+          variables:
+            WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: sbns-webviz-nonprod.servicebus.windows.net
+            WEBVIZ_SERVICE_BUS_QUEUE_NAME: review2-default
+            WEBVIZ_WORKER_MAX_CONCURRENT_TASKS: "1"
+          horizontalScaling:
+            minReplicas: 0
+            maxReplicas: 5
+            triggers:
+              - name: azure-sb-trigger
+                azureServiceBus:
+                  namespace: sbns-webviz-nonprod
+                  queueName: review2-default
+                  messageCount: 2
+                  authentication: { identity: *identityNonProdKedaScaler }
+
         - environment: review3
           variables:
             WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: sbns-webviz-nonprod.servicebus.windows.net
@@ -238,10 +252,7 @@ spec:
     # -----------------------------------------------------------------
     - name: redis-auth-store
       dockerFileName: ./docker/redis/Dockerfile
-      identity:
-        azure:
-          # Use managed identity for pure KeyVault access
-          clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e
+      identity: *identityKeyVaultReader
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
@@ -264,10 +275,7 @@ spec:
     # -----------------------------------------------------------------
     - name: redis-cache
       dockerFileName: ./docker/redis/Dockerfile
-      identity:
-        azure:
-          # Use managed identity for pure KeyVault access
-          clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e
+      identity: *identityKeyVaultReader
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
@@ -307,10 +315,7 @@ spec:
       ports:
         - name: http
           port: 8002
-      identity:
-        azure:
-          # Use managed identity for pure KeyVault access
-          clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e
+      identity: *identityKeyVaultReader
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
