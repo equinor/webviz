@@ -1,6 +1,6 @@
 <!--::metadata
-  changelog_counter: 2
-  date: 02.09.2026
+  changelog_counter: 3
+  date: 30.09.2026
 -->
 
 # Changelog
