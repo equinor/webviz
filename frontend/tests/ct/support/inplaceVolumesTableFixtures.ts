@@ -1,5 +1,6 @@
 import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 import type { TableColumnsConfig, TableRow } from "@modules/InplaceVolumesTable/view/types";
+import { makeStatisticColumnKey } from "@modules/InplaceVolumesTable/view/utils/tableComponentUtils";
 
 const ZONES = ["Valysar", "Therys", "Volon"];
 
@@ -102,7 +103,11 @@ export function makeResponsesAsRowsFixture(
         RESPONSE: { label: "RESPONSE", columnType: ColumnType.INDEX },
     };
     for (const statistic of statisticLabels) {
-        columnsConfig[statistic] = { label: statistic, columnType: ColumnType.RESULT, hoverText: statistic };
+        columnsConfig[makeStatisticColumnKey(statistic)] = {
+            label: statistic,
+            columnType: ColumnType.RESULT,
+            hoverText: statistic,
+        };
     }
 
     const rows: TableRow<TableColumnsConfig>[] = [];
@@ -118,7 +123,8 @@ export function makeResponsesAsRowsFixture(
             };
             statisticLabels.forEach((statistic, statisticIndex) => {
                 // Scrambled per base row and interleaved across responses, so an unscoped sort would mix responses
-                row[statistic] = ((i * 5) % numBaseRows) * 10 + resultIndex + statisticIndex * 0.1;
+                row[makeStatisticColumnKey(statistic)] =
+                    ((i * 5) % numBaseRows) * 10 + resultIndex + statisticIndex * 0.1;
             });
             rows.push(row);
         });

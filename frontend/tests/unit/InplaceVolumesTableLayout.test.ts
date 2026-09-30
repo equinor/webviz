@@ -13,6 +13,7 @@ import {
     RESULT_COLUMN_WIDTH_PX,
     applyTableSort,
     computeColumnLayout,
+    pruneHiddenColumnFilters,
     sortStatisticsForDisplay,
 } from "@modules/InplaceVolumesTable/view/utils/tableLayoutUtils";
 
@@ -176,14 +177,15 @@ describe("computeColumnLayout", () => {
         expect(layout.lastPinnedKey).toBe("ZONE");
     });
 
-    test("nothing is pinned when identifier columns exceed half of the wrapper", () => {
+    test("pins the longest leading run of identifier columns that fits half the wrapper", () => {
         const wideLayout = computeColumnLayout(
             makeStatisticalConfig(),
             makeStatisticalRows(),
             formatPlain,
             WIDE_WRAPPER_PX,
         );
-        const pinnedWidth = (wideLayout.widthPxByKey.get("ENSEMBLE") ?? 0) + (wideLayout.widthPxByKey.get("ZONE") ?? 0);
+        const ensembleWidth = wideLayout.widthPxByKey.get("ENSEMBLE") ?? 0;
+        const pinnedWidth = ensembleWidth + (wideLayout.widthPxByKey.get("ZONE") ?? 0);
 
         const atLimit = computeColumnLayout(
             makeStatisticalConfig(),
@@ -193,11 +195,20 @@ describe("computeColumnLayout", () => {
         );
         expect(atLimit.lastPinnedKey).toBe("ZONE");
 
-        const narrow = computeColumnLayout(
+        const partial = computeColumnLayout(
             makeStatisticalConfig(),
             makeStatisticalRows(),
             formatPlain,
             pinnedWidth * 2 - 1,
+        );
+        expect(partial.stickyLeftPxByKey).toEqual(new Map([["ENSEMBLE", 0]]));
+        expect(partial.lastPinnedKey).toBe("ENSEMBLE");
+
+        const narrow = computeColumnLayout(
+            makeStatisticalConfig(),
+            makeStatisticalRows(),
+            formatPlain,
+            ensembleWidth * 2 - 1,
         );
         expect(narrow.stickyLeftPxByKey.size).toBe(0);
         expect(narrow.lastPinnedKey).toBeNull();
@@ -260,6 +271,20 @@ describe("sortStatisticsForDisplay", () => {
 
         expect(input).toEqual([InplaceVolumesStatistic_api.MAX, InplaceVolumesStatistic_api.MEAN]);
         expect(result).not.toBe(input);
+    });
+});
+
+describe("pruneHiddenColumnFilters", () => {
+    test("removes filters on columns that are not visible", () => {
+        const pruned = pruneHiddenColumnFilters({ ZONE: "Val", FLUID: "oil", REGION: null }, new Set(["ZONE"]));
+
+        expect(pruned).toEqual({ ZONE: "Val" });
+    });
+
+    test("returns the same object when every filtered column is visible", () => {
+        const filterState = { ZONE: "Val" };
+
+        expect(pruneHiddenColumnFilters(filterState, new Set(["ZONE", "FLUID"]))).toBe(filterState);
     });
 });
 

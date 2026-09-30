@@ -98,17 +98,33 @@ export function computeColumnLayout(
     const stickyLeftPxByKey = new Map<string, number>();
     let lastPinnedKey: string | null = null;
 
-    const pinnedWidthPx = pinnableLeaves.reduce((sum, leaf) => sum + (widthPxByKey.get(leaf.key) ?? 0), 0);
-    if (pinnableLeaves.length > 0 && pinnedWidthPx <= wrapperWidthPx * MAX_PINNED_WIDTH_FRACTION) {
-        let offsetPx = 0;
-        for (const leaf of pinnableLeaves) {
-            stickyLeftPxByKey.set(leaf.key, offsetPx);
-            offsetPx += widthPxByKey.get(leaf.key) ?? 0;
-        }
-        lastPinnedKey = pinnableLeaves[pinnableLeaves.length - 1].key;
+    const maxPinnedWidthPx = wrapperWidthPx * MAX_PINNED_WIDTH_FRACTION;
+    let offsetPx = 0;
+    for (const leaf of pinnableLeaves) {
+        const widthPx = widthPxByKey.get(leaf.key) ?? 0;
+        if (offsetPx + widthPx > maxPinnedWidthPx) break;
+
+        stickyLeftPxByKey.set(leaf.key, offsetPx);
+        lastPinnedKey = leaf.key;
+        offsetPx += widthPx;
     }
 
     return { visibleLeaves, constantColumns, widthPxByKey, stickyLeftPxByKey, lastPinnedKey, totalWidthPx };
+}
+
+export type FilterState = { [columnKey: string]: string | null };
+
+/** Removes filters on columns that are not visible; returns the same object when nothing is removed. */
+export function pruneHiddenColumnFilters(
+    filterState: FilterState,
+    visibleColumnKeys: ReadonlySet<string>,
+): FilterState {
+    const hiddenKeys = Object.keys(filterState).filter((key) => !visibleColumnKeys.has(key));
+    if (hiddenKeys.length === 0) return filterState;
+
+    const pruned = { ...filterState };
+    for (const key of hiddenKeys) delete pruned[key];
+    return pruned;
 }
 
 export function sortStatisticsForDisplay(statistics: InplaceVolumesStatistic_api[]): InplaceVolumesStatistic_api[] {

@@ -16,8 +16,13 @@ import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 
 import type { TableColumnsConfig, TableHeading, TableRow } from "../types";
 import { collectLeafColumns, formatEnsembleIdent, isValidFluidType } from "../utils/tableComponentUtils";
-import type { ColumnLayout, SortScope } from "../utils/tableLayoutUtils";
-import { applyTableSort, CATEGORY_COLUMN_MAX_WIDTH_PX, computeColumnLayout } from "../utils/tableLayoutUtils";
+import type { ColumnLayout, FilterState, SortScope } from "../utils/tableLayoutUtils";
+import {
+    applyTableSort,
+    CATEGORY_COLUMN_MAX_WIDTH_PX,
+    computeColumnLayout,
+    pruneHiddenColumnFilters,
+} from "../utils/tableLayoutUtils";
 
 export type InplaceVolumesTableProps = {
     ensembleSet: EnsembleSet;
@@ -37,7 +42,7 @@ const FILTER_DEBOUNCE_TIME_MS = 250;
 
 export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.ReactNode {
     const [tableSortState, setTableSortState] = React.useState<TableSortState[]>([]);
-    const [tableFilterState, setTableFilterState] = React.useState<{ [columnKey: string]: string | null }>({});
+    const [tableFilterState, setTableFilterState] = React.useState<FilterState>({});
 
     const tableWrapperRef = React.useRef<HTMLDivElement>(null);
     const { width: tableWrapperWidthPx } = useElementSize(tableWrapperRef);
@@ -60,6 +65,13 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
         () => new Set(layout.visibleLeaves.map((leaf) => leaf.key)),
         [layout.visibleLeaves],
     );
+
+    // Filters on columns that become hidden (constant, or gone after a layout switch) are dropped, not kept invisibly
+    const [prevVisibleLeafKeys, setPrevVisibleLeafKeys] = React.useState(visibleLeafKeys);
+    if (prevVisibleLeafKeys !== visibleLeafKeys) {
+        setPrevVisibleLeafKeys(visibleLeafKeys);
+        setTableFilterState((prev) => pruneHiddenColumnFilters(prev, visibleLeafKeys));
+    }
 
     const sortScope = React.useMemo<SortScope | undefined>(() => {
         if (props.sortScopeColumnKey === undefined) return undefined;
@@ -117,9 +129,7 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
     }, [props.columnsConfig, layout]);
 
     const collatedRows = React.useMemo(() => {
-        const activeFilters = Object.entries(tableFilterState).filter(
-            ([columnKey, filterValue]) => filterValue && visibleLeafKeys.has(columnKey),
-        );
+        const activeFilters = Object.entries(tableFilterState).filter(([, filterValue]) => filterValue);
 
         const filteredRows = props.rows.filter((row) => {
             return activeFilters.every(([columnKey, filterValue]) => {
@@ -133,16 +143,14 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
         });
 
         return applyTableSort(filteredRows, tableSortState, sortScope);
-    }, [tableFilterState, visibleLeafKeys, props.rows, tableSortState, sortScope]);
+    }, [tableFilterState, props.rows, tableSortState, sortScope]);
 
     const hasExportableColumns = React.useMemo(
         () => collectLeafColumns(props.columnsConfig).length > 0,
         [props.columnsConfig],
     );
     const isDownloadDisabled = !props.onDownload || collatedRows.length === 0 || !hasExportableColumns;
-    const hasActiveFilters = Object.entries(tableFilterState).some(
-        ([columnKey, v]) => v !== null && v !== "" && visibleLeafKeys.has(columnKey),
-    );
+    const hasActiveFilters = Object.values(tableFilterState).some((v) => v !== null && v !== "");
     const constantColumnsCaption = layout.constantColumns
         .map((column) => `${column.label}: ${column.displayValue}`)
         .join(" · ");

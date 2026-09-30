@@ -146,6 +146,27 @@ test.describe("InplaceVolumesTable layout", () => {
         await expect(cmp.getByLabel("Filter ZONE")).toBeVisible();
     });
 
+    test("a filter on a column that becomes hidden is dropped", async ({ mount }) => {
+        const { columnsConfig, rows } = makeWideStatisticalFixture(NUM_ROWS, ["STOIIP"], ["Mean"]);
+        const cmp = await mount(
+            <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />,
+        );
+
+        await cmp.getByLabel("Filter ZONE").fill("Valysar");
+        await expect(cmp.getByText(`4 of ${NUM_ROWS} rows`)).toBeVisible();
+
+        const constantZoneRows = rows.map((row) => ({ ...row, ZONE: "Valysar" }));
+        await cmp.update(
+            <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={constantZoneRows} />,
+        );
+        await expect(cmp.getByLabel("Filter ZONE")).toHaveCount(0);
+        await expect(cmp.getByText(`${NUM_ROWS} rows`, { exact: true })).toBeVisible();
+
+        await cmp.update(<InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />);
+        await expect(cmp.getByLabel("Filter ZONE")).toHaveValue("");
+        await expect(cmp.getByText(`${NUM_ROWS} rows`, { exact: true })).toBeVisible();
+    });
+
     test("statistic headers follow the fixture order", async ({ mount }) => {
         const { columnsConfig, rows } = makeWideStatisticalFixture(NUM_ROWS, ["STOIIP"], ALL_STATISTIC_LABELS);
         const cmp = await mount(
