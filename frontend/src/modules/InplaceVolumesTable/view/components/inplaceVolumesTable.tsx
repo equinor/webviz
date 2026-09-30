@@ -170,8 +170,8 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
     return (
         <div className="flex h-full min-h-0 flex-col">
             <div className="gap-x-3xs px-3xs py-3xs flex shrink-0 items-center justify-between">
-                <div className="gap-x-3xs text-body-sm text-neutral-subtle flex min-w-0 items-center">
-                    <span aria-live="polite" className="shrink-0">
+                <div className="gap-x-3xs text-body-sm text-neutral-subtle flex items-center">
+                    <span aria-live="polite">
                         {hasActiveFilters
                             ? `${collatedRows.length} of ${props.rows.length} rows`
                             : `${props.rows.length} rows`}
@@ -184,14 +184,6 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
                     >
                         Clear filters
                     </Button>
-                    {constantColumnsCaption && (
-                        <span
-                            className="text-body-sm text-neutral-subtle min-w-0 truncate"
-                            title={constantColumnsCaption}
-                        >
-                            {constantColumnsCaption}
-                        </span>
-                    )}
                 </div>
                 <Button
                     variant="outlined"
@@ -202,6 +194,11 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
                     Download CSV
                 </Button>
             </div>
+            {constantColumnsCaption && (
+                <p className="px-3xs pb-3xs text-body-sm text-neutral-subtle shrink-0 break-words">
+                    {constantColumnsCaption}
+                </p>
+            )}
             <div ref={tableWrapperRef} className="min-h-0 grow">
                 <Table.Root
                     height="100%"

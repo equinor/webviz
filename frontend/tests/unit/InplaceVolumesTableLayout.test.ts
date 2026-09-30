@@ -365,6 +365,35 @@ describe("applyTableSort", () => {
         ]);
     });
 
+    test("explicit keys before the first scoped key keep priority over the implicit response grouping", () => {
+        const mixedRows: TableRow<TableColumnsConfig>[] = [
+            { __id: "1", ZONE: "A", RESPONSE: "BULK", Mean: 5 },
+            { __id: "2", ZONE: "A", RESPONSE: "BULK", Mean: 3 },
+            { __id: "3", ZONE: "A", RESPONSE: "STOIIP", Mean: 50 },
+            { __id: "4", ZONE: "A", RESPONSE: "STOIIP", Mean: 60 },
+            { __id: "5", ZONE: "B", RESPONSE: "BULK", Mean: 9 },
+            { __id: "6", ZONE: "B", RESPONSE: "STOIIP", Mean: 10 },
+            { __id: "7", ZONE: "B", RESPONSE: "STOIIP", Mean: 8 },
+        ];
+        const sortState = [
+            { columnKey: "ZONE", direction: SortDirection.DESC },
+            { columnKey: "Mean", direction: SortDirection.ASC },
+        ];
+
+        const sorted = applyTableSort(mixedRows, sortState, responseScope);
+
+        // ZONE first, then responses in first-seen order within each zone, then Mean within each response
+        expect(sorted.map((row) => `${row.ZONE}:${row.RESPONSE}:${row.Mean}`)).toEqual([
+            "B:BULK:9",
+            "B:STOIIP:8",
+            "B:STOIIP:10",
+            "A:BULK:3",
+            "A:BULK:5",
+            "A:STOIIP:50",
+            "A:STOIIP:60",
+        ]);
+    });
+
     test("an empty sort state keeps the input order", () => {
         expect(applyTableSort(rows, [], responseScope).map((row) => row.__id)).toEqual(rows.map((row) => row.__id));
         expect(applyTableSort(rows, []).map((row) => row.__id)).toEqual(rows.map((row) => row.__id));

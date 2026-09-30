@@ -145,7 +145,8 @@ export type SortScope = {
 
 /**
  * Sorts rows by the table sort state. With a `sortScope`, a sort that includes a scoped column but not the
- * scope column itself is applied within each scope value, keeping those values in first-seen order.
+ * scope column itself is applied within each scope value, keeping those values in first-seen order. The implicit
+ * scope key is inserted just before the first scoped sort key, so explicit keys sorted earlier keep their priority.
  */
 export function applyTableSort<TRow extends TableRow<TableColumnsConfig>>(
     rows: TRow[],
@@ -155,9 +156,11 @@ export function applyTableSort<TRow extends TableRow<TableColumnsConfig>>(
     const iteratees: (string | ((row: TRow) => number))[] = sortState.map((s) => s.columnKey);
     const orders = sortState.map((s) => s.direction as "asc" | "desc");
 
+    const firstScopedIndex =
+        sortScope === undefined ? -1 : sortState.findIndex((s) => sortScope.scopedColumnKeys.has(s.columnKey));
     const isScoped =
         sortScope !== undefined &&
-        sortState.some((s) => sortScope.scopedColumnKeys.has(s.columnKey)) &&
+        firstScopedIndex !== -1 &&
         !sortState.some((s) => s.columnKey === sortScope.columnKey);
 
     if (isScoped) {
@@ -167,8 +170,8 @@ export function applyTableSort<TRow extends TableRow<TableColumnsConfig>>(
             const value = row[scopeKey];
             if (!positions.has(value)) positions.set(value, positions.size);
         }
-        iteratees.unshift((row) => positions.get(row[scopeKey]) ?? Number.MAX_SAFE_INTEGER);
-        orders.unshift("asc");
+        iteratees.splice(firstScopedIndex, 0, (row) => positions.get(row[scopeKey]) ?? Number.MAX_SAFE_INTEGER);
+        orders.splice(firstScopedIndex, 0, "asc");
     }
 
     return orderBy(rows, iteratees, orders);

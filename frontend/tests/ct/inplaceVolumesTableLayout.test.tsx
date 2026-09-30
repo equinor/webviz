@@ -146,6 +146,29 @@ test.describe("InplaceVolumesTable layout", () => {
         expect(content.split("\n")[0].startsWith("ENSEMBLE,TABLE_NAME,FLUID,ZONE,")).toBe(true);
     });
 
+    test("the constant-columns caption wraps instead of truncating on narrow modules", async ({ mount, page }) => {
+        await page.setViewportSize({ width: 240, height: 800 });
+        const { columnsConfig, rows } = makeWideStatisticalFixture(NUM_ROWS, ["STOIIP"], ["Mean", "P10", "P90"]);
+        const cmp = await mount(
+            <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />,
+        );
+
+        const caption = cmp.getByText("ENSEMBLE: ens1");
+        await expect(caption).toBeVisible();
+        await expect(caption).toContainText("FLUID: gas + oil + water");
+
+        const { isClipped, heightInFontSizes } = await caption.evaluate((el) => {
+            const fontSizePx = parseFloat(getComputedStyle(el).fontSize);
+            return {
+                isClipped: el.scrollWidth > el.clientWidth,
+                heightInFontSizes: el.getBoundingClientRect().height / fontSizePx,
+            };
+        });
+        expect(isClipped).toBe(false);
+        // A single line is roughly 1.2–1.6 font-sizes tall; two or more lines are clearly above that
+        expect(heightInFontSizes).toBeGreaterThan(2);
+    });
+
     test("only visible identifier columns have a filter input", async ({ mount }) => {
         const { columnsConfig, rows } = makeWideStatisticalFixture(NUM_ROWS, FOUR_RESULT_NAMES, ALL_STATISTIC_LABELS);
         const cmp = await mount(
