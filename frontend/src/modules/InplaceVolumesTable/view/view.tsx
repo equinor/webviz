@@ -13,6 +13,7 @@ import type { Interfaces } from "../interfaces";
 
 import { areSelectedTablesComparableAtom, haveAllQueriesFailedAtom, isQueryFetchingAtom } from "./atoms/derivedAtoms";
 import { InplaceVolumesTable } from "./components/inplaceVolumesTable";
+import { useDownloadCsv } from "./hooks/useDownloadCsv";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useTableBuilder } from "./hooks/useTableBuilder";
 import type { TableColumnsConfig, TableRow } from "./types";
@@ -31,6 +32,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     // Build table headings and rows
     const { headings: tableColumnConfig, tableRows } = useTableBuilder();
 
+    const handleDownloadCsv = useDownloadCsv(tableColumnConfig, ensembleSet);
     const publishHoverValues = usePublishHoverValues(props.hoverService, props.viewContext.getInstanceIdString());
 
     const handleTableHover = React.useCallback(
@@ -91,6 +93,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 columnsConfig={tableColumnConfig}
                 rows={tableRows}
                 onHover={handleTableHover}
+                onDownload={handleDownloadCsv}
                 ensembleSet={ensembleSet}
             />
         </StatusWrapper>

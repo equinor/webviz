@@ -1,6 +1,6 @@
 <!--::metadata
-  changelog_counter: 2
-  date: 02.09.2026
+  changelog_counter: 3
+  date: 30.09.2026
 -->
 
 # Changelog
@@ -9,6 +9,7 @@
 
 ### Changed
 
+- **VFP module**: The VFP module now supports standard lift curve data from `SIM2SUMO`.
 - **Experimental modules**: In the module list, experimental modules are now shown by default.
 - **Leaving a session**: The close (✕) button has been removed. Instead, a "Start" breadcrumb now appears in front of the session name in the top bar — click it to leave the current session or snapshot and return to the start page.
 
@@ -25,6 +26,7 @@
 - **Planned well trajectories**: Planned well trajectories from SMDA can now be displayed in the 2D and 3D viewers and used as the path for Intersection views.
 - **Fluid contact surfaces**: Initial fluid contacts are now available as a separate layer in the 2D, 3D, and Intersection views.
 - **Top bar**: Clicking the FMU logo or the "FMU Analysis" title reloads the application and returns you to the start page.
+- **Inplace Volumes Table**: added CSV download of the displayed table (respects filters, sorting and table mode).
 - **3D viewer**: Well trajectory depth/flow filters and completion (screen/perforation) markers are now supported, matching the 2D viewer.
 
 ## August 2026

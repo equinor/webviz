@@ -11,6 +11,11 @@ class VfpType(StrEnum):
     INJ = "INJ"
 
 
+class VfpTableInfo(BaseModel):
+    vfpType: Literal[VfpType.INJ, VfpType.PROD]
+    tableNumber: int
+
+
 class VfpTableBase(BaseModel):
     vfpType: Literal[VfpType.INJ, VfpType.PROD]
     tableNumber: int
