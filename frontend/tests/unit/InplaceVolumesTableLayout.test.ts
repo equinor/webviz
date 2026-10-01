@@ -11,6 +11,7 @@ import {
     CATEGORY_COLUMN_MAX_WIDTH_PX,
     CATEGORY_COLUMN_MIN_WIDTH_PX,
     CHAR_WIDTH_PX,
+    GROUP_HEADER_CHROME_PX,
     RESULT_COLUMN_WIDTH_PX,
     applyTableSort,
     computeColumnPinning,
@@ -172,6 +173,30 @@ describe("computeColumnLayout", () => {
         expect(keys).toContain("STOIIP-Mean");
         expect(keys).toContain("STOIIP-P10");
         expect(layout.widthPxByKey.has("STOIIP")).toBe(false);
+    });
+
+    test("a result group's leaves are widened so a long group label fits", () => {
+        const columnsConfig: TableColumnsConfig = {
+            ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
+            ASSOCIATEDGAS: {
+                label: "ASSOCIATEDGAS",
+                subHeading: { "ASSOCIATEDGAS-Mean": { label: "Mean", columnType: ColumnType.RESULT } },
+            },
+            STOIIP: {
+                label: "STOIIP",
+                subHeading: { "STOIIP-Mean": { label: "Mean", columnType: ColumnType.RESULT } },
+            },
+        };
+        const rows = [
+            { __id: "1", ZONE: "A", "ASSOCIATEDGAS-Mean": 1, "STOIIP-Mean": 2 },
+            { __id: "2", ZONE: "B", "ASSOCIATEDGAS-Mean": 3, "STOIIP-Mean": 4 },
+        ];
+
+        const widths = computeColumnWidths(columnsConfig, rows, formatPlain);
+
+        const required = Math.round("ASSOCIATEDGAS".length * CHAR_WIDTH_PX) + GROUP_HEADER_CHROME_PX;
+        expect(widths.widthPxByKey.get("ASSOCIATEDGAS-Mean")).toBeGreaterThanOrEqual(required);
+        expect(widths.widthPxByKey.get("STOIIP-Mean")).toBe(RESULT_COLUMN_WIDTH_PX);
     });
 
     test("sticky offsets are cumulative and the last identifier column is the edge", () => {

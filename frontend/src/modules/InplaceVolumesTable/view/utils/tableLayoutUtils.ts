@@ -14,6 +14,7 @@ export const CHAR_WIDTH_PX = 8.5;
 export const CATEGORY_COLUMN_CHROME_PX = 60;
 export const CATEGORY_COLUMN_MIN_WIDTH_PX = 72;
 export const CATEGORY_COLUMN_MAX_WIDTH_PX = 280;
+export const GROUP_HEADER_CHROME_PX = 28;
 export const MAX_PINNED_WIDTH_FRACTION = 0.5;
 
 const STATISTICS_DISPLAY_ORDER: readonly InplaceVolumesStatistic_api[] = [
@@ -85,6 +86,25 @@ export function computeColumnWidths(
 
         visibleLeaves.push(leaf);
         widthPxByKey.set(leaf.key, computeCategoryColumnWidthPx(maxChars));
+    }
+
+    // A group header (e.g. a long result name over a single statistic) must not be narrower than its label
+    for (const [groupKey, groupHeading] of Object.entries(columnsConfig)) {
+        if (!groupHeading.subHeading) continue;
+
+        const groupLeafKeys = collectLeafColumns({ [groupKey]: groupHeading })
+            .map((leaf) => leaf.key)
+            .filter((key) => widthPxByKey.has(key));
+        if (groupLeafKeys.length === 0) continue;
+
+        const requiredWidthPx = Math.round(groupHeading.label.length * CHAR_WIDTH_PX) + GROUP_HEADER_CHROME_PX;
+        const currentWidthPx = groupLeafKeys.reduce((sum, key) => sum + (widthPxByKey.get(key) ?? 0), 0);
+        if (currentWidthPx >= requiredWidthPx) continue;
+
+        const extraPerLeafPx = Math.ceil((requiredWidthPx - currentWidthPx) / groupLeafKeys.length);
+        for (const key of groupLeafKeys) {
+            widthPxByKey.set(key, (widthPxByKey.get(key) ?? 0) + extraPerLeafPx);
+        }
     }
 
     return { visibleLeaves, constantColumns, widthPxByKey };

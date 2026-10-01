@@ -69,6 +69,25 @@ test.describe("InplaceVolumesTable layout", () => {
         expect(truncatedValues).toEqual([]);
     });
 
+    test("a long result group header over a single statistic is not truncated", async ({ mount }) => {
+        const longResultNames = ["ASSOCIATEDGAS", "ASSOCIATEDOIL", "STOIIP_TOTAL", "STOIIP"];
+        const { columnsConfig, rows } = makeWideStatisticalFixture(NUM_ROWS, longResultNames, ["Mean"]);
+        const cmp = await mount(
+            <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />,
+        );
+        await expect(cmp.getByText("ASSOCIATEDGAS")).toBeVisible();
+
+        // Group headers are the non-sortable header cells
+        const truncatedGroupHeaders = await cmp
+            .locator("thead th:not([role])")
+            .evaluateAll((cells) =>
+                cells
+                    .filter((cell) => cell.scrollWidth > cell.clientWidth)
+                    .map((cell) => `${cell.childNodes[0]?.textContent}: ${cell.scrollWidth} > ${cell.clientWidth}`),
+            );
+        expect(truncatedGroupHeaders).toEqual([]);
+    });
+
     test("identifier columns stay pinned while scrolling horizontally", async ({ mount }) => {
         const { columnsConfig, rows } = makeWideStatisticalFixture(NUM_ROWS, FOUR_RESULT_NAMES, ALL_STATISTIC_LABELS);
         const cmp = await mount(
