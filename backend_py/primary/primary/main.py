@@ -15,6 +15,9 @@ from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.sumo_access.sumo_fingerprinter import SumoFingerprinterFactory
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
+from webviz_services.platform.azure_credentials import create_azure_credential
+from webviz_services.platform.azure_credentials import log_azure_credential_env_var_status
+from webviz_services.platform.message_bus import MessageBusSingleton
 
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
@@ -46,12 +49,9 @@ from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
 from primary.routers.persistence.router import router as persistence_router
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry_for_primary
-from primary.utils.azure_service_credentials import create_credential_for_azure_services
-from primary.utils.azure_service_credentials import log_azure_credential_env_var_status
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
-from primary.utils.message_bus import MessageBusSingleton
 
 from . import config
 
@@ -100,9 +100,9 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
     # The opt-out for the credential creation here is only meant for special scenarios such as e2e testing.
-    azure_services_credential: WorkloadIdentityCredential | ClientSecretCredential | None = None
+    azure_credential: WorkloadIdentityCredential | ClientSecretCredential | None = None
     if "WEBVIZ_SKIP_AZURE_CREDENTIAL_CREATION" not in os.environ:
-        azure_services_credential = create_credential_for_azure_services()
+        azure_credential = create_azure_credential()
 
     if config.COSMOS_DB_EMULATOR_HOST:
         LOGGER.info(
@@ -110,29 +110,21 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
         )
         PersistenceStoresSingleton.initialize_with_emulator(config.COSMOS_DB_EMULATOR_HOST)
     else:
-        LOGGER.info(
-            f"Using credential for azure services to initialize PersistenceStoresSingleton with: {config.COSMOS_DB_URL}"
-        )
-        if azure_services_credential is None:
-            raise RuntimeError("Cannot proceed without an Azure services credential.")
+        LOGGER.info(f"Using Azure credential to initialize PersistenceStoresSingleton with: {config.COSMOS_DB_URL}")
+        if azure_credential is None:
+            raise RuntimeError("Cannot proceed without an Azure credential.")
 
-        await PersistenceStoresSingleton.initialize_with_credential_async(
-            config.COSMOS_DB_URL, azure_services_credential
-        )
+        await PersistenceStoresSingleton.initialize_with_credential_async(config.COSMOS_DB_URL, azure_credential)
 
     if config.SERVICE_BUS_EMULATOR_CONNECTION_STRING is not None:
         LOGGER.info("Initializing MessageBusSingleton using emulator connection string from environment")
         MessageBusSingleton.initialize_with_connection_string(config.SERVICE_BUS_EMULATOR_CONNECTION_STRING)
     else:
-        LOGGER.info(
-            f"Initializing MessageBusSingleton using credential for azure services, {config.SERVICE_BUS_NAMESPACE=}"
-        )
-        if azure_services_credential is None:
-            raise RuntimeError("Cannot proceed without an Azure services credential.")
+        LOGGER.info(f"Initializing MessageBusSingleton using Azure credential, {config.SERVICE_BUS_NAMESPACE=}")
+        if azure_credential is None:
+            raise RuntimeError("Cannot proceed without an Azure credential.")
 
-        await MessageBusSingleton.initialize_with_credential_async(
-            config.SERVICE_BUS_NAMESPACE, azure_services_credential
-        )
+        await MessageBusSingleton.initialize_with_credential_async(config.SERVICE_BUS_NAMESPACE, azure_credential)
 
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
@@ -143,8 +135,8 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     await MessageBusSingleton.shutdown_async()
     await PersistenceStoresSingleton.shutdown_async()
 
-    if azure_services_credential is not None:
-        await azure_services_credential.close()
+    if azure_credential is not None:
+        await azure_credential.close()
 
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
 

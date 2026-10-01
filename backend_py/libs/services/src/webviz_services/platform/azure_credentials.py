@@ -8,7 +8,7 @@ from webviz_core_utils.radix_utils import is_running_on_radix_platform
 LOGGER = logging.getLogger(__name__)
 
 
-def create_credential_for_azure_services() -> WorkloadIdentityCredential | ClientSecretCredential:
+def create_azure_credential() -> WorkloadIdentityCredential | ClientSecretCredential:
     """
     Create an Azure Identity credential suitable for authenticating to Azure services such as Service Bus and Cosmos DB.
 

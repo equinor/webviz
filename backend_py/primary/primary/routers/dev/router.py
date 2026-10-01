@@ -20,11 +20,11 @@ from webviz_services.user_grid3d_service.user_grid3d_service import UserGrid3dSe
 from webviz_services.service_exceptions import Service, ServiceUnavailableError, ServiceRequestError
 from webviz_services.utils.otel_span_tracing import start_otel_span_async
 from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
+from webviz_services.platform.message_bus import MessageBusSingleton, MessageBus
 
 from primary import config
 from primary.auth.auth_helper import AuthenticatedUser, AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
-from primary.utils.message_bus import MessageBusSingleton, MessageBus
 
 LOGGER = logging.getLogger(__name__)
 
