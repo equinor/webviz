@@ -7,6 +7,8 @@ from azure.core.credentials_async import AsyncTokenCredential
 from azure.servicebus.aio import ServiceBusClient, ServiceBusSender
 from azure.servicebus import ServiceBusMessage
 
+from webviz_core_utils.azure_service_bus_destination import ensure_fq_sb_namespace
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -73,9 +75,7 @@ class MessageBusSingleton:
     _message_bus_instance: MessageBus | None = None
 
     @classmethod
-    async def initialize_with_credential_async(
-        cls, fully_qualified_sb_namespace: str, credential: AsyncTokenCredential
-    ) -> None:
+    async def initialize_with_credential_async(cls, sb_namespace: str, credential: AsyncTokenCredential) -> None:
         if cls._message_bus_instance is not None:
             raise RuntimeError("MessageBusSingleton is already initialized")
 
@@ -91,7 +91,8 @@ class MessageBusSingleton:
         except ClientAuthenticationError as exc:
             raise RuntimeError("Azure authentication failed while acquiring token for Service Bus scope") from exc
 
-        sb_client = ServiceBusClient(fully_qualified_namespace=fully_qualified_sb_namespace, credential=credential)
+        fully_qualified_namespace = ensure_fq_sb_namespace(sb_namespace)
+        sb_client = ServiceBusClient(fully_qualified_namespace=fully_qualified_namespace, credential=credential)
         cls._message_bus_instance = MessageBus(sb_client)
 
     @classmethod

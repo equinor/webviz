@@ -6,7 +6,7 @@ from webviz_core_utils.radix_utils import is_running_on_radix_platform
 
 @dataclass(frozen=True)
 class WorkerConfig:
-    sb_fq_namespace: str
+    sb_namespace: str
     sb_queue_name: str
     sb_payload_fernet_key: str
     sb_emulator_connection_string: str | None
@@ -20,19 +20,19 @@ def load_worker_config_from_env() -> WorkerConfig:
 
     sb_emulator_connection_string: str | None = None
     if is_running_on_radix_platform():
-        sb_fq_namespace = os.environ["WEBVIZ_SERVICE_BUS_FQ_NAMESPACE"]
+        sb_namespace = os.environ["WEBVIZ_SERVICE_BUS_NAMESPACE"]
         sb_queue_name = os.environ["WEBVIZ_SERVICE_BUS_QUEUE_NAME"]
     else:
         sb_emulator_connection_string = os.getenv("WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING")
         if sb_emulator_connection_string:
-            sb_fq_namespace = "NotInUse"
+            sb_namespace = "NotInUse"
             sb_queue_name = "emulator-queue"
         else:
-            sb_fq_namespace = os.environ["WEBVIZ_SERVICE_BUS_FQ_NAMESPACE"]
+            sb_namespace = os.environ["WEBVIZ_SERVICE_BUS_NAMESPACE"]
             sb_queue_name = os.environ["WEBVIZ_SERVICE_BUS_QUEUE_NAME"]
 
     return WorkerConfig(
-        sb_fq_namespace=sb_fq_namespace,
+        sb_namespace=sb_namespace,
         sb_queue_name=sb_queue_name,
         sb_payload_fernet_key=os.environ["WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY"],
         sb_emulator_connection_string=sb_emulator_connection_string,

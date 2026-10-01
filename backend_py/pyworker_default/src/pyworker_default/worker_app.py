@@ -14,6 +14,7 @@ from opentelemetry.sdk.resources import Resource
 
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 from webviz_core_utils.azure_monitor_destination import AzureMonitorDestination
+from webviz_core_utils.azure_service_bus_destination import ensure_fq_sb_namespace
 from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
@@ -127,11 +128,12 @@ async def _authenticated_sb_client_async(config: WorkerConfig) -> AsyncIterator[
     _logger.info(f"AZURE_FEDERATED_TOKEN_FILE present: {"AZURE_FEDERATED_TOKEN_FILE" in os.environ}")
     _logger.info(f"AZURE_CLIENT_SECRET present: {"AZURE_CLIENT_SECRET" in os.environ}")
 
-    _logger.info(f"Using Service Bus with DefaultAzureCredential, sb namespace: {config.sb_fq_namespace}")
+    sb_fq_namespace = ensure_fq_sb_namespace(config.sb_namespace)
+    _logger.info(f"Using Service Bus with DefaultAzureCredential, sb namespace: {sb_fq_namespace}")
 
     async with DefaultAzureCredential() as credential:
         _logger.info(f"{type(credential)=}")
-        async with ServiceBusClient(fully_qualified_namespace=config.sb_fq_namespace, credential=credential) as client:
+        async with ServiceBusClient(fully_qualified_namespace=sb_fq_namespace, credential=credential) as client:
             yield client
 
 

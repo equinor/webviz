@@ -134,7 +134,7 @@ spec:
 
         - environment: review3
           variables:
-            WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: sbns-webviz-nonprod.servicebus.windows.net
+            WEBVIZ_SERVICE_BUS_NAMESPACE: sbns-webviz-nonprod
             WEBVIZ_SERVICE_BUS_QUEUE_NAME: review3-default
           resources:
             requests:
@@ -210,7 +210,7 @@ spec:
 
         - environment: review2
           variables:
-            WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: sbns-webviz-nonprod.servicebus.windows.net
+            WEBVIZ_SERVICE_BUS_NAMESPACE: sbns-webviz-nonprod
             WEBVIZ_SERVICE_BUS_QUEUE_NAME: review2-default
             WEBVIZ_WORKER_MAX_CONCURRENT_TASKS: "1"
           horizontalScaling:
@@ -226,7 +226,7 @@ spec:
 
         - environment: review3
           variables:
-            WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: sbns-webviz-nonprod.servicebus.windows.net
+            WEBVIZ_SERVICE_BUS_NAMESPACE: sbns-webviz-nonprod
             WEBVIZ_SERVICE_BUS_QUEUE_NAME: review3-default
             WEBVIZ_WORKER_MAX_CONCURRENT_TASKS: "1"
           horizontalScaling:
