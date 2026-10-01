@@ -114,7 +114,7 @@ services:
   pyworker-default:
     build:
       context: .
-      dockerfile: ./backend_py/pyworker_default/Dockerfile
+      dockerfile: ./backend_py/pyworker/Dockerfile
     environment:
       - AZURE_TENANT_ID
       - AZURE_CLIENT_ID
@@ -128,10 +128,10 @@ services:
       - WEBVIZ_WORKER_MAX_CONCURRENT_TASKS
       - APPLICATIONINSIGHTS_CONNECTION_STRING
     volumes:
-      - ./backend_py/pyworker_default/src:/home/appuser/backend_py/pyworker_default/src
+      - ./backend_py/pyworker/src:/home/appuser/backend_py/pyworker/src
       - ./backend_py/libs:/home/appuser/backend_py/libs
-    command: ["watchfiles", "python -m pyworker_default.worker_main", "/home/appuser/backend_py/pyworker_default/src"]
-    #command: ["python", "-m", "pyworker_default.worker_main"]
+    command: ["watchfiles", "python -m pyworker.worker_main", "/home/appuser/backend_py/pyworker/src"]
+    #command: ["python", "-m", "pyworker.worker_main"]
     #restart: on-failure
     restart: always
     depends_on:

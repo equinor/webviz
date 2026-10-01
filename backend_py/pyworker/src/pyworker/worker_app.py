@@ -152,7 +152,7 @@ async def _run_worker_loop_async(worker_config: WorkerConfig, shutdown_event: as
         # The reason for the type ignore below is that the async get_queue_receiver is mis-annotated in the SDK to
         # expect the sync AutoLockRenewer, but at runtime it requires the async one (from azure.servicebus.aio)
         sb_receiver: ServiceBusReceiver = sb_client.get_queue_receiver(
-            client_identifier="pyworker-default",
+            client_identifier="pyworker",
             queue_name=worker_config.sb_queue_name,
             auto_lock_renewer=lock_renewer,  # type: ignore[arg-type]
         )
@@ -210,15 +210,15 @@ async def run_app_async() -> None:
 
     configure_logging()
 
-    logging.getLogger("pyworker_default").setLevel(logging.DEBUG)
+    logging.getLogger("pyworker").setLevel(logging.DEBUG)
 
     # Limit logging from the more noisy loggers
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("azure.servicebus").setLevel(logging.WARNING)
 
-    _logger.info("=== Starting worker pyworker-default...")
+    _logger.info("=== Starting pyworker...")
 
-    _setup_azure_monitor_telemetry_for_worker("pyworker-default")
+    _setup_azure_monitor_telemetry_for_worker("pyworker")
 
     # Read our own config from environment variables
     worker_config: WorkerConfig = load_worker_config_from_env()

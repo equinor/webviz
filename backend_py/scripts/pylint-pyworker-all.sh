@@ -13,7 +13,7 @@ for path in \
     libs/core_utils/src/webviz_core_utils \
     libs/server_schemas/src/webviz_server_schemas \
     libs/services/src/webviz_services \
-    pyworker_default/src/pyworker_default
+    pyworker/src/pyworker
 do
     echo
     echo "Running pylint on: $path"

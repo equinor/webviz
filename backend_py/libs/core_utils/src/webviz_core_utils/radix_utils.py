@@ -16,7 +16,7 @@ def is_running_on_radix_platform() -> bool:
 def get_radix_component_name() -> str | None:
     """
     Returns the name of the current Radix component based on environment variable "RADIX_COMPONENT".
-    For our use case: backend-primary, pyworker-default, etc
+    For our use case: backend-primary, surface-query, etc
     """
     return os.getenv("RADIX_COMPONENT")
 

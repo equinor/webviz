@@ -181,7 +181,7 @@ spec:
 
     # -----------------------------------------------------------------
     - name: pyworker-default
-      dockerFileName: ./backend_py/pyworker_default/Dockerfile
+      dockerFileName: ./backend_py/pyworker/Dockerfile
       # Set non-prod clientId as default, prod overrides below
       identity: *identityNonProdAppId
       secretRefs:
