@@ -1,6 +1,6 @@
 import { strToU8, zip } from "fflate";
 
-type StringFile = { filename: string; content: string };
+export type StringFile = { filename: string; content: string };
 type BinaryFile = { filename: string; content: Uint8Array };
 export type DownloadFile = StringFile | BinaryFile;
 
@@ -67,6 +67,6 @@ export function createZipFilename(baseName: string): string {
 /**
  * Trigger a browser download of a text file with the given MIME type.
  */
-export function downloadTextFile(content: string, filename: string, mimeType: string): void {
-    downloadBlobFile(new Blob([content], { type: mimeType }), filename);
+export function downloadTextFile(file: StringFile, mimeType: string): void {
+    downloadBlobFile(new Blob([file.content], { type: mimeType }), file.filename);
 }

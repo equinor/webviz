@@ -5,14 +5,18 @@ import { InplaceVolumesStatistic_api } from "@api";
 import { SortDirection } from "@lib/components/Table/typesAndEnums";
 import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 import type { TableColumnsConfig, TableHeading, TableRow } from "@modules/InplaceVolumesTable/view/types";
+import type { ColumnLayout } from "@modules/InplaceVolumesTable/view/utils/tableLayoutUtils";
 import {
     CATEGORY_COLUMN_CHROME_PX,
     CATEGORY_COLUMN_MAX_WIDTH_PX,
     CATEGORY_COLUMN_MIN_WIDTH_PX,
     CHAR_WIDTH_PX,
+    GROUP_HEADER_CHROME_PX,
     RESULT_COLUMN_WIDTH_PX,
     applyTableSort,
-    computeColumnLayout,
+    computeColumnPinning,
+    computeColumnWidths,
+    pruneHiddenColumnFilters,
     sortStatisticsForDisplay,
 } from "@modules/InplaceVolumesTable/view/utils/tableLayoutUtils";
 
@@ -20,6 +24,16 @@ const WIDE_WRAPPER_PX = 10_000;
 
 function formatPlain(value: string | number | null): string {
     return value === null ? "-" : String(value);
+}
+
+function computeColumnLayout(
+    columnsConfig: TableColumnsConfig,
+    rows: TableRow<TableColumnsConfig>[],
+    formatDisplayValue: (value: string | number | null, heading: TableHeading) => string,
+    wrapperWidthPx: number,
+): ColumnLayout {
+    const widths = computeColumnWidths(columnsConfig, rows, formatDisplayValue);
+    return { ...widths, ...computeColumnPinning(widths, wrapperWidthPx) };
 }
 
 function expectedCategoryWidth(maxChars: number): number {
@@ -161,6 +175,30 @@ describe("computeColumnLayout", () => {
         expect(layout.widthPxByKey.has("STOIIP")).toBe(false);
     });
 
+    test("a result group's leaves are widened so a long group label fits", () => {
+        const columnsConfig: TableColumnsConfig = {
+            ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
+            ASSOCIATEDGAS: {
+                label: "ASSOCIATEDGAS",
+                subHeading: { "ASSOCIATEDGAS-Mean": { label: "Mean", columnType: ColumnType.RESULT } },
+            },
+            STOIIP: {
+                label: "STOIIP",
+                subHeading: { "STOIIP-Mean": { label: "Mean", columnType: ColumnType.RESULT } },
+            },
+        };
+        const rows = [
+            { __id: "1", ZONE: "A", "ASSOCIATEDGAS-Mean": 1, "STOIIP-Mean": 2 },
+            { __id: "2", ZONE: "B", "ASSOCIATEDGAS-Mean": 3, "STOIIP-Mean": 4 },
+        ];
+
+        const widths = computeColumnWidths(columnsConfig, rows, formatPlain);
+
+        const required = Math.round("ASSOCIATEDGAS".length * CHAR_WIDTH_PX) + GROUP_HEADER_CHROME_PX;
+        expect(widths.widthPxByKey.get("ASSOCIATEDGAS-Mean")).toBeGreaterThanOrEqual(required);
+        expect(widths.widthPxByKey.get("STOIIP-Mean")).toBe(RESULT_COLUMN_WIDTH_PX);
+    });
+
     test("sticky offsets are cumulative and the last identifier column is the edge", () => {
         const layout = computeColumnLayout(
             makeStatisticalConfig(),
@@ -176,14 +214,15 @@ describe("computeColumnLayout", () => {
         expect(layout.lastPinnedKey).toBe("ZONE");
     });
 
-    test("nothing is pinned when identifier columns exceed half of the wrapper", () => {
+    test("pins the longest leading run of identifier columns that fits half the wrapper", () => {
         const wideLayout = computeColumnLayout(
             makeStatisticalConfig(),
             makeStatisticalRows(),
             formatPlain,
             WIDE_WRAPPER_PX,
         );
-        const pinnedWidth = (wideLayout.widthPxByKey.get("ENSEMBLE") ?? 0) + (wideLayout.widthPxByKey.get("ZONE") ?? 0);
+        const ensembleWidth = wideLayout.widthPxByKey.get("ENSEMBLE") ?? 0;
+        const pinnedWidth = ensembleWidth + (wideLayout.widthPxByKey.get("ZONE") ?? 0);
 
         const atLimit = computeColumnLayout(
             makeStatisticalConfig(),
@@ -193,27 +232,39 @@ describe("computeColumnLayout", () => {
         );
         expect(atLimit.lastPinnedKey).toBe("ZONE");
 
-        const narrow = computeColumnLayout(
+        const partial = computeColumnLayout(
             makeStatisticalConfig(),
             makeStatisticalRows(),
             formatPlain,
             pinnedWidth * 2 - 1,
         );
+        expect(partial.stickyLeftPxByKey).toEqual(new Map([["ENSEMBLE", 0]]));
+        expect(partial.lastPinnedKey).toBe("ENSEMBLE");
+
+        const narrow = computeColumnLayout(
+            makeStatisticalConfig(),
+            makeStatisticalRows(),
+            formatPlain,
+            ensembleWidth * 2 - 1,
+        );
         expect(narrow.stickyLeftPxByKey.size).toBe(0);
         expect(narrow.lastPinnedKey).toBeNull();
     });
 
-    test("total width equals the sum of the visible leaf widths", () => {
-        const layout = computeColumnLayout(
-            makeStatisticalConfig(),
-            makeStatisticalRows(),
-            formatPlain,
-            WIDE_WRAPPER_PX,
-        );
+    test("pinning is computed from the widths alone, so a resize does not rescan the rows", () => {
+        const rowsSeen: number[] = [];
+        const countingFormat = (value: string | number | null) => {
+            rowsSeen.push(1);
+            return formatPlain(value);
+        };
 
-        const sum = layout.visibleLeaves.reduce((acc, leaf) => acc + (layout.widthPxByKey.get(leaf.key) ?? 0), 0);
-        expect(layout.totalWidthPx).toBe(sum);
-        expect(layout.totalWidthPx).toBeGreaterThan(2 * RESULT_COLUMN_WIDTH_PX);
+        const widths = computeColumnWidths(makeStatisticalConfig(), makeStatisticalRows(), countingFormat);
+        const callsAfterWidths = rowsSeen.length;
+        expect(callsAfterWidths).toBeGreaterThan(0);
+
+        computeColumnPinning(widths, WIDE_WRAPPER_PX);
+        computeColumnPinning(widths, 1);
+        expect(rowsSeen.length).toBe(callsAfterWidths);
     });
 });
 
@@ -260,6 +311,20 @@ describe("sortStatisticsForDisplay", () => {
 
         expect(input).toEqual([InplaceVolumesStatistic_api.MAX, InplaceVolumesStatistic_api.MEAN]);
         expect(result).not.toBe(input);
+    });
+});
+
+describe("pruneHiddenColumnFilters", () => {
+    test("removes filters on columns that are not visible", () => {
+        const pruned = pruneHiddenColumnFilters({ ZONE: "Val", FLUID: "oil", REGION: null }, new Set(["ZONE"]));
+
+        expect(pruned).toEqual({ ZONE: "Val" });
+    });
+
+    test("returns the same object when every filtered column is visible", () => {
+        const filterState = { ZONE: "Val" };
+
+        expect(pruneHiddenColumnFilters(filterState, new Set(["ZONE", "FLUID"]))).toBe(filterState);
     });
 });
 
@@ -322,6 +387,35 @@ describe("applyTableSort", () => {
             "B:STOIIP",
             "A:BULK",
             "A:STOIIP",
+        ]);
+    });
+
+    test("explicit keys before the first scoped key keep priority over the implicit response grouping", () => {
+        const mixedRows: TableRow<TableColumnsConfig>[] = [
+            { __id: "1", ZONE: "A", RESPONSE: "BULK", Mean: 5 },
+            { __id: "2", ZONE: "A", RESPONSE: "BULK", Mean: 3 },
+            { __id: "3", ZONE: "A", RESPONSE: "STOIIP", Mean: 50 },
+            { __id: "4", ZONE: "A", RESPONSE: "STOIIP", Mean: 60 },
+            { __id: "5", ZONE: "B", RESPONSE: "BULK", Mean: 9 },
+            { __id: "6", ZONE: "B", RESPONSE: "STOIIP", Mean: 10 },
+            { __id: "7", ZONE: "B", RESPONSE: "STOIIP", Mean: 8 },
+        ];
+        const sortState = [
+            { columnKey: "ZONE", direction: SortDirection.DESC },
+            { columnKey: "Mean", direction: SortDirection.ASC },
+        ];
+
+        const sorted = applyTableSort(mixedRows, sortState, responseScope);
+
+        // ZONE first, then responses in first-seen order within each zone, then Mean within each response
+        expect(sorted.map((row) => `${row.ZONE}:${row.RESPONSE}:${row.Mean}`)).toEqual([
+            "B:BULK:9",
+            "B:STOIIP:8",
+            "B:STOIIP:10",
+            "A:BULK:3",
+            "A:BULK:5",
+            "A:STOIIP:50",
+            "A:STOIIP:60",
         ]);
     });
 

@@ -6,13 +6,13 @@ import {
     makeDeltaRealizationAlignmentWarnings,
     makeDeltaRealizationCountWarnings,
 } from "@modules/_shared/ensembleDeltaWarnings";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import {
     makeDroppedFluidSelectionWarnings,
     makeUnmatchedDeltaRowWarnings,
 } from "@modules/_shared/InplaceVolumes/deltaEnsembleWarnings";
 import { SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { FLUID_SPECIFIC_RESULT_NAMES, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import { filterAtom, isSensitivityEnsembleSelectionBlockedAtom } from "../atoms/baseAtoms";
 import { indicesWithValuesAtom, sensitivityCasesWithoutRealizationsAtom } from "../atoms/derivedAtoms";
@@ -34,7 +34,7 @@ export function useMakeViewStatusWriterMessages(
     const isSensitivityEnsembleSelectionBlocked = useAtomValue(isSensitivityEnsembleSelectionBlockedAtom);
     const sensitivityCasesWithoutRealizations = useAtomValue(sensitivityCasesWithoutRealizationsAtom);
 
-    usePropagateAllApiErrorsToStatusWriter(queriesResult.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(queriesResult.errors, statusWriter);
 
     if (isSensitivityEnsembleSelectionBlocked) {
         statusWriter.addError(SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE);

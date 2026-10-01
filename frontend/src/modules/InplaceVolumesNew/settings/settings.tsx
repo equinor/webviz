@@ -16,7 +16,6 @@ import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { HistogramType } from "@modules/_shared/histogram";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import {
     getSensitivityCaseOptions,
     SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE,
@@ -24,6 +23,7 @@ import {
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { FLUID_SPECIFIC_RESULT_NAMES, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType, plotTypeToStringMapping, type InplaceVolumesPlotOptions } from "../typesAndEnums";
@@ -80,7 +80,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [plotOptions, setPlotOptions] = useAtom(plotOptionsAtom);
     const [showTable, setShowTable] = useAtom(showTableAtom);
 
-    usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQueryResult.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(tableDefinitionsQueryResult.errors, statusWriter);
 
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
@@ -277,13 +277,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     {[PlotType.HISTOGRAM, PlotType.BAR, PlotType.BOX, PlotType.DISTRIBUTION].includes(
                         selectedPlotType,
                     ) && (
-                            <SwitchCompositions.WithLabel
-                                label="Show statistical markers"
-                                checked={plotOptions.showStatisticalMarkers}
-                                onCheckedChange={handleOptionChange("showStatisticalMarkers")}
-                                size="small"
-                            />
-                        )}
+                        <SwitchCompositions.WithLabel
+                            label="Show statistical markers"
+                            checked={plotOptions.showStatisticalMarkers}
+                            onCheckedChange={handleOptionChange("showStatisticalMarkers")}
+                            size="small"
+                        />
+                    )}
                     {[PlotType.HISTOGRAM, PlotType.DISTRIBUTION].includes(selectedPlotType) && (
                         <SwitchCompositions.WithLabel
                             label="Show statistical marker labels"
@@ -337,7 +337,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     ensembleSet={ensembleSet}
                     settingsContext={props.settingsContext}
                     workbenchSession={props.workbenchSession}
-                    workbenchServices={props.workbenchServices}
+                    syncSettingsService={props.syncSettingsService}
                     isPending={tableDefinitionsQueryResult.isLoading}
                     availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
                     availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}

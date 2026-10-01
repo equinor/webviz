@@ -7,12 +7,12 @@ import {
     makeDeltaRealizationAlignmentWarnings,
     makeDeltaRealizationCountWarnings,
 } from "@modules/_shared/ensembleDeltaWarnings";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import {
     makeDroppedFluidSelectionWarnings,
     makeUnmatchedDeltaRowWarnings,
 } from "@modules/_shared/InplaceVolumes/deltaEnsembleWarnings";
 import { SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import { filterAtom, isSensitivityEnsembleSelectionBlockedAtom, resultNamesAtom } from "../atoms/baseAtoms";
 import {
@@ -43,7 +43,7 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter, 
     const isSensitivityEnsembleSelectionBlocked = useAtomValue(isSensitivityEnsembleSelectionBlockedAtom);
     const sensitivityCasesWithoutRealizations = useAtomValue(sensitivityCasesWithoutRealizationsAtom);
 
-    usePropagateAllApiErrorsToStatusWriter(activeQueriesResult.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(activeQueriesResult.errors, statusWriter);
 
     if (isSensitivityEnsembleSelectionBlocked) {
         statusWriter.addError(SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE);

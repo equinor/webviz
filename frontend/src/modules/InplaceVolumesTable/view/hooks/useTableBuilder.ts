@@ -18,11 +18,13 @@ import {
 } from "../utils/tableComponentUtils";
 import { sortStatisticsForDisplay } from "../utils/tableLayoutUtils";
 
-export function useTableBuilder(): {
+type TableBuilderResult = {
     headings: TableColumnsConfig;
     tableRows: TableRow<TableColumnsConfig>[];
     sortScopeColumnKey?: string;
-} {
+};
+
+export function useTableBuilder(): TableBuilderResult {
     const tableType = useAtomValue(tableTypeAtom);
     const statisticOptions = useAtomValue(statisticOptionsAtom);
     const statisticsLayout = useAtomValue(statisticsLayoutAtom);

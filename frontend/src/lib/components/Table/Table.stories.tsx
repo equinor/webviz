@@ -421,9 +421,9 @@ export const PinnedColumns: Story = {
                 </Table.Head>
                 <Table.Body>
                     {range(0, 5)
-                        .flatMap(() => EXAMPLE_DATA)
-                        .map((datum, rowIndex) => (
-                            <Table.Row key={rowIndex} rowKey={String(rowIndex)}>
+                        .flatMap((copy) => EXAMPLE_DATA.map((datum) => ({ datum, rowKey: `${copy}-${datum.id}` })))
+                        .map(({ datum, rowKey }) => (
+                            <Table.Row key={rowKey} rowKey={rowKey}>
                                 <Table.Cell stickyLeftPx={0}>{datum.id}</Table.Cell>
                                 <Table.Cell stickyLeftPx={60} stickyEdge>
                                     {datum.name}
@@ -492,8 +492,8 @@ export const WithSortableList: Story = {
 };
 
 function ExampleTableDataRows(props: { data: readonly TExampleData[] }): React.ReactNode {
-    return props.data.map((datum, i) => (
-        <Table.Row rowKey={String(datum.id)} key={datum.id ?? i}>
+    return props.data.map((datum) => (
+        <Table.Row rowKey={String(datum.id)} key={datum.id}>
             {Object.values(datum).map((v) => (
                 <Table.Cell key={v}>{v}</Table.Cell>
             ))}

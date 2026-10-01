@@ -136,4 +136,10 @@ describe("buildCsvRowsFromTable", () => {
         expect(csvRows.dataRows).toEqual([['Valysar, "East"']]);
         expect(convertRowsToCsvContentString(csvRows)).toBe('ZONE\n"Valysar, ""East"""');
     });
+
+    test("no leaf columns: returns an empty headerRows array, stays total", () => {
+        const csvRows = buildCsvRowsFromTable({}, [], ensembleSet);
+
+        expect(csvRows).toEqual({ headerRows: [], dataRows: [] });
+    });
 });

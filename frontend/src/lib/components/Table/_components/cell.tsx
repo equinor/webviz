@@ -80,7 +80,7 @@ export const Cell = React.forwardRef<HTMLTableCellElement, TableCellProps>(funct
                     relative: !isSticky,
                     "sticky z-[1]": isSticky,
                     "bg-neutral-canvas": isSticky && sectionContext !== "body",
-                    "bg-surface group-hover/row:bg-neutral-hover group-data-selected/row:bg-accent-strong":
+                    "bg-surface group-hover/row:bg-neutral-hover group-data-selected/row:bg-accent-strong group-data-selected/row:group-hover/row:bg-accent-strong-hover":
                         isSticky && sectionContext === "body",
                     "border-r": props.stickyEdge,
                     "truncate overflow-hidden": rootContext.fixed,

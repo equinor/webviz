@@ -196,6 +196,11 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
 
 export const RESPONSE_COLUMN_KEY = "RESPONSE";
 
+/** Row key for a statistic column in the responses-as-rows layout; distinct from any selector column name. */
+export function makeStatisticColumnKey(statisticLabel: string): string {
+    return `STATISTIC:${statisticLabel}`;
+}
+
 /**
  * Long-format statistical table: identifier columns, then RESPONSE, then one column per statistic.
  * Each base row is repeated once per response, in `sortResultNameStrings` order.
@@ -225,13 +230,13 @@ export function createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData(
     tableHeadings[RESPONSE_COLUMN_KEY] = { label: RESPONSE_COLUMN_KEY, columnType: ColumnType.INDEX };
 
     const statisticLabels = orderedStatistics.map((statistic) => InplaceVolumesStatisticEnumToStringMapping[statistic]);
-    for (const statisticLabel of statisticLabels) {
-        tableHeadings[statisticLabel] = {
+    const statisticKeys = statisticLabels.map(makeStatisticColumnKey);
+    statisticLabels.forEach((statisticLabel, index) => {
+        tableHeadings[statisticKeys[index]] = {
             label: statisticLabel,
             columnType: ColumnType.RESULT,
-            hoverText: statisticLabel,
         };
-    }
+    });
 
     const baseRows = new Table(columnData.nonStatisticalColumns).getRows();
     const numberOfRows = baseRows.length;
@@ -258,7 +263,7 @@ export function createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData(
             const row: TableRow<any> = { __id: v4(), ...baseRows[i], [RESPONSE_COLUMN_KEY]: resultName };
             orderedStatistics.forEach((statistic, index) => {
                 const column = statisticalColumns[statistic];
-                row[statisticLabels[index]] = hasRows && column ? (column.getRowValue(i) ?? null) : null;
+                row[statisticKeys[index]] = hasRows && column ? (column.getRowValue(i) ?? null) : null;
             });
             tableRows.push(row);
         }

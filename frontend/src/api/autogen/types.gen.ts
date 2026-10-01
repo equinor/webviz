@@ -1230,6 +1230,7 @@ export enum PolygonsAttributeType_api {
     SUBCROP = "subcrop",
     FAULT_LINES = "fault_lines",
     NAMED_AREA = "named_area",
+    REGIONS = "regions",
 }
 
 /**

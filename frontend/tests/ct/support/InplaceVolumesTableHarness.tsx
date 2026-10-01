@@ -25,7 +25,7 @@ export function InplaceVolumesTableHarness(props: InplaceVolumesTableHarnessProp
         const content = convertRowsToCsvContentString(csvRows);
         const modeSuffix = props.mode === "realization" ? "Realizations" : "Statistics";
         const filename = createTimestampedFilename(`InplaceVolumesTable_${modeSuffix}`, "csv");
-        downloadTextFile(content, filename, "text/csv;charset=utf-8");
+        downloadTextFile({ filename, content }, "text/csv;charset=utf-8");
     }
 
     return (

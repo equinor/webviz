@@ -51,6 +51,30 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
+    // A dashboard switch ends any data channel interaction. The listener effect further down only
+    // unsubscribes on a switch, so a drag or edit started on the previous dashboard would stay drawn.
+    // Hence, the state is reset here whenever the dashboard changes.
+    const [prevDashboard, setPrevDashboard] = React.useState(dashboard);
+    if (dashboard !== prevDashboard) {
+        setPrevDashboard(dashboard);
+        setVisible(false);
+        setHighlightedDataChannelConnection(null);
+        setEditDataChannelConnectionsForModuleInstanceId(null);
+    }
+
+    const prevDashboardRef = React.useRef(dashboard);
+    React.useEffect(
+        function resetGlobalDataChannelStateOnDashboardSwitch() {
+            if (prevDashboardRef.current === dashboard) {
+                return;
+            }
+            prevDashboardRef.current = dashboard;
+            guiMessageBroker.setState(GuiState.DataChannelConnectionLayerVisible, false);
+            guiMessageBroker.setState(GuiState.EditDataChannelConnections, false);
+        },
+        [dashboard, guiMessageBroker],
+    );
+
     React.useEffect(() => {
         let localMousePressed = false;
         let localCurrentOriginPoint: Vec2 = { x: 0, y: 0 };
@@ -165,10 +189,12 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         }
 
         function addDraggingEventListeners() {
+            /* eslint-disable @eslint-react/web-api-no-leaked-event-listener -- false positive; removed in removeDraggingEventListeners */
             document.addEventListener("pointerup", handlePointerUp);
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("pointercancel", handlePointerUp);
             document.addEventListener("blur-sm", handlePointerUp);
+            /* eslint-enable @eslint-react/web-api-no-leaked-event-listener */
         }
 
         function removeDraggingEventListeners() {

@@ -17,6 +17,8 @@ export function useIsDocumentVisible(): boolean {
 
     React.useEffect(function subscribeToDocumentVisibilityEffect() {
         function onVisibilityChange() {
+            // State is tracking a DOM element, so we accept set-state here
+            // eslint-disable-next-line @eslint-react/set-state-in-effect
             setVisible(getIsDocumentVisible());
         }
 

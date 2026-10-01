@@ -144,9 +144,8 @@ export class PvtPlotBuilder {
 
         const colors = this.makeColorsArray(colorBy, colorSet, pvtNums.length, tableCollections.length);
 
-        let pvtNumIndex = 0;
         for (const [collectionIndex, tableCollection] of tableCollections.entries()) {
-            pvtNumIndex = 0;
+            let pvtNumIndex = 0;
             for (const table of tableCollection.tables) {
                 if (pvtNums.includes(table.pvtnum) && phase === table.phase) {
                     const groupedTracesMaps = new Map<PressureDependentVariable, Map<number, TracePointData[]>>();
@@ -258,7 +257,7 @@ export class PvtPlotBuilder {
                             ((colorBy === GroupBy.PVT_NUM && collectionIndex === 0) ||
                                 (colorBy === GroupBy.ENSEMBLE && pvtNumIndex === 0))
                         ) {
-                            let traceLegendName = "";
+                            let traceLegendName;
                             if (colorBy === GroupBy.PVT_NUM) {
                                 traceLegendName = `PVTNum - ${table.pvtnum.toString()}`;
                             } else {

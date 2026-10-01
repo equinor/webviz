@@ -16,8 +16,14 @@ import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 
 import type { TableColumnsConfig, TableHeading, TableRow } from "../types";
 import { collectLeafColumns, formatEnsembleIdent, isValidFluidType } from "../utils/tableComponentUtils";
-import type { ColumnLayout, SortScope } from "../utils/tableLayoutUtils";
-import { applyTableSort, CATEGORY_COLUMN_MAX_WIDTH_PX, computeColumnLayout } from "../utils/tableLayoutUtils";
+import type { ColumnLayout, FilterState, SortScope } from "../utils/tableLayoutUtils";
+import {
+    applyTableSort,
+    CATEGORY_COLUMN_MAX_WIDTH_PX,
+    computeColumnPinning,
+    computeColumnWidths,
+    pruneHiddenColumnFilters,
+} from "../utils/tableLayoutUtils";
 
 export type InplaceVolumesTableProps = {
     ensembleSet: EnsembleSet;
@@ -37,7 +43,7 @@ const FILTER_DEBOUNCE_TIME_MS = 250;
 
 export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.ReactNode {
     const [tableSortState, setTableSortState] = React.useState<TableSortState[]>([]);
-    const [tableFilterState, setTableFilterState] = React.useState<{ [columnKey: string]: string | null }>({});
+    const [tableFilterState, setTableFilterState] = React.useState<FilterState>({});
 
     const tableWrapperRef = React.useRef<HTMLDivElement>(null);
     const { width: tableWrapperWidthPx } = useElementSize(tableWrapperRef);
@@ -51,24 +57,42 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
     );
 
     // Constant columns are detected on the unfiltered rows, so typing a filter never hides a column
-    const layout = React.useMemo(
-        () => computeColumnLayout(props.columnsConfig, props.rows, formatDisplayValue, tableWrapperWidthPx),
-        [props.columnsConfig, props.rows, formatDisplayValue, tableWrapperWidthPx],
+    const columnWidths = React.useMemo(
+        () => computeColumnWidths(props.columnsConfig, props.rows, formatDisplayValue),
+        [props.columnsConfig, props.rows, formatDisplayValue],
+    );
+
+    // Pinning is the only part of the layout that depends on the wrapper width, so resizing does not rescan the rows
+    const columnPinning = React.useMemo(
+        () => computeColumnPinning(columnWidths, tableWrapperWidthPx),
+        [columnWidths, tableWrapperWidthPx],
+    );
+
+    const layout = React.useMemo<ColumnLayout>(
+        () => ({ ...columnWidths, ...columnPinning }),
+        [columnWidths, columnPinning],
     );
 
     const visibleLeafKeys = React.useMemo(
-        () => new Set(layout.visibleLeaves.map((leaf) => leaf.key)),
-        [layout.visibleLeaves],
+        () => new Set(columnWidths.visibleLeaves.map((leaf) => leaf.key)),
+        [columnWidths.visibleLeaves],
     );
+
+    // Filters on columns that become hidden (constant, or gone after a layout switch) are dropped, not kept invisibly
+    const [prevVisibleLeafKeys, setPrevVisibleLeafKeys] = React.useState(visibleLeafKeys);
+    if (prevVisibleLeafKeys !== visibleLeafKeys) {
+        setPrevVisibleLeafKeys(visibleLeafKeys);
+        setTableFilterState((prev) => pruneHiddenColumnFilters(prev, visibleLeafKeys));
+    }
 
     const sortScope = React.useMemo<SortScope | undefined>(() => {
         if (props.sortScopeColumnKey === undefined) return undefined;
 
-        const resultLeafKeys = layout.visibleLeaves
+        const resultLeafKeys = columnWidths.visibleLeaves
             .filter((leaf) => leaf.heading.columnType === ColumnType.RESULT)
             .map((leaf) => leaf.key);
         return { columnKey: props.sortScopeColumnKey, scopedColumnKeys: new Set(resultLeafKeys) };
-    }, [props.sortScopeColumnKey, layout.visibleLeaves]);
+    }, [props.sortScopeColumnKey, columnWidths.visibleLeaves]);
 
     const tableColumns = React.useMemo(() => {
         function renderColumnRecursive(
@@ -117,9 +141,7 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
     }, [props.columnsConfig, layout]);
 
     const collatedRows = React.useMemo(() => {
-        const activeFilters = Object.entries(tableFilterState).filter(
-            ([columnKey, filterValue]) => filterValue && visibleLeafKeys.has(columnKey),
-        );
+        const activeFilters = Object.entries(tableFilterState).filter(([, filterValue]) => filterValue);
 
         const filteredRows = props.rows.filter((row) => {
             return activeFilters.every(([columnKey, filterValue]) => {
@@ -133,16 +155,14 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
         });
 
         return applyTableSort(filteredRows, tableSortState, sortScope);
-    }, [tableFilterState, visibleLeafKeys, props.rows, tableSortState, sortScope]);
+    }, [tableFilterState, props.rows, tableSortState, sortScope]);
 
     const hasExportableColumns = React.useMemo(
         () => collectLeafColumns(props.columnsConfig).length > 0,
         [props.columnsConfig],
     );
     const isDownloadDisabled = !props.onDownload || collatedRows.length === 0 || !hasExportableColumns;
-    const hasActiveFilters = Object.entries(tableFilterState).some(
-        ([columnKey, v]) => v !== null && v !== "" && visibleLeafKeys.has(columnKey),
-    );
+    const hasActiveFilters = Object.values(tableFilterState).some((v) => v !== null && v !== "");
     const constantColumnsCaption = layout.constantColumns
         .map((column) => `${column.label}: ${column.displayValue}`)
         .join(" · ");
@@ -150,8 +170,8 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
     return (
         <div className="flex h-full min-h-0 flex-col">
             <div className="gap-x-3xs px-3xs py-3xs flex shrink-0 items-center justify-between">
-                <div className="gap-x-3xs text-body-sm text-neutral-subtle flex min-w-0 items-center">
-                    <span aria-live="polite" className="shrink-0">
+                <div className="gap-x-3xs text-body-sm text-neutral-subtle flex items-center">
+                    <span aria-live="polite">
                         {hasActiveFilters
                             ? `${collatedRows.length} of ${props.rows.length} rows`
                             : `${props.rows.length} rows`}
@@ -164,25 +184,21 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
                     >
                         Clear filters
                     </Button>
-                    {constantColumnsCaption && (
-                        <span
-                            className="text-body-sm text-neutral-subtle min-w-0 truncate"
-                            title={constantColumnsCaption}
-                        >
-                            {constantColumnsCaption}
-                        </span>
-                    )}
                 </div>
                 <Button
                     variant="outlined"
                     icon={<Download fontSize="inherit" />}
                     disabled={isDownloadDisabled}
                     onClick={() => props.onDownload?.(collatedRows)}
-                    size="small"
                 >
                     Download CSV
                 </Button>
             </div>
+            {constantColumnsCaption && (
+                <p className="px-3xs pb-3xs text-body-sm text-neutral-subtle shrink-0 break-words">
+                    {constantColumnsCaption}
+                </p>
+            )}
             <div ref={tableWrapperRef} className="min-h-0 grow">
                 <Table.Root
                     height="100%"
@@ -385,7 +401,7 @@ function TableCellComp(props: {
         return (
             <Table.Cell {...cellProps}>
                 <span style={{ color: isValidFluidType(fluidType) ? PHASE_COLORS[fluidType] : undefined }}>
-                    {props.value}
+                    {props.displayValue}
                 </span>
             </Table.Cell>
         );
@@ -399,9 +415,5 @@ function TableCellComp(props: {
         );
     }
 
-    if (props.columnType === ColumnType.ENSEMBLE) {
-        return <Table.Cell {...cellProps}>{props.displayValue}</Table.Cell>;
-    }
-
-    return <Table.Cell {...cellProps}>{props.value}</Table.Cell>;
+    return <Table.Cell {...cellProps}>{props.displayValue}</Table.Cell>;
 }

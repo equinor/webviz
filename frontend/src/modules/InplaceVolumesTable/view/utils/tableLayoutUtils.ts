@@ -14,6 +14,7 @@ export const CHAR_WIDTH_PX = 8.5;
 export const CATEGORY_COLUMN_CHROME_PX = 60;
 export const CATEGORY_COLUMN_MIN_WIDTH_PX = 72;
 export const CATEGORY_COLUMN_MAX_WIDTH_PX = 280;
+export const GROUP_HEADER_CHROME_PX = 28;
 export const MAX_PINNED_WIDTH_FRACTION = 0.5;
 
 const STATISTICS_DISPLAY_ORDER: readonly InplaceVolumesStatistic_api[] = [
@@ -27,17 +28,21 @@ const STATISTICS_DISPLAY_ORDER: readonly InplaceVolumesStatistic_api[] = [
 
 export type ConstantColumn = { key: string; label: string; displayValue: string };
 
-export type ColumnLayout = {
+export type ColumnWidths = {
     /** Visible leaf columns in on-screen order */
     visibleLeaves: LeafColumn[];
     /** Hidden constant columns with their single display value, in on-screen order */
     constantColumns: ConstantColumn[];
     widthPxByKey: Map<string, number>;
+};
+
+export type ColumnPinning = {
     /** Present only for pinned leaf keys */
     stickyLeftPxByKey: Map<string, number>;
     lastPinnedKey: string | null;
-    totalWidthPx: number;
 };
+
+export type ColumnLayout = ColumnWidths & ColumnPinning;
 
 function isResultLeaf(leaf: LeafColumn): boolean {
     return leaf.heading.columnType === ColumnType.RESULT;
@@ -48,12 +53,12 @@ function computeCategoryColumnWidthPx(maxChars: number): number {
     return Math.min(Math.max(width, CATEGORY_COLUMN_MIN_WIDTH_PX), CATEGORY_COLUMN_MAX_WIDTH_PX);
 }
 
-export function computeColumnLayout(
+/** Decides which leaf columns are shown and how wide they are. Depends on the data only, not on the viewport. */
+export function computeColumnWidths(
     columnsConfig: TableColumnsConfig,
     unfilteredRows: TableRow<TableColumnsConfig>[],
     formatDisplayValue: (value: string | number | null, heading: TableHeading) => string,
-    wrapperWidthPx: number,
-): ColumnLayout {
+): ColumnWidths {
     const visibleLeaves: LeafColumn[] = [];
     const constantColumns: ConstantColumn[] = [];
     const widthPxByKey = new Map<string, number>();
@@ -83,10 +88,31 @@ export function computeColumnLayout(
         widthPxByKey.set(leaf.key, computeCategoryColumnWidthPx(maxChars));
     }
 
-    let totalWidthPx = 0;
-    for (const leaf of visibleLeaves) {
-        totalWidthPx += widthPxByKey.get(leaf.key) ?? 0;
+    // A group header (e.g. a long result name over a single statistic) must not be narrower than its label
+    for (const [groupKey, groupHeading] of Object.entries(columnsConfig)) {
+        if (!groupHeading.subHeading) continue;
+
+        const groupLeafKeys = collectLeafColumns({ [groupKey]: groupHeading })
+            .map((leaf) => leaf.key)
+            .filter((key) => widthPxByKey.has(key));
+        if (groupLeafKeys.length === 0) continue;
+
+        const requiredWidthPx = Math.round(groupHeading.label.length * CHAR_WIDTH_PX) + GROUP_HEADER_CHROME_PX;
+        const currentWidthPx = groupLeafKeys.reduce((sum, key) => sum + (widthPxByKey.get(key) ?? 0), 0);
+        if (currentWidthPx >= requiredWidthPx) continue;
+
+        const extraPerLeafPx = Math.ceil((requiredWidthPx - currentWidthPx) / groupLeafKeys.length);
+        for (const key of groupLeafKeys) {
+            widthPxByKey.set(key, (widthPxByKey.get(key) ?? 0) + extraPerLeafPx);
+        }
     }
+
+    return { visibleLeaves, constantColumns, widthPxByKey };
+}
+
+/** Pins the leading identifier columns that fit within half the wrapper width. */
+export function computeColumnPinning(columnWidths: ColumnWidths, wrapperWidthPx: number): ColumnPinning {
+    const { visibleLeaves, widthPxByKey } = columnWidths;
 
     // Only a leading run of identifier columns can be pinned with cumulative offsets
     const pinnableLeaves: LeafColumn[] = [];
@@ -98,17 +124,33 @@ export function computeColumnLayout(
     const stickyLeftPxByKey = new Map<string, number>();
     let lastPinnedKey: string | null = null;
 
-    const pinnedWidthPx = pinnableLeaves.reduce((sum, leaf) => sum + (widthPxByKey.get(leaf.key) ?? 0), 0);
-    if (pinnableLeaves.length > 0 && pinnedWidthPx <= wrapperWidthPx * MAX_PINNED_WIDTH_FRACTION) {
-        let offsetPx = 0;
-        for (const leaf of pinnableLeaves) {
-            stickyLeftPxByKey.set(leaf.key, offsetPx);
-            offsetPx += widthPxByKey.get(leaf.key) ?? 0;
-        }
-        lastPinnedKey = pinnableLeaves[pinnableLeaves.length - 1].key;
+    const maxPinnedWidthPx = wrapperWidthPx * MAX_PINNED_WIDTH_FRACTION;
+    let offsetPx = 0;
+    for (const leaf of pinnableLeaves) {
+        const widthPx = widthPxByKey.get(leaf.key) ?? 0;
+        if (offsetPx + widthPx > maxPinnedWidthPx) break;
+
+        stickyLeftPxByKey.set(leaf.key, offsetPx);
+        lastPinnedKey = leaf.key;
+        offsetPx += widthPx;
     }
 
-    return { visibleLeaves, constantColumns, widthPxByKey, stickyLeftPxByKey, lastPinnedKey, totalWidthPx };
+    return { stickyLeftPxByKey, lastPinnedKey };
+}
+
+export type FilterState = { [columnKey: string]: string | null };
+
+/** Removes filters on columns that are not visible; returns the same object when nothing is removed. */
+export function pruneHiddenColumnFilters(
+    filterState: FilterState,
+    visibleColumnKeys: ReadonlySet<string>,
+): FilterState {
+    const hiddenKeys = Object.keys(filterState).filter((key) => !visibleColumnKeys.has(key));
+    if (hiddenKeys.length === 0) return filterState;
+
+    const pruned = { ...filterState };
+    for (const key of hiddenKeys) delete pruned[key];
+    return pruned;
 }
 
 export function sortStatisticsForDisplay(statistics: InplaceVolumesStatistic_api[]): InplaceVolumesStatistic_api[] {
@@ -123,7 +165,8 @@ export type SortScope = {
 
 /**
  * Sorts rows by the table sort state. With a `sortScope`, a sort that includes a scoped column but not the
- * scope column itself is applied within each scope value, keeping those values in first-seen order.
+ * scope column itself is applied within each scope value, keeping those values in first-seen order. The implicit
+ * scope key is inserted just before the first scoped sort key, so explicit keys sorted earlier keep their priority.
  */
 export function applyTableSort<TRow extends TableRow<TableColumnsConfig>>(
     rows: TRow[],
@@ -133,9 +176,11 @@ export function applyTableSort<TRow extends TableRow<TableColumnsConfig>>(
     const iteratees: (string | ((row: TRow) => number))[] = sortState.map((s) => s.columnKey);
     const orders = sortState.map((s) => s.direction as "asc" | "desc");
 
+    const firstScopedIndex =
+        sortScope === undefined ? -1 : sortState.findIndex((s) => sortScope.scopedColumnKeys.has(s.columnKey));
     const isScoped =
         sortScope !== undefined &&
-        sortState.some((s) => sortScope.scopedColumnKeys.has(s.columnKey)) &&
+        firstScopedIndex !== -1 &&
         !sortState.some((s) => s.columnKey === sortScope.columnKey);
 
     if (isScoped) {
@@ -145,8 +190,8 @@ export function applyTableSort<TRow extends TableRow<TableColumnsConfig>>(
             const value = row[scopeKey];
             if (!positions.has(value)) positions.set(value, positions.size);
         }
-        iteratees.unshift((row) => positions.get(row[scopeKey]) ?? Number.MAX_SAFE_INTEGER);
-        orders.unshift("asc");
+        iteratees.splice(firstScopedIndex, 0, (row) => positions.get(row[scopeKey]) ?? Number.MAX_SAFE_INTEGER);
+        orders.splice(firstScopedIndex, 0, "asc");
     }
 
     return orderBy(rows, iteratees, orders);

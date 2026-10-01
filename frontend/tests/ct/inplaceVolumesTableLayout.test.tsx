@@ -70,6 +70,25 @@ test.describe("InplaceVolumesTable layout", () => {
         expect(truncatedValues).toEqual([]);
     });
 
+    test("a long result group header over a single statistic is not truncated", async ({ mount }) => {
+        const longResultNames = ["ASSOCIATEDGAS", "ASSOCIATEDOIL", "STOIIP_TOTAL", "STOIIP"];
+        const { columnsConfig, rows } = makeWideStatisticalFixture(NUM_ROWS, longResultNames, ["Mean"]);
+        const cmp = await mount(
+            <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />,
+        );
+        await expect(cmp.getByText("ASSOCIATEDGAS")).toBeVisible();
+
+        // Group headers are the non-sortable header cells
+        const truncatedGroupHeaders = await cmp
+            .locator("thead th:not([role])")
+            .evaluateAll((cells) =>
+                cells
+                    .filter((cell) => cell.scrollWidth > cell.clientWidth)
+                    .map((cell) => `${cell.childNodes[0]?.textContent}: ${cell.scrollWidth} > ${cell.clientWidth}`),
+            );
+        expect(truncatedGroupHeaders).toEqual([]);
+    });
+
     test("identifier columns stay pinned while scrolling horizontally", async ({ mount }) => {
         const { columnsConfig, rows } = makeWideStatisticalFixture(NUM_ROWS, FOUR_RESULT_NAMES, ALL_STATISTIC_LABELS);
         const cmp = await mount(
@@ -101,7 +120,7 @@ test.describe("InplaceVolumesTable layout", () => {
         expect(resultHeaderAfter?.x ?? NaN).toBeLessThan(resultHeaderBefore?.x ?? NaN);
     });
 
-    test("few statistics fit without horizontal scroll", async ({ mount }) => {
+    test("few statistics fit without horizontal scroll and pinned columns do not overlap", async ({ mount }) => {
         const { columnsConfig, rows } = makeWideStatisticalFixture(NUM_ROWS, ["STOIIP"], ["Mean", "P10", "P90"]);
         const cmp = await mount(
             <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />,
@@ -114,6 +133,17 @@ test.describe("InplaceVolumesTable layout", () => {
             .evaluate((el) => ({ scrollWidth: el.scrollWidth, clientWidth: el.clientWidth }));
 
         expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+
+        // The stretched table renders pinned columns wider than requested; sticky offsets must not pull the
+        // second pinned column back over the first
+        const tableNameHeaderLocator = cmp.getByRole("button", { name: "TABLE_NAME" });
+        const declaredTableNameWidth = Number(await tableNameHeaderLocator.getAttribute("width"));
+        const tableNameHeader = await tableNameHeaderLocator.boundingBox();
+        const zoneHeader = await cmp.getByRole("button", { name: "ZONE" }).boundingBox();
+        expect(tableNameHeader).not.toBeNull();
+        expect(zoneHeader).not.toBeNull();
+        expect(tableNameHeader!.width).toBeGreaterThan(declaredTableNameWidth + 1);
+        expect(zoneHeader!.x).toBeGreaterThanOrEqual(tableNameHeader!.x + tableNameHeader!.width - 1);
     });
 
     test("constant columns are summarised above the table but still exported", async ({ mount, page }) => {
@@ -136,6 +166,29 @@ test.describe("InplaceVolumesTable layout", () => {
         expect(content.split("\n")[0].startsWith("ENSEMBLE,TABLE_NAME,FLUID,ZONE,")).toBe(true);
     });
 
+    test("the constant-columns caption wraps instead of truncating on narrow modules", async ({ mount, page }) => {
+        await page.setViewportSize({ width: 240, height: 800 });
+        const { columnsConfig, rows } = makeWideStatisticalFixture(NUM_ROWS, ["STOIIP"], ["Mean", "P10", "P90"]);
+        const cmp = await mount(
+            <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />,
+        );
+
+        const caption = cmp.getByText("ENSEMBLE: ens1");
+        await expect(caption).toBeVisible();
+        await expect(caption).toContainText("FLUID: gas + oil + water");
+
+        const { isClipped, heightInFontSizes } = await caption.evaluate((el) => {
+            const fontSizePx = parseFloat(getComputedStyle(el).fontSize);
+            return {
+                isClipped: el.scrollWidth > el.clientWidth,
+                heightInFontSizes: el.getBoundingClientRect().height / fontSizePx,
+            };
+        });
+        expect(isClipped).toBe(false);
+        // A single line is roughly 1.2–1.6 font-sizes tall; two or more lines are clearly above that
+        expect(heightInFontSizes).toBeGreaterThan(2);
+    });
+
     test("only visible identifier columns have a filter input", async ({ mount }) => {
         const { columnsConfig, rows } = makeWideStatisticalFixture(NUM_ROWS, FOUR_RESULT_NAMES, ALL_STATISTIC_LABELS);
         const cmp = await mount(
@@ -145,6 +198,27 @@ test.describe("InplaceVolumesTable layout", () => {
         await expect(cmp.getByLabel(/^Filter /)).toHaveCount(2);
         await expect(cmp.getByLabel("Filter TABLE_NAME")).toBeVisible();
         await expect(cmp.getByLabel("Filter ZONE")).toBeVisible();
+    });
+
+    test("a filter on a column that becomes hidden is dropped", async ({ mount }) => {
+        const { columnsConfig, rows } = makeWideStatisticalFixture(NUM_ROWS, ["STOIIP"], ["Mean"]);
+        const cmp = await mount(
+            <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />,
+        );
+
+        await cmp.getByLabel("Filter ZONE").fill("Valysar");
+        await expect(cmp.getByText(`4 of ${NUM_ROWS} rows`)).toBeVisible();
+
+        const constantZoneRows = rows.map((row) => ({ ...row, ZONE: "Valysar" }));
+        await cmp.update(
+            <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={constantZoneRows} />,
+        );
+        await expect(cmp.getByLabel("Filter ZONE")).toHaveCount(0);
+        await expect(cmp.getByText(`${NUM_ROWS} rows`, { exact: true })).toBeVisible();
+
+        await cmp.update(<InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />);
+        await expect(cmp.getByLabel("Filter ZONE")).toHaveValue("");
+        await expect(cmp.getByText(`${NUM_ROWS} rows`, { exact: true })).toBeVisible();
     });
 
     test("statistic headers follow the fixture order", async ({ mount }) => {

@@ -80,6 +80,7 @@ export function createWellboreLayerItems(
         layerItems.push(createCasingLayerItem(wellboreCasingData, intersectionReferenceSystem, casingLayerOrder));
     }
     if (intersectionReferenceSystem) {
+        // eslint-disable-next-line no-useless-assignment -- We allow this for increments
         const pathLayerOrder = newLayerOrder++;
         layerItems.push(createWellborePathLayerItem(intersectionReferenceSystem, pathLayerOrder, pathStroke));
     }

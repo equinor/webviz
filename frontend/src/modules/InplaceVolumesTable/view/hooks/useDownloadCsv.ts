@@ -24,6 +24,7 @@ export function useDownloadCsv(
     return React.useCallback(
         function handleDownloadCsv(rows: TableRow<TableColumnsConfig>[]) {
             if (rows.length === 0 || collectLeafColumns(columnsConfig).length === 0) {
+                toastManager.add({ title: "No data available for download", type: "default", timeout: 3000 });
                 return;
             }
 
@@ -34,7 +35,7 @@ export function useDownloadCsv(
                 const modeSuffix = tableType === TableType.PER_REALIZATION ? "Realizations" : "Statistics";
                 const filename = createTimestampedFilename(`InplaceVolumesTable_${modeSuffix}`, "csv");
 
-                downloadTextFile(content, filename, "text/csv;charset=utf-8");
+                downloadTextFile({ filename, content }, "text/csv;charset=utf-8");
 
                 toastManager.add({ title: filename, type: "success", timeout: 3000 });
 

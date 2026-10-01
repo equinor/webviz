@@ -8,11 +8,15 @@ import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 import type { InplaceVolumesStatisticalTableData } from "@modules/_shared/InplaceVolumes/types";
 import {
     createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData,
+    makeStatisticColumnKey,
     sortTableRowsByCategoryOrder,
 } from "@modules/InplaceVolumesTable/view/utils/tableComponentUtils";
 
 const ENSEMBLE_IDENT = new RegularEnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1");
 const STATISTICS = [InplaceVolumesStatistic_api.MEAN, InplaceVolumesStatistic_api.P10, InplaceVolumesStatistic_api.MAX];
+const MEAN_KEY = makeStatisticColumnKey("Mean");
+const P10_KEY = makeStatisticColumnKey("P10");
+const MAX_KEY = makeStatisticColumnKey("Max");
 
 function makeFluidTable(
     fluidSelection: string,
@@ -54,13 +58,13 @@ describe("createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData", () => 
             "FLUID",
             "ZONE",
             "RESPONSE",
-            "Mean",
-            "P10",
-            "Max",
+            MEAN_KEY,
+            P10_KEY,
+            MAX_KEY,
         ]);
         expect(headings.RESPONSE).toEqual({ label: "RESPONSE", columnType: ColumnType.INDEX });
-        expect(headings.Mean).toEqual({ label: "Mean", columnType: ColumnType.RESULT, hoverText: "Mean" });
-        expect(headings.Mean.subHeading).toBeUndefined();
+        expect(headings[MEAN_KEY]).toEqual({ label: "Mean", columnType: ColumnType.RESULT });
+        expect(headings[MEAN_KEY].subHeading).toBeUndefined();
     });
 
     test("emits one row per base row and response, in result order", () => {
@@ -75,10 +79,10 @@ describe("createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData", () => 
         const { rows } = createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData(tablesData, STATISTICS);
 
         const oilZoneBBulk = rows.find((row) => row.FLUID === "oil" && row.ZONE === "B" && row.RESPONSE === "BULK");
-        expect(oilZoneBBulk).toMatchObject({ Mean: 200, P10: 201, Max: 202 });
+        expect(oilZoneBBulk).toMatchObject({ [MEAN_KEY]: 200, [P10_KEY]: 201, [MAX_KEY]: 202 });
 
         const gasZoneAGiip = rows.find((row) => row.FLUID === "gas" && row.ZONE === "A" && row.RESPONSE === "GIIP");
-        expect(gasZoneAGiip).toMatchObject({ Mean: 30, P10: 31, Max: 32 });
+        expect(gasZoneAGiip).toMatchObject({ [MEAN_KEY]: 30, [P10_KEY]: 31, [MAX_KEY]: 32 });
     });
 
     test("missing statistics are null, not absent", () => {
@@ -87,10 +91,26 @@ describe("createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData", () => 
         const gasStoiip = rows.filter((row) => row.FLUID === "gas" && row.RESPONSE === "STOIIP");
         expect(gasStoiip).toHaveLength(2);
         for (const row of gasStoiip) {
-            expect(row).toHaveProperty("Mean", null);
-            expect(row).toHaveProperty("P10", null);
-            expect(row).toHaveProperty("Max", null);
+            expect(row).toHaveProperty([MEAN_KEY], null);
+            expect(row).toHaveProperty([P10_KEY], null);
+            expect(row).toHaveProperty([MAX_KEY], null);
         }
+    });
+
+    test("a selector column named like a statistic keeps its values", () => {
+        const collidingTablesData = makeTablesData([makeFluidTable("oil", ["A", "B"], { STOIIP: [1, 2] }, "Mean")]);
+
+        const { headings, rows } = createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData(
+            collidingTablesData,
+            STATISTICS,
+        );
+
+        expect(headings.Mean).toEqual({ label: "Mean", columnType: ColumnType.INDEX });
+        expect(headings[MEAN_KEY]).toMatchObject({ label: "Mean", columnType: ColumnType.RESULT });
+        expect(rows.map((row) => [row.Mean, row[MEAN_KEY]])).toEqual([
+            ["A", 1],
+            ["B", 2],
+        ]);
     });
 
     test("throws when an identifier column is already named RESPONSE", () => {

@@ -1,7 +1,5 @@
 import React from "react";
 
-import { isEqual } from "lodash-es";
-
 import type { EnsembleSet } from "@framework/EnsembleSet";
 
 import {
@@ -28,7 +26,6 @@ export type UseEnsembleStateSyncResult = {
  * Manages selected regular/delta ensembles and selectable ensembles for delta
  */
 export function useEnsembleStateSync(ensembleSet: EnsembleSet | null) {
-    const [prevEnsembleSet, setPrevEnsembleSet] = React.useState<EnsembleSet | null>(null);
     const [ensembleSetHash, setEnsembleSetHash] = React.useState<string>("");
     const [selectedRegularEnsembles, setSelectedRegularEnsembles] = React.useState<InternalRegularEnsembleSetting[]>(
         [],
@@ -53,12 +50,13 @@ export function useEnsembleStateSync(ensembleSet: EnsembleSet | null) {
         setEnsembleSetHash(makeHashFromSelectedEnsembles(regularEnsembles, deltaEnsembles));
     }, [ensembleSet]);
 
-    React.useEffect(() => {
-        if (!isEqual(prevEnsembleSet, ensembleSet)) {
-            setPrevEnsembleSet(ensembleSet);
-            resetStatesFromEnsembleSet();
-        }
-    }, [ensembleSet, prevEnsembleSet, resetStatesFromEnsembleSet]);
+    // ! This one should start empty to ensure the below functions fire at least once
+    const [prevEnsembleSet, setPrevEnsembleSet] = React.useState<EnsembleSet | null>();
+
+    if (ensembleSet !== prevEnsembleSet) {
+        setPrevEnsembleSet(ensembleSet);
+        resetStatesFromEnsembleSet();
+    }
 
     return {
         ensembleSetHash,

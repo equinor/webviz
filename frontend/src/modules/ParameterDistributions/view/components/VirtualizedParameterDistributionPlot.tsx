@@ -1,5 +1,6 @@
-import type React from "react";
-import { useState, useEffect, useMemo, useRef } from "react";
+import React from "react";
+
+import { isEqual } from "lodash-es";
 
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
@@ -64,13 +65,30 @@ function SingleParameterPlot({
     );
 }
 
+function computeVisibleIndices(
+    containerHeight: number,
+    numPlots: number,
+    plotHeight: number,
+    numColumns: number,
+): Set<number> {
+    const initialVisible = new Set<number>();
+
+    if (numPlots > 0) {
+        const plotsPerView = Math.ceil(containerHeight / Math.max(plotHeight, 1)) * numColumns;
+        for (let i = 0; i < Math.min(plotsPerView + numColumns, numPlots); i++) {
+            initialVisible.add(i);
+        }
+    }
+
+    return initialVisible;
+}
+
 export function VirtualizedParameterDistributionPlot(props: ParameterDistributionPlotProps): React.ReactElement {
     const PLOT_LOADING_PLACEHOLDER_SIZE = 100;
     const MINIMUM_PIXEL_SIZE = 300;
     const FIXED_PLOT_HEIGHT = 350;
     const PLOT_MARGIN = 10;
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [visibleIndices, setVisibleIndices] = useState<Set<number>>(new Set());
+    const containerRef = React.useRef<HTMLDivElement>(null);
 
     // Calculate grid dimensions
     const numSubplots = props.dataArr.length;
@@ -86,8 +104,23 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
     const plotWidth = Math.floor(props.width / numColumns) - PLOT_MARGIN;
     const plotHeight = Math.max(FIXED_PLOT_HEIGHT, props.height / numRows) - PLOT_MARGIN;
 
+    // Using both a combination of state and a memoized value here, to make it so we can set the
+    // visibility both via the IntersectionObserver below, and when props change externally
+    const expectedVisibleIndices = React.useMemo(
+        () => computeVisibleIndices(props.height, numSubplots, plotHeight, numColumns),
+        [numColumns, numSubplots, plotHeight, props.height],
+    );
+
+    const [prevExpectedVisibleIndices, setPrevExpectedVisibleIndices] = React.useState(expectedVisibleIndices);
+    const [visibleIndices, setVisibleIndices] = React.useState(expectedVisibleIndices);
+
+    if (!isEqual(expectedVisibleIndices, prevExpectedVisibleIndices)) {
+        setPrevExpectedVisibleIndices(expectedVisibleIndices);
+        setVisibleIndices(expectedVisibleIndices);
+    }
+
     // Intersection Observer for virtualization
-    useEffect(() => {
+    React.useEffect(() => {
         if (!containerRef.current || numSubplots < 1) return;
 
         const observer = new IntersectionObserver(
@@ -129,7 +162,7 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
     }, [numSubplots, PLOT_LOADING_PLACEHOLDER_SIZE]);
 
     // Render grid with virtualized plots
-    const gridItems = useMemo(() => {
+    const gridItems = React.useMemo(() => {
         const items: React.ReactElement[] = [];
 
         for (let i = 0; i < numSubplots; i++) {
@@ -178,20 +211,6 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
 
         return items;
     }, [numSubplots, numColumns, plotWidth, plotHeight, visibleIndices, props]);
-
-    // Initialize visible plots (first few in viewport)
-    useEffect(() => {
-        const initialVisible = new Set<number>();
-
-        if (numSubplots > 0) {
-            const plotsPerView = Math.ceil(props.height / Math.max(plotHeight, 1)) * numColumns;
-            for (let i = 0; i < Math.min(plotsPerView + numColumns, numSubplots); i++) {
-                initialVisible.add(i);
-            }
-        }
-
-        setVisibleIndices(initialVisible);
-    }, [props.height, plotHeight, numColumns, numSubplots]);
 
     // If no parameters, show ContentWarning
     if (numSubplots === 0) {
