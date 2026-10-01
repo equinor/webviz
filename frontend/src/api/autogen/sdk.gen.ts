@@ -186,10 +186,10 @@ import type {
     GetVectorListResponses_api,
     GetVfpTableData_api,
     GetVfpTableErrors_api,
-    GetVfpTableNamesData_api,
-    GetVfpTableNamesErrors_api,
-    GetVfpTableNamesResponses_api,
     GetVfpTableResponses_api,
+    GetVfpTablesData_api,
+    GetVfpTablesErrors_api,
+    GetVfpTablesResponses_api,
     GetWellboreCasingsData_api,
     GetWellboreCasingsErrors_api,
     GetWellboreCasingsResponses_api,
@@ -1474,23 +1474,23 @@ export const getRftObservations = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Get Vfp Table Names
+ * Get Vfp Tables
  *
- * Get the available VFP table names for a given ensemble and realization.
+ * Get the available VFP tables (type and number) for a given ensemble and realization.
  */
-export const getVfpTableNames = <ThrowOnError extends boolean = false>(
-    options: Options<GetVfpTableNamesData_api, ThrowOnError>,
-): RequestResult<GetVfpTableNamesResponses_api, GetVfpTableNamesErrors_api, ThrowOnError> =>
-    (options.client ?? client).get<GetVfpTableNamesResponses_api, GetVfpTableNamesErrors_api, ThrowOnError>({
+export const getVfpTables = <ThrowOnError extends boolean = false>(
+    options: Options<GetVfpTablesData_api, ThrowOnError>,
+): RequestResult<GetVfpTablesResponses_api, GetVfpTablesErrors_api, ThrowOnError> =>
+    (options.client ?? client).get<GetVfpTablesResponses_api, GetVfpTablesErrors_api, ThrowOnError>({
         responseType: "json",
-        url: "/vfp/vfp_table_names/",
+        url: "/vfp/vfp_tables/",
         ...options,
     });
 
 /**
  * Get Vfp Table
  *
- * Get the VFP table for a given ensemble, realization and table name.
+ * Get the VFP table for a given ensemble, realization, type and table number.
  */
 export const getVfpTable = <ThrowOnError extends boolean = false>(
     options: Options<GetVfpTableData_api, ThrowOnError>,
