@@ -59,6 +59,7 @@ spec:
               - { name: webviz-session-store-fernet-key, envVar: WEBVIZ_SESSION_STORE_FERNET_KEY }
               - { name: webviz-redis-auth-store-password, envVar: WEBVIZ_REDIS_AUTH_STORE_PASSWORD }
               - { name: webviz-redis-cache-password, envVar: WEBVIZ_REDIS_CACHE_PASSWORD }
+              - { name: webviz-service-bus-payload-fernet-key, envVar: WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY }
               # Inject all App Insights connection strings as env vars.
               # Azure Monitor setup picks the right one based on the Radix environment.
               - { name: webviz-insights-connectionstring-prod, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PROD }
@@ -80,9 +81,6 @@ spec:
             requests:
               memory: 8Gi
               cpu: 1000m
-            limits:
-              # Memory limit=request and cpu limit omitted on purpose
-              memory: 8Gi
           horizontalScaling:
             minReplicas: 2
             maxReplicas: 4
@@ -97,8 +95,6 @@ spec:
             requests:
               memory: 4Gi
               cpu: 500m
-            limits:
-              memory: 4Gi
           horizontalScaling:
             minReplicas: 1
             maxReplicas: 3
@@ -113,8 +109,6 @@ spec:
             requests:
               memory: 4Gi
               cpu: 500m
-            limits:
-              memory: 4Gi
           horizontalScaling:
             minReplicas: 1
             maxReplicas: 3
@@ -129,8 +123,6 @@ spec:
             requests:
               memory: 4Gi
               cpu: 500m
-            limits:
-              memory: 4Gi
           horizontalScaling:
             minReplicas: 1
             maxReplicas: 3
@@ -268,8 +260,6 @@ spec:
         requests:
           memory: 1Gi
           cpu: 500m
-        limits:
-          memory: 1Gi
 
 
     # -----------------------------------------------------------------
@@ -293,8 +283,6 @@ spec:
         requests:
           memory: 4Gi
           cpu: 1000m
-        limits:
-          memory: 4Gi
 
 
   jobs:
