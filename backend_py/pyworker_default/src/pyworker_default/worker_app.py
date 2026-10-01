@@ -102,7 +102,7 @@ def _create_shutdown_event() -> asyncio.Event:
 
 
 @asynccontextmanager
-async def _authenticated_sb_client(config: WorkerConfig) -> AsyncIterator[ServiceBusClient]:
+async def _authenticated_sb_client_async(config: WorkerConfig) -> AsyncIterator[ServiceBusClient]:
     """
     Async context manager yielding a ServiceBusClient (auth chosen from config).
     """
@@ -146,7 +146,7 @@ async def _run_worker_loop_async(worker_config: WorkerConfig, shutdown_event: as
     # the message will be unlocked and may be received by another worker, leading to duplicate processing.
     lock_renewer = AutoLockRenewer(max_lock_renewal_duration=15 * 60)
 
-    async with _authenticated_sb_client(worker_config) as sb_client, lock_renewer:
+    async with _authenticated_sb_client_async(worker_config) as sb_client, lock_renewer:
         # The reason for the type ignore below is that the async get_queue_receiver is mis-annotated in the SDK to
         # expect the sync AutoLockRenewer, but at runtime it requires the async one (from azure.servicebus.aio)
         sb_receiver: ServiceBusReceiver = sb_client.get_queue_receiver(

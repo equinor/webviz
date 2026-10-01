@@ -343,7 +343,7 @@ async def get_send_sb_msg(
         with tracer.start_as_current_span(f"SubmittingDevTestMessageToQueue_{i}", kind=trace.SpanKind.PRODUCER):
             msg = DevTestMsg(
                 text=msg_text,
-                encrypted_text=fernet.encrypt(msg_text.encode()).decode(),
+                encrypted_text=fernet.encrypt(msg_text.encode()),
                 sleep_duration_s=5,
             )
 
