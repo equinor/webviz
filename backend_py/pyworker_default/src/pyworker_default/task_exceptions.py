@@ -49,7 +49,7 @@ class TaskDeferredError(Exception):
     """
     Base class for "try again later" outcomes: the task was not completed and the message should be
     delivered again (possibly picked up by another worker).
-    
+
     => SB message ABANDONED (returned to the queue for redelivery), task state left untouched.
     """
 

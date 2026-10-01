@@ -124,11 +124,15 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
         LOGGER.info("Initializing MessageBusSingleton using emulator connection string from environment")
         MessageBusSingleton.initialize_with_connection_string(config.SERVICE_BUS_EMULATOR_CONNECTION_STRING)
     else:
-        LOGGER.info(f"Initializing MessageBusSingleton using credential for azure services, {config.SERVICE_BUS_FQ_NAMESPACE=}")
+        LOGGER.info(
+            f"Initializing MessageBusSingleton using credential for azure services, {config.SERVICE_BUS_FQ_NAMESPACE=}"
+        )
         if azure_services_credential is None:
             raise RuntimeError("Cannot proceed without an Azure services credential.")
 
-        await MessageBusSingleton.initialize_with_credential_async(config.SERVICE_BUS_FQ_NAMESPACE, azure_services_credential)
+        await MessageBusSingleton.initialize_with_credential_async(
+            config.SERVICE_BUS_FQ_NAMESPACE, azure_services_credential
+        )
 
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)

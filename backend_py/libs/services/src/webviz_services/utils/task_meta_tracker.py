@@ -50,17 +50,17 @@ class TaskState(StrEnum):
 
 @dataclass(frozen=True, kw_only=True)
 class TaskMeta:
+    # fmt:off
     task_id: str
     state: TaskState
     status_message: str | None          # Human-readable description of the current or final task status, should be suitable for end-user consumption
     internal_error_message: str | None  # Internal error message for failed tasks, not meant for end-user consumption
-
     expected_store_key: str | None
-
     registered_at_utc_s: float          # Time when the task was registered with the task tracker
     updated_at_utc_s: float             # Time when the task was last updated
     started_at_utc_s: float | None      # Time when task execution started
     completed_at_utc_s: float | None    # Time when the task reached a terminal state (succeeded, failed, or cancelled)
+    # fmt:on
 
 
 class TaskMetaTracker:
@@ -125,7 +125,7 @@ class TaskMetaTracker:
             update_dict["startedAtUtcS"] = started_at_utc_s
 
         # Now set the remaining keys/fields in the hash
-        await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)# type: ignore[arg-type]
+        await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)  # type: ignore[arg-type]
 
         return TaskMeta(
             task_id=task_id,
@@ -212,19 +212,18 @@ class TaskMetaTracker:
 
     async def set_state_async(self, task_id: str, new_state: TaskState, status_message: str | None = None) -> bool:
         return await self._do_set_state_async(
-            task_id=task_id,
-            new_state=new_state,
-            status_message=status_message,
-            internal_error_message=None
-            )
+            task_id=task_id, new_state=new_state, status_message=status_message, internal_error_message=None
+        )
 
-    async def fail_task_async(self, task_id: str, status_message: str | None = None, internal_error_message: str | None = None) -> bool:
+    async def fail_task_async(
+        self, task_id: str, status_message: str | None = None, internal_error_message: str | None = None
+    ) -> bool:
         return await self._do_set_state_async(
             task_id=task_id,
             new_state=TaskState.FAILED,
             status_message=status_message,
-            internal_error_message=internal_error_message
-            )
+            internal_error_message=internal_error_message,
+        )
 
     async def set_status_message_async(self, task_id: str, status_message: str) -> bool:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
@@ -242,7 +241,7 @@ class TaskMetaTracker:
             "updatedAtUtcS": time_now_utc_s,
         }
 
-        await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)# type: ignore[arg-type]
+        await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)  # type: ignore[arg-type]
 
         return True
 
@@ -290,7 +289,9 @@ class TaskMetaTracker:
         async for key in self._redis_client.scan_iter(match=pattern):
             await self._redis_client.pexpire(key, 1)
 
-    async def _do_set_state_async(self, task_id: str, new_state: TaskState, status_message: str | None, internal_error_message: str | None) -> bool:
+    async def _do_set_state_async(
+        self, task_id: str, new_state: TaskState, status_message: str | None, internal_error_message: str | None
+    ) -> bool:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
 
         if not await self._redis_client.exists(redis_hash_name):
@@ -322,7 +323,7 @@ class TaskMetaTracker:
         else:
             update_dict["internalErrorMessage"] = ""
 
-        await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)# type: ignore[arg-type]
+        await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)  # type: ignore[arg-type]
 
         return True
 

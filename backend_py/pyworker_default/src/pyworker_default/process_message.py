@@ -14,12 +14,13 @@ from .utils.abort_signal import AbortSignal
 from .task_exceptions import TaskFailedError, TaskDeferredError, TaskAbortedError, TaskInternalError
 from .tasks.dev_test_task import dev_test_task_async
 
-
 _logger = logging.getLogger(__name__)
 _tracer = trace.get_tracer(__name__)
 
 
-async def process_message_async(receiver: ServiceBusReceiver, msg: ServiceBusReceivedMessage, abort_signal: AbortSignal) -> None:
+async def process_message_async(
+    receiver: ServiceBusReceiver, msg: ServiceBusReceivedMessage, abort_signal: AbortSignal
+) -> None:
     """
     Processes a single Service Bus message, dispatching to the appropriate handler based on the
     worker operation, which is determined by the 'subject' property of the message.

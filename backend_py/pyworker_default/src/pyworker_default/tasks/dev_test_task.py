@@ -8,12 +8,11 @@ from webviz_server_schemas.pyworker.messages import DevTestMsg
 from ..utils import message_decryption
 from ..task_exceptions import MalformedMessageError
 
-
 _logger = logging.getLogger(__name__)
 
 
 async def dev_test_task_async(sb_msg: ServiceBusReceivedMessage) -> None:
-    _logger.info(f"dev_test_task_async(): Parsing and decrypting DevTestMsg: {sb_msg.message_id=}, {sb_msg.sequence_number=}")
+    _logger.info(f"dev_test_task_async(): Parsing DevTestMsg: {sb_msg.message_id=}, {sb_msg.sequence_number=}")
 
     try:
         body_bytes = b"".join(sb_msg.body)

@@ -11,13 +11,13 @@ from .task_exceptions import TaskFailedError, TaskDeferredError, MalformedMessag
 from .utils.abort_signal import AbortSignal
 from .utils.worker_logging import LogScope
 
-
 _logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
 class TaskSuccess:
     status_message: str | None = None
+
 
 # A task work function performs the actual work for a single message.
 # It receives the task tracker, the raw Service Bus message and an abort signal.
@@ -26,18 +26,20 @@ class TaskSuccess:
 UserTaskWorkFn = Callable[[TaskMetaTracker, ServiceBusReceivedMessage, AbortSignal], Awaitable[TaskSuccess]]
 
 
-async def run_tracked_user_task_async(sb_msg: ServiceBusReceivedMessage, work_fn: UserTaskWorkFn, abort_signal: AbortSignal) -> None:
+async def run_tracked_user_task_async(
+    sb_msg: ServiceBusReceivedMessage, work_fn: UserTaskWorkFn, abort_signal: AbortSignal
+) -> None:
     """
-    Owns the task lifecycle and maps the work outcome onto the task state. 
+    Owns the task lifecycle and maps the work outcome onto the task state.
     Message settlement is performed in process_message_async(), based on any exception that propagates out of here:
-    
+
       | Outcome of work_fn                      | Task state| Message settlement |
       |-----------------------------------------|-----------|--------------------|
       | Returns normally                        | SUCCEEDED | complete           |
       | Raises TaskFailedError                  | FAILED    | complete           |
       | Raises TaskDeferredError (retry/abort)  | untouched | abandon / retry    |
       | Raises TaskInternalError / other        | FAILED    | dead-letter        |
-    
+
     Note: The task state is always recorded before the exception propagates, so the message is never settled before
     the outcome has been written as task state.
     """

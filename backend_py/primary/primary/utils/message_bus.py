@@ -68,6 +68,7 @@ class MessageBus:
                     await sender.close()
                 raise
 
+
 class MessageBusSingleton:
     _message_bus_instance: MessageBus | None = None
 
