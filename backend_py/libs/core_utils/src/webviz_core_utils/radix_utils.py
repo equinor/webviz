@@ -6,16 +6,26 @@ LOGGER = logging.getLogger(__name__)
 
 
 def is_running_on_radix_platform() -> bool:
-    # Probe for the presence of a few well known RADIX environment variables, including the RADIX_APP environment variable,
-    # which is expected to be set in all Radix environments. This is not a perfect method but should work for our purposes.
+    """
+    Probe for the presence of a few well known RADIX environment variables, including the RADIX_APP environment variable,
+    which is expected to be set in all Radix environments. This is not a perfect method but should work for our purposes.
+    """
     return bool(os.getenv("RADIX_APP") and os.getenv("RADIX_ENVIRONMENT"))
 
 
 def get_radix_component_name() -> str | None:
+    """
+    Returns the name of the current Radix component based on environment variable "RADIX_COMPONENT".
+    For our use case: backend-primary, pyworker-default, etc
+    """
     return os.getenv("RADIX_COMPONENT")
 
 
 def get_radix_environment_name() -> str | None:
+    """
+    Returns the name of the current Radix environment based on environment variable "RADIX_ENVIRONMENT".
+    For our use case: prod, preprod, review, etc
+    """
     return os.getenv("RADIX_ENVIRONMENT")
 
 
