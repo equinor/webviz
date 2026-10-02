@@ -5,14 +5,6 @@ import { expect, test } from "@playwright/test";
 
 import { DROGON_AHM } from "./drogonTestData";
 
-/**
- * Helpers for the recorded UI walkthrough tests.
- *
- * The walkthrough doubles as a tutorial video (uploaded to blob storage from CI when RECORD=1),
- * so when recording we deliberately slow the interactions down to make the resulting video
- * watchable. When not recording the same test runs at full speed as a normal regression check.
- */
-
 /** True when the run is capturing video (set via RECORD=1, see tests/e2e/_playwright.config.ts). */
 export const RECORDING = !!process.env.RECORD;
 
@@ -234,14 +226,6 @@ async function injectRecordingStyle(page: Page, styleId: string, css: string): P
  * paint time, so a non-allowed cell can never render readable — not even for one frame, and not when
  * the virtualized table mounts/recycles rows during scrolling.
  *
- * Relies on a production hook: every identifying case cell (name/id, description, author) carries a
- * `data-case-uuid="<case uuid>"` attribute on a normal block-level <div>. We blur those divs
- * directly (not the <tr>/<td>), because CSS `filter` — like `opacity` and `transform` — is not
- * reliably rendered on `display: table-row`/`table-cell` boxes in Chromium, whereas a plain <div>
- * renders it fine. The attribute is unique to case cells, so no extra scoping is needed. As a
- * belt-and-braces fallback (blur doesn't always composite into the screencast), the text is also
- * made transparent with a blurred shadow, so glyphs stay unreadable even if the blur doesn't paint.
- *
  * No-op unless RECORD=1, so normal test runs are unaffected. Must be called BEFORE `page.goto(...)`
  * so the init script is registered for the first navigation (and re-applied on every navigation).
  */
@@ -250,20 +234,8 @@ export async function installCaseRowRedaction(page: Page, allowedCaseUuids: stri
         return;
     }
     const allowed = allowedCaseUuids.map((uuid) => uuid.toLowerCase());
-    // Allow cells whose case UUID is in the allowlist; blur every other case cell so its text is
-    // unreadable. Case UUIDs are lowercase in both the DOM and the allowlist, so we match exactly
-    // (no CSS Level 4 `i` flag, which — if ever rejected — would invalidate the whole `:not()` and
-    // drop the entire rule). A moderate blur keeps each cell visible as a recognizable (but
-    // unreadable) smudge — strong enough to obscure case names/authors, light enough that small
-    // cells like the author avatar don't disappear entirely.
     const allowSelectors = allowed.map((uuid) => `:not([data-case-uuid="${uuid}"])`).join("");
     const blockSelector = `[data-case-uuid]${allowSelectors}`;
-    // Two layers, because `filter: blur` alone proved fragile: depending on how the cell is wrapped
-    // and stacked, Chromium doesn't always composite the blur into the screencast. So we ALSO smear
-    // the glyphs themselves — transparent text casting a blurred shadow — which never relies on
-    // filter compositing and reaches text in nested spans via the descendant selector. If the blur
-    // does paint we simply get both; if it doesn't, the text is still unreadable. Author avatars are
-    // images, which a text smear can't hide, so any img/svg in a non-allowed cell is hidden outright.
     const css = `${blockSelector} {
         filter: blur(5px) !important;
         user-select: none !important;
@@ -644,26 +616,6 @@ export async function sweepSliderAcross(
         // Never leave the mouse button pressed on failure.
         await page.mouse.up().catch(() => undefined);
         throw error;
-    }
-}
-
-/**
- * Expand every collapsed node in a group-tree plot so all branches are visible. Collapsed nodes
- * render a "+ N child(ren)" label; clicking a node expands it, which can reveal further collapsed
- * descendants, so we keep clicking the first remaining collapsed label until none are left (bounded
- * so an animating/stuck tree can never loop forever).
- */
-export async function expandAllGroupTreeNodes(page: Page, container: Locator): Promise<void> {
-    const MAX_EXPANSIONS = 200;
-    for (let i = 0; i < MAX_EXPANSIONS; i++) {
-        const collapsed = container.getByText(/\+ \d+ child(ren)?/).first();
-        if ((await collapsed.count()) === 0) {
-            break;
-        }
-        await smoothClick(page, collapsed);
-        // Let the expand animation / re-layout settle before looking for the next collapsed node.
-        await page.waitForTimeout(150);
-        await pace(page, "short");
     }
 }
 

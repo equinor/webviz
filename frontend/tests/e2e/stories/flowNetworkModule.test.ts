@@ -1,4 +1,5 @@
 import { expect } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 
 import { DROGON_AHM } from "../support/drogonTestData";
 import { test } from "../support/recordingFixtures";
@@ -15,10 +16,29 @@ import {
     smoothClick,
     smoothMoveToLocator,
     sweepSliderAcross,
-    expandAllGroupTreeNodes,
 } from "../support/walkthroughHelpers";
 
 import { meta } from "./flowNetworkModule.meta";
+
+/**
+ * Expand every collapsed node in a group-tree plot so all branches are visible. Collapsed nodes
+ * render a "+ N child(ren)" label; clicking a node expands it, which can reveal further collapsed
+ * descendants, so we keep clicking the first remaining collapsed label until none are left (bounded
+ * so an animating/stuck tree can never loop forever).
+ */
+async function expandAllGroupTreeNodes(page: Page, container: Locator): Promise<void> {
+    const MAX_EXPANSIONS = 200;
+    for (let i = 0; i < MAX_EXPANSIONS; i++) {
+        const collapsed = container.getByText(/\+ \d+ child(ren)?/).first();
+        if ((await collapsed.count()) === 0) {
+            break;
+        }
+        await smoothClick(page, collapsed);
+        // Let the expand animation / re-layout settle before looking for the next collapsed node.
+        await page.waitForTimeout(150);
+        await pace(page, "short");
+    }
+}
 
 
 test.describe("Flow Network module", () => {
