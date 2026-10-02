@@ -70,7 +70,7 @@ async def process_message_async(
                 span.record_exception(exc)
                 span.set_status(trace.StatusCode.ERROR)
                 _logger.error(
-                    f"Task reported a user-facing failure: {exc.status_message!r}, {repr(exc)}\n{"".join(traceback.format_exception(exc))}"
+                    f"Task reported a user-facing failure: {exc.status_msg!r}, {repr(exc)}\n{"".join(traceback.format_exception(exc))}"
                 )
                 await receiver.complete_message(msg)
 

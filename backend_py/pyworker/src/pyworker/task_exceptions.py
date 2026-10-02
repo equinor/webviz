@@ -33,16 +33,16 @@ class TaskFailedError(Exception):
     Returning it to the message queue for automatic retrying would not help.
 
     Raise this to report an expected/business failure the user cares about (e.g. invalid input, requested
-    data not found, not authorized). `status_message` is surfaced to the user, while the optional
-    `internal_error_message` is retained for logging/telemetry only and never shown to the user.
+    data not found, not authorized). `status_msg` is surfaced to the user, while the optional
+    `internal_error_msg` is retained for logging/telemetry only and never shown to the user.
 
-    => SB message COMPLETED, task state FAILED with `status_message` (not retried, not dead-lettered).
+    => SB message COMPLETED, task state FAILED with `status_msg` (not retried, not dead-lettered).
     """
 
-    def __init__(self, status_message: str, internal_error_message: str | None = None) -> None:
-        super().__init__(status_message)
-        self.status_message = status_message
-        self.internal_error_message = internal_error_message
+    def __init__(self, status_msg: str, internal_error_msg: str | None = None) -> None:
+        super().__init__(status_msg)
+        self.status_msg = status_msg
+        self.internal_error_msg = internal_error_msg
 
 
 class TaskDeferredError(Exception):

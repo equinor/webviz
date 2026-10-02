@@ -210,22 +210,22 @@ class TaskMetaTracker:
 
         return await self.get_task_meta_async(task_id)
 
-    async def set_state_async(self, task_id: str, new_state: TaskState, status_message: str | None = None) -> bool:
+    async def set_state_async(self, task_id: str, new_state: TaskState, status_msg: str | None = None) -> bool:
         return await self._do_set_state_async(
-            task_id=task_id, new_state=new_state, status_message=status_message, internal_error_message=None
+            task_id=task_id, new_state=new_state, status_msg=status_msg, internal_error_msg=None
         )
 
     async def fail_task_async(
-        self, task_id: str, status_message: str | None = None, internal_error_message: str | None = None
+        self, task_id: str, status_msg: str | None = None, internal_error_msg: str | None = None
     ) -> bool:
         return await self._do_set_state_async(
             task_id=task_id,
             new_state=TaskState.FAILED,
-            status_message=status_message,
-            internal_error_message=internal_error_message,
+            status_msg=status_msg,
+            internal_error_msg=internal_error_msg,
         )
 
-    async def set_status_message_async(self, task_id: str, status_message: str) -> bool:
+    async def set_status_message_async(self, task_id: str, status_msg: str) -> bool:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
 
         if not await self._redis_client.exists(redis_hash_name):
@@ -237,7 +237,7 @@ class TaskMetaTracker:
         time_now_utc_s = time.time()
 
         update_dict = {
-            "statusMessage": status_message,
+            "statusMessage": status_msg,
             "updatedAtUtcS": time_now_utc_s,
         }
 
@@ -290,7 +290,7 @@ class TaskMetaTracker:
             await self._redis_client.pexpire(key, 1)
 
     async def _do_set_state_async(
-        self, task_id: str, new_state: TaskState, status_message: str | None, internal_error_message: str | None
+        self, task_id: str, new_state: TaskState, status_msg: str | None, internal_error_msg: str | None
     ) -> bool:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
 
@@ -313,13 +313,13 @@ class TaskMetaTracker:
             update_dict["completedAtUtcS"] = time_now_utc_s
 
         # Clear status message when state changes (unless a new one is provided)
-        if status_message is not None:
-            update_dict["statusMessage"] = status_message
+        if status_msg is not None:
+            update_dict["statusMessage"] = status_msg
         else:
             update_dict["statusMessage"] = ""
 
-        if new_state == TaskState.FAILED and internal_error_message is not None:
-            update_dict["internalErrorMessage"] = internal_error_message
+        if new_state == TaskState.FAILED and internal_error_msg is not None:
+            update_dict["internalErrorMessage"] = internal_error_msg
         else:
             update_dict["internalErrorMessage"] = ""
 

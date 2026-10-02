@@ -16,7 +16,7 @@ _logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class TaskSuccess:
-    status_message: str | None = None
+    status_msg: str | None = None
 
 
 # A task work function performs the actual work for a single message.
@@ -54,11 +54,13 @@ async def run_tracked_user_task_async(
 
         try:
             success = await work_fn(task_tracker, sb_msg, abort_signal)
-            await task_tracker.set_state_async(header.task_id, TaskState.SUCCEEDED, status_message=success.status_message)
+            await task_tracker.set_state_async(header.task_id, TaskState.SUCCEEDED, status_msg=success.status_msg)
 
         except TaskFailedError as exc:
             # Final, user-facing failure: record FAILED, then re-raise so the message is COMPLETED.
-            await task_tracker.fail_task_async(header.task_id, status_message=exc.status_message, internal_error_message=exc.internal_error_message)
+            await task_tracker.fail_task_async(
+                header.task_id, status_msg=exc.status_msg, internal_error_msg=exc.internal_error_msg
+            )
             raise
 
         except TaskDeferredError:
@@ -67,7 +69,9 @@ async def run_tracked_user_task_async(
 
         except Exception as exc:
             # TaskInternalError or any unexpected error: record FAILED, then re-raise so the message is dead-lettered for inspection.
-            await task_tracker.fail_task_async(header.task_id, status_message="Task failed due to an error", internal_error_message=repr(exc))
+            await task_tracker.fail_task_async(
+                header.task_id, status_msg="Task failed due to an error", internal_error_msg=repr(exc)
+            )
             raise
 
 
