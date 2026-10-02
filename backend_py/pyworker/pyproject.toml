@@ -13,7 +13,6 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
-azure-identity = "^1.25.1"
 azure-servicebus = "^7.14.3"
 aiohttp = "^3.13.4"  # async transport for azure.servicebus.aio
 cryptography = "^48.0.1"

@@ -1,11 +1,9 @@
-import os
 import asyncio
 import logging
 import signal
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus.aio import ServiceBusClient, ServiceBusReceiver, AutoLockRenewer
 from azure.servicebus import ServiceBusReceivedMessage
 from azure.servicebus.exceptions import ServiceBusError
@@ -15,6 +13,7 @@ from opentelemetry.sdk.resources import Resource
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 from webviz_core_utils.azure_monitor_destination import AzureMonitorDestination
 from webviz_core_utils.service_bus_destination import ensure_fq_sb_namespace
+from webviz_services.platform.azure_credentials import log_azure_credential_env_var_status, create_azure_credential
 from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
@@ -48,21 +47,15 @@ def _setup_azure_monitor_telemetry_for_worker(service_name: str) -> None:
         return
 
     _logger.info(
-        f"Configuring Azure Monitor telemetry for {service_name}, resource attributes: {azmon_dest.resource_attributes}"
+        f"Configuring Azure Monitor telemetry for {service_name} with resource attributes: {azmon_dest.resource_attributes}"
     )
 
-    # !!!!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!
-    # We should revisit the logging formatter we use for telemetry
-    # I don't think we should include the logger name in the log message, since that is already included in the telemetry data.
-    # !!!!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!
+    # Unlike our other azure monitor configurations, here we are not including the logger name in the log message.
+    # Going forward, we should probably ensure that our other azure monitor configs do the same.
     configure_azure_monitor(
         connection_string=azmon_dest.insights_connection_string,
         resource=Resource.create(attributes=azmon_dest.resource_attributes),
         sampling_ratio=1.0,
-        # logging_formatter=logging.Formatter("[%(name)s]: %(message)s"),
     )
 
 
@@ -103,7 +96,7 @@ def _create_shutdown_event() -> asyncio.Event:
 
 
 @asynccontextmanager
-async def _authenticated_sb_client_async(config: WorkerConfig) -> AsyncIterator[ServiceBusClient]:
+async def _authenticated_sb_client_async(config: WorkerConfig) -> AsyncGenerator[ServiceBusClient]:
     """
     Async context manager yielding a ServiceBusClient (auth chosen from config).
     """
@@ -119,20 +112,10 @@ async def _authenticated_sb_client_async(config: WorkerConfig) -> AsyncIterator[
             yield sb_client
         return
 
-    # For now, we will use DefaultAzureCredential for both local dev and in Radix.
-    # For Radix, this relies on then environment variables AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_FEDERATED_TOKEN_FILE being set by Radix.
-    # For local dev, this relies on the environment variables AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_CLIENT_SECRET being set.
-    _logger.info("Using DefaultAzureCredential for authentication")
-    _logger.info(f"AZURE_TENANT_ID: {os.getenv('AZURE_TENANT_ID')}")
-    _logger.info(f"AZURE_CLIENT_ID: {os.getenv('AZURE_CLIENT_ID')}")
-    _logger.info(f"AZURE_FEDERATED_TOKEN_FILE present: {"AZURE_FEDERATED_TOKEN_FILE" in os.environ}")
-    _logger.info(f"AZURE_CLIENT_SECRET present: {"AZURE_CLIENT_SECRET" in os.environ}")
-
     sb_fq_namespace = ensure_fq_sb_namespace(config.sb_namespace)
-    _logger.info(f"Using Service Bus with DefaultAzureCredential, SB namespace: {sb_fq_namespace}")
+    _logger.info(f"Using Service Bus with Azure credential, SB namespace: {sb_fq_namespace}")
 
-    async with DefaultAzureCredential() as credential:
-        _logger.info(f"{type(credential)=}")
+    async with create_azure_credential() as credential:
         async with ServiceBusClient(fully_qualified_namespace=sb_fq_namespace, credential=credential) as client:
             yield client
 
@@ -217,8 +200,12 @@ async def run_app_async() -> None:
     # Limit logging from the more noisy loggers
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("azure.servicebus").setLevel(logging.WARNING)
-
+    logging.getLogger("azure.servicebus").setLevel(logging.WARNING)
+    logging.getLogger("azure.identity").setLevel(logging.WARNING)
     _logger.info("=== Starting pyworker...")
+
+    # Do a dump of key AZURE_ env variables that we rely on
+    log_azure_credential_env_var_status()
 
     _setup_azure_monitor_telemetry_for_worker("pyworker")
 
