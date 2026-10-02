@@ -64,12 +64,9 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
    ```bash
    docker compose -f docker-compose.yml -f docker-compose-cosmos-db.yml up
    ```
-2. Give the backend access to Drogon Sumo data using the test user. You can do this by first ensuring
-   the environment variable `SHARED_KEY_DROGON_READ_PROD` is set and then run
-   ```bash
-   npm run test:e2e:sumo-key --prefix ./frontend
-   ```
-   Re-run this whenever the docker stack is recreated (the key lives inside the container).
+2. Make sure the environment variable `SHARED_KEY_DROGON_READ_PROD` is set (e.g. as a Codespace
+   secret) to give the backend access to Drogon Sumo data using the test user. The key is installed
+   into the backend container automatically during seeding, so there's nothing else to run here.
 3. Launch codegen
    ```bash
    npm run test:e2e:codegen --prefix ./frontend

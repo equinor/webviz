@@ -2,8 +2,8 @@ name: e2e recordings
 
 on:
   push:
-    branches:
-      - main
+    #branches:
+    #  - main
   workflow_dispatch:
 
 permissions:
@@ -64,11 +64,6 @@ jobs:
       - name: 🐳 Build and start the full stack
         run: docker compose up --build --detach
 
-      - name: 🔑 Add Sumo shared key into the backend container
-        env:
-          SHARED_KEY_DROGON_READ_PROD: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
-        run: ./frontend/tests/e2e/setup/install-sumo-shared-key.sh
-
       - name: ⏳ Wait for the stack to become responsive
         run: |
           curl --retry 90 --retry-delay 5 --retry-connrefused --retry-all-errors -f http://localhost:5000/alive
@@ -78,6 +73,7 @@ jobs:
         working-directory: ./frontend
         env:
           CI: "true"
+          SHARED_KEY_DROGON_READ_PROD: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
         run: npm run test:e2e:record
 
       - name: 🐳 Dump docker compose logs on failure
