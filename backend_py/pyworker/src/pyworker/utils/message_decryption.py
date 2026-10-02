@@ -1,10 +1,11 @@
 from cryptography.fernet import Fernet
 
-_fernet: Fernet | None = None
+# Module-level singleton
+_fernet: Fernet | None = None  # pylint: disable=invalid-name
 
 
 def initialize(fernet_key: str) -> None:
-    global _fernet
+    global _fernet  # pylint: disable=global-statement
     _fernet = Fernet(fernet_key)
 
 
