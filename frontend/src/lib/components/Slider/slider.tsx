@@ -380,12 +380,17 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
         }
     }, [updateValue, valueToClamp]);
 
+    // Base-UI allows the slider to go out of range, but it's computed positions visually clashes with
+    // our design: to avoid this, we feed the actual component a clamped value
+    const clampedInternalValue = isDualSliderValue(activeValue)
+        ? activeValue.map((n) => clamp(n, defaultedProps.min, defaultedProps.max))
+        : clamp(activeValue, defaultedProps.min, defaultedProps.max);
     return (
         <SliderBase.Root
             {...baseProps}
             className={resolveClassNames(baseProps.className, "px-2xs grid items-center")}
             ref={wrapperRef}
-            value={activeValue}
+            value={clampedInternalValue}
             onValueChange={onValueChangeInternal}
             style={
                 {
