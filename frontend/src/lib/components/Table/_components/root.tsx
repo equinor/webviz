@@ -132,6 +132,7 @@ export const Root = React.forwardRef<HTMLTableElement, TableRootProps>(function 
 
     let headColumnMetaData: TableColumnContextType = {
         columns: [],
+        leafColumns: [],
         content: null,
         maxDepth: 0,
         leafCount: 0,
@@ -140,7 +141,8 @@ export const Root = React.forwardRef<HTMLTableElement, TableRootProps>(function 
     const headChild = recursivelyFindHeadChild(props.children);
 
     if (headChild) {
-        headColumnMetaData = recursivelyProcessColumnChildren(headChild);
+        const rootMetaData = recursivelyProcessColumnChildren(headChild);
+        headColumnMetaData = { ...rootMetaData, leafColumns: collectLeafColumns(rootMetaData.columns) };
     }
 
     // Calculate available body height if the table was to fill the wrapper. This is used for the PendingRows "fill" option to automatically fill the remaining space in the table body.
@@ -319,4 +321,8 @@ function recursivelyProcessColumnChildren(columnParent: React.ReactNode, depth =
         content: headerContent,
         cellProps: cellProps,
     };
+}
+
+function collectLeafColumns(columns: ColumnMetaData[]): ColumnMetaData[] {
+    return columns.flatMap((column) => (column.columns.length ? collectLeafColumns(column.columns) : [column]));
 }

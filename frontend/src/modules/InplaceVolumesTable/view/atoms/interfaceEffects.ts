@@ -7,6 +7,7 @@ import {
     filterAtom,
     resultNamesAtom,
     statisticOptionsAtom,
+    statisticsLayoutAtom,
     tableTypeAtom,
 } from "./baseAtoms";
 
@@ -30,6 +31,10 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     (getInterfaceValue, setAtomValue) => {
         const statisticOptions = getInterfaceValue("statisticOptions");
         setAtomValue(statisticOptionsAtom, statisticOptions);
+    },
+    (getInterfaceValue, setAtomValue) => {
+        const statisticsLayout = getInterfaceValue("statisticsLayout");
+        setAtomValue(statisticsLayoutAtom, statisticsLayout);
     },
     (getInterfaceValue, setAtomValue) => {
         const areTableDefinitionSelectionsValid = getInterfaceValue("areTableDefinitionSelectionsValid");
