@@ -351,7 +351,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
             {...baseProps}
             className={resolveClassNames(baseProps.className, "px-2xs grid items-center")}
             ref={wrapperRef}
-            value={clampedInternalValue}
+            value={activeValue}
             onValueChange={onValueChangeInternal}
             style={
                 {
