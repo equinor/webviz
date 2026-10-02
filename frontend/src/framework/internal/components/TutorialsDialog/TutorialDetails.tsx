@@ -31,7 +31,7 @@ export function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
         queryKey: ["tutorialSteps", video?.slug, sasToken],
         enabled: Boolean(video && sasToken),
         queryFn: async ({ signal }) => {
-            const response = await fetch(`${getStepsUrl(video!.slug)}?${sasToken}`, { signal });
+            const response = await fetch(appendSasToken(getStepsUrl(video!.slug), sasToken)!, { signal });
             if (!response.ok) {
                 return [];
             }

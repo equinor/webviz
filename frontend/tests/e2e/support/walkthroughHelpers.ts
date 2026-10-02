@@ -388,12 +388,6 @@ export async function smoothMoveToLocator(page: Page, locator: Locator): Promise
     }
 }
 
-/**
- * Click a locator, first gliding the (visible) cursor over to it when recording so the motion is
- * easy to follow in the tutorial video. A click ripple is fired slightly BEFORE the real click so
- * its grow-and-fade animation lines up with (rather than trails) the action. Behaves like a plain
- * `locator.click(options)` otherwise.
- */
 /** Friendly keycap labels for click modifiers, so modified clicks read clearly in recorded videos. */
 const MODIFIER_OVERLAY_LABELS: Record<string, string> = {
     // Recordings run on Linux Desktop Chrome, so "ControlOrMeta" resolves to Control there.
@@ -404,6 +398,12 @@ const MODIFIER_OVERLAY_LABELS: Record<string, string> = {
     Alt: "Alt",
 };
 
+/**
+ * Click a locator, first gliding the (visible) cursor over to it when recording so the motion is
+ * easy to follow in the tutorial video. A click ripple is fired slightly BEFORE the real click so
+ * its grow-and-fade animation lines up with (rather than trails) the action. Behaves like a plain
+ * `locator.click(options)` otherwise.
+ */
 export async function smoothClick(
     page: Page,
     locator: Locator,
