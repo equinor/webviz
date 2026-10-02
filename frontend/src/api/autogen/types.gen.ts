@@ -2422,6 +2422,16 @@ export type TableColumnStatisticalData_api = {
 };
 
 /**
+ * TutorialMediaSasToken
+ */
+export type TutorialMediaSasToken_api = {
+    /**
+     * Sastoken
+     */
+    sasToken: string;
+};
+
+/**
  * UnitType
  */
 export enum UnitType_api {
@@ -7253,6 +7263,24 @@ export type DeleteSnapshotAccessLogResponses_api = {
      */
     200: unknown;
 };
+
+export type GetMediaSasTokenData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/tutorials/media_sas_token";
+};
+
+export type GetMediaSasTokenResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: TutorialMediaSasToken_api;
+};
+
+export type GetMediaSasTokenResponse_api = GetMediaSasTokenResponses_api[keyof GetMediaSasTokenResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;
