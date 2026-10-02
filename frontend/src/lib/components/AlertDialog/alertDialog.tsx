@@ -1,6 +1,6 @@
 import React from "react";
 
-import { AlertDialog as AlertDialogBase, type AlertDialogRootProps } from "@base-ui/react";
+import { AlertDialog as AlertDialogBase, type AlertDialogPopupProps, type AlertDialogRootProps } from "@base-ui/react";
 
 import { AlertDialogNestingContext } from "../../contexts/alertDialogNestingContext";
 import type { ButtonProps } from "../Button";
@@ -28,10 +28,12 @@ export type AlertDialogProps = Omit<AlertDialogRootProps, "className" | "render"
     secondaryActions?: AlertDialogAction[];
     /** The dialog description content. */
     children: React.ReactNode;
+    /** Where focus goes when the dialog closes. @default the element focused before it opened */
+    finalFocus?: AlertDialogPopupProps["finalFocus"];
 };
 
 export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(function AlertDialog(props, ref) {
-    const { title, primaryAction, secondaryActions, children, open, ...rest } = props;
+    const { title, primaryAction, secondaryActions, children, open, finalFocus, ...rest } = props;
     const { increment, decrement } = React.useContext(AlertDialogNestingContext);
 
     React.useEffect(
@@ -50,7 +52,7 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
         <AlertDialogBase.Root {...rest} open={open}>
             <AlertDialogBase.Portal>
                 <AlertDialogBase.Backdrop className="dialog__backdrop z-alert" />
-                <AlertDialogBase.Popup className="dialog__popup z-alert" ref={ref}>
+                <AlertDialogBase.Popup className="dialog__popup z-alert" ref={ref} finalFocus={finalFocus}>
                     <AlertDialogBase.Title
                         className="dialog__popup__child"
                         render={(baseProps) => (

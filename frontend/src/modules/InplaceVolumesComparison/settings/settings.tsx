@@ -116,15 +116,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         ? [...persistedComparisonEnsembleAnnotations, { type: "error", message: "Must differ from the reference" }]
         : persistedComparisonEnsembleAnnotations;
 
-    const referenceSourceAnnotations: SettingAnnotation[] = [
-        ...persistedReferenceEnsembleAnnotations,
-        ...referenceTableNameAnnotations,
-    ];
-    const comparisonSourceAnnotations: SettingAnnotation[] = [
-        ...comparisonEnsembleAnnotations,
-        ...comparisonTableNameAnnotations,
-    ];
-
     if (areSourcesDistinct && !areSelectedTablesComparable) {
         statusWriter.addWarning("The selected table sources share no index columns and are not comparable.");
     }
@@ -169,8 +160,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             <Setting.Panel>
                 <Setting.Section title="Sources" defaultOpen>
                     <Setting.Field
-                        label="Reference source"
-                        description="Ensemble and table the change is measured from."
+                        label="Reference ensemble"
+
                         help={{
                             title: "Reference and comparison",
                             content: (
@@ -187,63 +178,64 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                 </>
                             ),
                         }}
-                        annotations={referenceSourceAnnotations}
-                        stacked
+                        annotations={persistedReferenceEnsembleAnnotations}
+                    >
+                        <EnsembleDropdown
+                            aria-label="Reference ensemble"
+                            ensembles={ensembleSet.getRegularEnsembleArray()}
+                            value={referenceEnsembleIdent.value}
+                            ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                            onValueChange={setReferenceEnsembleIdent}
+                        />
+                    </Setting.Field>
+                    <Setting.Field
+                        label="Reference table"
+                        annotations={referenceTableNameAnnotations}
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                            referenceEnsembleIdent.value &&
-                            referenceTableNameOptions.length === 0
+                                referenceEnsembleIdent.value &&
+                                referenceTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
                     >
-                        <>
-                            <EnsembleDropdown
-                                aria-label="Reference ensemble"
-                                ensembles={ensembleSet.getRegularEnsembleArray()}
-                                value={referenceEnsembleIdent.value}
-                                ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                                onValueChange={setReferenceEnsembleIdent}
-                            />{" "}
-                            <Combobox
-                                aria-label="Reference table"
-                                value={selectedReferenceTableName.value}
-                                items={referenceTableNameOptions}
-                                onValueChange={(v) => setSelectedReferenceTableName(v)}
-                            />
-                        </>
+                        <Combobox
+                            aria-label="Reference table"
+                            value={selectedReferenceTableName.value}
+                            items={referenceTableNameOptions}
+                            onValueChange={(v) => setSelectedReferenceTableName(v)}
+                        />
                     </Setting.Field>
 
+                    <Setting.Field label="Comparison ensemble" annotations={comparisonEnsembleAnnotations}>
+                        <EnsembleDropdown
+                            aria-label="Comparison ensemble"
+                            ensembles={ensembleSet.getRegularEnsembleArray()}
+                            value={comparisonEnsembleIdent.value}
+                            ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                            onValueChange={setComparisonEnsembleIdent}
+
+                        />
+                    </Setting.Field>
                     <Setting.Field
-                        label="Comparison source"
-                        description="Ensemble and table the change is measured to."
-                        annotations={comparisonSourceAnnotations}
-                        stacked
+                        label="Comparison table"
+                        annotations={comparisonTableNameAnnotations}
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                            comparisonEnsembleIdent.value &&
-                            comparisonTableNameOptions.length === 0
+                                comparisonEnsembleIdent.value &&
+                                comparisonTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
                     >
-                        <>
-                            <EnsembleDropdown
-                                aria-label="Comparison ensemble"
-                                ensembles={ensembleSet.getRegularEnsembleArray()}
-                                value={comparisonEnsembleIdent.value}
-                                ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                                onValueChange={setComparisonEnsembleIdent}
-                            />{" "}
-                            <Combobox
-                                aria-label="Comparison table"
-                                value={selectedComparisonTableName.value}
-                                items={comparisonTableNameOptions}
-                                onValueChange={(v) => setSelectedComparisonTableName(v)}
-                            />
-                        </>
+                        <Combobox
+                            aria-label="Comparison table"
+                            value={selectedComparisonTableName.value}
+                            items={comparisonTableNameOptions}
+                            onValueChange={(v) => setSelectedComparisonTableName(v)}
+                        />
                     </Setting.Field>
 
                     {isCrossTableComparison && (

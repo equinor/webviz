@@ -25,15 +25,15 @@ import {
     getWellMetaReadout,
 } from "../utils/subsurfaceViewerLayers";
 
-export interface AdjustedWellsLayerProps extends WellsLayerProps {
+export interface WebvizWellsLayerProps extends WellsLayerProps {
     productionColors: FlowDataColors;
     injectionColors: FlowDataColors;
 }
 
-export class AdjustedWellsLayer extends WellsLayer {
-    static layerName: string = "AdjustedWellsLayer";
+export class WebvizWellsLayer extends WellsLayer {
+    static layerName: string = "WebvizWellsLayer";
 
-    constructor(props?: Partial<AdjustedWellsLayerProps>) {
+    constructor(props?: Partial<WebvizWellsLayerProps>) {
         // ! Subsurface comp does not allow us to override the prop type. With how Deck.gl works, we need to access the new props using this.props in the later life-cycles to get the most recent values. We're just adding new fields, so forwarding them directly wont affect the base layer, so this is okay
         super(props as any);
     }
@@ -61,9 +61,7 @@ export class AdjustedWellsLayer extends WellsLayer {
             return [0, 0, 0, 0, 0, 0];
         }
 
-        const bbox = GetBoundingBox(this.state.data);
-        console.debug("AdjustedWellsLayer bounding box", bbox);
-        return bbox;
+        return GetBoundingBox(this.state.data);
     }
 
     renderLayers(): LayersList {
@@ -73,22 +71,23 @@ export class AdjustedWellsLayer extends WellsLayer {
             return layers;
         }
 
-        const colorsLayer = layers.find((layer) => {
-            if (!(layer instanceof Layer)) {
-                return false;
-            }
+        // With `markers.showScreenTrajectoryAsDash` the trajectory sublayer is SCREEN_TRAJECTORY instead of COLORS.
+        // Match on the exact id: SCREEN_TRAJECTORY_OUTLINE contains SCREEN_TRAJECTORY as a substring.
+        const trajectorySubLayerId = this.props.markers?.showScreenTrajectoryAsDash
+            ? SubLayerId.SCREEN_TRAJECTORY
+            : SubLayerId.COLORS;
+        const fullTrajectorySubLayerId = this.getSubLayerProps({ id: trajectorySubLayerId }).id;
 
-            return layer.id.includes(SubLayerId.COLORS);
-        });
+        const trajectoryLayer = layers.find((layer) => layer instanceof Layer && layer.id === fullTrajectorySubLayerId);
 
-        if (!(colorsLayer instanceof GeoJsonLayer)) {
+        if (!(trajectoryLayer instanceof GeoJsonLayer)) {
             return layers;
         }
 
-        const newColorsLayer = new GeoJsonLayer(
+        const newTrajectoryLayer = new GeoJsonLayer(
             super.getSubLayerProps({
-                ...colorsLayer.props,
-                data: colorsLayer.props.data,
+                ...trajectoryLayer.props,
+                data: trajectoryLayer.props.data,
                 pickable: true,
                 stroked: false,
                 pointRadiusUnits: "meters",
@@ -97,18 +96,18 @@ export class AdjustedWellsLayer extends WellsLayer {
                 lineWidthScale: this.props.lineWidthScale,
                 lineBillboard: true,
                 pointBillboard: true,
-                id: "colors",
+                id: trajectorySubLayerId,
                 lineWidthMinPixels: 3,
                 lineWidthMaxPixels: 8,
                 onHover: () => {},
             } as GeoJsonLayerProps),
         );
 
-        return [newColorsLayer, ...layers.filter((layer) => layer !== colorsLayer)];
+        return [newTrajectoryLayer, ...layers.filter((layer) => layer !== trajectoryLayer)];
     }
 
     getPickingInfo({ info, sourceLayer }: GetPickingInfoParams): LayerPickInfoWithReadout<WellFeature> {
-        const props = this.props as unknown as AdjustedWellsLayerProps;
+        const props = this.props as unknown as WebvizWellsLayerProps;
         const superInfo = super.getPickingInfo({ info });
         // The well's layer modifies the z-coordinate during picking, so we need to scale it back so readouts are correct
         // ! Mutates the original coordinate object

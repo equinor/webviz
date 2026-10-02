@@ -74,7 +74,7 @@ import {
     getUserPhoto,
     getVectorList,
     getVfpTable,
-    getVfpTableNames,
+    getVfpTables,
     getWellboreCasings,
     getWellboreCompletions,
     getWellboreLogCurveHeaders,
@@ -279,10 +279,10 @@ import type {
     GetVectorListResponse_api,
     GetVfpTableData_api,
     GetVfpTableError_api,
-    GetVfpTableNamesData_api,
-    GetVfpTableNamesError_api,
-    GetVfpTableNamesResponse_api,
     GetVfpTableResponse_api,
+    GetVfpTablesData_api,
+    GetVfpTablesError_api,
+    GetVfpTablesResponse_api,
     GetWellboreCasingsData_api,
     GetWellboreCasingsError_api,
     GetWellboreCasingsResponse_api,
@@ -2524,23 +2524,22 @@ export const getRftObservationsOptions = (options: Options<GetRftObservationsDat
         queryKey: getRftObservationsQueryKey(options),
     });
 
-export const getVfpTableNamesQueryKey = (options: Options<GetVfpTableNamesData_api>) =>
-    createQueryKey("getVfpTableNames", options);
+export const getVfpTablesQueryKey = (options: Options<GetVfpTablesData_api>) => createQueryKey("getVfpTables", options);
 
 /**
- * Get Vfp Table Names
+ * Get Vfp Tables
  *
- * Get the available VFP table names for a given ensemble and realization.
+ * Get the available VFP tables (type and number) for a given ensemble and realization.
  */
-export const getVfpTableNamesOptions = (options: Options<GetVfpTableNamesData_api>) =>
+export const getVfpTablesOptions = (options: Options<GetVfpTablesData_api>) =>
     queryOptions<
-        GetVfpTableNamesResponse_api,
-        AxiosError<GetVfpTableNamesError_api>,
-        GetVfpTableNamesResponse_api,
-        ReturnType<typeof getVfpTableNamesQueryKey>
+        GetVfpTablesResponse_api,
+        AxiosError<GetVfpTablesError_api>,
+        GetVfpTablesResponse_api,
+        ReturnType<typeof getVfpTablesQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getVfpTableNames({
+            const { data } = await getVfpTables({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -2548,7 +2547,7 @@ export const getVfpTableNamesOptions = (options: Options<GetVfpTableNamesData_ap
             });
             return data;
         },
-        queryKey: getVfpTableNamesQueryKey(options),
+        queryKey: getVfpTablesQueryKey(options),
     });
 
 export const getVfpTableQueryKey = (options: Options<GetVfpTableData_api>) => createQueryKey("getVfpTable", options);
@@ -2556,7 +2555,7 @@ export const getVfpTableQueryKey = (options: Options<GetVfpTableData_api>) => cr
 /**
  * Get Vfp Table
  *
- * Get the VFP table for a given ensemble, realization and table name.
+ * Get the VFP table for a given ensemble, realization, type and table number.
  */
 export const getVfpTableOptions = (options: Options<GetVfpTableData_api>) =>
     queryOptions<
