@@ -16,6 +16,7 @@ build-backend = "poetry.core.masonry.api"
 azure-identity = "^1.25.1"
 azure-servicebus = "^7.14.3"
 aiohttp = "^3.13.4"  # async transport for azure.servicebus.aio
+cryptography = "^48.0.1"
 
 ### We have experienced unexpected behavioral changes in patch versions of 'azure-monitor-opentelemetry', so pin it.
 azure-monitor-opentelemetry = "1.8.10"
