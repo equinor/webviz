@@ -29,6 +29,7 @@ services:
       - AZURE_TENANT_ID
       - AZURE_CLIENT_ID
       - AZURE_CLIENT_SECRET
+      - WEBVIZ_LOCAL_DEVELOPER_QUALIFIER
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
       - WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
       - WEBVIZ_SUMO_ENV
@@ -36,8 +37,6 @@ services:
       - WEBVIZ_PSEUDONYM_HMAC_KEY
       - WEBVIZ_SESSION_STORE_FERNET_KEY
       - WEBVIZ_REDIS_AUTH_STORE_PASSWORD
-      - WEBVIZ_SERVICE_BUS_NAMESPACE
-      - WEBVIZ_SERVICE_BUS_QUEUE_NAME
       - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
       - WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING # For local development only
       - WEBVIZ_REDIS_CACHE_PASSWORD
@@ -119,13 +118,13 @@ services:
       - AZURE_TENANT_ID
       - AZURE_CLIENT_ID
       - AZURE_CLIENT_SECRET
+      - WEBVIZ_LOCAL_DEVELOPER_QUALIFIER
       - WEBVIZ_SUMO_ENV
       - WEBVIZ_REDIS_CACHE_PASSWORD
-      - WEBVIZ_SERVICE_BUS_NAMESPACE
-      - WEBVIZ_SERVICE_BUS_QUEUE_NAME
       - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
       - WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING # For local development only
-      - WEBVIZ_WORKER_MAX_CONCURRENT_TASKS
+      - WEBVIZ_PYWORKER_SERVICE_BUS_QUEUE_ROLE
+      - WEBVIZ_PYWORKER_MAX_CONCURRENT_TASKS
       - APPLICATIONINSIGHTS_CONNECTION_STRING
     volumes:
       - ./backend_py/pyworker/src:/home/appuser/backend_py/pyworker/src
@@ -134,27 +133,27 @@ services:
     #command: ["python", "-m", "pyworker.worker_main"]
     #restart: on-failure
     restart: always
-    depends_on:
-      - sb-emulator
+    # depends_on:
+    #   - sb-emulator
 
-  sb-emulator:
-    image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
-    environment:
-      ACCEPT_EULA: Y
-      SQL_SERVER: mssql
-      MSSQL_SA_PASSWORD: NotSoSecretPassw0rd
-    volumes:
-      - ./docker/sb-emulator/SbEmulatorConfig.json:/ServiceBus_Emulator/ConfigFiles/Config.json
-    ports:
-      - "5672:5672"
-    depends_on:
-      - mssql
+  # sb-emulator:
+  #   image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+  #   environment:
+  #     ACCEPT_EULA: Y
+  #     SQL_SERVER: mssql
+  #     MSSQL_SA_PASSWORD: NotSoSecretPassw0rd
+  #   volumes:
+  #     - ./docker/sb-emulator/SbEmulatorConfig.json:/ServiceBus_Emulator/ConfigFiles/Config.json
+  #   ports:
+  #     - "5672:5672"
+  #   depends_on:
+  #     - mssql
 
-  mssql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    environment:
-      ACCEPT_EULA: Y
-      MSSQL_SA_PASSWORD: NotSoSecretPassw0rd
-    # Stop Compose from streaming SQL Server's noisy startup logs; still available via `docker compose logs mssql`.
-    attach: false
+  # mssql:
+  #   image: mcr.microsoft.com/mssql/server:2022-latest
+  #   environment:
+  #     ACCEPT_EULA: Y
+  #     MSSQL_SA_PASSWORD: NotSoSecretPassw0rd
+  #   # Stop Compose from streaming SQL Server's noisy startup logs; still available via `docker compose logs mssql`.
+  #   attach: false
 

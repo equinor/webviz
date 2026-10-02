@@ -1,6 +1,7 @@
 import os
 import httpx
 
+from webviz_core_utils.service_bus_destination import ServiceBusDestination
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 
 PSEUDONYM_HMAC_KEY = os.getenv("WEBVIZ_PSEUDONYM_HMAC_KEY")
@@ -33,8 +34,11 @@ AUTH_SESSION_STORE_PREFIX = "auth-sessions:"
 REDIS_CACHE_PASSWORD = os.environ["WEBVIZ_REDIS_CACHE_PASSWORD"]
 REDIS_CACHE_URL = f"redis://:{REDIS_CACHE_PASSWORD}@redis-cache:6379"
 
+
 _is_on_radix_platform = is_running_on_radix_platform()
 
+
+# Config for Cosmos DB
 if _is_on_radix_platform:
     COSMOS_DB_URL = os.getenv("WEBVIZ_COSMOS_DB_URL", "https://webviz-db.documents.azure.com:443/")
 else:
@@ -43,17 +47,17 @@ else:
 # Backend will use local cosmos DB emulator when this env. variable is set:
 COSMOS_DB_EMULATOR_HOST = os.getenv("WEBVIZ_COSMOS_DB_EMULATOR_HOST")
 
+
+# Config related to Azure Service Bus
 if _is_on_radix_platform:
+    _sb_dest = ServiceBusDestination.from_radix_env(queue_role="default")
+    SERVICE_BUS_NAMESPACE = _sb_dest.namespace
+    SERVICE_BUS_DEFAULT_QUEUE = _sb_dest.queue_name
     SERVICE_BUS_EMULATOR_CONNECTION_STRING = None
-    SERVICE_BUS_NAMESPACE = os.environ["WEBVIZ_SERVICE_BUS_NAMESPACE"]
-    SERVICE_BUS_QUEUE_NAME = os.environ["WEBVIZ_SERVICE_BUS_QUEUE_NAME"]
 else:
-    SERVICE_BUS_EMULATOR_CONNECTION_STRING = os.getenv("WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING")
-    if SERVICE_BUS_EMULATOR_CONNECTION_STRING:
-        SERVICE_BUS_NAMESPACE = "NotInUse"
-        SERVICE_BUS_QUEUE_NAME = "emulator-queue"
-    else:
-        SERVICE_BUS_NAMESPACE = os.environ["WEBVIZ_SERVICE_BUS_NAMESPACE"]
-        SERVICE_BUS_QUEUE_NAME = os.environ["WEBVIZ_SERVICE_BUS_QUEUE_NAME"]
+    _sb_dest = ServiceBusDestination.for_local_dev(queue_role="default")
+    SERVICE_BUS_NAMESPACE = _sb_dest.namespace
+    SERVICE_BUS_DEFAULT_QUEUE = _sb_dest.queue_name
+    SERVICE_BUS_EMULATOR_CONNECTION_STRING = _sb_dest.emulator_connection_string
 
 SERVICE_BUS_PAYLOAD_FERNET_KEY = os.environ["WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY"]

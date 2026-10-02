@@ -117,7 +117,7 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
         await PersistenceStoresSingleton.initialize_with_credential_async(config.COSMOS_DB_URL, azure_credential)
 
     if config.SERVICE_BUS_EMULATOR_CONNECTION_STRING is not None:
-        LOGGER.info("Initializing MessageBusSingleton using emulator connection string from environment")
+        LOGGER.info("Initializing MessageBusSingleton using Service Bus emulator")
         MessageBusSingleton.initialize_with_connection_string(config.SERVICE_BUS_EMULATOR_CONNECTION_STRING)
     else:
         LOGGER.info(f"Initializing MessageBusSingleton using Azure credential, {config.SERVICE_BUS_NAMESPACE=}")

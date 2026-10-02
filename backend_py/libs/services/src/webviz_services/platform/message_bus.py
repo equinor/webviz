@@ -7,7 +7,7 @@ from azure.core.credentials_async import AsyncTokenCredential
 from azure.servicebus.aio import ServiceBusClient, ServiceBusSender
 from azure.servicebus import ServiceBusMessage
 
-from webviz_core_utils.azure_service_bus_destination import ensure_fq_sb_namespace
+from webviz_core_utils.service_bus_destination import ensure_fq_sb_namespace
 
 LOGGER = logging.getLogger(__name__)
 

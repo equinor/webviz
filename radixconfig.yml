@@ -133,9 +133,6 @@ spec:
                 averageUtilization: 80
 
         - environment: review3
-          variables:
-            WEBVIZ_SERVICE_BUS_NAMESPACE: sbns-webviz-nonprod
-            WEBVIZ_SERVICE_BUS_QUEUE_NAME: review3-default
           resources:
             requests:
               memory: 4Gi
@@ -198,6 +195,9 @@ spec:
               - { name: webviz-insights-connectionstring-review, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW }
               - { name: webviz-insights-connectionstring-review2, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW2 }
               - { name: webviz-insights-connectionstring-review3, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW3 }
+      variables:
+        WEBVIZ_PYWORKER_SERVICE_BUS_QUEUE_ROLE: "default"
+        WEBVIZ_PYWORKER_MAX_CONCURRENT_TASKS: "1"
       resources:
         requests:
           memory: 4Gi
@@ -208,27 +208,7 @@ spec:
           # Override with prod clientId
           identity: *identityProdAppId
 
-        - environment: review2
-          variables:
-            WEBVIZ_SERVICE_BUS_NAMESPACE: sbns-webviz-nonprod
-            WEBVIZ_SERVICE_BUS_QUEUE_NAME: review2-default
-            WEBVIZ_WORKER_MAX_CONCURRENT_TASKS: "1"
-          horizontalScaling:
-            minReplicas: 0
-            maxReplicas: 5
-            triggers:
-              - name: azure-sb-trigger
-                azureServiceBus:
-                  namespace: sbns-webviz-nonprod
-                  queueName: review2-default
-                  messageCount: 2
-                  authentication: { identity: *identityNonProdKedaScaler }
-
         - environment: review3
-          variables:
-            WEBVIZ_SERVICE_BUS_NAMESPACE: sbns-webviz-nonprod
-            WEBVIZ_SERVICE_BUS_QUEUE_NAME: review3-default
-            WEBVIZ_WORKER_MAX_CONCURRENT_TASKS: "1"
           horizontalScaling:
             minReplicas: 0
             maxReplicas: 5

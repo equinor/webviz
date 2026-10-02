@@ -14,7 +14,7 @@ from opentelemetry.sdk.resources import Resource
 
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 from webviz_core_utils.azure_monitor_destination import AzureMonitorDestination
-from webviz_core_utils.azure_service_bus_destination import ensure_fq_sb_namespace
+from webviz_core_utils.service_bus_destination import ensure_fq_sb_namespace
 from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
@@ -112,7 +112,7 @@ async def _authenticated_sb_client_async(config: WorkerConfig) -> AsyncIterator[
 
     if not is_on_radix_platform and config.sb_emulator_connection_string:
         _logger.info("Using Service Bus emulator connection string for local development")
-        _logger.info(f"{config.sb_emulator_connection_string=}")
+        _logger.info(f"Emulator connection string: {config.sb_emulator_connection_string}")
         async with ServiceBusClient.from_connection_string(conn_str=config.sb_emulator_connection_string) as sb_client:
             # The emulator may not be ready when the worker starts, so wait for it before yielding the client.
             await _wait_for_emulator_ready_async(sb_client, config.sb_queue_name)
@@ -129,7 +129,7 @@ async def _authenticated_sb_client_async(config: WorkerConfig) -> AsyncIterator[
     _logger.info(f"AZURE_CLIENT_SECRET present: {"AZURE_CLIENT_SECRET" in os.environ}")
 
     sb_fq_namespace = ensure_fq_sb_namespace(config.sb_namespace)
-    _logger.info(f"Using Service Bus with DefaultAzureCredential, sb namespace: {sb_fq_namespace}")
+    _logger.info(f"Using Service Bus with DefaultAzureCredential, SB namespace: {sb_fq_namespace}")
 
     async with DefaultAzureCredential() as credential:
         _logger.info(f"{type(credential)=}")
@@ -137,10 +137,10 @@ async def _authenticated_sb_client_async(config: WorkerConfig) -> AsyncIterator[
             yield client
 
 
-async def _run_worker_loop_async(worker_config: WorkerConfig, shutdown_event: asyncio.Event) -> None:
-    max_concurrency = max(1, worker_config.max_concurrent_tasks)
+async def _run_worker_loop_async(config: WorkerConfig, shutdown_event: asyncio.Event) -> None:
+    max_concurrency = max(1, config.max_concurrent_tasks)
 
-    _logger.info(f"Worker will receive messages from queue: {worker_config.sb_queue_name}")
+    _logger.info(f"Worker will receive messages from: queue={config.sb_queue_name}, namespace={config.sb_namespace}")
     _logger.info(f"Max concurrent tasks: {max_concurrency}")
 
     # Use AutoLockRenewer to automatically renew the lock on messages while they are being processed.
@@ -148,17 +148,19 @@ async def _run_worker_loop_async(worker_config: WorkerConfig, shutdown_event: as
     # the message will be unlocked and may be received by another worker, leading to duplicate processing.
     lock_renewer = AutoLockRenewer(max_lock_renewal_duration=15 * 60)
 
-    async with _authenticated_sb_client_async(worker_config) as sb_client, lock_renewer:
+    async with _authenticated_sb_client_async(config) as sb_client, lock_renewer:
         # The reason for the type ignore below is that the async get_queue_receiver is mis-annotated in the SDK to
         # expect the sync AutoLockRenewer, but at runtime it requires the async one (from azure.servicebus.aio)
         sb_receiver: ServiceBusReceiver = sb_client.get_queue_receiver(
             client_identifier="pyworker",
-            queue_name=worker_config.sb_queue_name,
+            queue_name=config.sb_queue_name,
             auto_lock_renewer=lock_renewer,  # type: ignore[arg-type]
         )
 
         async with sb_receiver:
-            _logger.info("=== WORKER READY: waiting to receive messages")
+            _logger.info(
+                f"=== WORKER READY: waiting to receive messages (queue={config.sb_queue_name}, namespace={config.sb_namespace})"
+            )
 
             # Cooperative abort signal passed to tasks so they can abort promptly when a shutdown is requested
             abort_signal = AbortSignal(shutdown_event)
