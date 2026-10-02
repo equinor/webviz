@@ -173,7 +173,7 @@ async function globalSetup(): Promise<void> {
 
 export default globalSetup;
 
-// Run directly via `npm run test:e2e:seed` to seed a session so `playwright codegen` starts logged in.
+// Run directly (`node tests/e2e/setup/globalSetup.ts`) to seed a session so `playwright codegen` starts logged in.
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
     await globalSetup();
     console.info(`Wrote authenticated storage state to ${STORAGE_STATE_PATH}`);

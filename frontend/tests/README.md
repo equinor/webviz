@@ -66,7 +66,7 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
    ```
 2. Make sure the environment variable `SHARED_KEY_DROGON_READ_PROD` is set (e.g. as a Codespace
    secret) to give the backend access to Drogon Sumo data using the test user. The key is installed
-   into the backend container automatically during seeding, so there's nothing else to run here.
+   into the backend container automatically during startup of both Playwright codegen and tests.
 3. Launch codegen
    ```bash
    npm run test:e2e:codegen --prefix ./frontend
