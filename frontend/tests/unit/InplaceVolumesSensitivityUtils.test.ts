@@ -217,6 +217,44 @@ describe("resolveSensitivityMode", () => {
     test("blocked with a delta whose constituent has sensitivities", () => {
         expect(resolveSensitivityMode(ensembleSet, [sensDelta.getIdent()]).kind).toBe("blocked");
     });
+
+    test("an ensemble with a single case is not a sensitivity ensemble", () => {
+        const singleCaseArr: Sensitivity[] = [
+            { name: "mc", type: SensitivityType.MONTECARLO, cases: [{ name: "p10_p90", realizations: [0, 1] }] },
+        ];
+        const singleCase = makeEnsemble("55555555-aaaa-4444-aaaa-aaaaaaaaaaaa", singleCaseArr);
+        const otherSingleCase = makeEnsemble("66666666-aaaa-4444-aaaa-aaaaaaaaaaaa", singleCaseArr);
+        const set = new EnsembleSet([singleCase, otherSingleCase]);
+
+        expect(resolveSensitivityMode(set, [singleCase.getIdent()]).kind).toBe("off");
+        expect(resolveSensitivityMode(set, [singleCase.getIdent(), otherSingleCase.getIdent()]).kind).toBe("off");
+    });
+});
+
+describe("sensitivity and case order", () => {
+    test("follows the lowest realization, not the backend order", () => {
+        const unordered = new EnsembleSensitivities([
+            {
+                name: "faults",
+                type: SensitivityType.SCENARIO,
+                cases: [
+                    { name: "high", realizations: [4] },
+                    { name: "low", realizations: [3] },
+                ],
+            },
+            {
+                name: "rms_seed",
+                type: SensitivityType.MONTECARLO,
+                cases: [{ name: "p10_p90", realizations: [2, 0, 1] }],
+            },
+        ]);
+
+        expect(getSensitivityCaseRefs(unordered)).toEqual([
+            { sensitivityName: "rms_seed", caseName: "p10_p90" },
+            { sensitivityName: "faults", caseName: "low" },
+            { sensitivityName: "faults", caseName: "high" },
+        ]);
+    });
 });
 
 describe("default comparison cases", () => {

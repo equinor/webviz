@@ -1,6 +1,6 @@
 import React from "react";
 
-import { cloneDeep, isEqual } from "lodash-es";
+import { cloneDeep, isEqual, omit } from "lodash-es";
 
 import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
@@ -36,6 +36,7 @@ export type InplaceVolumesFilterComponentProps = {
     selectedAllowIndicesValuesIntersection: boolean;
     availableSensitivityCases?: SensitivityCaseOption[];
     selectedSensitivityCases?: SensitivityCaseRef[];
+    sensitivityCasesAnnotations?: SettingAnnotation[];
 
     dataAnnotations?: SettingAnnotation[];
     selectionAnnotations?: SettingAnnotation[];
@@ -176,12 +177,15 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     }
 
     function callOnChangeAndMaybePublish(filter: InplaceVolumesFilterSettings, publish: boolean): void {
-        props.onChange(filter);
+        // Modules without case selection must not publish cases, or synced modules would reset theirs.
+        const supportedFilter =
+            props.selectedSensitivityCases === undefined ? omit(filter, "sensitivityCases") : filter;
+        props.onChange(supportedFilter);
         if (publish) {
             syncHelper.publishValue(
                 SyncSettingKey.INPLACE_VOLUMES_FILTER,
                 "global.syncValue.inplaceVolumesFilterSettings",
-                filter,
+                supportedFilter,
             );
         }
     }
@@ -289,10 +293,10 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     return (
         <>
             <Setting.Section title="Data" defaultOpen>
-                {props.dataAnnotations?.map((annotation, index) => (
+                {props.dataAnnotations?.map((annotation) => (
                     <Banner
                         layoutClassName="col-span-3"
-                        key={index}
+                        key={annotation.message}
                         tone={({ info: "info", warning: "warning", error: "danger" } as const)[annotation.type]}
                     >
                         {annotation.message}
@@ -337,7 +341,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                     />
                 </Setting.Field>
                 {sensitivityCaseOptions.length > 0 && (
-                    <Setting.Field label="Sensitivity cases" stacked>
+                    <Setting.Field label="Sensitivity cases" stacked annotations={props.sensitivityCasesAnnotations}>
                         <Select
                             options={sensitivityCaseOptions}
                             value={sensitivityCases.map(makeSensitivityCaseKey)}

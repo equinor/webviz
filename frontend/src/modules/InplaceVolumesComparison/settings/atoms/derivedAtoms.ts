@@ -6,7 +6,7 @@ import type { EnsembleSensitivities } from "@framework/EnsembleSensitivities";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
-import { isSameSensitivityCase } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { getMultiCaseSensitivities, isSameSensitivityCase } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria, TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
 import {
@@ -35,7 +35,9 @@ function getEnsembleSensitivities(
     get: Getter,
     ensembleIdent: RegularEnsembleIdent | null,
 ): EnsembleSensitivities | null {
-    return ensembleIdent ? (get(EnsembleSetAtom).findEnsemble(ensembleIdent)?.getSensitivities() ?? null) : null;
+    return ensembleIdent
+        ? getMultiCaseSensitivities(get(EnsembleSetAtom).findEnsemble(ensembleIdent)?.getSensitivities() ?? null)
+        : null;
 }
 
 export const referenceSensitivitiesAtom = atom<EnsembleSensitivities | null>((get) =>

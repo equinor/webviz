@@ -11,10 +11,12 @@ import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableD
 
 import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
 import {
+    selectedColorByAtom,
     selectedEnsembleIdentsAtom,
     selectedResultNameAtom,
     selectedIndicesWithValuesAtom,
     selectedSensitivityCasesAtom,
+    selectedSubplotByAtom,
     selectedTableNamesAtom,
 } from "./persistableFixableAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
@@ -69,6 +71,15 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
     }
 
     if (get(isSensitivityEnsembleSelectionBlockedAtom)) {
+        return false;
+    }
+
+    // Restored values are kept while invalid; plotting them could pool cases, tables or ensembles.
+    if (!get(selectedSubplotByAtom).isValidInContext || !get(selectedColorByAtom).isValidInContext) {
+        return false;
+    }
+
+    if (get(sensitivityModeAtom).kind === "active" && !get(selectedSensitivityCasesAtom).isValidInContext) {
         return false;
     }
 

@@ -72,6 +72,10 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
         return false;
     }
 
+    if (get(sensitivityModeAtom).kind === "active" && !get(selectedSensitivityCasesAtom).isValidInContext) {
+        return false;
+    }
+
     if (!tableDefinitionsAccessor.hasEnsembleIdents(selectedEnsembleIdents.value)) {
         return false;
     }

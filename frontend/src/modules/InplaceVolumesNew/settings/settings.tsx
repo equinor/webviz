@@ -153,6 +153,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectedSelectorColumnAnnotations = useMakePersistableFixableAtomAnnotations(selectedSelectorColumnAtom);
     const selectedSubplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
+    const selectedSensitivityCasesAnnotations = useMakePersistableFixableAtomAnnotations(selectedSensitivityCasesAtom);
 
     function handleOptionChange<K extends keyof InplaceVolumesPlotOptions>(key: K) {
         return (value: InplaceVolumesPlotOptions[K]) => setPlotOptions({ ...plotOptions, [key]: value });
@@ -353,6 +354,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             : []
                     }
                     selectedSensitivityCases={selectedSensitivityCases.value}
+                    sensitivityCasesAnnotations={selectedSensitivityCasesAnnotations}
                     dataAnnotations={
                         sensitivityMode.kind === "blocked"
                             ? [{ type: "error", message: SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE }]

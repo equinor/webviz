@@ -2,7 +2,7 @@ import { formatHex, oklch } from "culori";
 
 import type { InplaceVolumesTableData_api, InplaceVolumesTableDataPerFluidSelection_api } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import type { EnsembleSensitivities, Sensitivity } from "@framework/EnsembleSensitivities";
+import type { EnsembleSensitivities, Sensitivity, SensitivityCase } from "@framework/EnsembleSensitivities";
 import { SensitivityType } from "@framework/EnsembleSensitivities";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
@@ -39,12 +39,32 @@ export function makeSensitivityCaseLabel(sensitivity: Sensitivity, caseName: str
     return `${sensitivity.name}:${caseName}`;
 }
 
+function getLowestRealization(sensitivityCase: SensitivityCase): number {
+    return sensitivityCase.realizations.reduce((lowest, real) => Math.min(lowest, real), Infinity);
+}
+
+/** Sensitivities and their cases in design-matrix order (lowest realization first), as the backend order is not stable. */
+function getOrderedSensitivityArr(sensitivities: EnsembleSensitivities): Sensitivity[] {
+    const byLowestRealization = (a: SensitivityCase, b: SensitivityCase) =>
+        getLowestRealization(a) - getLowestRealization(b);
+    return sensitivities
+        .getSensitivityArr()
+        .map((sensitivity) => ({ ...sensitivity, cases: [...sensitivity.cases].sort(byLowestRealization) }))
+        .sort((a, b) => byLowestRealization(a.cases[0], b.cases[0]));
+}
+
+/** Null unless the ensemble has more than one case, e.g. a pure Monte Carlo design is not analysed per case. */
+export function getMultiCaseSensitivities(sensitivities: EnsembleSensitivities | null): EnsembleSensitivities | null {
+    const numCases = sensitivities?.getSensitivityArr().reduce((sum, sens) => sum + sens.cases.length, 0) ?? 0;
+    return numCases > 1 ? sensitivities : null;
+}
+
 export function getSensitivityCaseRefs(sensitivities: EnsembleSensitivities): SensitivityCaseRef[] {
     return getSensitivityCaseOptions(sensitivities).map((option) => option.ref);
 }
 
 export function getSensitivityCaseOptions(sensitivities: EnsembleSensitivities): SensitivityCaseOption[] {
-    return sensitivities.getSensitivityArr().flatMap((sensitivity) =>
+    return getOrderedSensitivityArr(sensitivities).flatMap((sensitivity) =>
         sensitivity.cases.map((sensitivityCase) => ({
             ref: { sensitivityName: sensitivity.name, caseName: sensitivityCase.name },
             label: makeSensitivityCaseLabel(sensitivity, sensitivityCase.name),
@@ -85,7 +105,7 @@ export function makeSensitivityCaseLabelForRef(sensitivities: EnsembleSensitivit
 
 /** The base case to compare against: `rms_seed`, else `rms`, else the first sensitivity; its first case. */
 export function pickDefaultReferenceSensitivityCase(sensitivities: EnsembleSensitivities): SensitivityCaseRef | null {
-    const sensitivityArr = sensitivities.getSensitivityArr();
+    const sensitivityArr = getOrderedSensitivityArr(sensitivities);
     const sensitivity =
         sensitivityArr.find((sens) => sens.name === "rms_seed") ??
         sensitivityArr.find((sens) => sens.name === "rms") ??
@@ -108,7 +128,7 @@ function getSelectedCasesInEnsembleOrder(
     cases: SensitivityCaseRef[],
 ): { sensitivity: Sensitivity; caseName: string; realizations: number[] }[] {
     const result: { sensitivity: Sensitivity; caseName: string; realizations: number[] }[] = [];
-    for (const sensitivity of sensitivities.getSensitivityArr()) {
+    for (const sensitivity of getOrderedSensitivityArr(sensitivities)) {
         for (const sensitivityCase of sensitivity.cases) {
             const ref = { sensitivityName: sensitivity.name, caseName: sensitivityCase.name };
             if (cases.some((selectedCase) => isSameSensitivityCase(selectedCase, ref))) {
@@ -261,14 +281,15 @@ export function resolveSensitivityMode(
 ): SensitivityMode {
     if (selectedEnsembleIdents.length === 1 && isEnsembleIdentOfType(selectedEnsembleIdents[0], RegularEnsembleIdent)) {
         const ensemble = ensembleSet.findEnsemble(selectedEnsembleIdents[0]);
-        const sensitivities = ensemble?.getSensitivities() ?? null;
+        const sensitivities = getMultiCaseSensitivities(ensemble?.getSensitivities() ?? null);
         if (ensemble && sensitivities) {
             return { kind: "active", ensemble, sensitivities };
         }
     }
 
     const anyHasSensitivities = expandToRegularEnsembleIdents(selectedEnsembleIdents).some(
-        (ensembleIdent) => (ensembleSet.findEnsemble(ensembleIdent)?.getSensitivities() ?? null) !== null,
+        (ensembleIdent) =>
+            getMultiCaseSensitivities(ensembleSet.findEnsemble(ensembleIdent)?.getSensitivities() ?? null) !== null,
     );
     return anyHasSensitivities ? { kind: "blocked" } : { kind: "off" };
 }
@@ -281,7 +302,7 @@ export function createSensitivityCaseColorMap(
     const baseColorMap = createSensitivityColorMap(sensitivities.getSensitivityNames().sort(), colorSet);
 
     const colorMap = new Map<string, string>();
-    for (const sensitivity of sensitivities.getSensitivityArr()) {
+    for (const sensitivity of getOrderedSensitivityArr(sensitivities)) {
         const baseColor = baseColorMap[sensitivity.name];
         const baseOklch = oklch(baseColor);
         for (const [caseIndex, sensitivityCase] of sensitivity.cases.entries()) {
