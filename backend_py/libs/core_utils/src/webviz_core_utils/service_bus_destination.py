@@ -38,6 +38,7 @@ class ServiceBusDestination:
     Local development can instead use the Service Bus emulator. When WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING
     is set, the connection will be made via that connection string (no authentication, no namespace).
     """
+
     queue_name: str
     namespace: str
     emulator_connection_string: str | None = None
