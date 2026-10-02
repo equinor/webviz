@@ -19,7 +19,7 @@ _tracer = trace.get_tracer(__name__)
 
 
 async def process_message_async(
-    receiver: ServiceBusReceiver, msg: ServiceBusReceivedMessage, abort_signal: AbortSignal
+    receiver: ServiceBusReceiver, msg: ServiceBusReceivedMessage, _abort_signal: AbortSignal
 ) -> None:
     """
     Processes a single Service Bus message, dispatching to the appropriate handler based on the
@@ -100,7 +100,7 @@ async def process_message_async(
                 )
                 await receiver.dead_letter_message(msg, reason="InternalError", error_description=str(exc))
 
-            except Exception as exc:
+            except Exception as exc:  # pylint: disable=broad-exception-caught
                 span.record_exception(exc)
                 span.set_status(trace.StatusCode.ERROR, repr(exc))
                 _logger.error(

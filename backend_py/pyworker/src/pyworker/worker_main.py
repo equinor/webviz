@@ -12,7 +12,7 @@ def main() -> int:
         return 0
     except KeyboardInterrupt:
         return 130
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         _logger.exception("Fatal error")
         return 1
 
