@@ -212,14 +212,17 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
     const showMinLock = [true, "both", "min"].includes(defaultedProps.showRangeLocks);
     const showMaxLock = [true, "both", "max"].includes(defaultedProps.showRangeLocks);
 
+    const minAndMaxAreEqual = defaultedProps.min === defaultedProps.max;
+
     const markerLabelFormatFunc =
         typeof defaultedProps.markerLabels === "function" ? defaultedProps.markerLabels : undefined;
     const allMarkers = React.useMemo(() => {
+        if (minAndMaxAreEqual) return [defaultedProps.min];
         return chain([defaultedProps.min, ...defaultedProps.markers, defaultedProps.max])
             .sortBy()
             .sortedUniq()
             .value();
-    }, [defaultedProps.markers, defaultedProps.max, defaultedProps.min]);
+    }, [defaultedProps.markers, defaultedProps.max, defaultedProps.min, minAndMaxAreEqual]);
 
     // Prioritize the controlled value if possible
     const activeValue = props.value ?? internalValue;
@@ -341,15 +344,12 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
 
     const showThumbValueLabels = defaultedProps.valueLabelDisplay === "auto" && (isHovered || isFocused);
 
-    // Base-UI allows the slider to go out of range, but it's computed positions visually clashes with
-    // our design: to avoid this, we feed the actual component a clamped value
-    const clampedInternalValue = isDualSliderValue(activeValue)
-        ? activeValue.map((n) => clamp(n, defaultedProps.min, defaultedProps.max))
-        : clamp(activeValue, defaultedProps.min, defaultedProps.max);
     return (
         <SliderBase.Root
             {...baseProps}
             className={resolveClassNames(baseProps.className, "px-2xs grid items-center")}
+            // ! A slider with each min/max is unusable, so we disable it
+            disabled={minAndMaxAreEqual || baseProps.disabled}
             ref={wrapperRef}
             value={activeValue}
             onValueChange={onValueChangeInternal}
@@ -400,7 +400,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                         onBlur={() => setIsFocused(false)}
                         // If the slider is being dragged, we want to check if we should lock to min or max based on the pointer position
                         onPointerDown={(evt) => {
-                            if (props.disabled) return;
+                            if (state.disabled) return;
 
                             evt.currentTarget.setPointerCapture(evt.pointerId);
                             setIsDragging(true);
@@ -498,6 +498,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                     leftPosPercent={getMarkerPercentage(v, defaultedProps.min, defaultedProps.max)}
                                 />
                             ))}
+                            {minAndMaxAreEqual && <Marker variant="dot" leftPosPercent={100} />}
                         </SliderBase.Track>
 
                         {showMaxLock && (
@@ -542,7 +543,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                     index={i}
                                     size={componentSize}
                                     numMarkers={allMarkers.length}
-                                    disabled={props.disabled}
+                                    disabled={state.disabled}
                                     labelFormat={markerLabelFormatFunc}
                                     onClick={(v) => {
                                         if (!isDualSliderValue(activeValue)) {
@@ -562,6 +563,17 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                     }}
                                 />
                             ))}
+                            {minAndMaxAreEqual && (
+                                <MarkerLabel
+                                    value={defaultedProps.min}
+                                    size={componentSize}
+                                    leftPosPercent={100}
+                                    disabled={state.disabled}
+                                    index={1}
+                                    numMarkers={2}
+                                    onClick={() => {}}
+                                />
+                            )}
                         </div>
                     )}
                 </div>

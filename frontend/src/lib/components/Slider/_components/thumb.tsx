@@ -34,7 +34,8 @@ export function Thumb(props: {
         throw new Error("Thumb cannot be locked to both min and max");
     }
 
-    const thumbHidden = !isDualSliderValue(props.sliderValue) && props.index === 1;
+    // Base-ui hides the thumb off-screen when limits are equal
+    const thumbHidden = props.min === props.max || (!isDualSliderValue(props.sliderValue) && props.index === 1);
     const thumbValue = isDualSliderValue(props.sliderValue) ? props.sliderValue[props.index] : props.sliderValue;
 
     const isOutOfBounds = thumbValue < props.min || thumbValue > props.max;
