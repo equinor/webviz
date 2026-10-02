@@ -4,6 +4,8 @@ import type { ColumnMetaData } from "../_components/column";
 
 export type TableColumnContextType = {
     columns: ColumnMetaData[];
+    /** Leaf columns in on-screen order; body cells inherit column-level props from these by index */
+    leafColumns: ColumnMetaData[];
     content: React.ReactNode;
     maxDepth: number;
     leafCount: number;

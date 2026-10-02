@@ -394,7 +394,7 @@ export const PinnedColumns: Story = {
     parameters: {
         docs: {
             description: {
-                story: "Cells with `stickyLeftPx` stay pinned while scrolling horizontally. The consumer supplies the cumulative offsets; `stickyEdge` marks the last pinned column.",
+                story: "Columns with `stickyLeftPx` stay pinned while scrolling horizontally; body cells inherit it from their column. The consumer supplies the cumulative offsets; `stickyEdge` marks the last pinned column.",
             },
         },
     },
@@ -424,10 +424,8 @@ export const PinnedColumns: Story = {
                         .flatMap((copy) => EXAMPLE_DATA.map((datum) => ({ datum, rowKey: `${copy}-${datum.id}` })))
                         .map(({ datum, rowKey }) => (
                             <Table.Row key={rowKey} rowKey={rowKey}>
-                                <Table.Cell stickyLeftPx={0}>{datum.id}</Table.Cell>
-                                <Table.Cell stickyLeftPx={60} stickyEdge>
-                                    {datum.name}
-                                </Table.Cell>
+                                <Table.Cell>{datum.id}</Table.Cell>
+                                <Table.Cell>{datum.name}</Table.Cell>
                                 {extraColumns.map((key, i) => (
                                     <Table.Cell key={key}>{(datum.id * 10 + i).toFixed(1)}</Table.Cell>
                                 ))}

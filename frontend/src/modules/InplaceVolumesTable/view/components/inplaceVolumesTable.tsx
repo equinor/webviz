@@ -245,9 +245,6 @@ function TableFilterRow(props: {
     return (
         <Table.Row sortable={false}>
             {props.layout.visibleLeaves.map(({ key, heading }) => {
-                const stickyLeftPx = props.layout.stickyLeftPxByKey.get(key);
-                const stickyEdge = props.layout.lastPinnedKey === key;
-
                 if (heading.columnType === ColumnType.RESULT) {
                     return <Table.Cell key={key} colKey={key} noPadding />;
                 }
@@ -258,8 +255,6 @@ function TableFilterRow(props: {
                         filterValue={props.filterState[key] ?? null}
                         colKey={key}
                         heading={heading}
-                        stickyLeftPx={stickyLeftPx}
-                        stickyEdge={stickyEdge}
                         onFilterChange={props.onFilterChange}
                     />
                 );
@@ -272,8 +267,6 @@ function TableFilterCell(props: {
     colKey: string;
     heading: TableHeading;
     filterValue: string | null;
-    stickyLeftPx?: number;
-    stickyEdge?: boolean;
     onFilterChange: (columnKey: string, filterValue: string | null) => void;
 }) {
     function handleFilterChange(newValue: string | null) {
@@ -332,7 +325,7 @@ function TableFilterCell(props: {
     // }
 
     return (
-        <Table.Cell colKey={props.colKey} noPadding stickyLeftPx={props.stickyLeftPx} stickyEdge={props.stickyEdge}>
+        <Table.Cell colKey={props.colKey} noPadding>
             <TextInput
                 aria-label={`Filter ${props.heading.label}`}
                 value={localTableFilterState ?? ""}
@@ -375,8 +368,6 @@ function TableRowComp(props: {
                         value={value}
                         displayValue={displayValue}
                         columnType={heading.columnType}
-                        stickyLeftPx={props.layout.stickyLeftPxByKey.get(key)}
-                        stickyEdge={props.layout.lastPinnedKey === key}
                         title={isWidthCapped ? displayValue : undefined}
                     />
                 );
@@ -389,17 +380,13 @@ function TableCellComp(props: {
     value: string | number | null;
     displayValue: string;
     columnType?: ColumnType;
-    stickyLeftPx?: number;
-    stickyEdge?: boolean;
     title?: string;
 }) {
-    const cellProps = { stickyLeftPx: props.stickyLeftPx, stickyEdge: props.stickyEdge, title: props.title };
-
     if (props.columnType === ColumnType.FLUID) {
         const fluidType = props.value?.toString().toLocaleLowerCase() ?? "";
 
         return (
-            <Table.Cell {...cellProps}>
+            <Table.Cell title={props.title}>
                 <span style={{ color: isValidFluidType(fluidType) ? PHASE_COLORS[fluidType] : undefined }}>
                     {props.displayValue}
                 </span>
@@ -409,11 +396,11 @@ function TableCellComp(props: {
 
     if (props.columnType === ColumnType.RESULT) {
         return (
-            <Table.Cell {...cellProps} layoutClassName="text-right">
+            <Table.Cell title={props.title} layoutClassName="text-right">
                 {formatInplaceVolumesValue(props.value)}
             </Table.Cell>
         );
     }
 
-    return <Table.Cell {...cellProps}>{props.displayValue}</Table.Cell>;
+    return <Table.Cell title={props.title}>{props.displayValue}</Table.Cell>;
 }
