@@ -48,6 +48,8 @@ from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
 from primary.routers.persistence.router import router as persistence_router
+from primary.routers.tutorials.router import router as tutorials_router
+from primary.services.tutorial_media.tutorial_media_signer import TutorialMediaSignerSingleton
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry_for_primary
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
@@ -128,12 +130,15 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
 
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
+    if azure_services_credential is not None:
+        TutorialMediaSignerSingleton.initialize(credential=azure_services_credential)
 
     # This part, after the yield, will be executed after the application has finished.
     yield
 
     await MessageBusSingleton.shutdown_async()
     await PersistenceStoresSingleton.shutdown_async()
+    await TutorialMediaSignerSingleton.shutdown_async()
 
     if azure_credential is not None:
         await azure_credential.close()
@@ -181,6 +186,7 @@ app.include_router(rft_router, prefix="/rft", tags=["rft"])
 app.include_router(vfp_router, prefix="/vfp", tags=["vfp"])
 app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
 app.include_router(persistence_router, prefix="/persistence", tags=["persistence"])
+app.include_router(tutorials_router, prefix="/tutorials", tags=["tutorials"])
 
 auth_helper = AuthHelper()
 app.include_router(auth_helper.router)

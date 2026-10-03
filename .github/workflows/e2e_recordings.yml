@@ -13,7 +13,7 @@ jobs:
   e2e_recordings:
     # The Sumo shared key secret is only available on the upstream repo, so skip on forks.
     if: github.repository == 'equinor/webviz'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     env:
       COMPOSE_FILE: docker-compose.yml:docker-compose-cosmos-db.yml
@@ -64,25 +64,6 @@ jobs:
       - name: 🐳 Build and start the full stack
         run: docker compose up --build --detach
 
-      - name: 🔑 Add Sumo shared key into the backend container
-        env:
-          SHARED_KEY_SUMO_PROD: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
-        run: |
-          if [ ${#SHARED_KEY_SUMO_PROD} -eq 0 ]; then
-            echo "Error: SHARED_KEY_SUMO_PROD is empty. Stopping the action."
-            exit 1
-          fi
-          printf '%s' "$SHARED_KEY_SUMO_PROD" > shared.key
-          docker compose exec -T backend-primary mkdir -p /home/appuser/.sumo
-          docker compose cp shared.key backend-primary:/home/appuser/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
-          rm -f shared.key
-
-          # `docker compose cp` writes the file as root, but the backend runs as `appuser`. Fix ownership.
-          docker compose exec -T -u root backend-primary \
-            chown appuser:appuser /home/appuser/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
-          docker compose exec -T -u root backend-primary \
-            chmod 600 /home/appuser/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
-
       - name: ⏳ Wait for the stack to become responsive
         run: |
           curl --retry 90 --retry-delay 5 --retry-connrefused --retry-all-errors -f http://localhost:5000/alive
@@ -92,11 +73,21 @@ jobs:
         working-directory: ./frontend
         env:
           CI: "true"
+          SHARED_KEY_DROGON_READ_PROD: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
         run: npm run test:e2e:record
 
       - name: 🐳 Dump docker compose logs on failure
         if: failure()
         run: docker compose logs --no-color
+
+      - name: 🎭 Upload Playwright traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: frontend/test-results/**/trace.zip
+          retention-days: 1
+          if-no-files-found: ignore
 
       - name: ☁️ Upload recordings to Azure Blob Storage  
         env:
@@ -104,9 +95,10 @@ jobs:
         run: |
           az storage blob upload-batch \
             --destination tutorial-videos \
-            --source frontend/test-results \
-            --pattern "*.webm" \
+            --source frontend/public/tutorial-videos \
+            --pattern "*" \
             --overwrite \
+            --content-cache "private, no-cache" \
             --output none
 
       - name: 🧹 Tear down the stack

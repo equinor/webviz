@@ -1,16 +1,24 @@
-import type { Locator, Page } from "@playwright/test";
-import { expect } from "@playwright/test";
+import path from "path";
 
-/**
- * Helpers for the recorded UI walkthrough tests.
- *
- * The walkthrough doubles as a tutorial video (uploaded to blob storage from CI when RECORD=1),
- * so when recording we deliberately slow the interactions down to make the resulting video
- * watchable. When not recording the same test runs at full speed as a normal regression check.
- */
+import type { Locator, Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+
+import { DROGON_AHM } from "./drogonTestData";
 
 /** True when the run is capturing video (set via RECORD=1, see tests/e2e/_playwright.config.ts). */
 export const RECORDING = !!process.env.RECORD;
+
+/**
+ * Save a still frame of the page as the tutorial's preview thumbnail (used as the poster image in
+ * the in-app Tutorials dialog). Call this at the moment that best represents the finished result.
+ * No-op unless RECORD=1.
+ */
+export async function captureThumbnail(page: Page): Promise<void> {
+    if (!RECORDING) {
+        return;
+    }
+    await page.screenshot({ path: path.join(test.info().outputDir, "thumbnail.png") });
+}
 
 /** Pause lengths (ms) used only while recording, to give the viewer time to follow along. */
 const PACING_MS = {
@@ -218,12 +226,6 @@ async function injectRecordingStyle(page: Page, styleId: string, css: string): P
  * paint time, so a non-allowed cell can never render readable — not even for one frame, and not when
  * the virtualized table mounts/recycles rows during scrolling.
  *
- * Relies on a production hook: every identifying case cell (name/id, description, author) carries a
- * `data-case-uuid="<case uuid>"` attribute on a normal block-level <div>. We blur those divs
- * directly (not the <tr>/<td>), because CSS `filter` — like `opacity` and `transform` — is not
- * reliably rendered on `display: table-row`/`table-cell` boxes in Chromium, whereas a plain <div>
- * renders it fine. The attribute is unique to case cells, so no extra scoping is needed.
- *
  * No-op unless RECORD=1, so normal test runs are unaffected. Must be called BEFORE `page.goto(...)`
  * so the init script is registered for the first navigation (and re-applied on every navigation).
  */
@@ -232,16 +234,20 @@ export async function installCaseRowRedaction(page: Page, allowedCaseUuids: stri
         return;
     }
     const allowed = allowedCaseUuids.map((uuid) => uuid.toLowerCase());
-    // Allow cells whose case UUID is in the allowlist; blur every other case cell so its text is
-    // unreadable. Case UUIDs are lowercase in both the DOM and the allowlist, so we match exactly
-    // (no CSS Level 4 `i` flag, which — if ever rejected — would invalidate the whole `:not()` and
-    // drop the entire rule). A moderate blur keeps each cell visible as a recognizable (but
-    // unreadable) smudge — strong enough to obscure case names/authors, light enough that small
-    // cells like the author avatar don't disappear entirely.
     const allowSelectors = allowed.map((uuid) => `:not([data-case-uuid="${uuid}"])`).join("");
-    const css = `[data-case-uuid]${allowSelectors} {
+    const blockSelector = `[data-case-uuid]${allowSelectors}`;
+    const css = `${blockSelector} {
         filter: blur(5px) !important;
         user-select: none !important;
+    }
+    ${blockSelector},
+    ${blockSelector} * {
+        color: transparent !important;
+        text-shadow: 0 0 8px rgba(0, 0, 0, 0.6) !important;
+    }
+    ${blockSelector} img,
+    ${blockSelector} svg {
+        visibility: hidden !important;
     }`;
     await injectRecordingStyle(page, "__pw_case_row_redaction_style__", css);
 }
@@ -249,8 +255,8 @@ export async function installCaseRowRedaction(page: Page, allowedCaseUuids: stri
 /**
  * Hide developer-only overlays that float over the app so they don't appear in the recorded video.
  *
- * The app's own dev tools are suppressed by seeding `devToolsVisible=false` (see setup/globalSetup),
- * but the TanStack React Query Devtools render their own floating toggle button (the logo in the
+ * The app's own dev tools are suppressed by forcing dev-mode off (see setup/globalSetup), but the
+ * TanStack React Query Devtools render their own floating toggle button (the logo in the
  * lower-left corner) independently of that flag. We hide it with pure CSS, which can't be missed for
  * a single frame regardless of when the button mounts.
  *
@@ -265,6 +271,71 @@ export async function hideDevOverlays(page: Page): Promise<void> {
 }
 
 /**
+ * Expose a `window.__pwShowKey__(label)` helper that briefly pops up a keycap-styled badge at the
+ * bottom of the screen, so a recorded video can show WHICH keyboard key was pressed (Playwright's
+ * screencast never paints physical key presses). The badge pops in, holds, then fades out on its own.
+ *
+ * No-op unless RECORD=1. Must be called BEFORE `page.goto(...)` so the init script is registered for
+ * the first navigation. Use together with {@link pressKeyWithOverlay}.
+ */
+export async function installKeyOverlay(page: Page): Promise<void> {
+    if (!RECORDING) {
+        return;
+    }
+    await page.addInitScript(() => {
+        const STYLE_ID = "__pw_key_overlay_style__";
+
+        function ensureKeyframes(): void {
+            if (document.getElementById(STYLE_ID)) {
+                return;
+            }
+            const style = document.createElement("style");
+            style.id = STYLE_ID;
+            style.textContent = `@keyframes __pw_key_pop__ {
+                0%   { transform: translateX(-50%) scale(0.8); opacity: 0; }
+                12%  { transform: translateX(-50%) scale(1);   opacity: 1; }
+                80%  { transform: translateX(-50%) scale(1);   opacity: 1; }
+                100% { transform: translateX(-50%) scale(0.96); opacity: 0; }
+            }`;
+            document.documentElement.appendChild(style);
+        }
+
+        function showKey(label: string): void {
+            ensureKeyframes();
+            const cap = document.createElement("div");
+            cap.textContent = label;
+            cap.style.cssText = [
+                "position: fixed",
+                "left: 50%",
+                "bottom: 48px",
+                "transform: translateX(-50%)",
+                "min-width: 56px",
+                "height: 56px",
+                "padding: 0 18px",
+                "display: flex",
+                "align-items: center",
+                "justify-content: center",
+                "box-sizing: border-box",
+                "font: 600 24px/1 system-ui, -apple-system, sans-serif",
+                "color: #1a1a1a",
+                "background: linear-gradient(#ffffff, #e7e7e7)",
+                "border: 1px solid rgba(0, 0, 0, 0.25)",
+                "border-bottom-width: 4px",
+                "border-radius: 10px",
+                "box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25)",
+                "pointer-events: none",
+                "z-index: 2147483647",
+                "animation: __pw_key_pop__ 900ms ease-out forwards",
+            ].join(";");
+            document.documentElement.appendChild(cap);
+            window.setTimeout(() => cap.remove(), 950);
+        }
+
+        (window as unknown as { __pwShowKey__?: (label: string) => void }).__pwShowKey__ = showKey;
+    });
+}
+
+/**
  * Glide the real Playwright mouse to the centre of `locator` in several small steps so the injected
  * fake cursor (which follows pointer/mouse move events) animates smoothly across the screen instead
  * of teleporting. Playwright interpolates from its last known pointer position, so the resulting
@@ -274,7 +345,7 @@ export async function hideDevOverlays(page: Page): Promise<void> {
  * subsequent action waits for/locates the element on its own. Best-effort: any failure here is
  * swallowed so a purely-cosmetic cursor animation can never fail a test.
  */
-async function smoothMoveToLocator(page: Page, locator: Locator): Promise<void> {
+export async function smoothMoveToLocator(page: Page, locator: Locator): Promise<void> {
     if (!RECORDING) {
         return;
     }
@@ -288,6 +359,16 @@ async function smoothMoveToLocator(page: Page, locator: Locator): Promise<void> 
         // Cursor animation is purely cosmetic; never let it break the walkthrough.
     }
 }
+
+/** Friendly keycap labels for click modifiers, so modified clicks read clearly in recorded videos. */
+const MODIFIER_OVERLAY_LABELS: Record<string, string> = {
+    // Recordings run on Linux Desktop Chrome, so "ControlOrMeta" resolves to Control there.
+    Control: "Ctrl",
+    ControlOrMeta: "Ctrl",
+    Meta: "\u2318",
+    Shift: "Shift",
+    Alt: "Alt",
+};
 
 /**
  * Click a locator, first gliding the (visible) cursor over to it when recording so the motion is
@@ -303,6 +384,17 @@ export async function smoothClick(
     await smoothMoveToLocator(page, locator);
     if (RECORDING) {
         try {
+            // When the click holds a modifier (e.g. Ctrl for multi-select), pop a keycap badge so the
+            // recorded video shows the modifier is down — otherwise it looks like a plain click.
+            // Requires installKeyOverlay(); the call is optional-chained so it's a no-op otherwise.
+            const modifierLabels = (options?.modifiers ?? []).map((modifier) => MODIFIER_OVERLAY_LABELS[modifier] ?? modifier);
+            if (modifierLabels.length > 0) {
+                await page.evaluate(
+                    (label) =>
+                        (window as unknown as { __pwShowKey__?: (label: string) => void }).__pwShowKey__?.(label),
+                    modifierLabels.join(" + "),
+                );
+            }
             const box = await locator.boundingBox();
             if (box) {
                 const x = box.x + box.width / 2;
@@ -334,6 +426,59 @@ export async function smoothFill(page: Page, locator: Locator, value: string): P
 }
 
 /**
+ * Like {@link smoothFill}, but when recording the text is typed one character at a time (with a
+ * short per-key delay) so it visibly appears as if being typed instead of snapping in all at once.
+ * Falls back to an instant `fill` when not recording to keep the regression run fast.
+ */
+export async function smoothType(page: Page, locator: Locator, value: string): Promise<void> {
+    await smoothMoveToLocator(page, locator);
+    await locator.click();
+    await locator.fill("");
+    if (!RECORDING) {
+        await locator.fill(value);
+        return;
+    }
+    await locator.pressSequentially(value, { delay: 45 });
+}
+
+/**
+ * Where in the layout a dragged module should be dropped. `"center"` drops onto the middle of the
+ * canvas (replacing an empty layout, or nesting into whatever box is under the centre); the four
+ * side positions aim at the layout's edge drop zones so the module is split off to that side of the
+ * existing content (e.g. `"right"` places it beside the current module, `"bottom"` beneath it).
+ */
+export type ModuleDropPosition = "center" | "left" | "right" | "top" | "bottom";
+
+/**
+ * How far (px) inside the layout edge to aim for the side drop positions. The layout's perimeter
+ * drop zones are only ~50px wide, so a small fixed inset reliably lands in the edge zone (splitting
+ * off the whole layout to that side) rather than nesting into a child box nearer the centre — which
+ * is what a percentage-based target does once the canvas already holds a couple of modules.
+ */
+const DROP_EDGE_INSET_PX = 24;
+
+/** Resolve the absolute (x, y) drop target within `layoutBox` for a given drop position. */
+function resolveDropTarget(
+    layoutBox: { x: number; y: number; width: number; height: number },
+    dropPosition: ModuleDropPosition,
+): { x: number; y: number } {
+    const centerX = layoutBox.x + layoutBox.width / 2;
+    const centerY = layoutBox.y + layoutBox.height / 2;
+    switch (dropPosition) {
+        case "left":
+            return { x: layoutBox.x + DROP_EDGE_INSET_PX, y: centerY };
+        case "right":
+            return { x: layoutBox.x + layoutBox.width - DROP_EDGE_INSET_PX, y: centerY };
+        case "top":
+            return { x: centerX, y: layoutBox.y + DROP_EDGE_INSET_PX };
+        case "bottom":
+            return { x: centerX, y: layoutBox.y + layoutBox.height - DROP_EDGE_INSET_PX };
+        default:
+            return { x: centerX, y: centerY };
+    }
+}
+
+/**
  * Drag a module from the modules list onto the dashboard layout.
  *
  * Module placement uses native pointer events (the modules list item publishes a "new module"
@@ -346,11 +491,19 @@ export async function smoothFill(page: Page, locator: Locator, value: string): P
  *     module into the layout; without it the release is a no-op),
  *  5. release to create the module instance.
  *
+ * `dropPosition` chooses where in the layout the module lands: the layout splits off a new region on
+ * whichever edge the pointer dwells over, so aiming at an edge (rather than the centre) drops the
+ * module beside/above/below the existing content instead of nesting into its middle.
+ *
  * The gesture is retried until the module instance actually appears in the layout, because the
  * drop-preview timer can be reset by closely-spaced synthetic pointer moves and occasionally needs
  * another attempt to commit.
  */
-export async function dragModuleOntoLayout(page: Page, moduleDisplayName: string): Promise<void> {
+export async function dragModuleOntoLayout(
+    page: Page,
+    moduleDisplayName: string,
+    dropPosition: ModuleDropPosition = "center",
+): Promise<void> {
     const layout = page.getByTestId("module-layout");
     await expect(layout).toBeVisible();
 
@@ -371,8 +524,11 @@ export async function dragModuleOntoLayout(page: Page, moduleDisplayName: string
 
         const startX = itemBox.x + itemBox.width / 2;
         const startY = itemBox.y + itemBox.height / 2;
-        const targetX = layoutBox.x + layoutBox.width / 2;
-        const targetY = layoutBox.y + layoutBox.height / 2;
+        const { x: targetX, y: targetY } = resolveDropTarget(layoutBox, dropPosition);
+        // Nudge the second dwell toward the layout centre so it stays inside the same edge zone even
+        // when the target sits close to a boundary.
+        const jiggleX = targetX + (targetX > layoutBox.x + layoutBox.width / 2 ? -3 : 3);
+        const jiggleY = targetY + (targetY > layoutBox.y + layoutBox.height / 2 ? -3 : 3);
 
         await page.mouse.move(startX, startY);
         await page.mouse.down();
@@ -385,11 +541,11 @@ export async function dragModuleOntoLayout(page: Page, moduleDisplayName: string
             // pointer is stationary inside the canvas.
             await page.waitForTimeout(700);
             // A tiny jiggle + second dwell makes the preview commit reliably.
-            await page.mouse.move(targetX + 3, targetY + 3, { steps: 3 });
+            await page.mouse.move(jiggleX, jiggleY, { steps: 3 });
             await page.waitForTimeout(700);
             await page.mouse.up();
             // Keep the tracked cursor position in sync so the next glide measures the right distance.
-            lastMousePosition.set(page, { x: targetX + 3, y: targetY + 3 });
+            lastMousePosition.set(page, { x: jiggleX, y: jiggleY });
         } catch (error) {
             // Make sure we never leave the mouse button pressed between retries.
             await page.mouse.up().catch(() => undefined);
@@ -398,4 +554,219 @@ export async function dragModuleOntoLayout(page: Page, moduleDisplayName: string
 
         await expect(droppedModule).toBeVisible({ timeout: 5_000 });
     }).toPass({ timeout: 60_000, intervals: [1_000] });
+}
+
+/**
+ * Slowly glide a slider's thumb from one end of the track to the other, so the motion is easy to
+ * follow in a recorded tutorial. Playwright codegen can only capture discrete clicks on a slider,
+ * which look abrupt; here we press the thumb at the start edge and drag it to the far edge with a
+ * real mouse drag instead.
+ *
+ * `sliderControl` is the slider's pointer surface (base-ui `Slider.Control`, i.e. the full-width
+ * clickable track area). `direction` chooses which way to sweep (`"right"` = min→max, the default;
+ * `"left"` = max→min). The sweep position is driven by elapsed wall-clock time, so it lands close to
+ * `durationMs` regardless of how many discrete time steps the slider snaps through — unlike stepping
+ * key-by-key, whose per-press overhead makes the total balloon on sliders with many steps. Outside
+ * recording it just clicks the destination end so the slider is still exercised without slowing the
+ * regression run down.
+ */
+export async function sweepSliderAcross(
+    page: Page,
+    sliderControl: Locator,
+    { durationMs = 6000, direction = "right" }: { durationMs?: number; direction?: "left" | "right" } = {},
+): Promise<void> {
+    await sliderControl.scrollIntoViewIfNeeded();
+    const box = await sliderControl.boundingBox();
+    if (!box) {
+        return;
+    }
+
+    const y = box.y + box.height / 2;
+    const leftX = box.x + 2;
+    const rightX = box.x + box.width - 2;
+    const fromX = direction === "right" ? leftX : rightX;
+    const toX = direction === "right" ? rightX : leftX;
+
+    if (!RECORDING) {
+        // Outside recording, just jump to the destination end so the slider is still exercised.
+        await page.mouse.click(toX, y);
+        return;
+    }
+
+    // Grab the thumb at the start edge, then glide it to the far edge over the target duration.
+    // Position is driven by elapsed wall-clock time (not a fixed number of fixed-delay steps), so the
+    // sweep lands close to `durationMs` even though each move triggers a re-render; slow moves just
+    // yield fewer, larger position jumps rather than a longer total.
+    await glideMouseTo(page, fromX, y);
+    await page.mouse.down();
+    try {
+        const start = Date.now();
+        for (;;) {
+            const progress = Math.min(1, (Date.now() - start) / durationMs);
+            await page.mouse.move(fromX + (toX - fromX) * progress, y);
+            if (progress >= 1) {
+                break;
+            }
+            await page.waitForTimeout(16);
+        }
+        await page.mouse.up();
+        // Keep the tracked cursor position in sync so the next glide measures the right distance.
+        lastMousePosition.set(page, { x: toX, y });
+    } catch (error) {
+        // Never leave the mouse button pressed on failure.
+        await page.mouse.up().catch(() => undefined);
+        throw error;
+    }
+}
+
+/**
+ * Add a vector to the Simulation Time Series vector selector by typing its full name and confirming
+ * with Enter, then asserting its tag appears. The vector tree may still be loading when the field is
+ * first focused, so this retries the type-and-confirm until the tag shows up. `vectorName` uses the
+ * selector's colon-separated form for well vectors, e.g. "FOPR" or "WGOR:A1".
+ */
+export async function addVectorToSelector(page: Page, vectorName: string): Promise<void> {
+    const vectorSelectorContainer = page.getByTestId("vector-selector");
+    await expect(vectorSelectorContainer).toBeVisible();
+    const vectorInput = vectorSelectorContainer.locator("input").last();
+    const vectorTag = vectorSelectorContainer.locator(`li[title="${vectorName}"]`);
+
+    await smoothClick(page, vectorInput);
+    await expect(async () => {
+        if ((await vectorTag.count()) === 0) {
+            await vectorInput.fill("");
+            await vectorInput.pressSequentially(vectorName, { delay: 120 });
+            await vectorInput.press("Enter");
+        }
+        await expect(vectorTag).toHaveCount(1);
+    }).toPass({ timeout: 60_000, intervals: [1_000] });
+}
+
+/** Friendly on-screen glyphs for the keys we demo; falls back to the raw key name. */
+const KEY_OVERLAY_LABELS: Record<string, string> = {
+    ArrowLeft: "←",
+    ArrowRight: "→",
+    ArrowUp: "↑",
+    ArrowDown: "↓",
+    Home: "Home",
+    End: "End",
+};
+
+/**
+ * Press `key` on `target` while (when recording) popping up a keycap badge showing which key was
+ * pressed, so the action is visible in the tutorial video. Requires {@link installKeyOverlay} to
+ * have been called before navigation. Waits `pauseMs` after each press (only while recording) so
+ * consecutive keycaps read clearly and can be paced to match the narration.
+ */
+export async function pressKeyWithOverlay(
+    page: Page,
+    target: Locator,
+    key: string,
+    { label, pauseMs = 600 }: { label?: string; pauseMs?: number } = {},
+): Promise<void> {
+    if (RECORDING) {
+        const shownLabel = label ?? KEY_OVERLAY_LABELS[key] ?? key;
+        await page.evaluate(
+            (l) => (window as unknown as { __pwShowKey__?: (label: string) => void }).__pwShowKey__?.(l),
+            shownLabel,
+        );
+    }
+    await target.press(key);
+    if (RECORDING) {
+        await page.waitForTimeout(pauseMs);
+    }
+}
+
+/** Optional narration hooks for {@link createSessionAndSelectEnsemble}; default to no-ops. */
+export type SessionAndEnsembleNarrationHooks = {
+    narrate?: (text: string) => Promise<void>;
+    markStep?: (title: string) => void;
+    /** Further ensemble (iteration) names from the same Drogon case to add alongside the default one. */
+    additionalEnsembleNames?: string[];
+};
+
+/**
+ * Create a new session, then add and apply the Drogon AHM ensemble to it — the common setup shared
+ * by every story that needs an ensemble loaded before it can show off its own module.
+ *
+ * `narrate`/`markStep` are opt-in: callers that want this flow narrated as its own part of a
+ * recorded walkthrough (see the "Session and ensemble selection" story) pass the fixtures through;
+ * callers that only need the setup done (e.g. other stories reusing this as a precondition) omit
+ * them so no narration/step is recorded for these actions.
+ *
+ * `additionalEnsembleNames` lets a story load more than one ensemble from the same case (e.g. to
+ * compare iterations); the "Ensembles in selected case" list is multi-select, so each extra name is
+ * simply clicked before applying.
+ */
+export async function createSessionAndSelectEnsemble(
+    page: Page,
+    {
+        narrate = async () => undefined,
+        markStep = () => undefined,
+        additionalEnsembleNames = [],
+    }: SessionAndEnsembleNarrationHooks = {},
+): Promise<void> {
+    const newSessionNarration = narrate("Let's start by creating a new session...");
+    markStep("Create a session");
+    await smoothClick(page, page.getByRole("button", { name: "New session" }));
+    await newSessionNarration;
+
+    const ensembleNarration = narrate(
+        "...and then add some ensembles. The Drogon asset is already selected, so we just check that the case we want is the one shown, and select it.",
+    );
+    markStep("Add the Drogon ensemble");
+    await expect(page.getByText("Ensembles used in this session")).toBeVisible({ timeout: 60_000 });
+    await smoothClick(page, page.getByTestId("add-regular-ensemble-button"));
+    await pace(page);
+
+    // The test user only has access to one asset (Drogon), so it is already selected. Just glide the
+    // cursor over the Asset selector to point it out — opening it would leave the dropdown covering
+    // the case filter below.
+    await smoothMoveToLocator(page, page.getByRole("combobox", { name: "Asset" }));
+    await pace(page);
+
+    // Filter the case table by the test case UUID. The Asset dropdown is never opened, so its own
+    // "Filter ..." search field isn't present and this reliably targets the Case (ID) column filter.
+    const caseIdColumnFilter = page.getByPlaceholder("Filter ...").first();
+    // While Sumo case data is loading the table is faded and made `inert` (see StatusWrapper), and a
+    // fill that lands in that window is dropped when the table re-renders. Retry until the typed
+    // value sticks and the matching case row shows up.
+    await expect(async () => {
+        await smoothFill(page, caseIdColumnFilter, DROGON_AHM.caseUuid);
+        await expect(caseIdColumnFilter).toHaveValue(DROGON_AHM.caseUuid);
+        await expect(page.getByText(DROGON_AHM.caseUuid)).toBeVisible({ timeout: 10_000 });
+    }).toPass({ timeout: 60_000 });
+    await pace(page);
+
+    await smoothClick(
+        page,
+        page
+            .locator("tbody")
+            .getByRole("row", { name: new RegExp(DROGON_AHM.caseUuid) })
+            .first(),
+    );
+
+    await expect(page.getByText(DROGON_AHM.ensembleName).first()).toBeVisible({ timeout: 60_000 });
+    await ensembleNarration;
+    await pace(page);
+
+    markStep("Apply selected ensembles");
+    const applyNarration = narrate(
+        "We select the ensembles and apply them to load them into the session.",
+    );
+
+    await smoothClick(page, page.getByText(DROGON_AHM.ensembleName).first());
+
+    // The "Ensembles in selected case" list is multi-select, so add any further iterations by
+    // simply clicking their rows before applying.
+    for (const additionalEnsembleName of additionalEnsembleNames) {
+        await smoothClick(page, page.getByText(additionalEnsembleName).first());
+    }
+
+    await smoothClick(page, page.getByRole("button", { name: "Apply" }).last());
+    await pace(page);
+
+    await smoothClick(page, page.getByRole("button", { name: "Apply" }));
+    await expect(page.getByText("Ensembles used in this session")).not.toBeVisible({ timeout: 120_000 });
+    await applyNarration;
 }
