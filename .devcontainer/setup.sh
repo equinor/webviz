@@ -5,9 +5,8 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-echo "=== Installing system packages ==="
-sudo apt-get update
-sudo apt-get install -y ffmpeg
+# System packages (ffmpeg, Python, ...) are installed in .devcontainer/Dockerfile
+# so they are cached by GitHub Codespaces prebuilds.
 
 echo "=== Installing frontend dependencies ==="
 npm ci --prefix ./frontend
