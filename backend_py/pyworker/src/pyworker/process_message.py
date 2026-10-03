@@ -1,0 +1,123 @@
+import logging
+import traceback
+
+from azure.servicebus.aio import ServiceBusReceiver
+from azure.servicebus import ServiceBusReceivedMessage
+from opentelemetry.propagate import extract
+from opentelemetry.context import Context
+from opentelemetry import trace
+
+from webviz_server_schemas.pyworker.messages import WorkerOperation
+
+from .utils.worker_logging import LogScope
+from .utils.abort_signal import AbortSignal
+from .task_exceptions import TaskFailedError, TaskDeferredError, TaskAbortedError, TaskInternalError
+from .tasks.dev_test_task import dev_test_task_async
+
+_logger = logging.getLogger(__name__)
+_tracer = trace.get_tracer(__name__)
+
+
+async def process_message_async(
+    receiver: ServiceBusReceiver, msg: ServiceBusReceivedMessage, _abort_signal: AbortSignal
+) -> None:
+    """
+    Processes a single Service Bus message, dispatching to the appropriate handler based on the
+    worker operation, which is determined by the 'subject' property of the message.
+    """
+    queue_name = receiver.entity_path
+    worker_op = msg.subject or "UNKNOWN"
+    message_id = msg.message_id or "UNKNOWN"
+
+    parent_ctx: Context = _extract_trace_context_from_message(msg)
+    with _tracer.start_as_current_span(f"process_message: {worker_op}", parent_ctx, trace.SpanKind.CONSUMER) as span:
+        _logger.debug(f"process_message_async(): {msg.subject=}, {msg.sequence_number=}, {msg.message_id=}")
+        _logger.debug(f"process_message_async(): {msg.delivery_count=}, {msg.enqueued_time_utc=}")
+        _logger.debug(f"process_message_async(): {msg.application_properties=}")
+
+        span.set_attribute("app.message_queue_name", queue_name)
+        span.set_attribute("app.message_id", message_id)
+        span.set_attribute("app.worker_op", worker_op)
+
+        with LogScope(queue_name=queue_name, message_id=message_id, worker_op=worker_op):
+            _logger.info(f"Processing message: {worker_op=}, {msg.sequence_number=}, {message_id=}")
+            try:
+                match worker_op:
+                    case WorkerOperation.DEV_TEST:
+                        await dev_test_task_async(msg)
+
+                    case _:
+                        err_msg = f"Unknown worker operation: {worker_op}"
+                        span.record_exception(ValueError(err_msg))
+                        span.set_status(trace.StatusCode.ERROR)
+                        _logger.error(err_msg)
+                        await receiver.dead_letter_message(msg, reason="UnknownWorkerOp", error_description=err_msg)
+                        return
+
+                span.set_status(trace.StatusCode.OK)
+                await receiver.complete_message(msg)
+
+            # The exception handlers below settle the message based on exception taxonomy (see task_exceptions).
+            # We record exceptions on the telemetry span, but avoid doing logger.exception().
+            # It looks like Azure Monitor's telemetry instrumentation will pick up the exception from logger.exception()
+            # and export that log record as exception telemetry which results in duplicate exception telemetry.
+            # We also don't re-raise the exception because we want to fully handle the settlement of messages
+            # here (complete/abandon/dead-letter) and not let the exception propagate further.
+
+            except TaskFailedError as exc:
+                # User-facing failure. The task should already be marked FAILED if it is being tracked.
+                # Here we complete the message (not dead-lettered) and just log the error.
+                span.record_exception(exc)
+                span.set_status(trace.StatusCode.ERROR)
+                _logger.error(
+                    f"Task reported a user-facing failure: {exc.status_msg!r}, {repr(exc)}\n{"".join(traceback.format_exception(exc))}"
+                )
+                await receiver.complete_message(msg)
+
+            except TaskDeferredError as exc:
+                # Handles the TaskDeferredError exception family
+                # Always abandon message so the message is retried later (bounded by the queue's maxDeliveryCount).
+                # The subtype only affects logging and telemetry, not the message settlement.
+                if isinstance(exc, TaskAbortedError):
+                    # Cooperative shutdown/cancellation, not an error.
+                    # For now log this as warning and don't set a status on the span
+                    _logger.warning(f"Task aborted due to shutdown, abandoning message for retry: {repr(exc)}")
+                else:
+                    span.record_exception(exc)
+                    span.set_status(trace.StatusCode.ERROR)
+                    _logger.error(
+                        f"Transient failure processing Service Bus message, abandoning for retry: {repr(exc)}\n{"".join(traceback.format_exception(exc))}"
+                    )
+
+                await receiver.abandon_message(msg)
+
+            except TaskInternalError as exc:
+                # Handles the TaskInternalError exception family
+                span.record_exception(exc)
+                span.set_status(trace.StatusCode.ERROR)
+                _logger.error(
+                    f"Internal error processing Service Bus message, sending to DLQ: {repr(exc)}\n{"".join(traceback.format_exception(exc))}"
+                )
+                await receiver.dead_letter_message(msg, reason="InternalError", error_description=str(exc))
+
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                span.record_exception(exc)
+                span.set_status(trace.StatusCode.ERROR, repr(exc))
+                _logger.error(
+                    f"Unexpected error processing Service Bus message, sending to DLQ: {repr(exc)}\n{"".join(traceback.format_exception(exc))}"
+                )
+                await receiver.dead_letter_message(msg, reason="UnexpectedError", error_description=str(exc))
+
+
+def _extract_trace_context_from_message(message: ServiceBusReceivedMessage) -> Context:
+    """
+    Extracts the trace context from the Service Bus message's application properties and returns an OpenTelemetry Context.
+    Note the that the keys and values may be bytes, so we need to handle those cases.
+    """
+    props = {}
+    for k, v in (message.application_properties or {}).items():
+        key = k.decode() if isinstance(k, bytes) else k
+        value = v.decode() if isinstance(v, bytes) else v
+        props[key] = value
+
+    return extract(props)

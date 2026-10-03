@@ -5,8 +5,12 @@ from typing import Annotated, Literal
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Response
+from azure.servicebus import ServiceBusMessage
+from opentelemetry import trace
+from cryptography.fernet import Fernet
 
 from webviz_core_utils.background_tasks import run_in_background_task
+from webviz_server_schemas.pyworker.messages import DevTestMsg, WorkerOperation
 from webviz_services.user_session_manager.user_session_manager import UserSessionManager
 from webviz_services.user_session_manager.user_session_manager import UserComponent
 from webviz_services.user_session_manager.user_session_manager import _USER_SESSION_DEFS
@@ -16,7 +20,9 @@ from webviz_services.user_grid3d_service.user_grid3d_service import UserGrid3dSe
 from webviz_services.service_exceptions import Service, ServiceUnavailableError, ServiceRequestError
 from webviz_services.utils.otel_span_tracing import start_otel_span_async
 from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
+from webviz_services.platform.message_bus import MessageBusSingleton, MessageBus
 
+from primary import config
 from primary.auth.auth_helper import AuthenticatedUser, AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
@@ -314,6 +320,46 @@ async def get_ri_isect(
     )
 
     return "OK"
+
+
+@router.get("/sb/{msg_text}")
+async def get_send_sb_msg(
+    response: Response,
+    _authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    msg_text: Annotated[str, Path(description="The string to send")],
+    count: Annotated[int, Query(description="Number of messages to send")] = 1,
+) -> str:
+
+    tracer = trace.get_tracer(__name__)
+    perf_metrics = ResponsePerfMetrics(response)
+
+    queue_name = config.SERVICE_BUS_DEFAULT_QUEUE
+    LOGGER.info(f"About to send message on service bus {queue_name=} {msg_text=}")
+
+    message_bus: MessageBus = MessageBusSingleton.get_instance()
+    fernet = Fernet(config.SERVICE_BUS_PAYLOAD_FERNET_KEY)
+
+    for i in range(count):
+        with tracer.start_as_current_span(f"SubmittingDevTestMessageToQueue_{i}", kind=trace.SpanKind.PRODUCER):
+            msg = DevTestMsg(
+                text=msg_text,
+                encrypted_text=fernet.encrypt(msg_text.encode()),
+                sleep_duration_s=5,
+            )
+
+            sb_msg = ServiceBusMessage(subject=WorkerOperation.DEV_TEST, body=msg.model_dump_json())
+            await message_bus.send_to_queue_async(queue_name=queue_name, message=sb_msg)
+            LOGGER.info(f"Sent message {i} on service bus {sb_msg.message_id=}")
+        if i == 0:
+            perf_metrics.record_lap("send-first-msg")
+
+    if count > 1:
+        perf_metrics.record_lap("send-remaining-msgs")
+
+    LOGGER.info(
+        f"Sent {count} message(s) with {msg_text=} on service bus queue {queue_name} in {perf_metrics.to_string()}"
+    )
+    return f"Sent {count} message(s) with {msg_text=} on service bus queue {queue_name} in {perf_metrics.to_string()}"
 
 
 # Used for troubleshooting and testing, to what the client IP is as seen by this service
