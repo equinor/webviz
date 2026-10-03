@@ -15,9 +15,8 @@
     "VNC_RESOLUTION": "1920x1080",
     "VNC_DPI": "96"
   },
-  "postCreateCommand": "bash .devcontainer/post_create.sh",
-  "postStartCommand": "bash .devcontainer/post_start.sh",
-  "waitFor": "postCreateCommand",
+  "updateContentCommand": "bash .devcontainer/update_content.sh",
+  "waitFor": "updateContentCommand",
   "forwardPorts": [6080],
   "hostRequirements": {
     "cpus": 4,
