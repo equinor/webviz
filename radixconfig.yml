@@ -1,8 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/equinor/radix-operator/release/json-schema/radixapplication.json
 
 # Client IDs referenced in this configuration:
 #   900ed417-a860-4970-bd37-73b059ca6f0d  -  Prod application ID (webviz)
 #   025fe044-5ee8-4b27-bf83-aefb548f14fa  -  NonProd application ID (webviz-nonprod)
 #   cabb1ac4-d5a7-4017-b6bf-c883c503c95e  -  Managed identity for access to KeyVault (id-webviz-keyvault-shared)
+
+# Reusable definitions as YAML anchors
+_definitions:
+  identityProdApp:           &identityProdAppId         { azure: { clientId: 900ed417-a860-4970-bd37-73b059ca6f0d } }
+  identityNonProdApp:        &identityNonProdAppId      { azure: { clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa } }
+  identityKeyVaultReader:    &identityKeyVaultReader    { azure: { clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e } }
+
 
 apiVersion: radix.equinor.com/v1
 kind: RadixApplication
@@ -39,9 +47,7 @@ spec:
         - name: http
           port: 5000
       # Set non-prod clientId as default, prod overrides below
-      identity:
-        azure:
-          clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa
+      identity: *identityNonProdAppId
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
@@ -61,93 +67,32 @@ spec:
               - { name: webviz-insights-connectionstring-review2, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW2 }
               - { name: webviz-insights-connectionstring-review3, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW3 }
       variables:
-        UVICORN_PORT: 5000
+        UVICORN_PORT: "5000"
         WEBVIZ_VDS_HOST_ADDRESS: "https://server-oneseismic-prod.radix.equinor.com"
+
+      # Set non-prod resources and scaling as default, prod overrides below
+      resources:
+        requests:
+          memory: 4Gi
+          cpu: 500m
+      horizontalScaling:
+        minReplicas: 1
+        maxReplicas: 3
+        triggers: [ { name: memory, memory: { value: 60 } }, { name: cpu, cpu: { value: 80 } } ]
+
       environmentConfig:
         - environment: prod
-          identity:
-            azure:
-              # Override with prod clientId
-              clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
+          # Override with prod clientId
+          identity: *identityProdAppId
+          # Override with prod resources and scaling
           resources:
             requests:
               memory: 8Gi
               cpu: 1000m
-            limits:
-              # Memory limit=request and cpu limit omitted on purpose
-              memory: 8Gi
           horizontalScaling:
             minReplicas: 2
             maxReplicas: 4
-            resources:
-              memory:
-                averageUtilization: 60
-              cpu:
-                averageUtilization: 80
-
-        - environment: preprod
-          resources:
-            requests:
-              memory: 4Gi
-              cpu: 500m
-            limits:
-              memory: 4Gi
-          horizontalScaling:
-            minReplicas: 1
-            maxReplicas: 3
-            resources:
-              memory:
-                averageUtilization: 60
-              cpu:
-                averageUtilization: 80
-
-        - environment: review
-          resources:
-            requests:
-              memory: 4Gi
-              cpu: 500m
-            limits:
-              memory: 4Gi
-          horizontalScaling:
-            minReplicas: 1
-            maxReplicas: 3
-            resources:
-              memory:
-                averageUtilization: 60
-              cpu:
-                averageUtilization: 80
-
-        - environment: review2
-          resources:
-            requests:
-              memory: 4Gi
-              cpu: 500m
-            limits:
-              memory: 4Gi
-          horizontalScaling:
-            minReplicas: 1
-            maxReplicas: 3
-            resources:
-              memory:
-                averageUtilization: 60
-              cpu:
-                averageUtilization: 80
-
-        - environment: review3
-          resources:
-            requests:
-              memory: 4Gi
-              cpu: 500m
-            limits:
-              memory: 4Gi
-          horizontalScaling:
-            minReplicas: 1
-            maxReplicas: 3
-            resources:
-              memory:
-                averageUtilization: 60
-              cpu:
-                averageUtilization: 80
+            triggers: [ { name: memory, memory: { value: 60 } }, { name: cpu, cpu: { value: 80 } } ]
 
 
     # -----------------------------------------------------------------
@@ -165,28 +110,18 @@ spec:
         limits:
           # Even though the general advice is to leave cpu limit unspecified, here we set it to the same as requests.
           # As of now, it seems that it's the cpu limit value that will be picked up by automaxprocs utilized in the go service.
-          memory: 8Gi
           cpu: 2000m
       horizontalScaling:
         minReplicas: 1
         maxReplicas: 4
         pollingInterval: 15
-        triggers:
-        - name: cpu
-          cpu:
-            value: 20
-        - name: memory
-          memory:
-            value: 20
+        triggers: [ { name: memory, memory: { value: 20 } }, { name: cpu, cpu: { value: 20 } } ]
 
 
     # -----------------------------------------------------------------
     - name: redis-auth-store
       dockerFileName: ./docker/redis/Dockerfile
-      identity:
-        azure:
-          # Use managed identity for pure KeyVault access
-          clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e
+      identity: *identityKeyVaultReader
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
@@ -202,17 +137,12 @@ spec:
         requests:
           memory: 1Gi
           cpu: 500m
-        limits:
-          memory: 1Gi
 
 
     # -----------------------------------------------------------------
     - name: redis-cache
       dockerFileName: ./docker/redis/Dockerfile
-      identity:
-        azure:
-          # Use managed identity for pure KeyVault access
-          clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e
+      identity: *identityKeyVaultReader
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
@@ -230,8 +160,6 @@ spec:
         requests:
           memory: 4Gi
           cpu: 1000m
-        limits:
-          memory: 4Gi
 
 
   jobs:
@@ -243,7 +171,7 @@ spec:
         - name: http
           port: 8001
       variables:
-        UVICORN_PORT: 8001
+        UVICORN_PORT: "8001"
 
     # -----------------------------------------------------------------
     - name: user-grid3d-ri
@@ -252,10 +180,7 @@ spec:
       ports:
         - name: http
           port: 8002
-      identity:
-        azure:
-          # Use managed identity for pure KeyVault access
-          clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e
+      identity: *identityKeyVaultReader
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
@@ -269,7 +194,7 @@ spec:
               - { name: webviz-insights-connectionstring-review2, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW2 }
               - { name: webviz-insights-connectionstring-review3, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW3 }
       variables:
-        UVICORN_PORT: 8002
+        UVICORN_PORT: "8002"
       payload:
         path: /compute/args
 
