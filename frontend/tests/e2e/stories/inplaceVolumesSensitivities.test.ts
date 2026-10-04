@@ -8,7 +8,7 @@ import {
     activeModuleLayout,
     addDashboard,
     captureThumbnail,
-    connectDataChannel,
+    connectDataChannelByName,
     createSessionAndSelectEnsemble,
     dragModuleOntoLayout,
     hideDevOverlays,
@@ -267,7 +267,7 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         const channelNarration = narrate(
             "The tornado gets its data through a data channel. We drag from the plot module's channel button onto the tornado's Response input, which sends the oil in place of every realization across.",
         );
-        await connectDataChannel(page, { senderModuleTitle: PLOT_MODULE_TITLE, receiverName: "Response" });
+        await connectDataChannelByName(page, { senderModuleTitle: PLOT_MODULE_TITLE, receiverName: "Response" });
         await waitForModules();
         await channelNarration;
 
