@@ -5,8 +5,8 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-# System packages (ffmpeg, Python, ...) are installed in .devcontainer/Dockerfile
-# so they are cached by GitHub Codespaces prebuilds.
+# System packages such as ffmpeg are installed in .devcontainer/Dockerfile, while
+# language runtimes are provided by devcontainer features; both are cached by prebuilds.
 
 echo "=== Installing frontend dependencies ==="
 npm ci --prefix ./frontend
