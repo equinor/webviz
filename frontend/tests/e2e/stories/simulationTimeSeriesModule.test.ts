@@ -12,6 +12,7 @@ import {
     installFakeCursor,
     pace,
     smoothClick,
+    smoothMoveToLocator,
 } from "../support/walkthroughHelpers";
 
 import { meta } from "./simulationTimeSeriesModule.meta";
@@ -175,6 +176,16 @@ test.describe("Simulation Time Series module", () => {
         await page.keyboard.press("Escape");
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
         await compareNarration;
+
+        markStep("Download the data");
+        const downloadNarration = narrate(
+            "The data shown is computed on the fly, and can be exported: hovering the plot reveals a toolbar whose download button saves the currently displayed data to a spreadsheet.",
+        );
+        // The Plotly modebar is only shown on hover, so hover the plot first to reveal the button.
+        await plot.hover();
+        await smoothMoveToLocator(page, page.getByRole("button", { name: "Download data" }).first());
+        await downloadNarration;
+        await pace(page, "long");
 
         await captureThumbnail(page);
 
