@@ -505,7 +505,11 @@ function ModuleTitle(props: ModuleTitleProps) {
             })}
             onPointerDown={handlePointerDown}
         >
-            <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap" title={title}>
+            <span
+                className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap"
+                title={title}
+                data-module-title={props.moduleInstance.getModule().getDefaultTitle()}
+            >
                 {title}
             </span>
             {devToolsVisible && (

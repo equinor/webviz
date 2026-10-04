@@ -22,6 +22,12 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
         description: "Start a session, add an ensemble and modules, then save it and share a snapshot.",
     },
     {
+        slug: "data-channels",
+        category: "Framework",
+        title: "Data channels",
+        description: "Pipe data between modules: feed a Simulation Time Series into a Distribution Plot, cross-plot two vectors in a scatter, then cross-plot across modules against an Inplace Volumes response.",
+    },
+    {
         slug: "grid3d-viewer-3d-grid-model",
         category: "Modules",
         title: "3D Viewer",
@@ -34,9 +40,33 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
         description: "The Flow Network module visualizes the reservoir simulator's network tree as it evolves over time, along with the oil, gas, and water flowing through each branch.",
     },
     {
+        slug: "parameter-distributions-module",
+        category: "Modules",
+        title: "Parameter Distributions",
+        description: "Compare prior and posterior parameter distributions from an assisted history matching run to see how conditioning to observations narrows the uncertainty.",
+    },
+    {
+        slug: "pvt-module",
+        category: "Modules",
+        title: "PVT",
+        description: "Plot pressure-dependent fluid properties for the oil, gas and water phases, and compare them across realizations and PVT regions.",
+    },
+    {
+        slug: "relative-permeability-module",
+        category: "Modules",
+        title: "Relative Permeability",
+        description: "Plot and compare relative permeability and capillary pressure curves across realizations, saturation regions and saturation axes.",
+    },
+    {
         slug: "simulation-time-series-chart",
         category: "Modules",
         title: "Simulation Time Series",
         description: "Visualize simulated time series data, together with observations used in the assisted history matching process",
+    },
+    {
+        slug: "vfp-module",
+        category: "Modules",
+        title: "VFP",
+        description: "Inspect Vertical Flow Performance tables as families of bottom-hole-pressure curves, varying the tubing-head pressure and other lift parameters.",
     },
 ];
