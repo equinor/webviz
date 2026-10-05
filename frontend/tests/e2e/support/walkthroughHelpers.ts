@@ -515,6 +515,8 @@ export async function dragModuleOntoLayout(
     await expect(async () => {
         const moduleItem = page.locator(`[title="${moduleDisplayName}"]`).first();
         await expect(moduleItem).toBeVisible();
+        // Mouse events outside the viewport are never dispatched (e.g. low items in the default 1280x720 run).
+        await moduleItem.scrollIntoViewIfNeeded();
 
         const itemBox = await moduleItem.boundingBox();
         const layoutBox = await layout.boundingBox();
