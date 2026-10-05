@@ -15,7 +15,7 @@ import {
 } from "@mui/icons-material";
 
 import { GuiEvent, GuiState, RightDrawerContent, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
-import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
+import { useDashboard } from "@framework/internal/components/DashboardContext";
 import {
     SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
     SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT,
@@ -53,7 +53,7 @@ export type HeaderProps = {
 const COMPACT_WIDTH_THRESHOLD_PX = 320;
 
 export const Header: React.FC<HeaderProps> = (props) => {
-    const dashboard = useActiveDashboard();
+    const { dashboard } = useDashboard();
     const isSnapshot = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
@@ -208,17 +208,20 @@ export const Header: React.FC<HeaderProps> = (props) => {
             <div className="gap-4xs flex shrink-0 items-center">
                 <Separator orientation="vertical" />
                 <Tooltip content={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}>
-                    <Button
-                        onPointerDown={handleRemoveClick}
-                        onPointerUp={handlePointerUp}
-                        disabled={isSnapshot}
-                        tone="danger"
-                        variant="ghost"
-                        size="small"
-                        iconOnly
-                    >
-                        <Close fontSize="inherit" />
-                    </Button>
+                    {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                    <span>
+                        <Button
+                            onPointerDown={handleRemoveClick}
+                            onPointerUp={handlePointerUp}
+                            disabled={isSnapshot}
+                            tone="danger"
+                            variant="ghost"
+                            size="small"
+                            iconOnly
+                        >
+                            <Close fontSize="inherit" />
+                        </Button>
+                    </span>
                 </Tooltip>
             </div>
         </div>
@@ -672,7 +675,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     const popoverActionRef = React.useRef<PopoverRootActions | null>(null);
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
-    const dashboard = useActiveDashboard();
+    const { dashboard } = useDashboard();
 
     const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
     const hotStatusMessages = useStatusControllerStateValue(
@@ -702,8 +705,12 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     function makeHotStatusMessages(): React.ReactNode {
         return (
             <ul className="gap-y-2xs p-2xs flex flex-col">
-                {hotStatusMessages.map((entry, i) => (
-                    <li key={`${entry.message}-${i}`} className="px-3xs py-4xs">
+                {hotStatusMessages.map((entry) => (
+                    <li
+                        key={`${entry.message}-${entry.source}-${entry.datetimeMs}
+                        datetimeMs}`}
+                        className="px-3xs py-4xs"
+                    >
                         <Typography
                             as="span"
                             size="xs"

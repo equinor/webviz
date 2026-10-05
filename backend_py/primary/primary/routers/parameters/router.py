@@ -23,9 +23,10 @@ async def get_parameters_and_sensitivities(
     ensemble_name: str = Query(description="Ensemble name"),
 ) -> schemas.EnsembleParametersAndSensitivities:
     access = ParameterAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    parameters, sensitivities = await access.get_parameters_and_sensitivities_async()
+    parameters_and_sensitivities = await access.get_parameters_and_sensitivities_async()
 
     return schemas.EnsembleParametersAndSensitivities(
-        parameters=converters.to_api_parameters(parameters),
-        sensitivities=converters.to_api_sensitivities(sensitivities),
+        parameters=converters.to_api_parameters(parameters_and_sensitivities.parameters),
+        sensitivities=converters.to_api_sensitivities(parameters_and_sensitivities.sensitivities),
+        nonStandardParametersWarning=parameters_and_sensitivities.non_standard_parameters_warning,
     )

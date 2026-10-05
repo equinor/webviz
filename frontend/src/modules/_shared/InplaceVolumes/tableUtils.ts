@@ -38,6 +38,12 @@ export function makeTableFromApiData(data: InplaceVolumesTableData[]): Table {
     // Then, add the values to the columns
     for (const tableSet of data) {
         for (const perFluidTable of tableSet.data.tableDataPerFluidSelection) {
+            // A fluid selection can lack the requested result (e.g. BO is only defined for oil). Adding
+            // its selector rows would leave the result columns shorter than the selector columns.
+            if (perFluidTable.resultColumns.length === 0) {
+                continue;
+            }
+
             let mainColumnsAdded = false;
             for (const selectorColumn of perFluidTable.selectorColumns) {
                 for (let i = 0; i < selectorColumn.indices.length; i++) {

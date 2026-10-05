@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Clear } from "@mui/icons-material";
+import { Clear, Download } from "@mui/icons-material";
 import { orderBy } from "lodash";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
@@ -11,10 +11,11 @@ import type { TableSortState } from "@lib/components/Table/typesAndEnums";
 import { TextInput } from "@lib/components/TextInput";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { PHASE_COLORS } from "@modules/_shared/constants/colors";
+import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 
 import type { TableColumnsConfig, TableHeading, TableRow } from "../types";
-import { formatEnsembleIdent, formatResultValue, isValidFluidType } from "../utils/tableComponentUtils";
+import { collectLeafColumns, formatEnsembleIdent, isValidFluidType } from "../utils/tableComponentUtils";
 
 export type InplaceVolumesTableProps = {
     ensembleSet: EnsembleSet;
@@ -22,6 +23,9 @@ export type InplaceVolumesTableProps = {
     rows: TableRow<TableColumnsConfig>[];
 
     onHover: (row: TableRow<TableColumnsConfig> | null) => void;
+
+    /** Called with the currently filtered and sorted rows (all of them, not only the virtualized viewport) */
+    onDownload?: (rows: TableRow<TableColumnsConfig>[]) => void;
 };
 
 const FILTER_DEBOUNCE_TIME_MS = 250;
@@ -66,39 +70,75 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
         );
     }, [tableFilterState, props.rows, tableSortState]);
 
-    return (
-        <Table.Root
-            height="100%"
-            size="small"
-            fixed
-            sortable="multiple"
-            columnSorting={tableSortState}
-            onChangeColumnSort={setTableSortState}
-            compact
-        >
-            <Table.Head sticky>
-                {tableColumns}
-                <TableFilterRow
-                    filterState={tableFilterState}
-                    columnConfig={props.columnsConfig}
-                    onFilterChange={(k, v) => setTableFilterState((prev) => ({ ...prev, [k]: v }))}
-                />
-            </Table.Head>
+    const hasExportableColumns = React.useMemo(
+        () => collectLeafColumns(props.columnsConfig).length > 0,
+        [props.columnsConfig],
+    );
+    const isDownloadDisabled = !props.onDownload || collatedRows.length === 0 || !hasExportableColumns;
+    const hasActiveFilters = Object.values(tableFilterState).some((v) => v !== null && v !== "");
 
-            <Table.Body onPointerLeave={() => props.onHover(null)}>
-                <TableCompositions.VirtualizedRows rows={collatedRows}>
-                    {(row) => (
-                        <TableRowComp
-                            key={row.__id}
-                            row={row}
-                            tableColumnConfig={props.columnsConfig}
-                            ensembleSet={props.ensembleSet}
-                            onHover={props.onHover}
+    return (
+        <div className="flex h-full min-h-0 flex-col">
+            <div className="gap-x-3xs px-3xs py-3xs flex shrink-0 items-center justify-between">
+                <div className="gap-x-3xs text-body-sm text-neutral-subtle flex items-center">
+                    <span aria-live="polite">
+                        {hasActiveFilters
+                            ? `${collatedRows.length} of ${props.rows.length} rows`
+                            : `${props.rows.length} rows`}
+                    </span>
+                    <Button
+                        variant="ghost"
+                        size="small"
+                        disabled={!hasActiveFilters}
+                        onClick={() => setTableFilterState({})}
+                    >
+                        Clear filters
+                    </Button>
+                </div>
+                <Button
+                    variant="outlined"
+                    icon={<Download fontSize="inherit" />}
+                    disabled={isDownloadDisabled}
+                    onClick={() => props.onDownload?.(collatedRows)}
+                >
+                    Download CSV
+                </Button>
+            </div>
+            <div className="min-h-0 grow">
+                <Table.Root
+                    height="100%"
+                    size="small"
+                    fixed
+                    sortable="multiple"
+                    columnSorting={tableSortState}
+                    onChangeColumnSort={setTableSortState}
+                    compact
+                >
+                    <Table.Head sticky>
+                        {tableColumns}
+                        <TableFilterRow
+                            filterState={tableFilterState}
+                            columnConfig={props.columnsConfig}
+                            onFilterChange={(k, v) => setTableFilterState((prev) => ({ ...prev, [k]: v }))}
                         />
-                    )}
-                </TableCompositions.VirtualizedRows>
-            </Table.Body>
-        </Table.Root>
+                    </Table.Head>
+
+                    <Table.Body onPointerLeave={() => props.onHover(null)}>
+                        <TableCompositions.VirtualizedRows rows={collatedRows}>
+                            {(row) => (
+                                <TableRowComp
+                                    key={row.__id}
+                                    row={row}
+                                    tableColumnConfig={props.columnsConfig}
+                                    ensembleSet={props.ensembleSet}
+                                    onHover={props.onHover}
+                                />
+                            )}
+                        </TableCompositions.VirtualizedRows>
+                    </Table.Body>
+                </Table.Root>
+            </div>
+        </div>
     );
 }
 
@@ -108,27 +148,17 @@ function TableFilterRow(props: {
     onFilterChange: (columnKey: string, filterValue: string | null) => void;
 }) {
     // ! As with sorting, the keys/sub-keys should match the property key path in the data object
-    const flattenedLeafColumns = React.useMemo(() => {
+    const leafColumnMap = React.useMemo(() => {
         const leafColumns: { [key: string]: TableHeading } = {};
-
-        function addLeafColumnsRecursive(heading: TableHeading, key: string) {
-            if (heading.subHeading) {
-                Object.entries(heading.subHeading).forEach(([subKey, subHeading]) =>
-                    addLeafColumnsRecursive(subHeading, subKey),
-                );
-            } else {
-                leafColumns[key] = heading;
-            }
+        for (const leaf of collectLeafColumns(props.columnConfig)) {
+            leafColumns[leaf.key] = leaf.heading;
         }
-
-        Object.entries(props.columnConfig).forEach(([key, heading]) => addLeafColumnsRecursive(heading, key));
-
         return leafColumns;
     }, [props.columnConfig]);
 
     return (
         <Table.Row sortable={false}>
-            {Object.entries(flattenedLeafColumns).map(([colKey, heading]) => (
+            {Object.entries(leafColumnMap).map(([colKey, heading]) => (
                 <TableFilterCell
                     key={colKey}
                     filterValue={props.filterState[colKey] ?? null}
@@ -279,7 +309,7 @@ function TableCellComp(props: { value: string | number | null; columnType?: Colu
     }
 
     if (props.columnType === ColumnType.RESULT) {
-        return <Table.Cell layoutClassName="text-right">{formatResultValue(props.value)}</Table.Cell>;
+        return <Table.Cell layoutClassName="text-right">{formatInplaceVolumesValue(props.value)}</Table.Cell>;
     }
 
     if (props.columnType === ColumnType.ENSEMBLE) {

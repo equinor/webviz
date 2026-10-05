@@ -2,7 +2,7 @@ import type React from "react";
 
 import { getSessionsMetadataOptions, SortDirection_api, SessionSortBy_api, type SessionMetadata_api } from "@api";
 import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
-import { buildSessionUrl } from "@framework/internal/WorkbenchSession/utils/url";
+import { buildWorkbenchUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
 import { timeAgo } from "@lib/utils/dates";
 
@@ -11,6 +11,7 @@ import { RecentList } from "./recentList";
 
 export type RecentSessionsProps = {
     workbench: Workbench;
+    className?: string;
 };
 
 export function RecentSessions(props: RecentSessionsProps) {
@@ -35,6 +36,7 @@ export function RecentSessions(props: RecentSessionsProps) {
 
     return (
         <RecentList
+            className={props.className}
             title="Recent sessions"
             useQueryOptions={{
                 ...getSessionsMetadataOptions({
@@ -49,7 +51,7 @@ export function RecentSessions(props: RecentSessionsProps) {
             transformData={(data) => data.items}
             renderItem={(item: SessionMetadata_api) => (
                 <ItemCard
-                    href={buildSessionUrl(item.id)}
+                    href={buildWorkbenchUrl({ kind: "session", sessionId: item.id, dashboardId: null })}
                     onClick={handleSessionClick}
                     key={item.id}
                     id={item.id}

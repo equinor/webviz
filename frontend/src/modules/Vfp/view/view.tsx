@@ -15,7 +15,7 @@ import type { Interfaces } from "../interfaces";
 import { usePlotBuilder } from "./hooks/useVfpPlotBuilder";
 
 export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) {
-    const { tableDataStatus, tableNamesStatus } = viewContext.useSettingsToViewInterfaceValue(
+    const { tableDataStatus, tablesStatus } = viewContext.useSettingsToViewInterfaceValue(
         "tableDataAccessorWithStatusFlags",
     );
 
@@ -24,11 +24,11 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     const vfpPlotData = usePlotBuilder(viewContext, workbenchSettings, wrapperDivSize);
 
-    let content = null;
-    if (tableDataStatus.isError || tableNamesStatus.isError) {
-        const source = tableDataStatus.isError ? "data" : "names";
+    let content;
+    if (tableDataStatus.isError || tablesStatus.isError) {
+        const source = tableDataStatus.isError ? "data" : "numbers";
         content = <ContentError>Error when loading VFP table {source}. See the log for details.</ContentError>;
-    } else if (tableDataStatus.isFetching || tableNamesStatus.isFetching) {
+    } else if (tableDataStatus.isFetching || tablesStatus.isFetching) {
         content = (
             <ContentMessage type={ContentMessageType.INFO}>
                 <CircularProgress />

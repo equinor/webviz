@@ -4,6 +4,7 @@ import { Provider } from "jotai";
 
 import { useActiveSession } from "@framework/internal/components/ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToView } from "@framework/internal/components/ApplyInterfaceEffects/applyInterfaceEffects";
+import { useDashboard } from "@framework/internal/components/DashboardContext";
 import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { HydrateQueryClientAtom } from "@framework/internal/components/HydrateQueryClientAtom";
@@ -29,6 +30,7 @@ type ViewContentProps = {
 
 export const ViewContent = React.memo((props: ViewContentProps) => {
     const workbenchSession = useActiveSession();
+    const { dashboard } = useDashboard();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
     const moduleInstanceLifeCycleState = useModuleInstanceTopicValue(
         props.moduleInstance,
@@ -130,6 +132,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         if (errorObject) {
             return (
                 <CrashView
+                    workbench={props.workbench}
                     moduleName={props.moduleInstance.getModule().getName()}
                     error={errorObject.err}
                     errorInfo={errorObject.errInfo}
@@ -144,6 +147,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         return null;
     }
 
+    // eslint-disable-next-line @eslint-react/static-components -- Legacy
     const View = props.moduleInstance.getViewFC();
     return (
         <ErrorBoundary moduleInstance={props.moduleInstance}>
@@ -157,11 +161,12 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     <Provider store={atomStore}>
                         <HydrateQueryClientAtom>
                             <ApplyInterfaceEffectsToView moduleInstance={props.moduleInstance}>
+                                {/* eslint-disable-next-line @eslint-react/static-components -- Legacy */}
                                 <View
                                     viewContext={props.moduleInstance.getContext()}
                                     workbenchSession={props.workbench.getSessionManager().getActiveSession()}
-                                    workbenchServices={props.workbench.getWorkbenchServices()}
-                                    hoverService={props.workbench.getHoverService()}
+                                    syncSettingsService={dashboard.getSyncSettingsService()}
+                                    hoverService={dashboard.getHoverService()}
                                     workbenchSettings={props.workbench
                                         .getSessionManager()
                                         .getActiveSession()

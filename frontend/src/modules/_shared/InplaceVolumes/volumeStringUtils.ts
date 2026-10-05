@@ -23,7 +23,8 @@ export function getVolumeDefinition(volumeName: string): VolumeDefinition | null
 export function createHoverTextForVolume(volumeName: string): string {
     const volumeDefinition = getVolumeDefinition(volumeName);
     if (volumeDefinition) {
-        return `${volumeDefinition.description}${volumeDefinition.unit ? ` [${volumeDefinition.unit}]` : ""}`;
+        const description = `${volumeDefinition.description}${volumeDefinition.unit ? ` [${volumeDefinition.unit}]` : ""}`;
+        return volumeDefinition.formula ? `${description}. Calculated as ${volumeDefinition.formula}.` : description;
     }
     return volumeName;
 }

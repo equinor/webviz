@@ -1,16 +1,13 @@
-import {
-    type GetPickingInfoParams,
-    Layer,
-    type LayerContext,
-    type LayerProps,
-    type Material,
-    type PickingInfo,
-    type UpdateParameters,
-    picking,
-    project32,
+import { Layer, phongMaterial, picking, project32 } from "@deck.gl/core";
+import type {
+    GetPickingInfoParams,
+    LayerContext,
+    LayerProps,
+    Material,
+    PickingInfo,
+    UpdateParameters,
 } from "@deck.gl/core";
 import { Geometry, Model } from "@luma.gl/engine";
-import { phongLighting } from "@luma.gl/shadertools";
 import { isEqual } from "lodash-es";
 
 import * as vec3 from "@lib/utils/vec3";
@@ -18,7 +15,8 @@ import type { Vec3 } from "@lib/utils/vec3";
 
 import { Pipe } from "./Pipe";
 import fragmentShader from "./shaders/fragmentShader.glsl?raw";
-import { type PipeProps, pipeUniforms } from "./shaders/uniforms";
+import type { PipeProps } from "./shaders/uniforms";
+import { pipeUniforms } from "./shaders/uniforms";
 import vertexShader from "./shaders/vertexShader.glsl?raw";
 
 export type PipeLayerProps = {
@@ -118,7 +116,7 @@ export class PipesLayer extends Layer<PipeLayerProps> {
             const model = new Model(context.device, {
                 id: `${this.id}-mesh-${idx}`,
                 geometry: mesh,
-                modules: [project32, phongLighting, picking, pipeUniforms],
+                modules: [project32, phongMaterial, picking, pipeUniforms],
                 vs: vertexShader,
                 fs: fragmentShader,
             });
@@ -258,6 +256,7 @@ export class PipesLayer extends Layer<PipeLayerProps> {
 
             normals[normalsIndex++] = endNormal.x;
             normals[normalsIndex++] = endNormal.y;
+            // eslint-disable-next-line no-useless-assignment -- We'll allow this for index increments
             normals[normalsIndex++] = endNormal.z;
 
             for (let j = 0; j < numVerticesPerContour; j++) {

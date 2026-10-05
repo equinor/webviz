@@ -2,6 +2,7 @@ import React from "react";
 
 import { isEqual } from "lodash-es";
 
+import { ContextMenu as ContextMenuComponent } from "@lib/components/ContextMenu";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import {
     type ContextMenu as ContextMenuType,
@@ -40,23 +41,21 @@ export function ContextMenu(props: ContextMenuProps): React.ReactNode {
     }
 
     return (
-        <div
-            style={{ top: contextMenu.position.y, left: contextMenu.position.x }}
-            className="border-neutral-subtle z-elevated py-3xs absolute rounded border bg-white shadow-lg"
-        >
-            {contextMenu.items.map((item, index) => (
-                <div
-                    key={index}
-                    className="hover:bg-info-surface gap-2xs px-2xs text-body-sm p-3xs flex cursor-pointer items-center"
-                    onClick={() => {
-                        item.onClick();
-                        setVisible(false);
-                    }}
-                >
-                    {item.icon ? React.cloneElement(item.icon, { fontSize: "small" }) : null}
-                    <span>{item.label}</span>
-                </div>
-            ))}
-        </div>
+        <ContextMenuComponent.Root open onOpenChange={setVisible}>
+            <ContextMenuComponent.Menu anchor={contextMenu.position}>
+                {contextMenu.items.map((item) => (
+                    <ContextMenuComponent.Item
+                        key={item.id}
+                        onClick={() => {
+                            item.onClick();
+                            setVisible(false);
+                        }}
+                    >
+                        <span className="icon-font-size-small">{item.icon}</span>
+                        <span>{item.label}</span>
+                    </ContextMenuComponent.Item>
+                ))}
+            </ContextMenuComponent.Menu>
+        </ContextMenuComponent.Root>
     );
 }

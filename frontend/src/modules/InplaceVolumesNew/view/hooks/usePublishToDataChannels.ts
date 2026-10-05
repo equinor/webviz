@@ -1,9 +1,11 @@
 import { useAtomValue } from "jotai";
 
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewContext } from "@framework/ModuleContext";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ChannelContentDefinition, ChannelContentMetaData, DataGenerator } from "@framework/types/dataChannnel";
+import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
@@ -18,7 +20,7 @@ const STANDARD_ORIGIN_KEYS = [TableOriginKey.ENSEMBLE, TableOriginKey.TABLE_NAME
 
 interface ContentContext {
     ensembleName: string;
-    ensembleIdent: RegularEnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     ensembleIdentStr: string | number;
     tableName: string | number;
     fluidZone: string | number;
@@ -131,11 +133,11 @@ export function usePublishToDataChannels(
     const isStandardColorBy = STANDARD_ORIGIN_KEYS.includes(colorBy as TableOriginKey);
 
     for (const [ensembleIdentStr, ensembleTable] of table.splitByColumn(TableOriginKey.ENSEMBLE).getCollectionMap()) {
-        const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentStr.toString());
-        const ensembleName = makeDistinguishableEnsembleDisplayName(
-            ensembleIdent,
-            ensembleSet.getRegularEnsembleArray(),
-        );
+        const ensembleIdent = getEnsembleIdentFromString(ensembleIdentStr.toString());
+        if (!ensembleIdent) {
+            continue;
+        }
+        const ensembleName = makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getEnsembleArray());
 
         for (const [tableName, tableForTableName] of ensembleTable
             .splitByColumn(TableOriginKey.TABLE_NAME)
@@ -211,8 +213,8 @@ function createColumnValuesToColorMap(
         let effectiveColor = currentBaseColorFromSet;
 
         if (colorBy === TableOriginKey.ENSEMBLE) {
-            const currentEnsembleIdent = RegularEnsembleIdent.fromString(keyOfColorByItem.toString());
-            const ensemble = ensembleSet.findEnsemble(currentEnsembleIdent);
+            const currentEnsembleIdent = getEnsembleIdentFromString(keyOfColorByItem.toString());
+            const ensemble = currentEnsembleIdent ? ensembleSet.findEnsemble(currentEnsembleIdent) : null;
             const ensembleSpecificColor = ensemble?.getColor();
 
             if (ensembleSpecificColor !== undefined) {

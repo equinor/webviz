@@ -42,3 +42,4 @@ class EnsembleParametersAndSensitivities(BaseModel):
 
     parameters: list[EnsembleParameter]
     sensitivities: list[EnsembleSensitivity]
+    nonStandardParametersWarning: str | None = None

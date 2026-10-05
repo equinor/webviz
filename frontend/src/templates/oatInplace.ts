@@ -3,14 +3,14 @@ import type { Template } from "@framework/TemplateRegistry";
 import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
-import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
+import { ChannelIds } from "@modules/InplaceVolumesNew/channelDefs";
 import { DisplayComponentType } from "@modules/SensitivityPlot/typesAndEnums";
 
 const template: Template = {
     name: "Sensitivity analysis of inplace volumes",
     description: "Inplace volumes analysis for design matrix ensembles.",
     moduleInstances: [
-        createTemplateModuleInstance("InplaceVolumesPlot", {
+        createTemplateModuleInstance("InplaceVolumesNew", {
             instanceRef: "MainInplaceVolumesPlotInstance",
             layout: {
                 relHeight: 0.5,

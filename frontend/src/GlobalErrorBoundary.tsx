@@ -2,10 +2,11 @@ import React from "react";
 
 import { BugReport, ContentCopy } from "@mui/icons-material";
 
+import { SupportDocumentsGenerator } from "@framework/components/SupportDocumentsGenerator";
+import { SERVICE_NOW_HREF } from "@framework/utils/externalUrls";
+import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
-import { reportErrorToGithub } from "@lib/utils/errors";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
 
 type Props = {
     children?: React.ReactNode;
@@ -13,22 +14,25 @@ type Props = {
 
 interface State {
     error: Error | null;
+    componentStack: string | null;
     copiedToClipboard: boolean;
-    symbolicatingStack: boolean;
+    activeWorkbench: Workbench | null;
 }
 
 export class GlobalErrorBoundary extends React.Component<Props, State> {
     state: State = {
         error: null,
         copiedToClipboard: false,
-        symbolicatingStack: false,
+        componentStack: null,
+        activeWorkbench: null,
     };
 
     private _boundHandleWindowError: (event: ErrorEvent) => void;
     private _boundHandleUnhandledRejection: (event: PromiseRejectionEvent) => void;
+    private _boundRegisterActiveWorkbench: (wb: Workbench | null) => void;
 
-    static getDerivedStateFromError(err: Error): State {
-        return { error: err, copiedToClipboard: false, symbolicatingStack: false };
+    static getDerivedStateFromError(err: Error): Partial<State> {
+        return { error: err, copiedToClipboard: false };
     }
 
     constructor(props: Props) {
@@ -36,6 +40,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
 
         this._boundHandleWindowError = this.handleWindowError.bind(this);
         this._boundHandleUnhandledRejection = this.handleUnhandledRejection.bind(this);
+        this._boundRegisterActiveWorkbench = this.registerActiveWorkbench.bind(this);
     }
 
     private handleWindowError(event: ErrorEvent) {
@@ -54,6 +59,17 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         this.setState({ error: event.reason });
     }
 
+    private registerActiveWorkbench(wb: Workbench | null) {
+        // When we get an error, the entire component tree gets unmounted, which in turn means the workbench-wrapper will unmount. Avoid setting in this case so we can get info from the most recent workbench
+        if (!(this.state.error && wb == null)) {
+            this.setState({ activeWorkbench: wb });
+        }
+    }
+
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+        this.setState({ componentStack: errorInfo.componentStack ?? null });
+    }
+
     componentDidMount() {
         window.addEventListener("error", this._boundHandleWindowError);
         window.addEventListener("unhandledrejection", this._boundHandleUnhandledRejection);
@@ -67,23 +83,6 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
     render() {
         const freshStartUrl = new URL(window.location.protocol + "//" + window.location.host);
         freshStartUrl.searchParams.set("cleanStart", "true");
-
-        const reportIssue = async (error: Error) => {
-            let customStackTrace;
-            if (shouldSymbolicate()) {
-                this.setState({ symbolicatingStack: true });
-
-                try {
-                    customStackTrace = await symbolicateStackTrace(error);
-                } catch (err) {
-                    console.error("Failed to symbolicate stack trace:", err);
-                }
-
-                this.setState({ symbolicatingStack: false });
-            }
-
-            reportErrorToGithub(error, customStackTrace);
-        };
 
         const copyToClipboard = () => {
             navigator.clipboard.writeText(freshStartUrl.toString());
@@ -108,17 +107,17 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                             <div className="gap-y-2xs flex flex-col">
                                 You can use the following URL to start a clean session:
                                 <div>
-                                    <div className="bg-neutral text-body-sm p-xs flex items-center font-mono whitespace-nowrap">
-                                        <a href={freshStartUrl.toString()} className="grow">
+                                    <div className="bg-neutral text-body-sm flex items-center font-mono whitespace-nowrap">
+                                        <a href={freshStartUrl.toString()} className="p-xs grow">
                                             {freshStartUrl.toString()}
                                         </a>
                                         <Button
+                                            layoutClassName="m-4xs"
                                             onClick={copyToClipboard}
                                             title="Copy URL to clipboard"
                                             tone="accent"
                                             variant="ghost"
                                             iconOnly
-                                            size="small"
                                         >
                                             <ContentCopy fontSize="small" />
                                         </Button>
@@ -136,19 +135,43 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                                 </div>
                             </div>
                         </div>
-                        <div className="gap-x-xs p-sm bg-canvas flex shadow-sm">
-                            <Button
-                                onClick={() => this.state.error && reportIssue(this.state.error)}
-                                disabled={this.state.symbolicatingStack}
-                            >
-                                <BugReport fontSize="small" />{" "}
-                                {this.state.symbolicatingStack ? "Symbolicating stack..." : "Report issue"}
-                            </Button>
+                        <div className="gap-x-xs p-sm bg-canvas flex justify-end shadow-sm">
+                            <SupportDocumentsGenerator
+                                error={this.state.error}
+                                session={
+                                    this.state.activeWorkbench?.getSessionManager().getActiveSessionOrNull() ?? null
+                                }
+                                componentStack={this.state.componentStack}
+                            />
+                            <Button.AsLink href={SERVICE_NOW_HREF} target="_blank" rel="noopener noreferrer" external>
+                                <BugReport fontSize="small" />
+                                Report issue
+                            </Button.AsLink>
                         </div>
                     </div>
                 </div>
             );
         }
-        return this.props.children;
+        return (
+            <GlobalErrorBoundaryContext.Provider
+                value={{
+                    registerActiveWorkbench: this._boundRegisterActiveWorkbench,
+                }}
+            >
+                {this.props.children}
+            </GlobalErrorBoundaryContext.Provider>
+        );
     }
+}
+
+export const GlobalErrorBoundaryContext = React.createContext<{
+    registerActiveWorkbench: (workbench: Workbench | null) => void;
+} | null>(null);
+
+export function useGlobalErrorBoundaryContext() {
+    const context = React.useContext(GlobalErrorBoundaryContext);
+    if (!context) {
+        throw new Error("useGlobalErrorBoundaryContext must be used within a GlobalErrorBoundaryContext.Provider");
+    }
+    return context;
 }

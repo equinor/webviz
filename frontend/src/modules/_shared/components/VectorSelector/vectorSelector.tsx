@@ -271,6 +271,7 @@ export const VectorSelector = React.forwardRef<HTMLInputElement, VectorSelectorP
     function VectorSelector(props, ref) {
         const adjustedProps: VectorSelectorComponentProps = {
             id: props.id ?? "",
+            dataTestId: props.dataTestId ?? "",
             data: props.data,
             customVectorDefinitions: props.customVectorDefinitions ?? {},
             onValueChange:

@@ -5,7 +5,8 @@ import type { WellFeature } from "@webviz/subsurface-viewer";
 import type { PickingInfoPerView } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
 
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
+import { getPolylinesLayerReadout, PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
+import { WebvizWellsLayer } from "@modules/_shared/customDeckGlLayers/WebvizWellsLayer";
 import {
     getReadoutFromSubsurfacePick,
     type LayerPickInfoWithReadout,
@@ -39,9 +40,12 @@ export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNod
 
         for (const pick of props.picks) {
             // TODO: First refer to DPF for layer specific readouts, instead of manually per layer here
-            if (pick.layer instanceof AdjustedWellsLayer) {
+            if (pick.layer instanceof WebvizWellsLayer) {
                 const infoWithReadout = pick as LayerPickInfoWithReadout<WellFeature>;
                 if (infoWithReadout.readout) readouts.push(infoWithReadout.readout);
+            } else if (pick.layer instanceof PolylinesLayer) {
+                const polylineReadout = getPolylinesLayerReadout(pick);
+                if (polylineReadout) readouts.push(polylineReadout);
             } else {
                 const extractedReadout = getReadoutFromSubsurfacePick(pick);
                 if (extractedReadout) readouts.push(extractedReadout);

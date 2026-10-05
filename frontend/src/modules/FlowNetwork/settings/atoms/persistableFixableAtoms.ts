@@ -133,5 +133,5 @@ function computeFlowNetworkQueryResultDependenciesState({
     if (flowNetworkQueryResult.isFetching) {
         return "loading";
     }
-    return !flowNetworkQueryResult.data ? "error" : "loaded";
+    return "loaded";
 }

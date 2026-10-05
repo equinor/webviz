@@ -168,7 +168,7 @@ export function wellTrajectoryToGeojson(
     };
 
     let color = [150, 150, 150] as Color;
-    let lineWidth = 2;
+    let lineWidth = 3;
     let wellHeadSize = 1;
 
     if (wellTrajectory.wellboreUuid === opts?.selectedWellboreUuid) {

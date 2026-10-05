@@ -282,6 +282,20 @@ export interface MakeSubplotOptions {
 }
 
 /**
+ * Number of rows and columns that lay out `numSubplots` subplots as close to a square grid as
+ * possible, filling rows first. Always at least 1x1, even for zero or negative input.
+ */
+export function calcNumRowsAndCols(numSubplots: number): { numRows: number; numCols: number } {
+    if (numSubplots < 1) {
+        return { numRows: 1, numCols: 1 };
+    }
+
+    const numRows = Math.ceil(Math.sqrt(numSubplots));
+    const numCols = Math.ceil(numSubplots / numRows);
+    return { numRows, numCols };
+}
+
+/**
  * Utility function to create a figure with subplots.
  *
  * This function creates grid axis mapping with index from top-left to bottom-right, with row and column number

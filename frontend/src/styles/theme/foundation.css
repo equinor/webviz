@@ -39,6 +39,7 @@
     --z-sticky: 30; /* Sticky elements like headers and navbars */
     --z-scrim: 50; /* Scrims and backdrops */
     --z-modal: 100; /* Modals and dialogs */
+    --z-loading-overlay: 120; /* Loading overlays that should appear above modals */
     --z-alert: 150; /* Alerts and critical notifications that should appear above modals */
     --z-toast: 200; /* Toasts and notifications */
     --z-tooltip: 250; /* Tooltips and popovers that should appear above modals */

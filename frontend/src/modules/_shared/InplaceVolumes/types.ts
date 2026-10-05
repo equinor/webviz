@@ -3,20 +3,36 @@ import type {
     InplaceVolumesTableDataPerFluidSelection_api,
 } from "@api";
 import { InplaceVolumesStatistic_api } from "@api";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
+import type { DroppedFluidSelection, UnmatchedDeltaRows } from "./deltaTableUtils";
 import type { Column } from "./Table";
 
 export type InplaceVolumesTableData = {
-    ensembleIdent: RegularEnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     tableName: string;
     data: InplaceVolumesTableDataPerFluidSelection_api;
 };
 
 export type InplaceVolumesStatisticalTableData = {
-    ensembleIdent: RegularEnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     tableName: string;
     data: InplaceVolumesStatisticalTableDataPerFluidSelection_api;
+};
+
+/** Fluid selections excluded from a delta ensemble's difference, per source table. */
+export type DeltaDroppedFluidSelections = {
+    ensembleIdent: DeltaEnsembleIdent;
+    tableName: string;
+    fluidSelections: DroppedFluidSelection[];
+};
+
+/** Selector tuples excluded from a delta inner join, per source table. */
+export type DeltaUnmatchedRows = {
+    ensembleIdent: DeltaEnsembleIdent;
+    tableName: string;
+    rows: UnmatchedDeltaRows[];
 };
 
 export enum TableType {
@@ -36,6 +52,33 @@ export enum TableOriginKey {
     ENSEMBLE = "ENSEMBLE",
     TABLE_NAME = "TABLE_NAME",
     FLUID = "FLUID",
+}
+
+// Properties that are only defined for one specific fluid. The backend discards these results when
+// the fluids are summed, so the data must be grouped by FLUID for them to be computed at all.
+export const FLUID_SPECIFIC_RESULT_NAMES: Record<string, string> = {
+    BO: "oil",
+    BG: "gas",
+};
+
+export function isFluidSpecificResultName(resultName: string | null): boolean {
+    return resultName !== null && resultName in FLUID_SPECIFIC_RESULT_NAMES;
+}
+
+// Temporary fallback until the backend reports units per response. These known ratios and fractions
+// should be displayed without SI prefixes; unit metadata should eventually replace this name-based list.
+const DIMENSIONLESS_RESULT_NAMES: readonly string[] = [
+    "NTG",
+    "PORO",
+    "PORO_NET",
+    "SW",
+    "BO",
+    "BG",
+    "FACIES_FRACTION",
+];
+
+export function isDimensionlessResultName(resultName: string | null): boolean {
+    return resultName !== null && DIMENSIONLESS_RESULT_NAMES.includes(resultName);
 }
 
 export type StatisticalColumns = Partial<{

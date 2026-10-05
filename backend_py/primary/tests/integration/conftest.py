@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import pytest
 
 from webviz_services.services_config import ServicesConfig, init_services_config
+from webviz_services.sumo_access.sumo_client_factory import SENTINEL_ACCESS_TOKEN_FOR_TESTING
 from webviz_services.utils.authenticated_user import AuthenticatedUser, AccessTokens
 
 
@@ -54,7 +55,7 @@ def fixture_sumo_test_ensemble_design() -> SumoTestEnsemble:
 
 @pytest.fixture(name="test_user", scope="session")
 def fixture_test_user() -> AuthenticatedUser:
-    token = "DUMMY_TOKEN_FOR_TESTING"
+    token = SENTINEL_ACCESS_TOKEN_FOR_TESTING
     tokens = AccessTokens(
         sumo_access_token=token, graph_access_token=None, smda_access_token=None, ssdl_access_token=None
     )

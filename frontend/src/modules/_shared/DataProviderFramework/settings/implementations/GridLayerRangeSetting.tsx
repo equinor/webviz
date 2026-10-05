@@ -292,8 +292,8 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
             };
 
             const divRef = React.useRef<HTMLDivElement>(null);
-            const [internalValue, setInternalValue] = React.useState<InternalValueType>(cloneDeep(props.value));
-            const [prevValue, setPrevValue] = React.useState<InternalValueType>(cloneDeep(props.value));
+            const [internalValue, setInternalValue] = React.useState<InternalValueType>(() => cloneDeep(props.value));
+            const [prevValue, setPrevValue] = React.useState<InternalValueType>(() => cloneDeep(props.value));
 
             const divSize = useElementSize(divRef);
 

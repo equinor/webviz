@@ -69,8 +69,8 @@ export function useLockedValueUpdate(props: {
     maxLocked: boolean;
     onValueChange?: (value: number | number[], eventDetails: SliderChangeEventDetails, commit: boolean) => void;
 }) {
-    const prevMinLocked = React.useRef(false);
-    const prevMaxLocked = React.useRef(false);
+    const prevMinLockedRef = React.useRef(false);
+    const prevMaxLockedRef = React.useRef(false);
 
     const { onValueChange } = props;
 
@@ -81,7 +81,7 @@ export function useLockedValueUpdate(props: {
             let newValue: number | number[] | null = null;
 
             // Min lock was just enabled
-            if (props.minLocked && !prevMinLocked.current) {
+            if (props.minLocked && !prevMinLockedRef.current) {
                 if (isDualValue) {
                     newValue = [props.min, value[1]];
                 } else {
@@ -90,7 +90,7 @@ export function useLockedValueUpdate(props: {
             }
 
             // Max lock was just enabled
-            if (props.maxLocked && !prevMaxLocked.current) {
+            if (props.maxLocked && !prevMaxLockedRef.current) {
                 if (isDualValue && newValue !== null) {
                     newValue = [(newValue as number[])[0], props.max];
                 } else if (isDualValue) {
@@ -100,8 +100,8 @@ export function useLockedValueUpdate(props: {
                 }
             }
 
-            prevMinLocked.current = props.minLocked;
-            prevMaxLocked.current = props.maxLocked;
+            prevMinLockedRef.current = props.minLocked;
+            prevMaxLockedRef.current = props.maxLocked;
 
             if (newValue !== null) {
                 onValueChange?.(newValue, { reason: "range-locked" }, true);
@@ -122,12 +122,12 @@ export function useUnlockOnValueChange(props: {
     setMaxLocked: (locked: boolean) => void;
 }) {
     const { setMinLocked, setMaxLocked } = props;
-    const prevValue = React.useRef(props.value);
+    const prevValueRef = React.useRef(props.value);
 
     React.useEffect(
         function unlockSliderLocksEffect() {
             // Only check if value actually changed
-            if (isEqual(prevValue.current, props.value)) return;
+            if (isEqual(prevValueRef.current, props.value)) return;
 
             const lowerValue = isDualSliderValue(props.value) ? props.value[0] : props.value;
             const upperValue = isDualSliderValue(props.value) ? props.value[1] : props.value;
@@ -140,7 +140,7 @@ export function useUnlockOnValueChange(props: {
                 setMaxLocked(false);
             }
 
-            prevValue.current = props.value;
+            prevValueRef.current = props.value;
         },
         [props.max, props.maxLocked, props.min, props.minLocked, props.value, setMaxLocked, setMinLocked],
     );

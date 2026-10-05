@@ -430,6 +430,10 @@ export type EnsembleParametersAndSensitivities_api = {
      * Sensitivities
      */
     sensitivities: Array<EnsembleSensitivity_api>;
+    /**
+     * Nonstandardparameterswarning
+     */
+    nonStandardParametersWarning?: string | null;
 };
 
 /**
@@ -815,6 +819,41 @@ export type HTTPValidationError_api = {
 };
 
 /**
+ * InitialFluidContactSurfaceMeta
+ */
+export type InitialFluidContactSurfaceMeta_api = {
+    /**
+     * Name
+     */
+    name: string;
+    contact: InitialFluidContactType_api;
+    standard_result: SurfaceStandardResult_api;
+    /**
+     * Name Is Stratigraphic Offical
+     */
+    name_is_stratigraphic_offical: boolean;
+    /**
+     * Value Min
+     */
+    value_min: number | null;
+    /**
+     * Value Max
+     */
+    value_max: number | null;
+};
+
+/**
+ * InitialFluidContactType
+ */
+export enum InitialFluidContactType_api {
+    FGL = "fgl",
+    FWL = "fwl",
+    GOC = "goc",
+    GWC = "gwc",
+    OWC = "owc",
+}
+
+/**
  * InplaceVolumesIndexWithValues
  *
  * Unique values for an index column in an inplace volumes table
@@ -1191,6 +1230,7 @@ export enum PolygonsAttributeType_api {
     SUBCROP = "subcrop",
     FAULT_LINES = "fault_lines",
     NAMED_AREA = "named_area",
+    REGIONS = "regions",
 }
 
 /**
@@ -2293,6 +2333,20 @@ export type SurfaceRealizationSampleValues_api = {
 };
 
 /**
+ * SurfaceStandardResult
+ *
+ * The FMU standard results that are surfaces. Used when building standard result surface addresses.
+ */
+export enum SurfaceStandardResult_api {
+    FLUID_CONTACT_SURFACE = "fluid_contact_surface",
+    GRID_EXTRACTED_DEPTH_SURFACE = "grid_extracted_depth_surface",
+    STRUCTURE_DEPTH_FAULT_SURFACE = "structure_depth_fault_surface",
+    STRUCTURE_DEPTH_ISOCHORE = "structure_depth_isochore",
+    STRUCTURE_DEPTH_SURFACE = "structure_depth_surface",
+    STRUCTURE_TIME_SURFACE = "structure_time_surface",
+}
+
+/**
  * SurfaceStatisticFunction
  */
 export enum SurfaceStatisticFunction_api {
@@ -2365,6 +2419,16 @@ export type TableColumnStatisticalData_api = {
     statisticValues: {
         [key in InplaceVolumesStatistic_api]?: Array<number>;
     };
+};
+
+/**
+ * TutorialMediaSasToken
+ */
+export type TutorialMediaSasToken_api = {
+    /**
+     * Sastoken
+     */
+    sasToken: string;
 };
 
 /**
@@ -2682,6 +2746,28 @@ export type VfpProdTable_api = {
      */
     alqUnit: string;
 };
+
+/**
+ * VfpTableInfo
+ */
+export type VfpTableInfo_api = {
+    /**
+     * Vfptype
+     */
+    vfpType: "INJ" | "PROD";
+    /**
+     * Tablenumber
+     */
+    tableNumber: number;
+};
+
+/**
+ * VfpType
+ */
+export enum VfpType_api {
+    PROD = "PROD",
+    INJ = "INJ",
+}
 
 /**
  * WFR
@@ -4264,6 +4350,49 @@ export type GetObservedSurfacesMetadataResponses_api = {
 export type GetObservedSurfacesMetadataResponse_api =
     GetObservedSurfacesMetadataResponses_api[keyof GetObservedSurfacesMetadataResponses_api];
 
+export type GetInitialFluidContactSurfacesMetadataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        zCacheBust?: string;
+    };
+    url: "/surface/initial_fluid_contact_surfaces_metadata/";
+};
+
+export type GetInitialFluidContactSurfacesMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetInitialFluidContactSurfacesMetadataError_api =
+    GetInitialFluidContactSurfacesMetadataErrors_api[keyof GetInitialFluidContactSurfacesMetadataErrors_api];
+
+export type GetInitialFluidContactSurfacesMetadataResponses_api = {
+    /**
+     * Response Get Initial Fluid Contact Surfaces Metadata
+     *
+     * Successful Response
+     */
+    200: Array<InitialFluidContactSurfaceMeta_api>;
+};
+
+export type GetInitialFluidContactSurfacesMetadataResponse_api =
+    GetInitialFluidContactSurfacesMetadataResponses_api[keyof GetInitialFluidContactSurfacesMetadataResponses_api];
+
 export type GetSurfaceDataData_api = {
     body?: never;
     path?: never;
@@ -4418,41 +4547,11 @@ export type PostGetSurfaceIntersectionData_api = {
     path?: never;
     query: {
         /**
-         * Case Uuid
+         * Surf Addr Str
          *
-         * Sumo case uuid
+         * Surface address string, supported address types are *REAL*, *OBS* and *STAT*
          */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Realization Num
-         *
-         * Realization number
-         */
-        realization_num: number;
-        /**
-         * Name
-         *
-         * Surface name
-         */
-        name: string;
-        /**
-         * Attribute
-         *
-         * Surface attribute
-         */
-        attribute: string;
-        /**
-         * Time Or Interval Str
-         *
-         * Time point or time interval string
-         */
-        time_or_interval_str?: string | null;
+        surf_addr_str: string;
         zCacheBust?: string;
     };
     url: "/surface/get_surface_intersection";
@@ -4605,7 +4704,7 @@ export type GetMisfitSurfaceDataData_api = {
         /**
          * Sim Surf Addr Str
          *
-         * Address of simulated surface, supported type is *PARTIAL*
+         * Address of simulated surface, only supported address type is *REAL*
          */
         sim_surf_addr_str: string;
         /**
@@ -5278,6 +5377,43 @@ export type GetDrilledWellboreHeadersResponses_api = {
 export type GetDrilledWellboreHeadersResponse_api =
     GetDrilledWellboreHeadersResponses_api[keyof GetDrilledWellboreHeadersResponses_api];
 
+export type GetPlannedWellboreHeadersData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Field Identifier
+         *
+         * Official field identifier
+         */
+        field_identifier: string;
+        zCacheBust?: string;
+    };
+    url: "/well/planned_wellbore_headers/";
+};
+
+export type GetPlannedWellboreHeadersErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetPlannedWellboreHeadersError_api =
+    GetPlannedWellboreHeadersErrors_api[keyof GetPlannedWellboreHeadersErrors_api];
+
+export type GetPlannedWellboreHeadersResponses_api = {
+    /**
+     * Response Get Planned Wellbore Headers
+     *
+     * Successful Response
+     */
+    200: Array<WellboreHeader_api>;
+};
+
+export type GetPlannedWellboreHeadersResponse_api =
+    GetPlannedWellboreHeadersResponses_api[keyof GetPlannedWellboreHeadersResponses_api];
+
 export type GetFieldPerforationsData_api = {
     body?: never;
     path?: never;
@@ -5389,6 +5525,49 @@ export type GetWellTrajectoriesResponses_api = {
 };
 
 export type GetWellTrajectoriesResponse_api = GetWellTrajectoriesResponses_api[keyof GetWellTrajectoriesResponses_api];
+
+export type GetPlannedWellTrajectoriesData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Field Identifier
+         *
+         * Official field identifier
+         */
+        field_identifier: string;
+        /**
+         * Wellbore Uuids
+         *
+         * Optional subset of planned wellbore uuids
+         */
+        wellbore_uuids?: Array<string> | null;
+        zCacheBust?: string;
+    };
+    url: "/well/planned_well_trajectories/";
+};
+
+export type GetPlannedWellTrajectoriesErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetPlannedWellTrajectoriesError_api =
+    GetPlannedWellTrajectoriesErrors_api[keyof GetPlannedWellTrajectoriesErrors_api];
+
+export type GetPlannedWellTrajectoriesResponses_api = {
+    /**
+     * Response Get Planned Well Trajectories
+     *
+     * Successful Response
+     */
+    200: Array<WellboreTrajectory_api>;
+};
+
+export type GetPlannedWellTrajectoriesResponse_api =
+    GetPlannedWellTrajectoriesResponses_api[keyof GetPlannedWellTrajectoriesResponses_api];
 
 export type GetWellborePickIdentifiersData_api = {
     body?: never;
@@ -6453,7 +6632,7 @@ export type GetRftObservationsResponses_api = {
 
 export type GetRftObservationsResponse_api = GetRftObservationsResponses_api[keyof GetRftObservationsResponses_api];
 
-export type GetVfpTableNamesData_api = {
+export type GetVfpTablesData_api = {
     body?: never;
     path?: never;
     query: {
@@ -6477,28 +6656,28 @@ export type GetVfpTableNamesData_api = {
         realization: number;
         zCacheBust?: string;
     };
-    url: "/vfp/vfp_table_names/";
+    url: "/vfp/vfp_tables/";
 };
 
-export type GetVfpTableNamesErrors_api = {
+export type GetVfpTablesErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type GetVfpTableNamesError_api = GetVfpTableNamesErrors_api[keyof GetVfpTableNamesErrors_api];
+export type GetVfpTablesError_api = GetVfpTablesErrors_api[keyof GetVfpTablesErrors_api];
 
-export type GetVfpTableNamesResponses_api = {
+export type GetVfpTablesResponses_api = {
     /**
-     * Response Get Vfp Table Names
+     * Response Get Vfp Tables
      *
      * Successful Response
      */
-    200: Array<string>;
+    200: Array<VfpTableInfo_api>;
 };
 
-export type GetVfpTableNamesResponse_api = GetVfpTableNamesResponses_api[keyof GetVfpTableNamesResponses_api];
+export type GetVfpTablesResponse_api = GetVfpTablesResponses_api[keyof GetVfpTablesResponses_api];
 
 export type GetVfpTableData_api = {
     body?: never;
@@ -6523,11 +6702,15 @@ export type GetVfpTableData_api = {
          */
         realization: number;
         /**
-         * Vfp Table Name
-         *
-         * VFP table name
+         * VFP table type
          */
-        vfp_table_name: string;
+        vfp_type: VfpType_api;
+        /**
+         * Vfp Table Number
+         *
+         * VFP table number
+         */
+        vfp_table_number: number;
         zCacheBust?: string;
     };
     url: "/vfp/vfp_table/";
@@ -7080,6 +7263,24 @@ export type DeleteSnapshotAccessLogResponses_api = {
      */
     200: unknown;
 };
+
+export type GetMediaSasTokenData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/tutorials/media_sas_token";
+};
+
+export type GetMediaSasTokenResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: TutorialMediaSasToken_api;
+};
+
+export type GetMediaSasTokenResponse_api = GetMediaSasTokenResponses_api[keyof GetMediaSasTokenResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;

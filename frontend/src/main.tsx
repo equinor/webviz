@@ -49,13 +49,12 @@ const root = createRoot(container);
 
 root.render(
     <React.StrictMode>
+        {/* Toast might be used in the error boundary fallback. We assume that the toast comp is very unlikely to crash, so we keep it outside */}
+        <Toast toastManager={toastManager} />
         <GlobalErrorBoundary>
             <AuthProvider>
                 <CustomQueryClientProvider>
-                    <>
-                        <Toast toastManager={toastManager} />
-                        <App />
-                    </>
+                    <App />
                 </CustomQueryClientProvider>
             </AuthProvider>
         </GlobalErrorBoundary>
