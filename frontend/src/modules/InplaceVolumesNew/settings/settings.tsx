@@ -155,11 +155,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     </Banner>
                 )}
                 <Setting.Field label="Response" annotations={selectedFirstResultNameAnnotations}>
-                    <Combobox
-                        value={selectedFirstResultName.value}
-                        items={resultNameOptions}
-                        onValueChange={setSelectedFirstResultName}
-                    />
+                    <div data-testid="inplace-volumes-response-select" className="w-full">
+                        <Combobox
+                            value={selectedFirstResultName.value}
+                            items={resultNameOptions}
+                            onValueChange={setSelectedFirstResultName}
+                        />
+                    </div>
                 </Setting.Field>
 
                 <Setting.Field label="Subplot by" annotations={selectedSubplotByAnnotations}>

@@ -350,7 +350,8 @@ export async function smoothMoveToLocator(page: Page, locator: Locator): Promise
         return;
     }
     try {
-        await locator.scrollIntoViewIfNeeded();
+        // Bounded so a non-resolving locator can't hang the recording here (no timeout = wait forever).
+        await locator.scrollIntoViewIfNeeded({ timeout: 4_000 });
         const box = await locator.boundingBox();
         if (box) {
             await glideMouseTo(page, box.x + box.width / 2, box.y + box.height / 2);
@@ -381,6 +382,10 @@ export async function smoothClick(
     locator: Locator,
     options?: Parameters<Locator["click"]>[0],
 ): Promise<void> {
+    // Ensure the target exists before the record-only cursor cosmetics below (which await with no
+    // timeout and would otherwise hang the recording if the locator never resolves); fail fast with
+    // a clear locator error instead.
+    await locator.waitFor({ state: "visible", timeout: options?.timeout ?? 15_000 });
     await smoothMoveToLocator(page, locator);
     if (RECORDING) {
         try {
@@ -450,12 +455,19 @@ export async function smoothType(page: Page, locator: Locator, value: string): P
 export type ModuleDropPosition = "center" | "left" | "right" | "top" | "bottom";
 
 /**
- * How far (px) inside the layout edge to aim for the side drop positions. The layout's perimeter
- * drop zones are only ~50px wide, so a small fixed inset reliably lands in the edge zone (splitting
- * off the whole layout to that side) rather than nesting into a child box nearer the centre — which
- * is what a percentage-based target does once the canvas already holds a couple of modules.
+ * How far (px) inside the layout edge to aim for the side drop positions. The target must clear the
+ * layout's 25px box margin (`layoutBoxMargin`) — a single module's drop zones stop at
+ * `edge - margin`, so a smaller inset lands just outside the zone and the drop silently never
+ * commits — while staying within the ~50px edge band (`edgeWeight`) so it splits off the whole
+ * layout to that side rather than nesting into a child box nearer the centre.
  */
-const DROP_EDGE_INSET_PX = 24;
+const DROP_EDGE_INSET_PX = 45;
+
+/**
+ * The top/bottom edges need a touch more clearance than left/right: aiming ~15px further in lands
+ * reliably inside the bottom/top drop zone (a 45px inset still misses it and the drop never commits).
+ */
+const DROP_EDGE_INSET_VERTICAL_PX = 60;
 
 /** Resolve the absolute (x, y) drop target within `layoutBox` for a given drop position. */
 function resolveDropTarget(
@@ -464,15 +476,20 @@ function resolveDropTarget(
 ): { x: number; y: number } {
     const centerX = layoutBox.x + layoutBox.width / 2;
     const centerY = layoutBox.y + layoutBox.height / 2;
+    // For a side drop, aim the cross-axis at the centre of the first row/column rather than the layout
+    // centre: once the canvas holds stacked modules, the centre sits on the gutter between them, which
+    // resolves to the parent container (no side edge there) and nests the module instead of splitting.
+    const firstRowY = layoutBox.y + layoutBox.height / 4;
+    const firstColX = layoutBox.x + layoutBox.width / 4;
     switch (dropPosition) {
         case "left":
-            return { x: layoutBox.x + DROP_EDGE_INSET_PX, y: centerY };
+            return { x: layoutBox.x + DROP_EDGE_INSET_PX, y: firstRowY };
         case "right":
-            return { x: layoutBox.x + layoutBox.width - DROP_EDGE_INSET_PX, y: centerY };
+            return { x: layoutBox.x + layoutBox.width - DROP_EDGE_INSET_PX, y: firstRowY };
         case "top":
-            return { x: centerX, y: layoutBox.y + DROP_EDGE_INSET_PX };
+            return { x: firstColX, y: layoutBox.y + DROP_EDGE_INSET_VERTICAL_PX };
         case "bottom":
-            return { x: centerX, y: layoutBox.y + layoutBox.height - DROP_EDGE_INSET_PX };
+            return { x: firstColX, y: layoutBox.y + layoutBox.height - DROP_EDGE_INSET_VERTICAL_PX };
         default:
             return { x: centerX, y: centerY };
     }
@@ -507,8 +524,9 @@ export async function dragModuleOntoLayout(
     const layout = page.getByTestId("module-layout");
     await expect(layout).toBeVisible();
 
-    // The dropped module's header carries the module title; use it to confirm the drop committed.
-    const droppedModule = layout.getByTitle(moduleDisplayName).first();
+    // Confirm the drop via the header's stable data-module-title (the default title), which — unlike
+    // the visible `title` — never changes even if the module renames its instance title from data.
+    const droppedModule = layout.locator(`[data-module-title="${moduleDisplayName}"]`).first();
 
     await smoothMoveToLocator(page, page.locator(`[title="${moduleDisplayName}"]`).first());
 
@@ -642,6 +660,19 @@ export async function addVectorToSelector(page: Page, vectorName: string): Promi
     }).toPass({ timeout: 60_000, intervals: [1_000] });
 }
 
+/**
+ * Remove a vector tag from the Simulation Time Series vector selector by clicking its remove button,
+ * then assert the tag is gone. Pairs with {@link addVectorToSelector} when a story needs to swap the
+ * plotted vectors rather than accumulate them.
+ */
+export async function removeVectorFromSelector(page: Page, vectorName: string): Promise<void> {
+    const vectorSelectorContainer = page.getByTestId("vector-selector");
+    await expect(vectorSelectorContainer).toBeVisible();
+    const vectorTag = vectorSelectorContainer.locator(`li[title="${vectorName}"]`);
+    await smoothClick(page, vectorTag.getByRole("button", { name: "Remove" }));
+    await expect(vectorTag).toHaveCount(0, { timeout: 30_000 });
+}
+
 /** Friendly on-screen glyphs for the keys we demo; falls back to the raw key name. */
 const KEY_OVERLAY_LABELS: Record<string, string> = {
     ArrowLeft: "←",
@@ -769,4 +800,119 @@ export async function createSessionAndSelectEnsemble(
     await smoothClick(page, page.getByRole("button", { name: "Apply" }));
     await expect(page.getByText("Ensembles used in this session")).not.toBeVisible({ timeout: 120_000 });
     await applyNarration;
+}
+
+/**
+ * Connect a data channel by dragging from a publishing module's channel "output" button onto a
+ * receiver node on another module.
+ *
+ * Reproduces the framework's custom pointer gesture: pressing the channel-output button publishes an
+ * event that reveals the receiver nodes on compatible modules; gliding onto the wanted receiver node
+ * and releasing connects it. `receiverIdString` selects which receiver to drop on (e.g. the
+ * Distribution Plot's `channelX`).
+ *
+ * Options:
+ * - `origin`: the channel-output button to drag from. Defaults to the only one on the page; pass an
+ *   explicit locator when several modules publish channels (see `channelOutputForModule`).
+ * - `contentLabel`: when the source publishes more than one content (e.g. several vectors) the drop
+ *   opens a content selector — subscribe the receiver to the single content whose label contains
+ *   this text. If no selector appears (single-content source), the connection is accepted as-is.
+ * - `deselectContentLabel`: a content already selected on the receiver that must be unchecked first
+ *   (so re-pointing a multi-content receiver ends up with exactly the new content).
+ *
+ * The receiver nodes only mount once the drag starts, so the whole gesture is retried until it
+ * succeeds (an active outgoing connection on the origin button, or a dismissed content selector).
+ */
+export async function connectDataChannel(
+    page: Page,
+    receiverIdString: string,
+    options?: { contentLabel?: string; deselectContentLabel?: string; origin?: Locator },
+): Promise<void> {
+    const origin = options?.origin ?? page.locator('[id$="-data-channel-origin"]').first();
+    await expect(origin).toBeVisible();
+    const receiverNode = page.locator(`[id^="channel-connector-"][id$="-${receiverIdString}"]`).first();
+    const selector = page.locator("#channel-selector");
+
+    await expect(async () => {
+        // Clean up a content selector left open by a previous attempt.
+        if (await selector.isVisible().catch(() => false)) {
+            await selector.getByRole("button", { name: "Cancel" }).click().catch(() => undefined);
+            await expect(selector).toBeHidden({ timeout: 2_000 }).catch(() => undefined);
+        }
+
+        await smoothMoveToLocator(page, origin);
+        const originBox = await origin.boundingBox();
+        if (!originBox) {
+            throw new Error("Could not resolve the data channel origin button");
+        }
+
+        await page.mouse.move(originBox.x + originBox.width / 2, originBox.y + originBox.height / 2);
+        await page.mouse.down();
+        try {
+            // Pressing the origin reveals the receiver nodes; wait for the target one to show.
+            await expect(receiverNode).toBeVisible({ timeout: 3_000 });
+            const receiverBox = await receiverNode.boundingBox();
+            if (!receiverBox) {
+                throw new Error("Receiver node did not become visible");
+            }
+            const rx = receiverBox.x + receiverBox.width / 2;
+            const ry = receiverBox.y + receiverBox.height / 2;
+
+            // Glide onto the node so it registers a hover, nudge so a fresh pointermove fires, then
+            // release to commit the connection.
+            await page.mouse.move(rx, ry, { steps: RECORDING ? 30 : 15 });
+            await page.mouse.move(rx + 1, ry, { steps: 2 });
+            await page.waitForTimeout(150);
+            await page.mouse.up();
+            lastMousePosition.set(page, { x: rx, y: ry });
+        } catch (error) {
+            // Never leave the mouse button pressed between retries.
+            await page.mouse.up().catch(() => undefined);
+            throw error;
+        }
+
+        // The content selector only opens when the source publishes 2+ contents; give it a moment.
+        const selectorVisible = await selector
+            .waitFor({ state: "visible", timeout: 2_000 })
+            .then(() => true)
+            .catch(() => false);
+
+        if (selectorVisible && options?.contentLabel) {
+            // Deselect a whole-channel ("all") pre-selection so a single content can win.
+            const channelCheckbox = selector.getByRole("checkbox").first();
+            if (await channelCheckbox.isChecked().catch(() => false)) {
+                await smoothClick(page, channelCheckbox);
+            }
+            // Uncheck a specific content the receiver already carries (re-pointing case).
+            if (options.deselectContentLabel) {
+                const preSelected = selector.getByText(options.deselectContentLabel, { exact: false }).first();
+                if ((await preSelected.count()) > 0) {
+                    await smoothClick(page, preSelected);
+                }
+            }
+            await smoothClick(page, selector.getByText(options.contentLabel, { exact: false }).first());
+            await smoothClick(page, selector.getByRole("button", { name: "OK", exact: true }));
+            await expect(selector).toBeHidden({ timeout: 3_000 });
+        } else {
+            // Single-content (automatic) connect: the origin button's title gains a connection count.
+            await expect(origin).toHaveAttribute("title", /active connection/, { timeout: 3_000 });
+        }
+    }).toPass({ timeout: 30_000, intervals: [1_000] });
+}
+
+/**
+ * The channel-output ("origin") button belonging to the module whose header carries the stable
+ * `data-module-title` (the module's default title, e.g. "Inplace Volumes Plot"). This survives a
+ * module renaming its visible instance title from data. Use to disambiguate
+ * {@link connectDataChannel} when several modules publish channels. Resolves the nearest
+ * header/wrapper around the title that actually contains an output button.
+ */
+export function channelOutputForModule(page: Page, moduleTitle: string): Locator {
+    return page
+        .getByTestId("module-layout")
+        .locator(`[data-module-title="${moduleTitle}"]`)
+        .first()
+        .locator('xpath=ancestor::div[.//*[contains(@id, "-data-channel-origin")]][1]')
+        .locator('[id$="-data-channel-origin"]')
+        .first();
 }

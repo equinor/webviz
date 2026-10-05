@@ -19,12 +19,14 @@ import { meta } from "./sessionAndEnsembleSelection.meta";
 
 test.describe("Session and ensemble selection", () => {
     test("create a session and select and apply an ensemble", async ({ page, narrate, markStep }) => {
-        test.setTimeout(300_000);
+        test.setTimeout(360_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         const SESSION_TITLE = "Drogon walkthrough session";
         const SESSION_COPY_TITLE = "Drogon walkthrough session (copy)";
         const SNAPSHOT_TITLE = "Drogon walkthrough snapshot";
+        const DASHBOARD_OVERVIEW_TITLE = "Production overview";
+        const DASHBOARD_DETAILS_TITLE = "Well details";
 
         await installFakeCursor(page);
         await installCaseRowRedaction(page, [DROGON_AHM.caseUuid]);
@@ -59,6 +61,68 @@ test.describe("Session and ensemble selection", () => {
         );
         await dragModuleOntoLayout(page, "3D Viewer", "bottom");
         await dropBottomNarration;
+        await pace(page);
+
+        markStep("Organize work across dashboards");
+        const dashboardsIntroNarration = narrate(
+            "A session isn't limited to a single dashboard. The bar along the bottom lets you organize several — add new ones, duplicate them, rename them, and reorder them.",
+        );
+        await smoothMoveToLocator(page, page.getByRole("tablist", { name: "Dashboards" }));
+        await dashboardsIntroNarration;
+        await pace(page);
+
+        const renameNarration = narrate(
+            "Each dashboard has an actions menu. Edit metadata lets us give this first one a meaningful title.",
+        );
+        await smoothClick(page, page.getByRole("button", { name: "Open actions for Dashboard 1", exact: true }));
+        await smoothClick(page, page.getByRole("menuitem", { name: "Edit metadata" }));
+        await expect(page.getByRole("heading", { name: "Edit dashboard metadata", exact: true })).toBeVisible();
+        await smoothType(page, page.getByPlaceholder("Enter dashboard name"), DASHBOARD_OVERVIEW_TITLE);
+        await renameNarration;
+        await smoothClick(page, page.getByRole("button", { name: "Apply", exact: true }));
+        await expect(page.getByRole("heading", { name: "Edit dashboard metadata", exact: true })).toBeHidden();
+        await expect(page.getByRole("tab", { name: DASHBOARD_OVERVIEW_TITLE, exact: true })).toBeVisible();
+        await pace(page);
+
+        const addDashboardNarration = narrate(
+            "The plus button adds a fresh, empty dashboard, which becomes active so we can build it out separately. We'll give it a title too.",
+        );
+        await smoothClick(page, page.getByRole("button", { name: "Add new dashboard" }));
+        await expect(page.getByRole("tab", { name: "Dashboard 2", exact: true })).toBeVisible();
+        await smoothClick(page, page.getByRole("button", { name: "Open actions for Dashboard 2", exact: true }));
+        await smoothClick(page, page.getByRole("menuitem", { name: "Edit metadata" }));
+        await expect(page.getByRole("heading", { name: "Edit dashboard metadata", exact: true })).toBeVisible();
+        await smoothType(page, page.getByPlaceholder("Enter dashboard name"), DASHBOARD_DETAILS_TITLE);
+        await smoothClick(page, page.getByRole("button", { name: "Apply", exact: true }));
+        await expect(page.getByRole("heading", { name: "Edit dashboard metadata", exact: true })).toBeHidden();
+        await expect(page.getByRole("tab", { name: DASHBOARD_DETAILS_TITLE, exact: true })).toBeVisible();
+        await addDashboardNarration;
+        await pace(page);
+
+        const copyNarration = narrate(
+            "Create a copy duplicates a dashboard with all of its modules, so you can branch off an existing layout instead of starting from scratch.",
+        );
+        await smoothClick(
+            page,
+            page.getByRole("button", { name: `Open actions for ${DASHBOARD_OVERVIEW_TITLE}`, exact: true }),
+        );
+        await smoothClick(page, page.getByRole("menuitem", { name: "Create a copy" }));
+        await expect(page.getByRole("tab", { name: `${DASHBOARD_OVERVIEW_TITLE} (Copy)`, exact: true })).toBeVisible({
+            timeout: 60_000,
+        });
+        await copyNarration;
+        await pace(page);
+
+        const reorderNarration = narrate(
+            "And the Move left and Move right actions reorder the dashboards until the sequence tells the story you want.",
+        );
+        const copyActionsLabel = `Open actions for ${DASHBOARD_OVERVIEW_TITLE} (Copy)`;
+        await smoothClick(page, page.getByRole("button", { name: copyActionsLabel, exact: true }));
+        await smoothClick(page, page.getByRole("menuitem", { name: "Move left" }));
+        await pace(page);
+        await smoothClick(page, page.getByRole("button", { name: copyActionsLabel, exact: true }));
+        await smoothClick(page, page.getByRole("menuitem", { name: "Move right" }));
+        await reorderNarration;
         await pace(page);
 
         markStep("Save the session");
