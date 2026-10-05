@@ -22,13 +22,15 @@ export class DeserializationAssistant {
     }
 
     makeItem(serialized: SerializedItem): Item {
-        if (serialized.type === SerializedType.DATA_PROVIDER_MANAGER) {
-            throw new Error(
-                "Cannot deserialize a DataProviderManager in DeserializationFactory. A DataProviderManager can never be a descendant of a DataProviderManager.",
-            );
-        }
-
+        // Every failure, including an unknown or invalid item type, becomes a placeholder that keeps the original state -
+        // so one bad item never prevents the items after it from being restored
         try {
+            if (serialized.type === SerializedType.DATA_PROVIDER_MANAGER) {
+                throw new Error(
+                    "Cannot deserialize a DataProviderManager in DeserializationFactory. A DataProviderManager can never be a descendant of a DataProviderManager.",
+                );
+            }
+
             if (serialized.type === SerializedType.DATA_PROVIDER) {
                 const serializedDataProvider = serialized as SerializedDataProvider<any>;
                 const provider = DataProviderRegistry.makeDataProvider(
@@ -67,7 +69,6 @@ export class DeserializationAssistant {
                 return setting;
             }
 
-            // Thrown inside the try, so that e.g. a type that no longer exists becomes a placeholder as well
             throw new Error(`Unhandled serialized item type: ${serialized.type}`);
         } catch (error) {
             const name = serialized.name ?? "Unknown item";

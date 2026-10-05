@@ -226,8 +226,12 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             this._itemDelegate.deserializeState(serializedState);
             this._groupDelegate.deserializeChildren(serializedState.children);
         } catch (error) {
-            // Keep a partially built tree working rather than suppressing all notifications for the rest of the manager's life
+            // Keep a partially built tree working rather than suppressing all notifications for the rest of the manager's life.
+            // The children appended before the failure were added silently - announce them like a complete tree, but don't
+            // publish a data revision, as that would persist the partial tree over the saved state.
             this._deserializing = false;
+            this.publishTopic(DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE);
+            this.publishTopic(DataProviderManagerTopic.ITEMS);
             throw error;
         }
 
