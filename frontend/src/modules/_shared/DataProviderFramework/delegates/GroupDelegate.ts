@@ -43,6 +43,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
     private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
     private _treeRevisionNumber: number = 0;
     private _deserializing = false;
+    private _readinessWaitCounter = 0;
 
     constructor(owner: Item | null) {
         this._owner = owner;
@@ -88,6 +89,8 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
     clearChildren() {
         for (const child of this._children) {
             this.disposeOwnershipOfChild(child);
+            // Cleared children are discarded, not moved - tear them down so they stop fetching and publishing to the manager
+            child.beforeDestroy?.();
         }
         this._children = [];
         this.publishTopic(GroupDelegateTopic.CHILDREN);
@@ -278,7 +281,13 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         this.incrementTreeRevisionNumber();
     }
 
-    waitUntilAllDescendantDataProvidersAreReady(callback: () => void): void {
+    /*
+     * Calls the callback once all current descendant data providers have left the IDLE/LOADING state.
+     * Returns a function that cancels the wait - after cancelling, the callback is never called.
+     * Each wait gets its own subscription key, so overlapping waits on providers with the same id don't
+     * unsubscribe each other.
+     */
+    waitUntilAllDescendantDataProvidersAreReady(callback: () => void): () => void {
         const providers = this.getDescendantItems(isDataProvider) as DataProvider<any, any>[];
         const pending = new Set(
             providers.filter(
@@ -288,26 +297,37 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
 
         if (pending.size === 0) {
             callback();
-            return;
+            return () => {};
         }
 
+        const key = `readiness:${this._readinessWaitCounter++}`;
+        let settled = false;
+        const cancel = () => {
+            settled = true;
+            this._unsubscribeFunctionsManagerDelegate.unsubscribe(key);
+        };
+
         for (const provider of pending) {
-            const key = `readiness:${provider.getItemDelegate().getId()}`;
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 key,
                 provider.getPublishSubscribeDelegate().makeSubscriberFunction(DataProviderTopic.STATUS)(() => {
+                    if (settled) {
+                        return;
+                    }
                     const status = provider.getStatus();
                     if (status === DataProviderStatus.IDLE || status === DataProviderStatus.LOADING) {
                         return;
                     }
-                    this._unsubscribeFunctionsManagerDelegate.unsubscribe(key);
                     pending.delete(provider);
                     if (pending.size === 0) {
+                        cancel();
                         callback();
                     }
                 }),
             );
         }
+
+        return cancel;
     }
 
     private publishTopic(topic: GroupDelegateTopic) {

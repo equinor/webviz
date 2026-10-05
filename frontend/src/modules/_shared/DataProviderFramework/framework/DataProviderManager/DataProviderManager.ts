@@ -62,6 +62,8 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     private _globalSettings: Partial<GlobalSettings>;
     private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
     private _deserializing = false;
+    private _deserializationGeneration = 0;
+    private _cancelPendingReadinessWait: (() => void) | null = null;
     private _groupColorGenerator: Generator<string, string>;
 
     constructor(workbenchSession: WorkbenchSession, workbenchSettings: WorkbenchSettings, queryClient: QueryClient) {
@@ -216,16 +218,30 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     }
 
     deserializeState(serializedState: SerializedDataProviderManager): void {
+        // A previous deserialization may still be waiting for its (now discarded) tree to become ready.
+        this._cancelPendingReadinessWait?.();
+        this._cancelPendingReadinessWait = null;
+        const generation = ++this._deserializationGeneration;
+
         this._deserializing = true;
         this._itemDelegate.deserializeState(serializedState);
         this._groupDelegate.deserializeChildren(serializedState.children);
 
         // Waiting for all descendants to be ready before updating the deserializing flag and notifying subscribers about the items.
-        this._groupDelegate.waitUntilAllDescendantDataProvidersAreReady(() => {
+        const cancel = this._groupDelegate.waitUntilAllDescendantDataProvidersAreReady(() => {
+            if (generation !== this._deserializationGeneration) {
+                return;
+            }
+            this._cancelPendingReadinessWait = null;
             this._deserializing = false;
             this.increaseDataRevisionNumber();
             this.publishTopicIfSerialized(DataProviderManagerTopic.ITEMS);
         });
+
+        // The callback may have run synchronously and triggered a newer deserialization - don't overwrite its cancel function.
+        if (generation === this._deserializationGeneration && this._deserializing) {
+            this._cancelPendingReadinessWait = cancel;
+        }
     }
 
     makeGroupColor(): string {
