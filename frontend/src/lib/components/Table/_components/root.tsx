@@ -20,6 +20,7 @@ import type { ColumnMetaData } from "./column";
 import { Column } from "./column";
 import { Foot } from "./foot";
 import { Head } from "./head";
+import type { TableCellProps } from "./types";
 
 type BaseProps = ComponentWrapperProps<React.HTMLAttributes<HTMLTableElement>>;
 
@@ -132,6 +133,7 @@ export const Root = React.forwardRef<HTMLTableElement, TableRootProps>(function 
 
     let headColumnMetaData: TableColumnContextType = {
         columns: [],
+        leafColumns: [],
         content: null,
         maxDepth: 0,
         leafCount: 0,
@@ -140,7 +142,8 @@ export const Root = React.forwardRef<HTMLTableElement, TableRootProps>(function 
     const headChild = recursivelyFindHeadChild(props.children);
 
     if (headChild) {
-        headColumnMetaData = recursivelyProcessColumnChildren(headChild);
+        const rootMetaData = recursivelyProcessColumnChildren(headChild);
+        headColumnMetaData = { ...rootMetaData, leafColumns: collectLeafColumns(rootMetaData.columns) };
     }
 
     // Calculate available body height if the table was to fill the wrapper. This is used for the PendingRows "fill" option to automatically fill the remaining space in the table body.
@@ -249,6 +252,7 @@ export const Root = React.forwardRef<HTMLTableElement, TableRootProps>(function 
                 >
                     <ComponentSizeContext.Provider value={size}>
                         <TableColumnContext.Provider value={headColumnMetaData}>
+                            {props.fixed && <LeafColumnGroup leafColumns={headColumnMetaData.leafColumns} />}
                             {props.children}
                         </TableColumnContext.Provider>
                     </ComponentSizeContext.Provider>
@@ -257,6 +261,25 @@ export const Root = React.forwardRef<HTMLTableElement, TableRootProps>(function 
         </div>
     );
 });
+
+/**
+ * Fixed table layout reads column widths from the first header row only and splits a spanning header's width
+ * equally over its columns, ignoring the leaf widths underneath. `<col>` widths take precedence, so emit them.
+ */
+function LeafColumnGroup(props: { leafColumns: ColumnMetaData[] }): React.ReactNode {
+    if (props.leafColumns.length === 0) return null;
+
+    return (
+        <colgroup>
+            {props.leafColumns.map((leaf, index) => {
+                const { width, widthInPercent } = leaf.cellProps;
+                const colWidth = width ?? (widthInPercent !== undefined ? `${widthInPercent}%` : undefined);
+                // eslint-disable-next-line @eslint-react/no-array-index-key -- Leaf order is the column order
+                return <col key={index} style={{ width: colWidth }} />;
+            })}
+        </colgroup>
+    );
+}
 
 /** The table head component *might* be wrapped in virtual context components, so we need to recursively dig down for it */
 export function recursivelyFindHeadChild(children: React.ReactNode): React.ReactElement | null {
@@ -311,6 +334,8 @@ function recursivelyProcessColumnChildren(columnParent: React.ReactNode, depth =
 
     if (!columns.length) leafCount = 1;
 
+    inheritStickyPropsFromParent(cellProps, columns);
+
     return {
         columns: columns,
         depth: depth,
@@ -319,4 +344,47 @@ function recursivelyProcessColumnChildren(columnParent: React.ReactNode, depth =
         content: headerContent,
         cellProps: cellProps,
     };
+}
+
+/**
+ * A pinned group column pins its sub-columns too: each child gets the cumulative offset of its preceding siblings
+ * and the last child inherits `stickyEdge`. Explicit child props win. Requires numeric `width`s to derive offsets.
+ */
+function inheritStickyPropsFromParent(parentProps: TableCellProps, columns: ColumnMetaData[]): void {
+    if (parentProps.stickyLeftPx === undefined || columns.length === 0) return;
+
+    let offsetPx: number | undefined = parentProps.stickyLeftPx;
+    columns.forEach((column, index) => {
+        const isLast = index === columns.length - 1;
+
+        if (column.cellProps.stickyLeftPx === undefined && offsetPx !== undefined) {
+            column.cellProps.stickyLeftPx = offsetPx;
+        }
+        if (column.cellProps.stickyEdge === undefined && isLast) {
+            column.cellProps.stickyEdge = parentProps.stickyEdge;
+        }
+
+        // Sub-columns were processed before the parent, so re-run with the now-populated props
+        inheritStickyPropsFromParent(column.cellProps, column.columns);
+
+        const widthPx = getColumnWidthPx(column);
+        offsetPx = offsetPx !== undefined && widthPx !== undefined ? offsetPx + widthPx : undefined;
+    });
+}
+
+function getColumnWidthPx(column: ColumnMetaData): number | undefined {
+    if (typeof column.cellProps.width === "number") return column.cellProps.width;
+    if (column.columns.length === 0) return undefined;
+
+    let sum = 0;
+    for (const child of column.columns) {
+        const childWidth = getColumnWidthPx(child);
+        if (childWidth === undefined) return undefined;
+        sum += childWidth;
+    }
+    return sum;
+}
+
+function collectLeafColumns(columns: ColumnMetaData[]): ColumnMetaData[] {
+    return columns.flatMap((column) => (column.columns.length ? collectLeafColumns(column.columns) : [column]));
 }
