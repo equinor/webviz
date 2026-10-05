@@ -9,3 +9,11 @@ export const DROGON_AHM = {
     ensembleName: "iter-0",
     secondEnsembleName: "iter-1",
 } as const;
+
+export const DROGON_DESIGN = {
+    assetName: "Drogon",
+    fieldIdentifier: "DROGON",
+    caseName: "01_drogon_design",
+    caseUuid: "dc79f972-db8f-4ab9-b29b-ad4ca99d17ee",
+    ensembleName: "iter-0",
+} as const;
