@@ -558,6 +558,76 @@ export async function dragModuleOntoLayout(
     }).toPass({ timeout: 60_000, intervals: [1_000] });
 }
 
+/** The header bar of the module instance whose header shows `moduleTitle` (modules may retitle themselves). */
+function moduleHeader(page: Page, moduleTitle: string | RegExp): Locator {
+    return page
+        .getByTestId("module-layout")
+        .getByTitle(moduleTitle, { exact: true })
+        .first()
+        .locator(
+            "xpath=ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' shadow-elevation-raised ')][1]",
+        );
+}
+
+/** Remove a module instance from the dashboard via the close button in its header. */
+export async function removeModuleFromLayout(page: Page, moduleTitle: string | RegExp): Promise<void> {
+    // The remove button has no accessible name; it is the last button in the header.
+    await smoothClick(page, moduleHeader(page, moduleTitle).getByRole("button").last());
+    await expect(page.getByTestId("module-layout").getByTitle(moduleTitle, { exact: true })).toHaveCount(0);
+}
+
+/**
+ * Connect a data channel by dragging from the sender module's channel button to the receiver node
+ * named `receiverName` (shown on the receiving module while dragging). If the channel selector opens
+ * (several channels or contents), `contentName` is checked, or the first channel when omitted.
+ */
+export async function connectDataChannel(
+    page: Page,
+    {
+        senderModuleTitle,
+        receiverName,
+        contentName,
+    }: { senderModuleTitle: string | RegExp; receiverName: string; contentName?: string },
+): Promise<void> {
+    const origin = moduleHeader(page, senderModuleTitle).locator('[id$="-data-channel-origin"]');
+    await expect(origin).toBeVisible();
+    const originBox = await origin.boundingBox();
+    if (!originBox) {
+        throw new Error(`Could not locate the data channel button of "${senderModuleTitle}"`);
+    }
+
+    await glideMouseTo(page, originBox.x + originBox.width / 2, originBox.y + originBox.height / 2);
+    await page.mouse.down();
+    try {
+        const receiverNode = page.locator("[data-channelconnector]").filter({ hasText: receiverName });
+        await expect(receiverNode).toBeVisible();
+        const receiverBox = await receiverNode.boundingBox();
+        if (!receiverBox) {
+            throw new Error(`Could not locate the "${receiverName}" receiver node`);
+        }
+        await glideMouseTo(page, receiverBox.x + receiverBox.width / 2, receiverBox.y + receiverBox.height / 2);
+        await pace(page, "medium");
+    } finally {
+        await page.mouse.up();
+    }
+
+    const channelSelector = page.locator("#channel-selector");
+    const selectorOpened = await channelSelector
+        .waitFor({ state: "visible", timeout: 2_000 })
+        .then(() => true)
+        .catch(() => false);
+    if (selectorOpened) {
+        const checkbox = contentName
+            ? channelSelector.getByText(contentName, { exact: true })
+            : channelSelector.getByRole("checkbox").first();
+        await smoothClick(page, checkbox);
+        await smoothClick(page, channelSelector.getByRole("button", { name: "OK" }));
+        await expect(channelSelector).toBeHidden();
+    }
+
+    await expect(origin).toHaveAttribute("title", /active connection/);
+}
+
 /**
  * Slowly glide a slider's thumb from one end of the track to the other, so the motion is easy to
  * follow in a recorded tutorial. Playwright codegen can only capture discrete clicks on a slider,
@@ -685,10 +755,12 @@ export type SessionAndEnsembleNarrationHooks = {
     markStep?: (title: string) => void;
     /** Further ensemble (iteration) names from the same Drogon case to add alongside the default one. */
     additionalEnsembleNames?: string[];
+    /** Case and ensemble to load; defaults to the Drogon AHM case. */
+    testCase?: { caseUuid: string; ensembleName: string };
 };
 
 /**
- * Create a new session, then add and apply the Drogon AHM ensemble to it — the common setup shared
+ * Create a new session, then add and apply the Drogon AHM ensemble (or `testCase`) to it — the common setup shared
  * by every story that needs an ensemble loaded before it can show off its own module.
  *
  * `narrate`/`markStep` are opt-in: callers that want this flow narrated as its own part of a
@@ -706,6 +778,7 @@ export async function createSessionAndSelectEnsemble(
         narrate = async () => undefined,
         markStep = () => undefined,
         additionalEnsembleNames = [],
+        testCase = DROGON_AHM,
     }: SessionAndEnsembleNarrationHooks = {},
 ): Promise<void> {
     const newSessionNarration = narrate("Let's start by creating a new session...");
@@ -734,9 +807,9 @@ export async function createSessionAndSelectEnsemble(
     // fill that lands in that window is dropped when the table re-renders. Retry until the typed
     // value sticks and the matching case row shows up.
     await expect(async () => {
-        await smoothFill(page, caseIdColumnFilter, DROGON_AHM.caseUuid);
-        await expect(caseIdColumnFilter).toHaveValue(DROGON_AHM.caseUuid);
-        await expect(page.getByText(DROGON_AHM.caseUuid)).toBeVisible({ timeout: 10_000 });
+        await smoothFill(page, caseIdColumnFilter, testCase.caseUuid);
+        await expect(caseIdColumnFilter).toHaveValue(testCase.caseUuid);
+        await expect(page.getByText(testCase.caseUuid)).toBeVisible({ timeout: 10_000 });
     }).toPass({ timeout: 60_000 });
     await pace(page);
 
@@ -744,11 +817,11 @@ export async function createSessionAndSelectEnsemble(
         page,
         page
             .locator("tbody")
-            .getByRole("row", { name: new RegExp(DROGON_AHM.caseUuid) })
+            .getByRole("row", { name: new RegExp(testCase.caseUuid) })
             .first(),
     );
 
-    await expect(page.getByText(DROGON_AHM.ensembleName).first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText(testCase.ensembleName).first()).toBeVisible({ timeout: 60_000 });
     await ensembleNarration;
     await pace(page);
 
@@ -757,7 +830,7 @@ export async function createSessionAndSelectEnsemble(
         "We select the ensembles and apply them to load them into the session.",
     );
 
-    await smoothClick(page, page.getByText(DROGON_AHM.ensembleName).first());
+    await smoothClick(page, page.getByText(testCase.ensembleName).first());
 
     // The "Ensembles in selected case" list is multi-select, so add any further iterations by
     // simply clicking their rows before applying.
