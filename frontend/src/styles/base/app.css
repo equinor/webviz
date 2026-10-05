@@ -25,3 +25,12 @@ h6 {
 input:placeholder-shown {
     text-overflow: ellipsis;
 }
+
+/* Global default timing for View Transitions API animations */
+@media (prefers-reduced-motion: no-preference) {
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation-duration: 220ms;
+        animation-timing-function: ease-out;
+    }
+}

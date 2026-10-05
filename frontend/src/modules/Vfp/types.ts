@@ -29,7 +29,7 @@ export type TableDataAccessorWithStatusFlags = {
         isFetching: boolean;
         isError: boolean;
     };
-    tableNamesStatus: {
+    tablesStatus: {
         isError: boolean;
         isFetching: boolean;
     };

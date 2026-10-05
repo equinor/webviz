@@ -2422,6 +2422,16 @@ export type TableColumnStatisticalData_api = {
 };
 
 /**
+ * TutorialMediaSasToken
+ */
+export type TutorialMediaSasToken_api = {
+    /**
+     * Sastoken
+     */
+    sasToken: string;
+};
+
+/**
  * UnitType
  */
 export enum UnitType_api {
@@ -2736,6 +2746,28 @@ export type VfpProdTable_api = {
      */
     alqUnit: string;
 };
+
+/**
+ * VfpTableInfo
+ */
+export type VfpTableInfo_api = {
+    /**
+     * Vfptype
+     */
+    vfpType: "INJ" | "PROD";
+    /**
+     * Tablenumber
+     */
+    tableNumber: number;
+};
+
+/**
+ * VfpType
+ */
+export enum VfpType_api {
+    PROD = "PROD",
+    INJ = "INJ",
+}
 
 /**
  * WFR
@@ -6600,7 +6632,7 @@ export type GetRftObservationsResponses_api = {
 
 export type GetRftObservationsResponse_api = GetRftObservationsResponses_api[keyof GetRftObservationsResponses_api];
 
-export type GetVfpTableNamesData_api = {
+export type GetVfpTablesData_api = {
     body?: never;
     path?: never;
     query: {
@@ -6624,28 +6656,28 @@ export type GetVfpTableNamesData_api = {
         realization: number;
         zCacheBust?: string;
     };
-    url: "/vfp/vfp_table_names/";
+    url: "/vfp/vfp_tables/";
 };
 
-export type GetVfpTableNamesErrors_api = {
+export type GetVfpTablesErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type GetVfpTableNamesError_api = GetVfpTableNamesErrors_api[keyof GetVfpTableNamesErrors_api];
+export type GetVfpTablesError_api = GetVfpTablesErrors_api[keyof GetVfpTablesErrors_api];
 
-export type GetVfpTableNamesResponses_api = {
+export type GetVfpTablesResponses_api = {
     /**
-     * Response Get Vfp Table Names
+     * Response Get Vfp Tables
      *
      * Successful Response
      */
-    200: Array<string>;
+    200: Array<VfpTableInfo_api>;
 };
 
-export type GetVfpTableNamesResponse_api = GetVfpTableNamesResponses_api[keyof GetVfpTableNamesResponses_api];
+export type GetVfpTablesResponse_api = GetVfpTablesResponses_api[keyof GetVfpTablesResponses_api];
 
 export type GetVfpTableData_api = {
     body?: never;
@@ -6670,11 +6702,15 @@ export type GetVfpTableData_api = {
          */
         realization: number;
         /**
-         * Vfp Table Name
-         *
-         * VFP table name
+         * VFP table type
          */
-        vfp_table_name: string;
+        vfp_type: VfpType_api;
+        /**
+         * Vfp Table Number
+         *
+         * VFP table number
+         */
+        vfp_table_number: number;
         zCacheBust?: string;
     };
     url: "/vfp/vfp_table/";
@@ -7227,6 +7263,24 @@ export type DeleteSnapshotAccessLogResponses_api = {
      */
     200: unknown;
 };
+
+export type GetMediaSasTokenData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/tutorials/media_sas_token";
+};
+
+export type GetMediaSasTokenResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: TutorialMediaSasToken_api;
+};
+
+export type GetMediaSasTokenResponse_api = GetMediaSasTokenResponses_api[keyof GetMediaSasTokenResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;

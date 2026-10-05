@@ -27,9 +27,14 @@ export function ChangelogDialog(): React.ReactNode {
 
     const currentRelease = Number(metadata.get("changelog_counter") ?? -1);
 
-    const hasSeenRelease = currentRelease <= lastSeenChangelog;
+    const hasSeenRelease = lastSeenChangelog !== null && currentRelease <= lastSeenChangelog;
 
     React.useEffect(() => {
+        // First visit: silently record the current release so the changelog isn't the first thing a new user sees.
+        if (lastSeenChangelog === null) {
+            setLastSeenChangelog(currentRelease);
+            return;
+        }
         if (!hasSeenRelease && !disableChangelogPopup) {
             // User setting setters update provider state, so this needs to be in a use-effect to avoid bad set-states. Re-render is trivial, so we disable the rule here
             // eslint-disable-next-line @eslint-react/set-state-in-effect
