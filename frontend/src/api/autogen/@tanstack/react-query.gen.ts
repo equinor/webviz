@@ -39,6 +39,7 @@ import {
     getInplaceTableDefinitions,
     getLogCurveData,
     getLoggedInUser,
+    getMediaSasToken,
     getMisfitSurfaceData,
     getObservedSurfacesMetadata,
     getParametersAndSensitivities,
@@ -175,6 +176,8 @@ import type {
     GetLoggedInUserData_api,
     GetLoggedInUserError_api,
     GetLoggedInUserResponse_api,
+    GetMediaSasTokenData_api,
+    GetMediaSasTokenResponse_api,
     GetMisfitSurfaceDataData_api,
     GetMisfitSurfaceDataError_api,
     GetMisfitSurfaceDataResponse_api,
@@ -3323,6 +3326,33 @@ export const deleteSnapshotAccessLogMutation = (
     };
     return mutationOptions;
 };
+
+export const getMediaSasTokenQueryKey = (options?: Options<GetMediaSasTokenData_api>) =>
+    createQueryKey("getMediaSasToken", options);
+
+/**
+ * Get Media Sas Token
+ *
+ * Return a short-lived, read-only container SAS token for fetching tutorial media.
+ */
+export const getMediaSasTokenOptions = (options?: Options<GetMediaSasTokenData_api>) =>
+    queryOptions<
+        GetMediaSasTokenResponse_api,
+        AxiosError<DefaultError>,
+        GetMediaSasTokenResponse_api,
+        ReturnType<typeof getMediaSasTokenQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getMediaSasToken({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getMediaSasTokenQueryKey(options),
+    });
 
 export const loginRouteQueryKey = (options?: Options<LoginRouteData_api>) => createQueryKey("loginRoute", options);
 

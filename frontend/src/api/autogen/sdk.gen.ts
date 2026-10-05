@@ -82,6 +82,8 @@ import type {
     GetLoggedInUserData_api,
     GetLoggedInUserErrors_api,
     GetLoggedInUserResponses_api,
+    GetMediaSasTokenData_api,
+    GetMediaSasTokenResponses_api,
     GetMisfitSurfaceDataData_api,
     GetMisfitSurfaceDataErrors_api,
     GetMisfitSurfaceDataResponses_api,
@@ -1814,6 +1816,20 @@ export const deleteSnapshotAccessLog = <ThrowOnError extends boolean = false>(
     >({
         responseType: "json",
         url: "/persistence/snapshot_access_logs/{snapshot_id}",
+        ...options,
+    });
+
+/**
+ * Get Media Sas Token
+ *
+ * Return a short-lived, read-only container SAS token for fetching tutorial media.
+ */
+export const getMediaSasToken = <ThrowOnError extends boolean = false>(
+    options?: Options<GetMediaSasTokenData_api, ThrowOnError>,
+): RequestResult<GetMediaSasTokenResponses_api, unknown, ThrowOnError> =>
+    (options?.client ?? client).get<GetMediaSasTokenResponses_api, unknown, ThrowOnError>({
+        responseType: "json",
+        url: "/tutorials/media_sas_token",
         ...options,
     });
 
