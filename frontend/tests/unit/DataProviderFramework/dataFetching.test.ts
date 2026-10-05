@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import {
     DataProviderStatus,
     DataProviderTopic,
@@ -10,6 +11,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import {
     findProvider,
     getProviderSetting,
+    LABEL_PROVIDER_TYPE,
     makeDataProviderManager,
     managerState,
     settle,
@@ -127,5 +129,16 @@ describe("Data fetching", () => {
 
         expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
         expect(provider.getData()?.realization).toBe(2);
+    });
+
+    test("a provider without dependencies loads too, when added the way the settings UI adds it", async () => {
+        const manager = makeDataProviderManager({ fieldId: "field-a" });
+
+        const provider = DataProviderRegistry.makeDataProvider(LABEL_PROVIDER_TYPE, manager);
+        manager.getGroupDelegate().appendChild(provider);
+        await settle(manager);
+
+        expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+        expect(backend.callsTo("getLabelData")).toEqual([[true]]);
     });
 });

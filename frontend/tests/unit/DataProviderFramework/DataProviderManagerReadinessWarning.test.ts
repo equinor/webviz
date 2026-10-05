@@ -11,32 +11,28 @@ import {
     type SerializedDataProviderManager,
     SerializedType,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { makeDataProviderManager } from "../../utils/dataProviderFramework";
 
 const NO_SETTINGS = [] as const;
 
-// Nothing ever makes a provider without settings evaluate them, so it stays LOADING forever
-class NeverSettlingProvider implements CustomDataProviderImplementation<typeof NO_SETTINGS, string> {
+// Its data request never returns - as with a request that hangs - so it stays LOADING
+class HangingProvider implements CustomDataProviderImplementation<typeof NO_SETTINGS, string> {
     settings = NO_SETTINGS;
 
     getDefaultName(): string {
-        return "Never settling provider";
+        return "Hanging provider";
     }
 
     setupBindings(): void {}
 
-    async fetchData(): Promise<string> {
-        return "data";
+    fetchData(): Promise<string> {
+        return new Promise(() => {});
     }
 }
 
-const STATIC_SETTINGS = [Setting.SHOW_LABELS] as const;
-
-// Restoring a static setting initializes it, after which the provider loads instantly
-class SettlingProvider implements CustomDataProviderImplementation<typeof STATIC_SETTINGS, string> {
-    settings = STATIC_SETTINGS;
+class SettlingProvider implements CustomDataProviderImplementation<typeof NO_SETTINGS, string> {
+    settings = NO_SETTINGS;
 
     getDefaultName(): string {
         return "Settling provider";
@@ -49,20 +45,20 @@ class SettlingProvider implements CustomDataProviderImplementation<typeof STATIC
     }
 }
 
-DataProviderRegistry.registerDataProvider("never-settling-test-provider", NeverSettlingProvider);
+DataProviderRegistry.registerDataProvider("hanging-test-provider", HangingProvider);
 DataProviderRegistry.registerDataProvider("settling-test-provider", SettlingProvider);
 
-function makeSerializedState(provider: { type: string; name: string; settings: Record<string, string> }) {
+function makeSerializedState(dataProviderType: string, name: string): SerializedDataProviderManager {
     const serializedProvider: SerializedDataProvider<any> = {
         id: "provider",
         type: SerializedType.DATA_PROVIDER,
-        name: provider.name,
+        name,
         expanded: false,
         visible: true,
-        dataProviderType: provider.type,
-        settings: provider.settings,
+        dataProviderType,
+        settings: {},
     };
-    const state: SerializedDataProviderManager = {
+    return {
         id: "manager",
         type: SerializedType.DATA_PROVIDER_MANAGER,
         name: "Manager",
@@ -70,19 +66,11 @@ function makeSerializedState(provider: { type: string; name: string; settings: R
         visible: true,
         children: [serializedProvider],
     };
-    return state;
 }
 
-const NEVER_SETTLING_STATE = makeSerializedState({
-    type: "never-settling-test-provider",
-    name: "Pending provider",
-    settings: {},
-});
-const SETTLING_STATE = makeSerializedState({
-    type: "settling-test-provider",
-    name: "Settling provider",
-    settings: { [Setting.SHOW_LABELS]: JSON.stringify(true) },
-});
+const HANGING_STATE = makeSerializedState("hanging-test-provider", "Hanging provider");
+const SETTLING_STATE = makeSerializedState("settling-test-provider", "Settling provider");
+const EMPTY_STATE: SerializedDataProviderManager = { ...HANGING_STATE, children: [] };
 
 function countDataRevisions(manager: DataProviderManager) {
     const onDataRevision = vi.fn();
@@ -90,7 +78,7 @@ function countDataRevisions(manager: DataProviderManager) {
     return onDataRevision;
 }
 
-describe("DataProviderManager readiness timeout", () => {
+describe("DataProviderManager readiness warning", () => {
     beforeEach(() => {
         vi.useFakeTimers();
         vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -101,22 +89,24 @@ describe("DataProviderManager readiness timeout", () => {
         vi.restoreAllMocks();
     });
 
-    test("publishes after the timeout when a provider never settles, naming the provider", () => {
+    test("keeps deserializing while a provider is still loading, however long it takes, and names it in a warning after 10 s", () => {
         const manager = makeDataProviderManager();
         const onDataRevision = countDataRevisions(manager);
 
-        manager.deserializeState(NEVER_SETTLING_STATE);
+        manager.deserializeState(HANGING_STATE);
         vi.advanceTimersByTime(9_999);
-        expect(manager.isDeserializing()).toBe(true);
-        expect(onDataRevision).not.toHaveBeenCalled();
+        expect(console.warn).not.toHaveBeenCalled();
 
         vi.advanceTimersByTime(1);
-        expect(manager.isDeserializing()).toBe(false);
-        expect(onDataRevision).toHaveBeenCalledTimes(1);
-        expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("Pending provider"));
+        expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("Hanging provider"));
+
+        vi.advanceTimersByTime(60_000);
+        expect(manager.isDeserializing()).toBe(true);
+        expect(onDataRevision).not.toHaveBeenCalled();
+        expect(console.warn).toHaveBeenCalledTimes(1);
     });
 
-    test("does not publish again at the timeout when the providers settled before it", async () => {
+    test("does not warn when the providers settle in time", async () => {
         const manager = makeDataProviderManager();
         const onDataRevision = countDataRevisions(manager);
 
@@ -131,28 +121,26 @@ describe("DataProviderManager readiness timeout", () => {
         expect(console.warn).not.toHaveBeenCalled();
     });
 
-    test("restarts the timeout when a new state is restored", () => {
+    test("restarts the warning delay when a new state is restored", () => {
         const manager = makeDataProviderManager();
 
-        manager.deserializeState(NEVER_SETTLING_STATE);
+        manager.deserializeState(HANGING_STATE);
         vi.advanceTimersByTime(6_000);
-        manager.deserializeState(NEVER_SETTLING_STATE);
+        manager.deserializeState(HANGING_STATE);
         vi.advanceTimersByTime(6_000);
-        expect(manager.isDeserializing()).toBe(true);
+        expect(console.warn).not.toHaveBeenCalled();
 
         vi.advanceTimersByTime(4_000);
-        expect(manager.isDeserializing()).toBe(false);
+        expect(console.warn).toHaveBeenCalledTimes(1);
     });
 
-    test("stops the timeout when the manager is destroyed", () => {
+    test("does not warn once the manager is destroyed", () => {
         const manager = makeDataProviderManager();
-        const onDataRevision = countDataRevisions(manager);
 
-        manager.deserializeState(NEVER_SETTLING_STATE);
+        manager.deserializeState(HANGING_STATE);
         manager.beforeDestroy();
         vi.advanceTimersByTime(10_000);
 
-        expect(onDataRevision).not.toHaveBeenCalled();
         expect(console.warn).not.toHaveBeenCalled();
     });
 
@@ -163,12 +151,12 @@ describe("DataProviderManager readiness timeout", () => {
         manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.DATA_REVISION, () => {
             if (!restarted) {
                 restarted = true;
-                manager.deserializeState(NEVER_SETTLING_STATE);
+                manager.deserializeState(HANGING_STATE);
             }
         });
 
         // Without providers, this restore finishes synchronously - and its data revision starts the next one
-        manager.deserializeState({ ...NEVER_SETTLING_STATE, children: [] });
+        manager.deserializeState(EMPTY_STATE);
         expect(manager.isDeserializing()).toBe(true);
 
         manager.beforeDestroy();

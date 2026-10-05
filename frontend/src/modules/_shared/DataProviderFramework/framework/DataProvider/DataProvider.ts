@@ -193,6 +193,8 @@ export class DataProvider<
         if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
             this._status = DataProviderStatus.LOADING;
         }
+
+        this._settingsContextDelegate.evaluateIfWithoutDependencies();
     }
 
     getRevisionNumber(): number {

@@ -8,10 +8,11 @@ import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramewor
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-import { type GridTestData, getTestBackend, type SurfaceTestData } from "./testBackend";
+import { type GridTestData, getTestBackend, type LabelTestData, type SurfaceTestData } from "./testBackend";
 
 export const SURFACE_PROVIDER_TYPE = "test-surface-provider";
 export const GRID_PROVIDER_TYPE = "test-grid-provider";
+export const LABEL_PROVIDER_TYPE = "test-label-provider";
 
 const SURFACE_SETTINGS = [Setting.ATTRIBUTE, Setting.SURFACE_NAME, Setting.REALIZATION, Setting.SHOW_LABELS] as const;
 type SurfaceSettings = typeof SURFACE_SETTINGS;
@@ -192,5 +193,32 @@ export class GridTestProvider implements CustomDataProviderImplementation<GridSe
     }
 }
 
+const LABEL_SETTINGS = [Setting.SHOW_LABELS] as const;
+type LabelSettings = typeof LABEL_SETTINGS;
+
+// A provider without any dependencies - nothing but its own construction makes it evaluate its (static) setting
+export class LabelTestProvider implements CustomDataProviderImplementation<LabelSettings, LabelTestData> {
+    settings = LABEL_SETTINGS;
+
+    getDefaultName(): string {
+        return "Test labels";
+    }
+
+    getDefaultSettingsValues(): Partial<MakeSettingTypesMap<LabelSettings>> {
+        return { [Setting.SHOW_LABELS]: true };
+    }
+
+    setupBindings(): void {}
+
+    fetchData({ getSetting, fetchQuery }: FetchDataParams<LabelSettings, LabelTestData>) {
+        const showLabels = getSetting(Setting.SHOW_LABELS) ?? false;
+        return fetchQuery({
+            queryKey: ["testLabelData", showLabels],
+            queryFn: () => getTestBackend().getLabelData(showLabels),
+        });
+    }
+}
+
 DataProviderRegistry.registerDataProvider(SURFACE_PROVIDER_TYPE, SurfaceTestProvider);
 DataProviderRegistry.registerDataProvider(GRID_PROVIDER_TYPE, GridTestProvider);
+DataProviderRegistry.registerDataProvider(LABEL_PROVIDER_TYPE, LabelTestProvider);

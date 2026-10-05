@@ -20,8 +20,8 @@ import { ItemDelegate } from "../../delegates/ItemDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProviderManager, SerializedType } from "../../interfacesAndTypes/serialization";
 
-// How long a restored state may wait for its data providers to settle before item and data notifications are published anyway
-const READINESS_TIMEOUT_MS = 10_000;
+// After how long still waiting for the data providers of a restored state is reported as a warning
+const READINESS_WARNING_DELAY_MS = 10_000;
 
 export enum DataProviderManagerTopic {
     // Published on every change to the item tree, including while deserializing, so that relationships between items
@@ -243,7 +243,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         let finished = false;
         const finishDeserialization = () => {
             finished = true;
-            // Stops whichever of the readiness wait and the timeout didn't trigger this
+            // Stops the warning timer
             this._cancelPendingReadinessWait?.();
             this._cancelPendingReadinessWait = null;
             this._deserializing = false;
@@ -259,21 +259,21 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             return;
         }
 
-        // A provider that never settles must not keep the manager from publishing for the rest of its life -
-        // release after a while, and let the remaining providers publish as they finish.
-        const timeout = setTimeout(() => {
+        // The manager keeps deserializing until every provider has settled, however long that takes - publishing earlier
+        // would expose and persist a partially initialized state. A provider that never settles therefore blocks the
+        // manager, so name the providers that are still pending after a while, to make such a hang easy to track down.
+        const warningTimeout = setTimeout(() => {
             const pendingProviderNames = this._groupDelegate
                 .getPendingDescendantDataProviders()
                 .map((provider) => provider.getItemDelegate().getName());
             console.warn(
-                `Data providers still loading ${READINESS_TIMEOUT_MS / 1000} s after restoring state - publishing anyway: ${pendingProviderNames.join(", ")}`,
+                `Data providers still loading ${READINESS_WARNING_DELAY_MS / 1000} s after restoring state - still waiting for: ${pendingProviderNames.join(", ")}`,
             );
-            finishDeserialization();
-        }, READINESS_TIMEOUT_MS);
+        }, READINESS_WARNING_DELAY_MS);
 
         this._cancelPendingReadinessWait = () => {
             cancelWait();
-            clearTimeout(timeout);
+            clearTimeout(warningTimeout);
         };
     }
 

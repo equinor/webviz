@@ -13,6 +13,10 @@ export type GridTestData = {
     numCells: number;
 };
 
+export type LabelTestData = {
+    showLabels: boolean;
+};
+
 export type BackendCall = {
     method: string;
     args: unknown[];
@@ -80,6 +84,10 @@ export class TestBackend {
             gridName,
             numCells: this.grids[fieldId]?.[gridName] ?? 0,
         }));
+    }
+
+    getLabelData(showLabels: boolean): Promise<LabelTestData> {
+        return this.request("getLabelData", [showLabels], () => ({ showLabels }));
     }
 
     private async request<T>(method: string, args: unknown[], respond: () => T): Promise<T> {

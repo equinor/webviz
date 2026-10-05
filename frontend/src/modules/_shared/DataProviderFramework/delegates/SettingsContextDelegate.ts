@@ -125,6 +125,16 @@ export class SettingsContextDelegate<
         return this._dataProviderManager;
     }
 
+    /*
+     * The settings are evaluated whenever a setting or dependency changes - without any dependencies, that may never
+     * happen, which would leave the owner waiting forever. The owner calls this once it has subscribed.
+     */
+    evaluateIfWithoutDependencies(): void {
+        if (this._dependencies.length === 0) {
+            this.handleSettingChanged();
+        }
+    }
+
     getStatus(): SettingsContextStatus {
         return this._status;
     }
