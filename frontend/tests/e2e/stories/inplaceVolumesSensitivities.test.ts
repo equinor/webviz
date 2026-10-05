@@ -290,7 +290,7 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         await waitForModules();
         await valysarNarration;
         await narrate(
-            "Now the picture is different. More channel facies means better rock, so the change comes mainly from net-to-gross and net porosity rather than from the bulk volume.",
+            "Now the picture is different. Bulk volume and net-to-gross are unchanged. More channel facies means better rock, so the gain comes from a higher net porosity, and with it a higher oil saturation.",
         );
 
         await narrate("And that concludes our analysis of inplace volumes in a sensitivity ensemble.");
