@@ -247,7 +247,7 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         );
 
         const hideNarration = narrate(
-            "Finally, we hide sensitivities without impact. The dynamic-only scenarios, like relperm, kvkh and minpv, disappear. Monte Carlo sensitivities such as rms_seed keep a bar, since it reflects the seed spread rather than a changed input.",
+            "Finally, we hide sensitivities without impact. The dynamic-only sensitivities, like relperm, kvkh, minpv and multregt_mc, disappear, since they leave the static volumes unchanged. The reference rms_seed stays, and its bar shows the seed spread the other sensitivities are measured against.",
         );
         await smoothClick(page, page.getByText("Hide sensitivities without impact", { exact: true }));
         await waitForModules();
