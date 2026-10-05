@@ -17,7 +17,6 @@ import {
     removeModuleFromLayout,
     smoothClick,
     smoothMoveToLocator,
-    smoothType,
 } from "../support/walkthroughHelpers";
 
 import { meta } from "./inplaceVolumesSensitivities.meta";
@@ -42,6 +41,15 @@ function comboboxOption(page: Page, optionLabel: string): Locator {
 
 async function selectComboboxOption(page: Page, settingLabel: string, optionLabel: string): Promise<void> {
     await smoothClick(page, settingRow(page, settingLabel).getByRole("combobox"));
+    await smoothClick(page, comboboxOption(page, optionLabel));
+}
+
+/** Type into a combobox to filter its options, then pick the match. */
+async function typeAndSelectComboboxOption(page: Page, combobox: Locator, optionLabel: string): Promise<void> {
+    await smoothClick(page, combobox);
+    // The input reverts to the selected value when cleared, so type over a full selection instead.
+    await combobox.press("ControlOrMeta+a");
+    await combobox.pressSequentially(optionLabel, { delay: RECORDING ? 45 : 0 });
     await smoothClick(page, comboboxOption(page, optionLabel));
 }
 
@@ -262,15 +270,14 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
             "The reference is rms_seed on the geogrid. As comparison we choose the deep case of the free water level sensitivity.",
         );
         const comparisonCaseCombobox = page.getByRole("combobox", { name: "Comparison sensitivity case" });
-        await smoothType(page, comparisonCaseCombobox, "fwl:deep");
-        await smoothClick(page, comboboxOption(page, "fwl:deep"));
+        await typeAndSelectComboboxOption(page, comparisonCaseCombobox, "fwl:deep");
         await waitForModules();
         await expect(plot).toBeVisible({ timeout: 90_000 });
         await expect(plot.getByText("BULK", { exact: true }).first()).toBeVisible();
         await comparisonCaseNarration;
 
         await narrate(
-            "The waterfall starts at the mean STOIIP of the reference and ends at the comparison case. The bars in between split the change in the oil zone into contributions from bulk volume, porosity, oil saturation and the oil formation volume factor.",
+            "The waterfall starts at the mean STOIIP of the reference and ends at the comparison case. The bars in between split the change in the oil zone into contributions from bulk volume, net-to-gross, net porosity, oil saturation and the oil formation volume factor.",
         );
         await narrate(
             "A deeper free water level extends the oil column, so most of the gain comes from the bulk volume of the oil zone, while the rock and fluid properties change much less.",
@@ -279,12 +286,11 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         const valysarNarration = narrate(
             "For comparison, let's pick the high case of the Valysar channel probability.",
         );
-        await smoothType(page, comparisonCaseCombobox, "valysar_aps_prob_channel:high");
-        await smoothClick(page, comboboxOption(page, "valysar_aps_prob_channel:high"));
+        await typeAndSelectComboboxOption(page, comparisonCaseCombobox, "valysar_aps_prob_channel:high");
         await waitForModules();
         await valysarNarration;
         await narrate(
-            "Now the picture is different. More channel facies means better rock, so the change comes mainly from porosity rather than from the bulk volume.",
+            "Now the picture is different. More channel facies means better rock, so the change comes mainly from net-to-gross and net porosity rather than from the bulk volume.",
         );
 
         await narrate("And that concludes our analysis of inplace volumes in a sensitivity ensemble.");
