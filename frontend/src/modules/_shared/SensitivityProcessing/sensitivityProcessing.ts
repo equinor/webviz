@@ -53,6 +53,8 @@ export const computeSensitivitiesForResponse = (
     const filteredSensitivityResponses = filterSensitivityResponses(
         processedSensitivityResponses,
         hideNoImpactSensitivities,
+        validReferenceSensitivity,
+        referenceAverage,
     );
 
     return {

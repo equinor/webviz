@@ -1,4 +1,5 @@
 import type { EnsembleSensitivities, Sensitivity } from "@framework/EnsembleSensitivities";
+import { SensitivityType } from "@framework/EnsembleSensitivities";
 
 import { SensitivitySortBy, type EnsemblePerRealizationResponse, type SensitivityResponse } from "./types";
 
@@ -52,15 +53,49 @@ export function computeReferenceAverage(
     const refValues = extractResponseValues(ensemblePerRealResponse, refRealizations);
     return computeAverage(refValues);
 }
+// Relative tolerance for "no impact": volumes summed in a different order differ in the last bits.
+const NO_IMPACT_RELATIVE_TOLERANCE = 1e-6;
+
+function isNegligibleDifference(difference: number, referenceAverage: number): boolean {
+    return Math.abs(difference) <= Math.abs(referenceAverage) * NO_IMPACT_RELATIVE_TOLERANCE;
+}
+
+function hasNoImpact(
+    response: SensitivityResponse,
+    referenceResponse: SensitivityResponse | undefined,
+    referenceAverage: number,
+): boolean {
+    if (response.sensitivityType === SensitivityType.MONTECARLO) {
+        // P10/P90 always differ from the reference mean by the seed spread, so compare with the reference's own stats.
+        if (!referenceResponse || referenceResponse.sensitivityType !== SensitivityType.MONTECARLO) {
+            return false;
+        }
+        return (
+            isNegligibleDifference((response.sensitivityAverage ?? 0) - referenceAverage, referenceAverage) &&
+            isNegligibleDifference(response.lowCaseAverage - referenceResponse.lowCaseAverage, referenceAverage) &&
+            isNegligibleDifference(response.highCaseAverage - referenceResponse.highCaseAverage, referenceAverage)
+        );
+    }
+    return (
+        isNegligibleDifference(response.lowCaseReferenceDifference, referenceAverage) &&
+        isNegligibleDifference(response.highCaseReferenceDifference, referenceAverage)
+    );
+}
+
 export function filterSensitivityResponses(
     responses: SensitivityResponse[],
     hideNoImpactSensitivities: boolean,
+    referenceSensitivity: string,
+    referenceAverage: number,
 ): SensitivityResponse[] {
     if (!hideNoImpactSensitivities) return responses;
 
-    return responses.filter((response) => {
-        return response.lowCaseReferenceDifference !== 0 || response.highCaseReferenceDifference !== 0;
-    });
+    const referenceResponse = responses.find((response) => response.sensitivityName === referenceSensitivity);
+    return responses.filter(
+        (response) =>
+            response.sensitivityName === referenceSensitivity ||
+            !hasNoImpact(response, referenceResponse, referenceAverage),
+    );
 }
 export function getReferenceSensitivityName(
     sensitivities: EnsembleSensitivities,
