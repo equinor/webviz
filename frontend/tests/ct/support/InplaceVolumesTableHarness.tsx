@@ -14,6 +14,7 @@ export type InplaceVolumesTableHarnessProps = {
     columnsConfig: TableColumnsConfig;
     rows: TableRow<TableColumnsConfig>[];
     mode: "realization" | "statistical";
+    sortScopeColumnKey?: string;
 };
 
 const ensembleSet = new EnsembleSet([]);
@@ -33,6 +34,7 @@ export function InplaceVolumesTableHarness(props: InplaceVolumesTableHarnessProp
                 ensembleSet={ensembleSet}
                 columnsConfig={props.columnsConfig}
                 rows={props.rows}
+                sortScopeColumnKey={props.sortScopeColumnKey}
                 onHover={() => {}}
                 onDownload={handleDownload}
             />
