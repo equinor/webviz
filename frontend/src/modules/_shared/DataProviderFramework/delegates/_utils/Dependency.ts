@@ -72,6 +72,7 @@ export class Dependency<
     private _numChildDependencies = 0;
     private _updatePromise: Promise<void> | null = null;
     private _queued = false;
+    private _isDestroyed = false;
     private _numConsecutiveExternalCancellations = 0;
     private _unsubscribers: (() => void)[] = [];
     private _isProbing = false;
@@ -108,6 +109,9 @@ export class Dependency<
     }
 
     beforeDestroy() {
+        // A run in flight may have queued another one - that must not start once destroyed
+        this._isDestroyed = true;
+        this._queued = false;
         this._abortController?.abort();
         this._abortController = null;
 
@@ -364,6 +368,10 @@ export class Dependency<
     }
 
     private invalidate(): void {
+        if (this._isDestroyed) {
+            return;
+        }
+
         if (!this._isLoading) {
             this.setLoadingState(true);
         }

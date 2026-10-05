@@ -13,11 +13,11 @@ import {
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-import { makeDataProviderManager } from "../utils/dataProviderFramework";
+import { makeDataProviderManager } from "../../utils/dataProviderFramework";
 
 const NO_SETTINGS = [] as const;
 
-// Nothing ever makes a provider without settings evaluate them, so it stays IDLE forever
+// Nothing ever makes a provider without settings evaluate them, so it stays LOADING forever
 class NeverSettlingProvider implements CustomDataProviderImplementation<typeof NO_SETTINGS, string> {
     settings = NO_SETTINGS;
 

@@ -187,6 +187,12 @@ export class DataProvider<
                 this.handleSettingsStatusChange();
             }),
         );
+
+        // The settings context starts out LOADING without publishing it - start out in sync with it, so the first
+        // loading phase is shown too. Set directly instead of through setStatus(), as there is nothing to notify yet.
+        if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
+            this._status = DataProviderStatus.LOADING;
+        }
     }
 
     getRevisionNumber(): number {

@@ -13,7 +13,7 @@ import {
     SerializedType,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
 
-import { makeDataProviderManager } from "../utils/dataProviderFramework";
+import { makeDataProviderManager } from "../../utils/dataProviderFramework";
 
 function makeSerializedItem(type: string, name: string): SerializedItem {
     return { id: name, type: type as SerializedType, name, expanded: false, visible: true };

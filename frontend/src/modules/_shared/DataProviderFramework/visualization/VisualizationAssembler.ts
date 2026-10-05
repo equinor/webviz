@@ -272,8 +272,8 @@ export class VisualizationAssembler<
         },
         transformers: DataProviderTransformers<TSettings, TData, TTarget, TStoredData, TInjectedData, TAccumulatedData>,
     ): void {
-        if (this._dataProviderTransformers.has(dataProviderCtor.name)) {
-            throw new Error(`Transformer function for data provider ${dataProviderCtor.name} already registered`);
+        if (this._dataProviderTransformers.has(dataProviderName)) {
+            throw new Error(`Transformer function for data provider ${dataProviderName} already registered`);
         }
         this._dataProviderTransformers.set(dataProviderName, transformers);
     }
@@ -285,8 +285,8 @@ export class VisualizationAssembler<
         },
         collector: GroupCustomPropsCollector<TSettings, TGroupType, TCustomGroupProps>,
     ): void {
-        if (this._dataProviderTransformers.has(groupCtor.name)) {
-            throw new Error(`Data collector function for group ${groupCtor.name} already registered`);
+        if (this._groupCustomPropsCollectors.has(groupName)) {
+            throw new Error(`Data collector function for group ${String(groupName)} already registered`);
         }
         this._groupCustomPropsCollectors.set(groupName, collector);
     }

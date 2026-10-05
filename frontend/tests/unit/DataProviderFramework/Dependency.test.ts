@@ -88,6 +88,28 @@ describe("Dependency", () => {
         expect(resolve).toHaveBeenCalledTimes(1);
     });
 
+    test("does not start a queued resolve after being destroyed", async () => {
+        const deferreds: Deferred<string>[] = [];
+        const resolve = vi.fn(() => {
+            const deferred = makeDeferred<string>();
+            deferreds.push(deferred);
+            return deferred.promise;
+        });
+        const { dependency, globalSettings, setGlobalSetting } = makeRootDependency({
+            read: (read) => ({ fieldId: read.globalSetting("fieldId") }),
+            resolve,
+        });
+        globalSettings.fieldId = "old";
+
+        dependency.initialize();
+        setGlobalSetting("fieldId", "new");
+        dependency.beforeDestroy();
+        deferreds[0].resolve("result");
+        await flush();
+
+        expect(resolve).toHaveBeenCalledTimes(1);
+    });
+
     test("discards the result of a resolve that finishes after being destroyed", async () => {
         const deferred = makeDeferred<string>();
         const { dependency } = makeRootDependency({ resolve: () => deferred.promise });

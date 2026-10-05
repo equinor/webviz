@@ -364,10 +364,7 @@ export class SettingManager<
     }
 
     isExternallyControlled(): boolean {
-        if (this._externalController) {
-            return this._externalController.getSetting().isExternallyControlled();
-        }
-        return false;
+        return this._externalController !== null;
     }
 
     isValueValid(): boolean {
