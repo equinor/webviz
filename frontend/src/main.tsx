@@ -7,6 +7,7 @@ import { AuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CustomQueryClientProvider } from "@framework/internal/providers/QueryClientProvider";
 import { toastManager } from "@framework/toastManager";
 import { Toast } from "@lib/components/Toast";
+import { initTelemetry } from "@lib/telemetry/appInsights";
 
 import App from "./App";
 import { GlobalErrorBoundary } from "./GlobalErrorBoundary";
@@ -32,6 +33,15 @@ client.setConfig({
     withCredentials: true,
     baseURL: "/api",
 });
+
+// --------------------------------------------------------------------
+
+/*
+    Initialize Azure Application Insights telemetry.
+    No-op when VITE_APPLICATIONINSIGHTS_CONNECTION_STRING is not set.
+*/
+
+initTelemetry();
 
 // --------------------------------------------------------------------
 

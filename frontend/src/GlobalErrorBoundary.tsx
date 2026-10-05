@@ -6,6 +6,7 @@ import { SupportDocumentsGenerator } from "@framework/components/SupportDocument
 import { SERVICE_NOW_HREF } from "@framework/utils/externalUrls";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
+import { trackException } from "@lib/telemetry/appInsights";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type Props = {
@@ -68,6 +69,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
 
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
         this.setState({ componentStack: errorInfo.componentStack ?? null });
+        trackException(error, { componentStack: errorInfo.componentStack ?? "" });
     }
 
     componentDidMount() {

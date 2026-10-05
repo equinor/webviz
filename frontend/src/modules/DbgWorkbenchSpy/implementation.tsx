@@ -19,7 +19,7 @@ export function WorkbenchSpySettings() {
     const setRefreshCounter = useSetAtom(triggeredRefreshCounterAtom);
     return (
         <div>
-            <Button onClick={() => setRefreshCounter((prev: number) => prev + 1)}>Trigger Refresh</Button>
+            <Button onClick={() => setRefreshCounter((prev: number) => { throw new Error("Triggered refresh"); return prev + 1})}>Trigger Refresh</Button>
         </div>
     );
 }

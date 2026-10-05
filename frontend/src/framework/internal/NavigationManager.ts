@@ -11,6 +11,8 @@
  * instance needs its own navigation handling (important for testing and isolation).
  */
 
+import { trackPageView } from "@lib/telemetry/appInsights";
+
 // Each history entry created by this page is numbered, so that a popstate tells how far and in which
 // direction the user moved - no matter if via back/forward buttons or by picking an entry directly
 type NavigationHistoryState = { entryIndex: number };
@@ -184,6 +186,9 @@ export class NavigationManager {
         this._maxIndex = this._currentIndex;
         window.history.pushState(makeHistoryState(this._currentIndex), "", url);
         this._currentUrl = url;
+
+        // A genuine navigation starts a new logical operation in telemetry.
+        trackPageView(undefined, new URL(url, window.location.href).href);
     }
 
     /**
