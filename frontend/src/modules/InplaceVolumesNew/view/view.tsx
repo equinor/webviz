@@ -71,7 +71,11 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const tableColumns = React.useMemo(() => {
         if (!statisticsTableData) return null;
-        return makeStatisticsTableColumns(statisticsTableData.subplotByLabel, statisticsTableData.colorByLabel);
+        return makeStatisticsTableColumns(
+            statisticsTableData.subplotByLabel,
+            statisticsTableData.colorByLabel,
+            statisticsTableData.barCategoryLabel,
+        );
     }, [statisticsTableData]);
 
     const collatedTableRows = React.useMemo(() => {

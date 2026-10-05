@@ -147,8 +147,17 @@ export function useBuildPlotAndTable(
         margin: { t: 20, b: 50, l: 50, r: 20 },
     });
 
-    // Build statistics table data using the same grouped data
-    const statisticsTableData = buildStatisticsTableData(groupedData, resultName);
+    // Per-category bars are category means, so the statistics follow the same split. Per-REAL bars are
+    // the samples themselves and stay pooled.
+    const statisticsBarCategory =
+        barSelectorColumn &&
+        barSelectorColumn !== "REAL" &&
+        barSelectorColumn !== subplotBy &&
+        barSelectorColumn !== colorBy &&
+        table.getColumn(barSelectorColumn)
+            ? { column: barSelectorColumn, order: categoryOrder.get(barSelectorColumn) }
+            : null;
+    const statisticsTableData = buildStatisticsTableData(groupedData, resultName, statisticsBarCategory);
 
     return { plots, table, statisticsTableData };
 }
