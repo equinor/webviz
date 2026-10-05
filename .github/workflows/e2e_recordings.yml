@@ -2,8 +2,8 @@ name: e2e recordings
 
 on:
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
   workflow_dispatch:
 
 permissions:
@@ -89,7 +89,7 @@ jobs:
           retention-days: 1
           if-no-files-found: ignore
 
-      - name: ☁️ Upload recordings to Azure Blob Storage  
+      - name: ☁️ Upload recordings to Azure Blob Storage
         env:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.E2E_RECORDINGS_STORAGE_CONNECTION_STRING }}
         run: |
