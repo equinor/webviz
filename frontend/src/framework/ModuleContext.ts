@@ -1,5 +1,5 @@
 /**
- * Why are we disbling rules-of-hooks here?
+ * Why are we disabling rules-of-hooks here?
  *
  * Well, we are using several hooks in this class, which is not allowed by this rule.
  * However, we are not using these hooks in a component, but in a utility class.
@@ -9,7 +9,7 @@
  * and give additional context to the functions.
  */
 
-/* eslint-disable react-hooks/rules-of-hooks */
+/* eslint-disable @eslint-react/rules-of-hooks */
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 import type { ModuleInterfaceTypes } from "./Module";

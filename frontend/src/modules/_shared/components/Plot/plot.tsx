@@ -4,6 +4,9 @@ import { cloneDeep, isEqual, merge } from "lodash-es";
 import type { PlotParams } from "react-plotly.js";
 import BasePlot from "react-plotly.js";
 
+import { GpuResourceBoundary } from "@framework/components/GpuResourceBoundary";
+import { createManualContextLossAdapter } from "@framework/components/GpuResourceBoundary/adapters/manualContextLossAdapter";
+
 export type PlotProps = {
     /**
      * Informs if data/layout changes are ready to be applied
@@ -18,7 +21,7 @@ export type PlotProps = {
     layout?: Partial<Plotly.Layout>;
     data?: Partial<Plotly.Data>[];
     config?: Partial<Plotly.Config>;
-} & Omit<PlotParams, "data" | "layout" | "config">;
+} & Omit<PlotParams, "data" | "layout" | "config" | "onWebGlContextLost">;
 
 const DOWNLOAD_ICON: Plotly.Icon = {
     width: 24,
@@ -88,6 +91,27 @@ export function Plot(props: PlotProps): React.ReactNode {
     const onDownloadClickRef = React.useRef(onDownloadClick);
     onDownloadClickRef.current = onDownloadClick;
 
+    // Plotly's regl-backed WebGL traces (scattergl, heatmapgl, etc.) do not reliably rebuild their
+    // GPU resources after a context loss, and Plotly only exposes a "context lost" signal
+    // (onWebGlContextLost) with no restored counterpart - so we feed that single signal into a
+    // manual adapter and let GpuResourceBoundary's "remount" strategy (a fresh Plotly.newPlot)
+    // clear the lost state.
+    const adapter = React.useMemo(() => createManualContextLossAdapter(), []);
+    const handleWebGlContextLost = React.useCallback(
+        (info?: { event?: Event }) => {
+            // The Vite-injected plotly patch (vite-plugin-plotly-webgl-context-release) deliberately
+            // loses the WebGL context when plotly tears down its gl canvases, so the browser reclaims
+            // it instead of leaking. Plotly forwards that as a context-loss signal too - ignore it on
+            // a canvas we stamped; it is not a real browser eviction.
+            const target = info?.event?.target as (Element & { __webvizContextReleased?: boolean }) | undefined;
+            if (target?.__webvizContextReleased) {
+                return;
+            }
+            adapter.notifyContextLost();
+        },
+        [adapter],
+    );
+
     if (shouldApplyPlotUpdate && !isEqual(prevLayout, layout)) {
         setPrevLayout(layout);
         setStableLayout(cloneDeep(layout));
@@ -107,11 +131,15 @@ export function Plot(props: PlotProps): React.ReactNode {
         setStableOtherProps(otherProps);
     }
 
-    return React.useMemo(() => {
-        const layoutWithDefaults = merge({}, DEFAULT_LAYOUT, stableLayout);
-
+    // Keep the `config` object referentially stable across data/layout updates. Plotly.react()
+    // falls back to a full Plotly.newPlot() (tearing down and recreating the WebGL contexts) when
+    // it detects a config change, and it compares by value - a fresh `modeBarButtonsToAdd` array or
+    // `click` closure on every render counts as "changed". The download click handler is read
+    // through a ref so this closure never has to be recreated.
+    const hasDownloadHandler = onDownloadClick != null;
+    const configWithDefaults = React.useMemo(() => {
         const modeBarButtonsToAdd: Plotly.ModeBarButtonAny[] = [...(stableConfig?.modeBarButtonsToAdd ?? [])];
-        if (onDownloadClickRef.current) {
+        if (hasDownloadHandler) {
             modeBarButtonsToAdd.push({
                 name: "download",
                 title: "Download data",
@@ -119,10 +147,26 @@ export function Plot(props: PlotProps): React.ReactNode {
                 click: () => onDownloadClickRef.current?.(),
             });
         }
-        const configWithDefaults = { ...merge({}, DEFAULT_CONFIG, stableConfig), modeBarButtonsToAdd };
+        return { ...merge({}, DEFAULT_CONFIG, stableConfig), modeBarButtonsToAdd };
+    }, [stableConfig, hasDownloadHandler]);
+
+    const plotElement = React.useMemo(() => {
+        const layoutWithDefaults = merge({}, DEFAULT_LAYOUT, stableLayout);
 
         return (
-            <BasePlot data={stableData} layout={layoutWithDefaults} config={configWithDefaults} {...stableOtherProps} />
+            <BasePlot
+                {...stableOtherProps}
+                data={stableData}
+                layout={layoutWithDefaults}
+                config={configWithDefaults}
+                onWebGlContextLost={handleWebGlContextLost}
+            />
         );
-    }, [stableConfig, stableData, stableLayout, stableOtherProps]);
+    }, [configWithDefaults, stableData, stableLayout, stableOtherProps, handleWebGlContextLost]);
+
+    return (
+        <GpuResourceBoundary adapter={adapter} recoveryStrategy="remount">
+            {plotElement}
+        </GpuResourceBoundary>
+    );
 }

@@ -14,10 +14,13 @@ import "../../../../modules/registerAllModules";
 import "../../../../templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
+import { useGlobalErrorBoundaryContext } from "../../../../GlobalErrorBoundary";
 import { ActionBar } from "../ActionBar/actionBar";
 import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
+import { BottomBar } from "../BottomBar";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
+import { DocumentTitleSync } from "../DocumentTitleSync";
 import { InitialEnsemblesLoadingErrorInfoDialog } from "../InitialEnsemblesLoadingErrorInfoDialog";
 import { InitialEnsemblesLoadingWarningInfoDialog } from "../InitialEnsemblesLoadingWarningInfoDialog";
 import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
@@ -27,13 +30,16 @@ import { SaveSessionDialog } from "../SaveSessionDialog";
 import { SessionErrorDialog } from "../SessionErrorDialog";
 import { StartPage } from "../StartPage/StartPage";
 import { TemplatesDialog } from "../TemplatesDialog/templatesDialog";
+import { TutorialsDialog } from "../TutorialsDialog/tutorialsDialog";
 
 export function WorkbenchWrapper() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
     // Otherwise, the workbench will be reset on every code change. This would cause it to lose its state and will
     // cause the app to crash.
     const queryClient = useQueryClient();
-    const [workbench] = React.useState(new Workbench(queryClient));
+    const { registerActiveWorkbench } = useGlobalErrorBoundaryContext();
+
+    const [workbench] = React.useState(() => new Workbench(queryClient));
     const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
     const isSessionLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
     const isSnapshotLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSnapshot);
@@ -45,11 +51,17 @@ export function WorkbenchWrapper() {
 
     React.useEffect(
         function initApp() {
+            registerActiveWorkbench(workbench);
+
             workbench.initialize().then(() => {
                 setIsInitialized(true);
             });
+
+            return () => {
+                registerActiveWorkbench(null);
+            };
         },
-        [workbench],
+        [registerActiveWorkbench, workbench],
     );
 
     let content: React.ReactNode;
@@ -72,6 +84,7 @@ export function WorkbenchWrapper() {
             <TopBar workbench={workbench} />
             <ActiveSessionBoundary workbench={workbench}>
                 <ActiveDashboardBoundary>
+                    <DocumentTitleSync workbench={workbench} />
                     <ActionBar workbench={workbench} />
                     <SelectEnsemblesDialog workbench={workbench} />
                     <InitialEnsemblesLoadingErrorInfoDialog workbench={workbench} />
@@ -85,10 +98,12 @@ export function WorkbenchWrapper() {
                             <RightSideBar workbench={workbench} />
                         </div>
                     </div>
+                    <BottomBar workbench={workbench} />
                 </ActiveDashboardBoundary>
             </ActiveSessionBoundary>
             {content}
             <TemplatesDialog workbench={workbench} />
+            <TutorialsDialog workbench={workbench} />
             <MultiSessionsRecoveryDialog workbench={workbench} />
             <PersistenceManagementDialog workbench={workbench} />
             <SessionErrorDialog workbench={workbench} />

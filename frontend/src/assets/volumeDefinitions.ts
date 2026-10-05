@@ -1,6 +1,7 @@
 export type VolumeDefinition = {
     description: string;
     unit?: string;
+    formula?: string;
     // eclsum?: [string, string]; // string[]
 };
 
@@ -13,8 +14,16 @@ export type VolumeDefinitionsType = Record<string, VolumeDefinition>;
 export const ORDERED_VOLUME_DEFINITIONS: VolumeDefinitionsType = {
     STOIIP: { description: "Stock tank oil initially in place", unit: "Sm³" },
     GIIP: { description: "Gas initially in place", unit: "Sm³" },
-    STOIIP_TOTAL: { description: "Stock tank oil initially in place (total)", unit: "Sm³" },
-    GIIP_TOTAL: { description: "Gas initially in place (total)", unit: "Sm³" },
+    STOIIP_TOTAL: {
+        description: "Stock tank oil initially in place (total)",
+        unit: "Sm³",
+        formula: "STOIIP + ASSOCIATEDOIL",
+    },
+    GIIP_TOTAL: {
+        description: "Gas initially in place (total)",
+        unit: "Sm³",
+        formula: "GIIP + ASSOCIATEDGAS",
+    },
     ASSOCIATEDGAS: { description: "Associated gas", unit: "Sm³" },
     ASSOCIATEDOIL: { description: "Associated oil", unit: "Sm³" },
     BULK: { description: "Bulk volume", unit: "m³" },

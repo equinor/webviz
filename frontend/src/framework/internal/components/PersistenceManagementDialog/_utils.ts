@@ -59,6 +59,9 @@ export function useInfiniteSessionMetadataQuery(
         readonly unknown[],
         string | null
     >({
+        enabled,
+        initialPageParam: null,
+        refetchInterval: 20000,
         queryKey: [
             "getSessionsMetadata",
             "infinite",
@@ -67,18 +70,21 @@ export function useInfiniteSessionMetadataQuery(
             querySortParams?.filter_updated_to,
             querySortParams?.sort_by,
             querySortParams?.sort_direction,
+            querySortParams?.sort_lowercase,
+            querySortParams?.zCacheBust,
         ],
-        initialPageParam: null,
-        refetchInterval: 20000,
-        getNextPageParam(lastPage) {
-            return lastPage.pageToken;
-        },
         async queryFn({ pageParam, signal }) {
             const { data } = await getSessionsMetadata({
                 signal,
                 throwOnError: true,
                 query: {
-                    ...querySortParams,
+                    filter_title: querySortParams?.filter_title,
+                    filter_updated_from: querySortParams?.filter_updated_from,
+                    filter_updated_to: querySortParams?.filter_updated_to,
+                    sort_by: querySortParams?.sort_by,
+                    sort_direction: querySortParams?.sort_direction,
+                    sort_lowercase: querySortParams?.sort_lowercase,
+                    zCacheBust: querySortParams?.zCacheBust,
                     page_size: QUERY_PAGE_SIZE,
                     // TODO: Rename `cursor` to `continuation_token` once we update to latest hey-api version
                     cursor: pageParam,
@@ -89,6 +95,9 @@ export function useInfiniteSessionMetadataQuery(
 
             return data;
         },
-        enabled,
+
+        getNextPageParam(lastPage) {
+            return lastPage.pageToken;
+        },
     });
 }

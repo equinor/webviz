@@ -4,8 +4,8 @@ import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
+import type { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { Viewport } from "@framework/types/viewport";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { fuzzyCompareArrays } from "@lib/utils/fuzzyCompare";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -35,7 +35,7 @@ export type ViewportWrapperProps = {
     layerItemsBounds: Bounds;
     focusBounds: Bounds | null;
     colorScales: ColorScaleWithId[];
-    workbenchServices: WorkbenchServices;
+    syncSettingsService: SyncSettingsService;
     hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
 };
@@ -62,17 +62,24 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     );
 
     // Viewport, bounds, vertical scale, and all related handlers
-    const { viewport, verticalScale, effectiveLayerItemsBounds, updateViewport, updateVerticalScale, handleFitInView } =
-        useViewportState({
-            viewId,
-            viewLinkResult,
-            autofit: autoFitView,
-            layerItemsBounds: props.layerItemsBounds,
-            focusBounds: props.focusBounds,
-            containerSize: mainDivSize,
-            workbenchServices: props.workbenchServices,
-            viewContext: props.viewContext,
-        });
+    const {
+        viewport,
+        verticalScale,
+        effectiveLayerItemsBounds,
+        effectiveFocusBounds,
+        updateViewport,
+        updateVerticalScale,
+        handleFitInView,
+    } = useViewportState({
+        viewId,
+        viewLinkResult,
+        autofit: autoFitView,
+        layerItemsBounds: props.layerItemsBounds,
+        focusBounds: props.focusBounds,
+        containerSize: mainDivSize,
+        syncSettingsService: props.syncSettingsService,
+        viewContext: props.viewContext,
+    });
 
     const handleViewportChange = React.useCallback(
         function handleViewportChange(newViewport: Viewport) {
@@ -140,6 +147,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                     layers={props.layerItems}
                     layerIdToNameMap={props.layerItemIdToNameMap}
                     bounds={effectiveLayerItemsBounds}
+                    focusBounds={effectiveFocusBounds}
                     viewport={viewport ?? undefined}
                     hoverService={props.hoverService}
                     viewContext={props.viewContext}

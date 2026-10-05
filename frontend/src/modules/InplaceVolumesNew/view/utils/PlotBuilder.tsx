@@ -4,7 +4,7 @@ import type { Axis, PlotData } from "plotly.js";
 
 import { Plot } from "@modules/_shared/components/Plot";
 import type { Figure, MakeSubplotOptions } from "@modules/_shared/Figure";
-import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
+import { calcNumRowsAndCols, CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import type { HistogramType } from "@modules/_shared/histogram";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
@@ -16,6 +16,7 @@ export class PlotBuilder {
     private _groupedData: GroupedTableData;
     private _plotFunction: PlotFunction;
     private _axesOptions: { x: Partial<Axis> | null; y: Partial<Axis> | null } = { x: null, y: null };
+    private _numberFormatAxisOptions: { x: Partial<Axis>; y: Partial<Axis> } = { x: {}, y: {} };
     private _highlightedSubPlotNames: string[] = [];
     private _histogramType: HistogramType | null = null;
     private _plotType: PlotType | null = null;
@@ -33,6 +34,14 @@ export class PlotBuilder {
         this._axesOptions.y = options;
     }
 
+    setXAxisNumberFormatOptions(options: Partial<Axis>): void {
+        this._numberFormatAxisOptions.x = options;
+    }
+
+    setYAxisNumberFormatOptions(options: Partial<Axis>): void {
+        this._numberFormatAxisOptions.y = options;
+    }
+
     setHistogramType(histogramType: HistogramType): void {
         this._histogramType = histogramType;
     }
@@ -43,16 +52,6 @@ export class PlotBuilder {
 
     setHighlightedSubPlots(subPlotNames: string[]): void {
         this._highlightedSubPlotNames = subPlotNames;
-    }
-
-    private calcNumRowsAndCols(numSubplots: number): { numRows: number; numCols: number } {
-        if (numSubplots < 1) {
-            return { numRows: 1, numCols: 1 };
-        }
-
-        const numRows = Math.ceil(Math.sqrt(numSubplots));
-        const numCols = Math.ceil(numSubplots / numRows);
-        return { numRows, numCols };
     }
 
     private updateLayout(figure: Figure) {
@@ -66,12 +65,22 @@ export class PlotBuilder {
                 const xAxisKey = `xaxis${axisIndex}`;
 
                 const oldLayout = figure.makeLayout();
+                // @ts-expect-error - Ignore string type of xAxisKey for oldLayout[xAxisKey]
+                const oldXAxis = oldLayout[xAxisKey];
+                // @ts-expect-error - Ignore string type of yAxisKey for oldLayout[yAxisKey]
+                const oldYAxis = oldLayout[yAxisKey];
 
                 figure.updateLayout({
-                    // @ts-expect-error - Ignore string type of xAxisKey for oldLayout[xAxisKey]
-                    [xAxisKey]: { ...oldLayout[xAxisKey], ...this._axesOptions.x },
-                    // @ts-expect-error - Ignore string type of yAxisKey for oldLayout[yAxisKey]
-                    [yAxisKey]: { ...oldLayout[yAxisKey], ...this._axesOptions.y },
+                    [xAxisKey]: {
+                        ...oldXAxis,
+                        ...this._numberFormatAxisOptions.x,
+                        ...this._axesOptions.x,
+                    },
+                    [yAxisKey]: {
+                        ...oldYAxis,
+                        ...this._numberFormatAxisOptions.y,
+                        ...this._axesOptions.y,
+                    },
                 });
             }
         }
@@ -123,7 +132,7 @@ export class PlotBuilder {
             });
         }
 
-        const { numRows, numCols } = this.calcNumRowsAndCols(numSubplots);
+        const { numRows, numCols } = calcNumRowsAndCols(numSubplots);
 
         const traces: { row: number; col: number; trace: Partial<PlotData> }[] = [];
         const subplotTitles: string[] = Array(numRows * numCols).fill("");

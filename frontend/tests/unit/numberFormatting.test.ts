@@ -152,6 +152,12 @@ describe("formatNumber", () => {
         test("respects maxNumDecimalPlaces", () => {
             expect(formatNumber(1234, { unitSystem: "si", unit: "m", maxNumDecimalPlaces: 1 })).toBe("1.2 km");
         });
+
+        test("can suppress prefixes below the base unit", () => {
+            expect(formatNumber(0.25, { unitSystem: "si", useSubUnitPrefixes: false })).toBe("0.25");
+            expect(formatNumber(0.00234, { unitSystem: "si", useSubUnitPrefixes: false })).toBe("0.00234");
+            expect(formatNumber(1234, { unitSystem: "si", useSubUnitPrefixes: false })).toBe("1.23 k");
+        });
     });
 
     describe("unitSystem: binary", () => {

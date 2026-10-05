@@ -11,7 +11,7 @@ export const selectedParameterIdentsAtom = atom<ParameterIdent[]>([]);
 export const regularEnsembleIdentsAtom = atom<RegularEnsembleIdent[]>([]);
 
 export const showLabelsAtom = atom<boolean>(false);
-export const useFixedColorRangeAtom = atom<boolean>(true);
+export const fixedColorRangeEnabledAtom = atom<boolean>(true);
 export const plotTypeAtom = atom<PlotType>(PlotType.FullTriangularMatrix);
 export const correlationThresholdAtom = atom<number>(0.1);
 export const hideIndividualCellsAtom = atom<boolean>(true);

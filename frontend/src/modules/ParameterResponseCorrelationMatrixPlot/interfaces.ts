@@ -3,7 +3,7 @@ import type { InterfaceInitialization } from "@framework/UniDirectionalModuleCom
 
 import {
     showLabelsAtom,
-    useFixedColorRangeAtom,
+    fixedColorRangeEnabledAtom,
     plotTypeAtom,
     selectedParameterIdentsAtom,
     correlationThresholdAtom,
@@ -17,7 +17,7 @@ type SettingsToViewInterface = {
     parameterIdents: ParameterIdent[];
     plotType: PlotType;
     showLabels: boolean;
-    useFixedColorRange: boolean;
+    fixedColorRangeEnabled: boolean;
     correlationThreshold: number;
     hideIndividualCells: boolean;
     filterColumns: boolean;
@@ -31,7 +31,7 @@ export type Interfaces = {
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     parameterIdents: (get) => get(selectedParameterIdentsAtom),
     showLabels: (get) => get(showLabelsAtom),
-    useFixedColorRange: (get) => get(useFixedColorRangeAtom),
+    fixedColorRangeEnabled: (get) => get(fixedColorRangeEnabledAtom),
     plotType: (get) => get(plotTypeAtom),
     correlationThreshold: (get) => get(correlationThresholdAtom),
     hideIndividualCells: (get) => get(hideIndividualCellsAtom),

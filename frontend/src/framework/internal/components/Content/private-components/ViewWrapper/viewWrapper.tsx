@@ -1,7 +1,7 @@
 import React from "react";
 
 import { GuiEvent, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
+import { useDashboard } from "@framework/internal/components/DashboardContext";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
@@ -32,7 +32,7 @@ type ViewWrapperProps = {
 };
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
-    const dashboard = useActiveDashboard();
+    const { dashboard } = useDashboard();
     const [prevWidth, setPrevWidth] = React.useState<number>(props.width);
     const [prevHeight, setPrevHeight] = React.useState<number>(props.height);
     const [prevX, setPrevX] = React.useState<number>(props.x);
@@ -51,7 +51,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     );
 
     const timeRef = React.useRef<number | null>(null);
-    const pointerDown = React.useRef<boolean>(false);
+    const pointerDownRef = React.useRef<boolean>(false);
 
     if (props.width !== prevWidth && !props.changingLayout) {
         setPrevWidth(props.width);
@@ -95,14 +95,14 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     function handlePointerDown() {
         timeRef.current = Date.now();
-        pointerDown.current = true;
+        pointerDownRef.current = true;
     }
 
     function handlePointerUp() {
-        if (!pointerDown.current) {
+        if (!pointerDownRef.current) {
             return;
         }
-        pointerDown.current = false;
+        pointerDownRef.current = false;
         handleModuleClick();
     }
 

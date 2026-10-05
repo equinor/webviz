@@ -8,6 +8,7 @@ services:
         condition: service_healthy
     environment:
       - WEBVIZ_COSMOS_DB_EMULATOR_HOST=http://cosmos-db-emulator:8081
+      - WEBVIZ_SKIP_AZURE_CREDENTIAL_CREATION
 
   cosmos-db-emulator:
     image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-latest

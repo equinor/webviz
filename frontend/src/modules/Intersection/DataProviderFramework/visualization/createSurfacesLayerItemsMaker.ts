@@ -1,5 +1,6 @@
 import type { IntersectionReferenceSystem, SurfaceData } from "@equinor/esv-intersection";
 
+import type { ColorSet } from "@lib/utils/ColorSet";
 import { GeomodelCanvasLayer, GeomodelLabelsLayer } from "@modules/_shared/components/EsvIntersection";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
@@ -26,6 +27,15 @@ export function createSurfacesLayerItemsMaker({
         return null;
     }
 
+    return createSurfaceIntersectionLayerItemsMaker(id, name, data, colorSet);
+}
+
+export function createSurfaceIntersectionLayerItemsMaker(
+    id: string,
+    name: string,
+    data: RealizationSurfacesData,
+    colorSet: ColorSet,
+): EsvLayerItemsMaker {
     let currentColor = colorSet.getFirstColor();
     const surfaceData: SurfaceData = {
         areas: [],

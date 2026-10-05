@@ -266,6 +266,7 @@ export function recursivelyFindHeadChild(children: React.ReactNode): React.React
 function doRecursivelyFindHeadChild(children: React.ReactNode, depth = 0): React.ReactElement | null {
     if (depth > 100) throw new Error("Maximum table child depth exceeded. Check for circular references");
 
+    // eslint-disable-next-line @eslint-react/no-children-to-array -- Special case to find nested children of specific types
     for (const child of React.Children.toArray(children)) {
         if (!React.isValidElement(child)) continue;
 
@@ -294,6 +295,7 @@ function recursivelyProcessColumnChildren(columnParent: React.ReactNode, depth =
     let leafCount = 0;
     let maxDepth = depth;
 
+    // eslint-disable-next-line @eslint-react/no-children-for-each -- Special case to find nested children of specific types
     React.Children.forEach(colChildren, (child) => {
         if (!child || !React.isValidElement(child) || child.type !== Column) {
             headerContent.push(child);

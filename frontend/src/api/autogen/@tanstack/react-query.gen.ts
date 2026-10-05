@@ -35,13 +35,17 @@ import {
     getGridParameterTimeDiff,
     getGridSurface,
     getHistoricalVectorData,
+    getInitialFluidContactSurfacesMetadata,
     getInjectionData,
     getInplaceTableDefinitions,
     getLogCurveData,
     getLoggedInUser,
+    getMediaSasToken,
     getMisfitSurfaceData,
     getObservedSurfacesMetadata,
     getParametersAndSensitivities,
+    getPlannedWellboreHeaders,
+    getPlannedWellTrajectories,
     getPolygonsData,
     getPolygonsDirectory,
     getProductionData,
@@ -72,7 +76,7 @@ import {
     getUserPhoto,
     getVectorList,
     getVfpTable,
-    getVfpTableNames,
+    getVfpTables,
     getWellboreCasings,
     getWellboreCompletions,
     getWellboreLogCurveHeaders,
@@ -162,6 +166,9 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataError_api,
     GetHistoricalVectorDataResponse_api,
+    GetInitialFluidContactSurfacesMetadataData_api,
+    GetInitialFluidContactSurfacesMetadataError_api,
+    GetInitialFluidContactSurfacesMetadataResponse_api,
     GetInjectionDataData_api,
     GetInjectionDataError_api,
     GetInjectionDataResponse_api,
@@ -174,6 +181,8 @@ import type {
     GetLoggedInUserData_api,
     GetLoggedInUserError_api,
     GetLoggedInUserResponse_api,
+    GetMediaSasTokenData_api,
+    GetMediaSasTokenResponse_api,
     GetMisfitSurfaceDataData_api,
     GetMisfitSurfaceDataError_api,
     GetMisfitSurfaceDataResponse_api,
@@ -183,6 +192,12 @@ import type {
     GetParametersAndSensitivitiesData_api,
     GetParametersAndSensitivitiesError_api,
     GetParametersAndSensitivitiesResponse_api,
+    GetPlannedWellboreHeadersData_api,
+    GetPlannedWellboreHeadersError_api,
+    GetPlannedWellboreHeadersResponse_api,
+    GetPlannedWellTrajectoriesData_api,
+    GetPlannedWellTrajectoriesError_api,
+    GetPlannedWellTrajectoriesResponse_api,
     GetPolygonsDataData_api,
     GetPolygonsDataError_api,
     GetPolygonsDataResponse_api,
@@ -272,10 +287,10 @@ import type {
     GetVectorListResponse_api,
     GetVfpTableData_api,
     GetVfpTableError_api,
-    GetVfpTableNamesData_api,
-    GetVfpTableNamesError_api,
-    GetVfpTableNamesResponse_api,
     GetVfpTableResponse_api,
+    GetVfpTablesData_api,
+    GetVfpTablesError_api,
+    GetVfpTablesResponse_api,
     GetWellboreCasingsData_api,
     GetWellboreCasingsError_api,
     GetWellboreCasingsResponse_api,
@@ -997,6 +1012,36 @@ export const getObservedSurfacesMetadataOptions = (options: Options<GetObservedS
         queryKey: getObservedSurfacesMetadataQueryKey(options),
     });
 
+export const getInitialFluidContactSurfacesMetadataQueryKey = (
+    options: Options<GetInitialFluidContactSurfacesMetadataData_api>,
+) => createQueryKey("getInitialFluidContactSurfacesMetadata", options);
+
+/**
+ * Get Initial Fluid Contact Surfaces Metadata
+ *
+ * Get metadata for the initial fluid contact surfaces in a Sumo ensemble
+ */
+export const getInitialFluidContactSurfacesMetadataOptions = (
+    options: Options<GetInitialFluidContactSurfacesMetadataData_api>,
+) =>
+    queryOptions<
+        GetInitialFluidContactSurfacesMetadataResponse_api,
+        AxiosError<GetInitialFluidContactSurfacesMetadataError_api>,
+        GetInitialFluidContactSurfacesMetadataResponse_api,
+        ReturnType<typeof getInitialFluidContactSurfacesMetadataQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getInitialFluidContactSurfacesMetadata({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getInitialFluidContactSurfacesMetadataQueryKey(options),
+    });
+
 export const getSurfaceDataQueryKey = (options: Options<GetSurfaceDataData_api>) =>
     createQueryKey("getSurfaceData", options);
 
@@ -1011,7 +1056,6 @@ export const getSurfaceDataQueryKey = (options: Options<GetSurfaceDataData_api>)
  * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
  * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
  * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
- * - *PARTIAL* - Partial surface address. Similar to a realization surface address, but does not include a specific realization number.
  *
  * Structure of the different types of address strings:
  *
@@ -1019,8 +1063,18 @@ export const getSurfaceDataQueryKey = (options: Options<GetSurfaceDataData_api>)
  * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
  * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
  * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
- * PARTIAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>[~~<iso_date_or_interval>]
  * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
  *
  * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
  * encoded as a `UintListStr` or "*" to include all realizations.
@@ -1158,10 +1212,36 @@ export const postGetSurfaceIntersectionQueryKey = (options: Options<PostGetSurfa
 /**
  * Post Get Surface Intersection
  *
- * Get surface intersection data for requested surface name.
+ * Get surface intersection data for the specified surface.
  *
- * The surface intersection data for surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
- * and cumulative lengths, the accumulated length at each z-point in the array.
+ * ---
+ * *General description of the types of surface addresses that exist. The specific address types supported by this endpoint can be a subset of these.*
+ *
+ * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
+ * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
+ * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
+ *
+ * Structure of the different types of address strings:
+ *
+ * ```
+ * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
+ * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
+ * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
+ *
+ * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
+ * encoded as a `UintListStr` or "*" to include all realizations.
  */
 export const postGetSurfaceIntersectionOptions = (options: Options<PostGetSurfaceIntersectionData_api>) =>
     queryOptions<
@@ -1185,10 +1265,36 @@ export const postGetSurfaceIntersectionOptions = (options: Options<PostGetSurfac
 /**
  * Post Get Surface Intersection
  *
- * Get surface intersection data for requested surface name.
+ * Get surface intersection data for the specified surface.
  *
- * The surface intersection data for surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
- * and cumulative lengths, the accumulated length at each z-point in the array.
+ * ---
+ * *General description of the types of surface addresses that exist. The specific address types supported by this endpoint can be a subset of these.*
+ *
+ * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
+ * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
+ * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
+ *
+ * Structure of the different types of address strings:
+ *
+ * ```
+ * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
+ * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
+ * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
+ *
+ * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
+ * encoded as a `UintListStr` or "*" to include all realizations.
  */
 export const postGetSurfaceIntersectionMutation = (
     options?: Partial<Options<PostGetSurfaceIntersectionData_api>>,
@@ -1726,6 +1832,33 @@ export const getDrilledWellboreHeadersOptions = (options: Options<GetDrilledWell
         queryKey: getDrilledWellboreHeadersQueryKey(options),
     });
 
+export const getPlannedWellboreHeadersQueryKey = (options: Options<GetPlannedWellboreHeadersData_api>) =>
+    createQueryKey("getPlannedWellboreHeaders", options);
+
+/**
+ * Get Planned Wellbore Headers
+ *
+ * Get planned wellbore headers for all planned wells in a given field
+ */
+export const getPlannedWellboreHeadersOptions = (options: Options<GetPlannedWellboreHeadersData_api>) =>
+    queryOptions<
+        GetPlannedWellboreHeadersResponse_api,
+        AxiosError<GetPlannedWellboreHeadersError_api>,
+        GetPlannedWellboreHeadersResponse_api,
+        ReturnType<typeof getPlannedWellboreHeadersQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getPlannedWellboreHeaders({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getPlannedWellboreHeadersQueryKey(options),
+    });
+
 export const getFieldPerforationsQueryKey = (options: Options<GetFieldPerforationsData_api>) =>
     createQueryKey("getFieldPerforations", options);
 
@@ -1806,6 +1939,33 @@ export const getWellTrajectoriesOptions = (options: Options<GetWellTrajectoriesD
             return data;
         },
         queryKey: getWellTrajectoriesQueryKey(options),
+    });
+
+export const getPlannedWellTrajectoriesQueryKey = (options: Options<GetPlannedWellTrajectoriesData_api>) =>
+    createQueryKey("getPlannedWellTrajectories", options);
+
+/**
+ * Get Planned Well Trajectories
+ *
+ * Get planned trajectories for wellbores in a given field. Can optionally return only a subset if a list of uuids are given
+ */
+export const getPlannedWellTrajectoriesOptions = (options: Options<GetPlannedWellTrajectoriesData_api>) =>
+    queryOptions<
+        GetPlannedWellTrajectoriesResponse_api,
+        AxiosError<GetPlannedWellTrajectoriesError_api>,
+        GetPlannedWellTrajectoriesResponse_api,
+        ReturnType<typeof getPlannedWellTrajectoriesQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getPlannedWellTrajectories({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getPlannedWellTrajectoriesQueryKey(options),
     });
 
 export const getWellborePickIdentifiersQueryKey = (options: Options<GetWellborePickIdentifiersData_api>) =>
@@ -2463,23 +2623,22 @@ export const getRftObservationsOptions = (options: Options<GetRftObservationsDat
         queryKey: getRftObservationsQueryKey(options),
     });
 
-export const getVfpTableNamesQueryKey = (options: Options<GetVfpTableNamesData_api>) =>
-    createQueryKey("getVfpTableNames", options);
+export const getVfpTablesQueryKey = (options: Options<GetVfpTablesData_api>) => createQueryKey("getVfpTables", options);
 
 /**
- * Get Vfp Table Names
+ * Get Vfp Tables
  *
- * Get the available VFP table names for a given ensemble and realization.
+ * Get the available VFP tables (type and number) for a given ensemble and realization.
  */
-export const getVfpTableNamesOptions = (options: Options<GetVfpTableNamesData_api>) =>
+export const getVfpTablesOptions = (options: Options<GetVfpTablesData_api>) =>
     queryOptions<
-        GetVfpTableNamesResponse_api,
-        AxiosError<GetVfpTableNamesError_api>,
-        GetVfpTableNamesResponse_api,
-        ReturnType<typeof getVfpTableNamesQueryKey>
+        GetVfpTablesResponse_api,
+        AxiosError<GetVfpTablesError_api>,
+        GetVfpTablesResponse_api,
+        ReturnType<typeof getVfpTablesQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getVfpTableNames({
+            const { data } = await getVfpTables({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -2487,7 +2646,7 @@ export const getVfpTableNamesOptions = (options: Options<GetVfpTableNamesData_ap
             });
             return data;
         },
-        queryKey: getVfpTableNamesQueryKey(options),
+        queryKey: getVfpTablesQueryKey(options),
     });
 
 export const getVfpTableQueryKey = (options: Options<GetVfpTableData_api>) => createQueryKey("getVfpTable", options);
@@ -2495,7 +2654,7 @@ export const getVfpTableQueryKey = (options: Options<GetVfpTableData_api>) => cr
 /**
  * Get Vfp Table
  *
- * Get the VFP table for a given ensemble, realization and table name.
+ * Get the VFP table for a given ensemble, realization, type and table number.
  */
 export const getVfpTableOptions = (options: Options<GetVfpTableData_api>) =>
     queryOptions<
@@ -3263,6 +3422,33 @@ export const deleteSnapshotAccessLogMutation = (
     };
     return mutationOptions;
 };
+
+export const getMediaSasTokenQueryKey = (options?: Options<GetMediaSasTokenData_api>) =>
+    createQueryKey("getMediaSasToken", options);
+
+/**
+ * Get Media Sas Token
+ *
+ * Return a short-lived, read-only container SAS token for fetching tutorial media.
+ */
+export const getMediaSasTokenOptions = (options?: Options<GetMediaSasTokenData_api>) =>
+    queryOptions<
+        GetMediaSasTokenResponse_api,
+        AxiosError<DefaultError>,
+        GetMediaSasTokenResponse_api,
+        ReturnType<typeof getMediaSasTokenQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getMediaSasToken({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getMediaSasTokenQueryKey(options),
+    });
 
 export const loginRouteQueryKey = (options?: Options<LoginRouteData_api>) => createQueryKey("loginRoute", options);
 

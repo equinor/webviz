@@ -1,6 +1,7 @@
-import type { Layer, PickingInfo } from "@deck.gl/core";
+import type { PickingInfo } from "@deck.gl/core";
 import type { WellFeature as BaseWellFeature, LayerPickInfo } from "@webviz/subsurface-viewer";
-import { ColormapLayer, Grid3DLayer, MapLayer, WellMarkersLayer } from "@webviz/subsurface-viewer/dist/layers";
+import type { ColormapLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { WellMarkersLayer } from "@webviz/subsurface-viewer/dist/layers";
 import type { MarkerData } from "@webviz/subsurface-viewer/dist/layers/wells/layers/flatWellMarkersLayer";
 import { FlatWellMarkersLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/flatWellMarkersLayer";
 import type {
@@ -10,13 +11,10 @@ import type {
 } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import { isNaN } from "lodash-es";
 
-import { HoverTopic } from "@framework/HoverService";
-import type { HoverData } from "@framework/HoverService";
 import type { FlowDataColors } from "@framework/types/wellbore";
 import { InjectionPhase, ProductionPhase } from "@framework/types/wellbore";
 
 import type { CategoricalReadout, ReadoutProperty } from "../components/Readout/types";
-import { AdjustedWellsLayer } from "../customDeckGlLayers/AdjustedWellsLayer";
 import type { DrilledWellboreTrajectoryData } from "../DataProviderFramework/dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
 
 import { formatNumber } from "./numberFormatting";
@@ -48,7 +46,7 @@ export type ColorMapPickInfo = ReturnType<ColormapLayer["getPickingInfo"]>;
 
 export type LayerPickInfoWithReadout<TData> = LayerPickInfo<TData> & { readout?: CategoricalReadout };
 
-function sanitizeMdReadout(readoutValue: string | number | undefined): number | null {
+export function sanitizeMdReadout(readoutValue: string | number | undefined): number | null {
     if (readoutValue == null) return null;
     if (typeof readoutValue === "number") return readoutValue;
 
@@ -60,14 +58,7 @@ function sanitizeMdReadout(readoutValue: string | number | undefined): number | 
     return Number(strippedReadout);
 }
 
-function getInfoPickForLayer<TPickingInfo extends LayerPickInfo>(
-    infos: LayerPickInfo[],
-    layerCls: new () => Layer<any>,
-): TPickingInfo | undefined {
-    return infos.find((i): i is TPickingInfo => i.layer instanceof layerCls);
-}
-
-function getWellFeatureFromSubLayerData(pick: LayerPickInfoWithReadout<ExtendedWellFeature> | undefined) {
+export function getWellFeatureFromSubLayerData(pick: LayerPickInfoWithReadout<ExtendedWellFeature> | undefined) {
     if (!pick) return undefined;
 
     if (pick.sourceLayer instanceof FlatWellMarkersLayer || pick.sourceLayer instanceof WellMarkersLayer) {
@@ -76,79 +67,6 @@ function getWellFeatureFromSubLayerData(pick: LayerPickInfoWithReadout<ExtendedW
     }
 
     return pick.object;
-}
-
-function getTopicHoverDataFromPicks<TTopic extends keyof HoverData>(
-    topic: TTopic,
-    pickingInfos: LayerPickInfo[],
-): HoverData[TTopic] {
-    // Add more topic handlers here in the future
-    switch (topic) {
-        case HoverTopic.WELLBORE_MD: {
-            const wellsInfo = getInfoPickForLayer<LayerPickInfoWithReadout<ExtendedWellFeature>>(
-                pickingInfos,
-                AdjustedWellsLayer,
-            );
-            const wellFeature = getWellFeatureFromSubLayerData(wellsInfo);
-
-            const mdProperty = wellsInfo?.readout?.properties?.find((prop) => prop.name === "MD");
-
-            const wellboreUuid = wellFeature?.properties.uuid;
-            const mdReadout = sanitizeMdReadout(mdProperty?.value);
-
-            if (!wellboreUuid || !mdReadout) return null;
-            return { wellboreUuid, md: mdReadout } as HoverData[TTopic];
-        }
-        case HoverTopic.WELLBORE: {
-            const wellsInfo = getInfoPickForLayer<LayerPickInfoWithReadout<ExtendedWellFeature>>(
-                pickingInfos,
-                AdjustedWellsLayer,
-            );
-            const wellboreFeature = getWellFeatureFromSubLayerData(wellsInfo);
-
-            if (!wellsInfo || !wellboreFeature) return null;
-
-            return wellboreFeature.properties.uuid as HoverData[TTopic];
-        }
-
-        case HoverTopic.WORLD_POS_UTM: {
-            const pickWithCoords =
-                getInfoPickForLayer<ColorMapPickInfo>(pickingInfos, MapLayer) ||
-                getInfoPickForLayer<LayerPickInfo>(pickingInfos, Grid3DLayer);
-
-            if (!pickWithCoords?.coordinate) return null;
-
-            // Either layer-type will have valid x and y values
-            const [x, y, z] = pickWithCoords?.coordinate ?? [];
-
-            // ! The Z value in ColormapLayer is the camera position (I think), so we want to drop it
-            const zValue = pickWithCoords.layer instanceof ColormapLayer ? undefined : z;
-
-            return { x, y, z: zValue } as HoverData[TTopic];
-        }
-        default:
-            console.warn("Unsupported hover topic", topic);
-            return null;
-    }
-}
-
-type MappedHoverData<T extends readonly HoverTopic[]> = {
-    [Key in T[number]]: HoverData[Key];
-};
-
-export function getHoverDataInPicks<TTopic extends keyof HoverData>(
-    pickingInfoArr: PickingInfo[],
-    ...topics: TTopic[]
-): MappedHoverData<typeof topics> {
-    const values = {} as MappedHoverData<typeof topics>;
-
-    topics.forEach((topic) => {
-        const topicInfo = getTopicHoverDataFromPicks(topic, pickingInfoArr);
-
-        values[topic] = topicInfo;
-    });
-
-    return values;
 }
 
 function getGroupNameFromPickInfo(info: LayerPickInfo<unknown>): string {
@@ -335,4 +253,16 @@ export function getGeoWellFeaturePath(wellFeature: BaseWellFeature): GeoJSON.Pos
     if (wellFeature.geometry.type !== "GeometryCollection") return [];
 
     return wellFeature.geometry.geometries.find((g) => g.type === "LineString")?.coordinates ?? [];
+}
+
+export function getScaledCoordinate(coordinate: number[], verticalScale: number): number[] {
+    if (coordinate.length !== 3) return coordinate;
+
+    return [coordinate[0], coordinate[1], coordinate[2] * verticalScale];
+}
+
+export function getUnscaledCoordinates(coordinates: number[], verticalScale: number): number[] {
+    if (coordinates.length !== 3) return coordinates;
+
+    return [coordinates[0], coordinates[1], coordinates[2] / verticalScale];
 }

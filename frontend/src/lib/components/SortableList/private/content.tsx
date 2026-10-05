@@ -15,6 +15,7 @@ export function Content(props: ContentProps): React.ReactElement {
     const { registerContentContainer } = React.useContext(SortableListContext);
 
     const containerRef = React.useRef<HTMLElement | null>(null);
+    // eslint-disable-next-line @eslint-react/no-children-only -- Special use case to avoid overriding refs
     const onlyChild = React.Children.only(props.children) as React.ReactElement;
 
     React.useEffect(function devWarningEffect() {
@@ -37,6 +38,7 @@ export function Content(props: ContentProps): React.ReactElement {
 
     const mergedRef = useComposedRefs<HTMLElement>(setContainer, (onlyChild as any).ref);
 
+    // eslint-disable-next-line @eslint-react/no-clone-element -- Special use case to avoid overriding refs
     return React.cloneElement(onlyChild, {
         ref: mergedRef,
     });

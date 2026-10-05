@@ -4,17 +4,19 @@ import { useAtom, useAtomValue } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
+import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
 import { Setting } from "@lib/components/Setting";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
@@ -61,7 +63,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedPlotType, setSelectedPlotType] = useAtom(selectedPlotTypeAtom);
     const [selectedIndexValueCriteria, setSelectedIndexValueCriteria] = useAtom(selectedIndexValueCriteriaAtom);
 
-    usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQueryResult.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(tableDefinitionsQueryResult.errors, statusWriter);
 
     useApplyInitialSettingsToState(
         props.initialSettings,
@@ -70,7 +72,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIndexValueCriteria,
     );
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
-        setSelectedEnsembleIdents(newFilter.ensembleIdents);
+        setSelectedEnsembleIdents(filterEnsembleIdentsByType(newFilter.ensembleIdents, RegularEnsembleIdent));
         setSelectedTableNames(newFilter.tableNames);
         setSelectedIndicesWithValues(newFilter.indicesWithValues);
         setSelectedIndexValueCriteria(
@@ -82,7 +84,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const resultNameOptions: ComboboxItem<string>[] = tableDefinitionsAccessor
         .getResultNamesIntersection()
-        .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
+        .map((name) => ({ label: name, value: name, description: createHoverTextForVolume(name) }));
 
     // Create selector options
     const selectorOptions: ComboboxItem<string>[] = [
@@ -115,7 +117,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     onValueChange={(v) => v && setSelectedPlotType(v)}
                 />
             </Setting.Field>
-            <Setting.Field label="First Result" annotations={selectedFirstResultNameAnnotations}>
+            <Setting.Field label="First response" annotations={selectedFirstResultNameAnnotations}>
                 <Combobox
                     value={selectedFirstResultName.value}
                     items={resultNameOptions}
@@ -135,7 +137,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             )}
 
             {selectedPlotType === PlotType.SCATTER && (
-                <Setting.Field label="Second Result" annotations={selectedSecondResultNameAnnotations}>
+                <Setting.Field label="Second response" annotations={selectedSecondResultNameAnnotations}>
                     <Combobox
                         value={selectedSecondResultName.value}
                         items={resultNameOptions}
@@ -169,7 +171,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     ensembleSet={ensembleSet}
                     settingsContext={props.settingsContext}
                     workbenchSession={props.workbenchSession}
-                    workbenchServices={props.workbenchServices}
+                    syncSettingsService={props.syncSettingsService}
                     isPending={tableDefinitionsQueryResult.isLoading}
                     availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
                     availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}

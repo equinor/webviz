@@ -92,7 +92,7 @@ function isInternalState<T>(value: T | PersistableAtomState<T>): value is Persis
     );
 }
 
-type PersistableAtomDependenciesState = "loading" | "error" | "loaded";
+export type PersistableAtomDependenciesState = "loading" | "error" | "loaded";
 
 type PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue> = {
     /**

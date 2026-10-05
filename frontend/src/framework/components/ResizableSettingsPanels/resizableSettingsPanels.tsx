@@ -266,9 +266,11 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps): Re
             }
 
             function addEventListeners() {
+                /* eslint-disable @eslint-react/web-api-no-leaked-event-listener -- false positive; removed in removeEventListeners */
                 document.addEventListener("pointermove", handlePointerMove);
                 document.addEventListener("pointerup", handlePointerUp);
                 window.addEventListener("blur", handlePointerUp);
+                /* eslint-enable @eslint-react/web-api-no-leaked-event-listener */
             }
 
             function removeEventListeners() {
@@ -396,7 +398,7 @@ function SettingsDragBar(props: SettingsDragBarProps): React.ReactNode {
         >
             <div
                 data-settings-handle={props.panel}
-                className="z-sticky absolute top-0 -left-[5px] h-full w-2.5 cursor-ew-resize touch-none bg-transparent"
+                className="z-sticky absolute top-0 left-[-5px] h-full w-2.5 cursor-ew-resize touch-none bg-transparent"
             />
         </div>
     );

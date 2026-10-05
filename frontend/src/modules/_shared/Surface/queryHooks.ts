@@ -12,7 +12,7 @@ import type { SurfaceDataFormat } from "../DataProviderFramework/dataProviders/i
 import type { SurfaceDataFloat_trans } from "./queryDataTransforms";
 import { transformSurfaceData } from "./queryDataTransforms";
 import {
-    type FullSurfaceAddress,
+    type AnySurfaceAddress,
     encodeSurfAddrStr,
     peekSurfaceAddressType,
     peekSurfaceCaseUuid,
@@ -91,10 +91,10 @@ export function useSurfaceDataQuery(
     });
 }
 
-export function useSurfaceDataQueryByAddress(surfAddr: FullSurfaceAddress | null, format: SurfaceDataFormat.FLOAT, resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataFloat_trans>; // prettier-ignore
-export function useSurfaceDataQueryByAddress(surfAddr: FullSurfaceAddress | null, format: SurfaceDataFormat.PNG, resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataPng_api>; // prettier-ignore
+export function useSurfaceDataQueryByAddress(surfAddr: AnySurfaceAddress | null, format: SurfaceDataFormat.FLOAT, resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataFloat_trans>; // prettier-ignore
+export function useSurfaceDataQueryByAddress(surfAddr: AnySurfaceAddress | null, format: SurfaceDataFormat.PNG, resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataPng_api>; // prettier-ignore
 export function useSurfaceDataQueryByAddress(
-    surfAddr: FullSurfaceAddress | null,
+    surfAddr: AnySurfaceAddress | null,
     format: SurfaceDataFormat,
     resampleTo: SurfaceDef_api | null,
     allowEnable: boolean,

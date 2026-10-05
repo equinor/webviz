@@ -27,7 +27,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const setReceivedChannel = useSetAtom(receivedChannelAtom);
     const [availableParameterIdents] = useAtom(availableParameterIdentsAtom);
     const syncHelper = useRefStableSyncSettingsHelper({
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         moduleContext: props.settingsContext,
     });
     const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
@@ -41,7 +41,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         () => {
             setReceivedChannel(receiverResponse);
         }, // We only want to listen to revision number changes, but we need the whole channel response to set it
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line @eslint-react/exhaustive-deps
         [receiverResponse.revisionNumber, setReceivedChannel],
     );
 
@@ -49,7 +49,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     // If not, set it to the first valid parameterIdent
 
     useSyncSetting({
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         moduleContext: props.settingsContext,
         syncSettingKey: SyncSettingKey.PARAMETER,
         topic: "global.syncValue.parameter",

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { WebAsset } from "@mui/icons-material";
+import { WebAssetOff } from "@mui/icons-material";
 import { v4 } from "uuid";
 
 import type { LayoutBox } from "@framework/components/LayoutBox";
@@ -10,12 +10,17 @@ import {
     GuiState,
     RightDrawerContent,
     useGuiState,
+    useGuiValue,
     type GuiEventPayloads,
 } from "@framework/GuiMessageBroker";
+import { useDashboard } from "@framework/internal/components/DashboardContext";
 import { DashboardTopic, type LayoutElement } from "@framework/internal/Dashboard";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Paragraph } from "@lib/components/Typography/compositions";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Rect2D, Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, addMarginToRect, pointRelativeToDomRect, rectContainsPoint } from "@lib/utils/geometry";
@@ -30,7 +35,7 @@ import {
     vec2FromPointerEvent,
 } from "@lib/utils/vec2";
 
-import { useActiveDashboard } from "../../ActiveDashboardBoundary";
+import { useActiveSession } from "../../ActiveSessionBoundary";
 import {
     SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
     SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT,
@@ -53,7 +58,7 @@ function convertLayoutRectToRealRect(element: LayoutElement, size: Size2D): Rect
 }
 
 export const Layout: React.FC<LayoutProps> = (props) => {
-    const dashboard = useActiveDashboard();
+    const { dashboard, isActive: isActiveDashboard } = useDashboard();
     const [draggedModuleInstanceId, setDraggedModuleInstanceId] = React.useState<string | null>(null);
     const [position, setPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [pointer, setPointer] = React.useState<Vec2>({ x: -1, y: -1 });
@@ -64,6 +69,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
+    const isSwitchingDashboard = useGuiValue(guiMessageBroker, GuiState.IsSwitchingDashboard);
 
     // We use a temporary layout while dragging elements around
     const [tempLayout, setTempLayout] = React.useState<LayoutElement[] | null>(null);
@@ -71,6 +77,10 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const layout = tempLayout ?? trueLayout;
 
     React.useEffect(() => {
+        if (!isActiveDashboard) {
+            return;
+        }
+
         let pointerDownPoint: Vec2 | null = null;
         let pointerDownElementPosition: Vec2 | null = null;
         let pointerDownElementId: string | null = null;
@@ -286,11 +296,13 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         }
 
         function addDraggingEventListeners() {
+            /* eslint-disable @eslint-react/web-api-no-leaked-event-listener -- false positive; removed in removeDraggingEventListeners */
             document.addEventListener("pointerup", handlePointerUp);
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("keydown", handleButtonClick);
             document.addEventListener("pointercancel", handlePointerUp);
             document.addEventListener("blur-sm", handlePointerUp);
+            /* eslint-enable @eslint-react/web-api-no-leaked-event-listener */
         }
 
         function removeDraggingEventListeners() {
@@ -344,7 +356,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 clearTimeout(delayTimer);
             }
         };
-    }, [layoutDivSize, moduleInstances, guiMessageBroker, dashboard]);
+    }, [layoutDivSize, moduleInstances, guiMessageBroker, dashboard, isActiveDashboard]);
 
     function makeTempViewWrapperPlaceholder() {
         if (!tempLayoutBoxId) {
@@ -464,8 +476,16 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     );
                 })}
                 {makeTempViewWrapperPlaceholder()}
-                {moduleInstances.length === 0 && draggedModuleInstanceId === null && (
+                {moduleInstances.length === 0 && draggedModuleInstanceId === null && !isSwitchingDashboard && (
                     <EmptyLayout workbench={props.workbench} />
+                )}
+                {isSwitchingDashboard && (
+                    // Covers the outgoing dashboard's content the instant a tab switch is
+                    // requested (before the still-synchronous switch itself runs and blocks the
+                    // main thread for a moment)
+                    <div className="bg-surface/80 z-overlay absolute inset-0 flex items-center justify-center backdrop-blur-xs">
+                        <CircularProgress size={40} />
+                    </div>
                 )}
             </div>
         </div>
@@ -483,6 +503,8 @@ function EmptyLayout(props: EmptyLayoutProps) {
         guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,
     );
+    const activeSession = useActiveSession();
+    const isSnapshot = usePublishSubscribeTopicValue(activeSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     function openModulesList() {
         setRightDrawerContent(RightDrawerContent.ModulesList);
@@ -491,17 +513,33 @@ function EmptyLayout(props: EmptyLayoutProps) {
         }
     }
 
+    function makeContent() {
+        if (isSnapshot) {
+            return (
+                <Paragraph size="md" weight="bolder" tone="neutral" layoutClassName="text-center">
+                    This dashboard does not contain any modules.
+                </Paragraph>
+            );
+        }
+        return (
+            <>
+                <Paragraph size="md" weight="bolder" tone="neutral" layoutClassName="text-center">
+                    No modules added
+                </Paragraph>
+                <Paragraph size="sm" tone="neutral" layoutClassName="text-center">
+                    Drag modules here from the modules list.
+                </Paragraph>
+                {rightDrawerContent !== RightDrawerContent.ModulesList && (
+                    <Button onClick={openModulesList}>Open Modules List</Button>
+                )}
+            </>
+        );
+    }
+
     return (
         <div className="text-neutral-subtle gap-y-sm absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center select-none">
-            <WebAsset fontSize="large" />
-            <span className="text-center">
-                <strong>No modules added.</strong>
-                <br />
-                Drag modules here from the modules list.
-            </span>
-            {rightDrawerContent !== RightDrawerContent.ModulesList && (
-                <Button onClick={openModulesList}>Open Modules List</Button>
-            )}
+            <WebAssetOff fontSize="large" />
+            {makeContent()}
         </div>
     );
 }

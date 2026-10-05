@@ -1,0 +1,5 @@
+@layer components {
+    .inline-anchor {
+        @apply text-accent-subtle hover:text-accent-strong cursor-pointer rounded underline;
+    }
+}

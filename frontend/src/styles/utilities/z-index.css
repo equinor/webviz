@@ -16,6 +16,10 @@
 @utility z-modal {
     z-index: var(--z-modal);
 }
+@utility z-loading-overlay {
+    z-index: var(--z-loading-overlay);
+}
+
 @utility z-alert {
     z-index: var(--z-alert);
 }

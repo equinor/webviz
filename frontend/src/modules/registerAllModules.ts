@@ -5,6 +5,7 @@ import "./2DViewer/registerModule";
 import "./3DViewer/registerModule";
 import "./DistributionPlot/registerModule";
 import "./FlowNetwork/registerModule";
+import "./InplaceVolumesComparison/registerModule";
 import "./InplaceVolumesNew/registerModule";
 import "./InplaceVolumesPlot/registerModule";
 import "./InplaceVolumesTable/registerModule";
@@ -29,6 +30,7 @@ import "./WellLogViewer/registerModule";
 (async function registerDebugModules() {
     if (isDevMode() || debugFlagIsEnabled(SHOW_DEBUG_MODULES_FLAG)) {
         await import("./Map/registerModule");
+        await import("./DbgPerformanceTest/registerModule");
         await import("./MyModule/registerModule");
         await import("./DbgWorkbenchSpy/registerModule");
     }
