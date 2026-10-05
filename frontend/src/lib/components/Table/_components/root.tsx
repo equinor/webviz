@@ -252,6 +252,7 @@ export const Root = React.forwardRef<HTMLTableElement, TableRootProps>(function 
                 >
                     <ComponentSizeContext.Provider value={size}>
                         <TableColumnContext.Provider value={headColumnMetaData}>
+                            {props.fixed && <LeafColumnGroup leafColumns={headColumnMetaData.leafColumns} />}
                             {props.children}
                         </TableColumnContext.Provider>
                     </ComponentSizeContext.Provider>
@@ -260,6 +261,25 @@ export const Root = React.forwardRef<HTMLTableElement, TableRootProps>(function 
         </div>
     );
 });
+
+/**
+ * Fixed table layout reads column widths from the first header row only and splits a spanning header's width
+ * equally over its columns, ignoring the leaf widths underneath. `<col>` widths take precedence, so emit them.
+ */
+function LeafColumnGroup(props: { leafColumns: ColumnMetaData[] }): React.ReactNode {
+    if (props.leafColumns.length === 0) return null;
+
+    return (
+        <colgroup>
+            {props.leafColumns.map((leaf, index) => {
+                const { width, widthInPercent } = leaf.cellProps;
+                const colWidth = width ?? (widthInPercent !== undefined ? `${widthInPercent}%` : undefined);
+                // eslint-disable-next-line @eslint-react/no-array-index-key -- Leaf order is the column order
+                return <col key={index} style={{ width: colWidth }} />;
+            })}
+        </colgroup>
+    );
+}
 
 /** The table head component *might* be wrapped in virtual context components, so we need to recursively dig down for it */
 export function recursivelyFindHeadChild(children: React.ReactNode): React.ReactElement | null {
