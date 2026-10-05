@@ -20,6 +20,7 @@ import type { ColumnMetaData } from "./column";
 import { Column } from "./column";
 import { Foot } from "./foot";
 import { Head } from "./head";
+import type { TableCellProps } from "./types";
 
 type BaseProps = ComponentWrapperProps<React.HTMLAttributes<HTMLTableElement>>;
 
@@ -313,6 +314,8 @@ function recursivelyProcessColumnChildren(columnParent: React.ReactNode, depth =
 
     if (!columns.length) leafCount = 1;
 
+    inheritStickyPropsFromParent(cellProps, columns);
+
     return {
         columns: columns,
         depth: depth,
@@ -321,6 +324,45 @@ function recursivelyProcessColumnChildren(columnParent: React.ReactNode, depth =
         content: headerContent,
         cellProps: cellProps,
     };
+}
+
+/**
+ * A pinned group column pins its sub-columns too: each child gets the cumulative offset of its preceding siblings
+ * and the last child inherits `stickyEdge`. Explicit child props win. Requires numeric `width`s to derive offsets.
+ */
+function inheritStickyPropsFromParent(parentProps: TableCellProps, columns: ColumnMetaData[]): void {
+    if (parentProps.stickyLeftPx === undefined || columns.length === 0) return;
+
+    let offsetPx: number | undefined = parentProps.stickyLeftPx;
+    columns.forEach((column, index) => {
+        const isLast = index === columns.length - 1;
+
+        if (column.cellProps.stickyLeftPx === undefined && offsetPx !== undefined) {
+            column.cellProps.stickyLeftPx = offsetPx;
+        }
+        if (column.cellProps.stickyEdge === undefined && isLast) {
+            column.cellProps.stickyEdge = parentProps.stickyEdge;
+        }
+
+        // Sub-columns were processed before the parent, so re-run with the now-populated props
+        inheritStickyPropsFromParent(column.cellProps, column.columns);
+
+        const widthPx = getColumnWidthPx(column);
+        offsetPx = offsetPx !== undefined && widthPx !== undefined ? offsetPx + widthPx : undefined;
+    });
+}
+
+function getColumnWidthPx(column: ColumnMetaData): number | undefined {
+    if (typeof column.cellProps.width === "number") return column.cellProps.width;
+    if (column.columns.length === 0) return undefined;
+
+    let sum = 0;
+    for (const child of column.columns) {
+        const childWidth = getColumnWidthPx(child);
+        if (childWidth === undefined) return undefined;
+        sum += childWidth;
+    }
+    return sum;
 }
 
 function collectLeafColumns(columns: ColumnMetaData[]): ColumnMetaData[] {

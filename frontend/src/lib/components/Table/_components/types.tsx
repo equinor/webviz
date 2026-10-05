@@ -16,8 +16,9 @@ export type TableCellProps = {
     /**
      * Pins the cell to the left edge of the scroll container at this offset (px).
      * Set it on `Table.Column`; body cells in that column inherit it (an explicit cell value overrides).
+     * On a group column it also pins the sub-columns, with offsets derived from their numeric `width`s.
      */
     stickyLeftPx?: number;
-    /** Draws a right border to mark the last pinned column. Inherited by body cells like `stickyLeftPx`. */
+    /** Draws a right border to mark the last pinned column. Inherited by body cells and by the last sub-column. */
     stickyEdge?: boolean;
 } & ComponentWrapperProps<React.TableHTMLAttributes<HTMLTableCellElement>>;

@@ -88,8 +88,9 @@ function provideLeafColumns(children: React.ReactNode, leafColumns: ColumnMetaDa
         // Empty nodes render nothing, so they do not occupy a column
         if (child === null || child === undefined || typeof child === "boolean") return child;
 
-        const leafColumn = leafColumns[cellIndex] ?? null;
         const colSpan = React.isValidElement<TableCellProps>(child) ? (child.props.colSpan ?? 1) : 1;
+        // A cell spanning several columns belongs to none of them, so it inherits nothing
+        const leafColumn = colSpan === 1 ? (leafColumns[cellIndex] ?? null) : null;
         cellIndex += colSpan;
 
         return <TableCellColumnContext.Provider value={leafColumn}>{child}</TableCellColumnContext.Provider>;
