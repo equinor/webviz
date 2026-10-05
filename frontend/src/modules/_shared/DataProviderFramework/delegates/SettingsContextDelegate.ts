@@ -100,15 +100,7 @@ export class SettingsContextDelegate<
 
         this._settings = settings;
 
-        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-            "dependencies",
-            this.getDataProviderManager()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(() => {
-                this.handleSettingChanged();
-            }),
-        );
-
+        // Global settings are not subscribed to here - changes reach the settings through the dependencies that read them
         for (const key in this._settings) {
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "settings",
@@ -198,7 +190,7 @@ export class SettingsContextDelegate<
 
     areAllSettingsInitialized(): boolean {
         for (const key in this._settings) {
-            if (!this._settings[key].isInitialized() || this._settings[key].isPersistedValue()) {
+            if (!this._settings[key].isInitialized()) {
                 return false;
             }
         }
@@ -206,14 +198,14 @@ export class SettingsContextDelegate<
         return true;
     }
 
-    isSomePersistedSettingNotValid(): boolean {
+    /*
+     * A persisted value is adopted as soon as value constraints that accept it arrive. One that is still held once the
+     * settings are initialized has either been rejected by the constraints or failed to deserialize, and stays until the
+     * user changes the setting.
+     */
+    isSomePersistedValueUnresolved(): boolean {
         for (const key in this._settings) {
-            if (
-                !this._settings[key].isLoading() &&
-                this._settings[key].isPersistedValue() &&
-                !this._settings[key].isValueValid() &&
-                this._settings[key].isInitialized()
-            ) {
+            if (this._settings[key].isPersistedValue()) {
                 return true;
             }
         }
@@ -594,11 +586,7 @@ export class SettingsContextDelegate<
             return;
         }
 
-        if (
-            this.isSomePersistedSettingNotValid() ||
-            !this.areCurrentSettingsValid() ||
-            !this.areAllSettingsInitialized()
-        ) {
+        if (!this.areCurrentSettingsValid() || this.isSomePersistedValueUnresolved()) {
             this.setStatus(SettingsContextStatus.INVALID_SETTINGS);
             return;
         }

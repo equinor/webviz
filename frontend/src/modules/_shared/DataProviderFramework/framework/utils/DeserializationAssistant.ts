@@ -66,6 +66,9 @@ export class DeserializationAssistant {
                 setting.deserializeState(serializedSharedSetting);
                 return setting;
             }
+
+            // Thrown inside the try, so that e.g. a type that no longer exists becomes a placeholder as well
+            throw new Error(`Unhandled serialized item type: ${serialized.type}`);
         } catch (error) {
             const name = serialized.name ?? "Unknown item";
             const errorMessage = `Error deserializing item '${name}' - it might have been renamed or removed: ${error instanceof Error ? error.message : String(error)}`;
@@ -77,7 +80,5 @@ export class DeserializationAssistant {
             );
             return errorPlaceholder;
         }
-
-        throw new Error(`Unhandled serialized item type: ${serialized.type}`);
     }
 }

@@ -20,7 +20,12 @@ import { ItemDelegate } from "../../delegates/ItemDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProviderManager, SerializedType } from "../../interfacesAndTypes/serialization";
 
+// How long a restored state may wait for its data providers to settle before item and data notifications are published anyway
+const READINESS_TIMEOUT_MS = 10_000;
+
 export enum DataProviderManagerTopic {
+    // Published on every change to the item tree, including while deserializing, so that relationships between items
+    // (e.g. external setting controllers) are established before data providers start loading
     ITEMS_ABOUT_TO_CHANGE = "ITEMS_ABOUT_TO_CHANGE",
     ITEMS = "ITEMS",
     DATA_REVISION = "DATA_REVISION",
@@ -62,7 +67,6 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     private _globalSettings: Partial<GlobalSettings>;
     private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
     private _deserializing = false;
-    private _deserializationGeneration = 0;
     private _cancelPendingReadinessWait: (() => void) | null = null;
     private _groupColorGenerator: Generator<string, string>;
 
@@ -101,7 +105,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             this._groupDelegate
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER_ABOUT_TO_CHANGE)(() => {
-                this.publishTopicIfSerialized(DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE);
+                this.publishTopic(DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE);
             }),
         );
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -110,7 +114,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
                 this.increaseDataRevisionNumber();
-                this.publishTopicIfSerialized(DataProviderManagerTopic.ITEMS);
+                this.publishTopic(DataProviderManagerTopic.ITEMS);
             }),
         );
 
@@ -145,14 +149,6 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
 
     private publishTopic(topic: DataProviderManagerTopic): void {
         this._publishSubscribeDelegate.notifySubscribers(topic);
-    }
-
-    publishTopicIfSerialized(topic: DataProviderManagerTopic): void {
-        if (this._deserializing) {
-            return;
-        }
-
-        this.publishTopic(topic);
     }
 
     increaseDataRevisionNumber(): void {
@@ -200,6 +196,8 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     }
 
     beforeDestroy() {
+        this._cancelPendingReadinessWait?.();
+        this._cancelPendingReadinessWait = null;
         this._groupDelegate.beforeDestroy();
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
@@ -219,29 +217,60 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
 
     deserializeState(serializedState: SerializedDataProviderManager): void {
         // A previous deserialization may still be waiting for its (now discarded) tree to become ready.
+        // Cancelling stops both its readiness wait and its timeout, so it can no longer finish.
         this._cancelPendingReadinessWait?.();
         this._cancelPendingReadinessWait = null;
-        const generation = ++this._deserializationGeneration;
 
         this._deserializing = true;
-        this._itemDelegate.deserializeState(serializedState);
-        this._groupDelegate.deserializeChildren(serializedState.children);
+        try {
+            this._itemDelegate.deserializeState(serializedState);
+            this._groupDelegate.deserializeChildren(serializedState.children);
+        } catch (error) {
+            // Keep a partially built tree working rather than suppressing all notifications for the rest of the manager's life
+            this._deserializing = false;
+            throw error;
+        }
 
-        // Waiting for all descendants to be ready before updating the deserializing flag and notifying subscribers about the items.
-        const cancel = this._groupDelegate.waitUntilAllDescendantDataProvidersAreReady(() => {
-            if (generation !== this._deserializationGeneration) {
-                return;
-            }
+        // The new children were appended silently - announce the new structure, so that relationships between items
+        // (e.g. external setting controllers) are in place before any provider starts loading
+        this.publishTopic(DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE);
+        this.publishTopic(DataProviderManagerTopic.ITEMS);
+
+        let finished = false;
+        const finishDeserialization = () => {
+            finished = true;
+            // Stops whichever of the readiness wait and the timeout didn't trigger this
+            this._cancelPendingReadinessWait?.();
             this._cancelPendingReadinessWait = null;
             this._deserializing = false;
             this.increaseDataRevisionNumber();
-            this.publishTopicIfSerialized(DataProviderManagerTopic.ITEMS);
-        });
+        };
 
-        // The callback may have run synchronously and triggered a newer deserialization - don't overwrite its cancel function.
-        if (generation === this._deserializationGeneration && this._deserializing) {
-            this._cancelPendingReadinessWait = cancel;
+        // Waiting for all descendants to be ready before updating the deserializing flag and publishing data revisions
+        const cancelWait = this._groupDelegate.waitUntilAllDescendantDataProvidersAreReady(finishDeserialization);
+
+        // Finished synchronously - which may already have started a newer deserialization, whose cancel function must
+        // not be overwritten
+        if (finished) {
+            return;
         }
+
+        // A provider that never settles must not keep the manager from publishing for the rest of its life -
+        // release after a while, and let the remaining providers publish as they finish.
+        const timeout = setTimeout(() => {
+            const pendingProviderNames = this._groupDelegate
+                .getPendingDescendantDataProviders()
+                .map((provider) => provider.getItemDelegate().getName());
+            console.warn(
+                `Data providers still loading ${READINESS_TIMEOUT_MS / 1000} s after restoring state - publishing anyway: ${pendingProviderNames.join(", ")}`,
+            );
+            finishDeserialization();
+        }, READINESS_TIMEOUT_MS);
+
+        this._cancelPendingReadinessWait = () => {
+            cancelWait();
+            clearTimeout(timeout);
+        };
     }
 
     makeGroupColor(): string {

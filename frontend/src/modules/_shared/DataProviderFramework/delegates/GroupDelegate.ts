@@ -30,6 +30,12 @@ export type GroupDelegateTopicPayloads = {
     [GroupDelegateTopic.CHILDREN_EXPANSION_STATES]: { [id: string]: boolean };
 };
 
+// A provider is pending until it has loaded (or failed to load) for its current settings
+function isDataProviderPending(provider: DataProvider<any, any>): boolean {
+    const status = provider.getStatus();
+    return status === DataProviderStatus.IDLE || status === DataProviderStatus.LOADING;
+}
+
 /*
  * The GroupDelegate class is responsible for managing the children of a group item.
  * It provides methods for adding, removing, and moving children, as well as for serializing and deserializing children.
@@ -225,12 +231,15 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         this.clearChildren();
 
         this._deserializing = true;
-        const assistant = new DeserializationAssistant(this._owner.getItemDelegate().getDataProviderManager());
-        for (const child of children) {
-            const item = assistant.makeItem(child);
-            this.appendChild(item);
+        try {
+            const assistant = new DeserializationAssistant(this._owner.getItemDelegate().getDataProviderManager());
+            for (const child of children) {
+                const item = assistant.makeItem(child);
+                this.appendChild(item);
+            }
+        } finally {
+            this._deserializing = false;
         }
-        this._deserializing = false;
     }
 
     private incrementTreeRevisionNumber() {
@@ -281,51 +290,63 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         this.incrementTreeRevisionNumber();
     }
 
+    getPendingDescendantDataProviders(): DataProvider<any, any>[] {
+        return (this.getDescendantItems(isDataProvider) as DataProvider<any, any>[]).filter(isDataProviderPending);
+    }
+
     /*
-     * Calls the callback once all current descendant data providers have left the IDLE/LOADING state.
+     * Calls the callback once all data providers currently in the tree are out of the IDLE/LOADING state at the same time.
+     * The tree is re-checked on every status change and on every structural change:
+     * - a provider that has already settled may start loading again (e.g. when a setting it depends on resolves later)
+     * - a provider that is removed (and destroyed) while loading never publishes another status
+     * - a provider that is added while waiting has to settle as well
      * Returns a function that cancels the wait - after cancelling, the callback is never called.
      * Each wait gets its own subscription key, so overlapping waits on providers with the same id don't
      * unsubscribe each other.
      */
     waitUntilAllDescendantDataProvidersAreReady(callback: () => void): () => void {
-        const providers = this.getDescendantItems(isDataProvider) as DataProvider<any, any>[];
-        const pending = new Set(
-            providers.filter(
-                (p) => p.getStatus() === DataProviderStatus.IDLE || p.getStatus() === DataProviderStatus.LOADING,
-            ),
-        );
+        const getProviders = () => this.getDescendantItems(isDataProvider) as DataProvider<any, any>[];
 
-        if (pending.size === 0) {
+        if (!getProviders().some(isDataProviderPending)) {
             callback();
             return () => {};
         }
 
         const key = `readiness:${this._readinessWaitCounter++}`;
+        const subscribedProviders = new Set<DataProvider<any, any>>();
         let settled = false;
         const cancel = () => {
             settled = true;
             this._unsubscribeFunctionsManagerDelegate.unsubscribe(key);
         };
 
-        for (const provider of pending) {
-            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-                key,
-                provider.getPublishSubscribeDelegate().makeSubscriberFunction(DataProviderTopic.STATUS)(() => {
-                    if (settled) {
-                        return;
-                    }
-                    const status = provider.getStatus();
-                    if (status === DataProviderStatus.IDLE || status === DataProviderStatus.LOADING) {
-                        return;
-                    }
-                    pending.delete(provider);
-                    if (pending.size === 0) {
-                        cancel();
-                        callback();
-                    }
-                }),
-            );
-        }
+        const check = () => {
+            if (settled) {
+                return;
+            }
+            const providers = getProviders();
+            for (const provider of providers) {
+                if (subscribedProviders.has(provider)) {
+                    continue;
+                }
+                subscribedProviders.add(provider);
+                this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                    key,
+                    provider.getPublishSubscribeDelegate().makeSubscriberFunction(DataProviderTopic.STATUS)(check),
+                );
+            }
+            if (providers.some(isDataProviderPending)) {
+                return;
+            }
+            cancel();
+            callback();
+        };
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            key,
+            this._publishSubscribeDelegate.makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(check),
+        );
+        check();
 
         return cancel;
     }
