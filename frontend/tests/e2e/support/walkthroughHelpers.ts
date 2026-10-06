@@ -336,12 +336,13 @@ export async function installKeyOverlay(page: Page): Promise<void> {
 }
 
 /**
- * Smooth-scroll `locator` into view (no-op when already fully visible) and wait for the scroll to
- * settle, so the viewer sees e.g. a settings panel scroll instead of an instant jump.
+ * Smooth-scroll `locator` into view and wait for the scroll to settle, so the viewer sees e.g. a
+ * settings panel scroll instead of an instant jump. With the default "nearest" this is a no-op when
+ * the element is already fully visible.
  */
-async function smoothScrollIntoView(locator: Locator): Promise<void> {
-    await locator.evaluate(async (element) => {
-        element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+async function smoothScrollIntoView(locator: Locator, block: ScrollLogicalPosition = "nearest"): Promise<void> {
+    await locator.evaluate(async (element, scrollBlock) => {
+        element.scrollIntoView({ behavior: "smooth", block: scrollBlock });
         let lastTop = element.getBoundingClientRect().top;
         let stableFrames = 0;
         const start = performance.now();
@@ -351,7 +352,7 @@ async function smoothScrollIntoView(locator: Locator): Promise<void> {
             stableFrames = top === lastTop ? stableFrames + 1 : 0;
             lastTop = top;
         }
-    });
+    }, block);
 }
 
 /**
@@ -532,11 +533,13 @@ export async function dragModuleOntoLayout(
     // List items are divs; module header titles are spans (possibly on hidden dashboards).
     const moduleItem = page.locator(`div[title="${moduleDisplayName}"]`).filter({ visible: true }).first();
 
+    await smoothScrollIntoView(moduleItem, "center");
     await smoothMoveToLocator(page, moduleItem);
 
     await expect(async () => {
         await expect(moduleItem).toBeVisible();
-        // Mouse events outside the viewport are never dispatched (e.g. low items in the default 1280x720 run).
+        // Centre the item: scrolled just into view it can sit under the list's sticky group header.
+        await smoothScrollIntoView(moduleItem, "center");
         await moduleItem.scrollIntoViewIfNeeded();
 
         const itemBox = await moduleItem.boundingBox();
