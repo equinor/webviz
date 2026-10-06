@@ -336,6 +336,25 @@ export async function installKeyOverlay(page: Page): Promise<void> {
 }
 
 /**
+ * Smooth-scroll `locator` into view (no-op when already fully visible) and wait for the scroll to
+ * settle, so the viewer sees e.g. a settings panel scroll instead of an instant jump.
+ */
+async function smoothScrollIntoView(locator: Locator): Promise<void> {
+    await locator.evaluate(async (element) => {
+        element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        let lastTop = element.getBoundingClientRect().top;
+        let stableFrames = 0;
+        const start = performance.now();
+        while (stableFrames < 5 && performance.now() - start < 2_000) {
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            const top = element.getBoundingClientRect().top;
+            stableFrames = top === lastTop ? stableFrames + 1 : 0;
+            lastTop = top;
+        }
+    });
+}
+
+/**
  * Glide the real Playwright mouse to the centre of `locator` in several small steps so the injected
  * fake cursor (which follows pointer/mouse move events) animates smoothly across the screen instead
  * of teleporting. Playwright interpolates from its last known pointer position, so the resulting
@@ -350,6 +369,7 @@ export async function smoothMoveToLocator(page: Page, locator: Locator): Promise
         return;
     }
     try {
+        await smoothScrollIntoView(locator);
         await locator.scrollIntoViewIfNeeded();
         const box = await locator.boundingBox();
         if (box) {
