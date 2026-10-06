@@ -607,8 +607,9 @@ function dashboardTabs(page: Page): Locator {
 
 /** Rename the active dashboard via its tab's "Edit metadata" action. */
 export async function renameActiveDashboard(page: Page, name: string): Promise<void> {
-    const activeTab = dashboardTabs(page).getByRole("tab", { selected: true });
-    const tabItem = page.locator("[data-dashboard-tab-item]").filter({ has: activeTab });
+    const tabItem = dashboardTabs(page)
+        .locator("[data-dashboard-tab-item]")
+        .filter({ has: page.getByRole("tab", { selected: true }) });
     await smoothClick(page, tabItem.getByRole("button", { name: /^Open actions for / }));
     await smoothClick(page, page.getByRole("menuitem", { name: "Edit metadata" }));
 
