@@ -434,9 +434,13 @@ export class Dependency<
 
             this.applyNewValue(null);
 
+            // Any other error (e.g. a bug in a resolver) is reported too, as the setting otherwise just loses its
+            // allowed values without a reason
             const errorHelper = ApiErrorHelper.fromError(e);
             if (errorHelper) {
-                this._statusStore.addError(errorHelper?.makeFullErrorMessage());
+                this._statusStore.addError(errorHelper.makeFullErrorMessage());
+            } else {
+                this._statusStore.addError(e instanceof Error ? e.message : String(e));
             }
 
             return;

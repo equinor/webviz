@@ -125,6 +125,7 @@ export class DataProvider<
     private _scopedQueryController: ScopedQueryController;
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
+    private _hasHeldBackData: boolean = false;
 
     private _statusWriter = new GenericStatusMessageStore("DataProvider");
     private _allStatusMessages: GenericStatusMessage[] = [];
@@ -250,6 +251,11 @@ export class DataProvider<
         }
 
         if (!refetchRequired) {
+            // Data fetched while the settings were loading again is still current - publish it now
+            if (this._hasHeldBackData) {
+                this._hasHeldBackData = false;
+                this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
+            }
             // If the settings have changed but no refetch is required, it might be that the settings changes
             // still require a rerender of the data provider.
             if (this._status === DataProviderStatus.SUCCESS) {
@@ -260,8 +266,15 @@ export class DataProvider<
             return;
         }
 
+        this._hasHeldBackData = false;
         this._currentTransactionId += 1;
         const localTransactionId = this._currentTransactionId;
+
+        // The current data is outdated from now on, not only once the debounced fetch starts. A subordinated provider
+        // doesn't fetch, so it would never leave LOADING again.
+        if (!this._isSubordinated) {
+            this.setStatus(DataProviderStatus.LOADING);
+        }
 
         // Debounce the refetch to avoid multiple refetches in a short time span.
         if (this._debounceTimeout) {
@@ -273,11 +286,13 @@ export class DataProvider<
                 // previous one was still running. In this case, we do not refetch the data
                 return;
             }
+            // Recorded now, as the settings may change while fetching - the data belongs to the ones it was fetched with
+            const fetchedSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
+            const fetchedStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
             this.maybeRefetchData().then(() => {
                 if (this._currentTransactionId === localTransactionId) {
-                    // Store the previous settings and stored data after the data has been fetched
-                    this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
-                    this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
+                    this._prevSettings = fetchedSettings;
+                    this._prevStoredData = fetchedStoredData;
                 }
             });
         }, 10);
@@ -469,6 +484,14 @@ export class DataProvider<
             if (this._customDataProviderImpl.makeValueRange) {
                 this._valueRange = this._customDataProviderImpl.makeValueRange(accessors);
             }
+
+            // The settings started loading again while fetching - whether this data is still current is only known
+            // once they have resolved, so it is held back until then (see handleSettingsAndStoredDataChange)
+            if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
+                this._hasHeldBackData = true;
+                return;
+            }
+
             this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
             this.setStatus(DataProviderStatus.SUCCESS);
         } catch (error: any) {

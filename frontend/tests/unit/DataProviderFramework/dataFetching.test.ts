@@ -9,6 +9,7 @@ import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import {
+    filterProvider,
     findProvider,
     getProviderSetting,
     LABEL_PROVIDER_TYPE,
@@ -129,6 +130,60 @@ describe("Data fetching", () => {
 
         expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
         expect(provider.getData()?.realization).toBe(2);
+    });
+
+    test("is LOADING as soon as a refetch is scheduled, not only once the debounced fetch starts", async () => {
+        const { provider } = await restoreSurface();
+
+        getProviderSetting(provider, Setting.REALIZATION).setValue(2);
+
+        expect(provider.getStatus()).toBe(DataProviderStatus.LOADING);
+    });
+
+    test("data fetched while the settings load again is published once they turn out unchanged, without refetching", async () => {
+        // field-c has the same surfaces, so switching to it reloads the settings without changing them
+        backend.catalogues["field-c"] = backend.catalogues["field-a"];
+        const manager = makeDataProviderManager({ fieldId: "field-a" });
+        manager.deserializeState(managerState([filterProvider("Filter")]));
+        await settle(manager);
+        const provider = findProvider(manager, "Filter");
+        const onData = vi.fn();
+        provider.getPublishSubscribeDelegate().subscribe(DataProviderTopic.DATA, onData);
+        backend.delayMs = 100;
+
+        // The fetch for the labels starts after 10 ms and returns after 110 ms - the settings reload from 50 to 150 ms
+        getProviderSetting(provider, Setting.SHOW_LABELS).setValue(true);
+        await vi.advanceTimersByTimeAsync(50);
+        manager.updateGlobalSetting("fieldId", "field-c");
+        await vi.advanceTimersByTimeAsync(70);
+        expect(provider.getData()).toEqual({ showLabels: true });
+        expect(provider.getStatus()).toBe(DataProviderStatus.LOADING);
+        expect(onData).not.toHaveBeenCalled();
+
+        await settle(manager);
+        expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+        expect(onData).toHaveBeenCalledTimes(1);
+        expect(backend.callsTo("getLabelData")).toEqual([[false], [true]]);
+    });
+
+    test("refetches when a setting the data depends on changed while the settings were loading during a fetch", async () => {
+        backend.catalogues["field-c"] = backend.catalogues["field-a"];
+        const manager = makeDataProviderManager({ fieldId: "field-a" });
+        manager.deserializeState(managerState([filterProvider("Filter")]));
+        await settle(manager);
+        const provider = findProvider(manager, "Filter");
+        backend.delayMs = 100;
+
+        // The fetch for showing the labels is in flight when they are hidden again, while the settings reload
+        getProviderSetting(provider, Setting.SHOW_LABELS).setValue(true);
+        await vi.advanceTimersByTimeAsync(30);
+        manager.updateGlobalSetting("fieldId", "field-c");
+        await vi.advanceTimersByTimeAsync(10);
+        getProviderSetting(provider, Setting.SHOW_LABELS).setValue(false);
+        await settle(manager);
+
+        expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+        expect(provider.getData()).toEqual({ showLabels: false });
     });
 
     test("a provider without dependencies loads too, when added the way the settings UI adds it", async () => {

@@ -51,7 +51,60 @@ class FailingAttributesProvider implements CustomDataProviderImplementation<
     }
 }
 
+// The same, but its attributes resolver depends on another binding - which makes it wait for that one to resolve first
+class FailingDependentAttributesProvider implements CustomDataProviderImplementation<
+    typeof FAILING_ATTRIBUTES_SETTINGS,
+    string
+> {
+    settings = FAILING_ATTRIBUTES_SETTINGS;
+
+    getDefaultName(): string {
+        return "Failing dependent attributes provider";
+    }
+
+    setupBindings({ setting, makeSharedResult }: SetupBindingsContext<typeof FAILING_ATTRIBUTES_SETTINGS>): void {
+        const fieldIdDep = makeSharedResult({
+            debugName: "FieldId",
+            read(read) {
+                return { fieldId: read.globalSetting("fieldId") };
+            },
+            async resolve({ fieldId }) {
+                return fieldId;
+            },
+        });
+
+        setting(Setting.SURFACE_NAME).bindAttributes({
+            read(read) {
+                return { fieldId: read.sharedResult(fieldIdDep) };
+            },
+            resolve() {
+                throw new Error("Attributes resolver failed");
+            },
+        });
+    }
+
+    async fetchData(): Promise<string> {
+        return "data";
+    }
+}
+
 DataProviderRegistry.registerDataProvider("failing-attributes-test-provider", FailingAttributesProvider);
+DataProviderRegistry.registerDataProvider(
+    "failing-dependent-attributes-test-provider",
+    FailingDependentAttributesProvider,
+);
+
+function makeSerializedProvider(name: string, dataProviderType: string): SerializedDataProvider<any> {
+    return {
+        id: name,
+        type: SerializedType.DATA_PROVIDER,
+        name,
+        expanded: true,
+        visible: true,
+        dataProviderType,
+        settings: {},
+    };
+}
 
 // Whether the setting component would show the setting
 function isShown(setting: SettingManager<any>): boolean {
@@ -117,17 +170,20 @@ describe("Setting attributes", () => {
     });
 
     test("a setting whose attributes resolver fails is shown with the default attributes", async () => {
-        const serializedProvider: SerializedDataProvider<any> = {
-            id: "Failing",
-            type: SerializedType.DATA_PROVIDER,
-            name: "Failing",
-            expanded: true,
-            visible: true,
-            dataProviderType: "failing-attributes-test-provider",
-            settings: {},
-        };
         const manager = makeDataProviderManager({ fieldId: "field-a" });
-        manager.deserializeState(managerState([serializedProvider]));
+        manager.deserializeState(managerState([makeSerializedProvider("Failing", "failing-attributes-test-provider")]));
+        await vi.advanceTimersByTimeAsync(20);
+
+        const surfaceName = getProviderSetting(findProvider(manager, "Failing"), Setting.SURFACE_NAME);
+        expect(surfaceName.areAttributesResolved()).toBe(true);
+        expect(surfaceName.getAttributes()).toEqual({ visible: true, enabled: true });
+    });
+
+    test("a setting whose attributes resolver fails after waiting for another binding is shown as well", async () => {
+        const manager = makeDataProviderManager({ fieldId: "field-a" });
+        manager.deserializeState(
+            managerState([makeSerializedProvider("Failing", "failing-dependent-attributes-test-provider")]),
+        );
         await vi.advanceTimersByTimeAsync(20);
 
         const surfaceName = getProviderSetting(findProvider(manager, "Failing"), Setting.SURFACE_NAME);

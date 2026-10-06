@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { SettingsContextStatus } from "@modules/_shared/DataProviderFramework/delegates/SettingsContextDelegate";
 import { DataProviderStatus } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
+import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import {
@@ -176,6 +177,21 @@ describe("Hidden settings", () => {
         await settle(manager);
         return manager;
     }
+
+    test("restoring waits for the data of a provider whose settings only become valid once a setting is hidden", async () => {
+        const manager = makeDataProviderManager({ fieldId: "empty-field" });
+        const statusesWhenRestoringEnded: DataProviderStatus[] = [];
+        manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.IS_DESERIALIZING, () => {
+            if (!manager.isDeserializing()) {
+                statusesWhenRestoringEnded.push(findProvider(manager, "Filter").getStatus());
+            }
+        });
+
+        manager.deserializeState(managerState([filterProvider("Filter")]));
+        await settle(manager);
+
+        expect(statusesWhenRestoringEnded).toEqual([DataProviderStatus.SUCCESS]);
+    });
 
     test("a hidden setting without a valid value does not make its provider invalid", async () => {
         const manager = await restoreIn("empty-field", filterProvider("Filter"));

@@ -75,6 +75,19 @@ describe("Dependency", () => {
         expect(dependency.getStatusMessages()).toHaveLength(1);
     });
 
+    test("reports an error that is not an API error, e.g. a bug in the resolver", async () => {
+        const resolve = vi.fn().mockRejectedValue(new Error("Cannot read properties of undefined"));
+        const { dependency } = makeRootDependency({ resolve });
+
+        dependency.initialize();
+        await flush();
+
+        expect(dependency.getValue()).toBeNull();
+        expect(dependency.getStatusMessages()).toEqual([
+            expect.objectContaining({ message: "Cannot read properties of undefined" }),
+        ]);
+    });
+
     test("does not retry a resolve that is cancelled after being destroyed", async () => {
         const deferred = makeDeferred<string>();
         const resolve = vi.fn().mockReturnValue(deferred.promise);

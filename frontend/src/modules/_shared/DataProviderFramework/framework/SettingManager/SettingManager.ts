@@ -303,18 +303,20 @@ export class SettingManager<
         return this._numUnresolvedAttributeBindings === 0;
     }
 
-    updateAttributes(attributes: Partial<SettingAttributes>): void {
+    // Returns whether the attributes changed (and ATTRIBUTES was published)
+    updateAttributes(attributes: Partial<SettingAttributes>): boolean {
         const newAttributes = {
             ...this._attributes,
             ...attributes,
         };
         if (isEqual(this._attributes, newAttributes)) {
-            return;
+            return false;
         }
 
         this._attributes = newAttributes;
 
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.ATTRIBUTES);
+        return true;
     }
 
     getInternalValue(): TInternalValue {

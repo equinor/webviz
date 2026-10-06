@@ -482,14 +482,23 @@ export class SettingsContextDelegate<
 
             dependency.subscribe((attributes: Partial<SettingAttributes> | null) => {
                 // A failed resolver leaves the default attributes, rather than keeping the setting from ever being shown
-                if (attributes !== null) {
-                    this._settings[settingKey].updateAttributes(attributes);
-                }
+                const attributesChanged =
+                    attributes !== null && this._settings[settingKey].updateAttributes(attributes);
                 markAttributesResolved();
+                // Changed attributes are re-evaluated through the ATTRIBUTES subscription already
+                if (!attributesChanged) {
+                    this.handleSettingChanged();
+                }
             });
 
-            dependency.subscribeLoading(() => {
-                this.handleSettingChanged();
+            // Only the start of loading is handled here. The end is published before the resolved attributes are
+            // applied, so evaluating then would judge the settings by the old attributes - e.g. find them invalid
+            // because of a setting that is about to be hidden, which would end a restore before the provider loads.
+            // The value subscriber above evaluates once the attributes are applied instead.
+            dependency.subscribeLoading((loading) => {
+                if (loading) {
+                    this.handleSettingChanged();
+                }
             });
 
             this.subscribeToDependencyStatusMessages(dependency);
