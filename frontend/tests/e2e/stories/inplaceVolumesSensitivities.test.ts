@@ -106,7 +106,7 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         // --- 0. Setup --------------------------------------------------------------------------
         markStep("Load a design matrix ensemble");
         const introNarration = narrate(
-            "In this walkthrough we analyse inplace volumes in a design matrix ensemble. Such an ensemble groups its realizations into sensitivities. rms_seed is the reference, and every other sensitivity changes one input, either as fixed scenarios, like low and high, or as a Monte Carlo distribution.",
+            "First, we load a sensitivity run, also called a design matrix ensemble. While it loads, some background: in such an ensemble, the realizations are grouped into sensitivities. rms_seed is the reference, and every other sensitivity changes one input, either as fixed scenarios, like low and high, or as a Monte Carlo distribution.",
         );
         await createSessionAndSelectEnsemble(page, { testCase: DROGON_DESIGN });
         await introNarration;
@@ -129,7 +129,9 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         await waitForModules();
         await tableSourceNarration;
 
-        const responseNarration = narrate("As response, we pick the stock tank oil initially in place, STOIIP.");
+        const responseNarration = narrate(
+            "As response, we pick the stock tank oil initially in place, S T O I I P, or simply oil in place.",
+        );
         const responsesRow = settingRow(page, "Responses");
         await smoothClick(page, responsesRow.getByRole("combobox"));
         if ((await responsesRow.getByLabel("STOIIP", { exact: true }).count()) === 0) {
@@ -147,7 +149,7 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
             "Each row is now one sensitivity case, with the sensitivity column pinned to the left. The statistics are computed per case, over that case's realizations only. The table source is the same on every row, so it is summarised above the table instead of taking up a column.",
         );
         await narrate(
-            "Notice that several cases, such as relperm, kvkh and minpv, have exactly the same STOIIP as rms_seed. These sensitivities only change the dynamic model, so the static volumes are untouched.",
+            "Notice that several cases, such as relperm, kvkh and min-P-V, have exactly the same oil in place as rms_seed. These sensitivities only change the dynamic model, so the static volumes are untouched.",
         );
 
         // --- 2. Inplace Volumes Plot -----------------------------------------------------------
@@ -167,7 +169,7 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         await plotSourceNarration;
 
         await narrate(
-            "By default the plot is a histogram of STOIIP, coloured by sensitivity case. With more than twenty cases in one histogram, the individual distributions are hard to tell apart.",
+            "By default the plot is a histogram of oil in place, coloured by sensitivity case. With more than twenty cases in one histogram, the individual distributions are hard to tell apart.",
         );
 
         const barNarration = narrate(
@@ -181,7 +183,7 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         );
 
         const zoneNarration = narrate(
-            "We can also create one bar for each zone instead of each realization. Each bar then shows the mean STOIIP of a case in that zone.",
+            "We can also create one bar for each zone instead of each realization. Each bar then shows the mean oil in place of a case in that zone.",
         );
         await selectComboboxOption(page, "Create bar for each", "ZONE");
         await waitForModules();
@@ -226,7 +228,7 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         await tornadoNarration;
 
         const channelNarration = narrate(
-            "The tornado gets its data through a data channel. We drag from the plot module's channel button onto the tornado's Response input, which sends the STOIIP of every realization across.",
+            "The tornado gets its data through a data channel. We drag from the plot module's channel button onto the tornado's Response input, which sends the oil in place of every realization across.",
         );
         await connectDataChannel(page, { senderModuleTitle: PLOT_MODULE_TITLE, receiverName: "Response" });
         await waitForModules();
@@ -243,11 +245,11 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         await captureThumbnail(page);
 
         await narrate(
-            "The centre line is the reference, the average STOIIP of rms_seed. For scenario sensitivities, the bars show how far the low and high cases move the mean away from it. For Monte Carlo sensitivities, they show the spread of their realizations. The sensitivities are sorted by impact, so hum and the free water level stand out at the top.",
+            "The centre line is the reference, the average oil in place of rms_seed. For scenario sensitivities, the bars show how far the low and high cases move the mean away from it. For Monte Carlo sensitivities, they show the spread of their realizations. The sensitivities are sorted by impact, so hum and the free water level stand out at the top.",
         );
 
         const hideNarration = narrate(
-            "Finally, we hide sensitivities without impact. The dynamic-only sensitivities, like relperm, kvkh, minpv and multregt_mc, disappear, since they leave the static volumes unchanged. The reference rms_seed stays, and its bar shows the seed spread the other sensitivities are measured against.",
+            "Finally, we hide sensitivities without impact. The dynamic-only sensitivities, like relperm, kvkh, min-P-V and multregt_mc, disappear, since they leave the static volumes unchanged. The reference rms_seed stays, and its bar shows the seed spread the other sensitivities are measured against.",
         );
         await smoothClick(page, page.getByText("Hide sensitivities without impact", { exact: true }));
         await waitForModules();
@@ -277,7 +279,7 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         await comparisonCaseNarration;
 
         await narrate(
-            "The waterfall starts at the mean STOIIP of the reference and ends at the comparison case. The bars in between split the change in the oil zone into contributions from bulk volume, net-to-gross, net porosity, oil saturation and the oil formation volume factor.",
+            "The waterfall starts at the mean oil in place of the reference and ends at the comparison case. The bars in between split the change in the oil zone into contributions from bulk volume, net-to-gross, net porosity, oil saturation and the oil formation volume factor.",
         );
         await narrate(
             "A deeper free water level extends the oil column, so most of the gain comes from the bulk volume of the oil zone, while the rock and fluid properties change much less.",
