@@ -1,19 +1,19 @@
-import { Input } from "@mui/icons-material";
+import { Input, Warning } from "@mui/icons-material";
 
-import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ViewContext } from "@framework/ModuleContext";
-import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Tag } from "@lib/components/Tag";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
-import type { EnsemblePerRealizationResponse } from "@modules/_shared/SensitivityProcessing/types";
 import type { Interfaces } from "@modules/SensitivityPlot/interfaces";
 
+import { channelContentsToResponses, type ChannelResponse } from "../utils/channelContentsToResponses";
+
+const MAX_NUM_PLOTS = 12;
+
 export interface ResponseChannelData {
-    ensemblePerRealResponse: EnsemblePerRealizationResponse | null;
-    channelEnsemble: RegularEnsemble | null;
+    responses: ChannelResponse[];
     displayName: string | null;
     warningContent: React.ReactNode | null;
 }
@@ -32,8 +32,7 @@ export function useResponseChannel(
     const hasChannel = !!responseReceiver.channel;
     if (!hasChannel) {
         return {
-            ensemblePerRealResponse: null,
-            channelEnsemble: null,
+            responses: [],
             displayName: null,
             warningContent: (
                 <ContentWarning>
@@ -50,8 +49,7 @@ export function useResponseChannel(
 
     if (!hasChannelContents) {
         return {
-            ensemblePerRealResponse: null,
-            channelEnsemble: null,
+            responses: [],
             displayName: responseReceiver.channel?.displayName ?? null,
             warningContent: (
                 <ContentWarning>
@@ -61,42 +59,40 @@ export function useResponseChannel(
         };
     }
 
-    const content = responseReceiver.channel!.contents[0];
-
-    const ensembleIdentString = content.metaData.ensembleIdentString;
-    const channelEnsemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-
-    if (!channelEnsemble || channelEnsemble instanceof DeltaEnsemble) {
-        const ensembleType = !channelEnsemble ? "Invalid" : "Delta";
+    if (responseReceiver.channel!.contents.length > MAX_NUM_PLOTS) {
         return {
-            ensemblePerRealResponse: null,
-            channelEnsemble: null,
+            responses: [],
             displayName: responseReceiver.channel?.displayName ?? null,
             warningContent: (
                 <ContentWarning>
-                    <p>{ensembleType} ensemble detected in data channel.</p>
+                    <Warning fontSize="large" className="mb-sm" />
+                    Too many plots to display. Due to performance limitations, the number of plots is limited to{" "}
+                    {MAX_NUM_PLOTS}.
+                </ContentWarning>
+            ),
+        };
+    }
+
+    const { responses, invalidEnsembleType } = channelContentsToResponses(
+        responseReceiver.channel!.contents,
+        ensembleSet,
+    );
+
+    if (invalidEnsembleType) {
+        return {
+            responses: [],
+            displayName: responseReceiver.channel?.displayName ?? null,
+            warningContent: (
+                <ContentWarning>
+                    <p>{invalidEnsembleType} ensemble detected in data channel.</p>
                     <p>Unable to compute sensitivity responses.</p>
                 </ContentWarning>
             ),
         };
     }
-    const realizations: number[] = [];
-    const values: number[] = [];
-
-    content.dataArray?.forEach((el) => {
-        realizations.push(el.key as number);
-        values.push(el.value as number);
-    });
-    const ensemblePerRealResponse: EnsemblePerRealizationResponse = {
-        realizations,
-        values,
-        name: content.displayName,
-        unit: "",
-    };
 
     return {
-        ensemblePerRealResponse,
-        channelEnsemble,
+        responses,
         displayName: responseReceiver.channel?.displayName ?? null,
         warningContent: null,
     };
