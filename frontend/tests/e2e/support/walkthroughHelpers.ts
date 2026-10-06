@@ -597,13 +597,6 @@ function moduleHeader(page: Page, moduleTitle: string | RegExp): Locator {
         );
 }
 
-/** Remove a module instance from the dashboard via the close button in its header. */
-export async function removeModuleFromLayout(page: Page, moduleTitle: string | RegExp): Promise<void> {
-    // The remove button has no accessible name; it is the last button in the header.
-    await smoothClick(page, moduleHeader(page, moduleTitle).getByRole("button").last());
-    await expect(activeModuleLayout(page).getByTitle(moduleTitle, { exact: true })).toHaveCount(0);
-}
-
 function dashboardTabs(page: Page): Locator {
     return page.getByRole("tablist", { name: "Dashboards" });
 }
