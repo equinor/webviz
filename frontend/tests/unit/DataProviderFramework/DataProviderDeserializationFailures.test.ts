@@ -13,7 +13,7 @@ import {
     SerializedType,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
 
-import { makeDataProviderManager } from "../../utils/dataProviderFramework";
+import { makeDataProviderManager, managerState, surfaceProvider } from "../../utils/dataProviderFramework";
 
 function makeSerializedItem(type: string, name: string): SerializedItem {
     return { id: name, type: type as SerializedType, name, expanded: false, visible: true };
@@ -95,5 +95,34 @@ describe("Deserialization failures", () => {
         expect(manager.isDeserializing()).toBe(false);
         expect(childrenAtItemsNotifications.at(-1)).toEqual(["First item"]);
         expect(onDataRevision).not.toHaveBeenCalled();
+    });
+
+    test("the manager never announces restoring a state when building the tree threw", () => {
+        const manager = makeDataProviderManager();
+        makeSecondAppendThrow(manager.getGroupDelegate());
+        const onIsDeserializing = vi.fn();
+        manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.IS_DESERIALIZING, onIsDeserializing);
+
+        expect(() => manager.deserializeState(makeSerializedManager([FIRST_ITEM, SECOND_ITEM]))).toThrow();
+
+        expect(onIsDeserializing).not.toHaveBeenCalled();
+    });
+
+    test("the manager announces that restoring has ended when building the tree of a newer state threw", () => {
+        const manager = makeDataProviderManager({ fieldId: "field-a" });
+        // The provider's settings resolve asynchronously, so this restore is still waiting for it
+        manager.deserializeState(managerState([surfaceProvider("Surface")]));
+        expect(manager.isDeserializing()).toBe(true);
+
+        makeSecondAppendThrow(manager.getGroupDelegate());
+        const isDeserializingAtNotifications: boolean[] = [];
+        manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.IS_DESERIALIZING, () => {
+            isDeserializingAtNotifications.push(manager.isDeserializing());
+        });
+
+        expect(() => manager.deserializeState(makeSerializedManager([FIRST_ITEM, SECOND_ITEM]))).toThrow();
+
+        expect(isDeserializingAtNotifications).toEqual([false]);
+        manager.beforeDestroy();
     });
 });

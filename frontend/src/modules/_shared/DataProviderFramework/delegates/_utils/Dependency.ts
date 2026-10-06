@@ -303,9 +303,10 @@ export class Dependency<
             this._isProbing = false;
         }
 
-        // If there are no dependencies, we can call the update function.
-        // Started through invalidate(), so that an invalidation while this first run is in flight is queued
-        // instead of starting a second run that overlaps it
+        // Without parent dependencies, nothing will trigger the first update, so start it here.
+        // We use invalidate() rather than calling the update directly: if another invalidation
+        // arrives while this first update is still running, it gets queued instead of
+        // starting a second, overlapping update.
         if (!this._hasParentDependencies) {
             this.invalidate();
             await this._updatePromise;

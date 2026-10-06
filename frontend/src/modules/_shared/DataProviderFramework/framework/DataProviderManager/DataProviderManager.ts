@@ -20,8 +20,9 @@ import { ItemDelegate } from "../../delegates/ItemDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProviderManager, SerializedType } from "../../interfacesAndTypes/serialization";
 
-// After how long still waiting for the data providers of a restored state is reported as a warning
-const READINESS_WARNING_DELAY_MS = 10_000;
+// After how long still waiting for the data providers of a restored state is reported as a warning.
+// Generous, as most providers depend on network requests that can take a while when not cached.
+export const READINESS_WARNING_DELAY_MS = 60_000;
 
 export enum DataProviderManagerTopic {
     // Published on every change to the item tree, including while deserializing, so that relationships between items
@@ -30,6 +31,9 @@ export enum DataProviderManagerTopic {
     ITEMS = "ITEMS",
     DATA_REVISION = "DATA_REVISION",
     GLOBAL_SETTINGS = "GLOBAL_SETTINGS",
+    // Published when restoring a state starts and finishes - data revisions are held back in between, so this is what
+    // tells consumers that the data they have is not current
+    IS_DESERIALIZING = "IS_DESERIALIZING",
 }
 
 export type DataProviderManagerTopicPayload = {
@@ -37,6 +41,7 @@ export type DataProviderManagerTopicPayload = {
     [DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE]: void;
     [DataProviderManagerTopic.DATA_REVISION]: number;
     [DataProviderManagerTopic.GLOBAL_SETTINGS]: GlobalSettings;
+    [DataProviderManagerTopic.IS_DESERIALIZING]: boolean;
 };
 
 export type GlobalSettings = {
@@ -186,6 +191,9 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             if (topic === DataProviderManagerTopic.GLOBAL_SETTINGS) {
                 return this._globalSettings;
             }
+            if (topic === DataProviderManagerTopic.IS_DESERIALIZING) {
+                return this._deserializing;
+            }
         };
 
         return snapshotGetter;
@@ -215,12 +223,22 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         return this._deserializing;
     }
 
+    private setDeserializing(deserializing: boolean): void {
+        if (this._deserializing === deserializing) {
+            return;
+        }
+        this._deserializing = deserializing;
+        this.publishTopic(DataProviderManagerTopic.IS_DESERIALIZING);
+    }
+
     deserializeState(serializedState: SerializedDataProviderManager): void {
         // A previous deserialization may still be waiting for its (now discarded) tree to become ready.
         // Cancelling stops both its readiness wait and its timeout, so it can no longer finish.
         this._cancelPendingReadinessWait?.();
         this._cancelPendingReadinessWait = null;
 
+        // Set without publishing - it is announced once the new tree is complete, so that no one reacts to a partial one
+        const wasDeserializing = this._deserializing;
         this._deserializing = true;
         try {
             this._itemDelegate.deserializeState(serializedState);
@@ -229,7 +247,8 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             // Keep a partially built tree working rather than suppressing all notifications for the rest of the manager's life.
             // The children appended before the failure were added silently - announce them like a complete tree, but don't
             // publish a data revision, as that would persist the partial tree over the saved state.
-            this._deserializing = false;
+            this._deserializing = wasDeserializing;
+            this.setDeserializing(false);
             this.publishTopic(DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE);
             this.publishTopic(DataProviderManagerTopic.ITEMS);
             throw error;
@@ -239,6 +258,9 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         // (e.g. external setting controllers) are in place before any provider starts loading
         this.publishTopic(DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE);
         this.publishTopic(DataProviderManagerTopic.ITEMS);
+        if (!wasDeserializing) {
+            this.publishTopic(DataProviderManagerTopic.IS_DESERIALIZING);
+        }
 
         let finished = false;
         const finishDeserialization = () => {
@@ -246,7 +268,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             // Stops the warning timer
             this._cancelPendingReadinessWait?.();
             this._cancelPendingReadinessWait = null;
-            this._deserializing = false;
+            this.setDeserializing(false);
             this.increaseDataRevisionNumber();
         };
 

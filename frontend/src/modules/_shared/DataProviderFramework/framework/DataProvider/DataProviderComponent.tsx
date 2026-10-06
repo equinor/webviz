@@ -164,11 +164,15 @@ function EndActions(props: EndActionProps): React.ReactNode {
             }
             errorMessage += ".";
 
-            errorMessage += "\nPlease check the settings.";
+            errorMessage += "\nClick to show the settings.";
 
             return (
                 <Tooltip content={errorMessage} side="bottom">
-                    <Block className="text-danger-subtle" style={{ fontSize: 16 }} />
+                    <Block
+                        className="text-danger-subtle cursor-pointer"
+                        style={{ fontSize: 16 }}
+                        onClick={() => props.dataProvider.getItemDelegate().setExpanded(true)}
+                    />
                 </Tooltip>
             );
         }

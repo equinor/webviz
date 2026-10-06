@@ -13,6 +13,7 @@ import { type GridTestData, getTestBackend, type LabelTestData, type SurfaceTest
 export const SURFACE_PROVIDER_TYPE = "test-surface-provider";
 export const GRID_PROVIDER_TYPE = "test-grid-provider";
 export const LABEL_PROVIDER_TYPE = "test-label-provider";
+export const FILTER_PROVIDER_TYPE = "test-filter-provider";
 
 const SURFACE_SETTINGS = [Setting.ATTRIBUTE, Setting.SURFACE_NAME, Setting.REALIZATION, Setting.SHOW_LABELS] as const;
 type SurfaceSettings = typeof SURFACE_SETTINGS;
@@ -219,6 +220,73 @@ export class LabelTestProvider implements CustomDataProviderImplementation<Label
     }
 }
 
+const FILTER_SETTINGS = [Setting.SHOW_LABELS, Setting.SURFACE_NAME] as const;
+type FilterSettings = typeof FILTER_SETTINGS;
+
+/*
+ * A provider with a setting that is only shown when another one asks for it, like an optional filter:
+ *   global fieldId -> field catalogue (shared result)
+ *   catalogue -> SURFACE_NAME allowed values (the "depth" surfaces)
+ *   SHOW_LABELS + catalogue -> SURFACE_NAME attributes (only shown along with the labels, disabled without surfaces)
+ * The data only depends on SHOW_LABELS.
+ */
+export class FilterTestProvider implements CustomDataProviderImplementation<FilterSettings, LabelTestData> {
+    settings = FILTER_SETTINGS;
+
+    getDefaultName(): string {
+        return "Test filter";
+    }
+
+    getDefaultSettingsValues(): Partial<MakeSettingTypesMap<FilterSettings>> {
+        return { [Setting.SHOW_LABELS]: false };
+    }
+
+    setupBindings({ setting, makeSharedResult }: SetupBindingsContext<FilterSettings>) {
+        const catalogueDep = makeSharedResult({
+            debugName: "FieldCatalogue",
+            read(read) {
+                return { fieldId: read.globalSetting("fieldId") };
+            },
+            resolve({ fieldId }) {
+                return getTestBackend().getFieldCatalogue(fieldId);
+            },
+        });
+
+        setting(Setting.SURFACE_NAME).bindValueConstraints({
+            read(read) {
+                return { catalogue: read.sharedResult(catalogueDep) };
+            },
+            resolve({ catalogue }) {
+                return Object.keys(catalogue?.["depth"] ?? {});
+            },
+        });
+
+        setting(Setting.SURFACE_NAME).bindAttributes({
+            read(read) {
+                return {
+                    showLabels: read.localSetting(Setting.SHOW_LABELS),
+                    catalogue: read.sharedResult(catalogueDep),
+                };
+            },
+            resolve({ showLabels, catalogue }) {
+                return {
+                    visible: showLabels === true,
+                    enabled: catalogue?.["depth"] ? true : { enabled: false, reason: "No surfaces" },
+                };
+            },
+        });
+    }
+
+    fetchData({ getSetting, fetchQuery }: FetchDataParams<FilterSettings, LabelTestData>) {
+        const showLabels = getSetting(Setting.SHOW_LABELS) ?? false;
+        return fetchQuery({
+            queryKey: ["testLabelData", showLabels],
+            queryFn: () => getTestBackend().getLabelData(showLabels),
+        });
+    }
+}
+
 DataProviderRegistry.registerDataProvider(SURFACE_PROVIDER_TYPE, SurfaceTestProvider);
 DataProviderRegistry.registerDataProvider(GRID_PROVIDER_TYPE, GridTestProvider);
 DataProviderRegistry.registerDataProvider(LABEL_PROVIDER_TYPE, LabelTestProvider);
+DataProviderRegistry.registerDataProvider(FILTER_PROVIDER_TYPE, FilterTestProvider);

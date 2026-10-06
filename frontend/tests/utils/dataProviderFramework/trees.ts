@@ -10,7 +10,7 @@ import {
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-import { GRID_PROVIDER_TYPE, SURFACE_PROVIDER_TYPE } from "./testProviders";
+import { FILTER_PROVIDER_TYPE, GRID_PROVIDER_TYPE, SURFACE_PROVIDER_TYPE } from "./testProviders";
 
 /*
  * Builders for serialized item trees - restored with DataProviderManager.deserializeState(), the same way a saved
@@ -63,6 +63,21 @@ export function gridProvider(
         ...makeItem(SerializedType.DATA_PROVIDER, name, options),
         dataProviderType: GRID_PROVIDER_TYPE,
         settings: serializeSettings({ [Setting.GRID_NAME]: values.gridName }),
+    };
+}
+
+export function filterProvider(
+    name: string,
+    values: { showLabels?: boolean; surfaceName?: string | null } = {},
+    options: ItemOptions = {},
+): SerializedDataProvider<any> {
+    return {
+        ...makeItem(SerializedType.DATA_PROVIDER, name, options),
+        dataProviderType: FILTER_PROVIDER_TYPE,
+        settings: serializeSettings({
+            [Setting.SHOW_LABELS]: values.showLabels,
+            [Setting.SURFACE_NAME]: values.surfaceName,
+        }),
     };
 }
 

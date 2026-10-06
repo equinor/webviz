@@ -116,6 +116,15 @@ export class SettingsContextDelegate<
                     },
                 ),
             );
+            // Whether a setting is shown decides whether its validity counts
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "settings",
+                this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.ATTRIBUTES)(
+                    () => {
+                        this.handleSettingChanged();
+                    },
+                ),
+            );
         }
 
         this.setupDependencies();
@@ -158,9 +167,25 @@ export class SettingsContextDelegate<
         return settings;
     }
 
+    /*
+     * A hidden setting does not apply to the current configuration (e.g. a filter that is switched off) - the user can
+     * neither see nor fix it, so it must not make the settings invalid.
+     * A disabled setting that is shown still counts, as it explains itself (e.g. "No surfaces available").
+     */
+    private isSettingApplicable(key: TSettingKey): boolean {
+        return this._settings[key].getAttributes().visible;
+    }
+
+    private isSettingInvalid(key: TSettingKey): boolean {
+        if (!this.isSettingApplicable(key)) {
+            return false;
+        }
+        return !this._settings[key].isValueValid() || this._settings[key].isPersistedValue();
+    }
+
     areCurrentSettingsValid(): boolean {
         for (const key in this._settings) {
-            if (!this._settings[key].isValueValid()) {
+            if (this.isSettingApplicable(key) && !this._settings[key].isValueValid()) {
                 return false;
             }
         }
@@ -215,7 +240,7 @@ export class SettingsContextDelegate<
      */
     isSomePersistedValueUnresolved(): boolean {
         for (const key in this._settings) {
-            if (this._settings[key].isPersistedValue()) {
+            if (this.isSettingApplicable(key) && this._settings[key].isPersistedValue()) {
                 return true;
             }
         }
@@ -223,10 +248,11 @@ export class SettingsContextDelegate<
         return false;
     }
 
+    // The labels of the shown settings that make the settings invalid, including those still holding a rejected persisted value
     getInvalidSettings(): string[] {
         const invalidSettings: string[] = [];
         for (const key in this._settings) {
-            if (!this._settings[key].isValueValid()) {
+            if (this.isSettingInvalid(key)) {
                 invalidSettings.push(this._settings[key].getLabel());
             }
         }
@@ -451,13 +477,15 @@ export class SettingsContextDelegate<
             resolverSpec: ResolverSpec<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey, TReads>,
         ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey, TReads> => {
             const debugName = `SettingAttributesUpdater_${settingKey}`;
+            const markAttributesResolved = this._settings[settingKey].registerAttributesBinding();
             const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribe((attributes: Partial<SettingAttributes> | null) => {
-                if (attributes === null) {
-                    return;
+                // A failed resolver leaves the default attributes, rather than keeping the setting from ever being shown
+                if (attributes !== null) {
+                    this._settings[settingKey].updateAttributes(attributes);
                 }
-                this._settings[settingKey].updateAttributes(attributes);
+                markAttributesResolved();
             });
 
             dependency.subscribeLoading(() => {

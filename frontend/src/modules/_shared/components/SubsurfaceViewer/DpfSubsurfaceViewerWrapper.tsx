@@ -17,7 +17,10 @@ import type {
     AssemblerProduct,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import {
+    isVisualizationLoading,
+    VisualizationItemType,
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { ViewLayout } from "@modules/_shared/enums/viewLayout";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 
@@ -159,7 +162,7 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         }
     }
 
-    statusWriter.setLoading(props.visualizationAssemblerProduct.numLoadingDataProviders > 0);
+    statusWriter.setLoading(isVisualizationLoading(props.visualizationAssemblerProduct));
 
     for (const message of props.visualizationAssemblerProduct.aggregatedErrorMessages) {
         statusWriter.addError(message);
@@ -214,7 +217,7 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     }
 
     const finalLayers: Layer<any>[] = [];
-    if (changingFields && props.visualizationAssemblerProduct.numLoadingDataProviders === 0) {
+    if (changingFields && !isVisualizationLoading(props.visualizationAssemblerProduct)) {
         setChangingFields(false);
     }
 

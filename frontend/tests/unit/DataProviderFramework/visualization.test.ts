@@ -11,6 +11,7 @@ import {
     type Annotation,
     type AssemblerProduct,
     type DataProviderVisualization,
+    isVisualizationLoading,
     VisualizationAssembler,
     VisualizationItemType,
     type VisualizationTarget,
@@ -98,8 +99,11 @@ function makeAssembler() {
     return assembler;
 }
 
+// Kept stable, as consumers memoize the options - a new injected data object counts as a change
+const ASSEMBLE_OPTIONS = { injectedData: { scaleFactor: 2 }, initialAccumulatedData: { numValues: 0 } };
+
 function assemble(assembler: ReturnType<typeof makeAssembler>, manager: DataProviderManager): Product {
-    return assembler.make(manager, { injectedData: { scaleFactor: 2 }, initialAccumulatedData: { numValues: 0 } });
+    return assembler.make(manager, ASSEMBLE_OPTIONS);
 }
 
 // The structure of the product by name: groups as { group: children }, data provider visualizations as their name
@@ -309,6 +313,162 @@ describe("Visualization assembly", () => {
 
         expect(afterChange).not.toBe(first);
         expect(afterChange.showLabels).toBe(true);
+    });
+
+    test("accumulates data anew for a reused provider, as the providers before it may have changed", async () => {
+        const manager = await restore(
+            surfaceProvider("Surface 1", { realization: 1 }),
+            surfaceProvider("Surface 2", { realization: 3 }),
+        );
+        const assembler = makeAssembler();
+        expect(assemble(assembler, manager).accumulatedData).toEqual({ numValues: 4 });
+
+        // Surface 2 hasn't changed, so its visualization is reused - but its accumulated data must not be
+        findProvider(manager, "Surface 1").getItemDelegate().setVisible(false);
+        const product = assemble(assembler, manager);
+
+        expect(describeStructure(product.children)).toEqual(["Surface 2"]);
+        expect(product.accumulatedData).toEqual({ numValues: 2 });
+    });
+
+    test("accumulates data correctly when a provider before a reused one becomes available later", async () => {
+        const manager = await restore(
+            surfaceProvider("Surface 1", { surfaceName: "Gone surface" }),
+            surfaceProvider("Surface 2", { realization: 3 }),
+        );
+        const assembler = makeAssembler();
+
+        // Surface 1 is left out, so Surface 2 accumulates onto the initial data
+        expect(describeStructure(assemble(assembler, manager).children)).toEqual(["Surface 2"]);
+
+        getProviderSetting(findProvider(manager, "Surface 1"), Setting.SURFACE_NAME).setValue("Top reservoir");
+        await settle(manager);
+        const product = assemble(assembler, manager);
+
+        expect(describeStructure(product.children)).toEqual(["Surface 1", "Surface 2"]);
+        expect(product.accumulatedData).toEqual({ numValues: 4 });
+    });
+
+    test("makes a provider's visualization anew when the injected data changes", async () => {
+        const manager = await restore(surfaceProvider("Surface", { realization: 3 }));
+        const assembler = makeAssembler();
+        const injectedData = { scaleFactor: 2 };
+        const first = visualizationOf(assembler.make(manager, { injectedData }), "Surface");
+
+        expect(visualizationOf(assembler.make(manager, { injectedData }), "Surface")).toBe(first);
+
+        const rescaled = visualizationOf(assembler.make(manager, { injectedData: { scaleFactor: 10 } }), "Surface");
+        expect(rescaled.scaledValues).toEqual([30, 300]);
+    });
+
+    test("passes the injected data to the bounding box transformer", async () => {
+        const manager = await restore(gridProvider("Grid"));
+        const gridAssembler = new VisualizationAssembler<VisualizationTarget.DECK_GL, CustomGroupProps, InjectedData>();
+        gridAssembler.registerDataProviderTransformers(GRID_PROVIDER_TYPE, GridTestProvider, {
+            transformToVisualization: ({ name }) => asLayer({ name }),
+            transformToBoundingBox: ({ getInjectedData }) =>
+                bbox.create(vec3.create(0, 0, 0), vec3.create(getInjectedData().scaleFactor, 0, 0)),
+        });
+
+        const product = gridAssembler.make(manager, { injectedData: { scaleFactor: 5 } });
+
+        expect(product.combinedBoundingBox).toEqual(bbox.create(vec3.create(0, 0, 0), vec3.create(5, 0, 0)));
+    });
+
+    test("a product made while a state is being restored is loading, even before its providers are counted", async () => {
+        const manager = makeDataProviderManager({ fieldId: "field-a" });
+        const assembler = makeAssembler();
+        const beforeRestoring = assemble(assembler, manager);
+        expect(beforeRestoring.isRestoringState).toBe(false);
+        expect(isVisualizationLoading(beforeRestoring)).toBe(false);
+
+        manager.deserializeState(managerState([surfaceProvider("Surface")]));
+        const whileRestoring = assemble(assembler, manager);
+        expect(whileRestoring.isRestoringState).toBe(true);
+        expect(isVisualizationLoading(whileRestoring)).toBe(true);
+
+        await settle(manager);
+        const restored = assemble(assembler, manager);
+        expect(restored.isRestoringState).toBe(false);
+        expect(isVisualizationLoading(restored)).toBe(false);
+    });
+
+    test("groups in a product made while a state is being restored are loading as well", () => {
+        const manager = makeDataProviderManager({ fieldId: "field-a" });
+
+        manager.deserializeState(managerState([view("View", [gridProvider("Grid")])]));
+        const viewGroup = assemble(makeAssembler(), manager).children[0] as GroupChild;
+
+        expect(viewGroup.isRestoringState).toBe(true);
+        expect(isVisualizationLoading(viewGroup)).toBe(true);
+    });
+
+    test("memoizes derived data across changes that only affect the presentation, until the data changes", async () => {
+        const manager = await restore(surfaceProvider("Surface", { realization: 1 }));
+        const computeDerivedValues = vi.fn((values: number[]) => values.map((value) => value * 100));
+        const assembler = new VisualizationAssembler<
+            VisualizationTarget.DECK_GL,
+            CustomGroupProps,
+            InjectedData,
+            AccumulatedData
+        >();
+        assembler.registerDataProviderTransformers(SURFACE_PROVIDER_TYPE, SurfaceTestProvider, {
+            transformToVisualization: ({ getData, getSetting, memoize }) => {
+                const values = getData()?.values ?? [];
+                return asLayer({
+                    derivedValues: memoize("derivedValues", [getData()], () => computeDerivedValues(values)),
+                    showLabels: getSetting(Setting.SHOW_LABELS),
+                });
+            },
+        });
+        const provider = findProvider(manager, "Surface");
+        const first = visualizationOf(assembler.make(manager), "Surface");
+
+        // Changing the labels doesn't refetch, but makes the visualization anew
+        getProviderSetting(provider, Setting.SHOW_LABELS).setValue(true);
+        await settle(manager);
+        const afterLabels = visualizationOf(assembler.make(manager), "Surface");
+        expect(afterLabels).not.toBe(first);
+        expect(afterLabels.showLabels).toBe(true);
+        expect(afterLabels.derivedValues).toBe(first.derivedValues);
+        expect(computeDerivedValues).toHaveBeenCalledTimes(1);
+
+        getProviderSetting(provider, Setting.REALIZATION).setValue(3);
+        await settle(manager);
+        const afterRefetch = visualizationOf(assembler.make(manager), "Surface");
+        expect(afterRefetch.derivedValues).toEqual([300, 3000]);
+        expect(computeDerivedValues).toHaveBeenCalledTimes(2);
+    });
+
+    test("shares memoized values between the transformers of a provider, but not between providers", async () => {
+        const manager = await restore(
+            surfaceProvider("Surface 1", { realization: 1 }),
+            surfaceProvider("Surface 2", { realization: 3 }),
+        );
+        const computeExtent = vi.fn((values: number[]) => [Math.min(...values), Math.max(...values)] as const);
+        const assembler = new VisualizationAssembler<
+            VisualizationTarget.DECK_GL,
+            CustomGroupProps,
+            InjectedData,
+            AccumulatedData
+        >();
+        assembler.registerDataProviderTransformers(SURFACE_PROVIDER_TYPE, SurfaceTestProvider, {
+            transformToVisualization: ({ name, getData, memoize }) => {
+                const [min, max] = memoize("extent", [getData()], () => computeExtent(getData()?.values ?? []));
+                return asLayer({ name, min, max });
+            },
+            transformToBoundingBox: ({ getData, memoize }) => {
+                const [min, max] = memoize("extent", [getData()], () => computeExtent(getData()?.values ?? []));
+                return bbox.create(vec3.create(min, 0, 0), vec3.create(max, 0, 0));
+            },
+        });
+
+        const product = assembler.make(manager);
+
+        expect(computeExtent).toHaveBeenCalledTimes(2);
+        expect(visualizationOf(product, "Surface 1")).toMatchObject({ min: 1, max: 10 });
+        expect(visualizationOf(product, "Surface 2")).toMatchObject({ min: 3, max: 30 });
+        expect(product.combinedBoundingBox).toEqual(bbox.create(vec3.create(1, 0, 0), vec3.create(30, 0, 0)));
     });
 
     test("refuses to register transformers for the same provider type, or props for the same group type, twice", () => {

@@ -4,6 +4,7 @@ import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dat
 import {
     type DataProviderManager,
     DataProviderManagerTopic,
+    READINESS_WARNING_DELAY_MS,
 } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import type { CustomDataProviderImplementation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import {
@@ -89,18 +90,18 @@ describe("DataProviderManager readiness warning", () => {
         vi.restoreAllMocks();
     });
 
-    test("keeps deserializing while a provider is still loading, however long it takes, and names it in a warning after 10 s", () => {
+    test("keeps deserializing while a provider is still loading, however long it takes, and names it in a warning after a while", () => {
         const manager = makeDataProviderManager();
         const onDataRevision = countDataRevisions(manager);
 
         manager.deserializeState(HANGING_STATE);
-        vi.advanceTimersByTime(9_999);
+        vi.advanceTimersByTime(READINESS_WARNING_DELAY_MS - 1);
         expect(console.warn).not.toHaveBeenCalled();
 
         vi.advanceTimersByTime(1);
         expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("Hanging provider"));
 
-        vi.advanceTimersByTime(60_000);
+        vi.advanceTimersByTime(10 * READINESS_WARNING_DELAY_MS);
         expect(manager.isDeserializing()).toBe(true);
         expect(onDataRevision).not.toHaveBeenCalled();
         expect(console.warn).toHaveBeenCalledTimes(1);
@@ -116,7 +117,7 @@ describe("DataProviderManager readiness warning", () => {
         expect(manager.isDeserializing()).toBe(false);
         expect(onDataRevision).toHaveBeenCalledTimes(1);
 
-        await vi.advanceTimersByTimeAsync(10_000);
+        await vi.advanceTimersByTimeAsync(READINESS_WARNING_DELAY_MS);
         expect(onDataRevision).toHaveBeenCalledTimes(1);
         expect(console.warn).not.toHaveBeenCalled();
     });
@@ -125,12 +126,12 @@ describe("DataProviderManager readiness warning", () => {
         const manager = makeDataProviderManager();
 
         manager.deserializeState(HANGING_STATE);
-        vi.advanceTimersByTime(6_000);
+        vi.advanceTimersByTime(0.6 * READINESS_WARNING_DELAY_MS);
         manager.deserializeState(HANGING_STATE);
-        vi.advanceTimersByTime(6_000);
+        vi.advanceTimersByTime(0.6 * READINESS_WARNING_DELAY_MS);
         expect(console.warn).not.toHaveBeenCalled();
 
-        vi.advanceTimersByTime(4_000);
+        vi.advanceTimersByTime(0.4 * READINESS_WARNING_DELAY_MS);
         expect(console.warn).toHaveBeenCalledTimes(1);
     });
 
@@ -139,7 +140,7 @@ describe("DataProviderManager readiness warning", () => {
 
         manager.deserializeState(HANGING_STATE);
         manager.beforeDestroy();
-        vi.advanceTimersByTime(10_000);
+        vi.advanceTimersByTime(READINESS_WARNING_DELAY_MS);
 
         expect(console.warn).not.toHaveBeenCalled();
     });
@@ -160,7 +161,7 @@ describe("DataProviderManager readiness warning", () => {
         expect(manager.isDeserializing()).toBe(true);
 
         manager.beforeDestroy();
-        vi.advanceTimersByTime(10_000);
+        vi.advanceTimersByTime(READINESS_WARNING_DELAY_MS);
 
         expect(onDataRevision).toHaveBeenCalledTimes(1);
         expect(console.warn).not.toHaveBeenCalled();

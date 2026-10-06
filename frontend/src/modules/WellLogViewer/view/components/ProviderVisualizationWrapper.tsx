@@ -7,6 +7,7 @@ import type { ColormapFunction } from "@webviz/well-log-viewer/dist/utils/color-
 
 import type { WellboreTrajectory_api } from "@api";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { isVisualizationLoading } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { Template, TemplatePlot, TemplateTrack } from "@modules/_shared/types/wellLogTemplates";
 import { getUniqueCurveNameForPlotConfig } from "@modules/_shared/utils/wellLog";
 import { MAIN_AXIS_CURVE } from "@modules/WellLogViewer/constants";
@@ -154,7 +155,7 @@ export function ProviderVisualizationWrapper(props: ProviderVisualizationWrapper
         [factoryProduct, wellPicks, trajectoryData, limitDomainToData],
     );
 
-    if (!factoryProduct || factoryProduct.numLoadingDataProviders > 0) {
+    if (!factoryProduct || isVisualizationLoading(factoryProduct)) {
         return (
             <div className="z-elevated absolute flex h-full w-full items-center justify-center bg-white opacity-50">
                 <CircularProgress />

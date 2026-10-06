@@ -313,14 +313,15 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         }
 
         const key = `readiness:${this._readinessWaitCounter++}`;
+        const unsubscribeFunctionsManagerDelegate = this._unsubscribeFunctionsManagerDelegate;
         const subscribedProviders = new Set<DataProvider<any, any>>();
         let settled = false;
-        const cancel = () => {
+        function cancel() {
             settled = true;
-            this._unsubscribeFunctionsManagerDelegate.unsubscribe(key);
-        };
+            unsubscribeFunctionsManagerDelegate.unsubscribe(key);
+        }
 
-        const check = () => {
+        function checkProvidersReady() {
             if (settled) {
                 return;
             }
@@ -330,9 +331,11 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                     continue;
                 }
                 subscribedProviders.add(provider);
-                this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                     key,
-                    provider.getPublishSubscribeDelegate().makeSubscriberFunction(DataProviderTopic.STATUS)(check),
+                    provider.getPublishSubscribeDelegate().makeSubscriberFunction(DataProviderTopic.STATUS)(
+                        checkProvidersReady,
+                    ),
                 );
             }
             if (providers.some(isDataProviderPending)) {
@@ -340,13 +343,15 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
             }
             cancel();
             callback();
-        };
+        }
 
-        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+        unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             key,
-            this._publishSubscribeDelegate.makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(check),
+            this._publishSubscribeDelegate.makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(
+                checkProvidersReady,
+            ),
         );
-        check();
+        checkProvidersReady();
 
         return cancel;
     }

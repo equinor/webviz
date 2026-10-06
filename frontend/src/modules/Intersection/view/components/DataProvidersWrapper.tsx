@@ -18,6 +18,7 @@ import { IntersectionView } from "@modules/_shared/DataProviderFramework/groups/
 import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import {
+    isVisualizationLoading,
     VisualizationAssembler,
     VisualizationItemType,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -173,7 +174,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     }
 
     // Set loading status
-    const isLoading = assemblerProduct.numLoadingDataProviders > 0;
+    const isLoading = isVisualizationLoading(assemblerProduct);
     statusWriter.setLoading(isLoading);
 
     // Shared field-level query (same result for all views)

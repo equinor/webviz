@@ -286,6 +286,9 @@ export class DataProvider<
     private handleSettingsStatusChange(): void {
         const status = this._settingsContextDelegate.getStatus();
         if (status === SettingsContextStatus.INVALID_SETTINGS) {
+            // A fetch scheduled or started while the settings were still valid would otherwise replace this status
+            // once it finishes
+            this.cancelScheduledAndActiveFetch();
             this._error = "Invalid settings";
             this.setStatus(DataProviderStatus.INVALID_SETTINGS);
             return;
@@ -410,6 +413,16 @@ export class DataProvider<
         this._scopedQueryController.cancelActiveFetch();
         this._onFetchCancelOrFinishFn();
         this._onFetchCancelOrFinishFn = () => {};
+    }
+
+    private cancelScheduledAndActiveFetch(): void {
+        // A fetch that is already past its queries only applies its result while its transaction is the current one
+        this._currentTransactionId += 1;
+        if (this._debounceTimeout) {
+            clearTimeout(this._debounceTimeout);
+            this._debounceTimeout = null;
+        }
+        this.tidyUpFetchRelatedResources();
     }
 
     private async maybeRefetchData(): Promise<void> {

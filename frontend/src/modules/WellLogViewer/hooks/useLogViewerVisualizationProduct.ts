@@ -80,6 +80,7 @@ export function useLogViewerVisualizationProduct(
     dataProviderManager: DataProviderManager,
 ): WellLogFactoryProduct | null {
     const [previousRevision, setPreviousRevision] = React.useState<number | null>(null);
+    const [previousIsDeserializing, setPreviousIsDeserializing] = React.useState<boolean | null>(null);
     const [previousProduct, setPreviousProduct] = React.useState<WellLogFactoryProduct | null>(null);
 
     const latestRevision = React.useSyncExternalStore(
@@ -88,10 +89,19 @@ export function useLogViewerVisualizationProduct(
             .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION),
         dataProviderManager.makeSnapshotGetter(DataProviderManagerTopic.DATA_REVISION),
     );
+    // Data revisions are held back while restoring a state - without this, the product made before would not tell
+    // that it is outdated
+    const isDeserializing = React.useSyncExternalStore(
+        dataProviderManager
+            .getPublishSubscribeDelegate()
+            .makeSubscriberFunction(DataProviderManagerTopic.IS_DESERIALIZING),
+        dataProviderManager.makeSnapshotGetter(DataProviderManagerTopic.IS_DESERIALIZING),
+    );
 
-    if (previousRevision !== latestRevision) {
+    if (previousRevision !== latestRevision || previousIsDeserializing !== isDeserializing) {
         setPreviousRevision(latestRevision);
-        setPreviousProduct(VISUALIZATION_FACTORY.make(dataProviderManager, { disableCache: true }));
+        setPreviousIsDeserializing(isDeserializing);
+        setPreviousProduct(VISUALIZATION_FACTORY.make(dataProviderManager));
     }
 
     return previousProduct;

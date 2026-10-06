@@ -5,6 +5,7 @@ import { DataProviderStatus } from "@modules/_shared/DataProviderFramework/frame
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import {
+    filterProvider,
     findProvider,
     getProviderSetting,
     gridProvider,
@@ -165,5 +166,77 @@ describe("Fix-up of values that became invalid - current strategy", () => {
         expect(getProviderSetting(provider, Setting.SURFACE_NAME).getValue()).toBe("New surface");
         expect(getProviderSetting(provider, Setting.REALIZATION).getValue()).toBe(1);
         expect(provider.getData()?.surfaceName).toBe("New surface");
+    });
+});
+
+describe("Hidden settings", () => {
+    async function restoreIn(fieldId: string, ...items: Parameters<typeof managerState>[0]) {
+        const manager = makeDataProviderManager({ fieldId });
+        manager.deserializeState(managerState(items));
+        await settle(manager);
+        return manager;
+    }
+
+    test("a hidden setting without a valid value does not make its provider invalid", async () => {
+        const manager = await restoreIn("empty-field", filterProvider("Filter"));
+        const provider = findProvider(manager, "Filter");
+
+        expect(getProviderSetting(provider, Setting.SURFACE_NAME).isValueValid()).toBe(false);
+        expect(provider.getSettingsContextDelegate().getStatus()).toBe(SettingsContextStatus.VALID_SETTINGS);
+        expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+    });
+
+    test("showing a setting without a valid value makes its provider invalid, and hiding it again makes it valid", async () => {
+        const manager = await restoreIn("empty-field", filterProvider("Filter"));
+        const provider = findProvider(manager, "Filter");
+        const surfaceName = getProviderSetting(provider, Setting.SURFACE_NAME);
+
+        getProviderSetting(provider, Setting.SHOW_LABELS).setValue(true);
+        await settle(manager);
+        expect(surfaceName.getAttributes().visible).toBe(true);
+        expect(provider.getSettingsContextDelegate().getStatus()).toBe(SettingsContextStatus.INVALID_SETTINGS);
+        expect(provider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
+        expect(provider.getSettingsContextDelegate().getInvalidSettings()).toEqual([surfaceName.getLabel()]);
+
+        getProviderSetting(provider, Setting.SHOW_LABELS).setValue(false);
+        await settle(manager);
+        expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+    });
+
+    test("a shown setting still counts while it is disabled, as it explains why", async () => {
+        const manager = await restoreIn("empty-field", filterProvider("Filter", { showLabels: true }));
+        const provider = findProvider(manager, "Filter");
+
+        expect(getProviderSetting(provider, Setting.SURFACE_NAME).getAttributes().enabled).toEqual({
+            enabled: false,
+            reason: "No surfaces",
+        });
+        expect(provider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
+    });
+
+    test("a rejected persisted value only makes its provider invalid while its setting is shown", async () => {
+        const manager = await restore(filterProvider("Filter", { surfaceName: "Gone surface" }));
+        const provider = findProvider(manager, "Filter");
+        const surfaceName = getProviderSetting(provider, Setting.SURFACE_NAME);
+
+        expect(surfaceName.isPersistedValue()).toBe(true);
+        expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+
+        getProviderSetting(provider, Setting.SHOW_LABELS).setValue(true);
+        await settle(manager);
+        expect(provider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
+        expect(provider.getSettingsContextDelegate().getInvalidSettings()).toEqual([surfaceName.getLabel()]);
+    });
+});
+
+describe("Naming the invalid settings", () => {
+    test("names a setting that holds a rejected persisted value", async () => {
+        const manager = await restore(surfaceProvider("Surface", { surfaceName: "Gone surface" }));
+        const provider = findProvider(manager, "Surface");
+
+        expect(provider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
+        expect(provider.getSettingsContextDelegate().getInvalidSettings()).toContain(
+            getProviderSetting(provider, Setting.SURFACE_NAME).getLabel(),
+        );
     });
 });
