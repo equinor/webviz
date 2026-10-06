@@ -235,7 +235,14 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
             const assistant = new DeserializationAssistant(this._owner.getItemDelegate().getDataProviderManager());
             for (const child of children) {
                 const item = assistant.makeItem(child);
-                this.appendChild(item);
+                try {
+                    this.appendChild(item);
+                } catch (error) {
+                    // Not part of the tree, so nothing else would ever tear it down - and a provider starts initializing,
+                    // and publishing to the manager, as soon as it is made
+                    item.beforeDestroy?.();
+                    throw error;
+                }
             }
         } finally {
             this._deserializing = false;

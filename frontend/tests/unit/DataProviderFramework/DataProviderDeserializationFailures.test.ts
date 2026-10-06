@@ -13,7 +13,12 @@ import {
     SerializedType,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
 
-import { makeDataProviderManager, managerState, surfaceProvider } from "../../utils/dataProviderFramework";
+import {
+    makeDataProviderManager,
+    managerState,
+    resetTestBackend,
+    surfaceProvider,
+} from "../../utils/dataProviderFramework";
 
 function makeSerializedItem(type: string, name: string): SerializedItem {
     return { id: name, type: type as SerializedType, name, expanded: false, visible: true };
@@ -75,7 +80,7 @@ describe("Deserialization failures", () => {
         expect(onTreeRevision).toHaveBeenCalled();
     });
 
-    test("the manager announces the partial tree, without a data revision, when building it threw", () => {
+    test("the manager tears down the partial tree and announces the empty tree, without a data revision, when building it threw", () => {
         const manager = makeDataProviderManager();
         makeSecondAppendThrow(manager.getGroupDelegate());
         const childrenAtItemsNotifications: string[][] = [];
@@ -93,8 +98,34 @@ describe("Deserialization failures", () => {
         expect(() => manager.deserializeState(makeSerializedManager([FIRST_ITEM, SECOND_ITEM]))).toThrow();
 
         expect(manager.isDeserializing()).toBe(false);
-        expect(childrenAtItemsNotifications.at(-1)).toEqual(["First item"]);
+        expect(childrenAtItemsNotifications.at(-1)).toEqual([]);
         expect(onDataRevision).not.toHaveBeenCalled();
+    });
+
+    test("providers made before building the tree threw publish no data revisions afterwards", async () => {
+        vi.useFakeTimers();
+        try {
+            const backend = resetTestBackend();
+            backend.catalogues["field-a"] = { depth: { "Top reservoir": [1] } };
+            const manager = makeDataProviderManager({ fieldId: "field-a" });
+            // The first provider is appended, the second is made but appending it throws
+            makeSecondAppendThrow(manager.getGroupDelegate());
+            const onDataRevision = vi.fn();
+            manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.DATA_REVISION, onDataRevision);
+
+            expect(() =>
+                manager.deserializeState(
+                    managerState([surfaceProvider("Appended surface"), surfaceProvider("Unappended surface")]),
+                ),
+            ).toThrow();
+            // Long enough for both to have loaded, had they kept initializing
+            await vi.advanceTimersByTimeAsync(1_000);
+
+            expect(onDataRevision).not.toHaveBeenCalled();
+            expect(backend.callsTo("getSurfaceData")).toEqual([]);
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     test("the manager never announces restoring a state when building the tree threw", () => {
