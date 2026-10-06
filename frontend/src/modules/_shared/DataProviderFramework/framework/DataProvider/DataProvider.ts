@@ -289,11 +289,9 @@ export class DataProvider<
         // ! asynchronously without discarding outdated results (e.g. subsurface-viewer's MapLayer) - the outdated mesh
         // ! could finish last and replace the new one.
 
-        // Debounce the refetch to avoid multiple refetches in a short time span.
-        if (this._debounceTimeout) {
-            clearTimeout(this._debounceTimeout);
-        }
-        this._debounceTimeout = setTimeout(() => {
+        // Debounce the refetch to avoid multiple refetches in a short time span. Until it starts, the provider is
+        // pending through isFetchScheduled(), so e.g. a restore can't finish in between.
+        const timeout = setTimeout(() => {
             if (this._currentTransactionId !== localTransactionId) {
                 // If the transaction id has changed, it means that a new transaction has started while the
                 // previous one was still running. In this case, we do not refetch the data
@@ -308,7 +306,13 @@ export class DataProvider<
                     this._prevStoredData = fetchedStoredData;
                 }
             });
+            // Only cleared now that the fetch has started, which sets LOADING synchronously - so there is no moment in
+            // between where the provider looks settled
+            if (this._debounceTimeout === timeout) {
+                this.setScheduledFetch(null);
+            }
         }, 10);
+        this.setScheduledFetch(timeout);
     }
 
     private handleSettingsStatusChange(): void {
@@ -458,13 +462,31 @@ export class DataProvider<
         this._prevStoredData = null;
     }
 
+    /*
+     * Whether a refetch is scheduled but hasn't started yet. The provider is pending then (e.g. for the restore readiness
+     * check), although its status only changes once the fetch starts - see handleSettingsAndStoredDataChange.
+     */
+    isFetchScheduled(): boolean {
+        return this._debounceTimeout !== null;
+    }
+
+    // Replaces the scheduled refetch. A change of whether one is scheduled is published on the status topic, as it
+    // changes whether the provider is pending without changing its status.
+    private setScheduledFetch(timeout: ReturnType<typeof setTimeout> | null): void {
+        const wasScheduled = this._debounceTimeout !== null;
+        if (this._debounceTimeout) {
+            clearTimeout(this._debounceTimeout);
+        }
+        this._debounceTimeout = timeout;
+        if (wasScheduled !== (timeout !== null)) {
+            this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS);
+        }
+    }
+
     private cancelScheduledAndActiveFetch(): void {
         // A fetch that is already past its queries only applies its result while its transaction is the current one
         this._currentTransactionId += 1;
-        if (this._debounceTimeout) {
-            clearTimeout(this._debounceTimeout);
-            this._debounceTimeout = null;
-        }
+        this.setScheduledFetch(null);
         this.tidyUpFetchRelatedResources();
     }
 

@@ -1,12 +1,21 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import { DataProviderStatus } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
 import {
     type DataProviderManager,
     DataProviderManagerTopic,
 } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import {
+    type SerializedDataProvider,
+    SerializedType,
+} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import {
+    findProvider,
+    getProviderSetting,
     gridProvider,
+    LABEL_PROVIDER_TYPE,
     makeDataProviderManager,
     managerState,
     resetTestBackend,
@@ -83,5 +92,43 @@ describe("DataProviderManager restore announcements", () => {
             "deserializing: false (1 items)",
             "data revision",
         ]);
+    });
+
+    test("doesn't end restoring while a settled provider's refetch is scheduled and the last other one settles", async () => {
+        backend.delayMs = 10;
+        // A provider whose only setting has no bindings - changing it refetches without the settings loading first
+        const labels: SerializedDataProvider<any> = {
+            id: "Labels",
+            type: SerializedType.DATA_PROVIDER,
+            name: "Labels",
+            expanded: true,
+            visible: true,
+            dataProviderType: LABEL_PROVIDER_TYPE,
+            settings: { [Setting.SHOW_LABELS]: JSON.stringify(false) },
+        };
+        const manager = makeDataProviderManager({ fieldId: "field-a" });
+        manager.deserializeState(managerState([labels, surfaceProvider("Surface")]));
+        const labelsProvider = findProvider(manager, "Labels");
+        const dataWhenRestoringEnded: unknown[] = [];
+        manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.IS_DESERIALIZING, () => {
+            if (!manager.isDeserializing()) {
+                dataWhenRestoringEnded.push(labelsProvider.getData());
+            }
+        });
+
+        // Until the labels provider has settled and the surface provider's last request is in flight - it then settles in
+        // less than the 10 ms the labels provider's refetch is debounced for
+        while (
+            labelsProvider.getStatus() !== DataProviderStatus.SUCCESS ||
+            backend.callsTo("getSurfaceData").length === 0
+        ) {
+            await vi.advanceTimersByTimeAsync(1);
+        }
+        expect(findProvider(manager, "Surface").getStatus()).toBe(DataProviderStatus.LOADING);
+
+        getProviderSetting(labelsProvider, Setting.SHOW_LABELS).setValue(true);
+        await settle(manager);
+
+        expect(dataWhenRestoringEnded).toEqual([{ showLabels: true }]);
     });
 });

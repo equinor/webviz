@@ -30,10 +30,11 @@ export type GroupDelegateTopicPayloads = {
     [GroupDelegateTopic.CHILDREN_EXPANSION_STATES]: { [id: string]: boolean };
 };
 
-// A provider is pending until it has loaded (or failed to load) for its current settings
+// A provider is pending until it has loaded (or failed to load) for its current settings - including while a refetch is
+// scheduled but hasn't started, as its status only changes once the fetch starts
 function isDataProviderPending(provider: DataProvider<any, any>): boolean {
     const status = provider.getStatus();
-    return status === DataProviderStatus.IDLE || status === DataProviderStatus.LOADING;
+    return status === DataProviderStatus.IDLE || status === DataProviderStatus.LOADING || provider.isFetchScheduled();
 }
 
 /*

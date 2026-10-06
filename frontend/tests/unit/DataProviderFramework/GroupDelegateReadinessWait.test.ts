@@ -21,10 +21,12 @@ function makeFakeItemDelegate(id: string): ItemDelegate {
     } as unknown as ItemDelegate;
 }
 
-// Just enough of a DataProvider for the readiness wait: the brand, a status and STATUS notifications.
+// Just enough of a DataProvider for the readiness wait: the brand, a status, whether a refetch is scheduled and STATUS
+// notifications.
 class FakeProvider implements Item {
     readonly [DATA_PROVIDER_BRAND] = true;
     private _status: DataProviderStatus;
+    private _isFetchScheduled = false;
     private _itemDelegate: ItemDelegate;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<{
         [DataProviderTopic.STATUS]: DataProviderStatus;
@@ -49,6 +51,16 @@ class FakeProvider implements Item {
 
     setStatus(status: DataProviderStatus): void {
         this._status = status;
+        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS);
+    }
+
+    isFetchScheduled(): boolean {
+        return this._isFetchScheduled;
+    }
+
+    // Like the real provider, published on the status topic although the status doesn't change
+    setFetchScheduled(isFetchScheduled: boolean): void {
+        this._isFetchScheduled = isFetchScheduled;
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS);
     }
 
@@ -175,6 +187,39 @@ describe("GroupDelegate.waitUntilAllDescendantDataProvidersAreReady", () => {
         expect(callback).not.toHaveBeenCalled();
 
         a.setStatus(DataProviderStatus.SUCCESS);
+        expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    test("waits for a provider with a scheduled refetch, although its status still shows it as settled", () => {
+        const a = new FakeProvider("a", DataProviderStatus.SUCCESS);
+        const b = new FakeProvider("b");
+        const group = makeGroup(a, b);
+        const callback = vi.fn();
+
+        group.waitUntilAllDescendantDataProvidersAreReady(callback);
+        a.setFetchScheduled(true);
+        b.setStatus(DataProviderStatus.SUCCESS);
+        expect(callback).not.toHaveBeenCalled();
+
+        // The fetch starts - LOADING before the schedule is cleared, as the real provider does it
+        a.setStatus(DataProviderStatus.LOADING);
+        a.setFetchScheduled(false);
+        expect(callback).not.toHaveBeenCalled();
+
+        a.setStatus(DataProviderStatus.SUCCESS);
+        expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    test("calls back when a scheduled refetch is dropped without its status ever changing", () => {
+        const a = new FakeProvider("a", DataProviderStatus.SUCCESS);
+        const group = makeGroup(a);
+        a.setFetchScheduled(true);
+        const callback = vi.fn();
+
+        group.waitUntilAllDescendantDataProvidersAreReady(callback);
+        expect(callback).not.toHaveBeenCalled();
+
+        a.setFetchScheduled(false);
         expect(callback).toHaveBeenCalledTimes(1);
     });
 
