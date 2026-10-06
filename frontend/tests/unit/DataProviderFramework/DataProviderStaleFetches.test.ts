@@ -11,6 +11,7 @@ import {
 } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import type {
     CustomDataProviderImplementation,
+    DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
@@ -23,10 +24,11 @@ type Deferred = { showLabels: boolean; resolve: (data: string) => void; reject: 
 // The fetches that have been started and not settled yet, in the order they were started
 let pendingFetches: Deferred[] = [];
 
-const SETTINGS = [Setting.SHOW_LABELS] as const;
+const SETTINGS = [Setting.SHOW_LABELS, Setting.SHOW_LINES] as const;
 
 // Its fetch is work that doesn't stop when cancelled (e.g. processing after a request) - it only ends when the test
-// settles it
+// settles it. The data depends on SHOW_LABELS. Hiding the lines makes the settings invalid by the provider's own rule,
+// like clearing the selected wellbores does for the well trajectories.
 class UncancellableFetchProvider implements CustomDataProviderImplementation<typeof SETTINGS, string> {
     settings = SETTINGS;
 
@@ -35,10 +37,14 @@ class UncancellableFetchProvider implements CustomDataProviderImplementation<typ
     }
 
     getDefaultSettingsValues(): Partial<MakeSettingTypesMap<typeof SETTINGS>> {
-        return { [Setting.SHOW_LABELS]: false };
+        return { [Setting.SHOW_LABELS]: false, [Setting.SHOW_LINES]: true };
     }
 
     setupBindings(): void {}
+
+    areCurrentSettingsValid({ getSetting }: DataProviderAccessors<typeof SETTINGS, string>): boolean {
+        return getSetting(Setting.SHOW_LINES) === true;
+    }
 
     fetchData({ getSetting }: FetchDataParams<typeof SETTINGS, string>): Promise<string> {
         const showLabels = getSetting(Setting.SHOW_LABELS) ?? false;
@@ -127,6 +133,25 @@ describe("Stale fetches", () => {
 
         expect(provider.getData()).toBe("data without labels");
         expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+        manager.beforeDestroy();
+    });
+
+    test("a fetch in flight when the provider's own rule makes the settings invalid doesn't replace INVALID_SETTINGS", async () => {
+        const { manager, provider } = await addProviderWithPendingFetch();
+        takeFetch(false).resolve("data without labels");
+        await vi.advanceTimersByTimeAsync(20);
+
+        getProviderSetting(provider, Setting.SHOW_LABELS).setValue(true);
+        await vi.advanceTimersByTimeAsync(20);
+        getProviderSetting(provider, Setting.SHOW_LINES).setValue(false);
+        await vi.advanceTimersByTimeAsync(20);
+        expect(provider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
+
+        takeFetch(true).resolve("data with labels");
+        await vi.advanceTimersByTimeAsync(20);
+
+        expect(provider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
+        expect(provider.getData()).toBe("data without labels");
         manager.beforeDestroy();
     });
 

@@ -219,15 +219,16 @@ export class DataProvider<
             return;
         }
 
+        // Any fetch scheduled or running was for other settings - cancelled before anything else is decided, so it can't
+        // replace the outcome: neither INVALID_SETTINGS by the provider's own rule, nor the current data when no refetch
+        // turns out to be required, as the settings are then back to those of the current data
+        this.cancelScheduledAndActiveFetch();
+
         if (!this.areCurrentSettingsValid()) {
             this._error = "Invalid settings";
             this.setStatus(DataProviderStatus.INVALID_SETTINGS);
             return;
         }
-
-        // Any fetch scheduled or running was for other settings - also when no refetch turns out to be required, as the
-        // settings are then back to those of the current data
-        this.cancelScheduledAndActiveFetch();
 
         let refetchRequired;
 
