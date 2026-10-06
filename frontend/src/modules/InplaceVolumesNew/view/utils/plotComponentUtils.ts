@@ -43,6 +43,7 @@ export function makePlotData({
 
         for (const entry of colorEntries) {
             const { colorLabel: title, color, table } = entry;
+            const firstEntryTraceIndex = data.length;
 
             if (plotType === PlotType.HISTOGRAM) {
                 data.push(
@@ -102,10 +103,31 @@ export function makePlotData({
                     ),
                 );
             }
+
+            for (const trace of data.slice(firstEntryTraceIndex)) {
+                trace.legendgroup = entry.colorKey;
+            }
         }
 
         return data;
     };
+}
+
+/**
+ * Keeps a single legend entry per legendgroup: the first trace, across all subplots, that wants one.
+ */
+export function hideRepeatedLegendEntries(traces: Partial<PlotData>[]): void {
+    const groupsWithLegendEntry = new Set<string | undefined>();
+    for (const trace of traces) {
+        if (trace.showlegend === false) {
+            continue;
+        }
+        if (groupsWithLegendEntry.has(trace.legendgroup)) {
+            trace.showlegend = false;
+        } else {
+            groupsWithLegendEntry.add(trace.legendgroup);
+        }
+    }
 }
 
 function makeBarPlot(

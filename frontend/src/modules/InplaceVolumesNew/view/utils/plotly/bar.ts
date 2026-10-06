@@ -108,7 +108,6 @@ function createStatisticLinesForBarPlot(
             line: { color, width: 3, dash: dash },
             showlegend: false,
             name: label,
-            legendgroup: title,
             hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatInplaceVolumesValue(value)}<extra></extra>`,
         };
     }

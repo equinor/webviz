@@ -28,7 +28,6 @@ export function makePlotlyDensityTraces({
     data.push({
         x: values,
         name: title,
-        legendgroup: title,
         type: "violin",
         marker: { color },
         // @ts-expect-error - violin attributes are missing in the plotly types
@@ -77,7 +76,6 @@ function createStatisticMarkersForDistribution(
         mode: showLabels ? "text+markers" : "markers",
         marker: { color, size: 10, symbol: "x" },
         showlegend: false,
-        legendgroup: title,
         text: labels.map((label, i) => `${label}: ${formatInplaceVolumesValue(xValues[i])}`),
         textposition: "top center",
         textfont: showLabels ? { color: "black", size: 11 } : undefined,

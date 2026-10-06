@@ -43,7 +43,6 @@ export function makePlotlyHistogramTraces({
     });
 
     histogram.name = title;
-    histogram.legendgroup = title;
     histogram.showlegend = true;
     histogram.hovertemplate = `<b>${title}</b><br>Range: %{x}<br>Percentage: %{y:.2f}%<extra></extra>`;
 
@@ -107,7 +106,6 @@ function createStatisticLinesForHistogram(
             line: { color, width: 4, dash },
             showlegend: false,
             name: label,
-            legendgroup: title,
             hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatInplaceVolumesValue(value)}<extra></extra>`,
         };
 
@@ -145,7 +143,6 @@ function createRugTraceForHistogram(
         },
         showlegend: false,
         name: "Realizations",
-        legendgroup: title,
         customdata: realizations,
         hovertemplate: `<b>${title}</b><br>Value: %{x}<br>Realization: %{customdata}<extra></extra>`,
     };

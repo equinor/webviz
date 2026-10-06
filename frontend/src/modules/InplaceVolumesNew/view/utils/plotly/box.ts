@@ -29,7 +29,6 @@ export function makePlotlyBoxPlotTraces(options: PlotlyBoxPlotTracesOptions): Pa
     data.push({
         x: values,
         name: title,
-        legendgroup: title,
         type: "box",
         marker: { color },
         // @ts-expect-error - missing arguments in the plotly types

@@ -9,8 +9,11 @@ import type { HistogramType } from "@modules/_shared/histogram";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
 import type { ColorEntry, GroupedTableData } from "./GroupedTableData";
+import { hideRepeatedLegendEntries } from "./plotComponentUtils";
 
 export type PlotFunction = (colorEntries: ColorEntry[]) => Partial<PlotData>[];
+
+const LEGEND_MAX_HEIGHT_FRACTION = 0.15;
 
 export class PlotBuilder {
     private _groupedData: GroupedTableData;
@@ -89,6 +92,11 @@ export class PlotBuilder {
                 barmode: this._histogramType,
             });
         }
+        // Scroll long legends (e.g. many sensitivity cases) instead of shrinking the plots.
+        figure.updateLayout({
+            // @ts-expect-error - maxheight is missing in the plotly types
+            legend: { maxheight: LEGEND_MAX_HEIGHT_FRACTION },
+        });
         if (this._plotType === PlotType.BAR) {
             // Force normal legend order for the bar plot.
             // traceorder seems to be overriden when a categoryorder is set.
@@ -138,7 +146,6 @@ export class PlotBuilder {
         const subplotTitles: string[] = Array(numRows * numCols).fill("");
         const highlightedSubplots: { row: number; col: number }[] = [];
 
-        let legendAdded = false;
         for (let row = 1; row <= numRows; row++) {
             for (let col = 1; col <= numCols; col++) {
                 const index = (row - 1) * numCols + col - 1;
@@ -155,14 +162,11 @@ export class PlotBuilder {
 
                 const plotDataArr = this._plotFunction(subplotGroup.colorEntries);
                 for (const plotData of plotDataArr) {
-                    if (legendAdded) {
-                        plotData.showlegend = false;
-                    }
                     traces.push({ row, col, trace: plotData });
                 }
-                legendAdded = true;
             }
         }
+        hideRepeatedLegendEntries(traces.map(({ trace }) => trace));
 
         const figure = makeSubplots({
             numRows,
