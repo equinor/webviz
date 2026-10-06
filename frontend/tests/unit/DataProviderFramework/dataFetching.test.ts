@@ -132,14 +132,6 @@ describe("Data fetching", () => {
         expect(provider.getData()?.realization).toBe(2);
     });
 
-    test("is LOADING as soon as a refetch is scheduled, not only once the debounced fetch starts", async () => {
-        const { provider } = await restoreSurface();
-
-        getProviderSetting(provider, Setting.REALIZATION).setValue(2);
-
-        expect(provider.getStatus()).toBe(DataProviderStatus.LOADING);
-    });
-
     test("data fetched while the settings load again is published once they turn out unchanged, without refetching", async () => {
         // field-c has the same surfaces, so switching to it reloads the settings without changing them
         backend.catalogues["field-c"] = backend.catalogues["field-a"];

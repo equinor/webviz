@@ -284,11 +284,10 @@ export class DataProvider<
         this._currentTransactionId += 1;
         const localTransactionId = this._currentTransactionId;
 
-        // The current data is outdated from now on, not only once the debounced fetch starts. A subordinated provider
-        // doesn't fetch, so it would never leave LOADING again.
-        if (!this._isSubordinated) {
-            this.setStatus(DataProviderStatus.LOADING);
-        }
+        // ! The status deliberately stays as it is until the debounced fetch starts. Setting LOADING here already made
+        // ! visualizations get built from the outdated data a moment earlier, and some layers process their data
+        // ! asynchronously without discarding outdated results (e.g. subsurface-viewer's MapLayer) - the outdated mesh
+        // ! could finish last and replace the new one.
 
         // Debounce the refetch to avoid multiple refetches in a short time span.
         if (this._debounceTimeout) {
