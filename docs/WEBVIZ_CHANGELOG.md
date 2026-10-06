@@ -5,6 +5,14 @@
 
 # Changelog
 
+## October 2026
+
+### Fixed
+
+- **Data provider layers (2D, 3D, Intersection, Well log viewer)**: Restoring a session or reloading a module is more reliable — views update once everything has loaded instead of piece by piece, and restores that could get stuck now complete. Providers also show a spinner while their settings load.
+- **Data provider settings**: Hidden settings, such as the inactive filters of the well trajectories layer, no longer make a layer invalid, and settings no longer flash up before being hidden. Clicking the invalid-settings icon now opens the settings so the problem is easy to find.
+- **Well log viewer**: After a reload, differential plots now correctly flag curves with the same name from different logs.
+
 ## September 2026
 
 ### Changed
