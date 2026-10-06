@@ -524,16 +524,17 @@ export async function dragModuleOntoLayout(
     moduleDisplayName: string,
     dropPosition: ModuleDropPosition = "center",
 ): Promise<void> {
-    const layout = page.getByTestId("module-layout");
+    const layout = activeModuleLayout(page);
     await expect(layout).toBeVisible();
 
     // The dropped module's header carries the module title; use it to confirm the drop committed.
     const droppedModule = layout.getByTitle(moduleDisplayName).first();
+    // List items are divs; module header titles are spans (possibly on hidden dashboards).
+    const moduleItem = page.locator(`div[title="${moduleDisplayName}"]`).filter({ visible: true }).first();
 
-    await smoothMoveToLocator(page, page.locator(`[title="${moduleDisplayName}"]`).first());
+    await smoothMoveToLocator(page, moduleItem);
 
     await expect(async () => {
-        const moduleItem = page.locator(`[title="${moduleDisplayName}"]`).first();
         await expect(moduleItem).toBeVisible();
         // Mouse events outside the viewport are never dispatched (e.g. low items in the default 1280x720 run).
         await moduleItem.scrollIntoViewIfNeeded();
@@ -578,10 +579,14 @@ export async function dragModuleOntoLayout(
     }).toPass({ timeout: 60_000, intervals: [1_000] });
 }
 
+/** The module layout of the active dashboard (inactive, kept-alive dashboards stay in the DOM, hidden). */
+export function activeModuleLayout(page: Page): Locator {
+    return page.getByTestId("module-layout").filter({ visible: true });
+}
+
 /** The header bar of the module instance whose header shows `moduleTitle` (modules may retitle themselves). */
 function moduleHeader(page: Page, moduleTitle: string | RegExp): Locator {
-    return page
-        .getByTestId("module-layout")
+    return activeModuleLayout(page)
         .getByTitle(moduleTitle, { exact: true })
         .first()
         .locator(
@@ -593,7 +598,42 @@ function moduleHeader(page: Page, moduleTitle: string | RegExp): Locator {
 export async function removeModuleFromLayout(page: Page, moduleTitle: string | RegExp): Promise<void> {
     // The remove button has no accessible name; it is the last button in the header.
     await smoothClick(page, moduleHeader(page, moduleTitle).getByRole("button").last());
-    await expect(page.getByTestId("module-layout").getByTitle(moduleTitle, { exact: true })).toHaveCount(0);
+    await expect(activeModuleLayout(page).getByTitle(moduleTitle, { exact: true })).toHaveCount(0);
+}
+
+function dashboardTabs(page: Page): Locator {
+    return page.getByRole("tablist", { name: "Dashboards" });
+}
+
+/** Rename the active dashboard via its tab's "Edit metadata" action. */
+export async function renameActiveDashboard(page: Page, name: string): Promise<void> {
+    const activeTab = dashboardTabs(page).getByRole("tab", { selected: true });
+    const tabItem = page.locator("[data-dashboard-tab-item]").filter({ has: activeTab });
+    await smoothClick(page, tabItem.getByRole("button", { name: /^Open actions for / }));
+    await smoothClick(page, page.getByRole("menuitem", { name: "Edit metadata" }));
+
+    const dialog = page.getByRole("dialog");
+    await smoothType(page, dialog.getByPlaceholder("Enter dashboard name"), name);
+    await smoothClick(page, dialog.getByRole("button", { name: "Apply", exact: true }));
+    await expect(dialog).toBeHidden();
+    await expect(dashboardTabs(page).getByRole("tab", { name, exact: true })).toHaveAttribute("aria-selected", "true");
+}
+
+/** Add a new (empty) dashboard, which becomes the active one, and give it a name. */
+export async function addDashboard(page: Page, name: string): Promise<void> {
+    const tabs = dashboardTabs(page).getByRole("tab");
+    const tabCount = await tabs.count();
+    await smoothClick(page, page.getByRole("button", { name: "Add new dashboard" }));
+    await expect(tabs).toHaveCount(tabCount + 1);
+    await expect(tabs.last()).toHaveAttribute("aria-selected", "true");
+    await renameActiveDashboard(page, name);
+}
+
+/** Switch to the dashboard named `name` by clicking its tab. */
+export async function switchToDashboard(page: Page, name: string): Promise<void> {
+    const tab = dashboardTabs(page).getByRole("tab", { name, exact: true });
+    await smoothClick(page, tab);
+    await expect(tab).toHaveAttribute("aria-selected", "true");
 }
 
 /**
