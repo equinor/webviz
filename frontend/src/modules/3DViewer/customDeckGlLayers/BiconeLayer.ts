@@ -165,10 +165,11 @@ export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
             this.props.minSizeInMeters ?? 0,
         );
 
+        const scaledCenter = [...centerPoint];
         if (this.props.modelMatrix) {
             // Apply scaling from model matrix to center point and reset scaling in model matrix
             // We don't want to scale the bicone, just adjust its position
-            centerPoint[2] *= this.props.modelMatrix[10];
+            scaledCenter[2] *= this.props.modelMatrix[10];
             this.props.modelMatrix[10] = 1;
         }
 
@@ -178,7 +179,7 @@ export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
                     id: `mesh`,
                     data: [0],
                     mesh: this.state.geometry,
-                    getPosition: () => centerPoint,
+                    getPosition: () => scaledCenter,
                     getColor: () => color ?? [255, 255, 255],
                     getOrientation: () => normalToOrientation(normalVector),
                     opacity: opacity ?? 1,
