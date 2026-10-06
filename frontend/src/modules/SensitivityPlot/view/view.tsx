@@ -47,7 +47,13 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     const responseChannelData = useResponseChannel(viewContext, workbenchSession);
 
     const sensitivitiesColorMap = createSensitivityColorMap(
-        responseChannelData.responses[0]?.channelEnsemble.getSensitivities()?.getSensitivityNames().sort() ?? [],
+        Array.from(
+            new Set(
+                responseChannelData.responses.flatMap(
+                    (response) => response.channelEnsemble.getSensitivities()?.getSensitivityNames() ?? [],
+                ),
+            ),
+        ).sort(),
         colorSet,
     );
 
@@ -87,7 +93,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
         if (displayComponentType === DisplayComponentType.SENSITIVITY_CHART) {
             instanceTitle = "Sensitivity charts";
         } else if (displayComponentType === DisplayComponentType.SENSITIVITY_TABLE) {
-            instanceTitle = "Sensitivity tables";
+            instanceTitle = "Sensitivity table";
         }
     }
     viewContext.setInstanceTitle(instanceTitle);
