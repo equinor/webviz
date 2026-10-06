@@ -93,6 +93,7 @@ export function makeDrilledWellTrajectoriesLayer(
     const wellsLayer = new WebvizWellsLayer({
         ...DEFAULT_WELLS_LAYER_PROPS,
         id: id,
+        pickable: options.viewMode === "3D" ? "3d" : true,
         positionFormat: options.viewMode === "2D" ? "XY" : "XYZ",
         outline: false,
         data: wellGeoJson,
