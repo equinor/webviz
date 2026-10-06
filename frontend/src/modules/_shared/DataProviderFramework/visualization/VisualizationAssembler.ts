@@ -168,6 +168,8 @@ export class VisualizationAssembler<
         TStoredData extends StoredData = Record<string, never>,
     >(
         dataProviderName: string,
+        // Not used at runtime - only passed so that the provider's settings, data and stored data types are inferred
+        // for the transformers
         dataProviderCtor: {
             new (...params: any[]): CustomDataProviderImplementation<TSettings, TData, TStoredData>;
         },
@@ -178,6 +180,7 @@ export class VisualizationAssembler<
 
     registerGroupCustomPropsCollector<TSettings extends Settings, TGroupType extends keyof TCustomGroupProps>(
         groupName: TGroupType,
+        // Not used at runtime - only passed so that the group's settings types are inferred for the collector
         groupCtor: {
             new (...params: any[]): CustomGroupImplementation | CustomGroupImplementationWithSettings<TSettings>;
         },
