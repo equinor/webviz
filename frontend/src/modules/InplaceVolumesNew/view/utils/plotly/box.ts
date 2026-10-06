@@ -6,6 +6,7 @@ import { computeStatistics } from "@modules/_shared/utils/math/statistics";
 export type PlotlyBoxPlotTracesOptions = {
     title: string;
     values: number[];
+    realizations: number[];
     resultName: string;
     color: string;
     yAxisPosition?: number;
@@ -13,7 +14,16 @@ export type PlotlyBoxPlotTracesOptions = {
     showRealizationPoints: boolean;
 };
 export function makePlotlyBoxPlotTraces(options: PlotlyBoxPlotTracesOptions): Partial<PlotData>[] {
-    const { title, values, resultName, color, yAxisPosition, showStatisticalMarkers, showRealizationPoints } = options;
+    const {
+        title,
+        values,
+        realizations,
+        resultName,
+        color,
+        yAxisPosition,
+        showStatisticalMarkers,
+        showRealizationPoints,
+    } = options;
     const data: Partial<PlotData>[] = [];
 
     data.push({
@@ -24,9 +34,11 @@ export function makePlotlyBoxPlotTraces(options: PlotlyBoxPlotTracesOptions): Pa
         marker: { color },
         // @ts-expect-error - missing arguments in the plotly types
         y0: yAxisPosition ?? 0,
-        hoverinfo: "skip",
+        // Box statistics are covered by the marker traces; the template only applies to points.
+        hoveron: "points",
         boxpoints: showRealizationPoints ? "all" : "outliers",
-        hovertemplate: `${title}<br>${resultName}: <b>%{x}</b> <br>Realization: <b>%{pointNumber}</b> <extra></extra>`,
+        customdata: realizations,
+        hovertemplate: `<b>${title}</b><br>${resultName}: <b>%{x}</b><br>Realization: <b>%{customdata}</b><extra></extra>`,
     });
 
     if (showStatisticalMarkers) {

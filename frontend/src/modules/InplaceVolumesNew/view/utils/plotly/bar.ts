@@ -55,7 +55,7 @@ export function makePlotlyBarTraces({
     // Custom hover text
     const hoverText = sortedPoints.map(
         (p) =>
-            `<b>${selectorName}:</b> ${p.x}<br><b>${resultName}:</b> ${formatInplaceVolumesValue(Number(p.y))}<extra></extra>`,
+            `<b>${title}</b><br><b>${selectorName}:</b> ${p.x}<br><b>${resultName}:</b> ${formatInplaceVolumesValue(Number(p.y))}<extra></extra>`,
     );
 
     const showText = sortedXValues.length <= MAX_LABELS_FOR_BARS;

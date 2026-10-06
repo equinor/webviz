@@ -173,6 +173,7 @@ function makeHistogram(
     return makePlotlyHistogramTraces({
         title,
         values: resultColumn.getAllRowValues() as number[],
+        realizations: getRealizations(table),
         resultName,
         color,
         numBins,
@@ -202,6 +203,7 @@ function makeDensityPlot(
     return makePlotlyDensityTraces({
         title,
         values: xValues,
+        realizations: getRealizations(table),
         color,
         resultName,
         showRealizationPoints,
@@ -226,10 +228,19 @@ function makeBoxPlot(
     return makePlotlyBoxPlotTraces({
         title,
         values: resultColumn.getAllRowValues() as number[],
+        realizations: getRealizations(table),
         resultName,
         color,
         yAxisPosition,
         showStatisticalMarkers: showStatisticalMarkers ?? false,
         showRealizationPoints: showRealizationPoints ?? false,
     });
+}
+
+function getRealizations(table: Table): number[] {
+    const realColumn = table.getColumn("REAL");
+    if (!realColumn) {
+        throw new Error("REAL column not found");
+    }
+    return realColumn.getAllRowValues() as number[];
 }
