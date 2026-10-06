@@ -2,8 +2,7 @@ import type { WellsLayer, WellsLayerProps } from "@webviz/subsurface-viewer/dist
 import { LabelOrientation } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
 import type { Feature } from "geojson";
 
-import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
-import { DEFAULT_WELLS_LAYER_PROPS } from "@modules/_shared/constants/wellsLayer";
+import { DEFAULT_WELLS_LAYER_PROPS_BY_VIEW_MODE } from "@modules/_shared/constants/wellsLayer";
 import { WebvizWellsLayer } from "@modules/_shared/customDeckGlLayers/WebvizWellsLayer";
 import type {
     DrilledWellboreTrajectoriesData,
@@ -13,6 +12,7 @@ import type {
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ExtendedWellFeature } from "@modules/_shared/types/geojson";
+import { trajectoryDistanceRadial, trajectoryDistanceXY } from "@modules/_shared/utils/wellbore";
 
 import {
     FORMATION_FILTER_NAME,
@@ -50,14 +50,8 @@ export function makeDrilledWellTrajectoriesLayer(
     }
 
     // 2D simplifies on XY distance only; 3D must use full 3D distance so near-vertical sections keep their shape.
-    const computeDistance =
-        options.viewMode === "2D"
-            ? (point1: { easting: number; northing: number }, point2: { easting: number; northing: number }) =>
-                  point2Distance(
-                      vec2FromArray([point1.easting, point1.northing]),
-                      vec2FromArray([point2.easting, point2.northing]),
-                  )
-            : undefined;
+    const computeDistance = options.viewMode === "2D" ? trajectoryDistanceXY : trajectoryDistanceRadial;
+
     const wellGeoJson = wellDataToGeoJson(wellboreTrajectoriesData, computeDistance);
 
     // Get filter settings (if enabled)
@@ -89,15 +83,20 @@ export function makeDrilledWellTrajectoriesLayer(
     if (noWellPassesFlowFilter) {
         return null;
     }
+    // The label position is tied to the **entire** trajectory, so they look a bit out of place when filtering is applied. We might want to make sure the labels are hidden if `showFilterTrajectoryGhost` is false
+    // wellLabel.visible: false
+    const wellLabel = { ...DEFAULT_WELLS_LAYER_PROPS_BY_VIEW_MODE[options.viewMode].wellLabel };
+
+    // Tangential orientation looks nice, but slows down significantly on larger sets, so we revert to horizontal if needed
+    if (options.viewMode === "2D" && wellGeoJson.features.length > 200) {
+        wellLabel.orientation = LabelOrientation.HORIZONTAL;
+    }
 
     const wellsLayer = new WebvizWellsLayer({
-        ...DEFAULT_WELLS_LAYER_PROPS,
+        ...DEFAULT_WELLS_LAYER_PROPS_BY_VIEW_MODE[options.viewMode],
         id: id,
-        pickable: options.viewMode === "3D" ? "3d" : true,
-        positionFormat: options.viewMode === "2D" ? "XY" : "XYZ",
         outline: false,
         data: wellGeoJson,
-        depthTest: options.viewMode === "3D",
         lineWidthScale: 2,
         markers: {
             showPerforations: true,
@@ -119,8 +118,9 @@ export function makeDrilledWellTrajectoriesLayer(
         mdFilterRange: mdFilterRange,
         formationFilter: formationFilter,
         wellNameFilter: filteredWellNames,
+        wellLabel: wellLabel,
         lineStyle: {
-            ...DEFAULT_WELLS_LAYER_PROPS.lineStyle,
+            ...DEFAULT_WELLS_LAYER_PROPS_BY_VIEW_MODE[options.viewMode].lineStyle,
             // Trajectory color. If flow filter is enabled, color based on flow data
             color: (d: Feature) => {
                 const geoWellFeature = d as ExtendedWellFeature;
@@ -133,21 +133,6 @@ export function makeDrilledWellTrajectoriesLayer(
                 return flowColor ?? color;
             },
         },
-
-        wellLabel:
-            options.viewMode === "2D"
-                ? {
-                      // The label position is tied to the **entire** trajectory, so they look a bit out of place when filtering is applied. We might want to make sure the labels are hidden if `showFilterTrajectoryGhost` is false
-                      // visible: false
-                      orientation:
-                          wellGeoJson.features.length < 200 ? LabelOrientation.TANGENT : LabelOrientation.HORIZONTAL,
-                      positionFormat: "XY",
-                      getPositionAlongPath: 1,
-                      getBackgroundColor: [255, 255, 255, 255 * 0.1],
-                      getTextAnchor: "end",
-                      getAlignmentBaseline: "top",
-                  }
-                : DEFAULT_WELLS_LAYER_PROPS.wellLabel,
     });
 
     return wellsLayer;
