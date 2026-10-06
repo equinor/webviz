@@ -5,6 +5,8 @@ import { DROGON_DESIGN } from "../support/drogonTestData";
 import { test } from "../support/recordingFixtures";
 import {
     RECORDING,
+    activeModuleLayout,
+    addDashboard,
     captureThumbnail,
     connectDataChannel,
     createSessionAndSelectEnsemble,
@@ -14,9 +16,10 @@ import {
     installFakeCursor,
     installKeyOverlay,
     pace,
-    removeModuleFromLayout,
+    renameActiveDashboard,
     smoothClick,
     smoothMoveToLocator,
+    switchToDashboard,
 } from "../support/walkthroughHelpers";
 
 import { meta } from "./inplaceVolumesSensitivities.meta";
@@ -26,12 +29,19 @@ const PLOT_MODULE = "Inplace Volumes Plot";
 const TORNADO_MODULE = "Sensitivity/Response plot";
 const COMPARISON_MODULE = "Inplace Volumes Comparison";
 
+const TABLE_DASHBOARD = "Table";
+const PLOT_DASHBOARD = "Plot and tornado";
+const COMPARISON_DASHBOARD = "Comparison";
+
 // These modules retitle themselves from the selected data once added.
 const PLOT_MODULE_TITLE = /\(STOIIP\)/;
 const TORNADO_MODULE_TITLE = /^Sensitivity chart/;
 
 function settingRow(page: Page, label: string): Locator {
-    return page.locator(".setting-row").filter({ has: page.getByText(label, { exact: true }) });
+    return page
+        .locator(".setting-row")
+        .filter({ visible: true })
+        .filter({ has: page.getByText(label, { exact: true }) });
 }
 
 function comboboxOption(page: Page, optionLabel: string): Locator {
@@ -95,7 +105,7 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         await page.goto("/");
         await expect(page.getByText("FMU Analysis").first()).toBeVisible();
 
-        const moduleLayout = page.getByTestId("module-layout");
+        const moduleLayout = activeModuleLayout(page);
         const plot = moduleLayout.locator(".js-plotly-plot").first();
 
         async function waitForModules(): Promise<void> {
@@ -113,10 +123,14 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
 
         // --- 1. Inplace Volumes Table ----------------------------------------------------------
         markStep("STOIIP per sensitivity case");
-        await openModulesList(page);
-        const tableNarration = narrate(
-            "We start with the Inplace Volumes Table, and close the module list to give it room.",
+        const dashboardNarration = narrate(
+            "We will give each part of the analysis its own dashboard. The dashboard tabs are at the bottom, and we name this first one Table.",
         );
+        await renameActiveDashboard(page, TABLE_DASHBOARD);
+        await dashboardNarration;
+
+        await openModulesList(page);
+        const tableNarration = narrate("We add the Inplace Volumes Table, and close the module list to give it room.");
         await dragModuleOntoLayout(page, TABLE_MODULE);
         await closeModulesList(page);
         await tableNarration;
@@ -154,8 +168,10 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
 
         // --- 2. Inplace Volumes Plot -----------------------------------------------------------
         markStep("From histogram to bar plot");
-        const plotNarration = narrate("Next, we replace the table with the Inplace Volumes Plot.");
-        await removeModuleFromLayout(page, TABLE_MODULE);
+        const plotNarration = narrate(
+            "Next, we add a new dashboard for the Inplace Volumes Plot. The table stays on its own tab, just one click away.",
+        );
+        await addDashboard(page, PLOT_DASHBOARD);
         await openModulesList(page);
         await dragModuleOntoLayout(page, PLOT_MODULE);
         await closeModulesList(page);
@@ -258,10 +274,9 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         // --- 4. Inplace Volumes Comparison ---------------------------------------------------
         markStep("Decompose a sensitivity's effect");
         const comparisonNarration = narrate(
-            "The tornado tells us how much a sensitivity matters. To see why, we replace both modules with the Inplace Volumes Comparison.",
+            "The tornado tells us how much a sensitivity matters. To see why, we add a third dashboard with the Inplace Volumes Comparison.",
         );
-        await removeModuleFromLayout(page, TORNADO_MODULE_TITLE);
-        await removeModuleFromLayout(page, PLOT_MODULE_TITLE);
+        await addDashboard(page, COMPARISON_DASHBOARD);
         await openModulesList(page);
         await dragModuleOntoLayout(page, COMPARISON_MODULE);
         await closeModulesList(page);
@@ -294,6 +309,19 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         await narrate(
             "Now the picture is different. Bulk volume and net-to-gross are unchanged. More channel facies means better rock, so the gain comes from a higher net porosity, and with it a higher oil saturation.",
         );
+
+        const tabsNarration = narrate(
+            "Each dashboard keeps its own modules and settings, so we can move between the table, the tornado and the waterfall at any time.",
+        );
+        await switchToDashboard(page, TABLE_DASHBOARD);
+        await waitForModules();
+        await pace(page, "long");
+        await switchToDashboard(page, PLOT_DASHBOARD);
+        await waitForModules();
+        await pace(page, "long");
+        await switchToDashboard(page, COMPARISON_DASHBOARD);
+        await waitForModules();
+        await tabsNarration;
 
         await narrate("And that concludes our analysis of inplace volumes in a sensitivity ensemble.");
     });
