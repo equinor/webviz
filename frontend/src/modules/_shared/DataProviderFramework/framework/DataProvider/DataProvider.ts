@@ -126,6 +126,7 @@ export class DataProvider<
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
     private _hasHeldBackData: boolean = false;
+    private _isDestroyed: boolean = false;
 
     private _statusWriter = new GenericStatusMessageStore("DataProvider");
     private _allStatusMessages: GenericStatusMessage[] = [];
@@ -224,7 +225,9 @@ export class DataProvider<
             return;
         }
 
-        this.tidyUpFetchRelatedResources();
+        // Any fetch scheduled or running was for other settings - also when no refetch turns out to be required, as the
+        // settings are then back to those of the current data
+        this.cancelScheduledAndActiveFetch();
 
         let refetchRequired;
 
@@ -459,27 +462,39 @@ export class DataProvider<
         this.setProgressMessage(null);
         this.setStatus(DataProviderStatus.LOADING);
 
+        // A fetch is superseded once the transaction id changes - by a newer fetch, a cancellation or destroying the
+        // provider. Its queries are cancelled then, but anything else it does may still finish, so everything it does
+        // afterwards is checked against this.
+        const isCurrent = () => this._currentTransactionId === thisTransactionId;
+
         const onFetchCancelOrFinish = (fnc: () => void) => {
+            if (!isCurrent()) {
+                // Registered too late to be called by the cancellation - clean up right away instead
+                fnc();
+                return;
+            }
             this._onFetchCancelOrFinishFn = fnc;
         };
 
         try {
-            this._data = await this._customDataProviderImpl.fetchData({
+            const data = await this._customDataProviderImpl.fetchData({
                 ...accessors,
                 fetchQuery: <TQueryFnData, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
                     options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
                 ) => this._scopedQueryController.fetchQuery<TQueryFnData, TError, TData, TQueryKey>(options),
                 onFetchCancelOrFinish,
-                setProgressMessage: (message) => this.setProgressMessage(message),
+                setProgressMessage: (message) => {
+                    if (isCurrent()) {
+                        this.setProgressMessage(message);
+                    }
+                },
             });
 
-            // This is a security check to make sure that we are not using a stale transaction id.
-            // This can happen if the transaction id is incremented while the async fetch data function is still running.
-            // Queries are cancelled in the maybeCancelQuery function and should, hence, throw a cancelled error.
-            // However, there might me some operations following after the query execution that are not cancelled.
-            if (this._currentTransactionId !== thisTransactionId) {
+            if (!isCurrent()) {
                 return;
             }
+
+            this._data = data;
 
             if (this._customDataProviderImpl.makeValueRange) {
                 this._valueRange = this._customDataProviderImpl.makeValueRange(accessors);
@@ -495,7 +510,8 @@ export class DataProvider<
             this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
             this.setStatus(DataProviderStatus.SUCCESS);
         } catch (error: any) {
-            if (isCancelledError(error)) {
+            // A superseded fetch may fail with anything once its work is cut off, not only a cancelled error
+            if (isCancelledError(error) || !isCurrent()) {
                 return;
             }
             const apiError = ApiErrorHelper.fromError(error);
@@ -510,9 +526,12 @@ export class DataProvider<
             }
             this.setStatus(DataProviderStatus.ERROR);
         } finally {
-            this._onFetchCancelOrFinishFn();
-            this._onFetchCancelOrFinishFn = () => {};
-            this.setProgressMessage(null);
+            // A superseded fetch was cleaned up when it was cancelled - what is registered now belongs to a newer one
+            if (isCurrent()) {
+                this._onFetchCancelOrFinishFn();
+                this._onFetchCancelOrFinishFn = () => {};
+                this.setProgressMessage(null);
+            }
         }
     }
 
@@ -535,15 +554,18 @@ export class DataProvider<
     }
 
     beforeDestroy(): void {
+        this._isDestroyed = true;
+        // Supersedes a fetch in flight too, so nothing it does afterwards reaches this provider
+        this.cancelScheduledAndActiveFetch();
         this._settingsContextDelegate.beforeDestroy();
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
-        this._scopedQueryController.cancelActiveFetch();
-        if (this._debounceTimeout) {
-            clearTimeout(this._debounceTimeout);
-        }
     }
 
     private incrementRevisionNumber(): void {
+        // A destroyed provider is no longer part of the manager's tree, so it must not publish data revisions for it
+        if (this._isDestroyed) {
+            return;
+        }
         this._revisionNumber += 1;
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.REVISION_NUMBER);
         this._dataProviderManager.increaseDataRevisionNumber();
