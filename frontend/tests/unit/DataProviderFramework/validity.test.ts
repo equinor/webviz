@@ -245,6 +245,29 @@ describe("Hidden settings", () => {
     });
 });
 
+describe("Data of invalid providers", () => {
+    test("an invalid provider discards its outdated data, and fetches again once valid, even with the same settings", async () => {
+        const manager = await restore(surfaceProvider("Surface", { surfaceName: "Top reservoir" }));
+        const provider = findProvider(manager, "Surface");
+        const surfaceName = getProviderSetting(provider, Setting.SURFACE_NAME);
+        expect(provider.getData()).not.toBeNull();
+        const numFetchesBefore = backend.callsTo("getSurfaceData").length;
+
+        surfaceName.setValue("Gone surface");
+        await settle(manager);
+        expect(provider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
+        expect(provider.getData()).toBeNull();
+        expect(provider.getDataValueRange()).toBeNull();
+
+        // Back to the settings of the discarded data
+        surfaceName.setValue("Top reservoir");
+        await settle(manager);
+        expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+        expect(provider.getData()?.surfaceName).toBe("Top reservoir");
+        expect(backend.callsTo("getSurfaceData").length).toBe(numFetchesBefore + 1);
+    });
+});
+
 describe("Naming the invalid settings", () => {
     test("names a setting that holds a rejected persisted value", async () => {
         const manager = await restore(surfaceProvider("Surface", { surfaceName: "Gone surface" }));

@@ -125,7 +125,10 @@ export class DataProvider<
     private _scopedQueryController: ScopedQueryController;
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
-    private _hasHeldBackData: boolean = false;
+    // The outcome of a fetch that finished while the settings were loading again. Whether it is still current is only
+    // known once they have resolved, so it is applied then, if no refetch is required (see handleSettingsAndStoredDataChange).
+    private _heldBackFetchOutcome: { type: "data" } | { type: "error"; error: StatusMessage | string | null } | null =
+        null;
     private _isDestroyed: boolean = false;
 
     private _statusWriter = new GenericStatusMessageStore("DataProvider");
@@ -225,6 +228,7 @@ export class DataProvider<
         this.cancelScheduledAndActiveFetch();
 
         if (!this.areCurrentSettingsValid()) {
+            this.discardOutdatedData();
             this._error = "Invalid settings";
             this.setStatus(DataProviderStatus.INVALID_SETTINGS);
             return;
@@ -255,9 +259,15 @@ export class DataProvider<
         }
 
         if (!refetchRequired) {
-            // Data fetched while the settings were loading again is still current - publish it now
-            if (this._hasHeldBackData) {
-                this._hasHeldBackData = false;
+            // A fetch that finished while the settings were loading again is still current - apply its outcome now
+            const heldBackFetchOutcome = this._heldBackFetchOutcome;
+            this._heldBackFetchOutcome = null;
+            if (heldBackFetchOutcome?.type === "error") {
+                this._error = heldBackFetchOutcome.error;
+                this.setStatus(DataProviderStatus.ERROR);
+                return;
+            }
+            if (heldBackFetchOutcome?.type === "data") {
                 this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
             }
             // If the settings have changed but no refetch is required, it might be that the settings changes
@@ -270,7 +280,7 @@ export class DataProvider<
             return;
         }
 
-        this._hasHeldBackData = false;
+        this._heldBackFetchOutcome = null;
         this._currentTransactionId += 1;
         const localTransactionId = this._currentTransactionId;
 
@@ -308,6 +318,7 @@ export class DataProvider<
             // A fetch scheduled or started while the settings were still valid would otherwise replace this status
             // once it finishes
             this.cancelScheduledAndActiveFetch();
+            this.discardOutdatedData();
             this._error = "Invalid settings";
             this.setStatus(DataProviderStatus.INVALID_SETTINGS);
             return;
@@ -434,6 +445,20 @@ export class DataProvider<
         this._onFetchCancelOrFinishFn = () => {};
     }
 
+    /*
+     * Invalid settings make the current data outdated, and it isn't shown anyway. Keeping it would get it shown again
+     * once the provider loads anew - e.g. a surface of the previous field after a field change - and replacing it a
+     * moment later races the layer's asynchronous processing of the old data against the new one.
+     * The settings of the last fetch are forgotten with it, so becoming valid again always fetches.
+     */
+    private discardOutdatedData(): void {
+        this._data = null;
+        this._valueRange = null;
+        this._heldBackFetchOutcome = null;
+        this._prevSettings = null;
+        this._prevStoredData = null;
+    }
+
     private cancelScheduledAndActiveFetch(): void {
         // A fetch that is already past its queries only applies its result while its transaction is the current one
         this._currentTransactionId += 1;
@@ -501,10 +526,10 @@ export class DataProvider<
                 this._valueRange = this._customDataProviderImpl.makeValueRange(accessors);
             }
 
-            // The settings started loading again while fetching - whether this data is still current is only known
-            // once they have resolved, so it is held back until then (see handleSettingsAndStoredDataChange)
+            // The settings started loading again while fetching - the provider stays LOADING and the data is held back
+            // until they have resolved (see _heldBackFetchOutcome)
             if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
-                this._hasHeldBackData = true;
+                this._heldBackFetchOutcome = { type: "data" };
                 return;
             }
 
@@ -515,16 +540,15 @@ export class DataProvider<
             if (isCancelledError(error) || !isCurrent()) {
                 return;
             }
-            const apiError = ApiErrorHelper.fromError(error);
-            if (apiError) {
-                this._error = apiError.makeStatusMessage();
-            } else {
-                if (typeof error === "string") {
-                    this._error = error;
-                } else if (error instanceof Error) {
-                    this._error = error.message;
-                }
+
+            // Like data, a failure while the settings are loading again is held back - an ERROR would count as settled
+            // and could end a restore before the settings have resolved
+            if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
+                this._heldBackFetchOutcome = { type: "error", error: makeFetchErrorMessage(error) };
+                return;
             }
+
+            this._error = makeFetchErrorMessage(error);
             this.setStatus(DataProviderStatus.ERROR);
         } finally {
             // A superseded fetch was cleaned up when it was cancelled - what is registered now belongs to a newer one
@@ -598,4 +622,18 @@ export class DataProvider<
 
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS_MESSAGES);
     }
+}
+
+function makeFetchErrorMessage(error: any): StatusMessage | string | null {
+    const apiError = ApiErrorHelper.fromError(error);
+    if (apiError) {
+        return apiError.makeStatusMessage();
+    }
+    if (typeof error === "string") {
+        return error;
+    }
+    if (error instanceof Error) {
+        return error.message;
+    }
+    return null;
 }

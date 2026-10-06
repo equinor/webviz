@@ -56,6 +56,30 @@ describe("Deserialization failures", () => {
         expect(item.serializeState()).toBe(serialized);
     });
 
+    test("a provider that fails to restore after it was made is torn down, so it never fetches or publishes", async () => {
+        vi.useFakeTimers();
+        try {
+            const backend = resetTestBackend();
+            backend.catalogues["field-a"] = { depth: { "Top reservoir": [1] } };
+            const manager = makeDataProviderManager({ fieldId: "field-a" });
+            const malformed = surfaceProvider("Malformed surface") as any;
+            delete malformed.settings;
+            const onDataRevision = vi.fn();
+
+            manager.deserializeState(managerState([malformed]));
+            manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.DATA_REVISION, onDataRevision);
+            // Long enough for it to have loaded, had it kept initializing
+            await vi.advanceTimersByTimeAsync(1_000);
+
+            expect(manager.getGroupDelegate().getChildren().every(isErrorPlaceholder)).toBe(true);
+            expect(backend.callsTo("getRealizations")).toEqual([]);
+            expect(backend.callsTo("getSurfaceData")).toEqual([]);
+            expect(onDataRevision).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     test("a nested data provider manager becomes an error placeholder, and the items after it are still restored", () => {
         const manager = makeDataProviderManager();
         const nestedManager = makeSerializedItem(SerializedType.DATA_PROVIDER_MANAGER, "Nested manager");

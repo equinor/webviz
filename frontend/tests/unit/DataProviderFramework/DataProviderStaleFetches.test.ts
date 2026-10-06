@@ -151,7 +151,8 @@ describe("Stale fetches", () => {
         await vi.advanceTimersByTimeAsync(20);
 
         expect(provider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
-        expect(provider.getData()).toBe("data without labels");
+        // Neither the stale result nor the earlier data, which invalid settings made outdated
+        expect(provider.getData()).toBeNull();
         manager.beforeDestroy();
     });
 

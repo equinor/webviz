@@ -166,6 +166,51 @@ describe("Data fetching", () => {
         expect(backend.callsTo("getLabelData")).toEqual([[false], [true]]);
     });
 
+    test("a fetch failing while the settings load again keeps the provider pending, and fails it once they turn out unchanged", async () => {
+        backend.catalogues["field-c"] = backend.catalogues["field-a"];
+        const manager = makeDataProviderManager({ fieldId: "field-a" });
+        manager.deserializeState(managerState([filterProvider("Filter")]));
+        await settle(manager);
+        const provider = findProvider(manager, "Filter");
+        backend.delayMs = 100;
+        backend.failRequests("getLabelData", new Error("Label service down"));
+
+        // The fetch fails after 110 ms - the settings reload from 50 to 150 ms
+        getProviderSetting(provider, Setting.SHOW_LABELS).setValue(true);
+        await vi.advanceTimersByTimeAsync(50);
+        manager.updateGlobalSetting("fieldId", "field-c");
+        await vi.advanceTimersByTimeAsync(70);
+        expect(provider.getStatus()).toBe(DataProviderStatus.LOADING);
+
+        await settle(manager);
+        expect(provider.getStatus()).toBe(DataProviderStatus.ERROR);
+        expect(provider.getError()).toBe("Filter: Label service down");
+        expect(backend.callsTo("getLabelData")).toEqual([[false], [true]]);
+    });
+
+    test("a fetch failing while the settings load again is discarded when a setting the data depends on changed meanwhile", async () => {
+        backend.catalogues["field-c"] = backend.catalogues["field-a"];
+        const manager = makeDataProviderManager({ fieldId: "field-a" });
+        manager.deserializeState(managerState([filterProvider("Filter")]));
+        await settle(manager);
+        const provider = findProvider(manager, "Filter");
+        backend.delayMs = 100;
+        backend.failRequests("getLabelData");
+
+        // The failing fetch for showing the labels is in flight when they are hidden again, while the settings reload
+        getProviderSetting(provider, Setting.SHOW_LABELS).setValue(true);
+        await vi.advanceTimersByTimeAsync(30);
+        manager.updateGlobalSetting("fieldId", "field-c");
+        await vi.advanceTimersByTimeAsync(10);
+        getProviderSetting(provider, Setting.SHOW_LABELS).setValue(false);
+        await vi.advanceTimersByTimeAsync(90);
+        backend.stopFailingRequests("getLabelData");
+        await settle(manager);
+
+        expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+        expect(provider.getData()).toEqual({ showLabels: false });
+    });
+
     test("refetches when a setting the data depends on changed while the settings were loading during a fetch", async () => {
         backend.catalogues["field-c"] = backend.catalogues["field-a"];
         const manager = makeDataProviderManager({ fieldId: "field-a" });

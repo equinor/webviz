@@ -110,17 +110,20 @@ function EndActions(props: EndActionProps): React.ReactNode {
         ItemDelegateTopic.DESERIALIZATION_ERRORS,
     );
 
+    // Each status gets its own key, so its tooltip is mounted anew when the status changes. Otherwise React keeps
+    // the same tooltip and only swaps the element it is attached to (e.g. the loading spinner for the success icon),
+    // and Base UI's tooltip trigger keeps listening for the mouse on the replaced element - the tooltip never opens.
     function makeStatus(): React.ReactNode {
         if (isSubordinated) {
             return (
-                <Tooltip content="Subordinated" side="bottom">
+                <Tooltip key="subordinated" content="Subordinated" side="bottom">
                     <Difference style={{ fontSize: 16 }} />
                 </Tooltip>
             );
         }
         if (status === DataProviderStatus.LOADING) {
             return (
-                <Tooltip content={progressMessage ?? "Loading"} side="bottom">
+                <Tooltip key="loading" content={progressMessage ?? "Loading"} side="bottom">
                     <div className="gap-x-2xs flex min-w-0 items-center">
                         <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                             {progressMessage}
@@ -134,7 +137,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
             const error = props.dataProvider.getError();
             if (!error) {
                 return (
-                    <Tooltip content="Error" side="bottom">
+                    <Tooltip key="error" content="Error" side="bottom">
                         <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
                     </Tooltip>
                 );
@@ -142,14 +145,14 @@ function EndActions(props: EndActionProps): React.ReactNode {
 
             if (typeof error === "string") {
                 return (
-                    <Tooltip content={error} side="bottom">
+                    <Tooltip key="error" content={error} side="bottom">
                         <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
                     </Tooltip>
                 );
             } else {
                 const statusMessage = error as StatusMessage;
                 return (
-                    <Tooltip content={statusMessage.message} side="bottom">
+                    <Tooltip key="error" content={statusMessage.message} side="bottom">
                         <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
                     </Tooltip>
                 );
@@ -167,7 +170,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
             errorMessage += "\nClick to show the settings.";
 
             return (
-                <Tooltip content={errorMessage} side="bottom">
+                <Tooltip key="invalid-settings" content={errorMessage} side="bottom">
                     <Button
                         onClick={() => props.dataProvider.getItemDelegate().setExpanded(true)}
                         variant="ghost"
@@ -183,7 +186,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
         }
         if (status === DataProviderStatus.SUCCESS) {
             return (
-                <Tooltip content="Successfully loaded" side="bottom">
+                <Tooltip key="success" content="Successfully loaded" side="bottom">
                     <CheckCircle className="text-success-subtle" style={{ fontSize: 16 }} />
                 </Tooltip>
             );
