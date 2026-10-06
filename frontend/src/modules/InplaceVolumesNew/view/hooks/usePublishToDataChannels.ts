@@ -12,9 +12,9 @@ import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { ChannelIds } from "@modules/InplaceVolumesNew/channelDefs";
 import type { Interfaces } from "@modules/InplaceVolumesNew/interfaces";
-import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
-import { colorByAtom, resultNameAtom, plotTypeAtom, subplotByAtom } from "../atoms/baseAtoms";
+import { colorByAtom, resultNameAtom, plotTypeAtom, selectorColumnAtom, subplotByAtom } from "../atoms/baseAtoms";
+import { barSelectorIndexColumnAtom } from "../atoms/derivedAtoms";
 
 // SENSITIVITY is never split: the SensitivityPlot tornado needs the whole per-realization response.
 const STANDARD_ORIGIN_KEYS = [
@@ -117,17 +117,25 @@ export function usePublishToDataChannels(
     const colorBy = useAtomValue(colorByAtom);
     const resultName = useAtomValue(resultNameAtom);
     const plotType = useAtomValue(plotTypeAtom);
+    const selectorColumn = useAtomValue(selectorColumnAtom);
+    const barSelectorIndexColumn = useAtomValue(barSelectorIndexColumnAtom);
+    const dependencies = [table, ensembleSet, resultName, colorBy, colorSet, plotType, subplotBy, selectorColumn];
 
-    if (
-        !table ||
-        !resultName ||
-        !table.getColumn("REAL") ||
-        !table.getColumn(resultName) ||
-        plotType === PlotType.BAR
-    ) {
+    // A bar category the contents are not split by gives several rows per REAL in each content.
+    const contentSplitColumns: string[] = [
+        TableOriginKey.ENSEMBLE,
+        TableOriginKey.TABLE_NAME,
+        TableOriginKey.FLUID,
+        subplotBy,
+        colorBy,
+    ];
+    const hasSeveralRowsPerReal =
+        barSelectorIndexColumn !== null && !contentSplitColumns.includes(barSelectorIndexColumn);
+
+    if (!table || !resultName || !table.getColumn("REAL") || !table.getColumn(resultName) || hasSeveralRowsPerReal) {
         viewContext.usePublishChannelContents({
             channelIdString: ChannelIds.RESPONSE_PER_REAL,
-            dependencies: [table, ensembleSet, resultName, colorBy, colorSet],
+            dependencies,
             enabled: Boolean(table && resultName),
             contents,
         });
@@ -193,7 +201,7 @@ export function usePublishToDataChannels(
 
     viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.RESPONSE_PER_REAL,
-        dependencies: [table, ensembleSet, resultName, colorBy, colorSet],
+        dependencies,
         enabled: Boolean(table && resultName),
         contents,
     });

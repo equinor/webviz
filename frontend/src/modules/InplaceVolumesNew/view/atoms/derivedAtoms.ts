@@ -90,11 +90,22 @@ export const areSelectedTablesComparableAtom = atom((get) => {
     return filter?.areSelectedTablesComparable ?? false;
 });
 
+/** Index column added to the grouping by "Create bar for each" in Bar plots, or null if none. */
+export const barSelectorIndexColumnAtom = atom<string | null>((get) => {
+    const plotType = get(plotTypeAtom);
+    const selectorColumn = get(selectorColumnAtom);
+    const validIndexColumns = get(indicesWithValuesAtom).map((indexWithValue) => indexWithValue.indexColumn);
+
+    if (selectorColumn !== null && plotType === PlotType.BAR && validIndexColumns.includes(selectorColumn)) {
+        return selectorColumn;
+    }
+    return null;
+});
+
 export const groupByIndicesAtom = atom((get) => {
     const subplotBy = get(subplotByAtom);
     const colorBy = get(colorByAtom);
-    const plotType = get(plotTypeAtom);
-    const selectorColumn = get(selectorColumnAtom);
+    const barSelectorIndexColumn = get(barSelectorIndexColumnAtom);
     const resultName = get(resultNameAtom);
     const indicesWithValues = get(indicesWithValuesAtom);
 
@@ -108,9 +119,8 @@ export const groupByIndicesAtom = atom((get) => {
         groupByIndices.push(colorBy);
     }
 
-    // Only request selectorColumns when plotting bar plots
-    if (selectorColumn !== null && plotType === PlotType.BAR && validIndexColumns.includes(selectorColumn)) {
-        groupByIndices.push(selectorColumn);
+    if (barSelectorIndexColumn !== null) {
+        groupByIndices.push(barSelectorIndexColumn);
     }
 
     // Fluid specific properties (BO/BG) are discarded by the backend when the fluids are summed,
