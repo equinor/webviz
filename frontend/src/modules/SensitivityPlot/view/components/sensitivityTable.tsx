@@ -67,17 +67,10 @@ const SensitivityTable: React.FC<SensitivityTableProps> = ({ entries }) => {
             }));
     });
 
-    const sortedRows = React.useMemo(
-        function sortRows() {
-            if (!columnSorting || columnSorting.direction === SortDirection.NONE) {
-                return tableRows;
-            }
-            return orderBy(tableRows, [columnSorting.columnKey], [columnSorting.direction]);
-        },
-        // tableRows is recomputed every render; depend on the underlying inputs instead
-        // eslint-disable-next-line @eslint-react/exhaustive-deps
-        [entries, columnSorting],
-    );
+    const sortedRows =
+        !columnSorting || columnSorting.direction === SortDirection.NONE
+            ? tableRows
+            : orderBy(tableRows, [columnSorting.columnKey], [columnSorting.direction]);
 
     return (
         <div className="h-full">

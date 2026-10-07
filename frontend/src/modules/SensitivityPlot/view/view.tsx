@@ -1,5 +1,7 @@
 import React from "react";
 
+import { Warning } from "@mui/icons-material";
+
 import type { ModuleViewProps } from "@framework/Module";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -20,6 +22,7 @@ import { buildSensitivityChartFigure, type SensitivityChartOptions } from "./uti
 import { SensitivityDataScaler } from "./utils/sensitivityDataScaler";
 
 const CELL_HEADING_HEIGHT_PX = 20;
+const MAX_NUM_PLOTS = 12;
 
 type ComputedResponse = {
     idString: string;
@@ -111,6 +114,15 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     }
 
     function makeChartContent(): React.ReactNode {
+        if (computedResponses.length > MAX_NUM_PLOTS) {
+            return (
+                <ContentWarning>
+                    <Warning fontSize="large" className="mb-sm" />
+                    Too many plots to display. Due to performance limitations, the number of plots is limited to{" "}
+                    {MAX_NUM_PLOTS}. The sensitivity table shows all responses.
+                </ContentWarning>
+            );
+        }
         if (computedResponses.length === 1) {
             return makePlot(computedResponses[0], wrapperDivSize.width, wrapperDivSize.height);
         }

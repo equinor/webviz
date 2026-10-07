@@ -200,14 +200,16 @@ export class PlotBuilder {
                 : null;
         // Upper bound: the legend shrinks the plot area by at most its max height.
         const numLegendEntries = traces.filter(({ trace }) => trace.showlegend !== false).length;
-        const legendHeight = numLegendEntries > 1 ? LEGEND_MAX_HEIGHT_FRACTION * height : 0;
+        const legendHeight = numLegendEntries > 0 ? LEGEND_MAX_HEIGHT_FRACTION * height : 0;
+        // Only category labels are rotated; numeric ticks stay horizontal so the one-line estimate holds.
+        const xTickAngle = categoryLabels ? X_TICK_ANGLE : 0;
 
         const spacing = computeSubplotXAxisSpacing({
             numRows,
             availableHeight: height - (options.margin?.t ?? 0) - (options.margin?.b ?? 0) - legendHeight,
             showTickLabels: xAxisOptions.showticklabels !== false,
             categoryLabels,
-            tickAngle: X_TICK_ANGLE,
+            tickAngle: xTickAngle,
             tickFontSize: xAxisOptions.tickfont?.size ?? DEFAULT_TICK_FONT_SIZE,
             axisTitle: xAxisTitle?.text
                 ? {
@@ -223,7 +225,7 @@ export class PlotBuilder {
             height,
             width,
             subplotTitles,
-            xAxisTickAngle: X_TICK_ANGLE,
+            xAxisTickAngle: xTickAngle,
             verticalSpacing: spacing.verticalSpacing,
             ...options,
         });

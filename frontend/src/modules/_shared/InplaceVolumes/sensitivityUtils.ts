@@ -47,10 +47,13 @@ function getLowestRealization(sensitivityCase: SensitivityCase): number {
 function getOrderedSensitivityArr(sensitivities: EnsembleSensitivities): Sensitivity[] {
     const byLowestRealization = (a: SensitivityCase, b: SensitivityCase) =>
         getLowestRealization(a) - getLowestRealization(b);
+    // Cases are sorted, so the first one holds the sensitivity's lowest realization.
+    const lowestOf = (sensitivity: Sensitivity) =>
+        sensitivity.cases.length > 0 ? getLowestRealization(sensitivity.cases[0]) : Number.MAX_SAFE_INTEGER;
     return sensitivities
         .getSensitivityArr()
         .map((sensitivity) => ({ ...sensitivity, cases: [...sensitivity.cases].sort(byLowestRealization) }))
-        .sort((a, b) => byLowestRealization(a.cases[0], b.cases[0]));
+        .sort((a, b) => lowestOf(a) - lowestOf(b));
 }
 
 /** Null unless the ensemble has more than one case, e.g. a pure Monte Carlo design is not analysed per case. */

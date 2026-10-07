@@ -54,30 +54,25 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     });
 
     const sensitivityNames: string[] = [];
-    if (responseReceiver.channel) {
-        if (
-            responseReceiver.channel.contents.length > 0 &&
-            responseReceiver.channel.contents[0].metaData.ensembleIdentString
-        ) {
-            const ensembleIdentString = responseReceiver.channel.contents[0].metaData.ensembleIdentString;
-
-            const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-            if (!ensemble || ensemble instanceof DeltaEnsemble) {
-                const ensembleType = !ensemble ? "Invalid" : "Delta";
-                return (
-                    <ContentWarning>
-                        <p>{ensembleType} ensemble detected in the data channel.</p>
-                        <p>Unable to compute parameter correlations.</p>
-                    </ContentWarning>
-                );
-            }
-
-            sensitivityNames.push(
-                ...(ensemble
-                    .getSensitivities()
-                    ?.getSensitivityArr()
-                    .map((el) => el.name) ?? []),
+    for (const content of responseReceiver.channel?.contents ?? []) {
+        if (!content.metaData.ensembleIdentString) {
+            continue;
+        }
+        const ensemble = ensembleSet.findEnsembleByIdentString(content.metaData.ensembleIdentString);
+        if (!ensemble || ensemble instanceof DeltaEnsemble) {
+            const ensembleType = !ensemble ? "Invalid" : "Delta";
+            return (
+                <ContentWarning>
+                    <p>{ensembleType} ensemble detected in the data channel.</p>
+                    <p>Unable to compute parameter correlations.</p>
+                </ContentWarning>
             );
+        }
+
+        for (const sensitivity of ensemble.getSensitivities()?.getSensitivityArr() ?? []) {
+            if (!sensitivityNames.includes(sensitivity.name)) {
+                sensitivityNames.push(sensitivity.name);
+            }
         }
     }
 

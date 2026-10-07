@@ -1,4 +1,4 @@
-import { Input, Warning } from "@mui/icons-material";
+import { Input } from "@mui/icons-material";
 
 import type { ViewContext } from "@framework/ModuleContext";
 import { KeyKind } from "@framework/types/dataChannnel";
@@ -9,8 +9,6 @@ import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import type { Interfaces } from "@modules/SensitivityPlot/interfaces";
 
 import { channelContentsToResponses, type ChannelResponse } from "../utils/channelContentsToResponses";
-
-const MAX_NUM_PLOTS = 12;
 
 export interface ResponseChannelData {
     responses: ChannelResponse[];
@@ -54,20 +52,6 @@ export function useResponseChannel(
             warningContent: (
                 <ContentWarning>
                     No data received on channel {responseReceiver.channel?.displayName ?? "Unknown"}
-                </ContentWarning>
-            ),
-        };
-    }
-
-    if (responseReceiver.channel!.contents.length > MAX_NUM_PLOTS) {
-        return {
-            responses: [],
-            displayName: responseReceiver.channel?.displayName ?? null,
-            warningContent: (
-                <ContentWarning>
-                    <Warning fontSize="large" className="mb-sm" />
-                    Too many plots to display. Due to performance limitations, the number of plots is limited to{" "}
-                    {MAX_NUM_PLOTS}.
                 </ContentWarning>
             ),
         };
