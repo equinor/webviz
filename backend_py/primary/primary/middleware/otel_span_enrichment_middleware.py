@@ -3,9 +3,8 @@ import logging
 from opentelemetry import trace
 from starlette.requests import Request
 from starlette.types import ASGIApp, Scope, Receive, Send
+from webviz_core_utils.pseudonymize import pseudonymize_user_id
 from webviz_services.utils.authenticated_user import AuthenticatedUser
-
-from primary.utils.pseudonymize import pseudonymize_user_id
 
 LOGGER = logging.getLogger(__name__)
 

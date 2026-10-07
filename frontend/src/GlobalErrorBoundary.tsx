@@ -4,9 +4,9 @@ import { BugReport, ContentCopy } from "@mui/icons-material";
 
 import { SupportDocumentsGenerator } from "@framework/components/SupportDocumentsGenerator";
 import { SERVICE_NOW_HREF } from "@framework/utils/externalUrls";
+import { trackTelemetryError } from "@framework/utils/telemetry";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
-import { trackException } from "@lib/telemetry/appInsights";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type Props = {
@@ -69,7 +69,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
 
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
         this.setState({ componentStack: errorInfo.componentStack ?? null });
-        trackException(error, { componentStack: errorInfo.componentStack ?? "" });
+        trackTelemetryError(error, { componentStack: errorInfo.componentStack ?? "" });
     }
 
     componentDidMount() {

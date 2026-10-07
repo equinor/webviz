@@ -11,16 +11,10 @@ function createConfiguredAppInsights(telemetryConfig: TelemetryConfig_api): Appl
     const ai = new ApplicationInsights({
         config: {
             connectionString: telemetryConfig.insights_connection_string,
-            // Default SDK behavior: the initial page view is tracked on load and telemetry groups
-            // under the session. SPA route changes are not tracked as separate page views.
-            enableAutoRouteTracking: false,
-            // Capture AJAX/fetch dependencies and correlate them with backend traces.
-            disableFetchTracking: false,
             enableCorsCorrelation: true,
             enableRequestHeaderTracking: true,
             enableResponseHeaderTracking: true,
-            // Report unhandled browser exceptions automatically.
-            autoTrackPageVisitTime: true,
+            enableUnhandledPromiseRejectionTracking: true,
             // To stop Chrome complaining: "Permissions policy violation: unload is not allowed in this document"
             disablePageUnloadEvents: ["unload"],
         },
@@ -68,8 +62,9 @@ export async function initializeTelemetryFromBackend(): Promise<void> {
 
     try {
         const requestResult = await getTelemetryConfig({ throwOnError: true });
-        appInsightsSingleton = createConfiguredAppInsights(requestResult.data);
-        appInsightsSingleton.trackPageView();
+        const telemetryConfig: TelemetryConfig_api = requestResult.data;
+        appInsightsSingleton = createConfiguredAppInsights(telemetryConfig);
+        console.info(`Successfully initialized telemetry from backend (user_pseudonym=${telemetryConfig.user_pseudonym}, commit_sha=${telemetryConfig.commit_sha}, radix_environment=${telemetryConfig.radix_environment})`);
     }
     catch (error) {
         // Telemetry is optional so never let its setup break the app.
@@ -82,29 +77,23 @@ export function shutdownTelemetry(): void {
         return;
     }
 
-    appInsightsSingleton.clearAuthenticatedUserContext();
-    appInsightsSingleton.unload(false);
+    try {
+        appInsightsSingleton.clearAuthenticatedUserContext();
+        appInsightsSingleton.unload(false);
+    }
+    catch (error) {
+        console.warn("Failed to cleanly shutdown telemetry", error);
+    }
+
     appInsightsSingleton = null;
 }
 
 
-export function getAppInsights(): ApplicationInsights | null {
-    return appInsightsSingleton;
-}
-
-/*
-    Tracks a page view, which mints a fresh operation_Id. Call this when starting
-    a logical new "operation" (e.g. an in-app navigation) so telemetry isn't all
-    grouped under a single operation for the whole browser session.
-*/
-export function trackPageView(name?: string, uri?: string): void {
-    appInsightsSingleton?.trackPageView({ name, uri });
-}
-
-export function trackEvent(name: string, properties?: ICustomProperties): void {
+export function trackTelemetryEvent(name: string, properties?: ICustomProperties): void {
     appInsightsSingleton?.trackEvent({ name }, properties);
 }
 
-export function trackException(error: Error, properties?: ICustomProperties): void {
+
+export function trackTelemetryError(error: Error, properties?: ICustomProperties): void {
     appInsightsSingleton?.trackException({ exception: error }, properties);
 }

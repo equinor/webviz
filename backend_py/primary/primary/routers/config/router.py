@@ -6,10 +6,10 @@ from pydantic import BaseModel
 from webviz_core_utils.azure_monitor_destination import AzureMonitorDestination
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 from webviz_core_utils.radix_utils import get_radix_environment_name, get_radix_short_commit_sha
+from webviz_core_utils.pseudonymize import pseudonymize_user_id
 
 from primary import config
 from primary.auth.auth_helper import AuthenticatedUser, AuthHelper
-from primary.utils.pseudonymize import pseudonymize_user_id
 
 LOGGER = logging.getLogger(__name__)
 

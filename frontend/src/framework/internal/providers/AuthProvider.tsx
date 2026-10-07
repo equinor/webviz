@@ -2,7 +2,7 @@ import React from "react";
 
 import type { UserInfo_api } from "@api";
 import { getLoggedInUser } from "@api";
-import { initializeTelemetryFromBackend } from "@lib/telemetry/appInsights";
+import { initializeTelemetryFromBackend } from "@framework/utils/telemetry";
 
 export enum AuthState {
     LoggedIn = "LoggedIn",
