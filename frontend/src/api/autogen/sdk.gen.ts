@@ -177,6 +177,8 @@ import type {
     GetSurfaceDataData_api,
     GetSurfaceDataErrors_api,
     GetSurfaceDataResponses_api,
+    GetTelemetryConfigData_api,
+    GetTelemetryConfigResponses_api,
     GetUserInfoData_api,
     GetUserInfoErrors_api,
     GetUserInfoResponses_api,
@@ -1830,6 +1832,18 @@ export const getMediaSasToken = <ThrowOnError extends boolean = false>(
     (options?.client ?? client).get<GetMediaSasTokenResponses_api, unknown, ThrowOnError>({
         responseType: "json",
         url: "/tutorials/media_sas_token",
+        ...options,
+    });
+
+/**
+ * Get Telemetry Config
+ */
+export const getTelemetryConfig = <ThrowOnError extends boolean = false>(
+    options?: Options<GetTelemetryConfigData_api, ThrowOnError>,
+): RequestResult<GetTelemetryConfigResponses_api, unknown, ThrowOnError> =>
+    (options?.client ?? client).get<GetTelemetryConfigResponses_api, unknown, ThrowOnError>({
+        responseType: "json",
+        url: "/config/telemetry",
         ...options,
     });
 

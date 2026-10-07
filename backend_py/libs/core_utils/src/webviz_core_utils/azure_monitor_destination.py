@@ -58,6 +58,6 @@ class AzureMonitorDestination:
             resource_attributes={
                 "service.name": service_name,
                 "service.namespace": "local",
-                "service.version": "NA",
+                "service.version": "sha_dev",
             },
         )

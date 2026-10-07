@@ -25,6 +25,7 @@ from primary.middleware.otel_span_enrichment_middleware import OtelSpanEndUserEn
 from primary.middleware.encrypted_redis_session_store import EncryptedRedisSessionStore
 from primary.persistence.persistence_stores import PersistenceStoresSingleton
 from primary.routers.dev.router import router as dev_router
+from primary.routers.config.router import router as config_router
 from primary.routers.explore.router import router as explore_router
 from primary.routers.general import router as general_router
 from primary.routers.graph.router import router as graph_router
@@ -179,6 +180,7 @@ app.include_router(vfp_router, prefix="/vfp", tags=["vfp"])
 app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
 app.include_router(persistence_router, prefix="/persistence", tags=["persistence"])
 app.include_router(tutorials_router, prefix="/tutorials", tags=["tutorials"])
+app.include_router(config_router, prefix="/config", tags=["config"])
 
 auth_helper = AuthHelper()
 app.include_router(auth_helper.router)

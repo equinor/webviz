@@ -8,6 +8,7 @@ import { Avatar } from "@lib/components/Avatar";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Popover } from "@lib/components/Popover";
+import { shutdownTelemetry } from "@lib/telemetry/appInsights";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { makeInitials } from "@lib/utils/userNames";
 
@@ -24,6 +25,8 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     async function handleLogout() {
         console.debug("Logging out...");
+        // Tear telemetry down symmetrically with login, flushing pending data first.
+        shutdownTelemetry();
         await postLogout();
         console.debug("Redirecting to login screen...");
         window.location.reload();
