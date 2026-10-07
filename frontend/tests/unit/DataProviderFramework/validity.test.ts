@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { SettingsContextStatus } from "@modules/_shared/DataProviderFramework/delegates/SettingsContextDelegate";
-import { DataProviderStatus } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
+import {
+    DataProviderStatus,
+    DataProviderTopic,
+} from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
 import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
@@ -252,12 +255,18 @@ describe("Data of invalid providers", () => {
         const surfaceName = getProviderSetting(provider, Setting.SURFACE_NAME);
         expect(provider.getData()).not.toBeNull();
         const numFetchesBefore = backend.callsTo("getSurfaceData").length;
+        const dataWhenPublished: unknown[] = [];
+        provider.getPublishSubscribeDelegate().subscribe(DataProviderTopic.DATA, () => {
+            dataWhenPublished.push(provider.getData());
+        });
 
         surfaceName.setValue("Gone surface");
         await settle(manager);
         expect(provider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
         expect(provider.getData()).toBeNull();
         expect(provider.getDataValueRange()).toBeNull();
+        // Subscribers to the data are told that it was discarded
+        expect(dataWhenPublished).toEqual([null]);
 
         // Back to the settings of the discarded data
         surfaceName.setValue("Top reservoir");

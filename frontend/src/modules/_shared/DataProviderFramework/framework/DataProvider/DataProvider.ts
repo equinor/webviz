@@ -462,11 +462,15 @@ export class DataProvider<
      * The settings of the last fetch are forgotten with it, so becoming valid again always fetches.
      */
     private discardOutdatedData(): void {
+        const hadData = this._data !== null;
         this._data = null;
         this._valueRange = null;
         this._lastFetchOutcome = null;
         this._prevSettings = null;
         this._prevStoredData = null;
+        if (hadData) {
+            this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
+        }
     }
 
     /*

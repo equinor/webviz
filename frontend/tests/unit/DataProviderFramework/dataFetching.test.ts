@@ -160,6 +160,54 @@ describe("Data fetching", () => {
         expect(backend.callsTo("getLabelData")).toEqual([[false], [true]]);
     });
 
+    test("data held back and then rejected never becomes current, and a failed refetch isn't turned into SUCCESS later", async () => {
+        backend.catalogues["field-c"] = backend.catalogues["field-a"];
+        const { manager, provider } = await restoreSurface();
+        const realization = getProviderSetting(provider, Setting.REALIZATION);
+        backend.delayMs = 100;
+
+        // The fetch for realization 2 runs from 10 to 110 ms - the settings reload from 50 to 150 ms, and the
+        // realization changes again meanwhile, so its result is held back and then rejected
+        realization.setValue(2);
+        await vi.advanceTimersByTimeAsync(50);
+        manager.updateGlobalSetting("fieldId", "field-c");
+        await vi.advanceTimersByTimeAsync(10);
+        realization.setValue(3);
+        await vi.advanceTimersByTimeAsync(60);
+        backend.failRequests("getSurfaceData");
+
+        // The refetch for realization 3 is running - the rejected data is not current
+        await vi.advanceTimersByTimeAsync(80);
+        expect(provider.getStatus()).toBe(DataProviderStatus.LOADING);
+        expect(provider.getData()?.realization).toBe(1);
+
+        await settle(manager);
+        expect(provider.getStatus()).toBe(DataProviderStatus.ERROR);
+
+        // A change that doesn't refetch - the last fetch still failed
+        getProviderSetting(provider, Setting.SHOW_LABELS).setValue(true);
+        await settle(manager);
+        expect(provider.getStatus()).toBe(DataProviderStatus.ERROR);
+        expect(provider.getData()?.realization).not.toBe(2);
+    });
+
+    test("a provider whose last fetch failed stays in ERROR when its settings load again without changing", async () => {
+        backend.catalogues["field-c"] = backend.catalogues["field-a"];
+        const { manager, provider } = await restoreSurface();
+        backend.failRequests("getSurfaceData");
+        getProviderSetting(provider, Setting.REALIZATION).setValue(2);
+        await settle(manager);
+        expect(provider.getStatus()).toBe(DataProviderStatus.ERROR);
+        const numFetches = backend.callsTo("getSurfaceData").length;
+
+        backend.stopFailingRequests("getSurfaceData");
+        manager.updateGlobalSetting("fieldId", "field-c");
+        await settle(manager);
+
+        expect(provider.getStatus()).toBe(DataProviderStatus.ERROR);
+        expect(backend.callsTo("getSurfaceData").length).toBe(numFetches);
+    });
+
     test("a fetch failing while the settings load again keeps the provider pending, and fails it once they turn out unchanged", async () => {
         backend.catalogues["field-c"] = backend.catalogues["field-a"];
         const manager = makeDataProviderManager({ fieldId: "field-a" });
