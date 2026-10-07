@@ -7,7 +7,7 @@ from azure.servicebus import ServiceBusReceivedMessage
 from webviz_services.utils.task_meta_tracker import TaskMetaTracker, TaskState, get_task_meta_tracker_for_user_id
 from webviz_server_schemas.pyworker.messages import UserTaskMsgHeader
 
-from .task_exceptions import TaskFailedError, TaskDeferredError, MalformedMessageError
+from .task_exceptions import TaskFailedError, TaskDeferredError, MalformedMessageError, TaskRetryExhaustedError
 from .utils.abort_signal import AbortSignal
 from .utils.worker_logging import LogScope
 
@@ -27,20 +27,30 @@ UserTaskWorkFn = Callable[[TaskMetaTracker, ServiceBusReceivedMessage, AbortSign
 
 
 async def run_tracked_user_task_async(
-    sb_msg: ServiceBusReceivedMessage, work_fn: UserTaskWorkFn, abort_signal: AbortSignal
+    sb_msg: ServiceBusReceivedMessage,
+    work_fn: UserTaskWorkFn,
+    abort_signal: AbortSignal,
+    max_delivery_count: int,
 ) -> None:
     """
     Owns the task lifecycle and maps the work outcome onto the task state.
     Message settlement is performed in process_message_async(), based on any exception that propagates out of here:
 
-      | Outcome of work_fn                      | Task state| Message settlement |
-      |-----------------------------------------|-----------|--------------------|
-      | Returns normally                        | SUCCEEDED | complete           |
-      | Raises TaskFailedError                  | FAILED    | complete           |
-      | Raises TaskDeferredError (retry/abort)  | untouched | abandon / retry    |
-      | Raises TaskInternalError / other        | FAILED    | dead-letter        |
+    Note that max_delivery_count is used to determine when a TaskDeferredError should be escalated to a
+    TaskRetryExhaustedError, signaling that the task has reached its retry limit and should be dead-lettered.
+    Its value should match the maximum delivery count configured for the Service Bus queue (default is 10).
 
-    Note: The task state is always recorded before the exception propagates, so the message is never settled before
+    The mapping between work outcomes and task state/message settlement is summarized below:
+      | Outcome of work_fn                     | Task state | Message settlement |
+      |----------------------------------------|------------|--------------------|
+      | Returns normally                       | SUCCEEDED  | complete           |
+      | Raises TaskFailedError                 | FAILED     | complete           |
+      | Raises TaskDeferredError before limit  | RUNNING    | abandon / retry    |
+      | Raises TaskDeferredError at limit      | FAILED     | dead-letter        |
+      | Raises TaskInternalError / other       | FAILED     | dead-letter        |
+
+    Note: Except for the deferred failures that have not yet reached the delivery limit, the task
+    state is always recorded before the exception propagates, so the message is never settled before
     the outcome has been written as task state.
     """
 
@@ -63,8 +73,16 @@ async def run_tracked_user_task_async(
             )
             raise
 
-        except TaskDeferredError:
-            # Transient failure or cooperative shutdown: leave the task untouched and let caller settle message
+        except TaskDeferredError as exc:
+            # Transient failure or cooperative shutdown:
+            # Leave the task untouched (preserves RUNNING) unless the delivery count has reached the maximum.
+            # In that case the task will be marked as FAILED and the special TaskRetryExhaustedError gets raised,
+            # which signals to the caller that the task has failed and should be dead-lettered.
+            if sb_msg.delivery_count >= max_delivery_count:
+                await task_tracker.fail_task_async(
+                    header.task_id, status_msg="Task failed due to exhausting retries", internal_error_msg=repr(exc)
+                )
+                raise TaskRetryExhaustedError("Task reached the queue's maximum delivery count") from exc
             raise
 
         except Exception as exc:

@@ -5,17 +5,18 @@ Each of the main three exceptions map deterministically to a Service Bus settlem
 The base classes below correspond 1:1 to the three possible settlement outcomes.
 The subclasses only add diagnostic/telemetry nuance and share their base's settlement behaviour.
 
-    | Exception (base)          | SB message settlement   | Resulting task state     |
-    |---------------------------|-------------------------|--------------------------|
-    | TaskFailedError           | complete                | FAILED (user facing msg) |
-    |                           |                         |                          |
-    | TaskDeferredError         | abandon (retry message) | untouched                |
-    |   - TaskRetryError        |                         |                          |
-    |   - TaskAbortedError      |                         |                          |
-    |                           |                         |                          |
-    | TaskInternalError         | dead-letter             | FAILED (generic msg)     |
-    |   - MalformedMessageError |                         |                          |
-    |   - TaskTrackingError     |                         |                          |
+    | Exception (base)            | SB message settlement   | Resulting task state     |
+    |-----------------------------|-------------------------|--------------------------|
+    | TaskFailedError             | complete                | FAILED (user facing msg) |
+    |                             |                         |                          |
+    | TaskDeferredError           | abandon (retry message) | untouched                |
+    |   - TaskRetryError          |                         |                          |
+    |   - TaskAbortedError        |                         |                          |
+    |                             |                         |                          |
+    | TaskInternalError           | dead-letter             | FAILED (generic msg)     |
+    |   - TaskRetryExhaustedError |                         |                          |
+    |   - MalformedMessageError   |                         |                          |
+    |   - TaskTrackingError       |                         |                          |
 
 Any exception that is NOT one of these is treated like TaskInternalError:
     => SB message settled as DEAD-LETTERED, task marked FAILED with a generic message.
@@ -74,6 +75,12 @@ class TaskInternalError(Exception):
     retrying would not help; the message needs a human to inspect it.
 
     => SB message DEAD-LETTERED, task state FAILED with a generic user facing message + possibly internal error details.
+    """
+
+
+class TaskRetryExhaustedError(TaskInternalError):
+    """
+    A deferred task failure that has reached the queue's maximum delivery count.
     """
 
 
