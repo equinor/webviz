@@ -141,6 +141,7 @@ jobs:
           poetry check --lock --directory=./libs/server_schemas
           poetry check --lock --directory=./libs/services
           poetry check --lock --directory=./primary
+          poetry check --lock --directory=./pyworker
           poetry check --lock --directory=./user_grid3d_ri
 
           # Install our repo tooling (mypy, pylint, etc.)
@@ -151,7 +152,7 @@ jobs:
         run: |
           set -x
           black --check .
-          bandit --recursive primary/ libs/ user_grid3d_ri/ --exclude tests
+          bandit --recursive primary/ libs/ pyworker/ user_grid3d_ri/ --exclude tests
 
       - name: 🕵️ Check linting & typing for primary
         working-directory: ./backend_py
@@ -169,6 +170,14 @@ jobs:
           WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY: 0
         run: |
           pytest ./tests/unit
+
+      - name: 🕵️ Check linting & typing for pyworker
+        working-directory: ./backend_py
+        run: |
+          set -x
+          (cd pyworker && poetry install)
+          scripts/pylint-pyworker-all.sh
+          scripts/mypy-pyworker-all.sh
 
       - name: 🕵️ Check linting & typing for user_grid3d_ri
         working-directory: ./backend_py

@@ -14,7 +14,9 @@ for path in \
     libs/core_utils \
     libs/server_schemas \
     libs/services \
-    primary 
+    primary \
+    pyworker \
+    user_grid3d_ri
 do
     echo
     echo "Refreshing lockfile in: $path"
