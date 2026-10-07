@@ -1,11 +1,11 @@
-import type { ICustomProperties, ITelemetryItem } from "@microsoft/applicationinsights-web";
+import type { ITelemetryItem } from "@microsoft/applicationinsights-web";
+import type { ICustomProperties } from "@microsoft/applicationinsights-web";
+import type { IEventTelemetry, IExceptionTelemetry } from "@microsoft/applicationinsights-web";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 
 import { getTelemetryConfig, TelemetryConfig_api } from "@api";
 
-
 let appInsightsSingleton: ApplicationInsights | null = null;
-
 
 function createConfiguredAppInsights(telemetryConfig: TelemetryConfig_api): ApplicationInsights {
     const ai = new ApplicationInsights({
@@ -14,6 +14,7 @@ function createConfiguredAppInsights(telemetryConfig: TelemetryConfig_api): Appl
             enableCorsCorrelation: true,
             enableRequestHeaderTracking: true,
             enableResponseHeaderTracking: true,
+            //disableExceptionTracking: true,
             enableUnhandledPromiseRejectionTracking: true,
 
             // To stop Chrome complaining: "Permissions policy violation: unload is not allowed in this document"
@@ -24,6 +25,11 @@ function createConfiguredAppInsights(telemetryConfig: TelemetryConfig_api): Appl
                 ["AppInsightsCfgSyncPlugin"]: {
                     blkCdnCfg: true,
                 },
+            },
+
+            expCfg: {
+                // Example experimental configuration
+
             },
         },
     });
@@ -54,12 +60,11 @@ function createConfiguredAppInsights(telemetryConfig: TelemetryConfig_api): Appl
         item.tags["ai.user.id"] = telemetryConfig.user_pseudonym ?? "UnidentifiedUser";
 
         // Return true to indicate that the telemetry item should be sent, false would drop it.
-        return true; 
+        return true;
     });
 
     return ai;
 }
-
 
 // Initializes telemetry by fetching the config from the backend and setting up App Insights.
 // Call this once the user is authenticated. Safe to call more than once.
@@ -96,12 +101,24 @@ export function shutdownTelemetry(): void {
     appInsightsSingleton = null;
 }
 
-
 export function trackTelemetryEvent(name: string, properties?: ICustomProperties): void {
-    appInsightsSingleton?.trackEvent({ name }, properties);
+    if (!appInsightsSingleton) {
+        return;
+    }
+
+    const eventTelemetry: IEventTelemetry = {
+        name: name,
+    };
+    appInsightsSingleton.trackEvent(eventTelemetry, properties);
 }
 
+export function trackTelemetryException(error: Error, properties?: ICustomProperties): void {
+    if (!appInsightsSingleton) {
+        return;
+    }
 
-export function trackTelemetryError(error: Error, properties?: ICustomProperties): void {
-    appInsightsSingleton?.trackException({ exception: error }, properties);
+    const exceptionTelemetry: IExceptionTelemetry = {
+        exception: error,
+    };
+    appInsightsSingleton.trackException(exceptionTelemetry, properties);
 }

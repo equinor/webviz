@@ -4,7 +4,7 @@ import { BugReport, ContentCopy } from "@mui/icons-material";
 
 import { SupportDocumentsGenerator } from "@framework/components/SupportDocumentsGenerator";
 import { SERVICE_NOW_HREF } from "@framework/utils/externalUrls";
-import { trackTelemetryError } from "@framework/utils/telemetry";
+import { trackTelemetryException } from "@framework/utils/telemetry";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -54,10 +54,17 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
             return;
         }
         this.setState({ error: event.error });
+
+        // If we decide to log error to telemetry here, we should probably set disableExceptionTracking=true
+        trackTelemetryException(event.error, { triggeredFrom: "handleWindowError()", componentStack: this.state.componentStack ?? "NoComponentStack" });
+
     }
 
     private handleUnhandledRejection(event: PromiseRejectionEvent) {
         this.setState({ error: event.reason });
+
+        // If we decide to log error to telemetry here, we should probably set disableExceptionTracking=true
+        trackTelemetryException(event.reason, { triggeredFrom: "handleUnhandledRejection()", componentStack: this.state.componentStack ?? "NoComponentStack" });
     }
 
     private registerActiveWorkbench(wb: Workbench | null) {
@@ -69,7 +76,10 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
 
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
         this.setState({ componentStack: errorInfo.componentStack ?? null });
-        trackTelemetryError(error, { componentStack: errorInfo.componentStack ?? "" });
+
+        // Should we log the exception to telemetry here at all or is the premise that this exception is already handled in a controlled way?
+        // For now we send it to telemetry, including the component stack which
+        trackTelemetryException(error, { triggeredFrom: "componentDidCatch()", componentStack: errorInfo.componentStack ?? "NoComponentStack" });
     }
 
     componentDidMount() {
