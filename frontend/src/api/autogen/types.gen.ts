@@ -2422,6 +2422,28 @@ export type TableColumnStatisticalData_api = {
 };
 
 /**
+ * TelemetryConfig
+ */
+export type TelemetryConfig_api = {
+    /**
+     * Insights Connection String
+     */
+    insights_connection_string: string;
+    /**
+     * Radix Environment
+     */
+    radix_environment: string;
+    /**
+     * Commit Sha
+     */
+    commit_sha: string;
+    /**
+     * User Pseudonym
+     */
+    user_pseudonym?: string | null;
+};
+
+/**
  * TutorialMediaSasToken
  */
 export type TutorialMediaSasToken_api = {
@@ -7281,6 +7303,24 @@ export type GetMediaSasTokenResponses_api = {
 };
 
 export type GetMediaSasTokenResponse_api = GetMediaSasTokenResponses_api[keyof GetMediaSasTokenResponses_api];
+
+export type GetTelemetryConfigData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/config/telemetry";
+};
+
+export type GetTelemetryConfigResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: TelemetryConfig_api;
+};
+
+export type GetTelemetryConfigResponse_api = GetTelemetryConfigResponses_api[keyof GetTelemetryConfigResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;

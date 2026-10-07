@@ -1,11 +1,9 @@
 import logging
-import base64
-import hashlib
-import hmac
 
 from opentelemetry import trace
 from starlette.requests import Request
 from starlette.types import ASGIApp, Scope, Receive, Send
+from webviz_core_utils.pseudonymize import pseudonymize_user_id
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 LOGGER = logging.getLogger(__name__)
@@ -82,7 +80,7 @@ class OtelSpanEndUserEnrichmentMiddleware:
             if maybe_authenticated_user_obj and isinstance(maybe_authenticated_user_obj, AuthenticatedUser):
                 # user_name = maybe_authenticated_user_obj.get_username()
                 user_id = maybe_authenticated_user_obj.get_user_id()
-                pseudonym = _pseudonymize_user_id(self.hmac_secret_key, user_id)
+                pseudonym = pseudonymize_user_id(self.hmac_secret_key, user_id)
 
                 # Shows up as "Auth Id", "Authenticated user Id" or user_AuthenticatedId in Application Insights
                 curr_span.set_attribute("enduser.id", pseudonym)
@@ -99,13 +97,3 @@ class OtelSpanEndUserEnrichmentMiddleware:
                 LOGGER.debug("OtelSpanEndUserEnrichmentMiddleware: Could not get end user information from request")
 
         await self.app(scope, receive, send)
-
-
-def _pseudonymize_user_id(secret_key: str, user_id: str) -> str:
-    # Create an HMAC digest of the user ID which is irreversible without the secret key.
-    # This way we can have a consistent pseudonym for the same user ID, but it cannot be traced back to the original user ID without the secret key.
-    digest_bytes = hmac.digest(key=secret_key.encode("utf-8"), msg=user_id.encode("utf-8"), digest=hashlib.sha256)
-
-    # Encode the digest using base32 (all caps + digits, no special characters) and take the first 12 characters for a shorter pseudonym.
-    encoded_digest = base64.b32encode(digest_bytes).decode("ascii").rstrip("=")
-    return f"usr_{encoded_digest[:12]}"

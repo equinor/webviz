@@ -11,15 +11,31 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Button } from "@lib/components/Button";
 
 import type { Interfaces } from "./interfaces";
+import { trackTelemetryEvent } from "../../framework/utils/telemetry";
 
 export const triggeredRefreshCounterAtom = atom<number>(0);
 
 //-----------------------------------------------------------------------------------------------------------
 export function WorkbenchSpySettings() {
     const setRefreshCounter = useSetAtom(triggeredRefreshCounterAtom);
+
+    function handleButtonClick() {
+        trackTelemetryEvent("WorkbenchSpySettings.TriggeredRefresh");
+
+        setRefreshCounter((prev: number) => {
+            return prev + 1;
+        });
+
+        // !!!!!!!!!!!
+        // !!!!!!!!!!!
+        // !!!!!!!!!!!
+        // Trigger a refresh by throwing an error
+        throw new Error("Triggered refresh");
+    }
+
     return (
         <div>
-            <Button onClick={() => setRefreshCounter((prev: number) => prev + 1)}>Trigger Refresh</Button>
+            <Button onClick={handleButtonClick}>Trigger Refresh</Button>
         </div>
     );
 }
