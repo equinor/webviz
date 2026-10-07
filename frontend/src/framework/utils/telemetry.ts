@@ -15,8 +15,16 @@ function createConfiguredAppInsights(telemetryConfig: TelemetryConfig_api): Appl
             enableRequestHeaderTracking: true,
             enableResponseHeaderTracking: true,
             enableUnhandledPromiseRejectionTracking: true,
+
             // To stop Chrome complaining: "Permissions policy violation: unload is not allowed in this document"
             disablePageUnloadEvents: ["unload"],
+
+            extensionConfig: {
+                // Block the CfgSync plugin's CDN config fetch. Not needed and avoids a CSP exception.
+                ["AppInsightsCfgSyncPlugin"]: {
+                    blkCdnCfg: true,
+                },
+            },
         },
     });
 
