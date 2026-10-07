@@ -148,12 +148,14 @@ describe("Data fetching", () => {
         await vi.advanceTimersByTimeAsync(50);
         manager.updateGlobalSetting("fieldId", "field-c");
         await vi.advanceTimersByTimeAsync(70);
-        expect(provider.getData()).toEqual({ showLabels: true });
+        // Held back - the previous data stays the current one until the outcome is accepted
+        expect(provider.getData()).toEqual({ showLabels: false });
         expect(provider.getStatus()).toBe(DataProviderStatus.LOADING);
         expect(onData).not.toHaveBeenCalled();
 
         await settle(manager);
         expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+        expect(provider.getData()).toEqual({ showLabels: true });
         expect(onData).toHaveBeenCalledTimes(1);
         expect(backend.callsTo("getLabelData")).toEqual([[false], [true]]);
     });

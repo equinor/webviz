@@ -127,10 +127,10 @@ export class DataProvider<
     private _onFetchCancelOrFinishFn: () => void = () => {};
     // The outcome of the last fetch - applied right away, or held back while the settings were loading again, as whether
     // it is still current is only known once they have resolved. Restored when the settings turn out unchanged (see
-    // handleSettingsAndStoredDataChange). Held back data is kept here rather than in _data, so it only becomes visible
-    // once accepted - and only until then, so it's never kept twice.
+    // handleSettingsAndStoredDataChange). Held back data is kept in heldBackData rather than in _data, so it only becomes
+    // visible once accepted - and only until then, so it's never kept twice. heldBackData is checked by presence, as the
+    // data itself may be null or undefined.
     private _lastFetchOutcome:
-        // heldBackData is only present while held back - checked by presence, as the data itself may be null/undefined
         | { type: "data"; heldBackData?: TData }
         | { type: "error"; error: StatusMessage | string | null }
         | null = null;
