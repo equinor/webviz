@@ -4,10 +4,12 @@ import logging
 
 import httpx
 import starsessions
-from fastapi import APIRouter, HTTPException, Request, status, Query
+from fastapi import APIRouter, HTTPException, Request, Query, Depends
 from pydantic import BaseModel
 
 from webviz_services.graph_access.graph_access import GraphApiAccess
+from webviz_services.utils.authenticated_user import AuthenticatedUser
+from primary.auth.auth_helper import AuthHelper
 
 from primary.auth.auth_helper import AuthHelper
 
@@ -44,21 +46,13 @@ async def post_logout(request: Request) -> str:
     return "Logout OK"
 
 
-@router.get("/logged_in_user", response_model=UserInfo)
+@router.get("/logged_in_user")
 async def get_logged_in_user(
-    request: Request,
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     includeGraphApiInfo: bool = Query(  # pylint: disable=invalid-name
         False, description="Set to true to include user avatar and display name from Microsoft Graph API"
     ),
 ) -> UserInfo:
-
-    await starsessions.load_session(request)
-    authenticated_user = AuthHelper.get_authenticated_user(request)
-
-    if not authenticated_user:
-        # What is the most appropriate return code?
-        # Probably 401, but seemingly we got into trouble with that. Should try again
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No user is logged in")
 
     user_info = UserInfo(
         user_id=authenticated_user.get_user_id(),

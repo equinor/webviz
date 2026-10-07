@@ -6,6 +6,7 @@ import starsessions
 from fastapi import Request
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
+from opentelemetry import trace
 from webviz_core_utils.perf_metrics import PerfMetrics
 
 from .auth_helper import AuthHelper
@@ -74,7 +75,12 @@ class EnforceLoggedInMiddleware:
                     await redirect_response(scope, receive, send)
                     return
 
-                LOGGER.info("EnforceLoggedInMiddleware - user is not authorized yet")
+                LOGGER.debug("EnforceLoggedInMiddleware - user is not authorized yet")
+                span = trace.get_current_span()
+                if span.is_recording():
+                    LOGGER.info("!!!!!!!!!!!!!!!!!!!!!!!!!SETTING OK STATUS")
+                    span.set_status(trace.StatusCode.OK)
+
                 text_response = PlainTextResponse("Not authorized yet, must log in", 401)
                 await text_response(scope, receive, send)
                 return
