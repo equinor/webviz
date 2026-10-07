@@ -124,6 +124,7 @@ export function useBuildPlotAndTable(
         plotType,
         resultName,
         barSelectorColumn,
+        subplotBy,
         colorBy,
         histogramType,
         barSelectorLength,

@@ -60,6 +60,7 @@ export class PlotBuilder {
     private updateLayout(figure: Figure) {
         const numRows = figure.getNumRows();
         const numCols = figure.getNumColumns();
+        const numSubplots = this._groupedData.getNumSubplots();
 
         for (let row = 1; row <= numRows; row++) {
             for (let col = 1; col <= numCols; col++) {
@@ -73,12 +74,19 @@ export class PlotBuilder {
                 // @ts-expect-error - Ignore string type of yAxisKey for oldLayout[yAxisKey]
                 const oldYAxis = oldLayout[yAxisKey];
 
+                const xAxis: Partial<Axis> = {
+                    ...oldXAxis,
+                    ...this._numberFormatAxisOptions.x,
+                    ...this._axesOptions.x,
+                };
+                // A title between two subplot rows runs into the subplot below.
+                const hasSubplotBelow = row * numCols + col - 1 < numSubplots;
+                if (hasSubplotBelow) {
+                    delete xAxis.title;
+                }
+
                 figure.updateLayout({
-                    [xAxisKey]: {
-                        ...oldXAxis,
-                        ...this._numberFormatAxisOptions.x,
-                        ...this._axesOptions.x,
-                    },
+                    [xAxisKey]: xAxis,
                     [yAxisKey]: {
                         ...oldYAxis,
                         ...this._numberFormatAxisOptions.y,

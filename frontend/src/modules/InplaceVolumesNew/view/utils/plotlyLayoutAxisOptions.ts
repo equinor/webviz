@@ -11,6 +11,7 @@ export interface PlotConfigurerOptions {
     plotType: PlotType;
     resultName: string;
     barSelectorColumn: string | null;
+    subplotBy: string;
     colorBy: string;
     histogramType: HistogramType;
     barSelectorLength: number;
@@ -22,7 +23,7 @@ export interface PlotConfigurerOptions {
  * configuration logic.
  */
 export function configurePlotlyLayoutAxisByPlotType(plotBuilder: PlotBuilder, options: PlotConfigurerOptions): void {
-    const { plotType, resultName, barSelectorColumn, colorBy, histogramType, barSelectorLength } = options;
+    const { plotType, resultName, barSelectorColumn, subplotBy, colorBy, histogramType, barSelectorLength } = options;
 
     const responseAxisFormat = makeInplaceVolumesAxisFormat(resultName);
 
@@ -37,7 +38,7 @@ export function configurePlotlyLayoutAxisByPlotType(plotBuilder: PlotBuilder, op
         configureHistogramPlot(plotBuilder, histogramType);
     } else if (plotType === PlotType.BAR) {
         plotBuilder.setYAxisNumberFormatOptions(responseAxisFormat);
-        configureBarPlot(plotBuilder, barSelectorColumn, colorBy, barSelectorLength);
+        configureBarPlot(plotBuilder, barSelectorColumn, subplotBy, colorBy, barSelectorLength);
     } else if (plotType === PlotType.DISTRIBUTION) {
         plotBuilder.setXAxisNumberFormatOptions(responseAxisFormat);
         configureDistributionPlot(plotBuilder);
@@ -72,6 +73,7 @@ function configureHistogramPlot(plotBuilder: PlotBuilder, histogramType: Histogr
 function configureBarPlot(
     plotBuilder: PlotBuilder,
     selectorColumn: string | null,
+    subplotBy: string,
     colorBy: string,
     selectorLength: number,
 ): void {
@@ -86,7 +88,10 @@ function configureBarPlot(
         categoryorder: selectorColumn === colorBy ? "total descending" : undefined,
     };
 
-    if (selectorLength >= MAX_LABELS_FOR_BARS) {
+    if (selectorColumn === subplotBy) {
+        // Each subplot holds a single category, already named by the subplot title.
+        plotBuilder.setXAxisOptions({ ...baseOptions, showticklabels: false });
+    } else if (selectorLength >= MAX_LABELS_FOR_BARS) {
         plotBuilder.setXAxisOptions({
             ...baseOptions,
             showticklabels: false,
