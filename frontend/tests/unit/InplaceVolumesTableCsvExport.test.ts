@@ -17,10 +17,10 @@ const ensembleSet = new EnsembleSet([
 describe("buildCsvRowsFromTable", () => {
     test("realization mode: one header row of raw column names, leaf order equals config order, __id absent", () => {
         const columnsConfig: TableColumnsConfig = {
-            ENSEMBLE: { label: "ENSEMBLE", sizeInPercent: 25, columnType: ColumnType.ENSEMBLE },
-            REAL: { label: "REAL", sizeInPercent: 25, columnType: ColumnType.REAL },
-            ZONE: { label: "ZONE", sizeInPercent: 25, columnType: ColumnType.INDEX },
-            STOIIP: { label: "STOIIP", sizeInPercent: 25, columnType: ColumnType.RESULT },
+            ENSEMBLE: { label: "ENSEMBLE", columnType: ColumnType.ENSEMBLE },
+            REAL: { label: "REAL", columnType: ColumnType.REAL },
+            ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
+            STOIIP: { label: "STOIIP", columnType: ColumnType.RESULT },
         };
         const rows: TableRow<TableColumnsConfig>[] = [
             {
@@ -40,21 +40,19 @@ describe("buildCsvRowsFromTable", () => {
 
     test("statistical mode: exactly one header row, statistical leaves flattened, headers unique", () => {
         const columnsConfig: TableColumnsConfig = {
-            ZONE: { label: "ZONE", sizeInPercent: 20, columnType: ColumnType.INDEX },
+            ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
             STOIIP: {
                 label: "STOIIP",
-                sizeInPercent: 40,
                 subHeading: {
-                    "STOIIP-Mean": { label: "Mean", sizeInPercent: 50, columnType: ColumnType.RESULT },
-                    "STOIIP-P10": { label: "P10", sizeInPercent: 50, columnType: ColumnType.RESULT },
+                    "STOIIP-Mean": { label: "Mean", columnType: ColumnType.RESULT },
+                    "STOIIP-P10": { label: "P10", columnType: ColumnType.RESULT },
                 },
             },
             BULK: {
                 label: "BULK",
-                sizeInPercent: 40,
                 subHeading: {
-                    "BULK-Mean": { label: "Mean", sizeInPercent: 50, columnType: ColumnType.RESULT },
-                    "BULK-P10": { label: "P10", sizeInPercent: 50, columnType: ColumnType.RESULT },
+                    "BULK-Mean": { label: "Mean", columnType: ColumnType.RESULT },
+                    "BULK-P10": { label: "P10", columnType: ColumnType.RESULT },
                 },
             },
         };
@@ -78,7 +76,7 @@ describe("buildCsvRowsFromTable", () => {
 
     test("ensemble cell resolves to display name for known ident, raw string for unknown, empty for null", () => {
         const columnsConfig: TableColumnsConfig = {
-            ENSEMBLE: { label: "ENSEMBLE", sizeInPercent: 100, columnType: ColumnType.ENSEMBLE },
+            ENSEMBLE: { label: "ENSEMBLE", columnType: ColumnType.ENSEMBLE },
         };
         const unknownIdentString = `${UNKNOWN_CASE_UUID}::ens1`;
         const rows: TableRow<TableColumnsConfig>[] = [
@@ -96,7 +94,7 @@ describe("buildCsvRowsFromTable", () => {
 
     test("numbers exported raw, non-finite and null become empty string", () => {
         const columnsConfig: TableColumnsConfig = {
-            STOIIP: { label: "STOIIP", sizeInPercent: 100, columnType: ColumnType.RESULT },
+            STOIIP: { label: "STOIIP", columnType: ColumnType.RESULT },
         };
         const rows: TableRow<TableColumnsConfig>[] = [
             { __id: "1", STOIIP: 1234567.891 },
@@ -114,7 +112,7 @@ describe("buildCsvRowsFromTable", () => {
 
     test("supplied row order is preserved", () => {
         const columnsConfig: TableColumnsConfig = {
-            ZONE: { label: "ZONE", sizeInPercent: 100, columnType: ColumnType.INDEX },
+            ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
         };
         const rows: TableRow<TableColumnsConfig>[] = [
             { __id: "1", ZONE: "C" },
@@ -129,7 +127,7 @@ describe("buildCsvRowsFromTable", () => {
 
     test("category strings with commas/quotes pass through untouched, serializer escapes them", () => {
         const columnsConfig: TableColumnsConfig = {
-            ZONE: { label: "ZONE", sizeInPercent: 100, columnType: ColumnType.INDEX },
+            ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
         };
         const rows: TableRow<TableColumnsConfig>[] = [{ __id: "1", ZONE: 'Valysar, "East"' }];
 
