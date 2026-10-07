@@ -14,10 +14,12 @@ import type { SerializedItem } from "@modules/_shared/DataProviderFramework/inte
 const DATA_PROVIDER_BRAND = Symbol.for("dpf/data-provider");
 
 function makeFakeItemDelegate(id: string): ItemDelegate {
+    const publishSubscribeDelegate = new PublishSubscribeDelegate();
     return {
         getId: () => id,
         getOrder: () => 0,
         setParentGroup: () => {},
+        getPublishSubscribeDelegate: () => publishSubscribeDelegate,
     } as unknown as ItemDelegate;
 }
 

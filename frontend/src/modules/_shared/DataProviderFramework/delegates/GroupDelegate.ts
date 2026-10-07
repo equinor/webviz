@@ -3,7 +3,7 @@ import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import {
-    DataProvider,
+    type DataProvider,
     DataProviderStatus,
     DataProviderTopic,
     isDataProvider,
@@ -261,17 +261,14 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
 
         this._unsubscribeFunctionsManagerDelegate.unsubscribe(child.getItemDelegate().getId());
 
-        if (child instanceof DataProvider) {
-            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-                child.getItemDelegate().getId(),
-                child
-                    .getItemDelegate()
-                    .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(ItemDelegateTopic.EXPANDED)(() => {
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            child.getItemDelegate().getId(),
+            child.getItemDelegate().getPublishSubscribeDelegate().makeSubscriberFunction(ItemDelegateTopic.EXPANDED)(
+                () => {
                     this.publishTopic(GroupDelegateTopic.CHILDREN_EXPANSION_STATES);
-                }),
-            );
-        }
+                },
+            ),
+        );
 
         if (instanceofItemGroup(child)) {
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(

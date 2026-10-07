@@ -77,10 +77,10 @@ async function addProviderWithPendingFetch(): Promise<{
     return { manager, provider };
 }
 
-function countDataRevisions(manager: DataProviderManager) {
-    const onDataRevision = vi.fn();
-    manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.DATA_REVISION, onDataRevision);
-    return onDataRevision;
+function countGuiStateRevisions(manager: DataProviderManager) {
+    const onGuiStateRevision = vi.fn();
+    manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.GUI_STATE_REVISION, onGuiStateRevision);
+    return onGuiStateRevision;
 }
 
 beforeEach(() => {
@@ -96,7 +96,7 @@ describe("Stale fetches", () => {
     test("a fetch that finishes after its provider's tree was discarded changes nothing and publishes nothing", async () => {
         const { manager, provider } = await addProviderWithPendingFetch();
         manager.deserializeState(managerState([]));
-        const onDataRevision = countDataRevisions(manager);
+        const onGuiStateRevision = countGuiStateRevisions(manager);
         const statusAfterDiscarding = provider.getStatus();
 
         takeFetch(false).resolve("stale data");
@@ -104,19 +104,19 @@ describe("Stale fetches", () => {
 
         expect(provider.getData()).toBeNull();
         expect(provider.getStatus()).toBe(statusAfterDiscarding);
-        expect(onDataRevision).not.toHaveBeenCalled();
+        expect(onGuiStateRevision).not.toHaveBeenCalled();
     });
 
     test("a fetch that fails after its provider's tree was discarded changes nothing and publishes nothing", async () => {
         const { manager, provider } = await addProviderWithPendingFetch();
         manager.deserializeState(managerState([]));
-        const onDataRevision = countDataRevisions(manager);
+        const onGuiStateRevision = countGuiStateRevisions(manager);
 
         takeFetch(false).reject(new Error("Request failed"));
         await vi.advanceTimersByTimeAsync(20);
 
         expect(provider.getStatus()).not.toBe(DataProviderStatus.ERROR);
-        expect(onDataRevision).not.toHaveBeenCalled();
+        expect(onGuiStateRevision).not.toHaveBeenCalled();
     });
 
     test("a superseded fetch that finishes after the newer one doesn't replace its data", async () => {

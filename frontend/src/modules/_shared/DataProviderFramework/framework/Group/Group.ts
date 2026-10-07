@@ -87,7 +87,7 @@ export class Group<
     }
 
     handleSettingsChange() {
-        this._itemDelegate.getDataProviderManager().increaseDataRevisionNumber();
+        this._itemDelegate.getDataProviderManager().increaseGuiStateRevisionNumber();
     }
 
     getItemDelegate(): ItemDelegate {

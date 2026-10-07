@@ -27,11 +27,11 @@ export function useVisualizationAssemblerProduct<
     const latestRevision = React.useSyncExternalStore(
         dataProviderManager
             .getPublishSubscribeDelegate()
-            .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION),
-        dataProviderManager.makeSnapshotGetter(DataProviderManagerTopic.DATA_REVISION),
+            .makeSubscriberFunction(DataProviderManagerTopic.GUI_STATE_REVISION),
+        dataProviderManager.makeSnapshotGetter(DataProviderManagerTopic.GUI_STATE_REVISION),
     );
-    // Data revisions are held back while restoring a state - without this, the product made before would not tell
-    // that it is outdated
+    // GUI state revisions are held back while restoring a state - without this, the product made before would not
+    // tell that it is outdated
     const isDeserializing = React.useSyncExternalStore(
         dataProviderManager
             .getPublishSubscribeDelegate()

@@ -32,8 +32,8 @@ function recordAnnouncements(manager: DataProviderManager): string[] {
         const numChildren = manager.getGroupDelegate().getChildren().length;
         announcements.push(`deserializing: ${manager.isDeserializing()} (${numChildren} items)`);
     });
-    publishSubscribeDelegate.subscribe(DataProviderManagerTopic.DATA_REVISION, () => {
-        announcements.push("data revision");
+    publishSubscribeDelegate.subscribe(DataProviderManagerTopic.GUI_STATE_REVISION, () => {
+        announcements.push("GUI state revision");
     });
     return announcements;
 }
@@ -52,7 +52,7 @@ afterEach(() => {
 });
 
 describe("DataProviderManager restore announcements", () => {
-    test("announces restoring once the restored tree is complete, and its end before the data revision", async () => {
+    test("announces restoring once the restored tree is complete, and its end before the GUI state revision", async () => {
         const manager = makeDataProviderManager({ fieldId: "field-a" });
         const announcements = recordAnnouncements(manager);
 
@@ -62,7 +62,7 @@ describe("DataProviderManager restore announcements", () => {
         expect(announcements.slice(0, 3)).toEqual([
             "deserializing: true (2 items)",
             "deserializing: false (2 items)",
-            "data revision",
+            "GUI state revision",
         ]);
     });
 
@@ -75,7 +75,7 @@ describe("DataProviderManager restore announcements", () => {
         expect(announcements).toEqual([
             "deserializing: true (0 items)",
             "deserializing: false (0 items)",
-            "data revision",
+            "GUI state revision",
         ]);
     });
 
@@ -90,7 +90,7 @@ describe("DataProviderManager restore announcements", () => {
         expect(announcements.slice(0, 3)).toEqual([
             "deserializing: true (1 items)",
             "deserializing: false (1 items)",
-            "data revision",
+            "GUI state revision",
         ]);
     });
 

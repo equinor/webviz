@@ -65,7 +65,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
         this._name = name;
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.NAME);
         if (this._dataProviderManager) {
-            this._dataProviderManager.increaseDataRevisionNumber();
+            this._dataProviderManager.increaseGuiStateRevisionNumber();
         }
     }
 
@@ -97,7 +97,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
         this._visible = visible;
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.VISIBILITY);
         if (this._dataProviderManager) {
-            this._dataProviderManager.increaseDataRevisionNumber();
+            this._dataProviderManager.increaseGuiStateRevisionNumber();
         }
     }
 
@@ -165,7 +165,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
         this._deserializationErrors = [];
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.DESERIALIZATION_ERRORS);
         if (this._dataProviderManager) {
-            this._dataProviderManager.increaseDataRevisionNumber();
+            this._dataProviderManager.increaseGuiStateRevisionNumber();
         }
     }
 

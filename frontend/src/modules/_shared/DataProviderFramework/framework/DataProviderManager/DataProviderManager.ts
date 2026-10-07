@@ -29,19 +29,27 @@ export enum DataProviderManagerTopic {
     // (e.g. external setting controllers) are established before data providers start loading
     ITEMS_ABOUT_TO_CHANGE = "ITEMS_ABOUT_TO_CHANGE",
     ITEMS = "ITEMS",
-    DATA_REVISION = "DATA_REVISION",
+    // Published for every change that affects what consumers show: data, loading state, status and the item tree.
+    // Not for expanding or collapsing items, which have their own topics (ItemDelegateTopic.EXPANDED,
+    // GroupDelegateTopic.CHILDREN_EXPANSION_STATES).
+    GUI_STATE_REVISION = "GUI_STATE_REVISION",
     GLOBAL_SETTINGS = "GLOBAL_SETTINGS",
-    // Published when restoring a state starts and finishes - data revisions are held back in between, so this is what
-    // tells consumers that the data they have is not current
+    // Published when restoring a state starts and finishes - GUI state revisions are held back in between, so this is
+    // what tells consumers that the data they have is not current
     IS_DESERIALIZING = "IS_DESERIALIZING",
+    // Published when the state that serializeState() returns has changed and should be persisted - unlike
+    // GUI_STATE_REVISION, which also covers changes that only affect what is shown (loading, data, status). Never
+    // published while restoring a state, nor after restoring one failed (until the next restore).
+    SERIALIZED_STATE_REVISION = "SERIALIZED_STATE_REVISION",
 }
 
 export type DataProviderManagerTopicPayload = {
     [DataProviderManagerTopic.ITEMS]: Item[];
     [DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE]: void;
-    [DataProviderManagerTopic.DATA_REVISION]: number;
+    [DataProviderManagerTopic.GUI_STATE_REVISION]: number;
     [DataProviderManagerTopic.GLOBAL_SETTINGS]: GlobalSettings;
     [DataProviderManagerTopic.IS_DESERIALIZING]: boolean;
+    [DataProviderManagerTopic.SERIALIZED_STATE_REVISION]: number;
 };
 
 export type GlobalSettings = {
@@ -68,10 +76,17 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     private _queryClient: QueryClient;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<DataProviderManagerTopicPayload>();
     private _itemDelegate: ItemDelegate;
-    private _dataRevision: number = 0;
+    private _guiStateRevision: number = 0;
     private _globalSettings: Partial<GlobalSettings>;
     private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
     private _deserializing = false;
+    private _serializedStateRevision: number = 0;
+    // The serialized state that SERIALIZED_STATE_REVISION was last published for - a change is only published when the
+    // serialized state differs from it
+    private _lastSerializedState: string | null = null;
+    // Set when restoring a state failed - the torn-down tree must not be persisted over the saved state. Lifted by the
+    // next restore.
+    private _isSerializedStateRevisionSuspended = false;
     private _cancelPendingReadinessWait: (() => void) | null = null;
     private _groupColorGenerator: Generator<string, string>;
 
@@ -118,8 +133,17 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             this._groupDelegate
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
-                this.increaseDataRevisionNumber();
+                this.increaseGuiStateRevisionNumber();
                 this.publishTopic(DataProviderManagerTopic.ITEMS);
+            }),
+        );
+        // Expanding or collapsing items is part of the serialized state, but doesn't cause a GUI state revision
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "groupDelegate",
+            this._groupDelegate
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(() => {
+                this.maybePublishSerializedStateRevision();
             }),
         );
 
@@ -156,13 +180,41 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         this._publishSubscribeDelegate.notifySubscribers(topic);
     }
 
-    increaseDataRevisionNumber(): void {
+    increaseGuiStateRevisionNumber(): void {
         if (this._deserializing) {
             return;
         }
 
-        this._dataRevision++;
-        this.publishTopic(DataProviderManagerTopic.DATA_REVISION);
+        this._guiStateRevision++;
+        this.publishTopic(DataProviderManagerTopic.GUI_STATE_REVISION);
+
+        // Any of the changes behind a GUI state revision may have changed the serialized state as well (e.g. a setting
+        // value)
+        this.maybePublishSerializedStateRevision();
+    }
+
+    // The serialized state that SERIALIZED_STATE_REVISION was last published for - what should be persisted
+    getSerializedState(): string | null {
+        return this._lastSerializedState;
+    }
+
+    /*
+     * Publishes SERIALIZED_STATE_REVISION if the serialized state has changed since it was last published. Comparing the
+     * serialized state itself means no item has to report its changes - whatever serializeState() includes is covered.
+     */
+    private maybePublishSerializedStateRevision(): void {
+        if (this._deserializing || this._isSerializedStateRevisionSuspended) {
+            return;
+        }
+
+        const serializedState = JSON.stringify(this.serializeState());
+        if (serializedState === this._lastSerializedState) {
+            return;
+        }
+
+        this._lastSerializedState = serializedState;
+        this._serializedStateRevision++;
+        this.publishTopic(DataProviderManagerTopic.SERIALIZED_STATE_REVISION);
     }
 
     getWorkbenchSession(): WorkbenchSession {
@@ -185,14 +237,17 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             if (topic === DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE) {
                 return;
             }
-            if (topic === DataProviderManagerTopic.DATA_REVISION) {
-                return this._dataRevision;
+            if (topic === DataProviderManagerTopic.GUI_STATE_REVISION) {
+                return this._guiStateRevision;
             }
             if (topic === DataProviderManagerTopic.GLOBAL_SETTINGS) {
                 return this._globalSettings;
             }
             if (topic === DataProviderManagerTopic.IS_DESERIALIZING) {
                 return this._deserializing;
+            }
+            if (topic === DataProviderManagerTopic.SERIALIZED_STATE_REVISION) {
+                return this._serializedStateRevision;
             }
         };
 
@@ -237,6 +292,10 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         this._cancelPendingReadinessWait?.();
         this._cancelPendingReadinessWait = null;
 
+        // A new restore lifts the suspension of a failed one - nothing is published as a serialized state revision while
+        // restoring anyway, and if this restore fails as well, it is suspended again
+        this._isSerializedStateRevisionSuspended = false;
+
         // Set without publishing - it is announced once the new tree is complete, so that no one reacts to a partial one
         const wasDeserializing = this._deserializing;
         this._deserializing = true;
@@ -244,12 +303,15 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             this._itemDelegate.deserializeState(serializedState);
             this._groupDelegate.deserializeChildren(serializedState.children);
         } catch (error) {
-            // Tear down the partial tree: its providers would keep initializing, and every status change after this
-            // would publish a data revision - persisting the partial tree over the saved state. Cleared while data
-            // revisions are still held back, so the clearing itself only announces the (now empty) tree via ITEMS.
+            // The (now empty) tree must not be persisted over the saved state - serialized state revisions are suspended
+            // until the next restore, before anything else, so that nothing published from here on can persist it
+            this._isSerializedStateRevisionSuspended = true;
+            // Tear down the partial tree, as its providers would keep initializing and publishing
             this._groupDelegate.clearChildren();
             this._deserializing = wasDeserializing;
             this.setDeserializing(false);
+            // Safe now that serialized state revisions are suspended - lets consumers stop showing the torn-down tree
+            this.increaseGuiStateRevisionNumber();
             throw error;
         }
 
@@ -268,10 +330,11 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             this._cancelPendingReadinessWait?.();
             this._cancelPendingReadinessWait = null;
             this.setDeserializing(false);
-            this.increaseDataRevisionNumber();
+            this.increaseGuiStateRevisionNumber();
         };
 
-        // Waiting for all descendants to be ready before updating the deserializing flag and publishing data revisions
+        // Waiting for all descendants to be ready before updating the deserializing flag and publishing GUI state
+        // revisions
         const cancelWait = this._groupDelegate.waitUntilAllDescendantDataProvidersAreReady(finishDeserialization);
 
         // Finished synchronously - which may already have started a newer deserialization, whose cancel function must

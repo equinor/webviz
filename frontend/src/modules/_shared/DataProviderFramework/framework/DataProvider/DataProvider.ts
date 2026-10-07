@@ -608,13 +608,13 @@ export class DataProvider<
     }
 
     private incrementRevisionNumber(): void {
-        // A destroyed provider is no longer part of the manager's tree, so it must not publish data revisions for it
+        // A destroyed provider is no longer part of the manager's tree, so it must not publish GUI state revisions for it
         if (this._isDestroyed) {
             return;
         }
         this._revisionNumber += 1;
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.REVISION_NUMBER);
-        this._dataProviderManager.increaseDataRevisionNumber();
+        this._dataProviderManager.increaseGuiStateRevisionNumber();
     }
 
     private setStatus(status: DataProviderStatus): void {

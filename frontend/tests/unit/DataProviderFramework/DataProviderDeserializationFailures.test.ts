@@ -64,17 +64,19 @@ describe("Deserialization failures", () => {
             const manager = makeDataProviderManager({ fieldId: "field-a" });
             const malformed = surfaceProvider("Malformed surface") as any;
             delete malformed.settings;
-            const onDataRevision = vi.fn();
+            const onGuiStateRevision = vi.fn();
 
             manager.deserializeState(managerState([malformed]));
-            manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.DATA_REVISION, onDataRevision);
+            manager
+                .getPublishSubscribeDelegate()
+                .subscribe(DataProviderManagerTopic.GUI_STATE_REVISION, onGuiStateRevision);
             // Long enough for it to have loaded, had it kept initializing
             await vi.advanceTimersByTimeAsync(1_000);
 
             expect(manager.getGroupDelegate().getChildren().every(isErrorPlaceholder)).toBe(true);
             expect(backend.callsTo("getRealizations")).toEqual([]);
             expect(backend.callsTo("getSurfaceData")).toEqual([]);
-            expect(onDataRevision).not.toHaveBeenCalled();
+            expect(onGuiStateRevision).not.toHaveBeenCalled();
         } finally {
             vi.useRealTimers();
         }
@@ -104,7 +106,7 @@ describe("Deserialization failures", () => {
         expect(onTreeRevision).toHaveBeenCalled();
     });
 
-    test("the manager tears down the partial tree and announces the empty tree, without a data revision, when building it threw", () => {
+    test("the manager tears down the partial tree and announces the empty tree to consumers, without persisting it, when building it threw", () => {
         const manager = makeDataProviderManager();
         makeSecondAppendThrow(manager.getGroupDelegate());
         const childrenAtItemsNotifications: string[][] = [];
@@ -116,17 +118,24 @@ describe("Deserialization failures", () => {
                     .map((child) => child.getItemDelegate().getName()),
             );
         });
-        const onDataRevision = vi.fn();
-        manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.DATA_REVISION, onDataRevision);
+        const onGuiStateRevision = vi.fn();
+        manager
+            .getPublishSubscribeDelegate()
+            .subscribe(DataProviderManagerTopic.GUI_STATE_REVISION, onGuiStateRevision);
+        const onSerializedStateRevision = vi.fn();
+        manager
+            .getPublishSubscribeDelegate()
+            .subscribe(DataProviderManagerTopic.SERIALIZED_STATE_REVISION, onSerializedStateRevision);
 
         expect(() => manager.deserializeState(makeSerializedManager([FIRST_ITEM, SECOND_ITEM]))).toThrow();
 
         expect(manager.isDeserializing()).toBe(false);
         expect(childrenAtItemsNotifications.at(-1)).toEqual([]);
-        expect(onDataRevision).not.toHaveBeenCalled();
+        expect(onGuiStateRevision).toHaveBeenCalledTimes(1);
+        expect(onSerializedStateRevision).not.toHaveBeenCalled();
     });
 
-    test("providers made before building the tree threw publish no data revisions afterwards", async () => {
+    test("providers made before building the tree threw publish no GUI state revisions afterwards", async () => {
         vi.useFakeTimers();
         try {
             const backend = resetTestBackend();
@@ -134,18 +143,26 @@ describe("Deserialization failures", () => {
             const manager = makeDataProviderManager({ fieldId: "field-a" });
             // The first provider is appended, the second is made but appending it throws
             makeSecondAppendThrow(manager.getGroupDelegate());
-            const onDataRevision = vi.fn();
-            manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.DATA_REVISION, onDataRevision);
 
             expect(() =>
                 manager.deserializeState(
                     managerState([surfaceProvider("Appended surface"), surfaceProvider("Unappended surface")]),
                 ),
             ).toThrow();
+            // Subscribed after the failure, which announces the empty tree with a GUI state revision of its own
+            const onGuiStateRevision = vi.fn();
+            manager
+                .getPublishSubscribeDelegate()
+                .subscribe(DataProviderManagerTopic.GUI_STATE_REVISION, onGuiStateRevision);
+            const onSerializedStateRevision = vi.fn();
+            manager
+                .getPublishSubscribeDelegate()
+                .subscribe(DataProviderManagerTopic.SERIALIZED_STATE_REVISION, onSerializedStateRevision);
             // Long enough for both to have loaded, had they kept initializing
             await vi.advanceTimersByTimeAsync(1_000);
 
-            expect(onDataRevision).not.toHaveBeenCalled();
+            expect(onGuiStateRevision).not.toHaveBeenCalled();
+            expect(onSerializedStateRevision).not.toHaveBeenCalled();
             expect(backend.callsTo("getSurfaceData")).toEqual([]);
         } finally {
             vi.useRealTimers();

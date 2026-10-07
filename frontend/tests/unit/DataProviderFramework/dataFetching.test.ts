@@ -37,11 +37,11 @@ afterEach(() => {
 
 async function restoreSurface() {
     const manager = makeDataProviderManager({ fieldId: "field-a" });
-    const onDataRevision = vi.fn();
-    manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.DATA_REVISION, onDataRevision);
+    const onGuiStateRevision = vi.fn();
+    manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.GUI_STATE_REVISION, onGuiStateRevision);
     manager.deserializeState(managerState([surfaceProvider("Surface")]));
     await settle(manager);
-    return { manager, provider: findProvider(manager, "Surface"), onDataRevision };
+    return { manager, provider: findProvider(manager, "Surface"), onGuiStateRevision };
 }
 
 describe("Data fetching", () => {
@@ -58,14 +58,14 @@ describe("Data fetching", () => {
         expect(provider.getDataValueRange()).toEqual([1, 10]);
     });
 
-    test("publishes a single data revision when restoring has finished", async () => {
-        const { onDataRevision } = await restoreSurface();
+    test("publishes a single GUI state revision when restoring has finished", async () => {
+        const { onGuiStateRevision } = await restoreSurface();
 
-        expect(onDataRevision).toHaveBeenCalledTimes(1);
+        expect(onGuiStateRevision).toHaveBeenCalledTimes(1);
     });
 
     test("refetches when a setting the data depends on changes", async () => {
-        const { manager, provider, onDataRevision } = await restoreSurface();
+        const { manager, provider, onGuiStateRevision } = await restoreSurface();
 
         getProviderSetting(provider, Setting.REALIZATION).setValue(2);
         await settle(manager);
@@ -75,13 +75,13 @@ describe("Data fetching", () => {
             ["field-a", "depth", "Top reservoir", 2],
         ]);
         expect(provider.getData()?.values).toEqual([2, 20]);
-        expect(onDataRevision.mock.calls.length).toBeGreaterThan(1);
+        expect(onGuiStateRevision.mock.calls.length).toBeGreaterThan(1);
     });
 
     test("only re-renders when a setting that the data doesn't depend on changes", async () => {
-        const { manager, provider, onDataRevision } = await restoreSurface();
+        const { manager, provider, onGuiStateRevision } = await restoreSurface();
         const revisionNumber = provider.getRevisionNumber();
-        const numDataRevisions = onDataRevision.mock.calls.length;
+        const numGuiStateRevisions = onGuiStateRevision.mock.calls.length;
 
         getProviderSetting(provider, Setting.SHOW_LABELS).setValue(true);
         await settle(manager);
@@ -89,7 +89,7 @@ describe("Data fetching", () => {
         expect(backend.callsTo("getSurfaceData")).toHaveLength(1);
         expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
         expect(provider.getRevisionNumber()).toBeGreaterThan(revisionNumber);
-        expect(onDataRevision.mock.calls.length).toBeGreaterThan(numDataRevisions);
+        expect(onGuiStateRevision.mock.calls.length).toBeGreaterThan(numGuiStateRevisions);
     });
 
     test("discards a fetch that a settings change superseded", async () => {

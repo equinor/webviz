@@ -73,10 +73,10 @@ const HANGING_STATE = makeSerializedState("hanging-test-provider", "Hanging prov
 const SETTLING_STATE = makeSerializedState("settling-test-provider", "Settling provider");
 const EMPTY_STATE: SerializedDataProviderManager = { ...HANGING_STATE, children: [] };
 
-function countDataRevisions(manager: DataProviderManager) {
-    const onDataRevision = vi.fn();
-    manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.DATA_REVISION, onDataRevision);
-    return onDataRevision;
+function countGuiStateRevisions(manager: DataProviderManager) {
+    const onGuiStateRevision = vi.fn();
+    manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.GUI_STATE_REVISION, onGuiStateRevision);
+    return onGuiStateRevision;
 }
 
 describe("DataProviderManager readiness warning", () => {
@@ -92,7 +92,7 @@ describe("DataProviderManager readiness warning", () => {
 
     test("keeps deserializing while a provider is still loading, however long it takes, and names it in a warning after a while", () => {
         const manager = makeDataProviderManager();
-        const onDataRevision = countDataRevisions(manager);
+        const onGuiStateRevision = countGuiStateRevisions(manager);
 
         manager.deserializeState(HANGING_STATE);
         vi.advanceTimersByTime(READINESS_WARNING_DELAY_MS - 1);
@@ -103,22 +103,22 @@ describe("DataProviderManager readiness warning", () => {
 
         vi.advanceTimersByTime(10 * READINESS_WARNING_DELAY_MS);
         expect(manager.isDeserializing()).toBe(true);
-        expect(onDataRevision).not.toHaveBeenCalled();
+        expect(onGuiStateRevision).not.toHaveBeenCalled();
         expect(console.warn).toHaveBeenCalledTimes(1);
     });
 
     test("does not warn when the providers settle in time", async () => {
         const manager = makeDataProviderManager();
-        const onDataRevision = countDataRevisions(manager);
+        const onGuiStateRevision = countGuiStateRevisions(manager);
 
         manager.deserializeState(SETTLING_STATE);
         expect(manager.isDeserializing()).toBe(true);
         await vi.advanceTimersByTimeAsync(100);
         expect(manager.isDeserializing()).toBe(false);
-        expect(onDataRevision).toHaveBeenCalledTimes(1);
+        expect(onGuiStateRevision).toHaveBeenCalledTimes(1);
 
         await vi.advanceTimersByTimeAsync(READINESS_WARNING_DELAY_MS);
-        expect(onDataRevision).toHaveBeenCalledTimes(1);
+        expect(onGuiStateRevision).toHaveBeenCalledTimes(1);
         expect(console.warn).not.toHaveBeenCalled();
     });
 
@@ -147,23 +147,23 @@ describe("DataProviderManager readiness warning", () => {
 
     test("a restore started while the previous one finishes can still be stopped", () => {
         const manager = makeDataProviderManager();
-        const onDataRevision = countDataRevisions(manager);
+        const onGuiStateRevision = countGuiStateRevisions(manager);
         let restarted = false;
-        manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.DATA_REVISION, () => {
+        manager.getPublishSubscribeDelegate().subscribe(DataProviderManagerTopic.GUI_STATE_REVISION, () => {
             if (!restarted) {
                 restarted = true;
                 manager.deserializeState(HANGING_STATE);
             }
         });
 
-        // Without providers, this restore finishes synchronously - and its data revision starts the next one
+        // Without providers, this restore finishes synchronously - and its GUI state revision starts the next one
         manager.deserializeState(EMPTY_STATE);
         expect(manager.isDeserializing()).toBe(true);
 
         manager.beforeDestroy();
         vi.advanceTimersByTime(READINESS_WARNING_DELAY_MS);
 
-        expect(onDataRevision).toHaveBeenCalledTimes(1);
+        expect(onGuiStateRevision).toHaveBeenCalledTimes(1);
         expect(console.warn).not.toHaveBeenCalled();
     });
 });

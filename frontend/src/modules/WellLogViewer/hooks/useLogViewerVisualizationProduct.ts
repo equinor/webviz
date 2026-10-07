@@ -1,8 +1,6 @@
-import React from "react";
-
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
-import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 import type {
     CustomGroupPropsMap,
     VisualizationTarget,
@@ -76,33 +74,6 @@ VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomDataProviderType.WE
 
 export type WellLogFactoryProduct = ReturnType<(typeof VISUALIZATION_FACTORY)["make"]>;
 
-export function useLogViewerVisualizationProduct(
-    dataProviderManager: DataProviderManager,
-): WellLogFactoryProduct | null {
-    const [previousRevision, setPreviousRevision] = React.useState<number | null>(null);
-    const [previousIsDeserializing, setPreviousIsDeserializing] = React.useState<boolean | null>(null);
-    const [previousProduct, setPreviousProduct] = React.useState<WellLogFactoryProduct | null>(null);
-
-    const latestRevision = React.useSyncExternalStore(
-        dataProviderManager
-            .getPublishSubscribeDelegate()
-            .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION),
-        dataProviderManager.makeSnapshotGetter(DataProviderManagerTopic.DATA_REVISION),
-    );
-    // Data revisions are held back while restoring a state - without this, the product made before would not tell
-    // that it is outdated
-    const isDeserializing = React.useSyncExternalStore(
-        dataProviderManager
-            .getPublishSubscribeDelegate()
-            .makeSubscriberFunction(DataProviderManagerTopic.IS_DESERIALIZING),
-        dataProviderManager.makeSnapshotGetter(DataProviderManagerTopic.IS_DESERIALIZING),
-    );
-
-    if (previousRevision !== latestRevision || previousIsDeserializing !== isDeserializing) {
-        setPreviousRevision(latestRevision);
-        setPreviousIsDeserializing(isDeserializing);
-        setPreviousProduct(VISUALIZATION_FACTORY.make(dataProviderManager));
-    }
-
-    return previousProduct;
+export function useLogViewerVisualizationProduct(dataProviderManager: DataProviderManager): WellLogFactoryProduct {
+    return useVisualizationAssemblerProduct(dataProviderManager, VISUALIZATION_FACTORY);
 }
