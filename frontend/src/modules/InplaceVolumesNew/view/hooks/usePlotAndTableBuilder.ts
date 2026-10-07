@@ -137,15 +137,13 @@ export function useBuildPlotAndTable(
     }
 
     const horizontalSpacing = 80 / width;
-    const verticalSpacing = 60 / height;
 
     const plots = plotBuilder.build(height, width, {
         horizontalSpacing,
-        verticalSpacing,
         showGrid: true,
         sharedXAxes: sharedXAxis ? "all" : false,
         sharedYAxes: sharedYAxis ? "all" : false,
-        margin: { t: 20, b: 50, l: 50, r: 20 },
+        margin: { t: 20, b: 10, l: 50, r: 20 },
     });
 
     // Per-category bars are category means, so the statistics follow the same split. Per-REAL bars are
