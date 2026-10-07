@@ -125,10 +125,15 @@ export class DataProvider<
     private _scopedQueryController: ScopedQueryController;
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
-    // The outcome of a fetch that finished while the settings were loading again. Whether it is still current is only
-    // known once they have resolved, so it is applied then, if no refetch is required (see handleSettingsAndStoredDataChange).
-    private _heldBackFetchOutcome: { type: "data" } | { type: "error"; error: StatusMessage | string | null } | null =
-        null;
+    // The outcome of the last fetch - applied right away, or held back while the settings were loading again, as whether
+    // it is still current is only known once they have resolved. Restored when the settings turn out unchanged (see
+    // handleSettingsAndStoredDataChange). Held back data is kept here rather than in _data, so it only becomes visible
+    // once accepted - and only until then, so it's never kept twice.
+    private _lastFetchOutcome:
+        // heldBackData is only present while held back - checked by presence, as the data itself may be null/undefined
+        | { type: "data"; heldBackData?: TData }
+        | { type: "error"; error: StatusMessage | string | null }
+        | null = null;
     private _isDestroyed: boolean = false;
 
     private _statusWriter = new GenericStatusMessageStore("DataProvider");
@@ -259,15 +264,18 @@ export class DataProvider<
         }
 
         if (!refetchRequired) {
-            // A fetch that finished while the settings were loading again is still current - apply its outcome now
-            const heldBackFetchOutcome = this._heldBackFetchOutcome;
-            this._heldBackFetchOutcome = null;
-            if (heldBackFetchOutcome?.type === "error") {
-                this._error = heldBackFetchOutcome.error;
+            // The settings are those of the last fetch - restore its outcome, which may have been held back while they
+            // were loading again, or replaced by LOADING meanwhile. A failed fetch must not turn into SUCCESS.
+            const lastFetchOutcome = this._lastFetchOutcome;
+            if (lastFetchOutcome?.type === "error") {
+                this._error = lastFetchOutcome.error;
                 this.setStatus(DataProviderStatus.ERROR);
                 return;
             }
-            if (heldBackFetchOutcome?.type === "data") {
+            if (lastFetchOutcome?.type === "data" && "heldBackData" in lastFetchOutcome) {
+                const data = lastFetchOutcome.heldBackData as TData;
+                this._lastFetchOutcome = { type: "data" };
+                this.applyFetchedData(data);
                 this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
             }
             // If the settings have changed but no refetch is required, it might be that the settings changes
@@ -280,7 +288,6 @@ export class DataProvider<
             return;
         }
 
-        this._heldBackFetchOutcome = null;
         this._currentTransactionId += 1;
         const localTransactionId = this._currentTransactionId;
 
@@ -457,7 +464,7 @@ export class DataProvider<
     private discardOutdatedData(): void {
         this._data = null;
         this._valueRange = null;
-        this._heldBackFetchOutcome = null;
+        this._lastFetchOutcome = null;
         this._prevSettings = null;
         this._prevStoredData = null;
     }
@@ -481,6 +488,12 @@ export class DataProvider<
         if (wasScheduled !== (timeout !== null)) {
             this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS);
         }
+    }
+
+    // Makes fetched data the provider's current data
+    private applyFetchedData(data: TData): void {
+        this._data = data;
+        this._valueRange = this._customDataProviderImpl.makeValueRange?.(this.makeAccessors()) ?? null;
     }
 
     private cancelScheduledAndActiveFetch(): void {
@@ -541,18 +554,16 @@ export class DataProvider<
                 return;
             }
 
-            this._data = data;
-
-            if (this._customDataProviderImpl.makeValueRange) {
-                this._valueRange = this._customDataProviderImpl.makeValueRange(accessors);
-            }
-
-            // The settings started loading again while fetching - the provider stays LOADING and the data is held back
-            // until they have resolved (see _heldBackFetchOutcome)
+            // The settings started loading again while fetching - the provider stays LOADING and the data is held back,
+            // outside of the current data, until they have resolved (see _lastFetchOutcome)
             if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
-                this._heldBackFetchOutcome = { type: "data" };
+                this._lastFetchOutcome = { type: "data", heldBackData: data };
                 return;
             }
+
+            this._lastFetchOutcome = { type: "data" };
+
+            this.applyFetchedData(data);
 
             this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
             this.setStatus(DataProviderStatus.SUCCESS);
@@ -564,12 +575,13 @@ export class DataProvider<
 
             // Like data, a failure while the settings are loading again is held back - an ERROR would count as settled
             // and could end a restore before the settings have resolved
+            const errorMessage = makeFetchErrorMessage(error);
+            this._lastFetchOutcome = { type: "error", error: errorMessage };
             if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
-                this._heldBackFetchOutcome = { type: "error", error: makeFetchErrorMessage(error) };
                 return;
             }
 
-            this._error = makeFetchErrorMessage(error);
+            this._error = errorMessage;
             this.setStatus(DataProviderStatus.ERROR);
         } finally {
             // A superseded fetch was cleaned up when it was cancelled - what is registered now belongs to a newer one
