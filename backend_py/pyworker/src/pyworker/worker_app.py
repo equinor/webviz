@@ -150,45 +150,48 @@ async def _run_worker_loop_async(config: WorkerConfig, shutdown_event: asyncio.E
 
             in_flight_tasks: set[asyncio.Task[None]] = set()
 
-            while not shutdown_event.is_set():
-                # If we're at capacity, wait for at least one task to finish before retrying the loop.
-                # The continuation of the loop will then check for shutdown events before trying to receive more messages.
-                if len(in_flight_tasks) >= max_concurrency:
-                    await asyncio.wait(in_flight_tasks, return_when=asyncio.FIRST_COMPLETED)
-                    continue
+            try:
+                while not shutdown_event.is_set():
+                    # If we're at capacity, wait for at least one task to finish before retrying the loop.
+                    # The continuation of the loop will then check for shutdown events before trying to receive more messages.
+                    if len(in_flight_tasks) >= max_concurrency:
+                        await asyncio.wait(in_flight_tasks, return_when=asyncio.FIRST_COMPLETED)
+                        continue
 
-                # We poll for messages with a short timeout, so we can check for shutdown events frequently.
-                num_free_slots = max_concurrency - len(in_flight_tasks)
-                messages: list[ServiceBusReceivedMessage] = await sb_receiver.receive_messages(
-                    max_message_count=num_free_slots, max_wait_time=2
-                )
+                    # We poll for messages with a short timeout, so we can check for shutdown events frequently.
+                    num_free_slots = max_concurrency - len(in_flight_tasks)
+                    messages: list[ServiceBusReceivedMessage] = await sb_receiver.receive_messages(
+                        max_message_count=num_free_slots, max_wait_time=2
+                    )
 
-                if len(messages) > 0:
-                    _logger.debug(f"Worker got {len(messages)} new message(s), ({len(in_flight_tasks)} in flight)")
+                    if len(messages) > 0:
+                        _logger.debug(f"Worker got {len(messages)} new message(s), ({len(in_flight_tasks)} in flight)")
 
-                # Make sure we don't start any new processing if a shutdown has been requested
-                # Abandon any messages we received so they can be retried later (by another worker).
-                if shutdown_event.is_set():
-                    _logger.info("Worker shutdown requested; abandoning received messages before exiting worker")
+                    # Make sure we don't start any new processing if a shutdown has been requested
+                    # Abandon any messages we received so they can be retried later (by another worker).
+                    if shutdown_event.is_set():
+                        _logger.info("Worker shutdown requested; abandoning received messages before exiting worker")
+                        for msg in messages:
+                            await sb_receiver.abandon_message(msg)
+                        break
+
+                    # Spawn each message as its own task so they are processed concurrently.
                     for msg in messages:
-                        await sb_receiver.abandon_message(msg)
-                    break
+                        task = asyncio.create_task(process_message_async(sb_receiver, msg, abort_signal))
+                        in_flight_tasks.add(task)
 
-                # Spawn each message as its own task so they are processed concurrently.
-                for msg in messages:
-                    task = asyncio.create_task(process_message_async(sb_receiver, msg, abort_signal))
-                    in_flight_tasks.add(task)
+                        # The discard callback is used to remove the task from the in_flight_tasks set when it is done
+                        task.add_done_callback(in_flight_tasks.discard)
+            finally:
+                # This runs either after a controlled worker shutdown has been started or an exception from above.
+                # The signal handler may have set the event already that should not be a problem.
+                # Ensure cooperative shutdown is signaled and drain handlers before closing the receiver and renewer.
+                shutdown_event.set()
+                _logger.info("Worker stopping; waiting for in-flight messages to finish")
+                if in_flight_tasks:
+                    await asyncio.gather(*in_flight_tasks, return_exceptions=True)
 
-                    # The discard callback is used to remove the task from the in_flight_tasks set when it is done
-                    task.add_done_callback(in_flight_tasks.discard)
-
-            # Drain any tasks that are still running.
-            # The abort_signal has already been tripped so cooperative tasks should wind down promptly.
-            _logger.info("Worker shutdown requested; waiting for in-flight messages to finish")
-            if in_flight_tasks:
-                await asyncio.gather(*in_flight_tasks, return_exceptions=True)
-
-            _logger.info("Worker shutdown requested; exiting worker loop")
+                _logger.info("Worker loop cleanup complete")
 
 
 async def run_app_async() -> None:
