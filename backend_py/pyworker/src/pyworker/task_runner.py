@@ -7,7 +7,8 @@ from azure.servicebus import ServiceBusReceivedMessage
 from webviz_services.utils.task_meta_tracker import TaskMetaTracker, TaskState, get_task_meta_tracker_for_user_id
 from webviz_server_schemas.pyworker.messages import UserTaskMsgHeader
 
-from .task_exceptions import TaskFailedError, TaskDeferredError, MalformedMessageError, TaskRetryExhaustedError
+from .task_exceptions import TaskFailedError, TaskDeferredError, MalformedMessageError
+from .task_exceptions import TaskRetryExhaustedError, TaskTrackingError
 from .utils.abort_signal import AbortSignal
 from .utils.worker_logging import LogScope
 
@@ -24,6 +25,22 @@ class TaskSuccess:
 # On success it returns a TaskSuccess (optionally carrying an end-user status message stored as the final status).
 # It signals other outcomes by raising an exception (see task_exceptions for the full taxonomy):
 UserTaskWorkFn = Callable[[TaskMetaTracker, ServiceBusReceivedMessage, AbortSignal], Awaitable[TaskSuccess]]
+
+
+class TaskStateWriter:
+    def __init__(self, task_tracker: TaskMetaTracker, task_id: str) -> None:
+        self._task_tracker = task_tracker
+        self._task_id = task_id
+
+    async def set_state_async(self, new_state: TaskState, status_msg: str | None = None) -> None:
+        if not await self._task_tracker.set_state_async(self._task_id, new_state, status_msg=status_msg):
+            raise TaskTrackingError(f"Task metadata missing when recording {new_state.value} ({self._task_id=})")
+
+    async def fail_task_async(self, status_msg: str | None = None, internal_error_msg: str | None = None) -> None:
+        if not await self._task_tracker.fail_task_async(
+            self._task_id, status_msg=status_msg, internal_error_msg=internal_error_msg
+        ):
+            raise TaskTrackingError(f"Task metadata missing when recording FAILED ({self._task_id=})")
 
 
 async def run_tracked_user_task_async(
@@ -60,16 +77,19 @@ async def run_tracked_user_task_async(
     with LogScope(task_id=header.task_id):
         task_tracker = get_task_meta_tracker_for_user_id(header.user_id)
 
-        await task_tracker.set_state_async(header.task_id, TaskState.RUNNING)
+        # Use helper class to write task state updates. It will raise TaskTrackingError if we fail to
+        # update the task state (which probably means the task has been deleted in the tracker)
+        task_state_writer = TaskStateWriter(task_tracker=task_tracker, task_id=header.task_id)
+
+        await task_state_writer.set_state_async(TaskState.RUNNING)
 
         try:
             success = await work_fn(task_tracker, sb_msg, abort_signal)
-            await task_tracker.set_state_async(header.task_id, TaskState.SUCCEEDED, status_msg=success.status_msg)
 
         except TaskFailedError as exc:
             # Final, user-facing failure: record FAILED, then re-raise so the message is COMPLETED.
-            await task_tracker.fail_task_async(
-                header.task_id, status_msg=exc.status_msg, internal_error_msg=exc.internal_error_msg
+            await task_state_writer.fail_task_async(
+                status_msg=exc.status_msg, internal_error_msg=exc.internal_error_msg
             )
             raise
 
@@ -79,18 +99,21 @@ async def run_tracked_user_task_async(
             # In that case the task will be marked as FAILED and the special TaskRetryExhaustedError gets raised,
             # which signals to the caller that the task has failed and should be dead-lettered.
             if sb_msg.delivery_count is None or sb_msg.delivery_count >= max_delivery_count:
-                await task_tracker.fail_task_async(
-                    header.task_id, status_msg="Task failed due to exhausting retries", internal_error_msg=repr(exc)
+                await task_state_writer.fail_task_async(
+                    status_msg="Task failed due to exhausting retries", internal_error_msg=repr(exc)
                 )
                 raise TaskRetryExhaustedError("Task reached the queue's maximum delivery count") from exc
             raise
 
         except Exception as exc:
             # TaskInternalError or any unexpected error: record FAILED, then re-raise so the message is dead-lettered for inspection.
-            await task_tracker.fail_task_async(
-                header.task_id, status_msg="Task failed due to an error", internal_error_msg=repr(exc)
+            await task_state_writer.fail_task_async(
+                status_msg="Task failed due to an error", internal_error_msg=repr(exc)
             )
             raise
+
+        # The task succeeded: record SUCCEEDED in the task metadata.
+        await task_state_writer.set_state_async(TaskState.SUCCEEDED, status_msg=success.status_msg)
 
 
 def _peek_user_task_header(sb_msg: ServiceBusReceivedMessage) -> UserTaskMsgHeader:
