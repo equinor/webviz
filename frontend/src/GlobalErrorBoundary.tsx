@@ -19,6 +19,31 @@ interface State {
     activeWorkbench: Workbench | null;
 }
 
+// Anything can be thrown or used as a rejection reason, but the fallback and the support documents expect an Error
+function toError(value: unknown): Error {
+    if (value instanceof Error) {
+        return value;
+    }
+    if (typeof value === "string") {
+        return makeErrorWithoutStack(value);
+    }
+
+    let description: string;
+    try {
+        description = JSON.stringify(value) ?? String(value);
+    } catch {
+        description = String(value);
+    }
+    return makeErrorWithoutStack(`Non-Error value: ${description}`);
+}
+
+function makeErrorWithoutStack(message: string): Error {
+    const error = new Error(message);
+    // The stack would point to this file rather than to where the value was thrown, which is misleading in reports
+    error.stack = undefined;
+    return error;
+}
+
 export class GlobalErrorBoundary extends React.Component<Props, State> {
     state: State = {
         error: null,
@@ -31,8 +56,9 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
     private _boundHandleUnhandledRejection: (event: PromiseRejectionEvent) => void;
     private _boundRegisterActiveWorkbench: (wb: Workbench | null) => void;
 
-    static getDerivedStateFromError(err: Error): Partial<State> {
-        return { error: err, copiedToClipboard: false };
+    static getDerivedStateFromError(err: unknown): Partial<State> {
+        // componentStack is set in componentDidCatch, which is called right after this with the same error
+        return { error: toError(err), componentStack: null, copiedToClipboard: false };
     }
 
     constructor(props: Props) {
@@ -52,11 +78,26 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         if (import.meta.env.DEV) {
             return;
         }
-        this.setState({ error: event.error });
+        this.setErrorIfNoneSet(event.error);
     }
 
     private handleUnhandledRejection(event: PromiseRejectionEvent) {
-        this.setState({ error: event.reason });
+        this.setErrorIfNoneSet(event.reason);
+    }
+
+    private setErrorIfNoneSet(value: unknown) {
+        // ErrorEvent.error is null for e.g. ResizeObserver loop notifications and cross-origin script errors,
+        // which should not terminate the app
+        if (value == null) {
+            return;
+        }
+
+        const error = toError(value);
+
+        // Keep the first error, as it is most likely the root cause. Errors arriving after the app has been
+        // terminated (e.g. pending promises rejecting) would otherwise replace it and mismatch the componentStack.
+        // Errors from window events never have a component stack.
+        this.setState((prevState) => (prevState.error ? null : { error, componentStack: null }));
     }
 
     private registerActiveWorkbench(wb: Workbench | null) {
