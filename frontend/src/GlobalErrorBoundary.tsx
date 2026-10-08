@@ -80,8 +80,15 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
     private _boundHandleUnhandledRejection: (event: PromiseRejectionEvent) => void;
     private _boundRegisterActiveWorkbench: (wb: Workbench | null) => void;
 
+    // Called during the render phase when a descendant throws while rendering (errors from window events go through
+    // setErrorIfNoneSet instead). React renders the boundary again right away using the returned state, and that
+    // render is what replaces the children with the fallback. The error must therefore be set here rather than in
+    // componentDidCatch, which only runs once that render has been committed:
+    // - If only componentDidCatch set the error, React would commit the boundary with no children at all, and the
+    //   fallback would only appear after a second render.
+    // React does not pass the component stack to this method, so it is reset here and set by componentDidCatch.
+    // See also: https://legacy.reactjs.org/docs/error-boundaries.html
     static getDerivedStateFromError(err: unknown): Partial<State> {
-        // componentStack is set in componentDidCatch, which is called right after this with the same error
         return { error: toError(err), componentStack: null, copiedToClipboard: false };
     }
 
@@ -131,6 +138,9 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         }
     }
 
+    // Called in the commit phase, after the fallback has been rendered, with the same error that
+    // getDerivedStateFromError received. React only provides the component stack here, so it is set here rather than
+    // together with the error. Until then componentStack is null, so it never belongs to a different error.
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
         this.setState({ componentStack: errorInfo.componentStack ?? null });
     }
