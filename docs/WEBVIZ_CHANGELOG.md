@@ -20,6 +20,7 @@
 - **Inplace Volumes Plot**: In a bar plot with one bar per zone, region or other category, the statistics table below the plot now shows one row per category instead of pooling all categories together.
 - **Sensitivity/Response plot**: "Hide sensitivities without impact" now also hides sensitivities whose difference from the reference is only rounding noise, and Monte Carlo sensitivities that match a Monte Carlo reference. The reference itself is always shown.
 - **Sensitivity/Response plot**: When the data channel holds several responses (e.g. one per region), one tornado is shown per response instead of only the first, and the table lists all responses.
+- **Sensitivity/Response plot**: Sensitivities with no data in the received response (e.g. cases filtered out in the sending module) are left out and listed in a warning, instead of being drawn as zero. A reference sensitivity without data is reported instead of being treated as zero.
 - **Inplace Volumes Plot**: Hovers show which group (e.g. sensitivity case) a value belongs to and the actual realization number. Clicking a legend item now applies to all subplots, and long legends scroll.
 
 ### Added

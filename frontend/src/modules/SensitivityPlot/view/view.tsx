@@ -3,6 +3,7 @@ import React from "react";
 import { Warning } from "@mui/icons-material";
 
 import type { ModuleViewProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
@@ -46,6 +47,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const colorSet = useColorSet(workbenchSettings);
+    const statusWriter = useViewStatusWriter(viewContext);
 
     const responseChannelData = useResponseChannel(viewContext, workbenchSession);
 
@@ -61,6 +63,8 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     );
 
     const computedResponses: ComputedResponse[] = [];
+    const responsesWithoutReferenceData: string[] = [];
+    const sensitivitiesWithoutData = new Set<string>();
     for (const response of responseChannelData.responses) {
         const sensitivities = response.channelEnsemble.getSensitivities();
         if (!referenceSensitivityName || !sensitivities) {
@@ -73,6 +77,11 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
             sensitivitySortBy,
             hideZeroY,
         );
+        if (!sensitivityResponseDataset.hasReferenceData) {
+            responsesWithoutReferenceData.push(response.title);
+            continue;
+        }
+        sensitivityResponseDataset.sensitivitiesWithoutData.forEach((name) => sensitivitiesWithoutData.add(name));
         computedResponses.push({
             idString: response.idString,
             title: response.title,
@@ -82,6 +91,16 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
                 sensitivityResponseDataset.referenceAverage,
             ),
         });
+    }
+
+    const referenceMissingMessage = `The reference sensitivity ${referenceSensitivityName} has no data in the received response. Include it in the sending module's selection.`;
+    if (responsesWithoutReferenceData.length > 0 && computedResponses.length > 0) {
+        statusWriter.addWarning(`${referenceMissingMessage} Not shown: ${responsesWithoutReferenceData.join(", ")}`);
+    }
+    if (sensitivitiesWithoutData.size > 0) {
+        statusWriter.addWarning(
+            `Sensitivities not in the received data are not shown: ${Array.from(sensitivitiesWithoutData).join(", ")}`,
+        );
     }
 
     let instanceTitle = "Sensitivity chart";
@@ -159,6 +178,9 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     function makeViewContent(): React.ReactNode {
         if (responseChannelData.warningContent) {
             return responseChannelData.warningContent;
+        }
+        if (computedResponses.length === 0 && responsesWithoutReferenceData.length > 0) {
+            return <ContentWarning>{referenceMissingMessage}</ContentWarning>;
         }
         if (computedResponses.length === 0) {
             return <ContentWarning>No sensitivities available</ContentWarning>;

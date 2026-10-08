@@ -133,3 +133,55 @@ describe("computeSensitivitiesForResponse hiding sensitivities without impact", 
         expect(computeNames(true)).toEqual(["fwl", "hum", "rms_seed"]);
     });
 });
+
+describe("computeSensitivitiesForResponse with a partial response", () => {
+    const sensitivities = new EnsembleSensitivities([
+        { name: "rms_seed", type: SensitivityType.MONTECARLO, cases: [{ name: "p10_p90", realizations: [1, 2] }] },
+        { name: "hum", type: SensitivityType.MONTECARLO, cases: [{ name: "p10_p90", realizations: [3, 4] }] },
+        { name: "minpv", type: SensitivityType.SCENARIO, cases: [{ name: "low", realizations: [5, 6] }] },
+        {
+            name: "fwl",
+            type: SensitivityType.SCENARIO,
+            cases: [
+                { name: "shallow", realizations: [7, 8] },
+                { name: "deep", realizations: [9, 10] },
+            ],
+        },
+    ]);
+
+    function compute(realizations: number[], values: number[]) {
+        return computeSensitivitiesForResponse(
+            sensitivities,
+            { realizations, values },
+            "rms_seed",
+            SensitivitySortBy.ALPHABETICAL,
+            false,
+        );
+    }
+
+    test("leaves out sensitivities without values instead of treating them as zero", () => {
+        // Only rms_seed and fwl:deep, as when the sender filters on those cases.
+        const dataset = compute([1, 2, 9, 10], [10, 20, 30, 40]);
+
+        expect(dataset.hasReferenceData).toBe(true);
+        expect(dataset.sensitivitiesWithoutData.sort()).toEqual(["hum", "minpv"]);
+        expect(dataset.sensitivityResponses.map((r) => r.sensitivityName).sort()).toEqual(["fwl", "rms_seed"]);
+    });
+
+    test("processes a scenario with one case missing as a single-case scenario", () => {
+        const dataset = compute([1, 2, 9, 10], [10, 20, 30, 40]);
+        const fwl = dataset.sensitivityResponses.find((r) => r.sensitivityName === "fwl")!;
+
+        expect(fwl.lowCaseName).toBe("deep");
+        expect(fwl.lowCaseReferenceDifference).toBe(20);
+        expect(fwl.highCaseReferenceDifference).toBe(0);
+    });
+
+    test("computes nothing when the reference has no values", () => {
+        const dataset = compute([7, 8, 9, 10], [10, 20, 30, 40]);
+
+        expect(dataset.hasReferenceData).toBe(false);
+        expect(dataset.sensitivityResponses).toEqual([]);
+        expect(dataset.sensitivitiesWithoutData).toEqual(["rms_seed"]);
+    });
+});
