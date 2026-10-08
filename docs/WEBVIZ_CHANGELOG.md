@@ -38,6 +38,7 @@
 - **In-place volumes plots**: For an ensemble with sensitivities (design matrix), all plots and the statistics table are split per sensitivity case and coloured by case by default. A new "Sensitivity cases" filter selects which cases are included.
 - **Inplace Volumes Table**: For an ensemble with sensitivities, a SENSITIVITY column is added and statistics are computed per sensitivity case.
 - **Inplace Volumes Comparison**: For an ensemble with sensitivities, each side selects a sensitivity case, so a case can be compared against the base case of the same ensemble.
+- **Inplace Volumes Plot**: Box plots show one named row per group (e.g. sensitivity case), aligned across subplots. With a single subplot the names are on the axis instead of in the legend, and hovering a box shows its statistics.
 
 ## August 2026
 

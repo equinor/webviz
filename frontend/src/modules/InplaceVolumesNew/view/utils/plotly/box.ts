@@ -33,6 +33,8 @@ export function makePlotlyBoxPlotTraces(options: PlotlyBoxPlotTracesOptions): Pa
         text: realizations.map((realization) => `Realization: ${realization}`),
         // @ts-expect-error - this hoverinfo combination is missing in the plotly types
         hoverinfo: "x+text+name",
+        // Plotly cuts the name tag at 15 characters by default; sensitivity case names are longer.
+        hoverlabel: { namelength: -1 },
     });
 
     if (showStatisticalMarkers) {
