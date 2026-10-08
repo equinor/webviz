@@ -341,26 +341,20 @@ export async function installKeyOverlay(page: Page): Promise<void> {
  * of teleporting. Playwright interpolates from its last known pointer position, so the resulting
  * `mousemove` events trace a visible path.
  *
- * The target must resolve to exactly one visible element in every mode (recording or not): a stale
- * or ambiguous locator fails the test with a clear Playwright error instead of silently skipping
- * the glide, or hanging until the test timeout. Only the cursor animation itself is best-effort —
- * outside recording it is skipped entirely, and any failure in it is swallowed so a purely-cosmetic
- * effect can never fail a test on its own.
+ * The target is resolved in every mode, so a stale or ambiguous locator fails the test even when
+ * not recording, rather than only being noticed in the tutorial video.
  */
 export async function smoothMoveToLocator(page: Page, locator: Locator): Promise<void> {
     await locator.waitFor({ state: "visible", timeout: 30_000 });
     if (!RECORDING) {
         return;
     }
-    try {
-        await locator.scrollIntoViewIfNeeded({ timeout: 5_000 });
-        const box = await locator.boundingBox();
-        if (box) {
-            await glideMouseTo(page, box.x + box.width / 2, box.y + box.height / 2);
-        }
-    } catch {
-        // Cursor animation is purely cosmetic; never let it break the walkthrough.
+    await locator.scrollIntoViewIfNeeded({ timeout: 5_000 });
+    const box = await locator.boundingBox();
+    if (!box) {
+        throw new Error(`smoothMoveToLocator: ${locator} has no bounding box, cannot glide the cursor to it`);
     }
+    await glideMouseTo(page, box.x + box.width / 2, box.y + box.height / 2);
 }
 
 /** Friendly keycap labels for click modifiers, so modified clicks read clearly in recorded videos. */
@@ -386,34 +380,31 @@ export async function smoothClick(
 ): Promise<void> {
     await smoothMoveToLocator(page, locator);
     if (RECORDING) {
-        try {
-            // When the click holds a modifier (e.g. Ctrl for multi-select), pop a keycap badge so the
-            // recorded video shows the modifier is down — otherwise it looks like a plain click.
-            // Requires installKeyOverlay(); the call is optional-chained so it's a no-op otherwise.
-            const modifierLabels = (options?.modifiers ?? []).map((modifier) => MODIFIER_OVERLAY_LABELS[modifier] ?? modifier);
-            if (modifierLabels.length > 0) {
-                await page.evaluate(
-                    (label) =>
-                        (window as unknown as { __pwShowKey__?: (label: string) => void }).__pwShowKey__?.(label),
-                    modifierLabels.join(" + "),
-                );
-            }
-            const box = await locator.boundingBox();
-            if (box) {
-                const x = box.x + box.width / 2;
-                const y = box.y + box.height / 2;
-                await page.evaluate(
-                    ([px, py]) =>
-                        (
-                            window as unknown as { __pwFakeCursorRipple__?: (x: number, y: number) => void }
-                        ).__pwFakeCursorRipple__?.(px, py),
-                    [x, y] as const,
-                );
-                // Brief lead so the ripple is already expanding when the click lands.
-                await page.waitForTimeout(160);
-            }
-        } catch {
-            // Cursor ripple is purely cosmetic; never let it break the walkthrough.
+        // When the click holds a modifier (e.g. Ctrl for multi-select), pop a keycap badge so the
+        // recorded video shows the modifier is down — otherwise it looks like a plain click.
+        // Requires installKeyOverlay(); the call is optional-chained so it's a no-op otherwise.
+        const modifierLabels = (options?.modifiers ?? []).map(
+            (modifier) => MODIFIER_OVERLAY_LABELS[modifier] ?? modifier,
+        );
+        if (modifierLabels.length > 0) {
+            await page.evaluate(
+                (label) => (window as unknown as { __pwShowKey__?: (label: string) => void }).__pwShowKey__?.(label),
+                modifierLabels.join(" + "),
+            );
+        }
+        const box = await locator.boundingBox();
+        if (box) {
+            const x = box.x + box.width / 2;
+            const y = box.y + box.height / 2;
+            await page.evaluate(
+                ([px, py]) =>
+                    (
+                        window as unknown as { __pwFakeCursorRipple__?: (x: number, y: number) => void }
+                    ).__pwFakeCursorRipple__?.(px, py),
+                [x, y] as const,
+            );
+            // Brief lead so the ripple is already expanding when the click lands.
+            await page.waitForTimeout(160);
         }
     }
     await locator.click(options);
