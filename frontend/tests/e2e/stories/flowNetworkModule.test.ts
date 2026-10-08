@@ -94,7 +94,7 @@ test.describe("Flow Network module", () => {
         const ensembleRealizationNarration = narrate(
             "The network shown reflects the ensemble and realization you select.",
         );
-        await smoothMoveToLocator(page, page.locator(".setting-row").filter({ hasText: "Ensembles" }));
+        await smoothMoveToLocator(page, page.locator(".setting-row").filter({ hasText: "Ensemble" }));
         await smoothMoveToLocator(page, page.locator(".setting-row").filter({ hasText: "Realization" }));
         await ensembleRealizationNarration;
         await pace(page);

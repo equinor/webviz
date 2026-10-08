@@ -341,16 +341,19 @@ export async function installKeyOverlay(page: Page): Promise<void> {
  * of teleporting. Playwright interpolates from its last known pointer position, so the resulting
  * `mousemove` events trace a visible path.
  *
- * No-op unless RECORD=1 — outside recording we don't want to pay for the extra movement, and the
- * subsequent action waits for/locates the element on its own. Best-effort: any failure here is
- * swallowed so a purely-cosmetic cursor animation can never fail a test.
+ * The target must resolve to exactly one visible element in every mode (recording or not): a stale
+ * or ambiguous locator fails the test with a clear Playwright error instead of silently skipping
+ * the glide, or hanging until the test timeout. Only the cursor animation itself is best-effort —
+ * outside recording it is skipped entirely, and any failure in it is swallowed so a purely-cosmetic
+ * effect can never fail a test on its own.
  */
 export async function smoothMoveToLocator(page: Page, locator: Locator): Promise<void> {
+    await locator.waitFor({ state: "visible", timeout: 30_000 });
     if (!RECORDING) {
         return;
     }
     try {
-        await locator.scrollIntoViewIfNeeded();
+        await locator.scrollIntoViewIfNeeded({ timeout: 5_000 });
         const box = await locator.boundingBox();
         if (box) {
             await glideMouseTo(page, box.x + box.width / 2, box.y + box.height / 2);
