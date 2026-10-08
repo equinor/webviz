@@ -270,6 +270,16 @@ export class GroupedTableData {
         return this._colorMap;
     }
 
+    /**
+     * Labels of the colour groups that have entries, in display order.
+     */
+    getColorLabels(): string[] {
+        const colorKeysWithEntries = new Set(this._allEntries.map((entry) => entry.colorKey));
+        return Array.from(this._colorMap.keys())
+            .filter((key) => colorKeysWithEntries.has(key))
+            .map((key) => this.formatLabel(this._colorBy, key));
+    }
+
     getAllEntries(): GroupedEntry[] {
         return this._allEntries;
     }

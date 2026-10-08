@@ -128,6 +128,9 @@ export function useBuildPlotAndTable(
         colorBy,
         histogramType,
         barSelectorLength,
+        // With subplot = colour, each subplot holds a single row.
+        boxRowLabels: subplotBy === colorBy ? null : groupedData.getColorLabels(),
+        numSubplots: groupedData.getNumSubplots(),
     });
 
     // Set highlighted subplots based on hover state

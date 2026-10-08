@@ -39,7 +39,6 @@ export function makePlotData({
 }: MakePlotDataOptions): (colorEntries: ColorEntry[]) => Partial<PlotData>[] {
     return (colorEntries: ColorEntry[]): Partial<PlotData>[] => {
         const data: Partial<PlotData>[] = [];
-        const boxPlotKeyToPositionMap: Map<string, number> = new Map();
 
         for (const entry of colorEntries) {
             const { colorLabel: title, color, table } = entry;
@@ -74,21 +73,8 @@ export function makePlotData({
                     ),
                 );
             } else if (plotType === PlotType.BOX) {
-                let yAxisPosition = boxPlotKeyToPositionMap.get(entry.colorKey);
-                if (yAxisPosition === undefined) {
-                    yAxisPosition = -boxPlotKeyToPositionMap.size; // Negative value for placing top down
-                    boxPlotKeyToPositionMap.set(entry.colorKey, yAxisPosition);
-                }
                 data.push(
-                    ...makeBoxPlot(
-                        title,
-                        table,
-                        firstResultName,
-                        color,
-                        yAxisPosition,
-                        showStatisticalMarkers,
-                        showRealizationPoints,
-                    ),
+                    ...makeBoxPlot(title, table, firstResultName, color, showStatisticalMarkers, showRealizationPoints),
                 );
             } else if (plotType === PlotType.BAR) {
                 data.push(
@@ -239,9 +225,8 @@ function makeBoxPlot(
     table: Table,
     resultName: string,
     color: string,
-    yAxisPosition?: number,
-    showStatisticalMarkers?: boolean,
-    showRealizationPoints?: boolean,
+    showStatisticalMarkers: boolean,
+    showRealizationPoints: boolean,
 ): Partial<PlotData>[] {
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
@@ -253,9 +238,8 @@ function makeBoxPlot(
         realizations: getRealizations(table),
         resultName,
         color,
-        yAxisPosition,
-        showStatisticalMarkers: showStatisticalMarkers ?? false,
-        showRealizationPoints: showRealizationPoints ?? false,
+        showStatisticalMarkers,
+        showRealizationPoints,
     });
 }
 

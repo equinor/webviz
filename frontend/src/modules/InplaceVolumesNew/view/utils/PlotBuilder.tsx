@@ -34,6 +34,7 @@ export class PlotBuilder {
     private _highlightedSubPlotNames: string[] = [];
     private _histogramType: HistogramType | null = null;
     private _plotType: PlotType | null = null;
+    private _showLegend = true;
 
     constructor(groupedData: GroupedTableData, plotFunction: PlotFunction) {
         this._groupedData = groupedData;
@@ -62,6 +63,10 @@ export class PlotBuilder {
 
     setPlotType(plotType: PlotType): void {
         this._plotType = plotType;
+    }
+
+    setShowLegend(showLegend: boolean): void {
+        this._showLegend = showLegend;
     }
 
     setHighlightedSubPlots(subPlotNames: string[]): void {
@@ -126,6 +131,9 @@ export class PlotBuilder {
             // @ts-expect-error - maxheight is missing in the plotly types
             legend: { yref: "container", y: 0, yanchor: "bottom", maxheight: LEGEND_MAX_HEIGHT_FRACTION },
         });
+        if (!this._showLegend) {
+            figure.updateLayout({ showlegend: false });
+        }
         if (this._plotType === PlotType.BAR) {
             // Force normal legend order for the bar plot.
             // traceorder seems to be overriden when a categoryorder is set.
@@ -200,7 +208,7 @@ export class PlotBuilder {
                 : null;
         // Upper bound: the legend shrinks the plot area by at most its max height.
         const numLegendEntries = traces.filter(({ trace }) => trace.showlegend !== false).length;
-        const legendHeight = numLegendEntries > 0 ? LEGEND_MAX_HEIGHT_FRACTION * height : 0;
+        const legendHeight = this._showLegend && numLegendEntries > 0 ? LEGEND_MAX_HEIGHT_FRACTION * height : 0;
         // Only category labels are rotated; numeric ticks stay horizontal so the one-line estimate holds.
         const xTickAngle = categoryLabels ? X_TICK_ANGLE : 0;
 

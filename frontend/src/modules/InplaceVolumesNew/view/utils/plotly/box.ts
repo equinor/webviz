@@ -9,40 +9,34 @@ export type PlotlyBoxPlotTracesOptions = {
     realizations: number[];
     resultName: string;
     color: string;
-    yAxisPosition?: number;
     showStatisticalMarkers: boolean;
     showRealizationPoints: boolean;
 };
+/**
+ * A horizontal box in the category row named `title`.
+ */
 export function makePlotlyBoxPlotTraces(options: PlotlyBoxPlotTracesOptions): Partial<PlotData>[] {
-    const {
-        title,
-        values,
-        realizations,
-        resultName,
-        color,
-        yAxisPosition,
-        showStatisticalMarkers,
-        showRealizationPoints,
-    } = options;
+    const { title, values, realizations, resultName, color, showStatisticalMarkers, showRealizationPoints } = options;
     const data: Partial<PlotData>[] = [];
 
     data.push({
         x: values,
+        y: values.map(() => title),
         name: title,
         type: "box",
+        orientation: "h",
         marker: { color },
-        y0: yAxisPosition ?? 0,
         // Plotly ignores hovertemplate on the box statistics, so use hoverinfo; points get their realization as text.
         // @ts-expect-error - box hoveron values are missing in the plotly types
         hoveron: "boxes+points",
-        boxpoints: showRealizationPoints ? "all" : "outliers",
+        boxpoints: showRealizationPoints ? "all" : false,
         text: realizations.map((realization) => `Realization: ${realization}`),
         // @ts-expect-error - this hoverinfo combination is missing in the plotly types
         hoverinfo: "x+text+name",
     });
 
     if (showStatisticalMarkers) {
-        data.push(...createQuantileAndMeanMarkerTracesForBoxPlot(title, resultName, values, yAxisPosition ?? 0, color));
+        data.push(...createQuantileAndMeanMarkerTracesForBoxPlot(title, resultName, values, color));
     }
 
     return data;
@@ -52,7 +46,6 @@ function createQuantileAndMeanMarkerTracesForBoxPlot(
     title: string,
     resultName: string,
     values: number[],
-    yPosition: number,
     ensembleColor: string | undefined,
 ): Partial<PlotData>[] {
     const stats = computeStatistics(values);
@@ -60,7 +53,7 @@ function createQuantileAndMeanMarkerTracesForBoxPlot(
 
     const createMarker = (value: number, label: string) => ({
         x: [value],
-        y: [yPosition],
+        y: [title],
         type: "scatter" as const,
         hoverinfo: "x+text" as const,
         hovertext: label,

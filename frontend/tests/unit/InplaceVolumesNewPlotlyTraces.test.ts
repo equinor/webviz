@@ -75,10 +75,34 @@ describe("InplaceVolumesNew plotly trace hovers", () => {
         expect(box.hoveron).toBe("boxes+points");
         expect(box.hoverinfo).toBe("x+text+name");
         expect(box.hovertemplate).toBeUndefined();
+        expect(box.boxpoints).toBe("all");
         expect(box.text).toEqual(REALIZATIONS.map((realization) => `Realization: ${realization}`));
 
         for (const trace of traces.filter((trace) => trace.type !== "box")) {
             expectEveryHoverToStartWithTitle(trace.hovertemplate);
+        }
+    });
+
+    test("box sits in the row named by the colour label, markers included", () => {
+        const traces = makePlotlyBoxPlotTraces({
+            title: TITLE,
+            values: VALUES,
+            realizations: REALIZATIONS,
+            resultName: "STOIIP",
+            color: "red",
+            showStatisticalMarkers: true,
+            showRealizationPoints: false,
+        });
+
+        const box = traces.find((trace) => trace.type === "box")!;
+        expect(box.orientation).toBe("h");
+        expect(box.y).toEqual([TITLE, TITLE, TITLE]);
+        expect(box.boxpoints).toBe(false);
+
+        const markers = traces.filter((trace) => trace.type !== "box");
+        expect(markers).toHaveLength(3);
+        for (const marker of markers) {
+            expect(marker.y).toEqual([TITLE]);
         }
     });
 

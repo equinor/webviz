@@ -1,4 +1,4 @@
-import type { Axis } from "plotly.js";
+import type { Axis, LayoutAxis } from "plotly.js";
 
 import type { HistogramType } from "@modules/_shared/histogram";
 import { makeInplaceVolumesAxisFormat } from "@modules/_shared/InplaceVolumes/numberFormat";
@@ -15,6 +15,9 @@ export interface PlotConfigurerOptions {
     colorBy: string;
     histogramType: HistogramType;
     barSelectorLength: number;
+    // Box rows shared by all subplots, top-down; null lets each subplot list its own rows.
+    boxRowLabels: string[] | null;
+    numSubplots: number;
 }
 
 /**
@@ -23,7 +26,17 @@ export interface PlotConfigurerOptions {
  * configuration logic.
  */
 export function configurePlotlyLayoutAxisByPlotType(plotBuilder: PlotBuilder, options: PlotConfigurerOptions): void {
-    const { plotType, resultName, barSelectorColumn, subplotBy, colorBy, histogramType, barSelectorLength } = options;
+    const {
+        plotType,
+        resultName,
+        barSelectorColumn,
+        subplotBy,
+        colorBy,
+        histogramType,
+        barSelectorLength,
+        boxRowLabels,
+        numSubplots,
+    } = options;
 
     const responseAxisFormat = makeInplaceVolumesAxisFormat(resultName);
 
@@ -32,7 +45,7 @@ export function configurePlotlyLayoutAxisByPlotType(plotBuilder: PlotBuilder, op
         configureConvergencePlot(plotBuilder, resultName);
     } else if (plotType === PlotType.BOX) {
         plotBuilder.setXAxisNumberFormatOptions(responseAxisFormat);
-        configureBoxPlot(plotBuilder, resultName);
+        configureBoxPlot(plotBuilder, resultName, boxRowLabels, numSubplots);
     } else if (plotType === PlotType.HISTOGRAM) {
         plotBuilder.setXAxisNumberFormatOptions(responseAxisFormat);
         configureHistogramPlot(plotBuilder, resultName, histogramType);
@@ -59,9 +72,34 @@ function configureConvergencePlot(plotBuilder: PlotBuilder, resultName: string):
     });
 }
 
-function configureBoxPlot(plotBuilder: PlotBuilder, resultName: string): void {
+/**
+ * A single subplot names its rows on the y axis, which makes the legend redundant. With several subplots,
+ * labelled first columns would be narrower than the rest, so the legend names the rows instead.
+ */
+export function makeBoxPlotLayoutOptions(
+    rowLabels: string[] | null,
+    numSubplots: number,
+): { yAxis: Partial<LayoutAxis>; showLegend: boolean } {
+    const showRowLabels = numSubplots <= 1;
+    const yAxis: Partial<LayoutAxis> = { type: "category", showticklabels: showRowLabels, automargin: showRowLabels };
+    if (rowLabels) {
+        // Plotly lists categories bottom-up.
+        yAxis.categoryorder = "array";
+        yAxis.categoryarray = rowLabels.toReversed();
+    }
+    return { yAxis, showLegend: !showRowLabels };
+}
+
+function configureBoxPlot(
+    plotBuilder: PlotBuilder,
+    resultName: string,
+    rowLabels: string[] | null,
+    numSubplots: number,
+): void {
+    const { yAxis, showLegend } = makeBoxPlotLayoutOptions(rowLabels, numSubplots);
     plotBuilder.setXAxisOptions({ title: { text: resultName } });
-    plotBuilder.setYAxisOptions({ showticklabels: false });
+    plotBuilder.setYAxisOptions(yAxis);
+    plotBuilder.setShowLegend(showLegend);
 }
 
 function configureHistogramPlot(plotBuilder: PlotBuilder, resultName: string, histogramType: HistogramType): void {
