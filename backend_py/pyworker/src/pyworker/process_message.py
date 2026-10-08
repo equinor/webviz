@@ -55,7 +55,14 @@ async def process_message_async(
                         return
 
                 span.set_status(trace.StatusCode.OK)
-                await receiver.complete_message(msg)
+                try:
+                    await receiver.complete_message(msg)
+                except Exception as exc:  # pylint: disable=broad-exception-caught
+                    span.record_exception(exc)
+                    span.set_status(trace.StatusCode.ERROR, repr(exc))
+                    _logger.error(
+                        f"Failed to complete successfully processed message, leaving settlement unresolved: {repr(exc)}\n{"".join(traceback.format_exception(exc))}"
+                    )
 
             # The exception handlers below settle the message based on exception taxonomy (see task_exceptions).
             # We record exceptions on the telemetry span, but avoid doing logger.exception().
