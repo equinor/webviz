@@ -32,22 +32,22 @@ export function configurePlotlyLayoutAxisByPlotType(plotBuilder: PlotBuilder, op
         configureConvergencePlot(plotBuilder, resultName);
     } else if (plotType === PlotType.BOX) {
         plotBuilder.setXAxisNumberFormatOptions(responseAxisFormat);
-        configureBoxPlot(plotBuilder);
+        configureBoxPlot(plotBuilder, resultName);
     } else if (plotType === PlotType.HISTOGRAM) {
         plotBuilder.setXAxisNumberFormatOptions(responseAxisFormat);
-        configureHistogramPlot(plotBuilder, histogramType);
+        configureHistogramPlot(plotBuilder, resultName, histogramType);
     } else if (plotType === PlotType.BAR) {
         plotBuilder.setYAxisNumberFormatOptions(responseAxisFormat);
         configureBarPlot(plotBuilder, barSelectorColumn, subplotBy, colorBy, barSelectorLength);
     } else if (plotType === PlotType.DISTRIBUTION) {
         plotBuilder.setXAxisNumberFormatOptions(responseAxisFormat);
-        configureDistributionPlot(plotBuilder);
+        configureDistributionPlot(plotBuilder, resultName);
     }
 }
 
-function configureDistributionPlot(plotBuilder: PlotBuilder): void {
+function configureDistributionPlot(plotBuilder: PlotBuilder, resultName: string): void {
     plotBuilder.setYAxisOptions({ visible: false });
-    plotBuilder.setXAxisOptions({ zeroline: false });
+    plotBuilder.setXAxisOptions({ zeroline: false, title: { text: resultName } });
 }
 
 function configureConvergencePlot(plotBuilder: PlotBuilder, resultName: string): void {
@@ -59,11 +59,13 @@ function configureConvergencePlot(plotBuilder: PlotBuilder, resultName: string):
     });
 }
 
-function configureBoxPlot(plotBuilder: PlotBuilder): void {
+function configureBoxPlot(plotBuilder: PlotBuilder, resultName: string): void {
+    plotBuilder.setXAxisOptions({ title: { text: resultName } });
     plotBuilder.setYAxisOptions({ showticklabels: false });
 }
 
-function configureHistogramPlot(plotBuilder: PlotBuilder, histogramType: HistogramType): void {
+function configureHistogramPlot(plotBuilder: PlotBuilder, resultName: string, histogramType: HistogramType): void {
+    plotBuilder.setXAxisOptions({ title: { text: resultName } });
     plotBuilder.setYAxisOptions({
         title: { text: "Percentage (%)" },
     });
