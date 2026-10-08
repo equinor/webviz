@@ -59,7 +59,7 @@ describe("InplaceVolumesNew plotly trace hovers", () => {
         expect(rug.hovertemplate).not.toContain("pointNumber");
     });
 
-    test("box hovers start with the colour label and points carry the realizations", () => {
+    test("box hovers name the colour group, and points carry the realizations", () => {
         const traces = makePlotlyBoxPlotTraces({
             title: TITLE,
             values: VALUES,
@@ -70,14 +70,16 @@ describe("InplaceVolumesNew plotly trace hovers", () => {
             showRealizationPoints: true,
         });
 
-        for (const trace of traces) {
+        const box = traces.find((trace) => trace.type === "box")!;
+        expect(box.name).toBe(TITLE);
+        expect(box.hoveron).toBe("boxes+points");
+        expect(box.hoverinfo).toBe("x+text+name");
+        expect(box.hovertemplate).toBeUndefined();
+        expect(box.text).toEqual(REALIZATIONS.map((realization) => `Realization: ${realization}`));
+
+        for (const trace of traces.filter((trace) => trace.type !== "box")) {
             expectEveryHoverToStartWithTitle(trace.hovertemplate);
         }
-        const box = traces.find((trace) => trace.type === "box")!;
-        expect(box.hoverinfo).toBeUndefined();
-        expect(box.hoveron).toBe("points");
-        expect(box.customdata).toEqual(REALIZATIONS);
-        expect(box.hovertemplate).toContain("Realization: <b>%{customdata}</b>");
     });
 
     test("violin hovers start with the colour label and points carry the realizations", () => {

@@ -31,13 +31,14 @@ export function makePlotlyBoxPlotTraces(options: PlotlyBoxPlotTracesOptions): Pa
         name: title,
         type: "box",
         marker: { color },
-        // @ts-expect-error - missing arguments in the plotly types
         y0: yAxisPosition ?? 0,
-        // Box statistics are covered by the marker traces; the template only applies to points.
-        hoveron: "points",
+        // Plotly ignores hovertemplate on the box statistics, so use hoverinfo; points get their realization as text.
+        // @ts-expect-error - box hoveron values are missing in the plotly types
+        hoveron: "boxes+points",
         boxpoints: showRealizationPoints ? "all" : "outliers",
-        customdata: realizations,
-        hovertemplate: `<b>${title}</b><br>${resultName}: <b>%{x}</b><br>Realization: <b>%{customdata}</b><extra></extra>`,
+        text: realizations.map((realization) => `Realization: ${realization}`),
+        // @ts-expect-error - this hoverinfo combination is missing in the plotly types
+        hoverinfo: "x+text+name",
     });
 
     if (showStatisticalMarkers) {
