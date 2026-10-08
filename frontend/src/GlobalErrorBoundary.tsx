@@ -19,22 +19,46 @@ interface State {
     activeWorkbench: Workbench | null;
 }
 
-// Anything can be thrown or used as a rejection reason, but the fallback and the support documents expect an Error
+// Anything can be thrown or used as a rejection reason, but the fallback and the support documents expect an Error.
+// Must never throw, since it runs while an error is being handled.
 function toError(value: unknown): Error {
-    if (value instanceof Error) {
-        return value;
+    try {
+        if (value instanceof Error) {
+            return value;
+        }
+        if (typeof value === "string") {
+            return makeErrorWithoutStack(value);
+        }
+
+        return makeErrorWithoutStack(`Non-Error value: ${describeValue(value)}`);
+    } catch {
+        // instanceof throws for revoked proxies and proxies with a throwing getPrototypeOf trap
+        return makeErrorWithoutStack(`Non-Error value: ${describeUnserializable(value)}`);
     }
-    if (typeof value === "string") {
-        return makeErrorWithoutStack(value);
+}
+
+// Must never throw, since it runs while handling an error. JSON.stringify throws on circular references and throwing
+// getters/toJSON, and String throws on a throwing toString or on objects without a prototype.
+function describeValue(value: unknown): string {
+    try {
+        const json = JSON.stringify(value);
+        if (json !== undefined) {
+            return json;
+        }
+    } catch {
+        // Fall back to String below
     }
 
-    let description: string;
     try {
-        description = JSON.stringify(value) ?? String(value);
+        return String(value);
     } catch {
-        description = String(value);
+        return describeUnserializable(value);
     }
-    return makeErrorWithoutStack(`Non-Error value: ${description}`);
+}
+
+function describeUnserializable(value: unknown): string {
+    // typeof never throws, not even for revoked proxies
+    return `[unserializable ${typeof value}]`;
 }
 
 function makeErrorWithoutStack(message: string): Error {
