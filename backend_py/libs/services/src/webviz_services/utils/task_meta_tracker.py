@@ -237,7 +237,7 @@ class TaskMetaTracker:
 
     async def set_status_message_async(self, task_id: str, status_msg: str) -> bool:
         time_now_utc_s = time.time()
-        update_dict = {
+        update_dict: dict[str, float | str] = {
             "statusMessage": status_msg,
             "updatedAtUtcS": time_now_utc_s,
         }

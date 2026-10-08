@@ -361,8 +361,10 @@ async def get_send_sb_msg(
                 LOGGER.error(f"Task {task_id} is not in PENDING state ({task_meta.state=})")
 
             await task_tracker.set_state_async(task_id, TaskState.RUNNING, None)
-            task_meta = await task_tracker.get_task_meta_async(task_id)
-            if task_meta.state != TaskState.RUNNING:
+            new_task_meta = await task_tracker.get_task_meta_async(task_id)
+            if new_task_meta is None:
+                LOGGER.error(f"Task {task_id} could not be retrieved")
+            elif new_task_meta.state != TaskState.RUNNING:
                 LOGGER.error(f"Task {task_id} is not in PENDING state ({task_meta.state=})")
 
             LOGGER.info(f"Sent message {i} on service bus {sb_msg.message_id=}")
