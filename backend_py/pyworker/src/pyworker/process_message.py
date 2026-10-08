@@ -18,6 +18,7 @@ _logger = logging.getLogger(__name__)
 _tracer = trace.get_tracer(__name__)
 
 
+# pylint: disable-next=too-many-statements
 async def process_message_async(
     receiver: ServiceBusReceiver, msg: ServiceBusReceivedMessage, _abort_signal: AbortSignal
 ) -> None:
