@@ -10,6 +10,16 @@ from .authenticated_user import AuthenticatedUser
 
 _REDIS_KEY_PREFIX = "task_meta_tracker"
 
+# Lua script to conditionally set hash fields only if the hash already exists.
+# The existence check and update run atomically; HSET preserves the existing key TTL.
+_HSET_IF_EXISTS_SCRIPT = """
+if redis.call('EXISTS', KEYS[1]) == 0 then
+    return 0
+end
+redis.call('HSET', KEYS[1], unpack(ARGV))
+return 1
+"""
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -91,8 +101,8 @@ class TaskMetaTracker:
         self,
         task_id: str,
         ttl_s: int,
-        actual_start_time_utc_s: float | None,
-        expected_store_key: str | None,
+        actual_start_time_utc_s: float | None = None,
+        expected_store_key: str | None = None,
     ) -> TaskMeta:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
 
@@ -226,22 +236,18 @@ class TaskMetaTracker:
         )
 
     async def set_status_message_async(self, task_id: str, status_msg: str) -> bool:
-        redis_hash_name = self._make_full_redis_key_for_task(task_id)
-
-        if not await self._redis_client.exists(redis_hash_name):
-            # For now, log a warning and ignore the update if the task hash does not exist.
-            # Maybe we should raise an error instead to surface potential issues earlier?
-            LOGGER.warning(f"set_status_message_async: task hash does not exist, ignoring update ({task_id=})")
-            return False
-
         time_now_utc_s = time.time()
-
         update_dict = {
             "statusMessage": status_msg,
             "updatedAtUtcS": time_now_utc_s,
         }
 
-        await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)  # type: ignore[arg-type]
+        redis_hash_name = self._make_full_redis_key_for_task(task_id)
+        if not await self._hset_if_exists_async(redis_hash_name, update_dict):
+            # For now, log a warning and ignore the update if the task hash does not exist.
+            # Maybe we should raise an error instead to surface potential issues earlier?
+            LOGGER.warning(f"set_status_message_async: task hash does not exist, ignoring update ({task_id=})")
+            return False
 
         return True
 
@@ -292,14 +298,6 @@ class TaskMetaTracker:
     async def _do_set_state_async(
         self, task_id: str, new_state: TaskState, status_msg: str | None, internal_error_msg: str | None
     ) -> bool:
-        redis_hash_name = self._make_full_redis_key_for_task(task_id)
-
-        if not await self._redis_client.exists(redis_hash_name):
-            # For now, log a warning and ignore the update if the task hash does not exist.
-            # Maybe we should raise an error instead to surface potential issues earlier?
-            LOGGER.warning(f"_do_set_state_async: task hash does not exist, ignoring update ({task_id=}, {new_state=})")
-            return False
-
         time_now_utc_s = time.time()
 
         update_dict: dict[str, str | float] = {
@@ -323,9 +321,29 @@ class TaskMetaTracker:
         else:
             update_dict["internalErrorMessage"] = ""
 
-        await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)  # type: ignore[arg-type]
+        redis_hash_name = self._make_full_redis_key_for_task(task_id)
+        if not await self._hset_if_exists_async(redis_hash_name, update_dict):
+            # For now, log a warning and ignore the update if the task hash does not exist.
+            # Maybe we should raise an error instead to surface potential issues earlier?
+            LOGGER.warning(f"_do_set_state_async: task hash does not exist, ignoring update ({task_id=}, {new_state=})")
+            return False
 
         return True
+
+    async def _hset_if_exists_async(self, redis_hash_name: str, mapping: dict[str, str | int | float]) -> bool:
+        # Helper method to conditionally set hash fields only if the hash already exists.
+        # This is done using a Lua script to ensure atomicity of the existence check and the update.
+
+        # Build argument list for the Lua script, each key-value pair in the mapping is added as two consecutive arguments.
+        args: list[str | int | float] = []
+        for key, value in mapping.items():
+            args.append(key)
+            args.append(value)
+
+        # Inside the Lua script, redis_hash_name is available as KEYS[1]
+        # The remaining arguments in args are available as ARGV in the Lua script.
+        result = await self._redis_client.eval(_HSET_IF_EXISTS_SCRIPT, 1, redis_hash_name, *args)
+        return result == 1
 
     async def _find_task_id_for_fingerprint_async(self, fingerprint: str) -> str | None:
         fingerprint_redis_key = self._make_full_redis_key_for_fingerprint(fingerprint)

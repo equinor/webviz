@@ -19,7 +19,7 @@ from webviz_services.user_session_manager._user_session_directory import UserSes
 from webviz_services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
 from webviz_services.service_exceptions import Service, ServiceUnavailableError, ServiceRequestError
 from webviz_services.utils.otel_span_tracing import start_otel_span_async
-from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
+from webviz_services.utils.task_meta_tracker import TaskState, get_task_meta_tracker_for_user
 from webviz_services.platform.message_bus import MessageBusSingleton, MessageBus
 
 from primary import config
@@ -325,7 +325,7 @@ async def get_ri_isect(
 @router.get("/sb/{msg_text}")
 async def get_send_sb_msg(
     response: Response,
-    _authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     msg_text: Annotated[str, Path(description="The string to send")],
     count: Annotated[int, Query(description="Number of messages to send")] = 1,
 ) -> str:
@@ -339,6 +339,9 @@ async def get_send_sb_msg(
     message_bus: MessageBus = MessageBusSingleton.get_instance()
     fernet = Fernet(config.SERVICE_BUS_PAYLOAD_FERNET_KEY)
 
+    task_tracker = get_task_meta_tracker_for_user(authenticated_user)
+    my_task_ids: list[str] = []
+
     for i in range(count):
         with tracer.start_as_current_span(f"SubmittingDevTestMessageToQueue_{i}", kind=trace.SpanKind.PRODUCER):
             msg = DevTestMsg(
@@ -349,12 +352,33 @@ async def get_send_sb_msg(
 
             sb_msg = ServiceBusMessage(subject=WorkerOperation.DEV_TEST, body=msg.model_dump_json())
             await message_bus.send_to_queue_async(queue_name=queue_name, message=sb_msg)
+
+            task_id = task_tracker.generate_task_id("testTaskId")
+            my_task_ids.append(task_id)
+
+            task_meta = await task_tracker.register_task_async(task_id, ttl_s=2)
+            if task_meta.state != TaskState.PENDING:
+                LOGGER.error(f"Task {task_id} is not in PENDING state ({task_meta.state=})")
+
+            await task_tracker.set_state_async(task_id, TaskState.RUNNING, None)
+            task_meta = await task_tracker.get_task_meta_async(task_id)
+            if task_meta.state != TaskState.RUNNING:
+                LOGGER.error(f"Task {task_id} is not in PENDING state ({task_meta.state=})")
+
             LOGGER.info(f"Sent message {i} on service bus {sb_msg.message_id=}")
         if i == 0:
             perf_metrics.record_lap("send-first-msg")
 
     if count > 1:
         perf_metrics.record_lap("send-remaining-msgs")
+
+    # Sleep so that all tasks in tracker time out
+    # All the task tracker updates below should now fail
+    await asyncio.sleep(3)
+    for task_id in my_task_ids:
+        ok = await task_tracker.set_state_async(task_id, TaskState.FAILED, None)
+        if ok:
+            LOGGER.error(f"Setting of task {task_id} to FAILED succeeded unexpectedly")
 
     LOGGER.info(
         f"Sent {count} message(s) with {msg_text=} on service bus queue {queue_name} in {perf_metrics.to_string()}"
