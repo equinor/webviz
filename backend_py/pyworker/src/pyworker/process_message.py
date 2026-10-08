@@ -124,8 +124,12 @@ def _extract_trace_context_from_message(message: ServiceBusReceivedMessage) -> C
     """
     props = {}
     for k, v in (message.application_properties or {}).items():
-        key = k.decode() if isinstance(k, bytes) else k
-        value = v.decode() if isinstance(v, bytes) else v
-        props[key] = value
+        try:
+            key = k.decode() if isinstance(k, bytes) else k
+            value = v.decode() if isinstance(v, bytes) else v
+        except UnicodeDecodeError:
+            continue
+        if isinstance(key, str) and isinstance(value, str):
+            props[key] = value
 
     return extract(props)
