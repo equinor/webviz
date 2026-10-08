@@ -172,8 +172,18 @@ describe("computeSensitivitiesForResponse with a partial response", () => {
         const dataset = compute([1, 2, 9, 10], [10, 20, 30, 40]);
         const fwl = dataset.sensitivityResponses.find((r) => r.sensitivityName === "fwl")!;
 
-        expect(fwl.lowCaseName).toBe("deep");
-        expect(fwl.lowCaseReferenceDifference).toBe(20);
+        // deep (35) is above the reference (15), so it is the high side.
+        expect(fwl.highCaseName).toBe("deep");
+        expect(fwl.highCaseReferenceDifference).toBe(20);
+        expect(fwl.lowCaseReferenceDifference).toBe(0);
+    });
+
+    test("puts a single scenario case below the reference on the low side", () => {
+        const dataset = compute([1, 2, 7, 8], [30, 40, 10, 20]);
+        const fwl = dataset.sensitivityResponses.find((r) => r.sensitivityName === "fwl")!;
+
+        expect(fwl.lowCaseName).toBe("shallow");
+        expect(fwl.lowCaseReferenceDifference).toBe(-20);
         expect(fwl.highCaseReferenceDifference).toBe(0);
     });
 
