@@ -111,7 +111,7 @@ export const computeSensitivitiesForResponse = (
     return {
         sensitivityResponses: sortSensitivityResponses(
             filteredSensitivityResponses,
-            referenceSensitivity,
+            validReferenceSensitivity,
             sensitivitySortBy,
         ),
         referenceSensitivity: validReferenceSensitivity,
