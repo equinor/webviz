@@ -12,9 +12,10 @@ import type { ColorSet } from "@lib/utils/ColorSet";
 import { createSensitivityColorMap } from "@modules/_shared/sensitivityColors";
 
 import { encodeSelectorColumn, expandSelectorColumn } from "./selectorColumnUtils";
+import type { SensitivityCaseRef } from "./types";
 import { TableOriginKey } from "./types";
 
-export type SensitivityCaseRef = { sensitivityName: string; caseName: string };
+export type { SensitivityCaseRef } from "./types";
 
 export type SensitivitySelection = { ensembleIdent: RegularEnsembleIdent; selectedCases: SensitivityCaseRef[] };
 

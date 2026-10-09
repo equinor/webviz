@@ -9,9 +9,7 @@ import type {
 } from "./types";
 import { InplaceVolumesStatisticEnumToStringMapping, TableOriginKey } from "./types";
 
-function hasSensitivitySelectorColumn(
-    data: { data: { tableDataPerFluidSelection: { selectorColumns: { columnName: string }[] }[] } }[],
-): boolean {
+function hasSensitivitySelectorColumn(data: (InplaceVolumesTableData | InplaceVolumesStatisticalTableData)[]): boolean {
     return data.some((tableSet) =>
         tableSet.data.tableDataPerFluidSelection.some((perFluidTableData) =>
             perFluidTableData.selectorColumns.some((column) => column.columnName === TableOriginKey.SENSITIVITY),

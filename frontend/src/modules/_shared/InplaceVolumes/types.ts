@@ -7,8 +7,9 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import type { DroppedFluidSelection, UnmatchedDeltaRows } from "./deltaTableUtils";
-import type { SensitivityCaseRef } from "./sensitivityUtils";
 import type { Column } from "./Table";
+
+export type SensitivityCaseRef = { sensitivityName: string; caseName: string };
 
 export type InplaceVolumesTableData = {
     ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;

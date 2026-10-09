@@ -1,30 +1,6 @@
 export type NumberFormatNotation = "standard" | "scientific" | "engineering";
 export type NumberFormatUnitSystem = "none" | "si" | "binary";
 
-/**
- * Metric prefixes for large values only (k, M, G, T, P), so ratios and fractions stay plain decimals.
- */
-export function formatWithLargeValuePrefixes(value: number): string {
-    return formatNumber(value, { unitSystem: "si", useSubUnitPrefixes: false, numSignificantDigits: 3 });
-}
-
-/**
- * Plotly axis format matching `formatWithLargeValuePrefixes`. Plotly's "SI" mode also uses milli/micro
- * prefixes (0.25 → "250m"), so it is only used when the axis reaches 1000.
- */
-export function makeLargeValuePrefixAxisFormat(axisValues: readonly number[]): {
-    exponentformat: "SI" | "none";
-    hoverformat: string;
-} {
-    const maxAbsValue = axisValues.reduce(
-        (max, value) => (Number.isFinite(value) ? Math.max(max, Math.abs(value)) : max),
-        0,
-    );
-    return maxAbsValue >= 1000
-        ? { exponentformat: "SI", hoverformat: ".3s" }
-        : { exponentformat: "none", hoverformat: "" };
-}
-
 export type NumberFormatOptions = {
     /**
      * Limits the number of decimal places. When set, decimal-place rounding is used instead of
@@ -174,4 +150,28 @@ export function formatNumber(value: number, options?: NumberFormatOptions): stri
 
     // Standard notation without prefix
     return `${sign}${formatAbsValue(absValue, maxDecimals, numSigDigits)}${unitSuffix}`;
+}
+
+/**
+ * Metric prefixes for large values only (k, M, G, T, P), so ratios and fractions stay plain decimals.
+ */
+export function formatWithLargeValuePrefixes(value: number): string {
+    return formatNumber(value, { unitSystem: "si", useSubUnitPrefixes: false, numSignificantDigits: 3 });
+}
+
+/**
+ * Plotly axis format matching `formatWithLargeValuePrefixes`. Plotly's "SI" mode also uses milli/micro
+ * prefixes (0.25 → "250m"), so it is only used when the axis reaches 1000.
+ */
+export function makeLargeValuePrefixAxisFormat(axisValues: readonly number[]): {
+    exponentformat: "SI" | "none";
+    hoverformat: string;
+} {
+    const maxAbsValue = axisValues.reduce(
+        (max, value) => (Number.isFinite(value) ? Math.max(max, Math.abs(value)) : max),
+        0,
+    );
+    return maxAbsValue >= 1000
+        ? { exponentformat: "SI", hoverformat: ".3s" }
+        : { exponentformat: "none", hoverformat: "" };
 }

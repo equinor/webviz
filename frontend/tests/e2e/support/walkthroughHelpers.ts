@@ -533,7 +533,6 @@ export async function dragModuleOntoLayout(
     // List items are divs; module header titles are spans (possibly on hidden dashboards).
     const moduleItem = page.locator(`div[title="${moduleDisplayName}"]`).filter({ visible: true }).first();
 
-    await smoothScrollIntoView(moduleItem, "center");
     await smoothMoveToLocator(page, moduleItem);
 
     await expect(async () => {
