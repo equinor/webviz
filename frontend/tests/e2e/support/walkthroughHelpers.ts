@@ -597,6 +597,21 @@ function moduleHeader(page: Page, moduleTitle: string | RegExp): Locator {
         );
 }
 
+/** Maximize a module to fill the dashboard, or restore it, with the button in its header. */
+export async function setModuleMaximized(
+    page: Page,
+    moduleTitle: string | RegExp,
+    maximized: boolean,
+): Promise<void> {
+    // The header buttons have no accessible name; MUI icons carry a data-testid.
+    const [clickIcon, resultIcon] = maximized
+        ? ["OpenInFullIcon", "CloseFullscreenIcon"]
+        : ["CloseFullscreenIcon", "OpenInFullIcon"];
+    const header = moduleHeader(page, moduleTitle);
+    await smoothClick(page, header.locator(`button:has(svg[data-testid="${clickIcon}"])`));
+    await expect(header.locator(`svg[data-testid="${resultIcon}"]`)).toBeVisible();
+}
+
 function dashboardTabs(page: Page): Locator {
     return page.getByRole("tablist", { name: "Dashboards" });
 }

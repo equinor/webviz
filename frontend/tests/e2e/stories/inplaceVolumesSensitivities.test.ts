@@ -17,6 +17,7 @@ import {
     installKeyOverlay,
     pace,
     renameActiveDashboard,
+    setModuleMaximized,
     smoothClick,
     smoothMoveToLocator,
     switchToDashboard,
@@ -229,7 +230,7 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         // --- 3. Tornado via data channel ---------------------------------------------------------
         markStep("Rank sensitivities with a tornado");
         const boxNarration = narrate(
-            "To rank the sensitivities we use a tornado plot. First we switch to box plots, which show the spread of each case, and hide the statistics table to make room.",
+            "To rank the sensitivities we use a tornado plot. First we switch to box plots, which show the spread of each case on its own labelled row, and hide the statistics table to make room.",
         );
         await selectComboboxOption(page, "Plot Type", "Box");
         await waitForModules();
@@ -270,6 +271,33 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         await smoothClick(page, page.getByText("Hide sensitivities without impact", { exact: true }));
         await waitForModules();
         await hideNarration;
+
+        markStep("Rank sensitivities per zone");
+        const perZoneNarration = narrate(
+            "Back in the plot module, we split the plot by zone. The data channel then carries one response per zone, so the tornado shows one chart per zone, in the same order as the plot. The facies sensitivities only show up in their own zone, while hum and the free water level matter in every zone.",
+        );
+        await smoothClick(page, moduleLayout.getByTitle(PLOT_MODULE_TITLE).first());
+        await selectComboboxOption(page, "Subplot by", "ZONE");
+        await waitForModules();
+        await expect(moduleLayout.getByTitle("Sensitivity charts", { exact: true })).toBeVisible({ timeout: 90_000 });
+        await perZoneNarration;
+
+        markStep("Sensitivity table");
+        const tableViewNarration = narrate(
+            "The same numbers are also available as a table, so we maximize the tornado module to give it room. Each row says whether the sensitivity is a distribution, like hum, listed with its mean, P90 and P10, or a scenario, like the free water level, listed with the average of its low and high case. The realization counts at the end show how many realizations each value is based on.",
+        );
+        await smoothClick(page, moduleLayout.getByTitle(TORNADO_MODULE_TITLE).first());
+        await setModuleMaximized(page, TORNADO_MODULE_TITLE, true);
+        await selectComboboxOption(page, "Plot type", "Sensitivity Table");
+        await waitForModules();
+        await tableViewNarration;
+
+        const backToChartNarration = narrate("We switch back to the tornado and restore the layout.");
+        await selectComboboxOption(page, "Plot type", "Sensitivity chart (Tornado)");
+        await waitForModules();
+        await setModuleMaximized(page, TORNADO_MODULE_TITLE, false);
+        await waitForModules();
+        await backToChartNarration;
 
         // --- 4. Inplace Volumes Comparison ---------------------------------------------------
         markStep("Decompose a sensitivity's effect");
