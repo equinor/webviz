@@ -42,7 +42,7 @@ describe("channelContentsToResponses", () => {
 
         const result = channelContentsToResponses(contents, ensembleSet);
 
-        expect(result.invalidEnsembleType).toBeNull();
+        expect(result.invalidEnsemble).toBeNull();
         expect(result.responses.map((r) => r.title)).toEqual([
             "STOIIP (NorthHorst)",
             "STOIIP (CentralSouth)",
@@ -77,7 +77,7 @@ describe("channelContentsToResponses", () => {
 
         const result = channelContentsToResponses(contents, ensembleSet);
 
-        expect(result.invalidEnsembleType).toBe("Delta");
+        expect(result.invalidEnsemble).toBe("delta");
         expect(result.responses).toEqual([]);
     });
 
@@ -87,7 +87,7 @@ describe("channelContentsToResponses", () => {
 
         const result = channelContentsToResponses(contents, ensembleSet);
 
-        expect(result.invalidEnsembleType).toBe("Invalid");
+        expect(result.invalidEnsemble).toBe("missing");
         expect(result.responses).toEqual([]);
     });
 });

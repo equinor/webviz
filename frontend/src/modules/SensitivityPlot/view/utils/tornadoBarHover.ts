@@ -1,4 +1,5 @@
 import { SensitivityType } from "@framework/EnsembleSensitivities";
+import { hasCaseOnSide } from "@modules/_shared/SensitivityProcessing";
 import type { SensitivityResponse } from "@modules/_shared/SensitivityProcessing";
 import { formatWithLargeValuePrefixes } from "@modules/_shared/utils/numberFormatting";
 
@@ -16,10 +17,10 @@ function summarizeCase(
     referenceAverage: number,
 ): CaseSummary | null {
     const isLow = side === "low";
-    const name = isLow ? response.lowCaseName : response.highCaseName;
-    if (name === "" && (isLow ? response.lowCaseRealizations : response.highCaseRealizations).length === 0) {
+    if (!hasCaseOnSide(response, side)) {
         return null;
     }
+    const name = isLow ? response.lowCaseName : response.highCaseName;
     const value = isLow ? response.lowCaseAverage : response.highCaseAverage;
     const difference = value - referenceAverage;
     const percentage =

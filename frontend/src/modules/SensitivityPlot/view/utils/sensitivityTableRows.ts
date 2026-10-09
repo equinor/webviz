@@ -1,4 +1,5 @@
 import { SensitivityType } from "@framework/EnsembleSensitivities";
+import { hasCaseOnSide } from "@modules/_shared/SensitivityProcessing";
 import type { SensitivityResponse, SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing";
 
 export type SensitivityTableRow = {
@@ -15,11 +16,6 @@ export type SensitivityTableRow = {
     realsLow: number | null;
     realsHigh: number | null;
 };
-
-// A single-case scenario fills the side opposite the case with the reference; that side has no realizations.
-function hasCase(name: string, realizations: number[]): boolean {
-    return name !== "" || realizations.length > 0;
-}
 
 function makeRow(responseName: string, response: SensitivityResponse): SensitivityTableRow {
     const base = {
@@ -43,8 +39,8 @@ function makeRow(responseName: string, response: SensitivityResponse): Sensitivi
         };
     }
 
-    const hasLow = hasCase(response.lowCaseName, response.lowCaseRealizations);
-    const hasHigh = hasCase(response.highCaseName, response.highCaseRealizations);
+    const hasLow = hasCaseOnSide(response, "low");
+    const hasHigh = hasCaseOnSide(response, "high");
     return {
         ...base,
         type: "Scenario",

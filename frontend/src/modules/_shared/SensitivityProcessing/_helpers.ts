@@ -18,6 +18,13 @@ export function computeAverage(values: number[]): number {
     return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
 }
 
+/** False for the empty side of a single-case scenario, which sits at the reference. */
+export function hasCaseOnSide(response: SensitivityResponse, side: "low" | "high"): boolean {
+    return side === "low"
+        ? response.lowCaseName !== "" || response.lowCaseRealizations.length > 0
+        : response.highCaseName !== "" || response.highCaseRealizations.length > 0;
+}
+
 // Sensitivity realizations extraction
 export function extractSensitivityRealizations(sensitivity: Sensitivity): number[] {
     return sensitivity.cases.flatMap((c) => c.realizations);

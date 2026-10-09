@@ -12,7 +12,6 @@ import { channelContentsToResponses, type ChannelResponse } from "../utils/chann
 
 export interface ResponseChannelData {
     responses: ChannelResponse[];
-    displayName: string | null;
     warningContent: React.ReactNode | null;
 }
 
@@ -31,7 +30,6 @@ export function useResponseChannel(
     if (!hasChannel) {
         return {
             responses: [],
-            displayName: null,
             warningContent: (
                 <ContentWarning>
                     <span>
@@ -48,7 +46,6 @@ export function useResponseChannel(
     if (!hasChannelContents) {
         return {
             responses: [],
-            displayName: responseReceiver.channel?.displayName ?? null,
             warningContent: (
                 <ContentWarning>
                     No data received on channel {responseReceiver.channel?.displayName ?? "Unknown"}
@@ -57,18 +54,14 @@ export function useResponseChannel(
         };
     }
 
-    const { responses, invalidEnsembleType } = channelContentsToResponses(
-        responseReceiver.channel!.contents,
-        ensembleSet,
-    );
+    const { responses, invalidEnsemble } = channelContentsToResponses(responseReceiver.channel!.contents, ensembleSet);
 
-    if (invalidEnsembleType) {
+    if (invalidEnsemble) {
         return {
             responses: [],
-            displayName: responseReceiver.channel?.displayName ?? null,
             warningContent: (
                 <ContentWarning>
-                    <p>{invalidEnsembleType} ensemble detected in data channel.</p>
+                    <p>{invalidEnsemble === "missing" ? "Invalid" : "Delta"} ensemble detected in data channel.</p>
                     <p>Unable to compute sensitivity responses.</p>
                 </ContentWarning>
             ),
@@ -77,7 +70,6 @@ export function useResponseChannel(
 
     return {
         responses,
-        displayName: responseReceiver.channel?.displayName ?? null,
         warningContent: null,
     };
 }

@@ -14,7 +14,7 @@ export type ChannelResponse = {
 export type ChannelContentsToResponsesResult = {
     responses: ChannelResponse[];
     /** Set when any content refers to a missing or delta ensemble; `responses` is then empty. */
-    invalidEnsembleType: "Invalid" | "Delta" | null;
+    invalidEnsemble: "missing" | "delta" | null;
 };
 
 export function channelContentsToResponses(
@@ -26,7 +26,7 @@ export function channelContentsToResponses(
     for (const content of contents) {
         const channelEnsemble = ensembleSet.findEnsembleByIdentString(content.metaData.ensembleIdentString);
         if (!channelEnsemble || channelEnsemble instanceof DeltaEnsemble) {
-            return { responses: [], invalidEnsembleType: !channelEnsemble ? "Invalid" : "Delta" };
+            return { responses: [], invalidEnsemble: !channelEnsemble ? "missing" : "delta" };
         }
 
         const realizations: number[] = [];
@@ -49,5 +49,5 @@ export function channelContentsToResponses(
         });
     }
 
-    return { responses, invalidEnsembleType: null };
+    return { responses, invalidEnsemble: null };
 }
