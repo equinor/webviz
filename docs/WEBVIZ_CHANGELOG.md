@@ -15,6 +15,7 @@
 - **Sensitivity/Response plot**: The sensitivity table now shows each sensitivity's type. Distributions (Monte Carlo) list Mean, P90 and P10, and scenarios list the average of their low and high case, with realization counts last. Values are absolute and no longer follow the chart's scaling.
 - **Sensitivity/Response plot**: Large values use metric prefixes (k, M, G) like the inplace volumes modules, instead of K and B. The response unit, when the sending module provides one, is shown in the table headers.
 - **Sensitivity/Response plot**: The tornado's x-axis fits what is drawn; hidden realization and mean points no longer widen it, so the bars use the available width.
+- **Sensitivity/Response plot**: Hovering a tornado bar shows its case (e.g. `deep`, or P10/P90 for distributions), its value, the difference from the reference and the number of realizations.
 
 ### Fixed
 

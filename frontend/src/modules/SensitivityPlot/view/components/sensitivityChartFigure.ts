@@ -7,6 +7,7 @@ import type { SensitivityResponseDataset, SensitivityResponse } from "@modules/_
 import { formatWithLargeValuePrefixes, makeLargeValuePrefixAxisFormat } from "@modules/_shared/utils/numberFormatting";
 
 import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
+import { makeTornadoBarHoverTemplate } from "../utils/tornadoBarHover";
 import {
     createHighBarTrace,
     createHighRealizationPointsTrace,
@@ -212,11 +213,11 @@ export class SensitivityChartFigure {
     private _createLowLabel(): string[] {
         return this._sensitivityResponses.map((s) => this._computeLowLabel(s));
     }
-    private _createHighCustomData(): string[] {
-        return this._sensitivityResponses.map((s) => s.highCaseName);
+    private _createHighHoverTemplates(): string[] {
+        return this._sensitivityResponses.map((s) => makeTornadoBarHoverTemplate(s, "high", this._referenceAverage));
     }
-    private _createLowCustomData(): string[] {
-        return this._sensitivityResponses.map((s) => s.lowCaseName);
+    private _createLowHoverTemplates(): string[] {
+        return this._sensitivityResponses.map((s) => makeTornadoBarHoverTemplate(s, "low", this._referenceAverage));
     }
     private _createSensitivityNames(): string[] {
         return this._sensitivityResponses.map((s) => s.sensitivityName);
@@ -231,7 +232,7 @@ export class SensitivityChartFigure {
         return createHighBarTrace({
             xValues: this._calculateHighXValues(),
             yValues: this._createSensitivityNames(),
-            customdata: this._createHighCustomData(),
+            hoverTemplates: this._createHighHoverTemplates(),
             baseValues: this._createHighBase(),
             selectedBar: this._selectedBar,
             colors: this.createSensitivitiesHighCaseColors(),
@@ -244,7 +245,7 @@ export class SensitivityChartFigure {
         return createLowBarTrace({
             xValues: this._calculateLowXValues(),
             yValues: this._createSensitivityNames(),
-            customdata: this._createLowCustomData(),
+            hoverTemplates: this._createLowHoverTemplates(),
             baseValues: this._createLowBase(),
             selectedBar: this._selectedBar,
             colors: this.createSensitivitiesLowCaseColors(),
