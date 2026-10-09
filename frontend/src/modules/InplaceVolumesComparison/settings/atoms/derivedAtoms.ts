@@ -48,14 +48,29 @@ export const comparisonSensitivitiesAtom = atom<EnsembleSensitivities | null>((g
     getEnsembleSensitivities(get, get(selectedComparisonEnsembleIdentAtom).value),
 );
 
-/** Selected case per side; always null for an ensemble without sensitivities. */
+/**
+ * Selected case per side; always null for an ensemble without sensitivities. `isComplete` is false when a
+ * side with sensitivities has no case, or a restored case that is invalid in the current context.
+ */
 function getEffectiveSensitivityCases(get: Getter): {
     reference: SensitivityCaseRef | null;
     comparison: SensitivityCaseRef | null;
+    isComplete: boolean;
 } {
+    const referenceCase = get(selectedReferenceSensitivityCaseAtom);
+    const comparisonCase = get(selectedComparisonSensitivityCaseAtom);
+    const hasReferenceSensitivities = get(referenceSensitivitiesAtom) !== null;
+    const hasComparisonSensitivities = get(comparisonSensitivitiesAtom) !== null;
+
+    const isReferenceComplete =
+        !hasReferenceSensitivities || (referenceCase.value !== null && referenceCase.isValidInContext);
+    const isComparisonComplete =
+        !hasComparisonSensitivities || (comparisonCase.value !== null && comparisonCase.isValidInContext);
+
     return {
-        reference: get(referenceSensitivitiesAtom) ? get(selectedReferenceSensitivityCaseAtom).value : null,
-        comparison: get(comparisonSensitivitiesAtom) ? get(selectedComparisonSensitivityCaseAtom).value : null,
+        reference: hasReferenceSensitivities ? referenceCase.value : null,
+        comparison: hasComparisonSensitivities ? comparisonCase.value : null,
+        isComplete: isReferenceComplete && isComparisonComplete,
     };
 }
 
@@ -279,10 +294,7 @@ export const waterfallSourcesAtom = atom<{ reference: WaterfallSource; compariso
     if (!referenceEnsembleIdent || !comparisonEnsembleIdent || !referenceTableName || !comparisonTableName) {
         return null;
     }
-    if (
-        (get(referenceSensitivitiesAtom) && !sensitivityCases.reference) ||
-        (get(comparisonSensitivitiesAtom) && !sensitivityCases.comparison)
-    ) {
+    if (!sensitivityCases.isComplete) {
         return null;
     }
 
@@ -351,12 +363,12 @@ export const areSourcesDistinctAtom = atom((get) => {
         return false;
     }
 
-    const sensitivityCases = getEffectiveSensitivityCases(get);
+    const { reference, comparison } = getEffectiveSensitivityCases(get);
     const isSameEnsemble = referenceEnsembleIdent.equals(comparisonEnsembleIdent);
     return !(
         isSameEnsemble &&
         referenceTableName === comparisonTableName &&
-        isSameSensitivityCase(sensitivityCases.reference, sensitivityCases.comparison)
+        isSameSensitivityCase(reference, comparison)
     );
 });
 
