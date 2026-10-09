@@ -36,6 +36,8 @@ export class SensitivityChartFigure {
     private _sensitivityResponses: SensitivityResponse[];
     private _referenceAverage: number;
     private _colorBy: ColorBy;
+    private _hasRealizationTraces = false;
+    private _hasMeanPointTrace = false;
     private readonly _lowBarOrMonteCarloColor = "#1f77b4";
     private readonly _highBarColor = "#ff7f0e";
 
@@ -83,7 +85,10 @@ export class SensitivityChartFigure {
     }
 
     private _updateLayout() {
-        const xAxisRange = this._scaler.calculateXAxisRange(this._sensitivityResponses);
+        const xAxisRange = this._scaler.calculateXAxisRange(this._sensitivityResponses, {
+            realizationPoints: this._hasRealizationTraces,
+            sensitivityMeanPoints: this._hasMeanPointTrace,
+        });
         const referencePosition = this._scaler.getXAxisReferencePosition();
 
         this._figure.updateLayout({
@@ -127,6 +132,7 @@ export class SensitivityChartFigure {
         this._figure.addTrace(this._createHighTrace(showLabels, isTransparent));
     }
     public buildRealizationTraces() {
+        this._hasRealizationTraces = true;
         this._figure.addTrace(
             createHighRealizationPointsTrace(
                 this._createHighRealizationsValues(),
@@ -145,6 +151,7 @@ export class SensitivityChartFigure {
         );
     }
     public buildMeanPointTrace() {
+        this._hasMeanPointTrace = true;
         this._figure.addTrace(
             createSensitivityMeanPointsTrace(
                 this._createSensitivityMeanValues(),
