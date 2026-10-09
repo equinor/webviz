@@ -39,7 +39,12 @@ export function channelContentsToResponses(
         responses.push({
             idString: content.idString,
             title: content.displayName,
-            ensemblePerRealResponse: { realizations, values, name: content.displayName, unit: "" },
+            ensemblePerRealResponse: {
+                realizations,
+                values,
+                name: content.displayName,
+                unit: content.metaData.unit ?? "",
+            },
             channelEnsemble,
         });
     }

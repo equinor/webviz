@@ -4,6 +4,7 @@ import { SensitivityType } from "@framework/EnsembleSensitivities";
 import { makeSubplots, type Figure } from "@modules/_shared/Figure";
 import type { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
 import type { SensitivityResponseDataset, SensitivityResponse } from "@modules/_shared/SensitivityProcessing";
+import { formatWithLargeValuePrefixes, makeLargeValuePrefixAxisFormat } from "@modules/_shared/utils/numberFormatting";
 
 import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
 import {
@@ -34,11 +35,6 @@ export class SensitivityChartFigure {
     private _selectedBar: SelectedBar | null;
     private _sensitivityResponses: SensitivityResponse[];
     private _referenceAverage: number;
-    private _formatter: Intl.NumberFormat = Intl.NumberFormat("en", {
-        notation: "compact",
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
     private _colorBy: ColorBy;
     private readonly _lowBarOrMonteCarloColor = "#1f77b4";
     private readonly _highBarColor = "#ff7f0e";
@@ -95,6 +91,7 @@ export class SensitivityChartFigure {
             uirevision: "do not touch",
             ["xaxis1"]: {
                 range: xAxisRange,
+                ...makeLargeValuePrefixAxisFormat(xAxisRange),
             },
             shapes: [
                 {
@@ -116,7 +113,7 @@ export class SensitivityChartFigure {
                 y: this._sensitivityResponses.length,
                 xref: "x",
                 yref: "paper",
-                text: `<b>${this._formatter.format(this._referenceAverage)}</b> (Ref avg)`,
+                text: `<b>${formatWithLargeValuePrefixes(this._referenceAverage)}</b> (Ref avg)`,
                 showarrow: false,
                 align: "center",
             },
@@ -277,15 +274,15 @@ export class SensitivityChartFigure {
     }
     private _createSensitivityMeanHoverValues(): string[] {
         return this._getResponsesWithSensitivityAverage().map((sensitivity) =>
-            this._formatter.format(sensitivity.sensitivityAverage ?? 0),
+            formatWithLargeValuePrefixes(sensitivity.sensitivityAverage ?? 0),
         );
     }
     // Formatting utility methods
     private _numFormat(number: number): string {
         if (this._scaler.isRelativePercentage) {
-            return `${this._formatter.format(number)}%`;
+            return `${formatWithLargeValuePrefixes(number)}%`;
         }
-        return this._formatter.format(number);
+        return formatWithLargeValuePrefixes(number);
     }
 
     private _computeLowLabel(sensitivity: SensitivityResponse): string {

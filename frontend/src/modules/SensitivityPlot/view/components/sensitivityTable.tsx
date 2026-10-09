@@ -4,6 +4,7 @@ import { Table } from "@lib/components/Table";
 import type { TableSortState } from "@lib/components/Table/typesAndEnums";
 import { SortDirection } from "@lib/components/Table/typesAndEnums";
 import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing";
+import { formatWithLargeValuePrefixes } from "@modules/_shared/utils/numberFormatting";
 
 import {
     makeSensitivityTableRows,
@@ -36,17 +37,11 @@ const COLUMNS: ColumnDef[] = [
     { key: "realsHigh", label: "Reals high", widthInPercent: 8 },
 ];
 
-const NUMBER_FORMAT = Intl.NumberFormat("en", {
-    notation: "compact",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-});
-
 function formatCell(column: ColumnDef, value: string | number | null): string {
     if (value === null) {
         return "";
     }
-    return column.isAverage && typeof value === "number" ? NUMBER_FORMAT.format(value) : String(value);
+    return column.isAverage && typeof value === "number" ? formatWithLargeValuePrefixes(value) : String(value);
 }
 
 function getCommonUnit(datasets: SensitivityResponseDataset[]): string | null {

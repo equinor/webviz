@@ -60,6 +60,15 @@ describe("channelContentsToResponses", () => {
         expect(result.responses[2].channelEnsemble).toBe(ensembleB);
     });
 
+    test("passes the content's unit through", () => {
+        const content = makeContent("FOPT", ensembleA.getIdent().toString(), [[1, 10]]);
+        const contentWithUnit = { ...content, metaData: { ...content.metaData, unit: "Sm3" } };
+
+        const result = channelContentsToResponses([contentWithUnit], ensembleSet);
+
+        expect(result.responses[0].ensemblePerRealResponse.unit).toBe("Sm3");
+    });
+
     test("reports a delta ensemble in any content", () => {
         const contents = [
             makeContent("NorthHorst", ensembleA.getIdent().toString(), [[1, 10]]),

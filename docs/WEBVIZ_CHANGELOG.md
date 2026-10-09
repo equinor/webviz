@@ -13,9 +13,11 @@
 - **Experimental modules**: In the module list, experimental modules are now shown by default.
 - **Leaving a session**: The close (✕) button has been removed. Instead, a "Start" breadcrumb now appears in front of the session name in the top bar — click it to leave the current session or snapshot and return to the start page.
 - **Sensitivity/Response plot**: The sensitivity table now shows each sensitivity's type. Distributions (Monte Carlo) list Mean, P90 and P10, and scenarios list the average of their low and high case, with realization counts last. Values are absolute and no longer follow the chart's scaling.
+- **Sensitivity/Response plot**: Large values use metric prefixes (k, M, G) like the inplace volumes modules, instead of K and B. The response unit, when the sending module provides one, is shown in the table headers.
 
 ### Fixed
 
+- **Simulation Time Series Sensitivity**: Responses sent over the data channel now carry the vector's unit instead of the placeholder "unit".
 - **Well trajectories**: Failures when fetching well perforations or completions/screens no longer prevent drilled wellbore trajectories from loading; error details are now surfaced via the provider status indicator while still displaying trajectories.
 - **Intersection seismic readout**: The value shown when hovering over a seismic slice in the Intersection view is now interpolated between neighboring samples instead of taken from a single cell, giving a smoother, more accurate readout.
 - **Inplace Volumes Plot**: In a bar plot with one bar per zone, region or other category, the statistics table below the plot now shows one row per category instead of pooling all categories together.
