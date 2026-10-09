@@ -26,7 +26,7 @@ import { type SerializedDataProvider, SerializedType } from "../../interfacesAnd
 import type { NullableStoredData, StoredData } from "../../interfacesAndTypes/sharedTypes";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { Settings } from "../../settings/settingsDefinitions";
-import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
+import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import { makeSettings } from "../utils/makeSettings";
 
 export enum DataProviderTopic {
@@ -125,6 +125,16 @@ export class DataProvider<
     private _scopedQueryController: ScopedQueryController;
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _onFetchCancelOrFinishFn: () => void = () => {};
+    // The outcome of the last fetch - applied right away, or held back while the settings were loading again, as whether
+    // it is still current is only known once they have resolved. Restored when the settings turn out unchanged (see
+    // handleSettingsAndStoredDataChange). Held back data is kept in heldBackData rather than in _data, so it only becomes
+    // visible once accepted - and only until then, so it's never kept twice. heldBackData is checked by presence, as the
+    // data itself may be null or undefined.
+    private _lastFetchOutcome:
+        | { type: "data"; heldBackData?: TData }
+        | { type: "error"; error: StatusMessage | string | null }
+        | null = null;
+    private _isDestroyed: boolean = false;
 
     private _statusWriter = new GenericStatusMessageStore("DataProvider");
     private _allStatusMessages: GenericStatusMessage[] = [];
@@ -187,6 +197,14 @@ export class DataProvider<
                 this.handleSettingsStatusChange();
             }),
         );
+
+        // The settings context starts out LOADING without publishing it - start out in sync with it, so the first
+        // loading phase is shown too. Set directly instead of through setStatus(), as there is nothing to notify yet.
+        if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
+            this._status = DataProviderStatus.LOADING;
+        }
+
+        this._settingsContextDelegate.evaluateIfWithoutDependencies();
     }
 
     getRevisionNumber(): number {
@@ -209,13 +227,17 @@ export class DataProvider<
             return;
         }
 
+        // Any fetch scheduled or running was for other settings - cancelled before anything else is decided, so it can't
+        // replace the outcome: neither INVALID_SETTINGS by the provider's own rule, nor the current data when no refetch
+        // turns out to be required, as the settings are then back to those of the current data
+        this.cancelScheduledAndActiveFetch();
+
         if (!this.areCurrentSettingsValid()) {
+            this.discardOutdatedData();
             this._error = "Invalid settings";
             this.setStatus(DataProviderStatus.INVALID_SETTINGS);
             return;
         }
-
-        this.tidyUpFetchRelatedResources();
 
         let refetchRequired;
 
@@ -242,6 +264,20 @@ export class DataProvider<
         }
 
         if (!refetchRequired) {
+            // The settings are those of the last fetch - restore its outcome, which may have been held back while they
+            // were loading again, or replaced by LOADING meanwhile. A failed fetch must not turn into SUCCESS.
+            const lastFetchOutcome = this._lastFetchOutcome;
+            if (lastFetchOutcome?.type === "error") {
+                this._error = lastFetchOutcome.error;
+                this.setStatus(DataProviderStatus.ERROR);
+                return;
+            }
+            if (lastFetchOutcome?.type === "data" && "heldBackData" in lastFetchOutcome) {
+                const data = lastFetchOutcome.heldBackData as TData;
+                this._lastFetchOutcome = { type: "data" };
+                this.applyFetchedData(data);
+                this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
+            }
             // If the settings have changed but no refetch is required, it might be that the settings changes
             // still require a rerender of the data provider.
             if (this._status === DataProviderStatus.SUCCESS) {
@@ -255,29 +291,44 @@ export class DataProvider<
         this._currentTransactionId += 1;
         const localTransactionId = this._currentTransactionId;
 
-        // Debounce the refetch to avoid multiple refetches in a short time span.
-        if (this._debounceTimeout) {
-            clearTimeout(this._debounceTimeout);
-        }
-        this._debounceTimeout = setTimeout(() => {
+        // ! The status deliberately stays as it is until the debounced fetch starts. Setting LOADING here already made
+        // ! visualizations get built from the outdated data a moment earlier, and some layers process their data
+        // ! asynchronously without discarding outdated results (e.g. subsurface-viewer's MapLayer) - the outdated mesh
+        // ! could finish last and replace the new one.
+
+        // Debounce the refetch to avoid multiple refetches in a short time span. Until it starts, the provider is
+        // pending through isFetchScheduled(), so e.g. a restore can't finish in between.
+        const timeout = setTimeout(() => {
             if (this._currentTransactionId !== localTransactionId) {
                 // If the transaction id has changed, it means that a new transaction has started while the
                 // previous one was still running. In this case, we do not refetch the data
                 return;
             }
+            // Recorded now, as the settings may change while fetching - the data belongs to the ones it was fetched with
+            const fetchedSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
+            const fetchedStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
             this.maybeRefetchData().then(() => {
                 if (this._currentTransactionId === localTransactionId) {
-                    // Store the previous settings and stored data after the data has been fetched
-                    this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
-                    this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
+                    this._prevSettings = fetchedSettings;
+                    this._prevStoredData = fetchedStoredData;
                 }
             });
+            // Only cleared now that the fetch has started, which sets LOADING synchronously - so there is no moment in
+            // between where the provider looks settled
+            if (this._debounceTimeout === timeout) {
+                this.setScheduledFetch(null);
+            }
         }, 10);
+        this.setScheduledFetch(timeout);
     }
 
     private handleSettingsStatusChange(): void {
         const status = this._settingsContextDelegate.getStatus();
         if (status === SettingsContextStatus.INVALID_SETTINGS) {
+            // A fetch scheduled or started while the settings were still valid would otherwise replace this status
+            // once it finishes
+            this.cancelScheduledAndActiveFetch();
+            this.discardOutdatedData();
             this._error = "Invalid settings";
             this.setStatus(DataProviderStatus.INVALID_SETTINGS);
             return;
@@ -404,6 +455,58 @@ export class DataProvider<
         this._onFetchCancelOrFinishFn = () => {};
     }
 
+    /*
+     * Invalid settings make the current data outdated, and it isn't shown anyway. Keeping it would get it shown again
+     * once the provider loads anew - e.g. a surface of the previous field after a field change - and replacing it a
+     * moment later races the layer's asynchronous processing of the old data against the new one.
+     * The settings of the last fetch are forgotten with it, so becoming valid again always fetches.
+     */
+    private discardOutdatedData(): void {
+        const hadData = this._data !== null;
+        this._data = null;
+        this._valueRange = null;
+        this._lastFetchOutcome = null;
+        this._prevSettings = null;
+        this._prevStoredData = null;
+        if (hadData) {
+            this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
+        }
+    }
+
+    /*
+     * Whether a refetch is scheduled but hasn't started yet. The provider is pending then (e.g. for the restore readiness
+     * check), although its status only changes once the fetch starts - see handleSettingsAndStoredDataChange.
+     */
+    isFetchScheduled(): boolean {
+        return this._debounceTimeout !== null;
+    }
+
+    // Replaces the scheduled refetch. A change of whether one is scheduled is published on the status topic, as it
+    // changes whether the provider is pending without changing its status.
+    private setScheduledFetch(timeout: ReturnType<typeof setTimeout> | null): void {
+        const wasScheduled = this._debounceTimeout !== null;
+        if (this._debounceTimeout) {
+            clearTimeout(this._debounceTimeout);
+        }
+        this._debounceTimeout = timeout;
+        if (wasScheduled !== (timeout !== null)) {
+            this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS);
+        }
+    }
+
+    // Makes fetched data the provider's current data
+    private applyFetchedData(data: TData): void {
+        this._data = data;
+        this._valueRange = this._customDataProviderImpl.makeValueRange?.(this.makeAccessors()) ?? null;
+    }
+
+    private cancelScheduledAndActiveFetch(): void {
+        // A fetch that is already past its queries only applies its result while its transaction is the current one
+        this._currentTransactionId += 1;
+        this.setScheduledFetch(null);
+        this.tidyUpFetchRelatedResources();
+    }
+
     private async maybeRefetchData(): Promise<void> {
         const thisTransactionId = this._currentTransactionId;
 
@@ -423,52 +526,74 @@ export class DataProvider<
         this.setProgressMessage(null);
         this.setStatus(DataProviderStatus.LOADING);
 
+        // A fetch is superseded once the transaction id changes - by a newer fetch, a cancellation or destroying the
+        // provider. Its queries are cancelled then, but anything else it does may still finish, so everything it does
+        // afterwards is checked against this.
+        const isCurrent = () => this._currentTransactionId === thisTransactionId;
+
         const onFetchCancelOrFinish = (fnc: () => void) => {
+            if (!isCurrent()) {
+                // Registered too late to be called by the cancellation - clean up right away instead
+                fnc();
+                return;
+            }
             this._onFetchCancelOrFinishFn = fnc;
         };
 
         try {
-            this._data = await this._customDataProviderImpl.fetchData({
+            const data = await this._customDataProviderImpl.fetchData({
                 ...accessors,
                 fetchQuery: <TQueryFnData, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
                     options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
                 ) => this._scopedQueryController.fetchQuery<TQueryFnData, TError, TData, TQueryKey>(options),
                 onFetchCancelOrFinish,
-                setProgressMessage: (message) => this.setProgressMessage(message),
+                setProgressMessage: (message) => {
+                    if (isCurrent()) {
+                        this.setProgressMessage(message);
+                    }
+                },
             });
 
-            // This is a security check to make sure that we are not using a stale transaction id.
-            // This can happen if the transaction id is incremented while the async fetch data function is still running.
-            // Queries are cancelled in the maybeCancelQuery function and should, hence, throw a cancelled error.
-            // However, there might me some operations following after the query execution that are not cancelled.
-            if (this._currentTransactionId !== thisTransactionId) {
+            if (!isCurrent()) {
                 return;
             }
 
-            if (this._customDataProviderImpl.makeValueRange) {
-                this._valueRange = this._customDataProviderImpl.makeValueRange(accessors);
+            // The settings started loading again while fetching - the provider stays LOADING and the data is held back,
+            // outside of the current data, until they have resolved (see _lastFetchOutcome)
+            if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
+                this._lastFetchOutcome = { type: "data", heldBackData: data };
+                return;
             }
+
+            this._lastFetchOutcome = { type: "data" };
+
+            this.applyFetchedData(data);
+
             this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
             this.setStatus(DataProviderStatus.SUCCESS);
         } catch (error: any) {
-            if (isCancelledError(error)) {
+            // A superseded fetch may fail with anything once its work is cut off, not only a cancelled error
+            if (isCancelledError(error) || !isCurrent()) {
                 return;
             }
-            const apiError = ApiErrorHelper.fromError(error);
-            if (apiError) {
-                this._error = apiError.makeStatusMessage();
-            } else {
-                if (typeof error === "string") {
-                    this._error = error;
-                } else if (error instanceof Error) {
-                    this._error = error.message;
-                }
+
+            // Like data, a failure while the settings are loading again is held back - an ERROR would count as settled
+            // and could end a restore before the settings have resolved
+            const errorMessage = makeFetchErrorMessage(error);
+            this._lastFetchOutcome = { type: "error", error: errorMessage };
+            if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
+                return;
             }
+
+            this._error = errorMessage;
             this.setStatus(DataProviderStatus.ERROR);
         } finally {
-            this._onFetchCancelOrFinishFn();
-            this._onFetchCancelOrFinishFn = () => {};
-            this.setProgressMessage(null);
+            // A superseded fetch was cleaned up when it was cancelled - what is registered now belongs to a newer one
+            if (isCurrent()) {
+                this._onFetchCancelOrFinishFn();
+                this._onFetchCancelOrFinishFn = () => {};
+                this.setProgressMessage(null);
+            }
         }
     }
 
@@ -491,18 +616,21 @@ export class DataProvider<
     }
 
     beforeDestroy(): void {
+        this._isDestroyed = true;
+        // Supersedes a fetch in flight too, so nothing it does afterwards reaches this provider
+        this.cancelScheduledAndActiveFetch();
         this._settingsContextDelegate.beforeDestroy();
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
-        this._scopedQueryController.cancelActiveFetch();
-        if (this._debounceTimeout) {
-            clearTimeout(this._debounceTimeout);
-        }
     }
 
     private incrementRevisionNumber(): void {
+        // A destroyed provider is no longer part of the manager's tree, so it must not publish GUI state revisions for it
+        if (this._isDestroyed) {
+            return;
+        }
         this._revisionNumber += 1;
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.REVISION_NUMBER);
-        this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
+        this._dataProviderManager.increaseGuiStateRevisionNumber();
     }
 
     private setStatus(status: DataProviderStatus): void {
@@ -531,4 +659,18 @@ export class DataProvider<
 
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS_MESSAGES);
     }
+}
+
+function makeFetchErrorMessage(error: any): StatusMessage | string | null {
+    const apiError = ApiErrorHelper.fromError(error);
+    if (apiError) {
+        return apiError.makeStatusMessage();
+    }
+    if (typeof error === "string") {
+        return error;
+    }
+    if (error instanceof Error) {
+        return error.message;
+    }
+    return null;
 }

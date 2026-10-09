@@ -26,6 +26,7 @@ export enum SettingTopic {
     IS_INITIALIZED = "IS_INITIALIZED",
     IS_PERSISTED = "IS_PERSISTED",
     ATTRIBUTES = "ATTRIBUTES",
+    ARE_ATTRIBUTES_RESOLVED = "ARE_ATTRIBUTES_RESOLVED",
     IS_PERSISTED_VALUE_VALID = "IS_PERSISTED_VALUE_VALID",
 }
 
@@ -41,6 +42,7 @@ export type SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstrain
     [SettingTopic.IS_INITIALIZED]: boolean;
     [SettingTopic.IS_PERSISTED]: boolean;
     [SettingTopic.ATTRIBUTES]: SettingAttributes;
+    [SettingTopic.ARE_ATTRIBUTES_RESOLVED]: boolean;
     [SettingTopic.IS_PERSISTED_VALUE_VALID]: boolean;
 };
 
@@ -109,6 +111,7 @@ export class SettingManager<
         enabled: true,
         visible: true,
     };
+    private _numUnresolvedAttributeBindings = 0;
     private _externalController: ExternalSettingController<
         TSetting,
         TInternalValue,
@@ -272,17 +275,48 @@ export class SettingManager<
         return this._attributes;
     }
 
-    updateAttributes(attributes: Partial<SettingAttributes>): void {
-        if (isEqual(this._attributes, attributes)) {
-            return;
+    /*
+     * Registers a binding that resolves the attributes. Until every registered binding has resolved once, the attributes
+     * are only defaults - e.g. a setting would be shown before its binding hides it.
+     * Returns the function to call once the binding has resolved - calling it again has no effect.
+     */
+    registerAttributesBinding(): () => void {
+        this._numUnresolvedAttributeBindings++;
+        if (this._numUnresolvedAttributeBindings === 1) {
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.ARE_ATTRIBUTES_RESOLVED);
         }
 
-        this._attributes = {
+        let resolved = false;
+        return () => {
+            if (resolved) {
+                return;
+            }
+            resolved = true;
+            this._numUnresolvedAttributeBindings--;
+            if (this._numUnresolvedAttributeBindings === 0) {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.ARE_ATTRIBUTES_RESOLVED);
+            }
+        };
+    }
+
+    areAttributesResolved(): boolean {
+        return this._numUnresolvedAttributeBindings === 0;
+    }
+
+    // Returns whether the attributes changed (and ATTRIBUTES was published)
+    updateAttributes(attributes: Partial<SettingAttributes>): boolean {
+        const newAttributes = {
             ...this._attributes,
             ...attributes,
         };
+        if (isEqual(this._attributes, newAttributes)) {
+            return false;
+        }
+
+        this._attributes = newAttributes;
 
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.ATTRIBUTES);
+        return true;
     }
 
     getInternalValue(): TInternalValue {
@@ -364,10 +398,7 @@ export class SettingManager<
     }
 
     isExternallyControlled(): boolean {
-        if (this._externalController) {
-            return this._externalController.getSetting().isExternallyControlled();
-        }
-        return false;
+        return this._externalController !== null;
     }
 
     isValueValid(): boolean {
@@ -526,6 +557,9 @@ export class SettingManager<
                 if (topic === SettingTopic.ATTRIBUTES) {
                     return this._attributes;
                 }
+                if (topic === SettingTopic.ARE_ATTRIBUTES_RESOLVED) {
+                    return this.areAttributesResolved();
+                }
                 return this._externalController.getSetting().makeSnapshotGetter(topic)();
             }
 
@@ -554,6 +588,8 @@ export class SettingManager<
                     return this.isInitialized();
                 case SettingTopic.ATTRIBUTES:
                     return this._attributes;
+                case SettingTopic.ARE_ATTRIBUTES_RESOLVED:
+                    return this.areAttributesResolved();
                 default:
                     throw new Error(`Unknown topic: ${topic}`);
             }

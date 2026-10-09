@@ -5,6 +5,15 @@
 
 # Changelog
 
+## October 2026
+
+### Fixed
+
+- **Data provider layers (2D, 3D, Intersection, Well log viewer)**: Restoring a session is more reliable: views update once everything has loaded, restores no longer get stuck, and layers no longer show outdated data after quick setting changes. Providers show a spinner while their settings load.
+- **Data provider settings**: Hidden settings, such as inactive well trajectory filters, no longer make a layer invalid or flash up before being hidden. Clicking the invalid-settings icon opens the settings.
+- **Well trajectories**: Changing flow filter colours or limits no longer rebuilds the trajectories.
+- **Well log viewer**: Differential plots keep their curves apart after a reload and no longer disappear when another plot is added to the track. Stacked plots with geology or stratigraphy curves restore correctly.
+
 ## September 2026
 
 ### Changed

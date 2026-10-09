@@ -16,6 +16,8 @@ export type NoUpdate = typeof NO_UPDATE;
 const PENDING = Symbol("PENDING");
 export type Pending = typeof PENDING;
 
+const MAX_EXTERNAL_CANCELLATION_RETRIES = 3;
+
 export type Accessors<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
@@ -70,6 +72,8 @@ export class Dependency<
     private _numChildDependencies = 0;
     private _updatePromise: Promise<void> | null = null;
     private _queued = false;
+    private _isDestroyed = false;
+    private _numConsecutiveExternalCancellations = 0;
     private _unsubscribers: (() => void)[] = [];
     private _isProbing = false;
 
@@ -105,6 +109,9 @@ export class Dependency<
     }
 
     beforeDestroy() {
+        // A run in flight may have queued another one - that must not start once destroyed
+        this._isDestroyed = true;
+        this._queued = false;
         this._abortController?.abort();
         this._abortController = null;
 
@@ -296,9 +303,13 @@ export class Dependency<
             this._isProbing = false;
         }
 
-        // If there are no dependencies, we can call the update function
+        // Without parent dependencies, nothing will trigger the first update, so start it here.
+        // We use invalidate() rather than calling the update directly: if another invalidation
+        // arrives while this first update is still running, it gets queued instead of
+        // starting a second, overlapping update.
         if (!this._hasParentDependencies) {
-            await this.resolve();
+            this.invalidate();
+            await this._updatePromise;
         }
 
         this._isInitialized = true;
@@ -358,11 +369,18 @@ export class Dependency<
     }
 
     private invalidate(): void {
+        if (this._isDestroyed) {
+            return;
+        }
+
         if (!this._isLoading) {
             this.setLoadingState(true);
         }
 
         if (this._updatePromise) {
+            // The run in flight works with outdated inputs - abort it so that its result is discarded instead of being
+            // applied right before the queued run replaces it
+            this._abortController?.abort();
             this._queued = true;
             return;
         }
@@ -382,7 +400,9 @@ export class Dependency<
             this._abortController = null;
         }
 
-        this._abortController = new AbortController();
+        // Kept locally, as this._abortController may already belong to a newer run (or be cleared on destroy) when checked
+        const abortController = new AbortController();
+        this._abortController = abortController;
         this._statusStore.clear();
 
         let newValue: Awaited<TReturnValue> | null | NoUpdate | Pending;
@@ -394,11 +414,17 @@ export class Dependency<
                 return;
             }
         } catch (e: any) {
-            // Any abort or cancellation error should not be propagated,
-            // as they are expected to happen during the lifecycle of the dependency
-            // and are handled by not updating the value or notifying subscribers
-            const aborted = this._abortController?.signal.aborted || isAbortLike(e);
-            if (aborted || e instanceof CancelledError) return;
+            // This run was aborted (superseded or destroyed) - whoever aborted it takes care of the loading state
+            if (abortController.signal.aborted) {
+                return;
+            }
+
+            // Cancelled from outside, e.g. when the last other observer of the same query unsubscribed mid-fetch.
+            // Nothing else is going to resolve this dependency, so it has to try again.
+            if (e instanceof CancelledError || isAbortLike(e)) {
+                this.handleExternalCancellation();
+                return;
+            }
 
             // If this dependency is not initialized yet and is not a root node, we don't want to update the value or notify subscribers
             // as it might be a dependency that is still being established
@@ -408,11 +434,21 @@ export class Dependency<
 
             this.applyNewValue(null);
 
+            // Any other error (e.g. a bug in a resolver) is reported too, as the setting otherwise just loses its
+            // allowed values without a reason
             const errorHelper = ApiErrorHelper.fromError(e);
             if (errorHelper) {
-                this._statusStore.addError(errorHelper?.makeFullErrorMessage());
+                this._statusStore.addError(errorHelper.makeFullErrorMessage());
+            } else {
+                this._statusStore.addError(e instanceof Error ? e.message : String(e));
             }
 
+            return;
+        }
+
+        // Resolvers don't necessarily honour the abort signal (e.g. the generated query options replace it with
+        // TanStack's own), so an aborted run can still get here - its result is outdated
+        if (abortController.signal.aborted) {
             return;
         }
 
@@ -427,7 +463,20 @@ export class Dependency<
         this.applyNewValue(newValue);
     }
 
+    private handleExternalCancellation(): void {
+        this._numConsecutiveExternalCancellations++;
+        if (this._numConsecutiveExternalCancellations <= MAX_EXTERNAL_CANCELLATION_RETRIES) {
+            this.invalidate();
+            return;
+        }
+
+        // Don't keep retrying (an error that merely looks like an abort could be persistent) - fail visibly instead
+        this.applyNewValue(null);
+        this._statusStore.addError("The request was cancelled repeatedly");
+    }
+
     private applyNewValue(newValue: Awaited<TReturnValue> | null) {
+        this._numConsecutiveExternalCancellations = 0;
         this.setLoadingState(false);
         this._cachedValue = newValue;
         for (const callback of this._dependencies) {

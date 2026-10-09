@@ -1,8 +1,6 @@
-import React from "react";
-
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
-import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 import type {
     CustomGroupPropsMap,
     VisualizationTarget,
@@ -76,23 +74,6 @@ VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomDataProviderType.WE
 
 export type WellLogFactoryProduct = ReturnType<(typeof VISUALIZATION_FACTORY)["make"]>;
 
-export function useLogViewerVisualizationProduct(
-    dataProviderManager: DataProviderManager,
-): WellLogFactoryProduct | null {
-    const [previousRevision, setPreviousRevision] = React.useState<number | null>(null);
-    const [previousProduct, setPreviousProduct] = React.useState<WellLogFactoryProduct | null>(null);
-
-    const latestRevision = React.useSyncExternalStore(
-        dataProviderManager
-            .getPublishSubscribeDelegate()
-            .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION),
-        dataProviderManager.makeSnapshotGetter(DataProviderManagerTopic.DATA_REVISION),
-    );
-
-    if (previousRevision !== latestRevision) {
-        setPreviousRevision(latestRevision);
-        setPreviousProduct(VISUALIZATION_FACTORY.make(dataProviderManager, { disableCache: true }));
-    }
-
-    return previousProduct;
+export function useLogViewerVisualizationProduct(dataProviderManager: DataProviderManager): WellLogFactoryProduct {
+    return useVisualizationAssemblerProduct(dataProviderManager, VISUALIZATION_FACTORY);
 }
