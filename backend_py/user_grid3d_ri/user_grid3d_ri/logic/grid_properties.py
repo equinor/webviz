@@ -52,6 +52,41 @@ class GridPropertiesExtractor:
         )
         return new_object
 
+    @classmethod
+    def from_difference(
+        cls, monitor_extractor: "GridPropertiesExtractor", base_extractor: "GridPropertiesExtractor"
+    ) -> "GridPropertiesExtractor":
+        """Create an extractor holding the cell by cell difference, monitor minus base"""
+        if monitor_extractor.is_discrete() or base_extractor.is_discrete():
+            raise ValueError("Cannot calculate the difference between discrete grid properties")
+
+        monitor_arr = monitor_extractor.get_flat_prop_arr()
+        base_arr = base_extractor.get_flat_prop_arr()
+        if monitor_arr.shape != base_arr.shape:
+            raise ValueError(
+                f"The two grid properties have differing number of cells, {monitor_arr.shape} vs {base_arr.shape}"
+            )
+
+        diff_arr = np.subtract(monitor_arr, base_arr, dtype=np.float32)
+
+        # The min/max of a difference cannot be derived from the min/max of the two operands
+        if np.any(np.isfinite(diff_arr)):
+            min_prop_val = float(np.nanmin(diff_arr))
+            max_prop_val = float(np.nanmax(diff_arr))
+        else:
+            min_prop_val = 0.0
+            max_prop_val = 0.0
+
+        return GridPropertiesExtractor(
+            flat_prop_arr=diff_arr,
+            is_discrete=False,
+            min_global_prop_val=min_prop_val,
+            max_global_prop_val=max_prop_val,
+        )
+
+    def get_flat_prop_arr(self) -> NDArray[np.floating] | NDArray[np.integer]:
+        return self._flat_prop_arr
+
     def is_discrete(self) -> bool:
         return self._is_discrete
 
