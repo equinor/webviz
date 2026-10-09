@@ -121,8 +121,9 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             onValueChange={(value) => value && setDisplayComponentType(value)}
                         />
                     </Setting.Field>
-                    <Setting.Field label="Scaling">
+                    <Setting.Field label="Scaling" infoAnnotation={chartSettingsInfoAnnotation}>
                         <Combobox<SensitivityScaling>
+                            disabled={isChartSettingsDisabled}
                             items={[
                                 {
                                     label: "Relative",

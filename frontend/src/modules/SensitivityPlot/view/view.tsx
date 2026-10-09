@@ -193,7 +193,9 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
         if (displayComponentType === DisplayComponentType.SENSITIVITY_TABLE) {
             return (
                 <div className="text-body-sm">
-                    <SensitivityTable entries={computedResponses} />
+                    <SensitivityTable
+                        datasets={computedResponses.map((response) => response.sensitivityResponseDataset)}
+                    />
                 </div>
             );
         }

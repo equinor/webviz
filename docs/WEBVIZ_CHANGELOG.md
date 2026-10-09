@@ -12,6 +12,7 @@
 - **VFP module**: The VFP module now supports standard lift curve data from `SIM2SUMO`.
 - **Experimental modules**: In the module list, experimental modules are now shown by default.
 - **Leaving a session**: The close (✕) button has been removed. Instead, a "Start" breadcrumb now appears in front of the session name in the top bar — click it to leave the current session or snapshot and return to the start page.
+- **Sensitivity/Response plot**: The sensitivity table now shows each sensitivity's type. Distributions (Monte Carlo) list Mean, P90 and P10, and scenarios list the average of their low and high case, with realization counts last. Values are absolute and no longer follow the chart's scaling.
 
 ### Fixed
 
