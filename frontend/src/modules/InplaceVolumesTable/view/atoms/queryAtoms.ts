@@ -6,7 +6,7 @@ import {
     makeAggregatedPerRealizationTableDataQueryOptions,
     makeAggregatedStatisticalTableDataQueryOptions,
 } from "@modules/_shared/InplaceVolumes/queryHooks";
-import { addSensitivityColumnToPerRealizationDataMemoized } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { addSensitivityColumnToTablesData } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { computeStatisticalTableFromPerRealizationTableMemoized } from "@modules/_shared/InplaceVolumes/statisticalTableUtils";
 import type {
     InplaceVolumesStatisticalTableData,
@@ -91,16 +91,11 @@ const regularPerRealizationTableDataWithSensitivityAtom = atom((get) => {
         return { ...regular, numDroppedSensitivityRows: 0 };
     }
 
-    let numDroppedSensitivityRows = 0;
-    const tablesData: InplaceVolumesTableData[] = regular.tablesData.map((tableData) => {
-        const result = addSensitivityColumnToPerRealizationDataMemoized(
-            tableData.data,
-            realizationToSensitivityCaseLabel,
-        );
-        numDroppedSensitivityRows += result.numDroppedRows;
-        return { ...tableData, data: result.data };
-    });
-    return { ...regular, tablesData, numDroppedSensitivityRows };
+    const { tablesData, numDroppedRows } = addSensitivityColumnToTablesData(
+        regular.tablesData,
+        realizationToSensitivityCaseLabel,
+    );
+    return { ...regular, tablesData, numDroppedSensitivityRows: numDroppedRows };
 });
 
 /** Per-realization data for both regular and delta ensembles, the latter already differenced. */

@@ -3,7 +3,7 @@ import { useAtomValue } from "jotai";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { ColorSet } from "@lib/utils/ColorSet";
-import { createSensitivityCaseColorMap } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { createSensitivityCaseColorMap, REAL_COLUMN_NAME } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { makeTableFromApiData } from "@modules/_shared/InplaceVolumes/tableUtils";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
@@ -153,7 +153,7 @@ export function useBuildPlotAndTable(
     // the samples themselves and stay pooled.
     const statisticsBarCategory =
         barSelectorColumn &&
-        barSelectorColumn !== "REAL" &&
+        barSelectorColumn !== REAL_COLUMN_NAME &&
         barSelectorColumn !== subplotBy &&
         barSelectorColumn !== colorBy &&
         table.getColumn(barSelectorColumn)

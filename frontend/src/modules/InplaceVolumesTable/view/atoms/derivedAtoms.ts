@@ -10,9 +10,10 @@ import type {
     EnsembleIdentWithRealizations,
 } from "@modules/_shared/InplaceVolumes/queryHooks";
 import {
-    getRealizationsForSensitivityCases,
+    findSensitivityCaseLabelsWithoutRealizations,
     makeRealizationToSensitivityCaseLabelMap,
     makeSensitivityCaseLabelOrder,
+    restrictRealizationsToSensitivityCases,
 } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
 
@@ -53,17 +54,10 @@ export const sensitivityCasesWithoutRealizationsAtom = atom<string[]>((get) => {
         return [];
     }
     const validRealizations = new Set(get(ValidEnsembleRealizationsFunctionAtom)(sensitivitySelection.ensembleIdent));
-    const realizationToLabel = makeRealizationToSensitivityCaseLabelMap(
+    return findSensitivityCaseLabelsWithoutRealizations(
         sensitivities,
         sensitivitySelection.selectedCases,
-    );
-    const labelsWithRealizations = new Set(
-        Array.from(realizationToLabel.entries())
-            .filter(([realization]) => validRealizations.has(realization))
-            .map(([, label]) => label),
-    );
-    return makeSensitivityCaseLabelOrder(sensitivities, sensitivitySelection.selectedCases).filter(
-        (label) => !labelsWithRealizations.has(label),
+        validRealizations,
     );
 });
 
@@ -96,10 +90,11 @@ export const ensembleIdentsWithRealizationsAtom = atom((get) => {
     for (const ensembleIdent of regularEnsembleIdents) {
         let realizations = [...validEnsembleRealizationsFunction(ensembleIdent)];
         if (sensitivitySelection && sensitivities && sensitivitySelection.ensembleIdent.equals(ensembleIdent)) {
-            const caseRealizations = new Set(
-                getRealizationsForSensitivityCases(sensitivities, sensitivitySelection.selectedCases),
+            realizations = restrictRealizationsToSensitivityCases(
+                realizations,
+                sensitivities,
+                sensitivitySelection.selectedCases,
             );
-            realizations = realizations.filter((realization) => caseRealizations.has(realization));
         }
         ensembleIdentsWithRealizations.push({ ensembleIdent, realizations });
     }

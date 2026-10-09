@@ -2,7 +2,7 @@ import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framewo
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import type { InplaceVolumesSource } from "@modules/_shared/InplaceVolumes/queryHooks";
 import { makeAggregatedStatisticalTableDataQueryOptionsFromSources } from "@modules/_shared/InplaceVolumes/queryHooks";
-import { getRealizationsForSensitivityCases } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { restrictRealizationsToSensitivityCases } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 import { FLUID_INDEX_COLUMN } from "../utils/computeVolumeChangeDecomposition";
 
@@ -27,10 +27,9 @@ export const waterfallStatisticalDataQueriesAtom = atomWithQueries((get) => {
               let realizations = [...validEnsembleRealizationsFunction(source.ensembleIdent)];
               const sensitivities = ensembleSet.findEnsemble(source.ensembleIdent)?.getSensitivities() ?? null;
               if (source.sensitivityCase && sensitivities) {
-                  const caseRealizations = new Set(
-                      getRealizationsForSensitivityCases(sensitivities, [source.sensitivityCase]),
-                  );
-                  realizations = realizations.filter((realization) => caseRealizations.has(realization));
+                  realizations = restrictRealizationsToSensitivityCases(realizations, sensitivities, [
+                      source.sensitivityCase,
+                  ]);
               }
               return {
                   ensembleIdent: source.ensembleIdent,

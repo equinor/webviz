@@ -28,7 +28,7 @@ export type SensitivityCaseOption = { ref: SensitivityCaseRef; label: string };
 export const SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE =
     "Ensembles with sensitivities can only be analysed one at a time. Select a single ensemble.";
 
-const REAL_COLUMN_NAME = "REAL";
+export const REAL_COLUMN_NAME = "REAL";
 const CASE_LIGHTNESS_STEP = 0.12;
 const MAX_CASE_LIGHTNESS = 0.95;
 
@@ -90,6 +90,24 @@ export function filterValidSensitivityCases(
     return available.filter((availableCase) =>
         selected.some((selectedCase) => isSameSensitivityCase(selectedCase, availableCase)),
     );
+}
+
+/** Every selected case is available, and at least one is selected when any is available. */
+export function isValidSensitivityCaseSelection(
+    selected: SensitivityCaseRef[],
+    available: SensitivityCaseRef[],
+): boolean {
+    const allAvailable = filterValidSensitivityCases(selected, available).length === selected.length;
+    return allAvailable && (available.length === 0 || selected.length > 0);
+}
+
+/** Keep the valid selected cases; fall back to all available cases when none remain. */
+export function fixupSensitivityCaseSelection(
+    selected: SensitivityCaseRef[] | undefined,
+    available: SensitivityCaseRef[],
+): SensitivityCaseRef[] {
+    const validCases = filterValidSensitivityCases(selected ?? [], available);
+    return validCases.length > 0 ? validCases : [...available];
 }
 
 /** Stable string key for a case, e.g. as a select option value. */
@@ -159,6 +177,16 @@ export function getRealizationsForSensitivityCases(
     return Array.from(realizations).sort((a, b) => a - b);
 }
 
+/** `realizations` restricted to those in the selected cases. */
+export function restrictRealizationsToSensitivityCases(
+    realizations: readonly number[],
+    sensitivities: EnsembleSensitivities,
+    cases: SensitivityCaseRef[],
+): number[] {
+    const caseRealizations = new Set(getRealizationsForSensitivityCases(sensitivities, cases));
+    return realizations.filter((realization) => caseRealizations.has(realization));
+}
+
 export function makeRealizationToSensitivityCaseLabelMap(
     sensitivities: EnsembleSensitivities,
     cases: SensitivityCaseRef[],
@@ -182,6 +210,21 @@ export function makeSensitivityCaseLabelOrder(
     return getSelectedCasesInEnsembleOrder(sensitivities, cases).map((selectedCase) =>
         makeSensitivityCaseLabel(selectedCase.sensitivity, selectedCase.caseName),
     );
+}
+
+/** Labels of the selected cases that have no realization in `validRealizations`, in display order. */
+export function findSensitivityCaseLabelsWithoutRealizations(
+    sensitivities: EnsembleSensitivities,
+    cases: SensitivityCaseRef[],
+    validRealizations: ReadonlySet<number>,
+): string[] {
+    const realizationToLabel = makeRealizationToSensitivityCaseLabelMap(sensitivities, cases);
+    const labelsWithRealizations = new Set(
+        Array.from(realizationToLabel.entries())
+            .filter(([realization]) => validRealizations.has(realization))
+            .map(([, label]) => label),
+    );
+    return makeSensitivityCaseLabelOrder(sensitivities, cases).filter((label) => !labelsWithRealizations.has(label));
 }
 
 function addSensitivityColumnToFluidSelection(
@@ -276,6 +319,28 @@ export function addSensitivityColumnToPerRealizationDataMemoized(
     const result = addSensitivityColumnToPerRealizationData(data, realizationToLabel);
     resultByLabelMap.set(realizationToLabel, result);
     return result;
+}
+
+/** Inject the SENSITIVITY column into every table's data; sums the dropped rows. */
+export function addSensitivityColumnToTablesData<T extends { data: InplaceVolumesTableDataPerFluidSelection_api }>(
+    tablesData: T[],
+    realizationToLabel: ReadonlyMap<number, string>,
+): { tablesData: T[]; numDroppedRows: number } {
+    let numDroppedRows = 0;
+    const tablesDataWithSensitivity = tablesData.map((tableData) => {
+        const result = addSensitivityColumnToPerRealizationDataMemoized(tableData.data, realizationToLabel);
+        numDroppedRows += result.numDroppedRows;
+        return { ...tableData, data: result.data };
+    });
+    return { tablesData: tablesDataWithSensitivity, numDroppedRows };
+}
+
+export function makeDroppedSensitivityRowsWarning(numDroppedRows: number): string {
+    return `${numDroppedRows} rows were excluded because their realization belongs to no sensitivity case.`;
+}
+
+export function makeSensitivityCasesWithoutRealizationsWarning(caseLabels: string[]): string {
+    return `No valid realizations for sensitivity cases: ${caseLabels.join(", ")}. Check the realization filter.`;
 }
 
 export function resolveSensitivityMode(

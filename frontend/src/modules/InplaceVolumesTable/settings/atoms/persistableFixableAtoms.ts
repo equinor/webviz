@@ -12,7 +12,10 @@ import {
     isSelectedIndicesWithValuesValidSubset,
 } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
 import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
-import { filterValidSensitivityCases } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import {
+    fixupSensitivityCaseSelection,
+    isValidSensitivityCaseSelection,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { makeUniqueTableNamesIntersection } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { isFluidSpecificResultName, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
@@ -129,14 +132,8 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
 export const selectedSensitivityCasesAtom = persistableFixableAtom<SensitivityCaseRef[], SensitivityCaseRef[]>({
     initialValue: [],
     precomputeFunction: ({ get }) => get(availableSensitivityCasesAtom),
-    isValidFunction: ({ value, precomputedValue: availableCases }) => {
-        const allAvailable = filterValidSensitivityCases(value, availableCases).length === value.length;
-        return allAvailable && (availableCases.length === 0 || value.length > 0);
-    },
-    fixupFunction: ({ value, precomputedValue: availableCases }) => {
-        const validCases = filterValidSensitivityCases(value ?? [], availableCases);
-        return validCases.length > 0 ? validCases : [...availableCases];
-    },
+    isValidFunction: ({ value, precomputedValue }) => isValidSensitivityCaseSelection(value, precomputedValue),
+    fixupFunction: ({ value, precomputedValue }) => fixupSensitivityCaseSelection(value, precomputedValue),
 });
 
 // Utility function to compute dependencies state from tableDefinitionsQueryAtom

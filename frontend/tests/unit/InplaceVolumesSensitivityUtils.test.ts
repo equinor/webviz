@@ -16,17 +16,24 @@ import { expandSelectorColumn } from "@modules/_shared/InplaceVolumes/selectorCo
 import {
     addSensitivityColumnToPerRealizationData,
     addSensitivityColumnToPerRealizationDataMemoized,
+    addSensitivityColumnToTablesData,
     createSensitivityCaseColorMap,
     filterValidSensitivityCases,
+    findSensitivityCaseLabelsWithoutRealizations,
+    fixupSensitivityCaseSelection,
     getRealizationsForSensitivityCases,
     getSensitivityCaseRefs,
     isSameSensitivityCase,
+    isValidSensitivityCaseSelection,
+    makeDroppedSensitivityRowsWarning,
     makeRealizationToSensitivityCaseLabelMap,
     makeSensitivityCaseLabel,
     makeSensitivityCaseLabelOrder,
+    makeSensitivityCasesWithoutRealizationsWarning,
     pickDefaultComparisonSensitivityCase,
     pickDefaultReferenceSensitivityCase,
     resolveSensitivityMode,
+    restrictRealizationsToSensitivityCases,
 } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 const SENSITIVITY_ARR: Sensitivity[] = [
@@ -120,6 +127,63 @@ describe("sensitivity case labels and refs", () => {
     });
 });
 
+describe("sensitivity case selection", () => {
+    const refs = getSensitivityCaseRefs(SENSITIVITIES);
+    const unknown = { sensitivityName: "faults", caseName: "mid" };
+
+    test("isValidSensitivityCaseSelection requires available cases and a non-empty selection", () => {
+        expect(isValidSensitivityCaseSelection([refs[1]], refs)).toBe(true);
+        expect(isValidSensitivityCaseSelection([refs[1], unknown], refs)).toBe(false);
+        expect(isValidSensitivityCaseSelection([], refs)).toBe(false);
+        expect(isValidSensitivityCaseSelection([], [])).toBe(true);
+    });
+
+    test("fixupSensitivityCaseSelection keeps valid cases and falls back to all cases", () => {
+        expect(fixupSensitivityCaseSelection([unknown, refs[2]], refs)).toEqual([refs[2]]);
+        expect(fixupSensitivityCaseSelection([unknown], refs)).toEqual(refs);
+        expect(fixupSensitivityCaseSelection(undefined, refs)).toEqual(refs);
+    });
+});
+
+describe("restrictRealizationsToSensitivityCases", () => {
+    test("keeps only realizations of the selected cases, in input order", () => {
+        const cases = [
+            { sensitivityName: "faults", caseName: "high" },
+            { sensitivityName: "rms_seed", caseName: "p10_p90" },
+        ];
+        expect(restrictRealizationsToSensitivityCases([4, 3, 1, 7], SENSITIVITIES, cases)).toEqual([4, 1]);
+    });
+});
+
+describe("findSensitivityCaseLabelsWithoutRealizations", () => {
+    test("returns labels of cases without a valid realization, in display order", () => {
+        const cases = [
+            { sensitivityName: "faults", caseName: "high" },
+            { sensitivityName: "faults", caseName: "low" },
+            { sensitivityName: "rms_seed", caseName: "p10_p90" },
+        ];
+        expect(findSensitivityCaseLabelsWithoutRealizations(SENSITIVITIES, cases, new Set([0, 3]))).toEqual([
+            "faults:high",
+        ]);
+        expect(findSensitivityCaseLabelsWithoutRealizations(SENSITIVITIES, cases, new Set())).toEqual([
+            "rms_seed",
+            "faults:low",
+            "faults:high",
+        ]);
+    });
+});
+
+describe("sensitivity status messages", () => {
+    test("match the view status texts", () => {
+        expect(makeDroppedSensitivityRowsWarning(3)).toBe(
+            "3 rows were excluded because their realization belongs to no sensitivity case.",
+        );
+        expect(makeSensitivityCasesWithoutRealizationsWarning(["faults:low", "rms_seed"])).toBe(
+            "No valid realizations for sensitivity cases: faults:low, rms_seed. Check the realization filter.",
+        );
+    });
+});
+
 describe("addSensitivityColumnToPerRealizationData", () => {
     const realizationToLabel = makeRealizationToSensitivityCaseLabelMap(SENSITIVITIES, [
         { sensitivityName: "rms_seed", caseName: "p10_p90" },
@@ -182,6 +246,20 @@ describe("addSensitivityColumnToPerRealizationData", () => {
 
         const otherMap = new Map(realizationToLabel);
         expect(addSensitivityColumnToPerRealizationDataMemoized(data, otherMap)).not.toBe(first);
+    });
+
+    test("addSensitivityColumnToTablesData keeps other fields and sums dropped rows", () => {
+        const tablesData = [
+            { tableName: "a", data: makeData() },
+            { tableName: "b", data: makeData() },
+        ];
+        const result = addSensitivityColumnToTablesData(tablesData, realizationToLabel);
+
+        expect(result.numDroppedRows).toBe(4);
+        expect(result.tablesData.map((tableData) => tableData.tableName)).toEqual(["a", "b"]);
+        expect(result.tablesData[0].data).toBe(
+            addSensitivityColumnToPerRealizationDataMemoized(tablesData[0].data, realizationToLabel).data,
+        );
     });
 });
 

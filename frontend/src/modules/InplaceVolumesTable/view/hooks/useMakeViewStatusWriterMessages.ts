@@ -11,7 +11,11 @@ import {
     makeDroppedFluidSelectionWarnings,
     makeUnmatchedDeltaRowWarnings,
 } from "@modules/_shared/InplaceVolumes/deltaEnsembleWarnings";
-import { SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import {
+    makeDroppedSensitivityRowsWarning,
+    makeSensitivityCasesWithoutRealizationsWarning,
+    SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import { filterAtom, isSensitivityEnsembleSelectionBlockedAtom, resultNamesAtom } from "../atoms/baseAtoms";
@@ -50,15 +54,11 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter, 
     }
 
     if (activeQueriesResult.numDroppedSensitivityRows > 0) {
-        statusWriter.addWarning(
-            `${activeQueriesResult.numDroppedSensitivityRows} rows were excluded because their realization belongs to no sensitivity case.`,
-        );
+        statusWriter.addWarning(makeDroppedSensitivityRowsWarning(activeQueriesResult.numDroppedSensitivityRows));
     }
 
     if (sensitivityCasesWithoutRealizations.length > 0) {
-        statusWriter.addWarning(
-            `No valid realizations for sensitivity cases: ${sensitivityCasesWithoutRealizations.join(", ")}. Check the realization filter.`,
-        );
+        statusWriter.addWarning(makeSensitivityCasesWithoutRealizationsWarning(sensitivityCasesWithoutRealizations));
     }
 
     for (const elm of indicesValues) {
