@@ -56,7 +56,7 @@ const BINARY_PREFIXES: readonly [number, string][] = [
 function formatAbsValue(
     absValue: number,
     maxNumDecimalPlaces: number | undefined,
-    numSignificantDigits: number
+    numSignificantDigits: number,
 ): string {
     if (Number.isInteger(absValue)) return absValue.toString();
     if (maxNumDecimalPlaces !== undefined) {
@@ -130,8 +130,7 @@ export function formatNumber(value: number, options?: NumberFormatOptions): stri
     // SI prefix mode (k, M, G, …, m, μ, n, …)
     if (unitSystem === "si") {
         // Pre-round before prefix selection to avoid "1000 k" instead of "1 M"
-        const preRounded =
-            maxDecimals !== undefined ? absValue : parseFloat(absValue.toPrecision(numSigDigits));
+        const preRounded = maxDecimals !== undefined ? absValue : parseFloat(absValue.toPrecision(numSigDigits));
         const prefixes = useSubUnitPrefixes ? SI_PREFIXES : BASE_AND_LARGER_SI_PREFIXES;
         const [factor, prefix] = prefixes.find(([f]) => preRounded >= f) ?? prefixes.at(-1)!;
         const scaled = absValue / factor;
@@ -151,4 +150,28 @@ export function formatNumber(value: number, options?: NumberFormatOptions): stri
 
     // Standard notation without prefix
     return `${sign}${formatAbsValue(absValue, maxDecimals, numSigDigits)}${unitSuffix}`;
+}
+
+/**
+ * Metric prefixes for large values only (k, M, G, T, P), so ratios and fractions stay plain decimals.
+ */
+export function formatWithLargeValuePrefixes(value: number): string {
+    return formatNumber(value, { unitSystem: "si", useSubUnitPrefixes: false, numSignificantDigits: 3 });
+}
+
+/**
+ * Plotly axis format matching `formatWithLargeValuePrefixes`. Plotly's "SI" mode also uses milli/micro
+ * prefixes (0.25 → "250m"), so it is only used when the axis reaches 1000.
+ */
+export function makeLargeValuePrefixAxisFormat(axisValues: readonly number[]): {
+    exponentformat: "SI" | "none";
+    hoverformat: string;
+} {
+    const maxAbsValue = axisValues.reduce(
+        (max, value) => (Number.isFinite(value) ? Math.max(max, Math.abs(value)) : max),
+        0,
+    );
+    return maxAbsValue >= 1000
+        ? { exponentformat: "SI", hoverformat: ".3s" }
+        : { exponentformat: "none", hoverformat: "" };
 }

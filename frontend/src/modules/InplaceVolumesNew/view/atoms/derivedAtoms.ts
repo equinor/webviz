@@ -1,17 +1,73 @@
 import { atom } from "jotai";
 
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import type { EnsembleSensitivities } from "@framework/EnsembleSensitivities";
+import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import type {
     DeltaEnsembleIdentWithRealizations,
     EnsembleIdentWithRealizations,
 } from "@modules/_shared/InplaceVolumes/queryHooks";
+import {
+    findSensitivityCaseLabelsWithoutRealizations,
+    makeRealizationToSensitivityCaseLabelMap,
+    makeSensitivityCaseLabelOrder,
+    restrictRealizationsToSensitivityCases,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { isFluidSpecificResultName, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
-import { colorByAtom, filterAtom, plotTypeAtom, resultNameAtom, selectorColumnAtom, subplotByAtom } from "./baseAtoms";
+import {
+    colorByAtom,
+    filterAtom,
+    plotTypeAtom,
+    resultNameAtom,
+    selectorColumnAtom,
+    sensitivitySelectionAtom,
+    subplotByAtom,
+} from "./baseAtoms";
+
+export const selectedEnsembleSensitivitiesAtom = atom<EnsembleSensitivities | null>((get) => {
+    const sensitivitySelection = get(sensitivitySelectionAtom);
+    if (!sensitivitySelection) {
+        return null;
+    }
+    return get(EnsembleSetAtom).findEnsemble(sensitivitySelection.ensembleIdent)?.getSensitivities() ?? null;
+});
+
+export const realizationToSensitivityCaseLabelMapAtom = atom<Map<number, string> | null>((get) => {
+    const sensitivities = get(selectedEnsembleSensitivitiesAtom);
+    const sensitivitySelection = get(sensitivitySelectionAtom);
+    if (!sensitivities || !sensitivitySelection) {
+        return null;
+    }
+    return makeRealizationToSensitivityCaseLabelMap(sensitivities, sensitivitySelection.selectedCases);
+});
+
+export const sensitivityCaseLabelOrderAtom = atom<string[] | null>((get) => {
+    const sensitivities = get(selectedEnsembleSensitivitiesAtom);
+    const sensitivitySelection = get(sensitivitySelectionAtom);
+    if (!sensitivities || !sensitivitySelection) {
+        return null;
+    }
+    return makeSensitivityCaseLabelOrder(sensitivities, sensitivitySelection.selectedCases);
+});
+
+/** Labels of selected cases that have no valid realization after the realization filter. */
+export const sensitivityCasesWithoutRealizationsAtom = atom<string[]>((get) => {
+    const sensitivities = get(selectedEnsembleSensitivitiesAtom);
+    const sensitivitySelection = get(sensitivitySelectionAtom);
+    if (!sensitivities || !sensitivitySelection) {
+        return [];
+    }
+    const validRealizations = new Set(get(ValidEnsembleRealizationsFunctionAtom)(sensitivitySelection.ensembleIdent));
+    return findSensitivityCaseLabelsWithoutRealizations(
+        sensitivities,
+        sensitivitySelection.selectedCases,
+        validRealizations,
+    );
+});
 
 export const tableNamesAtom = atom((get) => {
     const filter = get(filterAtom);
@@ -28,11 +84,22 @@ export const areSelectedTablesComparableAtom = atom((get) => {
     return filter?.areSelectedTablesComparable ?? false;
 });
 
+/** Index column added to the grouping by "Create bar for each" in Bar plots, or null if none. */
+export const barSelectorIndexColumnAtom = atom<string | null>((get) => {
+    const plotType = get(plotTypeAtom);
+    const selectorColumn = get(selectorColumnAtom);
+    const validIndexColumns = get(indicesWithValuesAtom).map((indexWithValue) => indexWithValue.indexColumn);
+
+    if (selectorColumn !== null && plotType === PlotType.BAR && validIndexColumns.includes(selectorColumn)) {
+        return selectorColumn;
+    }
+    return null;
+});
+
 export const groupByIndicesAtom = atom((get) => {
     const subplotBy = get(subplotByAtom);
     const colorBy = get(colorByAtom);
-    const plotType = get(plotTypeAtom);
-    const selectorColumn = get(selectorColumnAtom);
+    const barSelectorIndexColumn = get(barSelectorIndexColumnAtom);
     const resultName = get(resultNameAtom);
     const indicesWithValues = get(indicesWithValuesAtom);
 
@@ -46,9 +113,8 @@ export const groupByIndicesAtom = atom((get) => {
         groupByIndices.push(colorBy);
     }
 
-    // Only request selectorColumns when plotting bar plots
-    if (selectorColumn !== null && plotType === PlotType.BAR && validIndexColumns.includes(selectorColumn)) {
-        groupByIndices.push(selectorColumn);
+    if (barSelectorIndexColumn !== null) {
+        groupByIndices.push(barSelectorIndexColumn);
     }
 
     // Fluid specific properties (BO/BG) are discarded by the backend when the fluids are summed,
@@ -68,16 +134,23 @@ export const ensembleIdentsWithRealizationsAtom = atom((get) => {
     const filter = get(filterAtom);
     const ensembleIdents = filter?.ensembleIdents ?? [];
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+    const sensitivitySelection = get(sensitivitySelectionAtom);
+    const sensitivities = get(selectedEnsembleSensitivitiesAtom);
 
     // NOTE: Delta ensembles are handled separately in `deltaEnsembleIdentsWithRealizationsAtom`.
     const regularEnsembleIdents = filterEnsembleIdentsByType(ensembleIdents, RegularEnsembleIdent);
 
     const ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[] = [];
     for (const ensembleIdent of regularEnsembleIdents) {
-        ensembleIdentsWithRealizations.push({
-            ensembleIdent,
-            realizations: [...validEnsembleRealizationsFunction(ensembleIdent)],
-        });
+        let realizations = [...validEnsembleRealizationsFunction(ensembleIdent)];
+        if (sensitivitySelection && sensitivities && sensitivitySelection.ensembleIdent.equals(ensembleIdent)) {
+            realizations = restrictRealizationsToSensitivityCases(
+                realizations,
+                sensitivities,
+                sensitivitySelection.selectedCases,
+            );
+        }
+        ensembleIdentsWithRealizations.push({ ensembleIdent, realizations });
     }
 
     return ensembleIdentsWithRealizations;

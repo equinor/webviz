@@ -12,11 +12,21 @@
 - **VFP module**: The VFP module now supports standard lift curve data from `SIM2SUMO`.
 - **Experimental modules**: In the module list, experimental modules are now shown by default.
 - **Leaving a session**: The close (✕) button has been removed. Instead, a "Start" breadcrumb now appears in front of the session name in the top bar — click it to leave the current session or snapshot and return to the start page.
+- **Sensitivity/Response plot**: The sensitivity table now shows each sensitivity's type. Distributions (Monte Carlo) list Mean, P90 and P10, and scenarios list the average of their low and high case, with realization counts last. Values are absolute and no longer follow the chart's scaling.
+- **Sensitivity/Response plot**: Large values use metric prefixes (k, M, G) like the inplace volumes modules, instead of K and B. The response unit, when the sending module provides one, is shown in the table headers.
+- **Sensitivity/Response plot**: The tornado's x-axis fits what is drawn; hidden realization and mean points no longer widen it, so the bars use the available width.
+- **Sensitivity/Response plot**: Hovering a tornado bar shows its case (e.g. `deep`, or P10/P90 for distributions), its value, the difference from the reference and the number of realizations.
 
 ### Fixed
 
+- **Simulation Time Series Sensitivity**: Responses sent over the data channel now carry the vector's unit instead of the placeholder "unit".
 - **Well trajectories**: Failures when fetching well perforations or completions/screens no longer prevent drilled wellbore trajectories from loading; error details are now surfaced via the provider status indicator while still displaying trajectories.
 - **Intersection seismic readout**: The value shown when hovering over a seismic slice in the Intersection view is now interpolated between neighboring samples instead of taken from a single cell, giving a smoother, more accurate readout.
+- **Inplace Volumes Plot**: In a bar plot with one bar per zone, region or other category, the statistics table below the plot now shows one row per category instead of pooling all categories together.
+- **Sensitivity/Response plot**: "Hide sensitivities without impact" now also hides sensitivities whose difference from the reference is only rounding noise, and Monte Carlo sensitivities that match a Monte Carlo reference. The reference itself is always shown.
+- **Sensitivity/Response plot**: When the data channel holds several responses (e.g. one per region), one tornado is shown per response instead of only the first, and the table lists all responses.
+- **Sensitivity/Response plot**: Sensitivities with no data in the received response (e.g. cases filtered out in the sending module) are left out and listed in a warning, instead of being drawn as zero. A reference sensitivity without data is reported instead of being treated as zero.
+- **Inplace Volumes Plot**: Hovers show which group (e.g. sensitivity case) a value belongs to and the actual realization number. Clicking a legend item now applies to all subplots, and long legends scroll.
 
 ### Added
 
@@ -30,6 +40,10 @@
 - **3D viewer**: Well trajectory depth/flow filters and completion (screen/perforation) markers are now supported, matching the 2D viewer.
 - **Inplace Volumes Table**: wide tables now scroll horizontally with the grouping columns pinned, and columns with the same value on every row are summarised above the table.
 - **Inplace Volumes Table**: new "Statistics layout" option shows responses as rows, keeping the table narrow when many responses are selected.
+- **In-place volumes plots**: For an ensemble with sensitivities (design matrix), all plots and the statistics table are split per sensitivity case and coloured by case by default. A new "Sensitivity cases" filter selects which cases are included.
+- **Inplace Volumes Table**: For an ensemble with sensitivities, a SENSITIVITY column is added and statistics are computed per sensitivity case.
+- **Inplace Volumes Comparison**: For an ensemble with sensitivities, each side selects a sensitivity case, so a case can be compared against the base case of the same ensemble.
+- **Inplace Volumes Plot**: Box plots show one named row per group (e.g. sensitivity case), aligned across subplots. With a single subplot the names are on the axis instead of in the legend, and hovering a box shows its statistics.
 
 ## August 2026
 

@@ -115,7 +115,11 @@ export class SensitivityDataScaler {
         return sensitivityResponses.flatMap((s) => this.scaleRealizationValues(s.highCaseRealizationValues));
     }
 
-    public calculateXAxisRange(sensitivityResponses: SensitivityResponse[]): [number, number] {
+    /** Range covering the bars and the reference, plus realization and mean points when they are drawn. */
+    public calculateXAxisRange(
+        sensitivityResponses: SensitivityResponse[],
+        drawn: { realizationPoints: boolean; sensitivityMeanPoints: boolean },
+    ): [number, number] {
         let lowValues: number[];
         let highValues: number[];
 
@@ -134,13 +138,15 @@ export class SensitivityDataScaler {
             highValues = sensitivityResponses.map((s) => s.highCaseReferenceDifference);
         }
 
-        const lowRealizationValues = sensitivityResponses.map((s) =>
-            this.scaleRealizationValues(s.lowCaseRealizationValues),
-        );
-        const highRealizationValues = sensitivityResponses.map((s) =>
-            this.scaleRealizationValues(s.highCaseRealizationValues),
-        );
-        const sensitivityAverageValues = this.createSensitivityAverageValues(sensitivityResponses);
+        const lowRealizationValues = drawn.realizationPoints
+            ? sensitivityResponses.map((s) => this.scaleRealizationValues(s.lowCaseRealizationValues))
+            : [];
+        const highRealizationValues = drawn.realizationPoints
+            ? sensitivityResponses.map((s) => this.scaleRealizationValues(s.highCaseRealizationValues))
+            : [];
+        const sensitivityAverageValues = drawn.sensitivityMeanPoints
+            ? this.createSensitivityAverageValues(sensitivityResponses)
+            : [];
 
         let minVal = this.isAbsolute ? this._referenceAverage : 0;
         let maxVal = this.isAbsolute ? this._referenceAverage : 0;

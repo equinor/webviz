@@ -55,7 +55,7 @@ export function makePlotlyBarTraces({
     // Custom hover text
     const hoverText = sortedPoints.map(
         (p) =>
-            `<b>${selectorName}:</b> ${p.x}<br><b>${resultName}:</b> ${formatInplaceVolumesValue(Number(p.y))}<extra></extra>`,
+            `<b>${title}</b><br><b>${selectorName}:</b> ${p.x}<br><b>${resultName}:</b> ${formatInplaceVolumesValue(Number(p.y))}<extra></extra>`,
     );
 
     const showText = sortedXValues.length <= MAX_LABELS_FOR_BARS;
@@ -108,7 +108,6 @@ function createStatisticLinesForBarPlot(
             line: { color, width: 3, dash: dash },
             showlegend: false,
             name: label,
-            legendgroup: title,
             hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatInplaceVolumesValue(value)}<extra></extra>`,
         };
     }

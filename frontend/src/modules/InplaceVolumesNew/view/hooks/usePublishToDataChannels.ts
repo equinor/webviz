@@ -12,11 +12,18 @@ import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { ChannelIds } from "@modules/InplaceVolumesNew/channelDefs";
 import type { Interfaces } from "@modules/InplaceVolumesNew/interfaces";
-import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
-import { colorByAtom, resultNameAtom, plotTypeAtom, subplotByAtom } from "../atoms/baseAtoms";
+import { colorByAtom, resultNameAtom, plotTypeAtom, selectorColumnAtom, subplotByAtom } from "../atoms/baseAtoms";
+import { barSelectorIndexColumnAtom, indicesWithValuesAtom } from "../atoms/derivedAtoms";
+import { orderEntriesByPreferredValues } from "../utils/GroupedTableData";
 
-const STANDARD_ORIGIN_KEYS = [TableOriginKey.ENSEMBLE, TableOriginKey.TABLE_NAME, TableOriginKey.FLUID];
+// SENSITIVITY is never split: the SensitivityPlot tornado needs the whole per-realization response.
+const STANDARD_ORIGIN_KEYS = [
+    TableOriginKey.ENSEMBLE,
+    TableOriginKey.TABLE_NAME,
+    TableOriginKey.FLUID,
+    TableOriginKey.SENSITIVITY,
+];
 
 interface ContentContext {
     ensembleName: string;
@@ -111,17 +118,45 @@ export function usePublishToDataChannels(
     const colorBy = useAtomValue(colorByAtom);
     const resultName = useAtomValue(resultNameAtom);
     const plotType = useAtomValue(plotTypeAtom);
+    const selectorColumn = useAtomValue(selectorColumnAtom);
+    const barSelectorIndexColumn = useAtomValue(barSelectorIndexColumnAtom);
+    const indicesWithValues = useAtomValue(indicesWithValuesAtom);
+    const dependencies = [
+        table,
+        ensembleSet,
+        resultName,
+        colorBy,
+        colorSet,
+        plotType,
+        subplotBy,
+        selectorColumn,
+        indicesWithValues,
+    ];
 
-    if (
-        !table ||
-        !resultName ||
-        !table.getColumn("REAL") ||
-        !table.getColumn(resultName) ||
-        plotType === PlotType.BAR
-    ) {
+    // Backend group order is not stable; follow the filter's order, as the plot does.
+    const categoryOrder = new Map(indicesWithValues.map((index) => [index.indexColumn, index.values]));
+    function splitInDisplayOrder(tableToSplit: Table, column: string) {
+        return orderEntriesByPreferredValues(
+            Array.from(tableToSplit.splitByColumn(column).getCollectionMap()),
+            categoryOrder.get(column),
+        );
+    }
+
+    // A bar category the contents are not split by gives several rows per REAL in each content.
+    const contentSplitColumns: string[] = [
+        TableOriginKey.ENSEMBLE,
+        TableOriginKey.TABLE_NAME,
+        TableOriginKey.FLUID,
+        subplotBy,
+        colorBy,
+    ];
+    const hasSeveralRowsPerReal =
+        barSelectorIndexColumn !== null && !contentSplitColumns.includes(barSelectorIndexColumn);
+
+    if (!table || !resultName || !table.getColumn("REAL") || !table.getColumn(resultName) || hasSeveralRowsPerReal) {
         viewContext.usePublishChannelContents({
             channelIdString: ChannelIds.RESPONSE_PER_REAL,
-            dependencies: [table, ensembleSet, resultName, colorBy, colorSet],
+            dependencies,
             enabled: Boolean(table && resultName),
             contents,
         });
@@ -142,9 +177,7 @@ export function usePublishToDataChannels(
         for (const [tableName, tableForTableName] of ensembleTable
             .splitByColumn(TableOriginKey.TABLE_NAME)
             .getCollectionMap()) {
-            for (const [fluidZone, fluidZoneTable] of tableForTableName
-                .splitByColumn(TableOriginKey.FLUID)
-                .getCollectionMap()) {
+            for (const [fluidZone, fluidZoneTable] of splitInDisplayOrder(tableForTableName, TableOriginKey.FLUID)) {
                 const baseCtx: Omit<ContentContext, "subplotByValue" | "colorByValue"> = {
                     ensembleName,
                     ensembleIdent,
@@ -156,9 +189,10 @@ export function usePublishToDataChannels(
 
                 const tablesToProcess = isStandardSubplotBy
                     ? [{ table: fluidZoneTable, subplotByValue: undefined }]
-                    : Array.from(fluidZoneTable.splitByColumn(subplotBy).getCollectionMap()).map(
-                          ([subplotValue, subplotTable]) => ({ table: subplotTable, subplotByValue: subplotValue }),
-                      );
+                    : splitInDisplayOrder(fluidZoneTable, subplotBy).map(([subplotValue, subplotTable]) => ({
+                          table: subplotTable,
+                          subplotByValue: subplotValue,
+                      }));
 
                 for (const { table: currentTable, subplotByValue } of tablesToProcess) {
                     // When subplotBy and colorBy are the same column, the split by subplotBy above
@@ -171,9 +205,10 @@ export function usePublishToDataChannels(
                     } else if (colorBySameAsSubplotBy) {
                         colorEntries = [{ table: currentTable, colorByValue: subplotByValue }];
                     } else {
-                        colorEntries = Array.from(currentTable.splitByColumn(colorBy).getCollectionMap()).map(
-                            ([colorValue, colorTable]) => ({ table: colorTable, colorByValue: colorValue }),
-                        );
+                        colorEntries = splitInDisplayOrder(currentTable, colorBy).map(([colorValue, colorTable]) => ({
+                            table: colorTable,
+                            colorByValue: colorValue,
+                        }));
                     }
 
                     for (const { table: finalTable, colorByValue } of colorEntries) {
@@ -187,7 +222,7 @@ export function usePublishToDataChannels(
 
     viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.RESPONSE_PER_REAL,
-        dependencies: [table, ensembleSet, resultName, colorBy, colorSet],
+        dependencies,
         enabled: Boolean(table && resultName),
         contents,
     });

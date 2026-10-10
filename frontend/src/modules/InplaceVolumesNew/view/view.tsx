@@ -13,9 +13,11 @@ import { Table } from "@lib/components/Table";
 import { TableCompositions } from "@lib/components/Table/compositions";
 import type { TableSortState } from "@lib/components/Table/typesAndEnums";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 import type { Interfaces } from "../interfaces";
 
+import { isSensitivityEnsembleSelectionBlockedAtom } from "./atoms/baseAtoms";
 import { areSelectedTablesComparableAtom } from "./atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
@@ -39,6 +41,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const aggregatedTableDataQueries = useAtomValue(aggregatedTableDataQueriesAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
+    const isSensitivityEnsembleSelectionBlocked = useAtomValue(isSensitivityEnsembleSelectionBlockedAtom);
     const showStatisticsTable = props.viewContext.useSettingsToViewInterfaceValue("showTable");
     const resultName = props.viewContext.useSettingsToViewInterfaceValue("resultName");
     const subplotBy = props.viewContext.useSettingsToViewInterfaceValue("subplotBy");
@@ -68,7 +71,11 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const tableColumns = React.useMemo(() => {
         if (!statisticsTableData) return null;
-        return makeStatisticsTableColumns(statisticsTableData.subplotByLabel, statisticsTableData.colorByLabel);
+        return makeStatisticsTableColumns(
+            statisticsTableData.subplotByLabel,
+            statisticsTableData.colorByLabel,
+            statisticsTableData.barCategoryLabel,
+        );
     }, [statisticsTableData]);
 
     const collatedTableRows = React.useMemo(() => {
@@ -82,6 +89,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     }, [statisticsTableData, tableSortState]);
 
     function createErrorMessage(): string | null {
+        if (isSensitivityEnsembleSelectionBlocked) {
+            return SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE;
+        }
         if (aggregatedTableDataQueries.allQueriesFailed) {
             return "Failed to load inplace volumes table data";
         }

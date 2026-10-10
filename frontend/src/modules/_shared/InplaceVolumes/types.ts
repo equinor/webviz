@@ -9,15 +9,19 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { DroppedFluidSelection, UnmatchedDeltaRows } from "./deltaTableUtils";
 import type { Column } from "./Table";
 
+export type SensitivityCaseRef = { sensitivityName: string; caseName: string };
+
 export type InplaceVolumesTableData = {
     ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     tableName: string;
+    sensitivityCase?: SensitivityCaseRef | null;
     data: InplaceVolumesTableDataPerFluidSelection_api;
 };
 
 export type InplaceVolumesStatisticalTableData = {
     ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     tableName: string;
+    sensitivityCase?: SensitivityCaseRef | null;
     data: InplaceVolumesStatisticalTableDataPerFluidSelection_api;
 };
 
@@ -52,6 +56,7 @@ export enum TableOriginKey {
     ENSEMBLE = "ENSEMBLE",
     TABLE_NAME = "TABLE_NAME",
     FLUID = "FLUID",
+    SENSITIVITY = "SENSITIVITY",
 }
 
 // Properties that are only defined for one specific fluid. The backend discards these results when
@@ -67,15 +72,7 @@ export function isFluidSpecificResultName(resultName: string | null): boolean {
 
 // Temporary fallback until the backend reports units per response. These known ratios and fractions
 // should be displayed without SI prefixes; unit metadata should eventually replace this name-based list.
-const DIMENSIONLESS_RESULT_NAMES: readonly string[] = [
-    "NTG",
-    "PORO",
-    "PORO_NET",
-    "SW",
-    "BO",
-    "BG",
-    "FACIES_FRACTION",
-];
+const DIMENSIONLESS_RESULT_NAMES: readonly string[] = ["NTG", "PORO", "PORO_NET", "SW", "BO", "BG", "FACIES_FRACTION"];
 
 export function isDimensionlessResultName(resultName: string | null): boolean {
     return resultName !== null && DIMENSIONLESS_RESULT_NAMES.includes(resultName);

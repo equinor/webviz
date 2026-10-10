@@ -20,6 +20,7 @@ import {
     selectedGroupByIndicesAtom,
     selectedIndicesWithValuesAtom,
     selectedResultNamesAtom,
+    selectedSensitivityCasesAtom,
     selectedTableNamesAtom,
 } from "./atoms/persistableFixableAtoms";
 
@@ -33,6 +34,7 @@ export type SerializedSettings = {
     selectedStatisticOptions: InplaceVolumesStatistic_api[];
     selectedStatisticsLayout?: StatisticsLayout;
     selectedIndexValueCriteria: IndexValueCriteria;
+    selectedSensitivityCases?: { sensitivityName: string; caseName: string }[];
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
@@ -74,6 +76,14 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
         selectedStatisticsLayout: {
             enum: Object.values(StatisticsLayout),
         },
+        selectedSensitivityCases: {
+            elements: {
+                properties: {
+                    sensitivityName: { type: "string" },
+                    caseName: { type: "string" },
+                },
+            },
+        },
     },
 }));
 
@@ -105,6 +115,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         selectedStatisticOptions: selectedStatisticOptions,
         selectedStatisticsLayout: selectedStatisticsLayout,
         selectedIndexValueCriteria: selectedIndexValueCriteria,
+        selectedSensitivityCases: get(selectedSensitivityCasesAtom).value,
     };
 };
 
@@ -122,4 +133,5 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedStatisticOptionsAtom, raw.selectedStatisticOptions);
     setIfDefined(set, selectedStatisticsLayoutAtom, raw.selectedStatisticsLayout);
     setIfDefined(set, selectedIndexValueCriteriaAtom, raw.selectedIndexValueCriteria);
+    setIfDefined(set, selectedSensitivityCasesAtom, raw.selectedSensitivityCases);
 };
