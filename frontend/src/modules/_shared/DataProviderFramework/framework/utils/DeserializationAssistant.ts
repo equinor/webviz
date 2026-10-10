@@ -16,48 +16,39 @@ import type { DataProviderManager } from "../DataProviderManager/DataProviderMan
 import { ErrorPlaceholder } from "../ErrorPlaceholder/ErrorPlaceholder";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 
-// Persisted `dataProviderType` values whose "attribute" setting was renamed to a dedicated key once
-// Setting.ATTRIBUTE (shared with grid/seismic providers) was split apart for surfaces. The two
-// Intersection provider type IDs are kept as literals - matching their registrations in
-// `modules/Intersection/DataProviderFramework/customDataProviderImplementations/dataProviderTypes.ts` -
-// so shared DPF code never imports from a module folder. Verified against those registrations in
-// DeserializationAssistant.test.ts.
-const LEGACY_SURFACE_PROVIDER_SETTING_RENAMES_BY_TYPE: Record<string, { legacyKey: string; currentKey: string }> = {
-    [DataProviderType.ATTRIBUTE_STATIC_SURFACE]: {
-        legacyKey: Setting.ATTRIBUTE,
-        currentKey: Setting.SURFACE_ATTRIBUTE,
-    },
-    [DataProviderType.ATTRIBUTE_TIME_STEP_SURFACE]: {
-        legacyKey: Setting.ATTRIBUTE,
-        currentKey: Setting.SURFACE_ATTRIBUTE,
-    },
-    [DataProviderType.ATTRIBUTE_INTERVAL_SURFACE]: {
-        legacyKey: Setting.ATTRIBUTE,
-        currentKey: Setting.SURFACE_ATTRIBUTE,
-    },
-    REALIZATION_SURFACES: { legacyKey: Setting.ATTRIBUTE, currentKey: Setting.DEPTH_ATTRIBUTE },
-    SURFACES_REALIZATIONS_UNCERTAINTY: { legacyKey: Setting.ATTRIBUTE, currentKey: Setting.DEPTH_ATTRIBUTE },
+// Renamed setting keys per persisted provider type (legacy key -> current key).
+// Intersection provider types are literals so shared DPF code does not import from a module folder.
+const LEGACY_SETTING_RENAMES_BY_PROVIDER_TYPE: Record<string, Record<string, string>> = {
+    [DataProviderType.ATTRIBUTE_STATIC_SURFACE]: { [Setting.ATTRIBUTE]: Setting.SURFACE_ATTRIBUTE },
+    [DataProviderType.ATTRIBUTE_TIME_STEP_SURFACE]: { [Setting.ATTRIBUTE]: Setting.SURFACE_ATTRIBUTE },
+    [DataProviderType.ATTRIBUTE_INTERVAL_SURFACE]: { [Setting.ATTRIBUTE]: Setting.SURFACE_ATTRIBUTE },
+    REALIZATION_SURFACES: { [Setting.ATTRIBUTE]: Setting.DEPTH_ATTRIBUTE },
+    SURFACES_REALIZATIONS_UNCERTAINTY: { [Setting.ATTRIBUTE]: Setting.DEPTH_ATTRIBUTE },
 };
 
-// Dispatches on the persisted dataProviderType only, never on the setting value or the mere presence
-// of a legacy key. Returns a normalized copy; the caller's serialized object (which may be retained
-// verbatim by ErrorPlaceholder on failure) is never mutated. Idempotent: once the legacy key has been
-// moved, re-running this is a no-op.
-function normalizeLegacySurfaceProviderSettings(
+// Returns a copy; the input may be retained verbatim by ErrorPlaceholder on failure.
+function normalizeLegacyProviderSettings(
     serializedDataProvider: SerializedDataProvider<any>,
 ): SerializedDataProvider<any> {
-    const rename = LEGACY_SURFACE_PROVIDER_SETTING_RENAMES_BY_TYPE[serializedDataProvider.dataProviderType];
-    if (!rename || !(rename.legacyKey in serializedDataProvider.settings)) {
+    const renames = LEGACY_SETTING_RENAMES_BY_PROVIDER_TYPE[serializedDataProvider.dataProviderType];
+    if (!renames) {
         return serializedDataProvider;
     }
 
     const settings: Record<string, string> = { ...serializedDataProvider.settings };
-    if (!(rename.currentKey in settings)) {
-        settings[rename.currentKey] = settings[rename.legacyKey];
+    let changed = false;
+    for (const [legacyKey, currentKey] of Object.entries(renames)) {
+        if (!(legacyKey in settings)) {
+            continue;
+        }
+        if (!(currentKey in settings)) {
+            settings[currentKey] = settings[legacyKey];
+        }
+        delete settings[legacyKey];
+        changed = true;
     }
-    delete settings[rename.legacyKey];
 
-    return { ...serializedDataProvider, settings };
+    return changed ? { ...serializedDataProvider, settings } : serializedDataProvider;
 }
 
 export class DeserializationAssistant {
@@ -76,7 +67,7 @@ export class DeserializationAssistant {
 
         try {
             if (serialized.type === SerializedType.DATA_PROVIDER) {
-                const serializedDataProvider = normalizeLegacySurfaceProviderSettings(
+                const serializedDataProvider = normalizeLegacyProviderSettings(
                     serialized as SerializedDataProvider<any>,
                 );
                 const provider = DataProviderRegistry.makeDataProvider(
