@@ -36,7 +36,7 @@ export const Head = React.forwardRef<HTMLTableSectionElement, TableHeadProps>(
                 >
                     {tableRows.map((row, rowIndex) => (
                         // eslint-disable-next-line @eslint-react/no-array-index-key -- Once built, we assume this as stable
-                        <Row key={rowIndex}>
+                        <Row key={rowIndex} inheritColumnProps={false}>
                             {row.map((cell, cellIndex) => (
                                 <Cell
                                     // eslint-disable-next-line @eslint-react/no-array-index-key -- Once built, we assume this as stable

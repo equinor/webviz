@@ -8,7 +8,7 @@ import { preview } from "./preview";
 
 export const MODULE_NAME = "FlowNetwork";
 
-const description = "Visualizes dated flow networks over time.";
+const description = "Visualizes simulator network together with fluid rates and node pressures over time.";
 
 ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,

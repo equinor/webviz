@@ -62,7 +62,7 @@ function useSyncedWellboreSetting(
 export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     // Utilities
     const syncHelper = useRefStableSyncSettingsHelper({
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         moduleContext: props.settingsContext,
     });
     const providerManager = useAtomValue(dataProviderManagerAtom);

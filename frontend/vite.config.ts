@@ -1,5 +1,7 @@
 import path from "path";
 
+import fs from "fs";
+
 import babel from "@rolldown/plugin-babel";
 import tailwindPlugin from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -18,13 +20,24 @@ const paths = {
     root: "./src",
 };
 
+// Serves local recordings from public/tutorial-videos when that folder exists, otherwise "" so the app falls
+// back to its hardcoded Azure URL. An explicitly set VITE_TUTORIAL_MEDIA_BASE_URL takes precedence.
+process.env.VITE_TUTORIAL_MEDIA_BASE_URL ??= fs.existsSync(path.resolve(__dirname, "public/tutorial-videos"))
+    ? "/tutorial-videos"
+    : "";
+
 // https://vitejs.dev/config/
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
     const define: Record<string, any> = {
         "process.env": {},
         // Subsurface viewer expects this to be polyfilled
         global: "globalThis",
     };
+
+    // jotaiReactRefresh preserves atom identity across Vite HMR updates by permanently caching every
+    // atom object on globalThis.jotaiAtomCache. That cache is a dev-server-only concern (HMR doesn't
+    // exist in production) and it defeats WeakMap-based GC of per-atom state if left enabled in builds.
+    const babelPlugins = command === "serve" ? [jotaiDebugLabel, jotaiReactRefresh] : [jotaiDebugLabel];
 
     return {
         plugins: [
@@ -32,7 +45,7 @@ export default defineConfig(() => {
             tailwindPlugin(),
             react(),
             vitePluginChecker({ typescript: true }),
-            babel({ plugins: [jotaiDebugLabel, jotaiReactRefresh] }),
+            babel({ plugins: babelPlugins }),
             glsl({
                 include: "**/*.glsl",
                 defaultExtension: "glsl",

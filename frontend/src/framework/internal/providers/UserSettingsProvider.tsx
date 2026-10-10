@@ -8,7 +8,7 @@ export type Density = "comfortable" | "spacious";
 export type UserSettings = {
     colorScheme: ColorScheme;
     density: Density;
-    lastSeenChangelog: number;
+    lastSeenChangelog: number | null;
     disableChangelogPopup: boolean;
 };
 
@@ -36,12 +36,13 @@ function resolveInitialDensity(): Density {
     return localStorage.getItem(DENSITY_KEY) === "comfortable" ? "comfortable" : "spacious";
 }
 
-function resolveInitialLastSeenChangelog(): number {
+function resolveInitialLastSeenChangelog(): number | null {
     const stored = localStorage.getItem(CHANGELOG_LAST_SEEN_KEY);
-    const parsed = Number(stored);
+    if (stored === null) return null;
 
+    const parsed = Number(stored);
     if (Number.isFinite(parsed)) return parsed;
-    return 0;
+    return null;
 }
 
 function resolveInitialDisableChangelogPopup(): boolean {
@@ -54,7 +55,7 @@ const UserSettingsContext = React.createContext<UserSettingsContextValue>({
     settings: {
         colorScheme: "light",
         density: "spacious",
-        lastSeenChangelog: 0,
+        lastSeenChangelog: null,
         disableChangelogPopup: false,
     },
     setColorScheme: () => undefined,

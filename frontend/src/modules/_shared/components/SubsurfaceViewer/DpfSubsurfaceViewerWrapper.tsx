@@ -8,11 +8,10 @@ import { AxesLayer, Grid3DLayer, MapLayer } from "@webviz/subsurface-viewer/dist
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
 import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
+import { WebvizWellsLayer } from "@modules/_shared/customDeckGlLayers/WebvizWellsLayer";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type {
     AssemblerProduct,
@@ -44,7 +43,6 @@ export type DpfSubsurfaceViewerContextType = {
     bounds: BoundingBox2D | BoundingBox3D | undefined;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
-    workbenchServices: WorkbenchServices;
     hoverService: HoverService;
     moduleInstanceId: string;
     hoverDataTransformationLookup: LayerTransformationLookupMap;
@@ -71,7 +69,6 @@ export type DpfSubsurfaceViewerWrapperProps = {
     viewContext: ViewContext<any>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
-    workbenchServices: WorkbenchServices;
     preferredViewLayout: ViewLayout;
     hoverService: HoverService;
     moduleInstanceId: string;
@@ -79,7 +76,7 @@ export type DpfSubsurfaceViewerWrapperProps = {
 };
 
 const HOVER_TRANSFORMATIONS = makeHoverTransformationLookup(
-    [AdjustedWellsLayer, transformToWellboreHoverData],
+    [WebvizWellsLayer, transformToWellboreHoverData],
     [MapLayer, transformToWorldPosHoverData],
     [Grid3DLayer, transformToWorldPosHoverData],
     [PolylinesLayer, transformPolylineToFenceHoverData],

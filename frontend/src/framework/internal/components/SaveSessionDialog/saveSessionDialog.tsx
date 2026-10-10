@@ -16,7 +16,8 @@ import { Typography } from "@lib/components/Typography";
 import { truncateString } from "@lib/utils/strings";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
-import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { dashboardsToPreviewItems } from "../DashboardPreview/_utils";
+import { DashboardPreviewCarousel } from "../DashboardPreview/dashboardPreviewCarousel";
 
 export type SaveSessionDialogProps = {
     workbench: Workbench;
@@ -58,10 +59,9 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
             return;
         }
 
-        props.workbench.getSessionManager().getActiveSession().updateMetadata({ title, description });
         props.workbench
             .getSessionManager()
-            .saveSession({ saveAsNew: props.saveAsNew })
+            .saveSession({ saveAsNew: props.saveAsNew, metadata: { title, description } })
             .then((success) => setIsOpen(!success));
     }
 
@@ -88,7 +88,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
         [isOpen],
     );
 
-    const layout = props.workbench.getSessionManager().getActiveSession().getActiveDashboard()?.getLayout() || [];
+    const dashboards = dashboardsToPreviewItems(props.workbench.getSessionManager().getActiveSession().getDashboards());
 
     return (
         <>
@@ -101,7 +101,12 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                         Sessions are not guaranteed to persist, as underlying data or module states may change.
                     </Banner>
                     <form id={formId} className="gap-x-sm flex items-center" onSubmit={handleSave}>
-                        <DashboardPreview height={220} width={150} layout={layout} />
+                        <DashboardPreviewCarousel
+                            height={220}
+                            width={150}
+                            dashboards={dashboards}
+                            activeDashboardId={activeSession.getActiveDashboard()?.getId()}
+                        />
                         <div className="gap-y-sm flex min-w-0 grow flex-col">
                             <FieldCompositions.Default
                                 label="Title"

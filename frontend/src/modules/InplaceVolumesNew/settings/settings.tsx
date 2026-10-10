@@ -318,7 +318,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     ensembleSet={ensembleSet}
                     settingsContext={props.settingsContext}
                     workbenchSession={props.workbenchSession}
-                    workbenchServices={props.workbenchServices}
+                    syncSettingsService={props.syncSettingsService}
                     isPending={tableDefinitionsQueryResult.isLoading}
                     availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
                     availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}

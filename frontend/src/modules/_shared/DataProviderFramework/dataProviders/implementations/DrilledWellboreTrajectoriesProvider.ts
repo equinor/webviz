@@ -45,7 +45,6 @@ const drilledWellboreTrajectoriesSettings = [
     Setting.WELLBORES,
     Setting.WELLBORE_DEPTH_FILTER_TYPE,
     Setting.MD_RANGE,
-    Setting.TVD_RANGE,
     Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE,
     Setting.WELLBORE_DEPTH_FORMATION_FILTER,
     Setting.FLOW_FILTER_TYPE,
@@ -376,59 +375,6 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                     }
                     if (header.mdMax !== null && header.mdMax !== undefined) {
                         globalMax = Math.max(globalMax, header.mdMax);
-                    }
-                }
-
-                if (globalMin === Number.POSITIVE_INFINITY || globalMax === Number.NEGATIVE_INFINITY) {
-                    return [0, 0, 1];
-                }
-
-                return [globalMin, globalMax, 1];
-            },
-        });
-
-        setting(Setting.TVD_RANGE).bindAttributes({
-            read(read) {
-                return {
-                    filterType: read.localSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE),
-                };
-            },
-            resolve({ filterType }) {
-                return {
-                    visible: filterType === "tvd_range",
-                };
-            },
-        });
-
-        setting(Setting.TVD_RANGE).bindValueConstraints({
-            read(read) {
-                return {
-                    wellboreHeaders: read.sharedResult(wellboreHeaders),
-                    selectedWellbores: read.localSetting(Setting.WELLBORES),
-                };
-            },
-            resolve({ wellboreHeaders, selectedWellbores }) {
-                if (!wellboreHeaders || !selectedWellbores) {
-                    return NO_UPDATE;
-                }
-
-                const filteredHeaders = wellboreHeaders.filter((header) =>
-                    selectedWellbores.some((wb) => wb.wellboreUuid === header.wellboreUuid),
-                );
-
-                if (filteredHeaders.length === 0) {
-                    return [0, 0, 1];
-                }
-
-                let globalMin = Number.POSITIVE_INFINITY;
-                let globalMax = Number.NEGATIVE_INFINITY;
-
-                for (const header of filteredHeaders) {
-                    if (header.tvdMin !== null && header.tvdMin !== undefined) {
-                        globalMin = Math.min(globalMin, header.tvdMin);
-                    }
-                    if (header.tvdMax !== null && header.tvdMax !== undefined) {
-                        globalMax = Math.max(globalMax, header.tvdMax);
                     }
                 }
 
