@@ -10,7 +10,6 @@ from webviz_core_utils.type_utils import expect_type
 from webviz_services.sumo_access.case_inspector import CaseInspector
 from webviz_services.sumo_access.surface_access import SurfaceAccess
 from webviz_services.sumo_access.surface_access import ExpectedError, InProgress
-from webviz_services.sumo_access.surface_types import TagNameAttribute
 from webviz_services.smda_access import SmdaAccess, StratigraphicUnit
 from webviz_services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 from webviz_services.smda_access.drogon import DrogonSmdaAccess
@@ -429,9 +428,9 @@ async def post_get_sample_surface_in_points(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     surface_name: str = Query(description="Surface name"),
-    surface_attribute: str = Query(description="Surface attribute"),
     realization_nums: List[int] = Query(description="Realization numbers"),
     sample_points: schemas.PointSetXY = Body(embed=True),
+    surface_attribute: schemas.SurfaceAttribute = Body(embed=True, description="Surface attribute"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[schemas.SurfaceRealizationSampleValues]:
 
@@ -442,7 +441,7 @@ async def post_get_sample_surface_in_points(
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
         surface_name=surface_name,
-        surface_attribute=TagNameAttribute(tag_name=surface_attribute),
+        surface_attribute=converters.from_api_surface_attribute(surface_attribute),
         realizations=realization_nums,
         x_coords=sample_points.x_points,
         y_coords=sample_points.y_points,

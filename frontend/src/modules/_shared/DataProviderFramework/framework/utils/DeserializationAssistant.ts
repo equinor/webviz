@@ -1,4 +1,5 @@
 import { DataProviderRegistry } from "../../dataProviders/DataProviderRegistry";
+import { DataProviderType } from "../../dataProviders/dataProviderTypes";
 import { GroupRegistry } from "../../groups/GroupRegistry";
 import type { Item } from "../../interfacesAndTypes/entities";
 import type {
@@ -9,10 +10,46 @@ import type {
     SerializedSharedSetting,
 } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
+import { Setting } from "../../settings/settingsDefinitions";
 import { ContextBoundary } from "../ContextBoundary/ContextBoundary";
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import { ErrorPlaceholder } from "../ErrorPlaceholder/ErrorPlaceholder";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
+
+// Renamed setting keys per persisted provider type (legacy key -> current key).
+// Intersection provider types are literals so shared DPF code does not import from a module folder.
+const LEGACY_SETTING_RENAMES_BY_PROVIDER_TYPE: Record<string, Record<string, string>> = {
+    [DataProviderType.ATTRIBUTE_STATIC_SURFACE]: { [Setting.ATTRIBUTE]: Setting.SURFACE_ATTRIBUTE },
+    [DataProviderType.ATTRIBUTE_TIME_STEP_SURFACE]: { [Setting.ATTRIBUTE]: Setting.SURFACE_ATTRIBUTE },
+    [DataProviderType.ATTRIBUTE_INTERVAL_SURFACE]: { [Setting.ATTRIBUTE]: Setting.SURFACE_ATTRIBUTE },
+    REALIZATION_SURFACES: { [Setting.ATTRIBUTE]: Setting.DEPTH_ATTRIBUTE },
+    SURFACES_REALIZATIONS_UNCERTAINTY: { [Setting.ATTRIBUTE]: Setting.DEPTH_ATTRIBUTE },
+};
+
+// Returns a copy; the input may be retained verbatim by ErrorPlaceholder on failure.
+function normalizeLegacyProviderSettings(
+    serializedDataProvider: SerializedDataProvider<any>,
+): SerializedDataProvider<any> {
+    const renames = LEGACY_SETTING_RENAMES_BY_PROVIDER_TYPE[serializedDataProvider.dataProviderType];
+    if (!renames) {
+        return serializedDataProvider;
+    }
+
+    const settings: Record<string, string> = { ...serializedDataProvider.settings };
+    let changed = false;
+    for (const [legacyKey, currentKey] of Object.entries(renames)) {
+        if (!(legacyKey in settings)) {
+            continue;
+        }
+        if (!(currentKey in settings)) {
+            settings[currentKey] = settings[legacyKey];
+        }
+        delete settings[legacyKey];
+        changed = true;
+    }
+
+    return changed ? { ...serializedDataProvider, settings } : serializedDataProvider;
+}
 
 export class DeserializationAssistant {
     private _dataProviderManager: DataProviderManager;
@@ -30,7 +67,9 @@ export class DeserializationAssistant {
 
         try {
             if (serialized.type === SerializedType.DATA_PROVIDER) {
-                const serializedDataProvider = serialized as SerializedDataProvider<any>;
+                const serializedDataProvider = normalizeLegacyProviderSettings(
+                    serialized as SerializedDataProvider<any>,
+                );
                 const provider = DataProviderRegistry.makeDataProvider(
                     serializedDataProvider.dataProviderType,
                     this._dataProviderManager,
