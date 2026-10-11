@@ -85,13 +85,16 @@ export class TimePointPairSetting implements CustomSettingImplementation<ValueTy
 
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
         return function TimePointPairSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
-            const options: ComboboxItem<string>[] = (props.valueConstraints ?? []).map((value) => ({
-                value,
-                label: timePointToLabel(value),
-            }));
-
             const base = props.value?.[0];
             const monitor = props.value?.[1];
+
+            function makeOptions(otherEndpoint: string | undefined): ComboboxItem<string>[] {
+                return (props.valueConstraints ?? []).map((value) => ({
+                    value,
+                    label: timePointToLabel(value),
+                    disabled: value === otherEndpoint,
+                }));
+            }
 
             function handleBaseChange(newBase: string | null) {
                 if (newBase === null) {
@@ -113,7 +116,7 @@ export class TimePointPairSetting implements CustomSettingImplementation<ValueTy
                         <span className="w-16 shrink-0 text-xs">Base</span>
                         <Combobox
                             layoutClassName="w-full"
-                            items={options}
+                            items={makeOptions(monitor)}
                             value={base}
                             onValueChange={handleBaseChange}
                             disabled={props.disabled}
@@ -123,7 +126,7 @@ export class TimePointPairSetting implements CustomSettingImplementation<ValueTy
                         <span className="w-16 shrink-0 text-xs">Monitor</span>
                         <Combobox
                             layoutClassName="w-full"
-                            items={options}
+                            items={makeOptions(base)}
                             value={monitor}
                             onValueChange={handleMonitorChange}
                             disabled={props.disabled}
