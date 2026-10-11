@@ -374,7 +374,7 @@ describe("DeserializationAssistant - legacy grid timeOrInterval migration", () =
         expect(settings).toEqual({
             attribute: JSON.stringify("PRESSURE"),
             timeType: JSON.stringify(TimeType.TIME_POINT),
-            timePoint: JSON.stringify("2018-01-01"),
+            timePoint: JSON.stringify("2018-01-01T00:00:00"),
         });
     });
 
@@ -385,7 +385,7 @@ describe("DeserializationAssistant - legacy grid timeOrInterval migration", () =
 
         expect(settings).toEqual({
             timeType: JSON.stringify(TimeType.INTERVAL),
-            timeInterval: JSON.stringify("2018-01-01/2020-07-01"),
+            timeInterval: JSON.stringify("2018-01-01T00:00:00/2020-07-01T00:00:00"),
         });
     });
 

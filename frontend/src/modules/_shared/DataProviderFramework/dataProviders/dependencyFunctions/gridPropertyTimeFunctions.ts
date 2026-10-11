@@ -11,6 +11,21 @@ export type GridPropertyTimeInfo = {
 
 const EMPTY_TIME_INFO: GridPropertyTimeInfo = { hasStatic: false, timePoints: [], intervals: [] };
 
+// Grid property times are date only, while surfaces use date-times; settings use date-times so they can be shared.
+export function gridTimeToIsoDateTime(gridTimeOrInterval: string): string {
+    return gridTimeOrInterval
+        .split("/")
+        .map((part) => (part.includes("T") ? part : `${part}T00:00:00`))
+        .join("/");
+}
+
+export function isoDateTimeToGridTime(isoDateTimeOrInterval: string): string {
+    return isoDateTimeOrInterval
+        .split("/")
+        .map((part) => part.split("T")[0])
+        .join("/");
+}
+
 /**
  * Split the time values available for a grid property into static, time points and precomputed intervals.
  */
@@ -39,9 +54,9 @@ export function makeGridPropertyTimeInfo(
             hasStatic = true;
         } else if (isoDateOrInterval.includes("/")) {
             // Grid property time values are date only, so an interval can only be recognized by its separator
-            intervals.add(isoDateOrInterval);
+            intervals.add(gridTimeToIsoDateTime(isoDateOrInterval));
         } else {
-            timePoints.add(isoDateOrInterval);
+            timePoints.add(gridTimeToIsoDateTime(isoDateOrInterval));
         }
     }
 

@@ -1,5 +1,6 @@
 import { DataProviderRegistry } from "../../dataProviders/DataProviderRegistry";
 import { DataProviderType } from "../../dataProviders/dataProviderTypes";
+import { gridTimeToIsoDateTime } from "../../dataProviders/dependencyFunctions/gridPropertyTimeFunctions";
 import { GroupRegistry } from "../../groups/GroupRegistry";
 import type { Item } from "../../interfacesAndTypes/entities";
 import type {
@@ -49,10 +50,10 @@ function splitLegacyTimeOrInterval(settings: Record<string, string>): void {
         settings[Setting.TIME_TYPE] = JSON.stringify(TimeType.NO_TIME);
     } else if (legacyValue.includes("/")) {
         settings[Setting.TIME_TYPE] = JSON.stringify(TimeType.INTERVAL);
-        settings[Setting.TIME_INTERVAL] = JSON.stringify(legacyValue);
+        settings[Setting.TIME_INTERVAL] = JSON.stringify(gridTimeToIsoDateTime(legacyValue));
     } else {
         settings[Setting.TIME_TYPE] = JSON.stringify(TimeType.TIME_POINT);
-        settings[Setting.TIME_POINT] = JSON.stringify(legacyValue);
+        settings[Setting.TIME_POINT] = JSON.stringify(gridTimeToIsoDateTime(legacyValue));
     }
 }
 

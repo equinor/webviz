@@ -9,6 +9,7 @@ import {
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import {
     getAvailableTimeTypes,
+    isoDateTimeToGridTime,
     makeGridPropertyTimeInfo,
 } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/gridPropertyTimeFunctions";
 import {
@@ -142,8 +143,8 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                     query: {
                         ...commonQuery,
                         parameter_name: attribute ?? "",
-                        base_time_str: timePointPair[0],
-                        monitor_time_str: timePointPair[1],
+                        base_time_str: isoDateTimeToGridTime(timePointPair[0]),
+                        monitor_time_str: isoDateTimeToGridTime(timePointPair[1]),
                     },
                 }),
             ).then(transformGridMappedProperty);
@@ -160,7 +161,8 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                     query: {
                         ...commonQuery,
                         parameter_name: attribute ?? "",
-                        parameter_time_or_interval_str: timeOrIntervalStr,
+                        parameter_time_or_interval_str:
+                            timeOrIntervalStr === null ? null : isoDateTimeToGridTime(timeOrIntervalStr),
                     },
                 }),
             ).then(transformGridMappedProperty);

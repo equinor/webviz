@@ -20,7 +20,11 @@ import type {
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
-import { getAvailableTimeTypes, makeGridPropertyTimeInfo } from "../dependencyFunctions/gridPropertyTimeFunctions";
+import {
+    getAvailableTimeTypes,
+    isoDateTimeToGridTime,
+    makeGridPropertyTimeInfo,
+} from "../dependencyFunctions/gridPropertyTimeFunctions";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchPlannedWellboreHeaders,
@@ -282,11 +286,7 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
                     (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
                 );
 
-                return getAvailableIntersectionOptions(
-                    headers,
-                    fieldIntersectionPolylines,
-                    plannedHeaders,
-                );
+                return getAvailableIntersectionOptions(headers, fieldIntersectionPolylines, plannedHeaders);
             },
         });
 
@@ -441,8 +441,8 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
                 postGetPolylineIntersectionTimeDiffOptions({
                     query: {
                         ...commonQuery,
-                        base_time_str: timePointPair[0],
-                        monitor_time_str: timePointPair[1],
+                        base_time_str: isoDateTimeToGridTime(timePointPair[0]),
+                        monitor_time_str: isoDateTimeToGridTime(timePointPair[1]),
                     },
                     body,
                 }),
@@ -460,7 +460,8 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
             postGetPolylineIntersectionOptions({
                 query: {
                     ...commonQuery,
-                    parameter_time_or_interval_str: timeOrInterval,
+                    parameter_time_or_interval_str:
+                        timeOrInterval === null ? null : isoDateTimeToGridTime(timeOrInterval),
                 },
                 body,
             }),
