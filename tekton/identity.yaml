@@ -7,7 +7,7 @@ metadata:
     azure.workload.identity/use: "true"
   annotations:
     # This annotation is optional and can be used to limit wich steps are enabled for workload identity
-    azure.workload.identity/skip-containers: skip-id,copy-frontend
+    azure.workload.identity/skip-containers: skip-id
 spec:
   params:
     - name: AZURE_CLIENT_ID                    # this value will be delivered from pipeline automatically
