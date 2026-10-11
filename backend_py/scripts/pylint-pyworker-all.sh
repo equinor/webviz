@@ -9,18 +9,15 @@ echo "Running using python interpreter at:"
 which python
 
 status=0
-
 for path in \
-    libs/core_utils \
-    libs/server_schemas \
-    libs/services \
-    primary \
-    pyworker \
-    user_grid3d_ri
+    libs/core_utils/src/webviz_core_utils \
+    libs/server_schemas/src/webviz_server_schemas \
+    libs/services/src/webviz_services \
+    pyworker/src/pyworker
 do
     echo
-    echo "Refreshing lockfile in: $path"
-    poetry lock --directory=$path
+    echo "Running pylint on: $path"
+    python -m pylint "$path" || status=$?
 done
 
 exit "$status"
