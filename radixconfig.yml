@@ -19,6 +19,8 @@ metadata:
 spec:
   build:
     useBuildKit: true
+    subPipeline:
+      identity: *identityNonProdAppId
   environments:
     - { name: prod }
     - { name: preprod, build: { from: main } }
