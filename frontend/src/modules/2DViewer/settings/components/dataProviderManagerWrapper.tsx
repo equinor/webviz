@@ -186,6 +186,11 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "attribute":
                 groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.dataProviderManager));
                 return;
+            case "surface-attribute":
+                groupDelegate.appendChild(
+                    new SharedSetting(Setting.SURFACE_ATTRIBUTE, null, props.dataProviderManager),
+                );
+                return;
             case "seismic-attribute":
                 groupDelegate.appendChild(
                     new SharedSetting(Setting.SEISMIC_ATTRIBUTE, null, props.dataProviderManager),
@@ -436,6 +441,11 @@ const ACTIONS: ActionGroup[] = [
                 identifier: "attribute",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Unsorted Attribute",
+            },
+            {
+                identifier: "surface-attribute",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Surface Attribute",
             },
             {
                 identifier: "seismic-attribute",

@@ -29,7 +29,6 @@ function createConfiguredAppInsights(telemetryConfig: TelemetryConfig_api): Appl
 
             expCfg: {
                 // Example experimental configuration
-
             },
         },
     });
@@ -77,9 +76,10 @@ export async function initializeTelemetryFromBackend(): Promise<void> {
         const requestResult = await getTelemetryConfig({ throwOnError: true });
         const telemetryConfig: TelemetryConfig_api = requestResult.data;
         appInsightsSingleton = createConfiguredAppInsights(telemetryConfig);
-        console.info(`Successfully initialized telemetry from backend (user_pseudonym=${telemetryConfig.user_pseudonym}, commit_sha=${telemetryConfig.commit_sha}, radix_environment=${telemetryConfig.radix_environment})`);
-    }
-    catch (error) {
+        console.info(
+            `Successfully initialized telemetry from backend (user_pseudonym=${telemetryConfig.user_pseudonym}, commit_sha=${telemetryConfig.commit_sha}, radix_environment=${telemetryConfig.radix_environment})`,
+        );
+    } catch (error) {
         // Telemetry is optional so never let its setup break the app.
         console.warn("Failed to initialize telemetry from backend", error);
     }
@@ -93,8 +93,7 @@ export function shutdownTelemetry(): void {
     try {
         appInsightsSingleton.clearAuthenticatedUserContext();
         appInsightsSingleton.unload(false);
-    }
-    catch (error) {
+    } catch (error) {
         console.warn("Failed to cleanly shutdown telemetry", error);
     }
 
@@ -106,10 +105,13 @@ export function trackTelemetryEvent(name: string, properties?: ICustomProperties
         return;
     }
 
-    const eventTelemetry: IEventTelemetry = {
-        name: name,
-    };
-    appInsightsSingleton.trackEvent(eventTelemetry, properties);
+    // Make sure we never trigger an exception while tracking telemetry
+    try {
+        const eventTelemetry: IEventTelemetry = { name: name };
+        appInsightsSingleton.trackEvent(eventTelemetry, properties);
+    } catch (trackingError) {
+        console.warn("Failed to track telemetry event", trackingError);
+    }
 }
 
 export function trackTelemetryException(error: Error, properties?: ICustomProperties): void {
@@ -117,8 +119,11 @@ export function trackTelemetryException(error: Error, properties?: ICustomProper
         return;
     }
 
-    const exceptionTelemetry: IExceptionTelemetry = {
-        exception: error,
-    };
-    appInsightsSingleton.trackException(exceptionTelemetry, properties);
+    // Make sure we never trigger an exception while tracking an exception itself
+    try {
+        const exceptionTelemetry: IExceptionTelemetry = { exception: error };
+        appInsightsSingleton.trackException(exceptionTelemetry, properties);
+    } catch (trackingError) {
+        console.warn("Failed to track telemetry exception", trackingError);
+    }
 }
