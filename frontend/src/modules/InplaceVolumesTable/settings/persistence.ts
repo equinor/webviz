@@ -7,7 +7,14 @@ import { TableType } from "@modules/_shared/InplaceVolumes/types";
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { selectedIndexValueCriteriaAtom, selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./atoms/baseAtoms";
+import { StatisticsLayout } from "../types";
+
+import {
+    selectedIndexValueCriteriaAtom,
+    selectedStatisticOptionsAtom,
+    selectedStatisticsLayoutAtom,
+    selectedTableTypeAtom,
+} from "./atoms/baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedGroupByIndicesAtom,
@@ -24,6 +31,7 @@ export type SerializedSettings = {
     selectedGroupByIndices: string[];
     selectedTableType: TableType;
     selectedStatisticOptions: InplaceVolumesStatistic_api[];
+    selectedStatisticsLayout?: StatisticsLayout;
     selectedIndexValueCriteria: IndexValueCriteria;
 };
 
@@ -62,6 +70,11 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
             enum: Object.values(IndexValueCriteria),
         },
     },
+    optionalProperties: {
+        selectedStatisticsLayout: {
+            enum: Object.values(StatisticsLayout),
+        },
+    },
 }));
 
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
@@ -74,6 +87,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
     const selectedGroupByIndices = get(selectedGroupByIndicesAtom);
     const selectedTableType = get(selectedTableTypeAtom);
     const selectedStatisticOptions = get(selectedStatisticOptionsAtom);
+    const selectedStatisticsLayout = get(selectedStatisticsLayoutAtom);
     const selectedIndexValueCriteria = get(selectedIndexValueCriteriaAtom);
 
     const indicesWithStringifiedValues = selectedIndicesWithValues.value.map((index) => ({
@@ -89,6 +103,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         selectedGroupByIndices: selectedGroupByIndices.value,
         selectedTableType: selectedTableType,
         selectedStatisticOptions: selectedStatisticOptions,
+        selectedStatisticsLayout: selectedStatisticsLayout,
         selectedIndexValueCriteria: selectedIndexValueCriteria,
     };
 };
@@ -105,5 +120,6 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedGroupByIndicesAtom, raw.selectedGroupByIndices);
     setIfDefined(set, selectedTableTypeAtom, raw.selectedTableType);
     setIfDefined(set, selectedStatisticOptionsAtom, raw.selectedStatisticOptions);
+    setIfDefined(set, selectedStatisticsLayoutAtom, raw.selectedStatisticsLayout);
     setIfDefined(set, selectedIndexValueCriteriaAtom, raw.selectedIndexValueCriteria);
 };

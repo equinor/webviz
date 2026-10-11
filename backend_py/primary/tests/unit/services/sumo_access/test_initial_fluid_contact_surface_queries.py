@@ -82,16 +82,7 @@ def test_time_filter_rejects_more_than_two_components(time_or_interval_str: str)
         time_or_interval_str_to_sumo_time_filter(time_or_interval_str)
 
 
-def test_apply_attribute_filter_resolves_legacy_standard_result_attribute_string() -> None:
-    # Surface metadata still reports standard results through the attribute field
-    search_context = MagicMock()
-
-    apply_attribute_filter(search_context, TagNameAttribute(tag_name="structure_depth_surface (standard result)"))
-
-    search_context.filter.assert_called_once_with(standard_result="structure_depth_surface")
-
-
-def test_generic_surface_metadata_emits_attribute_string_that_filter_can_resolve() -> None:
+def test_generic_surface_metadata_emits_attribute_that_filter_can_resolve() -> None:
     meta_arr = _build_surface_meta_arr(
         [
             SurfInfo(
@@ -109,9 +100,29 @@ def test_generic_surface_metadata_emits_attribute_string_that_filter_can_resolve
     )
 
     search_context = MagicMock()
-    apply_attribute_filter(search_context, TagNameAttribute(tag_name=meta_arr[0].attribute_name))
+    apply_attribute_filter(search_context, meta_arr[0].attribute)
 
     search_context.filter.assert_called_once_with(standard_result="structure_depth_surface")
+
+
+def test_generic_surface_metadata_skips_unrecognized_standard_result() -> None:
+    result = _build_surface_meta_arr(
+        [
+            SurfInfo(
+                name="Not a surface standard result",
+                tagname="",
+                standard_result="inplace_volumes",
+                content="depth",
+                is_stratigraphic=True,
+                global_min_val=1000.0,
+                global_max_val=2000.0,
+            )
+        ],
+        SurfTimeType.NO_TIME,
+        False,
+    )
+
+    assert result == []
 
 
 def test_apply_attribute_filter_adds_sub_name_term_for_std_res_attribute() -> None:

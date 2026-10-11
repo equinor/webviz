@@ -111,7 +111,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         <Setting.ScrollArea>
             <Setting.Panel>
                 <Setting.Section title="Data" defaultOpen>
-                    <Setting.Field label="Ensembles" annotations={selectedEnsembleIdentAnnotations}>
+                    <Setting.Field label="Ensemble" annotations={selectedEnsembleIdentAnnotations}>
                         <EnsembleDropdown
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedEnsembleIdent.value}
@@ -154,7 +154,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         label="Tree Type"
                         help={{
                             content:
-                                "Which network definition from the reservoir simulator to display. \"Standard Network\" is the simulator's GRUPTREE group hierarchy (producers + injectors); \"Extended Network\" is the BRANPROP production-network topology, shown only when the model defines it.",
+                                'Which network definition from the reservoir simulator to display. "Standard Network" is the simulator\'s GRUPTREE group hierarchy (producers + injectors); "Extended Network" is the BRANPROP production-network topology, shown only when the model defines it.',
                         }}
                         loadingOverlay={selectedTreeType.isLoading}
                         errorOverlay={selectedTreeType.depsHaveError ? "Could not load tree types." : undefined}

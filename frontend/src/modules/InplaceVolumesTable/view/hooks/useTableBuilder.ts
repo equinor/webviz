@@ -1,56 +1,70 @@
+import React from "react";
+
 import { useAtomValue } from "jotai";
 
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
+import { StatisticsLayout } from "@modules/InplaceVolumesTable/types";
 
-import { filterAtom, statisticOptionsAtom, tableTypeAtom } from "../atoms/baseAtoms";
+import { filterAtom, statisticOptionsAtom, statisticsLayoutAtom, tableTypeAtom } from "../atoms/baseAtoms";
 import { perRealizationTableDataResultsAtom, statisticalTableDataResultsAtom } from "../atoms/queryAtoms";
 import type { TableColumnsConfig, TableRow } from "../types";
 import {
+    createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData,
     createStatisticalTableHeadingsAndRowsFromTablesData,
     createTableHeadingsAndRowsFromTablesData,
+    RESPONSE_COLUMN_KEY,
     sortTableRowsByCategoryOrder,
 } from "../utils/tableComponentUtils";
+import { sortStatisticsForDisplay } from "../utils/tableLayoutUtils";
 
 type TableBuilderResult = {
     headings: TableColumnsConfig;
     tableRows: TableRow<TableColumnsConfig>[];
+    sortScopeColumnKey?: string;
 };
 
 export function useTableBuilder(): TableBuilderResult {
     const tableType = useAtomValue(tableTypeAtom);
     const statisticOptions = useAtomValue(statisticOptionsAtom);
+    const statisticsLayout = useAtomValue(statisticsLayoutAtom);
     const filter = useAtomValue(filterAtom);
-    const perRealizationTableDataResults = useAtomValue(perRealizationTableDataResultsAtom);
-    const statisticalTableDataResults = useAtomValue(statisticalTableDataResultsAtom);
+    const perRealizationTablesData = useAtomValue(perRealizationTableDataResultsAtom).tablesData;
+    const statisticalTablesData = useAtomValue(statisticalTableDataResultsAtom).tablesData;
+    const indicesWithValues = filter.indicesWithValues;
 
-    if (tableType === TableType.PER_REALIZATION) {
-        const tableHeadingsAndRows = createTableHeadingsAndRowsFromTablesData(
-            perRealizationTableDataResults.tablesData,
-        );
+    // Rows get fresh ids when rebuilt, so rebuilding on every render would remount all table rows
+    return React.useMemo(() => {
+        const categoryOrder = new Map(indicesWithValues.map((index) => [index.indexColumn, index.values]));
 
-        return {
-            headings: tableHeadingsAndRows.headings,
-            tableRows: sortTableRowsByCategoryOrder(
-                tableHeadingsAndRows.rows,
-                tableHeadingsAndRows.headings,
-                new Map(filter.indicesWithValues.map((index) => [index.indexColumn, index.values])),
-            ),
-        };
-    } else if (tableType === TableType.STATISTICAL) {
-        const tableHeadingsAndRows = createStatisticalTableHeadingsAndRowsFromTablesData(
-            statisticalTableDataResults.tablesData,
-            statisticOptions,
-        );
+        if (tableType === TableType.PER_REALIZATION) {
+            const { headings, rows } = createTableHeadingsAndRowsFromTablesData(perRealizationTablesData);
+            return { headings, tableRows: sortTableRowsByCategoryOrder(rows, headings, categoryOrder) };
+        }
 
-        return {
-            headings: tableHeadingsAndRows.headings,
-            tableRows: sortTableRowsByCategoryOrder(
-                tableHeadingsAndRows.rows,
-                tableHeadingsAndRows.headings,
-                new Map(filter.indicesWithValues.map((index) => [index.indexColumn, index.values])),
-            ),
-        };
-    }
+        if (tableType === TableType.STATISTICAL) {
+            const isResponsesAsRows = statisticsLayout === StatisticsLayout.RESPONSES_AS_ROWS;
+            const buildHeadingsAndRows = isResponsesAsRows
+                ? createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData
+                : createStatisticalTableHeadingsAndRowsFromTablesData;
+            const { headings, rows } = buildHeadingsAndRows(
+                statisticalTablesData,
+                sortStatisticsForDisplay(statisticOptions),
+            );
 
-    throw new Error("Not able to build table - Table type not supported");
+            return {
+                headings,
+                tableRows: sortTableRowsByCategoryOrder(rows, headings, categoryOrder),
+                sortScopeColumnKey: isResponsesAsRows ? RESPONSE_COLUMN_KEY : undefined,
+            };
+        }
+
+        throw new Error("Not able to build table - Table type not supported");
+    }, [
+        tableType,
+        statisticOptions,
+        statisticsLayout,
+        indicesWithValues,
+        perRealizationTablesData,
+        statisticalTablesData,
+    ]);
 }
