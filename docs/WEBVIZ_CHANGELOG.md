@@ -30,6 +30,7 @@
 - **3D viewer**: Well trajectory depth/flow filters and completion (screen/perforation) markers are now supported, matching the 2D viewer.
 - **Inplace Volumes Table**: wide tables now scroll horizontally with the grouping columns pinned, and columns with the same value on every row are summarised above the table.
 - **Inplace Volumes Table**: new "Statistics layout" option shows responses as rows, keeping the table narrow when many responses are selected.
+- **Grid layers**: Grid properties in the 2D, 3D, and Intersection views can now show the difference between two time steps. A new "Time Type" setting chooses between static, time step, interval, and computed interval (difference). Grid layers in saved sessions keep their selected date, but a shared "Date" setting added to a group in an older session no longer controls grid layers; replace it with a shared "Time step" or "Time interval". In the 2D viewer, a shared "Time point" now applies to both surface and grid layers.
 
 ## August 2026
 
