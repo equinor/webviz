@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Provider } from "jotai";
 
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
+import { shutdownTelemetry } from "@framework/utils/telemetry";
 
 import { HydrateQueryClientAtom } from "../components/HydrateQueryClientAtom";
 
@@ -37,6 +38,7 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
             queryCache: new QueryCache({
                 onError: (error) => {
                     if (error && (error as unknown as QueryError).status === 401) {
+                        shutdownTelemetry();
                         authProvider.setAuthState(AuthState.NotLoggedIn);
                     }
                 },

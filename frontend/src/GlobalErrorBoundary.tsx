@@ -110,23 +110,24 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         if (import.meta.env.DEV) {
             return;
         }
-        this.setErrorIfNoneSet(event.error);
 
         // If we decide to log error to telemetry here, we should probably set disableExceptionTracking=true
         trackTelemetryException(event.error, {
-            triggeredFrom: "handleWindowError()",
+            triggeredFrom: "GlobalErrorBoundary.handleWindowError()",
             componentStack: "NoComponentStack",
         });
+
+        this.setErrorIfNoneSet(event.error);
     }
 
     private handleUnhandledRejection(event: PromiseRejectionEvent) {
-        this.setErrorIfNoneSet(event.reason);
-
         // If we decide to log error to telemetry here, we should probably set disableExceptionTracking=true
         trackTelemetryException(event.reason, {
-            triggeredFrom: "handleUnhandledRejection()",
+            triggeredFrom: "GlobalErrorBoundary.handleUnhandledRejection()",
             componentStack: "NoComponentStack",
         });
+
+        this.setErrorIfNoneSet(event.reason);
     }
 
     private setErrorIfNoneSet(value: unknown) {
@@ -155,14 +156,14 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
     // getDerivedStateFromError received. React only provides the component stack here, so it is set here rather than
     // together with the error. Until then componentStack is null, so it never belongs to a different error.
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-        this.setState({ componentStack: errorInfo.componentStack ?? null });
-
         // Should we log the exception to telemetry here at all or is the premise that this exception is already handled in a controlled way?
         // For now we send it to telemetry, including the component stack which
         trackTelemetryException(error, {
-            triggeredFrom: "componentDidCatch()",
+            triggeredFrom: "GlobalErrorBoundary.componentDidCatch()",
             componentStack: errorInfo.componentStack ?? "NoComponentStack",
         });
+
+        this.setState({ componentStack: errorInfo.componentStack ?? null });
     }
 
     componentDidMount() {
