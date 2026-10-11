@@ -7,16 +7,22 @@ metadata:
     azure.workload.identity/use: "true"
   annotations:
     # This annotation is optional and can be used to limit wich steps are enabled for workload identity
-    azure.workload.identity/skip-containers: skip-id
+    azure.workload.identity/skip-containers: skip-id,copy-frontend
 spec:
   params:
     - name: AZURE_CLIENT_ID                    # this value will be delivered from pipeline automatically
       default: not-set-AZURE_CLIENT_ID-in-task # optional default value
+  volumes:
+    - name: frontend-artifacts
+      emptyDir: {}
   stepTemplate:
     # Make sure all steps runs as a regular user. Running as root is not allowed
     securityContext:
       runAsUser: 1000
     image: mcr.microsoft.com/azure-cli:2.55.0
+    volumeMounts:
+      - name: frontend-artifacts
+        mountPath: /workspace/frontend-artifacts
     env:
       # Az needs a home directory that the authorizatio information can be stored in
       - name: HOME
@@ -25,18 +31,29 @@ spec:
         value: $(params.AZURE_CLIENT_ID)      # AZURE_CLIENT_ID environment gets value from the task parameter AZURE_CLIENT_ID, set by pipeline parameter
 
   steps:
+    - name: copy-frontend
+      image: $(params.radix-image.frontend)
+      script: |
+        #!/usr/bin/env sh
+        set -eu
+        cp -R /usr/share/nginx/dist/. /workspace/frontend-artifacts/
+
     - name: get-secret
       script: |
         #!/usr/bin/env sh
-        TOKEN=`cat $AZURE_FEDERATED_TOKEN_FILE`
+        set -eu
+        TOKEN=$(cat "$AZURE_FEDERATED_TOKEN_FILE")
 
         # Log in to Azure with the provided credentials, that matches the configured ferated credential
         az login --service-principal \
-          --username $AZURE_CLIENT_ID \
-          --tenant $AZURE_TENANT_ID \
-          --federated-token $TOKEN \
-          --query [0].name
+          --username "$AZURE_CLIENT_ID" \
+          --tenant "$AZURE_TENANT_ID" \
+          --federated-token "$TOKEN" \
+          --query '[0].name'
 
+        cd /workspace
+        mkdir sigTest
+        cd sigTest
         echo "Hello from Tekton" > test-upload.txt
 
         az storage blob upload \
@@ -44,6 +61,14 @@ spec:
           --container-name "sourcemaps-review3" \
           --name test-upload.txt \
           --file test-upload.txt \
+          --auth-mode login
+
+        az storage blob upload-batch \
+          --account-name "stwebvizdiagnostics" \
+          --destination "sourcemaps-review3" \
+          --source /workspace/frontend-artifacts \
+          --pattern '*.map' \
+          --overwrite true \
           --auth-mode login
 
         # Use your current logged in user to access protected Azure resources
