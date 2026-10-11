@@ -37,6 +37,15 @@ spec:
           --federated-token $TOKEN \
           --query [0].name
 
+        echo "Hello from Tekton" > test-upload.txt
+
+        az storage blob upload \
+          --account-name "stwebvizdiagnostics" \
+          --container-name "sourcemaps-review3" \
+          --name test-upload.txt \
+          --file test-upload.txt \
+          --auth-mode login
+
         # Use your current logged in user to access protected Azure resources
         #az keyvault secret  show --vault-name <your-key-vault-name> --name <secret-name> --query value
         # Never print the secret to output, this is only for demo purposes
