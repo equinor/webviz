@@ -15,11 +15,13 @@ class GridPropertiesExtractor:
     def __init__(
         self,
         flat_prop_arr: NDArray[np.floating] | NDArray[np.integer],
+        dimensions: tuple[int, ...],
         is_discrete: bool,
         min_global_prop_val: float | int,
         max_global_prop_val: float | int,
     ) -> None:
         self._flat_prop_arr: NDArray[np.floating] | NDArray[np.integer] = flat_prop_arr
+        self._dimensions: tuple[int, ...] = dimensions
         self._is_discrete: bool = is_discrete
         self._min_global_prop_val: float | int = min_global_prop_val
         self._max_global_prop_val: float | int = max_global_prop_val
@@ -46,6 +48,7 @@ class GridPropertiesExtractor:
 
         new_object = GridPropertiesExtractor(
             flat_prop_arr=flat_arr,
+            dimensions=unmasked_value_arr.shape,
             is_discrete=is_discrete,
             min_global_prop_val=min_prop_val,
             max_global_prop_val=max_prop_val,
@@ -60,14 +63,15 @@ class GridPropertiesExtractor:
         if monitor_extractor.is_discrete() or base_extractor.is_discrete():
             raise ValueError("Cannot calculate the difference between discrete grid properties")
 
-        monitor_arr = monitor_extractor.get_flat_prop_arr()
-        base_arr = base_extractor.get_flat_prop_arr()
-        if monitor_arr.shape != base_arr.shape:
+        if monitor_extractor.get_dimensions() != base_extractor.get_dimensions():
             raise ValueError(
-                f"The two grid properties have differing number of cells, {monitor_arr.shape} vs {base_arr.shape}"
+                "The two grid properties have differing dimensions, "
+                f"{monitor_extractor.get_dimensions()} vs {base_extractor.get_dimensions()}"
             )
 
-        diff_arr = np.subtract(monitor_arr, base_arr, dtype=np.float32)
+        diff_arr = np.subtract(
+            monitor_extractor.get_flat_prop_arr(), base_extractor.get_flat_prop_arr(), dtype=np.float32
+        )
 
         # The min/max of a difference cannot be derived from the min/max of the two operands
         if np.any(np.isfinite(diff_arr)):
@@ -79,6 +83,7 @@ class GridPropertiesExtractor:
 
         return GridPropertiesExtractor(
             flat_prop_arr=diff_arr,
+            dimensions=monitor_extractor.get_dimensions(),
             is_discrete=False,
             min_global_prop_val=min_prop_val,
             max_global_prop_val=max_prop_val,
@@ -86,6 +91,9 @@ class GridPropertiesExtractor:
 
     def get_flat_prop_arr(self) -> NDArray[np.floating] | NDArray[np.integer]:
         return self._flat_prop_arr
+
+    def get_dimensions(self) -> tuple[int, ...]:
+        return self._dimensions
 
     def is_discrete(self) -> bool:
         return self._is_discrete
