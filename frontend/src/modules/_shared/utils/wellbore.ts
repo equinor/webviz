@@ -294,17 +294,24 @@ export type MinimalWellboreTrajectory = Pick<
 
 type TrajectoryPoint = { easting: number; northing: number; tvdMsl: number };
 
-function defaultRadialDistance(point1: TrajectoryPoint, point2: TrajectoryPoint) {
+export function trajectoryDistanceRadial(point1: TrajectoryPoint, point2: TrajectoryPoint) {
     const vec1 = fromArray([point1.easting, point1.northing, point1.tvdMsl]);
     const vec2 = fromArray([point2.easting, point2.northing, point2.tvdMsl]);
 
     return distance(vec1, vec2);
 }
 
-export function simplifyWellTrajectoryRadialDist<TTrajectory extends MinimalWellboreTrajectory>(
+export function trajectoryDistanceXY(point1: TrajectoryPoint, point2: TrajectoryPoint) {
+    return point2Distance(
+        vec2FromArray([point1.easting, point1.northing]),
+        vec2FromArray([point2.easting, point2.northing]),
+    );
+}
+
+export function simplifyWellTrajectory<TTrajectory extends MinimalWellboreTrajectory>(
     trajectory: TTrajectory,
     threshold: number,
-    computeDistance = defaultRadialDistance,
+    computeDistance = trajectoryDistanceRadial,
 ): TTrajectory {
     const thresholdSquared = threshold * threshold;
 
