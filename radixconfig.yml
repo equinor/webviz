@@ -20,7 +20,7 @@ spec:
   build:
     useBuildKit: true
     subPipeline:
-      identity: *identityNonProdAppId
+      identity: { azure: { clientId: 028bd377-0bff-4f73-bcbc-0039b81e1529 } }
   environments:
     - { name: prod }
     - { name: preprod, build: { from: main } }
