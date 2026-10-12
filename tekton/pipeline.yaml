@@ -8,6 +8,6 @@ spec:
       taskRef:
         name: extract-and-upload-sourcemaps-task
 
-    - name: dbg-show-sub-pipeline-env-vars
-      taskRef:
-        name: dbg-show-sub-pipeline-env-vars-task
+    # - name: dbg-show-sub-pipeline-env-vars
+    #   taskRef:
+    #     name: dbg-show-sub-pipeline-env-vars-task

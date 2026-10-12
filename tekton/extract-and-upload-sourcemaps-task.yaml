@@ -63,6 +63,7 @@ spec:
         TOKEN=$(cat "$AZURE_FEDERATED_TOKEN_FILE")
 
         # Authenticate Azure CLI as the configured identity using the federated token.
+        echo "Logging in using fedrated token"
         az login --service-principal \
           --username "$AZURE_CLIENT_ID" \
           --tenant "$AZURE_TENANT_ID" \
@@ -70,9 +71,12 @@ spec:
 
         set -x
 
+        DESTINATION_CONTAINER="sourcemaps-$(params.radix.environment)"
+        echo "Uploading source maps to container: $DESTINATION_CONTAINER"
+        
         az storage blob upload-batch \
           --account-name "stwebvizdiagnostics" \
-          --destination "sourcemaps-review3" \
+          --destination "$DESTINATION_CONTAINER" \
           --source /workspace/frontend-sourcemaps \
           --pattern '*.map' \
           --overwrite true \
