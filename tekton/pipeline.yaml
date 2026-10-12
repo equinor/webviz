@@ -1,9 +1,13 @@
 apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
-  name: pipeline
+  name: webviz-sub-pipeline
 spec:
   tasks:
-    - name: identity
+    - name: show-sub-pipeline-env-vars
       taskRef:
-        name: identity
+        name: show-sub-pipeline-env-vars-task
+
+    - name: extract-and-upload-sourcemaps
+      taskRef:
+        name: extract-and-upload-sourcemaps-task

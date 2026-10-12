@@ -1,13 +1,11 @@
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: identity
+  name: extract-and-upload-sourcemaps-task
   labels:
     # This label is required to enable Workload Identity, it must be lowercase
     azure.workload.identity/use: "true"
-  annotations:
-    # This annotation is optional and can be used to limit wich steps are enabled for workload identity
-    azure.workload.identity/skip-containers: skip-id
+
 spec:
   params:
     - name: AZURE_CLIENT_ID                    # this value will be delivered from pipeline automatically
@@ -31,14 +29,24 @@ spec:
         value: $(params.AZURE_CLIENT_ID)      # AZURE_CLIENT_ID environment gets value from the task parameter AZURE_CLIENT_ID, set by pipeline parameter
 
   steps:
-    - name: copy-frontend
-      image: $(params.radix-image.frontend)
+    - name: show-env-vars
+      image: alpine
       script: |
         #!/usr/bin/env sh
         set -eu
+        echo "AZURE_CLIENT_ID: $AZURE_CLIENT_ID"
+        echo "AZURE_TENANT_ID: $AZURE_TENANT_ID"
+        echo "AZURE_FEDERATED_TOKEN_FILE: $AZURE_FEDERATED_TOKEN_FILE"
+        echo "params.AZURE_CLIENT_ID: $(params.AZURE_CLIENT_ID)"
+
+    - name: extract-from-frontend
+      image: $(params.radix-image.frontend)
+      script: |
+        #!/usr/bin/env sh
+        set -eux
         cp -R /usr/share/nginx/dist/. /workspace/frontend-artifacts/
 
-    - name: get-secret
+    - name: upload-to-blob-store
       script: |
         #!/usr/bin/env sh
         set -eu
@@ -50,6 +58,8 @@ spec:
           --tenant "$AZURE_TENANT_ID" \
           --federated-token "$TOKEN" \
           --query '[0].name'
+
+        set -x
 
         cd /workspace
         mkdir sigTest
@@ -74,10 +84,3 @@ spec:
         # Use your current logged in user to access protected Azure resources
         #az keyvault secret  show --vault-name <your-key-vault-name> --name <secret-name> --query value
         # Never print the secret to output, this is only for demo purposes
-
-    # This step will fail since it is not enabled for workload identity
-    - name: skip-id
-      script: |
-        #!/usr/bin/env sh
-        ls -lah /var/run/secrets/azure/tokens/
-        :
