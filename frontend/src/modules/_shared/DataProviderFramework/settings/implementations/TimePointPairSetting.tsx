@@ -112,7 +112,7 @@ export class TimePointPairSetting implements CustomSettingImplementation<ValueTy
 
             return (
                 <div className="gap-y-3xs flex flex-col">
-                    <div className="gap-x-3xs flex items-center">
+                    <label className="gap-x-3xs flex items-center">
                         <span className="w-16 shrink-0 text-xs">Base</span>
                         <Combobox
                             layoutClassName="w-full"
@@ -121,8 +121,8 @@ export class TimePointPairSetting implements CustomSettingImplementation<ValueTy
                             onValueChange={handleBaseChange}
                             disabled={props.disabled}
                         />
-                    </div>
-                    <div className="gap-x-3xs flex items-center">
+                    </label>
+                    <label className="gap-x-3xs flex items-center">
                         <span className="w-16 shrink-0 text-xs">Monitor</span>
                         <Combobox
                             layoutClassName="w-full"
@@ -131,7 +131,7 @@ export class TimePointPairSetting implements CustomSettingImplementation<ValueTy
                             onValueChange={handleMonitorChange}
                             disabled={props.disabled}
                         />
-                    </div>
+                    </label>
                 </div>
             );
         };
