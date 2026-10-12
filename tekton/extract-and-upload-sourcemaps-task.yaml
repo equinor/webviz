@@ -23,16 +23,16 @@ spec:
         mountPath: /workspace/frontend-sourcemaps
 
   steps:
-    - name: show-env-vars
-      image: alpine
-      script: |
-        #!/usr/bin/env sh
-        set -eu
-        echo "AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-<unset>}"
-        echo "AZURE_TENANT_ID: ${AZURE_TENANT_ID:-<unset>}"
-        echo "AZURE_FEDERATED_TOKEN_FILE: ${AZURE_FEDERATED_TOKEN_FILE:-<unset>}"
-        echo "params.AZURE_CLIENT_ID: $(params.AZURE_CLIENT_ID)"
-        :
+    # - name: show-env-vars
+    #   image: alpine
+    #   script: |
+    #     #!/usr/bin/env sh
+    #     set -eu
+    #     echo "AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-<unset>}"
+    #     echo "AZURE_TENANT_ID: ${AZURE_TENANT_ID:-<unset>}"
+    #     echo "AZURE_FEDERATED_TOKEN_FILE: ${AZURE_FEDERATED_TOKEN_FILE:-<unset>}"
+    #     echo "params.AZURE_CLIENT_ID: $(params.AZURE_CLIENT_ID)"
+    #     :
 
     - name: extract-files-from-frontend
       image: $(params.radix-image.frontend)
@@ -45,7 +45,7 @@ spec:
         :
 
     - name: upload-to-blob-store
-      image: mcr.microsoft.com/azure-cli:2.55.0
+      image: mcr.microsoft.com/azure-cli:2.90.0
       env:
         # Az needs a home directory that the authorization information can be stored in
         - { name: HOME, value: "/tmp" }
