@@ -4340,7 +4340,7 @@ export type GetRealizationSurfacesMetadataData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/surface/realization_surfaces_metadata/";
+    url: "/surface/realization_surfaces_metadata_v2/";
 };
 
 export type GetRealizationSurfacesMetadataErrors_api = {

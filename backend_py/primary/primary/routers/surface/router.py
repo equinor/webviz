@@ -82,7 +82,7 @@ encoded as a `UintListStr` or "*" to include all realizations.
 
 
 @router.get("/realization_surfaces_metadata_v2/")
-@cache_time(CacheTime.SHORT)
+@cache_time(CacheTime.NORMAL)
 async def get_realization_surfaces_metadata(
     response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),

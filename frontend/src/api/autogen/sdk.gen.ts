@@ -612,7 +612,7 @@ export const getRealizationSurfacesMetadata = <ThrowOnError extends boolean = fa
         ThrowOnError
     >({
         responseType: "json",
-        url: "/surface/realization_surfaces_metadata/",
+        url: "/surface/realization_surfaces_metadata_v2/",
         ...options,
     });
 
