@@ -96,9 +96,10 @@ async def run_tracked_user_task_async(
         except TaskDeferredError as exc:
             # Transient failure or cooperative shutdown:
             # Leave the task untouched (preserves RUNNING) unless the delivery count has reached the maximum.
+            # delivery_count counts previous unsuccessful deliveries, so include this delivery when checking the limit.
             # In that case the task will be marked as FAILED and the special TaskRetryExhaustedError gets raised,
             # which signals to the caller that the task has failed and should be dead-lettered.
-            if sb_msg.delivery_count is None or sb_msg.delivery_count >= max_delivery_count:
+            if sb_msg.delivery_count is None or sb_msg.delivery_count + 1 >= max_delivery_count:
                 await task_state_writer.fail_task_async(
                     status_msg="Task failed due to exhausting retries", internal_error_msg=repr(exc)
                 )
