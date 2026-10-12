@@ -12,15 +12,15 @@ spec:
     - name: AZURE_CLIENT_ID
     # default: not-set-AZURE_CLIENT_ID-in-task
   volumes:
-    - name: frontend-artifacts
+    - name: frontendSourcemaps
       emptyDir: {}
   stepTemplate:
     # Make sure all steps runs as a regular user. Running as root is not allowed
     securityContext:
       runAsUser: 1000
     volumeMounts:
-      - name: frontend-artifacts
-        mountPath: /workspace/frontend-artifacts
+      - name: frontendSourcemaps
+        mountPath: /workspace/frontendSourcemaps
 
   steps:
     - name: show-env-vars
@@ -39,7 +39,9 @@ spec:
       script: |
         #!/usr/bin/env sh
         set -eux
-        cp -Rv /usr/share/nginx/dist/. /workspace/frontend-artifacts/
+        # Right now, copies all files (not only source maps) out from the container
+        # Still, we only upload *.map in the actual upload step
+        cp -Rv /usr/share/nginx/dist/. /workspace/frontendSourcemaps/
         :
 
     - name: upload-to-blob-store
@@ -52,10 +54,11 @@ spec:
       script: |
         #!/usr/bin/env sh
         set -eu
-        echo "AZURE_CLIENT_ID: "${AZURE_CLIENT_ID:?AZURE_CLIENT_ID is required}"
-        echo "AZURE_TENANT_ID: "${AZURE_TENANT_ID:?AZURE_TENANT_ID is required}"
-        echo "AZURE_FEDERATED_TOKEN_FILE: "${AZURE_FEDERATED_TOKEN_FILE:?AZURE_FEDERATED_TOKEN_FILE is required}"
+        echo "AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:?AZURE_CLIENT_ID is required}"
+        echo "AZURE_TENANT_ID: ${AZURE_TENANT_ID:?AZURE_TENANT_ID is required}"
+        echo "AZURE_FEDERATED_TOKEN_FILE: ${AZURE_FEDERATED_TOKEN_FILE:?AZURE_FEDERATED_TOKEN_FILE is required}"
         echo "params.AZURE_CLIENT_ID: $(params.AZURE_CLIENT_ID)"
+        echo "params.radix.environment: $(params.radix.environment)"
 
         TOKEN=$(cat "$AZURE_FEDERATED_TOKEN_FILE")
 
@@ -70,7 +73,7 @@ spec:
         az storage blob upload-batch \
           --account-name "stwebvizdiagnostics" \
           --destination "sourcemaps-review3" \
-          --source /workspace/frontend-artifacts \
+          --source /workspace/frontendSourcemaps \
           --pattern '*.map' \
           --overwrite true \
           --auth-mode login
