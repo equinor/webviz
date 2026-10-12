@@ -96,6 +96,12 @@ export type BodyPostGetPolylineIntersection_api = {
  */
 export type BodyPostGetSampleSurfaceInPoints_api = {
     sample_points: PointSetXY_api;
+    /**
+     * Surface Attribute
+     *
+     * Surface attribute
+     */
+    surface_attribute: TagNameAttribute_api | StdResAttribute_api;
 };
 
 /**
@@ -2038,6 +2044,26 @@ export type StatisticValueObject_api = {
 };
 
 /**
+ * StdResAttribute
+ *
+ * Identifies a surface by the FMU standard result it belongs to.
+ *
+ * sub_name discriminates between surfaces within a standard result, e.g. the contact
+ * type for fluid_contact_surface. It is None for standard results that do not need it.
+ */
+export type StdResAttribute_api = {
+    /**
+     * Kind
+     */
+    kind: "STDRES";
+    std_res_name: SurfaceStandardResult_api;
+    /**
+     * Sub Name
+     */
+    sub_name?: string | null;
+};
+
+/**
  * StratigraphicColumn
  *
  * Stratigraphic column from SMDA
@@ -2277,9 +2303,15 @@ export type SurfaceMeta_api = {
      */
     name_is_stratigraphic_offical: boolean;
     /**
-     * Attribute Name
+     * Attribute
      */
-    attribute_name: string;
+    attribute:
+        | ({
+              kind: "TAGNAME";
+          } & TagNameAttribute_api)
+        | ({
+              kind: "STDRES";
+          } & StdResAttribute_api);
     attribute_type: SurfaceAttributeType_api;
     time_type: SurfaceTimeType_api;
     /**
@@ -2419,6 +2451,22 @@ export type TableColumnStatisticalData_api = {
     statisticValues: {
         [key in InplaceVolumesStatistic_api]?: Array<number>;
     };
+};
+
+/**
+ * TagNameAttribute
+ *
+ * Identifies a surface by the free text tagname it was exported with.
+ */
+export type TagNameAttribute_api = {
+    /**
+     * Kind
+     */
+    kind: "TAGNAME";
+    /**
+     * Tag Name
+     */
+    tag_name: string;
 };
 
 /**
@@ -4292,7 +4340,7 @@ export type GetRealizationSurfacesMetadataData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/surface/realization_surfaces_metadata/";
+    url: "/surface/realization_surfaces_metadata_v2/";
 };
 
 export type GetRealizationSurfacesMetadataErrors_api = {
@@ -4327,7 +4375,7 @@ export type GetObservedSurfacesMetadataData_api = {
         case_uuid: string;
         zCacheBust?: string;
     };
-    url: "/surface/observed_surfaces_metadata/";
+    url: "/surface/observed_surfaces_metadata_v2/";
 };
 
 export type GetObservedSurfacesMetadataErrors_api = {
@@ -4599,12 +4647,6 @@ export type PostGetSampleSurfaceInPointsData_api = {
          * Surface name
          */
         surface_name: string;
-        /**
-         * Surface Attribute
-         *
-         * Surface attribute
-         */
-        surface_attribute: string;
         /**
          * Realization Nums
          *
