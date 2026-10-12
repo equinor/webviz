@@ -71,7 +71,7 @@ spec:
 
         set -x
 
-        DESTINATION_CONTAINER="sourcemaps-$(params.radix.environment)"
+        DESTINATION_CONTAINER="sourcemaps-shared"
         echo "Uploading source maps to container: $DESTINATION_CONTAINER"
         
         az storage blob upload-batch \
