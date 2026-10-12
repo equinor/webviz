@@ -630,7 +630,7 @@ export const getObservedSurfacesMetadata = <ThrowOnError extends boolean = false
         ThrowOnError
     >({
         responseType: "json",
-        url: "/surface/observed_surfaces_metadata/",
+        url: "/surface/observed_surfaces_metadata_v2/",
         ...options,
     });
 
