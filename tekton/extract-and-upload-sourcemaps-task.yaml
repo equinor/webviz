@@ -10,6 +10,7 @@ spec:
   params:
     # This value will be delivered from pipeline automatically
     - name: AZURE_CLIENT_ID
+    # default: not-set-AZURE_CLIENT_ID-in-task
   volumes:
     - name: frontend-artifacts
       emptyDir: {}
@@ -27,9 +28,9 @@ spec:
       script: |
         #!/usr/bin/env sh
         set -eu
-        echo "AZURE_CLIENT_ID: $AZURE_CLIENT_ID"
-        echo "AZURE_TENANT_ID: $AZURE_TENANT_ID"
-        echo "AZURE_FEDERATED_TOKEN_FILE: $AZURE_FEDERATED_TOKEN_FILE"
+        echo "AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-<unset>}"
+        echo "AZURE_TENANT_ID: ${AZURE_TENANT_ID:-<unset>}"
+        echo "AZURE_FEDERATED_TOKEN_FILE: ${AZURE_FEDERATED_TOKEN_FILE:-<unset>}"
         echo "params.AZURE_CLIENT_ID: $(params.AZURE_CLIENT_ID)"
         :
 
@@ -51,10 +52,9 @@ spec:
       script: |
         #!/usr/bin/env sh
         set -eu
-
-        echo "AZURE_CLIENT_ID: $AZURE_CLIENT_ID"
-        echo "AZURE_TENANT_ID: $AZURE_TENANT_ID"
-        echo "AZURE_FEDERATED_TOKEN_FILE: $AZURE_FEDERATED_TOKEN_FILE"
+        echo "AZURE_CLIENT_ID: "${AZURE_CLIENT_ID:?AZURE_CLIENT_ID is required}"
+        echo "AZURE_TENANT_ID: "${AZURE_TENANT_ID:?AZURE_TENANT_ID is required}
+        echo "AZURE_FEDERATED_TOKEN_FILE: "${AZURE_FEDERATED_TOKEN_FILE:?AZURE_FEDERATED_TOKEN_FILE is required}
         echo "params.AZURE_CLIENT_ID: $(params.AZURE_CLIENT_ID)"
 
         TOKEN=$(cat "$AZURE_FEDERATED_TOKEN_FILE")
