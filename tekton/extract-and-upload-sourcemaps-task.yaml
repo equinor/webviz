@@ -8,8 +8,8 @@ metadata:
 
 spec:
   params:
-    - name: AZURE_CLIENT_ID                    # this value will be delivered from pipeline automatically
-      default: not-set-AZURE_CLIENT_ID-in-task # optional default value
+    # This value will be delivered from pipeline automatically
+    - name: AZURE_CLIENT_ID
   volumes:
     - name: frontend-artifacts
       emptyDir: {}
@@ -17,16 +17,9 @@ spec:
     # Make sure all steps runs as a regular user. Running as root is not allowed
     securityContext:
       runAsUser: 1000
-    image: mcr.microsoft.com/azure-cli:2.55.0
     volumeMounts:
       - name: frontend-artifacts
         mountPath: /workspace/frontend-artifacts
-    env:
-      # Az needs a home directory that the authorizatio information can be stored in
-      - name: HOME
-        value: "/tmp"
-      - name: AZURE_CLIENT_ID
-        value: $(params.AZURE_CLIENT_ID)      # AZURE_CLIENT_ID environment gets value from the task parameter AZURE_CLIENT_ID, set by pipeline parameter
 
   steps:
     - name: show-env-vars
@@ -38,40 +31,41 @@ spec:
         echo "AZURE_TENANT_ID: $AZURE_TENANT_ID"
         echo "AZURE_FEDERATED_TOKEN_FILE: $AZURE_FEDERATED_TOKEN_FILE"
         echo "params.AZURE_CLIENT_ID: $(params.AZURE_CLIENT_ID)"
+        :
 
-    - name: extract-from-frontend
+    - name: extract-files-from-frontend
       image: $(params.radix-image.frontend)
       script: |
         #!/usr/bin/env sh
         set -eux
-        cp -R /usr/share/nginx/dist/. /workspace/frontend-artifacts/
+        cp -Rv /usr/share/nginx/dist/. /workspace/frontend-artifacts/
+        :
 
     - name: upload-to-blob-store
+      image: mcr.microsoft.com/azure-cli:2.55.0
+      env:
+        # Az needs a home directory that the authorization information can be stored in
+        - { name: HOME, value: "/tmp" }
+        # AZURE_CLIENT_ID environment gets value from the task parameter AZURE_CLIENT_ID, set by pipeline parameter
+        - { name: AZURE_CLIENT_ID, value: $(params.AZURE_CLIENT_ID)}
       script: |
         #!/usr/bin/env sh
         set -eu
+
+        echo "AZURE_CLIENT_ID: $AZURE_CLIENT_ID"
+        echo "AZURE_TENANT_ID: $AZURE_TENANT_ID"
+        echo "AZURE_FEDERATED_TOKEN_FILE: $AZURE_FEDERATED_TOKEN_FILE"
+        echo "params.AZURE_CLIENT_ID: $(params.AZURE_CLIENT_ID)"
+
         TOKEN=$(cat "$AZURE_FEDERATED_TOKEN_FILE")
 
-        # Log in to Azure with the provided credentials, that matches the configured ferated credential
+        # Authenticate Azure CLI as the configured identity using the federated token.
         az login --service-principal \
           --username "$AZURE_CLIENT_ID" \
           --tenant "$AZURE_TENANT_ID" \
-          --federated-token "$TOKEN" \
-          --query '[0].name'
+          --federated-token "$TOKEN"
 
         set -x
-
-        cd /workspace
-        mkdir sigTest
-        cd sigTest
-        echo "Hello from Tekton" > test-upload.txt
-
-        az storage blob upload \
-          --account-name "stwebvizdiagnostics" \
-          --container-name "sourcemaps-review3" \
-          --name test-upload.txt \
-          --file test-upload.txt \
-          --auth-mode login
 
         az storage blob upload-batch \
           --account-name "stwebvizdiagnostics" \
@@ -81,6 +75,4 @@ spec:
           --overwrite true \
           --auth-mode login
 
-        # Use your current logged in user to access protected Azure resources
-        #az keyvault secret  show --vault-name <your-key-vault-name> --name <secret-name> --query value
-        # Never print the secret to output, this is only for demo purposes
+        :

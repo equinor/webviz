@@ -4,10 +4,10 @@ metadata:
   name: webviz-sub-pipeline
 spec:
   tasks:
-    - name: show-sub-pipeline-env-vars
-      taskRef:
-        name: show-sub-pipeline-env-vars-task
-
     - name: extract-and-upload-sourcemaps
       taskRef:
         name: extract-and-upload-sourcemaps-task
+
+    - name: dbg-show-sub-pipeline-env-vars
+      taskRef:
+        name: dbg-show-sub-pipeline-env-vars-task

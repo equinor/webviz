@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: show-sub-pipeline-env-vars-task
+  name: dbg-show-sub-pipeline-env-vars-task
 
 spec:
   steps:
