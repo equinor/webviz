@@ -1,5 +1,6 @@
 import type { Position } from "@deck.gl/core";
 import { GeoJsonLayer } from "@deck.gl/layers";
+import { GL } from "@luma.gl/webgl/constants";
 import {
     getAziAndInclForSegment,
     getSegmentIndicesForMd,
@@ -14,7 +15,7 @@ import type {
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ExtendedWellFeature } from "@modules/_shared/types/geojson";
-import { wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
+import { interpolateSegmentPosition, wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
 
 function findWellboreTrajectory(uuid: string | null | undefined, trajectories: WellboreTrajectory_api[]) {
     if (!uuid) return undefined;
@@ -33,6 +34,36 @@ export function makeWellTrajectoriesHoverVisualizationFunctions(
     }
 
     return {
+        [HoverTopic.WELLBORE_MD]: (hoverData) => {
+            const wellboreTrajectory = wellboreTrajectories.find(
+                (wellTrajectory) => wellTrajectory.wellboreUuid === hoverData?.wellboreUuid,
+            );
+            if (!wellboreTrajectory || !hoverData) return [];
+
+            const data = getMarkerDataAtMd(wellboreTrajectory, hoverData.md);
+
+            return [
+                new WellMarkersLayer({
+                    id: `${id}-hovered-md-point`,
+                    name: "Well Markers",
+                    // ! Layer prepares the markers on init, data list length needs to be
+                    // ! consistent: if the data list starts empty, no markers will be shown
+                    data: ["dummy"],
+                    shape: "circle",
+                    sizeUnits: "meters",
+
+                    getSize: 9,
+                    // ! Marker disc is transparent, so it needs to be rendered before the
+                    // ! trajectory layer to make it clear where they intersect
+                    getColor: [255, 0, 0, 115],
+                    getPosition: data.position,
+                    getAzimuth: data.azimuth,
+                    getInclination: data.inclination,
+
+                    ZIncreasingDownwards: false,
+                }),
+            ];
+        },
         [HoverTopic.WELLBORE]: (wellboreUuid) => {
             const trajectoryData: ExtendedWellFeature[] = [];
             const wellboreTrajectory = findWellboreTrajectory(wellboreUuid, wellboreTrajectories);
@@ -55,33 +86,12 @@ export function makeWellTrajectoriesHoverVisualizationFunctions(
                     pickable: false,
                     visible: trajectoryData.length > 0,
                     autoHighlight: false,
-                }),
-            ];
-        },
-        [HoverTopic.WELLBORE_MD]: (hoverData) => {
-            const wellboreTrajectory = wellboreTrajectories.find(
-                (wellTrajectory) => wellTrajectory.wellboreUuid === hoverData?.wellboreUuid,
-            );
-            if (!wellboreTrajectory || !hoverData) return [];
 
-            const data = getMarkerDataAtMd(wellboreTrajectory, hoverData.md);
-
-            return [
-                new WellMarkersLayer({
-                    id: `${id}-hovered-md-point`,
-                    name: "Well Markers",
-                    // ! Layer prepares the markers on init; if the data list starts empty, no markers will be shown
-                    data: ["dummy"],
-                    shape: "circle",
-                    sizeUnits: "meters",
-
-                    getSize: 9,
-                    getColor: [255, 0, 0, 115],
-                    getPosition: data.position,
-                    getAzimuth: data.azimuth,
-                    getInclination: data.inclination,
-
-                    ZIncreasingDownwards: false,
+                    parameters: {
+                        // ! Some subsurface-comp layers are turning this setting off; this ensures
+                        // ! that the hover effect renders correctly on top of the trajectory
+                        [GL.POLYGON_OFFSET_FILL]: true,
+                    },
                 }),
             ];
         },
@@ -109,12 +119,8 @@ function getMarkerDataAtMd(trajectory: WellboreTrajectory_api, md: number) {
     ];
 
     // Interpolate values
+    const position = interpolateSegmentPosition(trajectory, startIdx, endIdx, lengthAlongSegment);
     const { azimuth, inclination } = getAziAndInclForSegment(segStartPoint as any, segEndPoint as any);
-    const position: Position = [
-        segStartPoint[0] + (segEndPoint[0] - segStartPoint[0]) * lengthAlongSegment,
-        segStartPoint[1] + (segEndPoint[1] - segStartPoint[1]) * lengthAlongSegment,
-        segStartPoint[2] + (segEndPoint[2] - segStartPoint[2]) * lengthAlongSegment,
-    ];
 
     return { position, azimuth, inclination };
 }

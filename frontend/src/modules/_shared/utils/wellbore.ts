@@ -220,39 +220,35 @@ export function getTrajectoryIndexForMd(md: number, wellboreTrajectory: Wellbore
 }
 
 /**
- * Interpolates the 3D position at a given MD value along the wellbore trajectory.
- * @param md Measured Depth to interpolate the position for.
+ * Interpolates the 3D position at a given position along a trajectory segment.
  * @param wellboreTrajectory The wellbore trajectory to interpolate within.
- * @param preComputedTrajectoryIndex (optional) If provided, this index will be used for interpolation instead of calculating it again.
- * @returns the interpolated UTM world position as a 3d-point array
+ * @param segmentStart The index of the start point of the segment.
+ * @param segmentEnd The index of the end point of the segment.
+ * @param lengthAlongSegment A value in [0, 1] representing how far along the segment to interpolate.
+ * @returns the interpolated UTM world position as a 3d-point array. Z increases upwards
  */
-export function getInterpolatedPositionAtMd(
-    md: number,
+export function interpolateSegmentPosition(
     wellboreTrajectory: WellboreTrajectory_api,
-    preComputedTrajectoryIndex?: number,
+    segmentStart: number,
+    segmentEnd: number,
+    lengthAlongSegment: number,
 ): Point3D {
-    const { mdArr, eastingArr, northingArr, tvdMslArr } = wellboreTrajectory;
-    const trajectoryIndex = preComputedTrajectoryIndex ?? getTrajectoryIndexForMd(md, wellboreTrajectory);
+    const startPoint = [
+        wellboreTrajectory.eastingArr[segmentStart],
+        wellboreTrajectory.northingArr[segmentStart],
+        -wellboreTrajectory.tvdMslArr[segmentStart],
+    ];
+    const endPoint = [
+        wellboreTrajectory.eastingArr[segmentEnd],
+        wellboreTrajectory.northingArr[segmentEnd],
+        -wellboreTrajectory.tvdMslArr[segmentEnd],
+    ];
 
-    // Get the real life points before and after the point
-    const nextMd = mdArr[trajectoryIndex];
-    const nextX = eastingArr[trajectoryIndex];
-    const nextY = northingArr[trajectoryIndex];
-    const nextZ = tvdMslArr[trajectoryIndex];
-
-    const prevMd = mdArr[trajectoryIndex - 1];
-    const prevX = eastingArr[trajectoryIndex - 1];
-    const prevY = northingArr[trajectoryIndex - 1];
-    const prevZ = tvdMslArr[trajectoryIndex - 1];
-
-    // Calculate how far along this segment the mdPoint is
-    const ratio = (md - prevMd) / (nextMd - prevMd);
-
-    const dx = nextX - prevX;
-    const dy = nextY - prevY;
-    const dz = nextZ - prevZ;
-
-    return [prevX + ratio * dx, prevY + ratio * dy, prevZ + ratio * dz];
+    return [
+        startPoint[0] + lengthAlongSegment * (endPoint[0] - startPoint[0]),
+        startPoint[1] + lengthAlongSegment * (endPoint[1] - startPoint[1]),
+        startPoint[2] + lengthAlongSegment * (endPoint[2] - startPoint[2]),
+    ];
 }
 
 /**
