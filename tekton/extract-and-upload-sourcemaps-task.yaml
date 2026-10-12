@@ -12,15 +12,15 @@ spec:
     - name: AZURE_CLIENT_ID
     # default: not-set-AZURE_CLIENT_ID-in-task
   volumes:
-    - name: frontendSourcemaps
+    - name: frontend-sourcemaps
       emptyDir: {}
   stepTemplate:
     # Make sure all steps runs as a regular user. Running as root is not allowed
     securityContext:
       runAsUser: 1000
     volumeMounts:
-      - name: frontendSourcemaps
-        mountPath: /workspace/frontendSourcemaps
+      - name: frontend-sourcemaps
+        mountPath: /workspace/frontend-sourcemaps
 
   steps:
     - name: show-env-vars
@@ -41,7 +41,7 @@ spec:
         set -eux
         # Right now, copies all files (not only source maps) out from the container
         # Still, we only upload *.map in the actual upload step
-        cp -Rv /usr/share/nginx/dist/. /workspace/frontendSourcemaps/
+        cp -Rv /usr/share/nginx/dist/. /workspace/frontend-sourcemaps/
         :
 
     - name: upload-to-blob-store
@@ -73,7 +73,7 @@ spec:
         az storage blob upload-batch \
           --account-name "stwebvizdiagnostics" \
           --destination "sourcemaps-review3" \
-          --source /workspace/frontendSourcemaps \
+          --source /workspace/frontend-sourcemaps \
           --pattern '*.map' \
           --overwrite true \
           --auth-mode login
