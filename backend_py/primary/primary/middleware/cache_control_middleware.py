@@ -73,7 +73,10 @@ def custom_cache_time(
         raise ValueError("Cache time must be a positive number of seconds")
     if stale_while_revalidate_s is not None and stale_while_revalidate_s <= 0:
         raise ValueError("stale_while_revalidate_s must be a positive number of seconds")
-    if result_version is not None and (isinstance(result_version, bool) or result_version <= 0):
+    # bool is a subclass of int, so exclude it explicitly
+    if result_version is not None and (
+        not isinstance(result_version, int) or isinstance(result_version, bool) or result_version <= 0
+    ):
         raise ValueError("result_version must be a positive integer")
 
     def decorator(func: Callable) -> Callable:

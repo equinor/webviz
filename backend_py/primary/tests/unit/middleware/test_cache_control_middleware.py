@@ -58,7 +58,7 @@ def test_endpoint_without_result_version_has_no_field() -> None:
     assert "x-result-version" not in operation
 
 
-@pytest.mark.parametrize("result_version", [0, -1, True])
+@pytest.mark.parametrize("result_version", [0, -1, True, False, 1.5, 2.0, "2"])
 def test_invalid_result_version_is_rejected(result_version: int) -> None:
     with pytest.raises(ValueError):
         cache_time(CacheTime.LONG, result_version=result_version)
