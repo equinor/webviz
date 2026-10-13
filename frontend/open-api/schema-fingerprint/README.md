@@ -41,17 +41,19 @@ This is independent of `zCacheBust` (`../cachebusting-plugin`), which busts cach
    undeclared 2xx.
 2. Collect every `$ref` reachable from them, transitively (`#/components/schemas/...`,
    `#/components/responses/...`).
-3. Serialize `{ responses, references }` as canonical JSON ([RFC 8785](https://www.rfc-editor.org/rfc/rfc8785),
+3. Take the operation's `x-result-version`, if it has one (see [Result version](#result-version)).
+4. Serialize `{ responses, references, resultVersion? }` as canonical JSON ([RFC 8785](https://www.rfc-editor.org/rfc/rfc8785),
    via the `canonicalize` package). Object keys are sorted, so property order doesn't matter.
-4. Hash `FINGERPRINT_ALGORITHM + "\n" + <canonical JSON>` with SHA-256 and keep the first 16 hex characters.
+5. Hash `FINGERPRINT_ALGORITHM + "\n" + <canonical JSON>` with SHA-256 and keep the first 16 hex characters.
 
 **Changes the fingerprint:** anything in those responses or the schemas they reference, including field
 additions, removals, type changes, `required`, enum values, nested schemas, status codes and media types.
 Documentation changes (descriptions, examples) and schema renames also change it. That is deliberate:
-ignoring them would need a schema-aware normalizer, and the cost is only one extra cache miss.
+ignoring them would need a schema-aware normalizer, and the cost is only one extra cache miss. Adding or
+bumping `x-result-version` also changes it.
 
-**Doesn't change it:** other explicitly declared non-2xx responses (e.g. `422`), request parameters and bodies, other endpoints, and components
-the endpoint doesn't reference.
+**Doesn't change it:** other explicitly declared non-2xx responses (e.g. `422`), request parameters and bodies,
+other endpoints, and components the endpoint doesn't reference.
 
 **Warnings at generation time** (printed as `[schema-fingerprint] ...`):
 
@@ -63,6 +65,32 @@ the endpoint doesn't reference.
 
 If you change what goes into the hash, bump `FINGERPRINT_ALGORITHM`. That changes every fingerprint once, on
 purpose.
+
+## Result version
+
+A bug fix or algorithm change can change the values an endpoint returns without changing its response schema.
+The fingerprint can't see that, so the backend declares it instead:
+
+```python
+@router.get("/realization_surfaces_metadata/")
+@cache_time(CacheTime.LONG, result_version=2)
+async def get_realization_surfaces_metadata(...): ...
+```
+
+`result_version` (on `@cache_time` and `@custom_cache_time`) is published as `x-result-version` in the
+endpoint's OpenAPI operation, and the fingerprint includes it. Bumping it changes only that endpoint's
+`_schema`, in the same PR as the fix, and the regenerated SDK shows the change.
+
+- Bump it for bug fixes, algorithm changes, and changes to units, filtering or defaults. That includes changes
+  in converters and in service or utility functions the endpoint calls. A fix in a shared helper needs a bump on
+  every cached endpoint that uses it.
+- Don't bump it for response schema changes (the fingerprint already covers them) or for refactors with
+  identical output.
+- Endpoints without `result_version` have no `x-result-version`, and their fingerprints are the same as before
+  the field existed.
+- It only busts the browser cache. Results cached on the server (Redis, Sumo task results) need their own
+  handling.
+- Endpoints that opt in at runtime with `set_cache_time()` can't declare it, because it isn't a decorator.
 
 ## How it hooks into hey-api
 
