@@ -1,7 +1,8 @@
 # Schema fingerprint (`_schema` query parameter)
 
 Every generated SDK function for a **GET** endpoint sends a constant `_schema=<16 hex chars>` query parameter.
-The value is a fingerprint of that endpoint's success-response schema (2xx and `default`), computed when the SDK is generated.
+The value is a fingerprint of that endpoint's success-response schema (2xx and `default`) and its optional
+[result version](#result-version), computed when the SDK is generated.
 
 ```ts
 // src/api/autogen/sdk.gen.ts (generated)
@@ -22,7 +23,8 @@ model, the browser could keep serving a body with the old shape, which the new f
 
 The browser cache is keyed by URL. When a response schema changes, regenerating the SDK changes that endpoint's
 `_schema`, and so its URL, so the old cached response is never used. Endpoints whose schema didn't change keep
-their URL and their cache.
+their URL and their cache. The same goes for a change to the values an endpoint returns, once the backend bumps
+its `result_version`.
 
 This is independent of `zCacheBust` (`../cachebusting-plugin`), which busts caches when _ensemble data_ changes.
 
@@ -42,8 +44,9 @@ This is independent of `zCacheBust` (`../cachebusting-plugin`), which busts cach
 2. Collect every `$ref` reachable from them, transitively (`#/components/schemas/...`,
    `#/components/responses/...`).
 3. Take the operation's `x-result-version`, if it has one (see [Result version](#result-version)).
-4. Serialize `{ responses, references, resultVersion? }` as canonical JSON ([RFC 8785](https://www.rfc-editor.org/rfc/rfc8785),
-   via the `canonicalize` package). Object keys are sorted, so property order doesn't matter.
+4. Serialize `{ responses, references, resultVersion? }` as canonical JSON
+   ([RFC 8785](https://www.rfc-editor.org/rfc/rfc8785), via the `canonicalize` package). Object keys are sorted,
+   so property order doesn't matter. `resultVersion` is left out entirely when the operation has none.
 5. Hash `FINGERPRINT_ALGORITHM + "\n" + <canonical JSON>` with SHA-256 and keep the first 16 hex characters.
 
 **Changes the fingerprint:** anything in those responses or the schemas they reference, including field
@@ -61,10 +64,13 @@ other endpoints, and components the endpoint doesn't reference.
   Currently expected for `GET /login` and `GET /auth-callback`, which are never cached.
 - An operation without any 2xx or `default` response.
 
-**Errors:** unresolvable or non-local (`other.json#/...`) `$ref`s fail generation.
+**Errors:** unresolvable or non-local (`other.json#/...`) `$ref`s fail generation, as does an
+`x-result-version` that isn't a positive integer.
 
 If you change what goes into the hash, bump `FINGERPRINT_ALGORITHM`. That changes every fingerprint once, on
-purpose.
+purpose. The exception is an optional input that's left out of the hashed JSON when absent, like
+`resultVersion`: endpoints without it hash exactly the same input as before, so their fingerprints don't change.
+Don't bump in that case, because a bump would invalidate every endpoint's browser cache for no reason.
 
 ## Result version
 
@@ -79,7 +85,8 @@ async def get_realization_surfaces_metadata(...): ...
 
 `result_version` (on `@cache_time` and `@custom_cache_time`) is published as `x-result-version` in the
 endpoint's OpenAPI operation, and the fingerprint includes it. Bumping it changes only that endpoint's
-`_schema`, in the same PR as the fix, and the regenerated SDK shows the change.
+`_schema`, in the same PR as the fix, and the regenerated SDK shows the change. It must be a positive integer:
+the backend raises at import time otherwise (including for `bool` and `float` values).
 
 - Bump it for bug fixes, algorithm changes, and changes to units, filtering or defaults. That includes changes
   in converters and in service or utility functions the endpoint calls. A fix in a shared helper needs a bump on
@@ -216,8 +223,8 @@ schema. Restore it before the next release that changes cached response models.
 
 ## Limitations
 
-- Only the **response schema** is covered. A backend change that alters what an endpoint returns without
-  changing its schema (semantics, units, filtering) doesn't change `_schema`.
+- A backend change that alters what an endpoint returns without changing its schema (semantics, units,
+  filtering) only changes `_schema` if the author bumps `result_version`. Nothing checks that automatically.
 - Endpoints with an empty response schema can't be fingerprinted meaningfully (see warnings above).
 - TanStack Query keys don't include `_schema`. That's fine: its in-memory cache doesn't survive the page reload
   that loads a new frontend build.
