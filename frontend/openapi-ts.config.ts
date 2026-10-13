@@ -2,6 +2,7 @@ import { defineConfig } from "@hey-api/openapi-ts";
 import { upperFirst } from "lodash-es";
 
 import { makePlugin as cacheBustingPlugin } from "./open-api/cachebusting-plugin";
+import { makeSchemaFingerprintEvents } from "./open-api/schema-fingerprint";
 
 function toPascalCase(str: string): string {
     const camelCase = str
@@ -43,7 +44,12 @@ export default defineConfig({
     },
     plugins: [
         cacheBustingPlugin(),
-        "@hey-api/sdk",
+        {
+            name: "@hey-api/sdk",
+            // Adds `_schema=<response schema fingerprint>` to GET requests to bust browser caches when a
+            // response schema changes. See open-api/schema-fingerprint/README.md
+            $hooks: { events: makeSchemaFingerprintEvents() },
+        },
         { name: "@hey-api/client-axios", exportFromIndex: true },
         {
             name: "@tanstack/react-query",
