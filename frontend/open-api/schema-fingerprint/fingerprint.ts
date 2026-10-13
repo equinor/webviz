@@ -10,8 +10,9 @@ export const FINGERPRINT_ALGORITHM = "webviz-response-fingerprint/v1";
 
 const FINGERPRINT_LENGTH = 16;
 
-// "200"–"299", and OpenAPI's range key "2XX"
-const SUCCESS_STATUS_CODE = /^2(\d\d|XX)$/i;
+// "200"–"299", OpenAPI's range key "2XX", and "default", which covers every status not declared otherwise,
+// including an undeclared 2xx
+const SUCCESS_STATUS_CODE = /^(2(\d\d|XX)|default)$/i;
 
 export class SchemaFingerprintError extends Error {
     constructor(message: string) {
@@ -27,15 +28,15 @@ export type FingerprintOptions = {
 
 /** Everything the fingerprint is computed from. */
 export type FingerprintInput = {
-    /** The operation's 2xx responses, keyed by status code, exactly as in the OpenAPI document. */
+    /** The operation's 2xx and `default` responses, keyed by status code, exactly as in the OpenAPI document. */
     responses: Record<string, unknown>;
     /** Every `$ref` reachable from those responses, mapped to the value it points to. */
     references: Record<string, unknown>;
 };
 
 /**
- * Fingerprint of an OpenAPI operation's success responses: their status codes, media types and schemas, plus
- * everything those schemas reference.
+ * Fingerprint of an OpenAPI operation's success responses (2xx and `default`): their status codes, media types and
+ * schemas, plus everything those schemas reference.
  *
  * Any change to that input changes the fingerprint, including descriptions and schema renames. Those only cost
  * an extra cache miss; what matters is that no change to the response shape can keep the old fingerprint.
@@ -65,7 +66,7 @@ export function collectFingerprintInput(
 
     const successResponses = pickSuccessResponses(operation);
     if (Object.keys(successResponses).length === 0) {
-        warn("no 2xx response is defined, so the fingerprint can't reflect the response body");
+        warn("no 2xx or default response is defined, so the fingerprint can't reflect the response body");
     }
     warnAboutResponsesWithoutSchema(successResponses, document, warn);
 
@@ -75,7 +76,7 @@ export function collectFingerprintInput(
     };
 }
 
-/** Returns the operation's 2xx responses, keyed by status code. */
+/** Returns the operation's 2xx and `default` responses, keyed by status code. */
 function pickSuccessResponses(operation: unknown): Record<string, unknown> {
     if (!isPlainObject(operation)) {
         throw new SchemaFingerprintError("expected an OpenAPI operation object");

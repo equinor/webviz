@@ -1,7 +1,7 @@
 # Schema fingerprint (`_schema` query parameter)
 
 Every generated SDK function for a **GET** endpoint sends a constant `_schema=<16 hex chars>` query parameter.
-The value is a fingerprint of that endpoint's success-response schema, computed when the SDK is generated.
+The value is a fingerprint of that endpoint's success-response schema (2xx and `default`), computed when the SDK is generated.
 
 ```ts
 // src/api/autogen/sdk.gen.ts (generated)
@@ -36,8 +36,9 @@ This is independent of `zCacheBust` (`../cachebusting-plugin`), which busts cach
 
 [`fingerprint.ts`](fingerprint.ts), `fingerprintResponse(operation, document)`:
 
-1. Take the operation's 2xx responses from the OpenAPI document as they are (status codes, media types,
-   schemas).
+1. Take the operation's 2xx and `default` responses from the OpenAPI document as they are (status codes, media
+   types, schemas). `default` is included because it covers every status not declared otherwise, including an
+   undeclared 2xx.
 2. Collect every `$ref` reachable from them, transitively (`#/components/schemas/...`,
    `#/components/responses/...`).
 3. Serialize `{ responses, references }` as canonical JSON ([RFC 8785](https://www.rfc-editor.org/rfc/rfc8785),
@@ -49,14 +50,14 @@ additions, removals, type changes, `required`, enum values, nested schemas, stat
 Documentation changes (descriptions, examples) and schema renames also change it. That is deliberate:
 ignoring them would need a schema-aware normalizer, and the cost is only one extra cache miss.
 
-**Doesn't change it:** non-2xx responses, request parameters and bodies, other endpoints, and components
+**Doesn't change it:** other explicitly declared non-2xx responses (e.g. `422`), request parameters and bodies, other endpoints, and components
 the endpoint doesn't reference.
 
 **Warnings at generation time** (printed as `[schema-fingerprint] ...`):
 
-- A 2xx response whose schema is missing or empty (`{}`). Its body shape can't be fingerprinted. Currently
-  expected for `GET /login` and `GET /auth-callback`, which are never cached.
-- An operation without any 2xx response.
+- A 2xx or `default` response whose schema is missing or empty (`{}`). Its body shape can't be fingerprinted.
+  Currently expected for `GET /login` and `GET /auth-callback`, which are never cached.
+- An operation without any 2xx or `default` response.
 
 **Errors:** unresolvable or non-local (`other.json#/...`) `$ref`s fail generation.
 
@@ -192,3 +193,9 @@ schema. Restore it before the next release that changes cached response models.
 - Endpoints with an empty response schema can't be fingerprinted meaningfully (see warnings above).
 - TanStack Query keys don't include `_schema`. That's fine: its in-memory cache doesn't survive the page reload
   that loads a new frontend build.
+- `_schema` is only a client-side marker, and the backend doesn't check it. During a rolling deploy, the new
+  frontend can be served while some `/api` requests still reach old backend replicas. A request in that window
+  gets the old response shape under the new `_schema` URL, and the browser can cache it for up to two weeks.
+  This only affects requests made during the rollout, and deploys mostly happen overnight. If it shows up in
+  practice, the fix is on the backend: the frontend sends its build commit in a header, and the backend marks
+  responses `Cache-Control: no-store` when that commit doesn't match its own.

@@ -136,6 +136,15 @@ describe("fingerprintResponse", () => {
             },
         ],
         [
+            // `default` also covers an undeclared 2xx
+            "a default response is added",
+            (spec) =>
+                (spec.paths["/wells"].get.responses.default = {
+                    description: "Any other response",
+                    content: { "application/json": { schema: { $ref: "#/components/schemas/Field" } } },
+                }),
+        ],
+        [
             "the media type changes",
             (spec) => {
                 const content = spec.paths["/wells"].get.responses["200"].content;
@@ -227,7 +236,32 @@ describe("fingerprintResponse", () => {
 
             fingerprintResponse(spec.paths["/wells"].get, spec, { onWarning });
 
-            expect(onWarning).toHaveBeenCalledExactlyOnceWith(expect.stringContaining("no 2xx response"));
+            expect(onWarning).toHaveBeenCalledExactlyOnceWith(expect.stringContaining("no 2xx or default response"));
+        });
+
+        test("does not warn when only a default response is defined", () => {
+            const spec = makeSpec();
+            const responses = spec.paths["/wells"].get.responses;
+            responses.default = responses["200"];
+            delete responses["200"];
+            const onWarning = vi.fn();
+
+            fingerprintResponse(spec.paths["/wells"].get, spec, { onWarning });
+
+            expect(onWarning).not.toHaveBeenCalled();
+        });
+
+        test("follows references from a default response", () => {
+            const spec = makeSpec();
+            spec.paths["/wells"].get.responses.default = {
+                description: "Any other response",
+                content: { "application/json": { schema: { $ref: "#/components/schemas/Field" } } },
+            };
+            const before = hashOf(spec);
+
+            spec.components.schemas.Field.properties.code = { type: "string" };
+
+            expect(hashOf(spec)).not.toBe(before);
         });
 
         test("does not warn about a success response without a body", () => {
