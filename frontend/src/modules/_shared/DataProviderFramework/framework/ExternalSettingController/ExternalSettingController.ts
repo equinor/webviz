@@ -83,6 +83,12 @@ export class ExternalSettingController<
                 this.makeIntersectionOfValueConstraints();
             }),
         );
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "controlled-settings",
+            settingManager.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(() => {
+                this.syncStateFromControlledSettings();
+            }),
+        );
     }
 
     getSetting(): SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints> {
