@@ -202,6 +202,10 @@ export class ExternalSettingController<
         let hasUninitialized = false;
 
         for (const setting of this._controlledSettings.values()) {
+            // A hidden setting does not contribute constraints, so it must not block the shared setting
+            if (setting.getAttributes().visible === false) {
+                continue;
+            }
             if (setting.isLoading(true)) {
                 hasLoading = true;
             }
