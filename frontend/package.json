@@ -122,6 +122,7 @@
         "@types/uuid": "^10.0.0",
         "@vitejs/plugin-react": "^6.0.3",
         "@vitest/coverage-istanbul": "^4.1.10",
+        "canonicalize": "^5.1.0",
         "dependency-cruiser": "^17.4.3",
         "eslint": "^10.10.0",
         "eslint-config-prettier": "^10.0.2",
