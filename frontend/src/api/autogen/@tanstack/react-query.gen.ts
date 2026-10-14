@@ -71,6 +71,7 @@ import {
     getStatisticalVectorDataPerSensitivity,
     getSummaryObservations,
     getSurfaceData,
+    getTelemetryConfig,
     getUserInfo,
     getUserPhoto,
     getVectorList,
@@ -271,6 +272,8 @@ import type {
     GetSurfaceDataData_api,
     GetSurfaceDataError_api,
     GetSurfaceDataResponse_api,
+    GetTelemetryConfigData_api,
+    GetTelemetryConfigResponse_api,
     GetUserInfoData_api,
     GetUserInfoError_api,
     GetUserInfoResponse_api,
@@ -3352,6 +3355,31 @@ export const getMediaSasTokenOptions = (options?: Options<GetMediaSasTokenData_a
             return data;
         },
         queryKey: getMediaSasTokenQueryKey(options),
+    });
+
+export const getTelemetryConfigQueryKey = (options?: Options<GetTelemetryConfigData_api>) =>
+    createQueryKey("getTelemetryConfig", options);
+
+/**
+ * Get Telemetry Config
+ */
+export const getTelemetryConfigOptions = (options?: Options<GetTelemetryConfigData_api>) =>
+    queryOptions<
+        GetTelemetryConfigResponse_api,
+        AxiosError<DefaultError>,
+        GetTelemetryConfigResponse_api,
+        ReturnType<typeof getTelemetryConfigQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getTelemetryConfig({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getTelemetryConfigQueryKey(options),
     });
 
 export const loginRouteQueryKey = (options?: Options<LoginRouteData_api>) => createQueryKey("loginRoute", options);

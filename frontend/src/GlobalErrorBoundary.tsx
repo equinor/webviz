@@ -4,6 +4,7 @@ import { BugReport, ContentCopy } from "@mui/icons-material";
 
 import { SupportDocumentsGenerator } from "@framework/components/SupportDocumentsGenerator";
 import { SERVICE_NOW_HREF } from "@framework/utils/externalUrls";
+import { trackTelemetryException } from "@framework/utils/telemetry";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -109,10 +110,23 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         if (import.meta.env.DEV) {
             return;
         }
+
+        // If we decide to log error to telemetry here, we should probably set disableExceptionTracking=true
+        trackTelemetryException(event.error, {
+            triggeredFrom: "GlobalErrorBoundary.handleWindowError()",
+            componentStack: "NoComponentStack",
+        });
+
         this.setErrorIfNoneSet(event.error);
     }
 
     private handleUnhandledRejection(event: PromiseRejectionEvent) {
+        // If we decide to log error to telemetry here, we should probably set disableExceptionTracking=true
+        trackTelemetryException(event.reason, {
+            triggeredFrom: "GlobalErrorBoundary.handleUnhandledRejection()",
+            componentStack: "NoComponentStack",
+        });
+
         this.setErrorIfNoneSet(event.reason);
     }
 
@@ -142,6 +156,13 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
     // getDerivedStateFromError received. React only provides the component stack here, so it is set here rather than
     // together with the error. Until then componentStack is null, so it never belongs to a different error.
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+        // Should we log the exception to telemetry here at all or is the premise that this exception is already handled in a controlled way?
+        // For now we send it to telemetry, including the component stack which
+        trackTelemetryException(error, {
+            triggeredFrom: "GlobalErrorBoundary.componentDidCatch()",
+            componentStack: errorInfo.componentStack ?? "NoComponentStack",
+        });
+
         this.setState({ componentStack: errorInfo.componentStack ?? null });
     }
 

@@ -1,0 +1,13 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: webviz-sub-pipeline
+spec:
+  tasks:
+    - name: extract-and-upload-sourcemaps
+      taskRef:
+        name: extract-and-upload-sourcemaps-task
+
+    # - name: dbg-show-sub-pipeline-env-vars
+    #   taskRef:
+    #     name: dbg-show-sub-pipeline-env-vars-task

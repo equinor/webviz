@@ -1,0 +1,30 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: dbg-show-sub-pipeline-env-vars-task
+
+spec:
+  steps:
+    # Show well-known Radix runtime values
+    # Based on guide here: https://www.radix.equinor.com/guides/sub-pipeline/example-pipeline-with-deploy-keys/
+    - name: show-radix-runtime-values
+      image: alpine
+      securityContext:
+        runAsUser: 1000
+      script: |
+        #!/usr/bin/env sh
+        echo "params.radix.pipeline-type: $(params.radix.pipeline-type)"
+        echo "params.radix.environment:   $(params.radix.environment)"
+        echo "params.radix.git-ref:       $(params.radix.git-ref)"
+        echo "params.radix.git-commit:    $(params.radix.git-commit)"
+        
+    # Show all available environment variables
+    # Based on guide here: https://www.radix.equinor.com/guides/sub-pipeline/#hints
+    - name: show-all-env-vars
+      image: alpine
+      securityContext:
+        runAsUser: 1000
+      script: |
+        #!/usr/bin/env sh
+        printenv
+        :

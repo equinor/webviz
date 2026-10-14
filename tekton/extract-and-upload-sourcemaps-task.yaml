@@ -1,0 +1,85 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: extract-and-upload-sourcemaps-task
+  labels:
+    # This label is required to enable Workload Identity, it must be lowercase
+    azure.workload.identity/use: "true"
+
+spec:
+  params:
+    # This value will be delivered from pipeline automatically
+    - name: AZURE_CLIENT_ID
+    # default: not-set-AZURE_CLIENT_ID-in-task
+  volumes:
+    - name: frontend-sourcemaps
+      emptyDir: {}
+  stepTemplate:
+    # Make sure all steps runs as a regular user. Running as root is not allowed
+    securityContext:
+      runAsUser: 1000
+    volumeMounts:
+      - name: frontend-sourcemaps
+        mountPath: /workspace/frontend-sourcemaps
+
+  steps:
+    # - name: show-env-vars
+    #   image: alpine
+    #   script: |
+    #     #!/usr/bin/env sh
+    #     set -eu
+    #     echo "AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-<unset>}"
+    #     echo "AZURE_TENANT_ID: ${AZURE_TENANT_ID:-<unset>}"
+    #     echo "AZURE_FEDERATED_TOKEN_FILE: ${AZURE_FEDERATED_TOKEN_FILE:-<unset>}"
+    #     echo "params.AZURE_CLIENT_ID: $(params.AZURE_CLIENT_ID)"
+    #     :
+
+    - name: extract-files-from-frontend
+      image: $(params.radix-image.frontend)
+      script: |
+        #!/usr/bin/env sh
+        set -eux
+        # Right now, copies all files (not only source maps) out from the container
+        # Still, we only upload *.map in the actual upload step
+        cp -Rv /usr/share/nginx/dist/. /workspace/frontend-sourcemaps/
+        :
+
+    - name: upload-to-blob-store
+      image: mcr.microsoft.com/azure-cli:2.90.0
+      env:
+        # Az needs a home directory that the authorization information can be stored in
+        - { name: HOME, value: "/tmp" }
+        # AZURE_CLIENT_ID environment gets value from the task parameter AZURE_CLIENT_ID, set by pipeline parameter
+        - { name: AZURE_CLIENT_ID, value: $(params.AZURE_CLIENT_ID)}
+      script: |
+        #!/usr/bin/env sh
+        set -eu
+        echo "AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:?AZURE_CLIENT_ID is required}"
+        echo "AZURE_TENANT_ID: ${AZURE_TENANT_ID:?AZURE_TENANT_ID is required}"
+        echo "AZURE_FEDERATED_TOKEN_FILE: ${AZURE_FEDERATED_TOKEN_FILE:?AZURE_FEDERATED_TOKEN_FILE is required}"
+        echo "params.AZURE_CLIENT_ID: $(params.AZURE_CLIENT_ID)"
+        echo "params.radix.environment: $(params.radix.environment)"
+
+        TOKEN=$(cat "$AZURE_FEDERATED_TOKEN_FILE")
+
+        # Authenticate Azure CLI as the configured identity using the federated token.
+        echo "Logging in using fedrated token"
+        az login --service-principal \
+          --username "$AZURE_CLIENT_ID" \
+          --tenant "$AZURE_TENANT_ID" \
+          --federated-token "$TOKEN"
+
+        set -x
+
+        DESTINATION_CONTAINER="sourcemaps-shared"
+        echo "Uploading source maps to container: $DESTINATION_CONTAINER"
+        
+        az storage blob upload-batch \
+          --account-name "stwebvizdiagnostics" \
+          --destination "$DESTINATION_CONTAINER" \
+          --source /workspace/frontend-sourcemaps \
+          --pattern '*.map' \
+          --overwrite true \
+          --auth-mode login
+
+        :

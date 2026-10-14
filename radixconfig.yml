@@ -4,12 +4,15 @@
 #   900ed417-a860-4970-bd37-73b059ca6f0d  -  Prod application ID (webviz)
 #   025fe044-5ee8-4b27-bf83-aefb548f14fa  -  NonProd application ID (webviz-nonprod)
 #   cabb1ac4-d5a7-4017-b6bf-c883c503c95e  -  Managed identity for access to KeyVault (id-webviz-keyvault-shared)
+#   028bd377-0bff-4f73-bcbc-0039b81e1529  -  Managed identity for write access to stwebvizdiagnostics storage account (id-webviz-tekton-subpipeline)
 
 # Reusable definitions as YAML anchors
 _definitions:
   identityProdApp:           &identityProdAppId         { azure: { clientId: 900ed417-a860-4970-bd37-73b059ca6f0d } }
   identityNonProdApp:        &identityNonProdAppId      { azure: { clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa } }
   identityKeyVaultReader:    &identityKeyVaultReader    { azure: { clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e } }
+
+  identityTektonSubPipeline: &identityTektonSubPipeline { azure: { clientId: 028bd377-0bff-4f73-bcbc-0039b81e1529 } }
 
 
 apiVersion: radix.equinor.com/v1
@@ -19,6 +22,8 @@ metadata:
 spec:
   build:
     useBuildKit: true
+    subPipeline:
+      identity: *identityTektonSubPipeline
   environments:
     - { name: prod }
     - { name: preprod, build: { from: main } }

@@ -16,6 +16,7 @@ import type { ChannelDefinition, ChannelReceiverDefinition } from "./types/dataC
 import type { InterfaceBaseType, InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import type { WorkbenchSession } from "./WorkbenchSession";
 import type { WorkbenchSettings } from "./WorkbenchSettings";
+import { trackTelemetryEvent } from "./utils/telemetry";
 
 export type OnInstanceUnloadFunc = (instanceId: string) => void;
 
@@ -317,6 +318,9 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
         });
         this._moduleInstances.push(instance);
         this.maybeImportSelf();
+
+        trackTelemetryEvent("ModuleInstanceCreated", { moduleName: this._name });
+
         return instance;
     }
 

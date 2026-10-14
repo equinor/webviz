@@ -7,6 +7,7 @@ import type { HoverData, HoverService } from "@framework/HoverService";
 import { HoverTopic, useHoverValue } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import { timestampUtcMsToIsoString } from "@framework/utils/timestampUtils";
+import { trackTelemetryEvent } from "@framework/utils/telemetry";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Button } from "@lib/components/Button";
 
@@ -17,9 +18,24 @@ export const triggeredRefreshCounterAtom = atom<number>(0);
 //-----------------------------------------------------------------------------------------------------------
 export function WorkbenchSpySettings() {
     const setRefreshCounter = useSetAtom(triggeredRefreshCounterAtom);
+
+    function handleButtonClick() {
+        // !!!!!!!!!!!!!!
+        // !!!!!!!!!!!!!!
+        trackTelemetryEvent("WorkbenchSpySettings.TriggeredRefresh");
+
+        setRefreshCounter((prev: number) => {
+            return prev + 1;
+        });
+
+        // !!!!!!!!!!!!!!
+        // !!!!!!!!!!!!!!
+        throw new Error("Intentional error triggered in button click handler");
+    }
+
     return (
         <div>
-            <Button onClick={() => setRefreshCounter((prev: number) => prev + 1)}>Trigger Refresh</Button>
+            <Button onClick={handleButtonClick}>Trigger Refresh</Button>
         </div>
     );
 }

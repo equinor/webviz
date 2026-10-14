@@ -2,6 +2,7 @@ import React from "react";
 
 import type { UserInfo_api } from "@api";
 import { getLoggedInUser } from "@api";
+import { initializeTelemetryFromBackend } from "@framework/utils/telemetry";
 
 export enum AuthState {
     LoggedIn = "LoggedIn",
@@ -48,6 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = (props) 
                 if (user) {
                     setAuthState(AuthState.LoggedIn);
                     setUserInfo(user.data);
+                    void initializeTelemetryFromBackend();
                 } else {
                     setAuthState(AuthState.NotLoggedIn);
                 }
