@@ -1,6 +1,8 @@
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
+import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { SENSITIVITY_CASE_REF_SCHEMA } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
@@ -18,8 +20,6 @@ import {
     selectedSubplotByAtom,
 } from "./atoms/persistableFixableAtoms";
 
-type SerializedSensitivityCase = { sensitivityName: string; caseName: string } | null;
-
 export type SerializedSettings = {
     referenceEnsembleIdentString: string | null;
     comparisonEnsembleIdentString: string | null;
@@ -30,15 +30,12 @@ export type SerializedSettings = {
     indicesWithValues: InplaceVolumesIndexWithValuesAsStrings[];
     indexValueCriteria: IndexValueCriteria;
     showTable: boolean;
-    referenceSensitivityCase?: SerializedSensitivityCase;
-    comparisonSensitivityCase?: SerializedSensitivityCase;
+    referenceSensitivityCase?: SensitivityCaseRef | null;
+    comparisonSensitivityCase?: SensitivityCaseRef | null;
 };
 
-const SENSITIVITY_CASE_SCHEMA = {
-    properties: {
-        sensitivityName: { type: "string" },
-        caseName: { type: "string" },
-    },
+const NULLABLE_SENSITIVITY_CASE_SCHEMA = {
+    ...SENSITIVITY_CASE_REF_SCHEMA,
     nullable: true,
 } as const;
 
@@ -55,8 +52,8 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
         showTable: { type: "boolean" },
     },
     optionalProperties: {
-        referenceSensitivityCase: SENSITIVITY_CASE_SCHEMA,
-        comparisonSensitivityCase: SENSITIVITY_CASE_SCHEMA,
+        referenceSensitivityCase: NULLABLE_SENSITIVITY_CASE_SCHEMA,
+        comparisonSensitivityCase: NULLABLE_SENSITIVITY_CASE_SCHEMA,
     },
 }));
 

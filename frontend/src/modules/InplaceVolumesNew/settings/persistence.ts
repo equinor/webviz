@@ -1,6 +1,8 @@
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { getEnsembleIdentsFromStrings } from "@framework/utils/ensembleIdentUtils";
+import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { SENSITIVITY_CASE_REF_SCHEMA } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
@@ -36,7 +38,7 @@ export type SerializedSettings = {
     plotOptions: InplaceVolumesPlotOptions;
     indexValueCriteria: IndexValueCriteria;
     showTable: boolean;
-    sensitivityCases?: { sensitivityName: string; caseName: string }[];
+    sensitivityCases?: SensitivityCaseRef[];
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
@@ -68,12 +70,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
     },
     optionalProperties: {
         sensitivityCases: {
-            elements: {
-                properties: {
-                    sensitivityName: { type: "string" },
-                    caseName: { type: "string" },
-                },
-            },
+            elements: SENSITIVITY_CASE_REF_SCHEMA,
         },
     },
 }));

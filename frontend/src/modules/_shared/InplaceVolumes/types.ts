@@ -11,6 +11,13 @@ import type { Column } from "./Table";
 
 export type SensitivityCaseRef = { sensitivityName: string; caseName: string };
 
+export const SENSITIVITY_CASE_REF_SCHEMA = {
+    properties: {
+        sensitivityName: { type: "string" },
+        caseName: { type: "string" },
+    },
+} as const;
+
 export type InplaceVolumesTableData = {
     ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     tableName: string;

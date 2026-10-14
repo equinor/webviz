@@ -107,15 +107,27 @@ export function filterSensitivityResponses(
             !hasNoImpact(response, referenceResponse, referenceAverage),
     );
 }
+/** Default reference sensitivity: `rms_seed`, else `rms`, else the first available sensitivity. */
+export function pickDefaultReferenceSensitivityName(sensitivityNames: readonly string[]): string | null {
+    if (sensitivityNames.includes("rms_seed")) {
+        return "rms_seed";
+    }
+    if (sensitivityNames.includes("rms")) {
+        return "rms";
+    }
+    return sensitivityNames[0] ?? null;
+}
+
 export function getReferenceSensitivityName(
     sensitivities: EnsembleSensitivities,
     referenceSensitivity: string,
 ): string {
     if (!referenceSensitivity || !sensitivities.hasSensitivityName(referenceSensitivity)) {
-        if (sensitivities.getSensitivityNames().length === 0) {
+        const defaultName = pickDefaultReferenceSensitivityName(sensitivities.getSensitivityNames());
+        if (!defaultName) {
             throw new Error("No sensitivities available");
         }
-        return sensitivities.getSensitivityNames()[0]; // Default to first sensitivity
+        return defaultName;
     }
     return referenceSensitivity;
 }

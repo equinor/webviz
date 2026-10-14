@@ -9,11 +9,10 @@ import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Combobox } from "@lib/components/Combobox";
 import { Setting } from "@lib/components/Setting";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
-import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
+import { pickDefaultReferenceSensitivityName, SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
 
 import type { Interfaces } from "../interfaces";
-import { DisplayComponentType, SensitivityScaling } from "../typesAndEnums";
-import { ColorBy } from "../view/components/sensitivityChartFigure";
+import { ColorBy, DisplayComponentType, SensitivityScaling } from "../typesAndEnums";
 
 import {
     sensitivitySortByAtom,
@@ -72,13 +71,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         (!referenceSensitivityName || !sensitivityNames.includes(referenceSensitivityName)) &&
         sensitivityNames.length > 0
     ) {
-        if (sensitivityNames.includes("rms_seed")) {
-            setReferenceSensitivityName("rms_seed");
-        } else if (sensitivityNames.includes("rms")) {
-            setReferenceSensitivityName("rms");
-        } else {
-            setReferenceSensitivityName(sensitivityNames[0]);
-        }
+        setReferenceSensitivityName(pickDefaultReferenceSensitivityName(sensitivityNames));
     }
 
     const isChartSettingsDisabled = displayComponentType !== DisplayComponentType.SENSITIVITY_CHART;

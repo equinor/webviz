@@ -1,7 +1,8 @@
 import type { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
 import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing";
 
-import { type ColorBy, SensitivityChartFigure } from "../components/sensitivityChartFigure";
+import type { ColorBy } from "../../typesAndEnums";
+import { SensitivityChartFigure } from "../components/sensitivityChartFigure";
 
 import type { SensitivityDataScaler } from "./sensitivityDataScaler";
 

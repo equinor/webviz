@@ -6,6 +6,7 @@ import type { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
 import type { SensitivityResponseDataset, SensitivityResponse } from "@modules/_shared/SensitivityProcessing";
 import { formatWithLargeValuePrefixes, makeLargeValuePrefixAxisFormat } from "@modules/_shared/utils/numberFormatting";
 
+import { ColorBy } from "../../typesAndEnums";
 import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
 import { makeTornadoBarHoverTemplate } from "../utils/tornadoBarHover";
 import {
@@ -14,21 +15,9 @@ import {
     createLowBarTrace,
     createLowRealizationPointsTrace,
     createSensitivityMeanPointsTrace,
+    type SelectedBar,
 } from "../utils/traceUtils";
 
-export enum TraceGroup {
-    LOW = "Low",
-    HIGH = "High",
-}
-
-export type SelectedBar = {
-    group: TraceGroup;
-    index: number;
-};
-export enum ColorBy {
-    SENSITIVITY = "Sensitivity",
-    LOW_HIGH = "Low/High",
-}
 export class SensitivityChartFigure {
     private _figure: Figure;
     private _scaler: SensitivityDataScaler;

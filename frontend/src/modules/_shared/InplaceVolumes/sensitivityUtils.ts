@@ -10,12 +10,13 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { expandToRegularEnsembleIdents, isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { createSensitivityColorMap } from "@modules/_shared/sensitivityColors";
+import { pickDefaultReferenceSensitivityName } from "@modules/_shared/SensitivityProcessing";
 
 import { encodeSelectorColumn, expandSelectorColumn } from "./selectorColumnUtils";
 import type { SensitivityCaseRef } from "./types";
-import { TableOriginKey } from "./types";
+import { SENSITIVITY_CASE_REF_SCHEMA, TableOriginKey } from "./types";
 
-export type { SensitivityCaseRef } from "./types";
+export { SENSITIVITY_CASE_REF_SCHEMA, type SensitivityCaseRef };
 
 export type SensitivitySelection = { ensembleIdent: RegularEnsembleIdent; selectedCases: SensitivityCaseRef[] };
 
@@ -128,10 +129,8 @@ export function makeSensitivityCaseLabelForRef(sensitivities: EnsembleSensitivit
 /** The base case to compare against: `rms_seed`, else `rms`, else the first sensitivity; its first case. */
 export function pickDefaultReferenceSensitivityCase(sensitivities: EnsembleSensitivities): SensitivityCaseRef | null {
     const sensitivityArr = getOrderedSensitivityArr(sensitivities);
-    const sensitivity =
-        sensitivityArr.find((sens) => sens.name === "rms_seed") ??
-        sensitivityArr.find((sens) => sens.name === "rms") ??
-        sensitivityArr[0];
+    const defaultName = pickDefaultReferenceSensitivityName(sensitivityArr.map((sens) => sens.name));
+    const sensitivity = sensitivityArr.find((sens) => sens.name === defaultName);
     const firstCase = sensitivity?.cases[0];
     return sensitivity && firstCase ? { sensitivityName: sensitivity.name, caseName: firstCase.name } : null;
 }
