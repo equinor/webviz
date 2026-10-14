@@ -1,8 +1,10 @@
 import type { QueryClient } from "@tanstack/query-core";
 
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
+import { AuthStateStore, AuthStateStoreTopic } from "@framework/internal/auth/AuthStateStore";
 import { globalLog } from "@framework/Log";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleFingerprints";
 import type { WorkbenchSessionManager } from "./WorkbenchSession/WorkbenchSessionManager";
@@ -19,6 +21,7 @@ export class EnsembleUpdateMonitor {
     private _pollingTimeout: ReturnType<typeof setTimeout> | null = null;
     private _lastPollTimestamp: number | null = null;
     private _sessionManager: WorkbenchSessionManager;
+    private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
 
     constructor(queryClient: QueryClient, sessionManager: WorkbenchSessionManager) {
         this._queryClient = queryClient;
@@ -29,6 +32,21 @@ export class EnsembleUpdateMonitor {
         if (this._pollingEnabled) {
             return; // Already polling
         }
+
+        // Every request would fail - and since signing in again reloads the page, polling never needs to resume
+        const authStateStore = AuthStateStore.getInstance();
+        if (!authStateStore.isLoggedIn()) {
+            return;
+        }
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "auth-state",
+            authStateStore.getPublishSubscribeDelegate().makeSubscriberFunction(AuthStateStoreTopic.AUTH_STATE)(() => {
+                if (!authStateStore.isLoggedIn()) {
+                    this.stopPolling();
+                }
+            }),
+        );
 
         // This shouldn't happen, but we check just in case
         if (this._pollingTimeout) {
@@ -48,6 +66,7 @@ export class EnsembleUpdateMonitor {
 
         logger.console?.log("checkForEnsembleUpdate - stopping...");
         this._pollingEnabled = false;
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("auth-state");
 
         if (this._pollingTimeout) {
             clearTimeout(this._pollingTimeout);
