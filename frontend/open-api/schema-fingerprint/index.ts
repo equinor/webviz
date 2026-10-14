@@ -19,8 +19,9 @@ export type SchemaFingerprintEventsOptions = {
 
 /**
  * Event hooks for the `@hey-api/sdk` plugin that make every generated GET request send
- * `_schema=<fingerprint of the operation's 2xx and default responses>`. A response schema change therefore changes the
- * request URL, so the browser can't serve a body cached under the old schema. See README.md.
+ * `_schema=<fingerprint of the operation's 2xx and default responses and its x-result-version>`. A response schema
+ * change or a result version bump therefore changes the request URL, so the browser can't serve a body cached
+ * before it. See README.md.
  *
  * Usage in openapi-ts.config.ts:
  *
