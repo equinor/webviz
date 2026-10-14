@@ -81,7 +81,7 @@ encoded as a `UintListStr` or "*" to include all realizations.
 """
 
 
-@router.get("/realization_surfaces_metadata_v2/")
+@router.get("/realization_surfaces_metadata/")
 @cache_time(CacheTime.NORMAL)
 async def get_realization_surfaces_metadata(
     response: Response,
@@ -126,7 +126,7 @@ async def get_realization_surfaces_metadata(
     return api_surf_meta_set
 
 
-@router.get("/observed_surfaces_metadata_v2/")
+@router.get("/observed_surfaces_metadata/")
 @cache_time(CacheTime.NORMAL)
 async def get_observed_surfaces_metadata(
     response: Response,
