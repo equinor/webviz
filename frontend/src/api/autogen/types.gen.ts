@@ -4362,7 +4362,7 @@ export type GetRealizationSurfacesMetadataData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/surface/realization_surfaces_metadata_v2/";
+    url: "/surface/realization_surfaces_metadata/";
 };
 
 export type GetRealizationSurfacesMetadataErrors_api = {
@@ -4397,7 +4397,7 @@ export type GetObservedSurfacesMetadataData_api = {
         case_uuid: string;
         zCacheBust?: string;
     };
-    url: "/surface/observed_surfaces_metadata_v2/";
+    url: "/surface/observed_surfaces_metadata/";
 };
 
 export type GetObservedSurfacesMetadataErrors_api = {
