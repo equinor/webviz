@@ -140,7 +140,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const referenceSensitivityCaseAnnotations = useMakePersistableFixableAtomAnnotations(
         selectedReferenceSensitivityCaseAtom,
     );
-    const comparisonSensitivityCaseAnnotations = useMakePersistableFixableAtomAnnotations(
+    const persistedComparisonSensitivityCaseAnnotations = useMakePersistableFixableAtomAnnotations(
         selectedComparisonSensitivityCaseAtom,
     );
     const resultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedResultNameAtom);
@@ -156,9 +156,18 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         !areSourcesDistinct,
     );
 
-    const comparisonEnsembleAnnotations: SettingAnnotation[] = isSameSourceSelectedTwice
-        ? [...persistedComparisonEnsembleAnnotations, { type: "error", message: "Must differ from the reference" }]
-        : persistedComparisonEnsembleAnnotations;
+    const duplicateSourceAnnotation: SettingAnnotation = {
+        type: "error",
+        message: "Must differ from the reference",
+    };
+    const comparisonEnsembleAnnotations: SettingAnnotation[] =
+        isSameSourceSelectedTwice && !comparisonSensitivities
+            ? [...persistedComparisonEnsembleAnnotations, duplicateSourceAnnotation]
+            : persistedComparisonEnsembleAnnotations;
+    const comparisonSensitivityCaseAnnotations: SettingAnnotation[] =
+        isSameSourceSelectedTwice && comparisonSensitivities
+            ? [...persistedComparisonSensitivityCaseAnnotations, duplicateSourceAnnotation]
+            : persistedComparisonSensitivityCaseAnnotations;
 
     if (areSourcesDistinct && !areSelectedTablesComparable) {
         statusWriter.addWarning("The selected table sources share no index columns and are not comparable.");

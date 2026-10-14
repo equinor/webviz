@@ -6,7 +6,10 @@ import { useAtomValue } from "jotai";
 import { InplaceVolumesStatistic_api } from "@api";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
-import { makeSensitivityCaseLabelForRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import {
+    makeSensitivityCaseLabelForRef,
+    makeSensitivityCasesWithoutRealizationsWarning,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import type { InplaceVolumesStatisticalTableData } from "@modules/_shared/InplaceVolumes/types";
 
 import {
@@ -23,7 +26,7 @@ import {
     waterfallFactorSpecAtom,
     waterfallSourcesAtom,
 } from "../atoms/baseAtoms";
-import { isWaterfallComputableAtom } from "../atoms/derivedAtoms";
+import { isWaterfallComputableAtom, sensitivityCasesWithoutRealizationsAtom } from "../atoms/derivedAtoms";
 import { waterfallStatisticalDataQueriesAtom } from "../atoms/queryAtoms";
 import { buildWaterfallPlot, type WaterfallGroupDecomposition } from "../utils/buildWaterfallPlot";
 import {
@@ -241,6 +244,7 @@ export function useBuildWaterfallPlot(
     const statisticalDataQueries = useAtomValue(waterfallStatisticalDataQueriesAtom);
     const subplotByIndex = useAtomValue(subplotByAtom);
     const waterfallSources = useAtomValue(waterfallSourcesAtom);
+    const sensitivityCasesWithoutRealizations = useAtomValue(sensitivityCasesWithoutRealizationsAtom);
     const indexColumnsLeftUnfiltered = useAtomValue(indexColumnsLeftUnfilteredAtom);
     const isIndexValueIntersectionActive = useAtomValue(isIndexValueIntersectionActiveAtom);
     const indexColumnsWithNoSelectedValues = useAtomValue(indexColumnsWithNoSelectedValuesAtom);
@@ -310,6 +314,14 @@ export function useBuildWaterfallPlot(
                     kind: "message",
                     result: makeErrorResult(
                         "The volume columns the decomposition is built from (BULK, PORV, HCPV) are not available for the selected table.",
+                    ),
+                };
+            }
+            if (sensitivityCasesWithoutRealizations.length > 0) {
+                return {
+                    kind: "message",
+                    result: makeErrorResult(
+                        makeSensitivityCasesWithoutRealizationsWarning(sensitivityCasesWithoutRealizations),
                     ),
                 };
             }
@@ -475,6 +487,7 @@ export function useBuildWaterfallPlot(
             statisticalDataQueries,
             subplotByIndex,
             waterfallSources,
+            sensitivityCasesWithoutRealizations,
             indexColumnsLeftUnfiltered,
             isIndexValueIntersectionActive,
             indexColumnsWithNoSelectedValues,

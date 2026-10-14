@@ -1,6 +1,6 @@
-import React from "react";
+import type React from "react";
 
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -33,20 +33,12 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [showSensitivityMeanPoints, setShowSensitivityMeanPoints] = useAtom(showSensitivityMeanPointsAtom);
     const [showRealizationPoints, setShowRealizationPoints] = useAtom(showRealizationPointsAtom);
-    const setModuleReferenceSensitivityName = useSetAtom(referenceSensitivityNameAtom);
+    const [referenceSensitivityName, setReferenceSensitivityName] = useAtom(referenceSensitivityNameAtom);
     const [sensitivitySortBy, setSensitivitySortBy] = useAtom(sensitivitySortByAtom);
     const [sensitivityScaling, setSensitivityScaling] = useAtom(sensitivityScalingAtom);
-    const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
     const [colorBy, setColorBy] = useAtom(colorByAtom);
 
     const ensembleSet = workbenchSession.getEnsembleSet();
-
-    React.useEffect(
-        function propagateReferenceSensitivityName() {
-            setModuleReferenceSensitivityName(referenceSensitivityName);
-        },
-        [referenceSensitivityName, setModuleReferenceSensitivityName],
-    );
 
     const responseReceiver = settingsContext.useChannelReceiver({
         receiverIdString: "response",
