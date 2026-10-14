@@ -3,15 +3,18 @@ import { SensitivityType } from "@framework/EnsembleSensitivities";
 
 import { SensitivitySortBy, type EnsemblePerRealizationResponse, type SensitivityResponse } from "./types";
 
-// Extract response values for the relevant realizations
+// Extract response values for the relevant realizations, in the order of `realizations`
 export function extractResponseValues(
     ensemblePerRealResponse: EnsemblePerRealizationResponse,
     realizations: number[],
 ): number[] {
-    return ensemblePerRealResponse.realizations
-        .map((real, idx) => ({ real, value: ensemblePerRealResponse.values[idx] }))
-        .filter(({ real }) => realizations.includes(real))
-        .map(({ value }) => value);
+    const valueByRealization = new Map(
+        ensemblePerRealResponse.realizations.map((real, idx) => [real, ensemblePerRealResponse.values[idx]]),
+    );
+    return realizations.flatMap((real) => {
+        const value = valueByRealization.get(real);
+        return value !== undefined ? [value] : [];
+    });
 }
 
 export function computeAverage(values: number[]): number {

@@ -194,4 +194,17 @@ describe("computeSensitivitiesForResponse with a partial response", () => {
         expect(dataset.sensitivityResponses).toEqual([]);
         expect(dataset.sensitivitiesWithoutData).toEqual(["rms_seed"]);
     });
+
+    test("keeps scenario case realizations aligned with their values when some realizations are filtered out", () => {
+        // Realization 7 (shallow) and 9 (deep) are excluded; response order is reversed.
+        const dataset = compute([1, 2, 10, 8], [10, 20, 40, 15]);
+        const fwl = dataset.sensitivityResponses.find((r) => r.sensitivityName === "fwl")!;
+
+        expect(fwl.lowCaseName).toBe("shallow");
+        expect(fwl.lowCaseRealizations).toEqual([8]);
+        expect(fwl.lowCaseRealizationValues).toEqual([15]);
+        expect(fwl.highCaseName).toBe("deep");
+        expect(fwl.highCaseRealizations).toEqual([10]);
+        expect(fwl.highCaseRealizationValues).toEqual([40]);
+    });
 });

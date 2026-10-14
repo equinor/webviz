@@ -21,14 +21,18 @@ import {
 // Domain specific thing (Reference realization?). This case name should be ignored.
 const IGNORED_CASE = "ref";
 
-/** The sensitivity restricted to the cases that have values in the response, or null if none have. */
+/** The sensitivity restricted to the cases and realizations that have values in the response, or null if none have. */
 function restrictToCasesWithData(
     sensitivity: Sensitivity,
     ensemblePerRealResponse: EnsemblePerRealizationResponse,
 ): Sensitivity | null {
-    const cases = sensitivity.cases.filter(
-        (sensitivityCase) => extractResponseValues(ensemblePerRealResponse, sensitivityCase.realizations).length > 0,
-    );
+    const responseRealizations = new Set(ensemblePerRealResponse.realizations);
+    const cases = sensitivity.cases
+        .map((sensitivityCase) => ({
+            ...sensitivityCase,
+            realizations: sensitivityCase.realizations.filter((real) => responseRealizations.has(real)),
+        }))
+        .filter((sensitivityCase) => sensitivityCase.realizations.length > 0);
     return cases.length > 0 ? { ...sensitivity, cases } : null;
 }
 
