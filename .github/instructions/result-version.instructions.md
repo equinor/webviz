@@ -5,7 +5,7 @@ description: "Use when changing backend endpoint logic, converters, services, ut
 
 # Result version for cached endpoints
 
-Endpoints decorated with `@cache_time` or `@custom_cache_time` are cached by the browser potentially for a long time. The browser cache is only invalidated by the backend if the endpoint's response schema changes or when its `result_version` is added/bumped. See `backend_py/primary/primary/middleware/cache_control_middleware.py` and the "Result version" section of `frontend/open-api/schema-fingerprint/README.md`.
+Endpoints decorated with `@cache_time` or `@custom_cache_time` are cached by the browser potentially for a long time. The browser cache is only invalidated if the endpoint's response schema changes or when its `result_version` is added/bumped. See `backend_py/primary/primary/middleware/cache_control_middleware.py` and the "Result version" section of `frontend/open-api/schema-fingerprint/README.md`.
 
 ## Flag a missing result_version bump
 
