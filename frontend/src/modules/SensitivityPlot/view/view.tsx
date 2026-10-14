@@ -8,6 +8,7 @@ import { useColorSet } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
+import { calcNumRowsAndCols } from "@modules/_shared/Figure";
 import {
     computeSensitivitiesForResponse,
     type SensitivityResponseDataset,
@@ -146,8 +147,8 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
             return makePlot(computedResponses[0], wrapperDivSize.width, wrapperDivSize.height);
         }
 
-        const numCols = Math.floor(Math.sqrt(computedResponses.length));
-        const numRows = Math.ceil(computedResponses.length / numCols);
+        // Same grid as the sending plot module, so the tornados line up with its subplots.
+        const { numRows, numCols } = calcNumRowsAndCols(computedResponses.length);
         const cellWidth = Math.floor(wrapperDivSize.width / numCols);
         const plotHeight = Math.max(0, Math.floor(wrapperDivSize.height / numRows) - CELL_HEADING_HEIGHT_PX);
 
