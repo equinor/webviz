@@ -108,7 +108,13 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         }, AUTO_SAVE_DEBOUNCE_MS + 50);
     }
 
-    stop() {
+    /**
+     * @param options.keepLocalBackup Keep the recovery backup - e.g. when the page goes away, but not the session
+     */
+    stop(options?: { keepLocalBackup?: boolean }) {
+        // A pending refresh would have updated the backup - so the latest changes are written right away instead
+        const hasPendingRefresh = this._refreshStateDebounceTimeout !== null;
+
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
         this.stopBackendPolling();
 
@@ -118,7 +124,11 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         }
 
         this._tracker.reset();
-        this._localBackup.remove();
+        if (!options?.keepLocalBackup) {
+            this._localBackup.remove();
+        } else if (hasPendingRefresh) {
+            this._localBackup.persist();
+        }
         this._destroyed = true;
     }
 
