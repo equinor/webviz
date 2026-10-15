@@ -1,6 +1,10 @@
 import { describe, expect, test, vi } from "vitest";
 
-import { fingerprintResponse, SchemaFingerprintError } from "../../open-api/schema-fingerprint";
+import {
+    collectFingerprintInput,
+    fingerprintResponse,
+    SchemaFingerprintError,
+} from "../../open-api/schema-fingerprint";
 
 // Loosely typed so that each test can mutate the fixture freely
 type Spec = any;
@@ -100,8 +104,8 @@ function renameSchema(spec: Spec, from: string, to: string): void {
 }
 
 describe("fingerprintResponse", () => {
-    test("returns 16 lowercase hex characters", () => {
-        expect(hashOf(makeSpec())).toMatch(/^[0-9a-f]{16}$/);
+    test("returns 6 lowercase hex characters", () => {
+        expect(hashOf(makeSpec())).toMatch(/^[0-9a-f]{6}$/);
     });
 
     test("is identical when the same spec is processed twice", () => {
@@ -144,6 +148,7 @@ describe("fingerprintResponse", () => {
                     content: { "application/json": { schema: { $ref: "#/components/schemas/Field" } } },
                 }),
         ],
+        ["a result version is added", (spec) => (spec.paths["/wells"].get["x-result-version"] = 1)],
         [
             "the media type changes",
             (spec) => {
@@ -190,6 +195,30 @@ describe("fingerprintResponse", () => {
         expect(hashAfter(mutate)).toBe(hashOf(makeSpec()));
     });
 
+    describe("result version", () => {
+        test("changes the fingerprint when bumped", () => {
+            const v1 = hashAfter((spec) => (spec.paths["/wells"].get["x-result-version"] = 1));
+            const v2 = hashAfter((spec) => (spec.paths["/wells"].get["x-result-version"] = 2));
+            expect(v2).not.toBe(v1);
+        });
+
+        test("is left out of the input when absent, so existing fingerprints don't change", () => {
+            const spec = makeSpec();
+            expect(collectFingerprintInput(spec.paths["/wells"].get, spec)).not.toHaveProperty("resultVersion");
+        });
+
+        test("only affects its own endpoint", () => {
+            const hash = hashAfter((spec) => (spec.paths["/wells"].get["x-result-version"] = 2), "/fields");
+            expect(hash).toBe(hashOf(makeSpec(), "/fields"));
+        });
+
+        test.each([0, -1, 1.5, "2", null])("throws on an invalid value (%s)", (value) => {
+            const spec = makeSpec();
+            spec.paths["/wells"].get["x-result-version"] = value;
+            expect(() => hashOf(spec)).toThrow(SchemaFingerprintError);
+        });
+    });
+
     describe("recursive schemas", () => {
         function makeRecursiveSpec(): Spec {
             const spec = makeSpec();
@@ -206,7 +235,7 @@ describe("fingerprintResponse", () => {
 
         test("produce a stable fingerprint", () => {
             const hash = hashOf(makeRecursiveSpec());
-            expect(hash).toMatch(/^[0-9a-f]{16}$/);
+            expect(hash).toMatch(/^[0-9a-f]{6}$/);
             expect(hashOf(makeRecursiveSpec())).toBe(hash);
         });
 
