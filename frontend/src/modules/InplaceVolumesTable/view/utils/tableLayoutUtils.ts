@@ -1,0 +1,198 @@
+import { orderBy } from "lodash";
+
+import { InplaceVolumesStatistic_api } from "@api";
+import type { TableSortState } from "@lib/components/Table/typesAndEnums";
+import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
+
+import type { TableColumnsConfig, TableHeading, TableRow } from "../types";
+
+import type { LeafColumn } from "./tableComponentUtils";
+import { collectLeafColumns } from "./tableComponentUtils";
+
+export const RESULT_COLUMN_WIDTH_PX = 108;
+export const CHAR_WIDTH_PX = 8.5;
+export const CATEGORY_COLUMN_CHROME_PX = 60;
+export const CATEGORY_COLUMN_MIN_WIDTH_PX = 72;
+export const CATEGORY_COLUMN_MAX_WIDTH_PX = 280;
+export const GROUP_HEADER_CHROME_PX = 28;
+export const MAX_PINNED_WIDTH_FRACTION = 0.5;
+
+const STATISTICS_DISPLAY_ORDER: readonly InplaceVolumesStatistic_api[] = [
+    InplaceVolumesStatistic_api.MEAN,
+    InplaceVolumesStatistic_api.STDDEV,
+    InplaceVolumesStatistic_api.P10,
+    InplaceVolumesStatistic_api.P90,
+    InplaceVolumesStatistic_api.MIN,
+    InplaceVolumesStatistic_api.MAX,
+];
+
+export type ConstantColumn = { key: string; label: string; displayValue: string };
+
+export type ColumnWidths = {
+    /** Visible leaf columns in on-screen order */
+    visibleLeaves: LeafColumn[];
+    /** Hidden constant columns with their single display value, in on-screen order */
+    constantColumns: ConstantColumn[];
+    widthPxByKey: Map<string, number>;
+};
+
+export type ColumnPinning = {
+    /** Present only for pinned leaf keys */
+    stickyLeftPxByKey: Map<string, number>;
+    lastPinnedKey: string | null;
+};
+
+export type ColumnLayout = ColumnWidths & ColumnPinning;
+
+function isResultLeaf(leaf: LeafColumn): boolean {
+    return leaf.heading.columnType === ColumnType.RESULT;
+}
+
+function computeCategoryColumnWidthPx(maxChars: number): number {
+    const width = Math.round(maxChars * CHAR_WIDTH_PX) + CATEGORY_COLUMN_CHROME_PX;
+    return Math.min(Math.max(width, CATEGORY_COLUMN_MIN_WIDTH_PX), CATEGORY_COLUMN_MAX_WIDTH_PX);
+}
+
+/** Decides which leaf columns are shown and how wide they are. Depends on the data only, not on the viewport. */
+export function computeColumnWidths(
+    columnsConfig: TableColumnsConfig,
+    unfilteredRows: TableRow<TableColumnsConfig>[],
+    formatDisplayValue: (value: string | number | null, heading: TableHeading) => string,
+): ColumnWidths {
+    const visibleLeaves: LeafColumn[] = [];
+    const constantColumns: ConstantColumn[] = [];
+    const widthPxByKey = new Map<string, number>();
+
+    for (const leaf of collectLeafColumns(columnsConfig)) {
+        if (isResultLeaf(leaf)) {
+            visibleLeaves.push(leaf);
+            widthPxByKey.set(leaf.key, RESULT_COLUMN_WIDTH_PX);
+            continue;
+        }
+
+        const rawValues = new Set(unfilteredRows.map((row) => row[leaf.key]));
+        const displayValues = new Set(Array.from(rawValues, (value) => formatDisplayValue(value, leaf.heading)));
+
+        if (unfilteredRows.length >= 2 && displayValues.size === 1) {
+            const [displayValue] = displayValues;
+            constantColumns.push({ key: leaf.key, label: leaf.heading.label, displayValue });
+            continue;
+        }
+
+        let maxChars = leaf.heading.label.length;
+        for (const value of displayValues) {
+            maxChars = Math.max(maxChars, value.length);
+        }
+
+        visibleLeaves.push(leaf);
+        widthPxByKey.set(leaf.key, computeCategoryColumnWidthPx(maxChars));
+    }
+
+    // A group header (e.g. a long result name over a single statistic) must not be narrower than its label
+    for (const [groupKey, groupHeading] of Object.entries(columnsConfig)) {
+        if (!groupHeading.subHeading) continue;
+
+        const groupLeafKeys = collectLeafColumns({ [groupKey]: groupHeading })
+            .map((leaf) => leaf.key)
+            .filter((key) => widthPxByKey.has(key));
+        if (groupLeafKeys.length === 0) continue;
+
+        const requiredWidthPx = Math.round(groupHeading.label.length * CHAR_WIDTH_PX) + GROUP_HEADER_CHROME_PX;
+        const currentWidthPx = groupLeafKeys.reduce((sum, key) => sum + (widthPxByKey.get(key) ?? 0), 0);
+        if (currentWidthPx >= requiredWidthPx) continue;
+
+        const extraPerLeafPx = Math.ceil((requiredWidthPx - currentWidthPx) / groupLeafKeys.length);
+        for (const key of groupLeafKeys) {
+            widthPxByKey.set(key, (widthPxByKey.get(key) ?? 0) + extraPerLeafPx);
+        }
+    }
+
+    return { visibleLeaves, constantColumns, widthPxByKey };
+}
+
+/** Pins the leading identifier columns that fit within half the wrapper width. */
+export function computeColumnPinning(columnWidths: ColumnWidths, wrapperWidthPx: number): ColumnPinning {
+    const { visibleLeaves, widthPxByKey } = columnWidths;
+
+    // Only a leading run of identifier columns can be pinned with cumulative offsets
+    const pinnableLeaves: LeafColumn[] = [];
+    for (const leaf of visibleLeaves) {
+        if (isResultLeaf(leaf)) break;
+        pinnableLeaves.push(leaf);
+    }
+
+    const stickyLeftPxByKey = new Map<string, number>();
+    let lastPinnedKey: string | null = null;
+
+    const maxPinnedWidthPx = wrapperWidthPx * MAX_PINNED_WIDTH_FRACTION;
+    let offsetPx = 0;
+    for (const leaf of pinnableLeaves) {
+        const widthPx = widthPxByKey.get(leaf.key) ?? 0;
+        if (offsetPx + widthPx > maxPinnedWidthPx) break;
+
+        stickyLeftPxByKey.set(leaf.key, offsetPx);
+        lastPinnedKey = leaf.key;
+        offsetPx += widthPx;
+    }
+
+    return { stickyLeftPxByKey, lastPinnedKey };
+}
+
+export type FilterState = { [columnKey: string]: string | null };
+
+/** Removes filters on columns that are not visible; returns the same object when nothing is removed. */
+export function pruneHiddenColumnFilters(
+    filterState: FilterState,
+    visibleColumnKeys: ReadonlySet<string>,
+): FilterState {
+    const hiddenKeys = Object.keys(filterState).filter((key) => !visibleColumnKeys.has(key));
+    if (hiddenKeys.length === 0) return filterState;
+
+    const pruned = { ...filterState };
+    for (const key of hiddenKeys) delete pruned[key];
+    return pruned;
+}
+
+export function sortStatisticsForDisplay(statistics: InplaceVolumesStatistic_api[]): InplaceVolumesStatistic_api[] {
+    return statistics.toSorted((a, b) => STATISTICS_DISPLAY_ORDER.indexOf(a) - STATISTICS_DISPLAY_ORDER.indexOf(b));
+}
+
+export type SortScope = {
+    columnKey: string;
+    /** Sorting by any of these columns is applied within each value of `columnKey` */
+    scopedColumnKeys: ReadonlySet<string>;
+};
+
+/**
+ * Sorts rows by the table sort state. With a `sortScope`, a sort that includes a scoped column but not the
+ * scope column itself is applied within each scope value, keeping those values in first-seen order. The implicit
+ * scope key is inserted just before the first scoped sort key, so explicit keys sorted earlier keep their priority.
+ */
+export function applyTableSort<TRow extends TableRow<TableColumnsConfig>>(
+    rows: TRow[],
+    sortState: TableSortState[],
+    sortScope?: SortScope,
+): TRow[] {
+    const iteratees: (string | ((row: TRow) => number))[] = sortState.map((s) => s.columnKey);
+    const orders = sortState.map((s) => s.direction as "asc" | "desc");
+
+    const firstScopedIndex =
+        sortScope === undefined ? -1 : sortState.findIndex((s) => sortScope.scopedColumnKeys.has(s.columnKey));
+    const isScoped =
+        sortScope !== undefined &&
+        firstScopedIndex !== -1 &&
+        !sortState.some((s) => s.columnKey === sortScope.columnKey);
+
+    if (isScoped) {
+        const scopeKey = sortScope.columnKey;
+        const positions = new Map<string | number | null, number>();
+        for (const row of rows) {
+            const value = row[scopeKey];
+            if (!positions.has(value)) positions.set(value, positions.size);
+        }
+        iteratees.splice(firstScopedIndex, 0, (row) => positions.get(row[scopeKey]) ?? Number.MAX_SAFE_INTEGER);
+        orders.splice(firstScopedIndex, 0, "asc");
+    }
+
+    return orderBy(rows, iteratees, orders);
+}

@@ -19,6 +19,55 @@ interface State {
     activeWorkbench: Workbench | null;
 }
 
+// Anything can be thrown or used as a rejection reason, but the fallback and the support documents expect an Error.
+// Must never throw, since it runs while an error is being handled.
+function toError(value: unknown): Error {
+    try {
+        if (value instanceof Error) {
+            return value;
+        }
+        if (typeof value === "string") {
+            return makeErrorWithoutStack(value);
+        }
+
+        return makeErrorWithoutStack(`Non-Error value: ${describeValue(value)}`);
+    } catch {
+        // instanceof throws for revoked proxies and proxies with a throwing getPrototypeOf trap
+        return makeErrorWithoutStack(`Non-Error value: ${describeUnserializable(value)}`);
+    }
+}
+
+// Must never throw, since it runs while handling an error. JSON.stringify throws on circular references and throwing
+// getters/toJSON, and String throws on a throwing toString or on objects without a prototype.
+function describeValue(value: unknown): string {
+    try {
+        const json = JSON.stringify(value);
+        if (json !== undefined) {
+            return json;
+        }
+    } catch {
+        // Fall back to String below
+    }
+
+    try {
+        return String(value);
+    } catch {
+        return describeUnserializable(value);
+    }
+}
+
+function describeUnserializable(value: unknown): string {
+    // typeof never throws, not even for revoked proxies
+    return `[unserializable ${typeof value}]`;
+}
+
+function makeErrorWithoutStack(message: string): Error {
+    const error = new Error(message);
+    // The stack would point to this file rather than to where the value was thrown, which is misleading in reports
+    error.stack = undefined;
+    return error;
+}
+
 export class GlobalErrorBoundary extends React.Component<Props, State> {
     state: State = {
         error: null,
@@ -31,8 +80,16 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
     private _boundHandleUnhandledRejection: (event: PromiseRejectionEvent) => void;
     private _boundRegisterActiveWorkbench: (wb: Workbench | null) => void;
 
-    static getDerivedStateFromError(err: Error): Partial<State> {
-        return { error: err, copiedToClipboard: false };
+    // Called during the render phase when a descendant throws while rendering (errors from window events go through
+    // setErrorIfNoneSet instead). React renders the boundary again right away using the returned state, and that
+    // render is what replaces the children with the fallback. The error must therefore be set here rather than in
+    // componentDidCatch, which only runs once that render has been committed:
+    // - If only componentDidCatch set the error, React would commit the boundary with no children at all, and the
+    //   fallback would only appear after a second render.
+    // React does not pass the component stack to this method, so it is reset here and set by componentDidCatch.
+    // See also: https://legacy.reactjs.org/docs/error-boundaries.html
+    static getDerivedStateFromError(err: unknown): Partial<State> {
+        return { error: toError(err), componentStack: null, copiedToClipboard: false };
     }
 
     constructor(props: Props) {
@@ -52,11 +109,26 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         if (import.meta.env.DEV) {
             return;
         }
-        this.setState({ error: event.error });
+        this.setErrorIfNoneSet(event.error);
     }
 
     private handleUnhandledRejection(event: PromiseRejectionEvent) {
-        this.setState({ error: event.reason });
+        this.setErrorIfNoneSet(event.reason);
+    }
+
+    private setErrorIfNoneSet(value: unknown) {
+        // ErrorEvent.error is null for e.g. ResizeObserver loop notifications and cross-origin script errors,
+        // which should not terminate the app
+        if (value == null) {
+            return;
+        }
+
+        const error = toError(value);
+
+        // Keep the first error, as it is most likely the root cause. Errors arriving after the app has been
+        // terminated (e.g. pending promises rejecting) would otherwise replace it and mismatch the componentStack.
+        // Errors from window events never have a component stack.
+        this.setState((prevState) => (prevState.error ? null : { error, componentStack: null }));
     }
 
     private registerActiveWorkbench(wb: Workbench | null) {
@@ -66,6 +138,9 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         }
     }
 
+    // Called in the commit phase, after the fallback has been rendered, with the same error that
+    // getDerivedStateFromError received. React only provides the component stack here, so it is set here rather than
+    // together with the error. Until then componentStack is null, so it never belongs to a different error.
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
         this.setState({ componentStack: errorInfo.componentStack ?? null });
     }
