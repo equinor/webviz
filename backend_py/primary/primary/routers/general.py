@@ -21,6 +21,8 @@ class UserInfo(BaseModel):
     avatar_b64str: str | None = None
     has_sumo_access: bool
     has_smda_access: bool
+    has_ssdl_access: bool
+    has_pdm_access: bool
 
 
 router = APIRouter()
@@ -59,6 +61,8 @@ async def get_logged_in_user(
         display_name=None,
         has_sumo_access=authenticated_user.has_sumo_access_token(),
         has_smda_access=authenticated_user.has_smda_access_token(),
+        has_ssdl_access=authenticated_user.has_ssdl_access_token(),
+        has_pdm_access=authenticated_user.has_pdm_access_token()
     )
 
     if authenticated_user.has_graph_access_token() and includeGraphApiInfo:

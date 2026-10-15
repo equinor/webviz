@@ -1973,7 +1973,7 @@ export const getLoggedInUser = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/logged_in_user",
         ...options,
-        query: { ...options?.query, _schema: "e636f695c93610cd" },
+        query: { ...options?.query, _schema: "58a3751b9529d638" },
     });
 
 /**
