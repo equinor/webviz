@@ -9,10 +9,14 @@ from fastapi.routing import APIRoute
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Scope, Receive, Send, Message
 
+# Name of the OpenAPI operation field that marks an endpoint whose responses browsers may cache
+BROWSER_CACHED_OPENAPI_FIELD = "x-browser-cached"
+
 # Name of the OpenAPI operation field that carries an endpoint's result version
 RESULT_VERSION_OPENAPI_FIELD = "x-result-version"
 
-# Attribute set on decorated endpoint functions, read by add_result_versions_to_openapi()
+# Attributes set on decorated endpoint functions, read by add_cache_info_to_openapi()
+_BROWSER_CACHED_ATTR = "__webviz_browser_cached__"
 _RESULT_VERSION_ATTR = "__webviz_result_version__"
 
 
@@ -85,6 +89,7 @@ def custom_cache_time(
             _cache_context.set(CacheSettings(max_age_s=max_age_s, stale_while_revalidate_s=stale_while_revalidate_s))
             return await func(*args, **kwargs)
 
+        setattr(wrapper_async, _BROWSER_CACHED_ATTR, True)
         if result_version is not None:
             setattr(wrapper_async, _RESULT_VERSION_ATTR, result_version)
 
@@ -104,7 +109,7 @@ def cache_time(
         stale_while_revalidate: Optional StaleTime enum value
         result_version: Optional version of the returned values. Bump it when the values the endpoint returns change without its
             response schema changing (bug fix, algorithm change, units, filtering, defaults). It is published in
-            the endpoint's OpenAPI entry, and the frontend folds it into the endpoint's `_schema` query parameter,
+            the endpoint's OpenAPI entry, and the frontend folds it into the endpoint's `_rv` query parameter,
             so browsers stop using responses cached before the bump. Response schema changes need no bump.
 
     Examples:
@@ -123,18 +128,26 @@ def cache_time(
     )
 
 
-def add_result_versions_to_openapi(app: FastAPI) -> None:
+def add_cache_info_to_openapi(app: FastAPI) -> None:
     """
-    Publishes the `result_version` of every endpoint decorated with `@cache_time` or `@custom_cache_time` as the
-    `x-result-version` field of its OpenAPI operation. Call it after all routers are included.
+    Marks every endpoint decorated with `@cache_time` or `@custom_cache_time` with the `x-browser-cached` field
+    of its OpenAPI operation, and publishes its `result_version`, if any, as the `x-result-version` field. The
+    frontend only adds the `_rv` query parameter to operations with `x-browser-cached`.
+    Call it after all routers are included.
     """
     for route in app.routes:
         if not isinstance(route, APIRoute):
             continue
 
+        if not getattr(route.endpoint, _BROWSER_CACHED_ATTR, False):
+            continue
+
+        cache_info: dict[str, Any] = {BROWSER_CACHED_OPENAPI_FIELD: True}
         result_version = getattr(route.endpoint, _RESULT_VERSION_ATTR, None)
         if result_version is not None:
-            route.openapi_extra = {**(route.openapi_extra or {}), RESULT_VERSION_OPENAPI_FIELD: result_version}
+            cache_info[RESULT_VERSION_OPENAPI_FIELD] = result_version
+
+        route.openapi_extra = {**(route.openapi_extra or {}), **cache_info}
 
 
 def set_cache_time(duration: CacheTime, stale_while_revalidate: StaleTime | None = None) -> None:
