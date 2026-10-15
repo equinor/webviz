@@ -348,7 +348,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
         <SliderBase.Root
             {...baseProps}
             className={resolveClassNames(baseProps.className, "px-2xs grid items-center")}
-            // ! A slider with each min/max is unusable, so we disable it
+            // ! A slider with equal min/max is unusable, so we disable it
             disabled={minAndMaxAreEqual || baseProps.disabled}
             ref={wrapperRef}
             value={activeValue}
