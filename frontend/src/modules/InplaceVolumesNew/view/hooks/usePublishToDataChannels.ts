@@ -13,8 +13,19 @@ import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { ChannelIds } from "@modules/InplaceVolumesNew/channelDefs";
 import type { Interfaces } from "@modules/InplaceVolumesNew/interfaces";
 
-import { colorByAtom, resultNameAtom, plotTypeAtom, selectorColumnAtom, subplotByAtom } from "../atoms/baseAtoms";
-import { barSelectorIndexColumnAtom, indicesWithValuesAtom } from "../atoms/derivedAtoms";
+import {
+    areTableDefinitionSelectionsValidAtom,
+    colorByAtom,
+    resultNameAtom,
+    plotTypeAtom,
+    selectorColumnAtom,
+    subplotByAtom,
+} from "../atoms/baseAtoms";
+import {
+    areSelectedTablesComparableAtom,
+    barSelectorIndexColumnAtom,
+    indicesWithValuesAtom,
+} from "../atoms/derivedAtoms";
 import { orderEntriesByPreferredValues } from "../utils/GroupedTableData";
 
 // SENSITIVITY is never split: the SensitivityPlot tornado needs the whole per-realization response.
@@ -121,6 +132,11 @@ export function usePublishToDataChannels(
     const selectorColumn = useAtomValue(selectorColumnAtom);
     const barSelectorIndexColumn = useAtomValue(barSelectorIndexColumnAtom);
     const indicesWithValues = useAtomValue(indicesWithValuesAtom);
+    const areTableDefinitionSelectionsValid = useAtomValue(areTableDefinitionSelectionsValidAtom);
+    const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
+    const isSelectionValid = areTableDefinitionSelectionsValid && areSelectedTablesComparable;
+    // Keep the last contents while loading, but clear them when the selection is invalid.
+    const enabled = Boolean(table && resultName) || !isSelectionValid;
     const dependencies = [
         table,
         ensembleSet,
@@ -131,6 +147,7 @@ export function usePublishToDataChannels(
         subplotBy,
         selectorColumn,
         indicesWithValues,
+        isSelectionValid,
     ];
 
     // Backend group order is not stable; follow the filter's order, as the plot does.
@@ -159,7 +176,7 @@ export function usePublishToDataChannels(
         viewContext.usePublishChannelContents({
             channelIdString: ChannelIds.RESPONSE_PER_REAL,
             dependencies,
-            enabled: Boolean(table && resultName),
+            enabled,
             contents,
         });
         return;
@@ -225,7 +242,7 @@ export function usePublishToDataChannels(
     viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.RESPONSE_PER_REAL,
         dependencies,
-        enabled: Boolean(table && resultName),
+        enabled,
         contents,
     });
 }
