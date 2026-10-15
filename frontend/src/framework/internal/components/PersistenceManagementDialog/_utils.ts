@@ -71,7 +71,7 @@ export function useInfiniteSessionMetadataQuery(
             querySortParams?.sort_by,
             querySortParams?.sort_direction,
             querySortParams?.sort_lowercase,
-            querySortParams?._cacheBusting,
+            querySortParams?._cacheBust,
         ],
         async queryFn({ pageParam, signal }) {
             const { data } = await getSessionsMetadata({
@@ -84,7 +84,7 @@ export function useInfiniteSessionMetadataQuery(
                     sort_by: querySortParams?.sort_by,
                     sort_direction: querySortParams?.sort_direction,
                     sort_lowercase: querySortParams?.sort_lowercase,
-                    _cacheBusting: querySortParams?._cacheBusting,
+                    _cacheBust: querySortParams?._cacheBust,
                     page_size: QUERY_PAGE_SIZE,
                     // TODO: Rename `cursor` to `continuation_token` once we update to latest hey-api version
                     cursor: pageParam,

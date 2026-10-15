@@ -26,7 +26,7 @@ The browser cache is keyed by URL. When a response schema changes, regenerating 
 their URL and their cache. The same goes for a change to the values an endpoint returns, once the backend bumps
 its `result_version`.
 
-This is independent of `_cacheBusting` (`../cachebusting-plugin`), which busts caches when _ensemble data_ changes.
+This is independent of `_cacheBust` (`../cachebusting-plugin`), which busts caches when _ensemble data_ changes.
 
 - No runtime cost: the value is a string constant in the generated code.
 - Callers don't see it: the generated function signatures and types are unchanged, and a caller-supplied
@@ -149,7 +149,7 @@ The value is added with the public `$` builder (`$.object().spread(...).prop(...
 It goes after `...options`, so it takes precedence.
 
 If the operation declares no query parameters, `options.query` is typed `never` and can't be spread, so we emit
-`query: { _schema: "..." }` without it. In practice every operation currently has `_cacheBusting`.
+`query: { _schema: "..." }` without it. In practice every operation currently has `_cacheBust`.
 
 Which operations are eligible is decided by an `isEligible` predicate passed to `makeInjectSchemaQueryEvents`
 (see [Which endpoints](#which-endpoints)); the `plugin:handler:after` check uses the same predicate.

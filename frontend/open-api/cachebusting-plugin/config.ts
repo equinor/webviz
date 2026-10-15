@@ -7,7 +7,7 @@ export const defaultConfig: CacheBustingPlugin["Config"] = {
     name: "cache-busting",
     handler: handler,
     config: {
-        cacheKey: "_cacheBusting",
+        cacheKey: "_cacheBust",
     },
 };
 
