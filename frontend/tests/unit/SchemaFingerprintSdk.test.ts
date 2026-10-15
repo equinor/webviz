@@ -23,6 +23,7 @@ function makeSpec(): any {
             "/wells/{field_id}": {
                 get: {
                     operationId: "getWells",
+                    "x-browser-cached": true,
                     parameters: [
                         { name: "field_id", in: "path", required: true, schema: { type: "string" } },
                         {
@@ -39,8 +40,13 @@ function makeSpec(): any {
                 },
             },
             "/fields": {
-                get: { operationId: "getFields", responses: { "200": json({ $ref: "#/components/schemas/Field" }) } },
+                get: {
+                    operationId: "getFields",
+                    "x-browser-cached": true,
+                    responses: { "200": json({ $ref: "#/components/schemas/Field" }) },
+                },
             },
+            // Not browser-cached
             "/alive": {
                 get: { operationId: "getAlive", responses: { "200": json({ type: "string" }) } },
             },
@@ -172,16 +178,17 @@ describe("generated SDK with schema fingerprints", () => {
         await Promise.all(generatedDirs.map((dir) => rm(dir, { recursive: true, force: true })));
     });
 
-    test("injects _schema into every GET function and nothing else", async () => {
+    test("injects _schema into every browser-cached GET function and nothing else", async () => {
         const source = await readFile(path.join(fingerprintedDir, "sdk.gen.ts"), "utf8");
         const functions = source.split(/^export const /m).slice(1);
 
-        const getFunctions = functions.filter((fn) => fn.includes(".get<"));
-        const otherFunctions = functions.filter((fn) => !fn.includes(".get<"));
+        const isCached = (fn: string) => fn.startsWith("getWells ") || fn.startsWith("getFields ");
+        const cachedFunctions = functions.filter(isCached);
+        const otherFunctions = functions.filter((fn) => !isCached(fn));
 
-        expect(getFunctions).toHaveLength(3);
-        expect(otherFunctions.length).toBeGreaterThan(0);
-        for (const fn of getFunctions) {
+        expect(cachedFunctions).toHaveLength(2);
+        expect(otherFunctions).toHaveLength(2);
+        for (const fn of cachedFunctions) {
             expect(fn).toMatch(/_schema: ["'][0-9a-f]{16}["']/);
         }
         for (const fn of otherFunctions) {
@@ -249,9 +256,17 @@ describe("generated SDK with schema fingerprints", () => {
     test("sends _schema when the caller passes no options", async () => {
         const { sdk, transport } = await loadSdk(fingerprintedDir);
 
-        await sdk.getAlive();
+        await sdk.getFields();
 
         expect(lastRequest(transport).searchParams.get("_schema")).toMatch(/^[0-9a-f]{16}$/);
+    });
+
+    test("leaves GET requests to endpoints that aren't browser-cached unchanged", async () => {
+        const { sdk, transport } = await loadSdk(fingerprintedDir);
+
+        await sdk.getAlive();
+
+        expect(lastRequest(transport).search).toBe("");
     });
 
     test("does not let the caller override _schema", async () => {
@@ -287,11 +302,33 @@ describe("generated SDK with schema fingerprints", () => {
 
     test("refuses to generate when an operation already declares a _schema query parameter", async () => {
         const conflictingSpec = makeSpec();
-        conflictingSpec.paths["/alive"].get.parameters = [{ name: "_schema", in: "query", schema: { type: "string" } }];
+        conflictingSpec.paths["/fields"].get.parameters = [
+            { name: "_schema", in: "query", schema: { type: "string" } },
+        ];
 
         const error = await generateSdk(conflictingSpec, { withFingerprint: true }).catch((e: unknown) => e);
 
         expect(collectErrorMessages(error).join("\n")).toContain(`already declares a "_schema" query parameter`);
+    }, 60_000);
+
+    test("refuses to generate when a non-GET operation is marked as browser-cached", async () => {
+        const invalidSpec = makeSpec();
+        invalidSpec.paths["/wells"].post["x-browser-cached"] = true;
+
+        const error = await generateSdk(invalidSpec, { withFingerprint: true }).catch((e: unknown) => e);
+
+        expect(collectErrorMessages(error).join("\n")).toContain(
+            `"x-browser-cached" is only supported on GET endpoints`,
+        );
+    }, 60_000);
+
+    test("refuses to generate when x-browser-cached is not true", async () => {
+        const invalidSpec = makeSpec();
+        invalidSpec.paths["/alive"].get["x-browser-cached"] = "yes";
+
+        const error = await generateSdk(invalidSpec, { withFingerprint: true }).catch((e: unknown) => e);
+
+        expect(collectErrorMessages(error).join("\n")).toContain(`expected "x-browser-cached" to be true, got "yes"`);
     }, 60_000);
 
     test("keeps interceptors and error handling working", async () => {

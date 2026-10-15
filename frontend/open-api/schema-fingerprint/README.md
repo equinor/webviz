@@ -1,8 +1,8 @@
 # Schema fingerprint (`_schema` query parameter)
 
-Every generated SDK function for a **GET** endpoint sends a constant `_schema=<16 hex chars>` query parameter.
-The value is a fingerprint of that endpoint's success-response schema (2xx and `default`) and its optional
-[result version](#result-version), computed when the SDK is generated.
+Every generated SDK function for a **browser-cached GET** endpoint sends a constant `_schema=<16 hex chars>` query
+parameter. The value is a fingerprint of that endpoint's success-response schema (2xx and `default`) and its
+optional [result version](#result-version), computed when the SDK is generated.
 
 ```ts
 // src/api/autogen/sdk.gen.ts (generated)
@@ -32,7 +32,19 @@ This is independent of `zCacheBust` (`../cachebusting-plugin`), which busts cach
 - Callers don't see it: the generated function signatures and types are unchanged, and a caller-supplied
   `query._schema` is overwritten.
 - The backend ignores it, like any undeclared query parameter.
-- Only GET requests get it, because browsers don't HTTP-cache other methods.
+- Only endpoints the backend marks as browser-cached get it (see [Which endpoints](#which-endpoints)).
+
+## Which endpoints
+
+`@cache_time` and `@custom_cache_time` mark their endpoint with `x-browser-cached: true` in its OpenAPI
+operation (`add_cache_info_to_openapi()` in `cache_control_middleware.py`). Only GET operations with that marker get
+`_schema`. Other endpoints respond with `Cache-Control: no-store`, so there is no cached body to bust.
+
+- The marker isn't part of the fingerprint, so adding it doesn't change an endpoint's `_schema`.
+- Generation fails if a non-GET operation has the marker (browsers don't HTTP-cache other methods, so the backend's
+  caching setup is wrong), or if its value isn't `true`.
+- Endpoints that opt in at runtime with `set_cache_time()` have no decorator, so they're **not** marked and get no
+  `_schema`. Currently that's `GET /surface/statistical_surface_data_hybrid`.
 
 ## How the fingerprint is computed
 
@@ -115,7 +127,7 @@ generated function. The plugin combines public hooks with a small, guarded use o
 | ----------------------- | ------- | ------------------------------------------------------------------------------- |
 | `plugin:handler:before` | yes     | reset per-run state                                                             |
 | `node:set:before`       | yes     | receives each finished SDK function (not yet rendered); we add the `query` prop |
-| `plugin:handler:after`  | yes     | fail if any GET operation never passed through `node:set:before`                |
+| `plugin:handler:after`  | yes     | fail if any eligible operation never passed through `node:set:before`           |
 
 Inside `node:set:before`, finding the `{ responseType, url, ...options }` object means walking hey-api's
 **internal** code-builder ("ts-dsl") tree. These fields are `protected` or undeclared in hey-api's typings:
@@ -136,6 +148,9 @@ It goes after `...options`, so it takes precedence.
 If the operation declares no query parameters, `options.query` is typed `never` and can't be spread, so we emit
 `query: { _schema: "..." }` without it. In practice every operation currently has `zCacheBust`.
 
+Which operations are eligible is decided by an `isEligible` predicate passed to `makeInjectSchemaQueryEvents`
+(see [Which endpoints](#which-endpoints)); the `plugin:handler:after` check uses the same predicate.
+
 The operation's spec entry is found via `node.name.symbol.meta.path` (`["paths", "/cases", "get"]`) in
 `plugin.context.spec`.
 
@@ -145,13 +160,14 @@ So that a hey-api change can't silently drop `_schema`:
 
 1. **Every step of the walk asserts the expected shape** and throws `SchemaQueryInjectionError`, naming the
    operation and what was found instead.
-2. **The `plugin:handler:after` check** fails generation if any GET operation didn't get the parameter. This
+2. **The `plugin:handler:after` check** fails generation if any browser-cached GET operation didn't get the
+   parameter. This
    catches hey-api no longer routing SDK functions through `node:set:before` at all, for example a different
    SDK layout (`operations.container: "class"`) or a refactored handler.
 3. **Unit tests** ([`tests/unit/SchemaFingerprint.test.ts`](../../tests/unit/SchemaFingerprint.test.ts),
    [`tests/unit/SchemaFingerprintSdk.test.ts`](../../tests/unit/SchemaFingerprintSdk.test.ts)) generate an
-   SDK from a fixture spec with the installed hey-api. They then check the output compiles, every GET sends
-   `_schema`, serialization of other params is unchanged, and error handling still works.
+   SDK from a fixture spec with the installed hey-api. They then check the output compiles, exactly the
+   browser-cached GETs send `_schema`, serialization of other params is unchanged, and error handling still works.
 
 Known unsupported configurations, each of which fails loudly: `paramsStructure: "flat"`, a class-based SDK, an
 operation that already declares a `_schema` query parameter.
@@ -210,7 +226,7 @@ or, from the safety net:
     ```sh
     npx vitest run tests/unit/SchemaFingerprint.test.ts tests/unit/SchemaFingerprintSdk.test.ts
     npm run generate:api    # backend running on :5000
-    git diff src/api/autogen/sdk.gen.ts   # only the expected changes; every GET still has `_schema`
+    git diff src/api/autogen/sdk.gen.ts   # only the expected changes; every browser-cached GET still has `_schema`
     npm run typecheck
     ```
 

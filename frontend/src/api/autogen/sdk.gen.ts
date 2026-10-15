@@ -288,7 +288,6 @@ export const getAssetInfos = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/asset_infos",
         ...options,
-        query: { ...options?.query, _schema: "0a58037305788155" },
     });
 
 /**
@@ -303,7 +302,6 @@ export const getFieldIdentifiers = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/field_identifiers",
         ...options,
-        query: { ...options?.query, _schema: "364c1afc4d1268d6" },
     });
 
 /**
@@ -318,7 +316,6 @@ export const getCases = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/cases",
         ...options,
-        query: { ...options.query, _schema: "77c97f183a1430fb" },
     });
 
 /**
@@ -772,7 +769,6 @@ export const getStatisticalSurfaceDataHybrid = <ThrowOnError extends boolean = f
         responseType: "json",
         url: "/surface/statistical_surface_data_hybrid",
         ...options,
-        query: { ...options.query, _schema: "2c5234d2fcf9b516" },
     });
 
 /**
@@ -856,7 +852,6 @@ export const getDeltaSurfaceData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/surface/delta_surface_data",
         ...options,
-        query: { ...options.query, _schema: "95b4bbea845a7805" },
     });
 
 /**
@@ -869,7 +864,6 @@ export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/surface/misfit_surface_data",
         ...options,
-        query: { ...options.query, _schema: "e676697b97d96a5d" },
     });
 
 /**
@@ -1582,7 +1576,6 @@ export const getSessionsMetadata = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/persistence/sessions",
         ...options,
-        query: { ...options?.query, _schema: "caab5a43664d3134" },
     });
 
 /**
@@ -1655,7 +1648,6 @@ export const getSession = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/persistence/sessions/{session_id}",
         ...options,
-        query: { ...options.query, _schema: "b8451456f2183e71" },
     });
 
 /**
@@ -1712,7 +1704,6 @@ export const getSessionMetadata = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/persistence/sessions/metadata/{session_id}",
         ...options,
-        query: { ...options.query, _schema: "d453600100e5922e" },
     });
 
 /**
@@ -1744,7 +1735,6 @@ export const getSnapshotAccessLogs = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/persistence/snapshot_access_logs",
         ...options,
-        query: { ...options?.query, _schema: "16e8d475160b8804" },
     });
 
 /**
@@ -1769,7 +1759,6 @@ export const getSnapshotsMetadata = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/persistence/snapshots",
         ...options,
-        query: { ...options?.query, _schema: "29aa2f963cdff19c" },
     });
 
 /**
@@ -1856,7 +1845,6 @@ export const getSnapshot = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/persistence/snapshots/{snapshot_id}",
         ...options,
-        query: { ...options.query, _schema: "e313826e82e01e9b" },
     });
 
 /**
@@ -1896,7 +1884,6 @@ export const getMediaSasToken = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/tutorials/media_sas_token",
         ...options,
-        query: { ...options?.query, _schema: "86edc310328d24ad" },
     });
 
 /**
@@ -1909,7 +1896,6 @@ export const loginRoute = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/login",
         ...options,
-        query: { ...options?.query, _schema: "fd0448008a4cafdf" },
     });
 
 /**
@@ -1922,7 +1908,6 @@ export const authorizedCallbackRoute = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/auth-callback",
         ...options,
-        query: { ...options?.query, _schema: "fd0448008a4cafdf" },
     });
 
 /**
@@ -1935,7 +1920,6 @@ export const getAlive = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/alive",
         ...options,
-        query: { ...options?.query, _schema: "f946f0c572e55767" },
     });
 
 /**
@@ -1948,7 +1932,6 @@ export const getAliveProtected = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/alive_protected",
         ...options,
-        query: { ...options?.query, _schema: "2787bd42badd2c19" },
     });
 
 /**
@@ -1973,7 +1956,6 @@ export const getLoggedInUser = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/logged_in_user",
         ...options,
-        query: { ...options?.query, _schema: "e636f695c93610cd" },
     });
 
 /**
@@ -1986,5 +1968,4 @@ export const root = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/",
         ...options,
-        query: { ...options?.query, _schema: "38794f509991ed60" },
     });
