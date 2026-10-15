@@ -212,14 +212,8 @@ if config.PSEUDONYM_HMAC_KEY is not None:
     app.add_middleware(OtelSpanEndUserEnrichmentMiddleware, hmac_secret_key=config.PSEUDONYM_HMAC_KEY)
 
 # Add our custom middleware to enforce that user is logged in
-# Also redirects to /login endpoint for some select paths
-unprotected_paths = ["/logout", "/logged_in_user", "/alive", "/openapi.json"]
-paths_redirected_to_login = ["/", "/alive_protected"]
-app.add_middleware(
-    EnforceLoggedInMiddleware,
-    unprotected_paths=unprotected_paths,
-    paths_redirected_to_login=paths_redirected_to_login,
-)
+unprotected_paths = ["/logout", "/alive", "/openapi.json"]
+app.add_middleware(EnforceLoggedInMiddleware, unprotected_paths=unprotected_paths)
 
 encrypted_session_store = EncryptedRedisSessionStore(
     fernet_key=config.SESSION_STORE_FERNET_KEY,

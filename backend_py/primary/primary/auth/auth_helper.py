@@ -1,4 +1,3 @@
-import base64
 import logging
 import os
 import time
@@ -9,7 +8,7 @@ import jwt
 import msal
 import starsessions
 from fastapi import APIRouter, Request, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, PlainTextResponse
 from pydantic import BaseModel, ValidationError
 from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
@@ -64,7 +63,13 @@ class AuthHelper:
         self.router.add_api_route(path="/auth-callback", endpoint=self._authorized_callback_route, methods=["GET"])
 
     # pylint: disable-next=async-suffix
-    async def _login_route(self, request: Request, redirect_url_after_login: Optional[str] = None) -> RedirectResponse:
+    async def _login_route(self, request: Request, redirect_target_after_login: Optional[str] = None) -> Response:
+
+        if redirect_target_after_login is not None:
+            if not _is_safe_redirect_target(redirect_target_after_login):
+                LOGGER.warning("Rejected unsafe post-login redirect path")
+                return PlainTextResponse("Invalid post-login redirect specified.", 400)
+
         await starsessions.load_session(request)
         request.session.clear()
 
@@ -82,12 +87,9 @@ class AuthHelper:
 
         request.session["flow"] = flow_dict
 
-        # If a final redirect url was specified, store it in session storage so we can
-        # redirect once we get the auth callback. Note that the redirect_url_after_login
-        # query parameter is base64 encoded
-        if redirect_url_after_login is not None:
-            target_url_str_after_auth = base64.urlsafe_b64decode(redirect_url_after_login.encode()).decode()
-            request.session["target_url_str_after_auth"] = target_url_str_after_auth
+        # If a final redirect url was specified, store it in the session so we can redirect from the auth callback.
+        if redirect_target_after_login is not None:
+            request.session["redirect_target_after_login"] = redirect_target_after_login
 
         return RedirectResponse(flow_dict["auth_uri"])
 
@@ -119,13 +121,17 @@ class AuthHelper:
 
         except ValueError:
             # Usually caused by CSRF
-            return Response("Error processing auth response, probably CSRF error", 400)
+            return PlainTextResponse("Error processing auth response, probably CSRF error", 400)
 
-        target_url_str_after_auth = request.session.get("target_url_str_after_auth")
-        if target_url_str_after_auth is not None:
-            return RedirectResponse(target_url_str_after_auth)
+        redirect_target_after_login = request.session.get("redirect_target_after_login")
+        if redirect_target_after_login is not None:
+            if not _is_safe_redirect_target(redirect_target_after_login):
+                LOGGER.error("Rejected unsafe post-login redirect path from session")
+                return PlainTextResponse("Invalid post-login redirect specified.", 400)
 
-        return Response("Login OK")
+            return RedirectResponse(redirect_target_after_login)
+
+        return PlainTextResponse("Login OK")
 
     @staticmethod
     def get_authenticated_user(request_with_session: Request) -> Optional[AuthenticatedUser]:
@@ -403,3 +409,25 @@ def _save_token_cache_in_session(request_with_session: Request, token_cache: msa
 
 def _decode_jwt(jwt_str: str) -> dict:
     return jwt.decode(jwt_str, algorithms=["RS256"], options={"verify_signature": False})
+
+
+def _is_safe_redirect_target(target: object) -> bool:
+    if not isinstance(target, str):
+        return False
+
+    if not target.startswith("/"):
+        return False
+
+    if target.startswith("//"):
+        return False
+
+    if "\\" in target:
+        return False
+
+    # Reject ASCII control characters
+    for character in target:
+        code_point = ord(character)
+        if code_point < 32 or code_point == 127:
+            return False
+
+    return True
