@@ -104,8 +104,8 @@ function renameSchema(spec: Spec, from: string, to: string): void {
 }
 
 describe("fingerprintResponse", () => {
-    test("returns 16 lowercase hex characters", () => {
-        expect(hashOf(makeSpec())).toMatch(/^[0-9a-f]{16}$/);
+    test("returns 6 lowercase hex characters", () => {
+        expect(hashOf(makeSpec())).toMatch(/^[0-9a-f]{6}$/);
     });
 
     test("is identical when the same spec is processed twice", () => {
@@ -235,7 +235,7 @@ describe("fingerprintResponse", () => {
 
         test("produce a stable fingerprint", () => {
             const hash = hashOf(makeRecursiveSpec());
-            expect(hash).toMatch(/^[0-9a-f]{16}$/);
+            expect(hash).toMatch(/^[0-9a-f]{6}$/);
             expect(hashOf(makeRecursiveSpec())).toBe(hash);
         });
 

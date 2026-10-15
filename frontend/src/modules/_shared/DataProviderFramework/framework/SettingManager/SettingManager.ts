@@ -458,10 +458,8 @@ export class SettingManager<
     }
 
     setLoading(loading: boolean): void {
-        if (this._externalController) {
-            this._externalController.getSetting().setLoading(loading);
-        }
-
+        // An external controller derives the shared setting's loading state from its visible controlled settings
+        // via the IS_LOADING topic, so a single (possibly hidden) setting must not set it directly
         if (this._loading === loading) {
             return;
         }

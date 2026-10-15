@@ -4,7 +4,7 @@ import type { Plugin } from "@hey-api/openapi-ts";
 /**
  * Injects a constant query parameter into the request options of generated `@hey-api/sdk` functions:
  *
- *     (options.client ?? client).get({ url: "/wells", ...options, query: { ...options.query, _schema: "<hash>" } })
+ *     (options.client ?? client).get({ url: "/wells", ...options, query: { ...options.query, _rv: "<hash>" } })
  *
  * hey-api has no public hook for the request options of an SDK function. We use the public
  * `node:set:before` event, which receives each finished SDK function before it is rendered, and walk
@@ -28,8 +28,8 @@ export type SdkOperationRef = {
 export type InjectSchemaQueryOptions = {
     /** Name of the injected query parameter. */
     queryKey: string;
-    /** HTTP methods whose SDK functions get the parameter, lowercase. */
-    methods: ReadonlyArray<string>;
+    /** Whether the given operation's SDK function gets the parameter. */
+    isEligible: (operation: SdkOperationRef, plugin: SdkPlugin) => boolean;
     /** Returns the constant value to inject for the given operation. */
     resolveValue: (operation: SdkOperationRef, plugin: SdkPlugin) => string;
 };
@@ -53,7 +53,6 @@ export class SchemaQueryInjectionError extends Error {
  * run that every eligible operation received it.
  */
 export function makeInjectSchemaQueryEvents(options: InjectSchemaQueryOptions): SdkEvents {
-    const methods = new Set(options.methods);
     const injectedOperationIds = new Set<string>();
 
     return {
@@ -63,7 +62,7 @@ export function makeInjectSchemaQueryEvents(options: InjectSchemaQueryOptions): 
         },
         "node:set:before": ({ node, plugin }) => {
             const operation = getSdkOperationRef(node);
-            if (!operation || !methods.has(operation.method)) {
+            if (!operation || !options.isEligible(operation, plugin)) {
                 return;
             }
 
@@ -89,8 +88,13 @@ export function makeInjectSchemaQueryEvents(options: InjectSchemaQueryOptions): 
             // `node:set:before`, so the hook above never matches anything
             const missing: string[] = [];
             plugin.forEach("operation", (event) => {
-                if (methods.has(event.method) && !injectedOperationIds.has(event.operation.id)) {
-                    missing.push(`${event.method.toUpperCase()} ${event.path} (${event.operation.id})`);
+                const operation: SdkOperationRef = {
+                    operationId: event.operation.id,
+                    method: event.method,
+                    path: event.path,
+                };
+                if (options.isEligible(operation, plugin) && !injectedOperationIds.has(operation.operationId)) {
+                    missing.push(`${operation.method.toUpperCase()} ${operation.path} (${operation.operationId})`);
                 }
             });
 
@@ -130,7 +134,7 @@ function getSdkOperationRef(node: SdkNode | null): SdkOperationRef | null {
     return { operationId: meta.resourceId, path: pointer[1], method: pointer[2] };
 }
 
-// Query parameters as hey-api's IR sees them, i.e. including ones added by earlier plugins (zCacheBust)
+// Query parameters as hey-api's IR sees them, i.e. including ones added by earlier plugins (_cacheBust)
 function getDeclaredQueryParameters(operation: SdkOperationRef, plugin: SdkPlugin): Record<string, unknown> {
     const irOperation = plugin.context.ir.paths?.[operation.path as `/${string}`]?.[operation.method as "get"] as
         | { parameters?: { query?: Record<string, unknown> } }
