@@ -204,7 +204,7 @@ export function wellTrajectoryToGeojson(
  * @param wellboreTrajectory The wellbore trajectory to search within.
  * @returns an index in the range [1, mdArr.length - 1]
  */
-export function getTrajectoryIndexForMd(md: number, wellboreTrajectory: WellboreTrajectory_api) {
+export function getTrajectoryIndexForMd(md: number, wellboreTrajectory: MinimalWellboreTrajectory) {
     const { mdArr } = wellboreTrajectory;
 
     if (!mdArr.length) throw Error(`Expected trajectory to be at least one point, got 0 points`);
@@ -228,7 +228,7 @@ export function getTrajectoryIndexForMd(md: number, wellboreTrajectory: Wellbore
  * @returns the interpolated UTM world position as a 3d-point array. Z increases upwards
  */
 export function interpolateSegmentPosition(
-    wellboreTrajectory: WellboreTrajectory_api,
+    wellboreTrajectory: MinimalWellboreTrajectory,
     segmentStart: number,
     segmentEnd: number,
     lengthAlongSegment: number,
@@ -260,7 +260,7 @@ export function interpolateSegmentPosition(
  */
 export function getInterpolatedNormalAtMd(
     md: number,
-    wellboreTrajectory: WellboreTrajectory_api,
+    wellboreTrajectory: MinimalWellboreTrajectory,
     preComputedTrajectoryIndex?: number,
 ): [number, number, number] {
     const { eastingArr, northingArr, tvdMslArr } = wellboreTrajectory;
