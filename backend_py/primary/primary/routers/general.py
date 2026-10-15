@@ -4,13 +4,11 @@ import logging
 
 import httpx
 import starsessions
-from fastapi import APIRouter, HTTPException, Request, Query, Depends
+from fastapi import APIRouter, Request, Query, Depends
 from pydantic import BaseModel
 
 from webviz_services.graph_access.graph_access import GraphApiAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
-from primary.auth.auth_helper import AuthHelper
-
 from primary.auth.auth_helper import AuthHelper
 
 LOGGER = logging.getLogger(__name__)
