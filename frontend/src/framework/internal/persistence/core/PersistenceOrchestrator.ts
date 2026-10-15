@@ -1,3 +1,4 @@
+import { AuthStateStore, AuthStateStoreTopic } from "@framework/internal/auth/AuthStateStore";
 import { objectToJsonString } from "@framework/internal/WorkbenchSession/utils/hash";
 import type { Workbench } from "@framework/Workbench";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
@@ -47,6 +48,7 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
     private _pollingInterval: ReturnType<typeof setInterval> | null = null;
     private _saveInProgress: boolean = false;
     private _destroyed: boolean = false;
+    private _isStarted: boolean = false;
     private _isInitializing: boolean = false;
 
     constructor(workbench: Workbench, session: PrivateWorkbenchSession) {
@@ -77,8 +79,9 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
 
     async start() {
         if (this._destroyed) return;
-        if (this._pollingInterval) return; // already started
+        if (this._isStarted) return;
         if (this._session.isSnapshot()) return;
+        this._isStarted = true;
 
         // Mark as initializing to prevent premature backups
         this._isInitializing = true;
@@ -105,7 +108,13 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         }, AUTO_SAVE_DEBOUNCE_MS + 50);
     }
 
-    stop() {
+    /**
+     * @param options.keepLocalBackup Keep the recovery backup - e.g. when the page goes away, but not the session
+     */
+    stop(options?: { keepLocalBackup?: boolean }) {
+        // A pending refresh would have updated the backup - so the latest changes are written right away instead
+        const hasPendingRefresh = this._refreshStateDebounceTimeout !== null;
+
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
         this.stopBackendPolling();
 
@@ -115,7 +124,11 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         }
 
         this._tracker.reset();
-        this._localBackup.remove();
+        if (!options?.keepLocalBackup) {
+            this._localBackup.remove();
+        } else if (hasPendingRefresh) {
+            this._localBackup.persist();
+        }
         this._destroyed = true;
     }
 
@@ -245,6 +258,20 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
     private startBackendPolling() {
         this.stopBackendPolling();
 
+        // Every request would fail - and since signing in again reloads the page, polling never needs to resume.
+        // Checked here rather than in start(), as start() awaits initialization before calling this.
+        const authStateStore = AuthStateStore.getInstance();
+        if (!authStateStore.isLoggedIn()) return;
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "auth-state",
+            authStateStore.getPublishSubscribeDelegate().makeSubscriberFunction(AuthStateStoreTopic.AUTH_STATE)(() => {
+                if (!authStateStore.isLoggedIn()) {
+                    this.stopBackendPolling();
+                }
+            }),
+        );
+
         const windowActivityObserver = WindowActivityObserver.getInstance();
 
         // Poll on interval, but only when window is visible
@@ -301,5 +328,7 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
             clearInterval(this._pollingInterval);
             this._pollingInterval = null;
         }
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("window-activity");
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("auth-state");
     }
 }

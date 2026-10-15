@@ -79,6 +79,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
     private _boundHandleWindowError: (event: ErrorEvent) => void;
     private _boundHandleUnhandledRejection: (event: PromiseRejectionEvent) => void;
     private _boundRegisterActiveWorkbench: (wb: Workbench | null) => void;
+    private _boundHasCrashed: () => boolean;
 
     // Called during the render phase when a descendant throws while rendering (errors from window events go through
     // setErrorIfNoneSet instead). React renders the boundary again right away using the returned state, and that
@@ -98,6 +99,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         this._boundHandleWindowError = this.handleWindowError.bind(this);
         this._boundHandleUnhandledRejection = this.handleUnhandledRejection.bind(this);
         this._boundRegisterActiveWorkbench = this.registerActiveWorkbench.bind(this);
+        this._boundHasCrashed = this.hasCrashed.bind(this);
     }
 
     private handleWindowError(event: ErrorEvent) {
@@ -136,6 +138,12 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         if (!(this.state.error && wb == null)) {
             this.setState({ activeWorkbench: wb });
         }
+    }
+
+    // After a crash, the most recent workbench must be kept alive - the fallback reads its session for the support
+    // documents
+    private hasCrashed(): boolean {
+        return this.state.error !== null;
     }
 
     // Called in the commit phase, after the fallback has been rendered, with the same error that
@@ -231,6 +239,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
             <GlobalErrorBoundaryContext.Provider
                 value={{
                     registerActiveWorkbench: this._boundRegisterActiveWorkbench,
+                    hasCrashed: this._boundHasCrashed,
                 }}
             >
                 {this.props.children}
@@ -241,6 +250,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
 
 export const GlobalErrorBoundaryContext = React.createContext<{
     registerActiveWorkbench: (workbench: Workbench | null) => void;
+    hasCrashed: () => boolean;
 } | null>(null);
 
 export function useGlobalErrorBoundaryContext() {
