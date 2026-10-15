@@ -345,3 +345,16 @@ export function simplifyWellTrajectory<TTrajectory extends MinimalWellboreTrajec
     }
     return simplifiedTrajectory;
 }
+
+/**
+ * Checks if a measured depth (MD) value is within the range of a wellbore trajectory's measured depth array.
+ * @param trajectory A wellbore trajectory object
+ * @param md A measured depth value
+ * @returns `true` if the measured depth is within the range of the trajectory's measured depth array, otherwise `false`.
+ */
+export function isInMdRange(trajectory: MinimalWellboreTrajectory, md: number): boolean {
+    const minMd = trajectory.mdArr[0];
+    const maxMd = trajectory.mdArr[trajectory.mdArr.length - 1];
+
+    return md >= minMd && md <= maxMd;
+}

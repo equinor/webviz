@@ -15,7 +15,7 @@ import type {
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ExtendedWellFeature } from "@modules/_shared/types/geojson";
-import { interpolateSegmentPosition, wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
+import { interpolateSegmentPosition, isInMdRange, wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
 
 function findWellboreTrajectory(uuid: string | null | undefined, trajectories: WellboreTrajectory_api[]) {
     if (!uuid) return undefined;
@@ -38,7 +38,7 @@ export function makeWellTrajectoriesHoverVisualizationFunctions(
             const wellboreTrajectory = wellboreTrajectories.find(
                 (wellTrajectory) => wellTrajectory.wellboreUuid === hoverData?.wellboreUuid,
             );
-            if (!wellboreTrajectory || !hoverData) return [];
+            if (!wellboreTrajectory || !hoverData || !isInMdRange(wellboreTrajectory, hoverData.md)) return [];
 
             const data = getMarkerDataAtMd(wellboreTrajectory, hoverData.md);
 
