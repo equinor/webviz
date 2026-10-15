@@ -7329,9 +7329,9 @@ export type LoginRouteData_api = {
     path?: never;
     query?: {
         /**
-         * Redirect Url After Login
+         * Redirect Target After Login
          */
-        redirect_url_after_login?: string | null;
+        redirect_target_after_login?: string | null;
         _cacheBust?: string;
     };
     url: "/login";
