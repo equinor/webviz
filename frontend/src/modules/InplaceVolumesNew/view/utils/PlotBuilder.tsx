@@ -215,6 +215,7 @@ export class PlotBuilder {
         const spacing = computeSubplotXAxisSpacing({
             numRows,
             availableHeight: height - (options.margin?.t ?? 0) - (options.margin?.b ?? 0) - legendHeight,
+            rowDomainSize: (1 - ((options.margin?.t ?? 0) + (options.margin?.b ?? 0)) / height) / numRows,
             showTickLabels: xAxisOptions.showticklabels !== false,
             categoryLabels,
             tickAngle: xTickAngle,

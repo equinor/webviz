@@ -7,9 +7,11 @@ import {
 } from "@modules/InplaceVolumesNew/view/utils/subplotSpacing";
 
 function makeOptions(overrides: Partial<SubplotXAxisSpacingOptions> = {}): SubplotXAxisSpacingOptions {
+    const numRows = overrides.numRows ?? 2;
     return {
-        numRows: 2,
+        numRows,
         availableHeight: 600,
+        rowDomainSize: 0.95 / numRows,
         showTickLabels: true,
         categoryLabels: ["Volon", "Valysar"],
         tickAngle: 35,
@@ -59,5 +61,23 @@ describe("computeSubplotXAxisSpacing", () => {
         expect(manyRows.showTickLabels).toBe(false);
         expect(manyRows.tickLabelExtent).toBe(0);
         expect(manyRows.verticalGap).toBeLessThan(fewRows.verticalGap);
+    });
+
+    test("keeps a positive height for inner rows in a short plot", () => {
+        const height = 280;
+        const numRows = 3;
+        const rowDomainSize = (1 - 30 / height) / numRows;
+        const spacing = computeSubplotXAxisSpacing(
+            makeOptions({
+                numRows,
+                availableHeight: height - 30 - 0.15 * height,
+                rowDomainSize,
+                categoryLabels: ["A1", "B22", "C33"],
+                axisTitle: { standoff: 10, fontSize: 14 },
+            }),
+        );
+
+        expect(spacing.showTickLabels).toBe(false);
+        expect(rowDomainSize - spacing.verticalSpacing).toBeGreaterThan(0);
     });
 });

@@ -23,10 +23,10 @@ function summarizeCase(
     const name = isLow ? response.lowCaseName : response.highCaseName;
     const value = isLow ? response.lowCaseAverage : response.highCaseAverage;
     const difference = value - referenceAverage;
+    // Signed reference, as in the chart's relative scaling.
+    const percentageValue = referenceAverage !== 0 ? (difference / referenceAverage) * 100 : null;
     const percentage =
-        referenceAverage !== 0
-            ? `${difference > 0 ? "+" : ""}${((difference / referenceAverage) * 100).toFixed(1)}%`
-            : "";
+        percentageValue !== null ? `${percentageValue > 0 ? "+" : ""}${percentageValue.toFixed(1)}%` : "";
     const numRealizations =
         response.sensitivityType === SensitivityType.MONTECARLO
             ? response.lowCaseRealizationValues.length + response.highCaseRealizationValues.length

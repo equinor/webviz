@@ -81,6 +81,19 @@ export const aggregatedTableDataQueriesAtom = atom((get) => {
     const delta = get(deltaAggregatedTableDataQueriesAtom);
     const realizationToSensitivityCaseLabel = get(realizationToSensitivityCaseLabelMapAtom);
 
+    // Disabled queries still return cached data, which may not match the current (invalid) selection.
+    if (!get(areSelectedTablesComparableAtom) || !get(areTableDefinitionSelectionsValidAtom)) {
+        return {
+            tablesData: [],
+            isFetching: false,
+            allQueriesFailed: false,
+            errors: [],
+            droppedFluidSelections: [],
+            unmatchedRows: [],
+            numDroppedSensitivityRows: 0,
+        };
+    }
+
     const { tablesData: regularTablesData, numDroppedRows: numDroppedSensitivityRows } =
         realizationToSensitivityCaseLabel
             ? addSensitivityColumnToTablesData(regular.tablesData, realizationToSensitivityCaseLabel)

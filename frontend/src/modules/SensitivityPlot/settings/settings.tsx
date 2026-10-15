@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import { useAtom } from "jotai";
 
@@ -45,19 +45,15 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     });
 
     const sensitivityNames: string[] = [];
+    let invalidEnsembleType: "Invalid" | "Delta" | null = null;
     for (const content of responseReceiver.channel?.contents ?? []) {
         if (!content.metaData.ensembleIdentString) {
             continue;
         }
         const ensemble = ensembleSet.findEnsembleByIdentString(content.metaData.ensembleIdentString);
         if (!ensemble || ensemble instanceof DeltaEnsemble) {
-            const ensembleType = !ensemble ? "Invalid" : "Delta";
-            return (
-                <ContentWarning>
-                    <p>{ensembleType} ensemble detected in the data channel.</p>
-                    <p>Unable to compute parameter correlations.</p>
-                </ContentWarning>
-            );
+            invalidEnsembleType = !ensemble ? "Invalid" : "Delta";
+            break;
         }
 
         for (const sensitivity of ensemble.getSensitivities()?.getSensitivityArr() ?? []) {
@@ -67,11 +63,28 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         }
     }
 
-    if (
-        (!referenceSensitivityName || !sensitivityNames.includes(referenceSensitivityName)) &&
-        sensitivityNames.length > 0
-    ) {
-        setReferenceSensitivityName(pickDefaultReferenceSensitivityName(sensitivityNames));
+    const defaultReferenceSensitivityName =
+        invalidEnsembleType === null &&
+        (!referenceSensitivityName || !sensitivityNames.includes(referenceSensitivityName))
+            ? pickDefaultReferenceSensitivityName(sensitivityNames)
+            : null;
+
+    React.useEffect(
+        function applyDefaultReferenceSensitivityName() {
+            if (defaultReferenceSensitivityName !== null) {
+                setReferenceSensitivityName(defaultReferenceSensitivityName);
+            }
+        },
+        [defaultReferenceSensitivityName, setReferenceSensitivityName],
+    );
+
+    if (invalidEnsembleType) {
+        return (
+            <ContentWarning>
+                <p>{invalidEnsembleType} ensemble detected in the data channel.</p>
+                <p>Unable to compute parameter correlations.</p>
+            </ContentWarning>
+        );
     }
 
     const isChartSettingsDisabled = displayComponentType !== DisplayComponentType.SENSITIVITY_CHART;

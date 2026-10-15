@@ -151,7 +151,9 @@ export function usePublishToDataChannels(
         colorBy,
     ];
     const hasSeveralRowsPerReal =
-        barSelectorIndexColumn !== null && !contentSplitColumns.includes(barSelectorIndexColumn);
+        barSelectorIndexColumn !== null &&
+        !contentSplitColumns.includes(barSelectorIndexColumn) &&
+        (table?.getColumn(barSelectorIndexColumn)?.getUniqueValues().length ?? 0) > 1;
 
     if (!table || !resultName || !table.getColumn("REAL") || !table.getColumn(resultName) || hasSeveralRowsPerReal) {
         viewContext.usePublishChannelContents({
