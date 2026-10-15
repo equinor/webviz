@@ -10,11 +10,14 @@ import starsessions
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import RedirectResponse, PlainTextResponse
 from pydantic import BaseModel, ValidationError
+
 from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary import config
+
+from .redirect_validation import is_safe_redirect_target
 
 LOGGER = logging.getLogger(__name__)
 
@@ -64,9 +67,8 @@ class AuthHelper:
 
     # pylint: disable-next=async-suffix
     async def _login_route(self, request: Request, redirect_target_after_login: Optional[str] = None) -> Response:
-
         if redirect_target_after_login is not None:
-            if not _is_safe_redirect_target(redirect_target_after_login):
+            if not is_safe_redirect_target(redirect_target_after_login):
                 LOGGER.warning("Rejected unsafe post-login redirect path")
                 return PlainTextResponse("Invalid post-login redirect specified.", 400)
 
@@ -125,10 +127,6 @@ class AuthHelper:
 
         redirect_target_after_login = request.session.get("redirect_target_after_login")
         if redirect_target_after_login is not None:
-            if not _is_safe_redirect_target(redirect_target_after_login):
-                LOGGER.error("Rejected unsafe post-login redirect path from session")
-                return PlainTextResponse("Invalid post-login redirect specified.", 400)
-
             return RedirectResponse(redirect_target_after_login)
 
         return PlainTextResponse("Login OK")
@@ -409,25 +407,3 @@ def _save_token_cache_in_session(request_with_session: Request, token_cache: msa
 
 def _decode_jwt(jwt_str: str) -> dict:
     return jwt.decode(jwt_str, algorithms=["RS256"], options={"verify_signature": False})
-
-
-def _is_safe_redirect_target(target: object) -> bool:
-    if not isinstance(target, str):
-        return False
-
-    if not target.startswith("/"):
-        return False
-
-    if target.startswith("//"):
-        return False
-
-    if "\\" in target:
-        return False
-
-    # Reject ASCII control characters
-    for character in target:
-        code_point = ord(character)
-        if code_point < 32 or code_point == 127:
-            return False
-
-    return True

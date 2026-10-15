@@ -1,6 +1,6 @@
 import pytest
 
-from primary.auth.auth_helper import _is_safe_redirect_target
+from primary.auth.redirect_validation import is_safe_redirect_target
 
 
 @pytest.mark.parametrize(
@@ -13,7 +13,7 @@ from primary.auth.auth_helper import _is_safe_redirect_target
     ],
 )
 def test_is_safe_redirect_target_accepts_local_paths(target: str) -> None:
-    assert _is_safe_redirect_target(target)
+    assert is_safe_redirect_target(target)
 
 
 @pytest.mark.parametrize(
@@ -33,4 +33,4 @@ def test_is_safe_redirect_target_accepts_local_paths(target: str) -> None:
     ],
 )
 def test_is_safe_redirect_target_rejects_unsafe_targets(target: object) -> None:
-    assert not _is_safe_redirect_target(target)
+    assert not is_safe_redirect_target(target)
