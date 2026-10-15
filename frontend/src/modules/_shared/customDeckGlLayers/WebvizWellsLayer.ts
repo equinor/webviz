@@ -13,6 +13,7 @@ import type { WellFeature } from "@webviz/subsurface-viewer/dist/layers/wells/ty
 import { GetBoundingBox } from "@webviz/subsurface-viewer/dist/layers/wells/utils/spline";
 import type { WellsLayerProps } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
 import { SubLayerId } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
+import { take } from "lodash-es";
 
 import type { FlowDataColors } from "@framework/types/wellbore";
 
@@ -88,7 +89,7 @@ export class WebvizWellsLayer extends WellsLayer {
             super.getSubLayerProps({
                 ...trajectoryLayer.props,
                 data: trajectoryLayer.props.data,
-                pickable: true,
+                pickable: this.props.pickable ?? true,
                 stroked: false,
                 pointRadiusUnits: "meters",
                 lineWidthUnits: "meters",
@@ -108,13 +109,13 @@ export class WebvizWellsLayer extends WellsLayer {
 
     getPickingInfo({ info, sourceLayer }: GetPickingInfoParams): LayerPickInfoWithReadout<WellFeature> {
         const props = this.props as unknown as WebvizWellsLayerProps;
-        const superInfo = super.getPickingInfo({ info });
-        // The well's layer modifies the z-coordinate during picking, so we need to scale it back so readouts are correct
-        // ! Mutates the original coordinate object
-        if (superInfo.coordinate && superInfo.coordinate.length === 3) {
-            const zScale = this.props.modelMatrix ? this.props.modelMatrix[10] : 1;
-            superInfo.coordinate[2] *= zScale;
+
+        // Safety-hatch; some sub-layers have forgotten to account for position-format, which in turn makes picking behave inconsistent for 2D views. Manually dropping the z-value coordinate avoids
+        if (props.positionFormat === "XY" && info.coordinate?.length === 3) {
+            info.coordinate = take(info.coordinate, 2);
         }
+
+        const superInfo = super.getPickingInfo({ info });
 
         // Return early if there's no relevant information to look at
         if (!info.object || !sourceLayer || info.index === -1) {

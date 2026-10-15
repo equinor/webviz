@@ -1,6 +1,7 @@
 import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { GL } from "@luma.gl/webgl/constants";
 import type { Point3D } from "@webviz/subsurface-viewer";
+import { getSegmentIndicesForMd } from "@webviz/subsurface-viewer/dist/layers";
 
 import type { WellboreTrajectory_api } from "@api";
 import { HoverTopic } from "@framework/HoverService";
@@ -10,7 +11,7 @@ import type {
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ExtendedWellFeature } from "@modules/_shared/types/geojson";
-import { getInterpolatedPositionAtMd, wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
+import { interpolateSegmentPosition, isInMdRange, wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
 
 function findWellboreTrajectory(uuid: string | null | undefined, trajectories: WellboreTrajectory_api[]) {
     if (!uuid) return undefined;
@@ -58,15 +59,12 @@ export function makeWellTrajectoriesHoverVisualizationFunctions(
         },
 
         [HoverTopic.WELLBORE_MD]: (hoverData) => {
-            const mdPointData: Point3D[] = [];
-            if (hoverData?.md) {
-                const wellboreTrajectory = findWellboreTrajectory(hoverData?.wellboreUuid, wellboreTrajectories);
-                if (wellboreTrajectory) {
-                    const interpolatedPosition = getInterpolatedPositionAtMd(hoverData.md, wellboreTrajectory);
-                    interpolatedPosition[2] *= -1; // TVD value is positive, so we flip of for the actual z-position
+            const wellboreTrajectory = findWellboreTrajectory(hoverData?.wellboreUuid, wellboreTrajectories);
 
-                    mdPointData.push(interpolatedPosition);
-                }
+            const mdPointData: Point3D[] = [];
+
+            if (hoverData && wellboreTrajectory && isInMdRange(wellboreTrajectory, hoverData.md)) {
+                mdPointData.push(getPositionAtMd(wellboreTrajectory, hoverData.md));
             }
 
             return [
@@ -91,4 +89,14 @@ export function makeWellTrajectoriesHoverVisualizationFunctions(
             ];
         },
     };
+}
+
+function getPositionAtMd(trajectory: WellboreTrajectory_api, md: number) {
+    const [startIdx, endIdx] = getSegmentIndicesForMd(trajectory.mdArr, md);
+
+    const mdStart = trajectory.mdArr[startIdx];
+    const mdEnd = trajectory.mdArr[endIdx];
+    const lengthAlongSegment = (md - mdStart) / (mdEnd - mdStart);
+
+    return interpolateSegmentPosition(trajectory, startIdx, endIdx, lengthAlongSegment);
 }

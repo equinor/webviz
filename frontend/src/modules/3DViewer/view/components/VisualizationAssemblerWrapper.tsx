@@ -12,6 +12,7 @@ import { CustomDataProviderType } from "@modules/3DViewer/DataProviderFramework/
 import { makeDrilledWellTrajectoriesLayer3D } from "@modules/3DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer3D";
 import { makeIntersectionRealizationGridLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeIntersectionRealizationGridLayer";
 import { makeIntersectionSeismicHoverVisualizationFunction } from "@modules/3DViewer/DataProviderFramework/visualization/makeIntersectionSeismicHoverVisualizationFunction";
+import { makePlannedWellTrajectoriesLayer3D } from "@modules/3DViewer/DataProviderFramework/visualization/makePlannedWellTrajectoriesLayer3D";
 import { makeSeismicIntersectionMeshLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeSeismicIntersectionMeshLayer";
 import { makeSeismicSlicesLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeSeismicSlicesLayer";
 import { makeWellTrajectoriesHoverVisualizationFunctions } from "@modules/3DViewer/DataProviderFramework/visualization/makeWellTrajectoriesHoverVisualizationFunctions";
@@ -52,7 +53,6 @@ import { makeWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFr
 import { makeDepthSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDepthSurfaceLayer";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
 import { makeInitialFluidContactSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeInitialFluidContactSurfaceLayer";
-import { makePlannedWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makePlannedWellTrajectoriesLayer";
 import { makePolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makePolygonsLayer";
 import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -78,15 +78,11 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<
     InitialFluidContactSurfaceSettings,
     SurfaceData,
     SurfaceStoredData
->(
-    DataProviderType.INITIAL_FLUID_CONTACT_SURFACE,
-    InitialFluidContactSurfaceProvider,
-    {
-        transformToVisualization: makeInitialFluidContactSurfaceLayer,
-        transformToBoundingBox: makeSurfaceLayerBoundingBox,
-        transformToAnnotations: makeDepthColorScaleAnnotation,
-    },
-);
+>(DataProviderType.INITIAL_FLUID_CONTACT_SURFACE, InitialFluidContactSurfaceProvider, {
+    transformToVisualization: makeInitialFluidContactSurfaceLayer,
+    transformToBoundingBox: makeSurfaceLayerBoundingBox,
+    transformToAnnotations: makeDepthColorScaleAnnotation,
+});
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(DataProviderType.FAULT_POLYGONS, FaultPolygonsProvider, {
     transformToVisualization: makePolygonsLayer,
     transformToBoundingBox: makePolygonDataBoundingBox,
@@ -129,7 +125,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.PLANNED_WELL_TRAJECTORIES,
     PlannedWellboreTrajectoriesProvider,
     {
-        transformToVisualization: makePlannedWellTrajectoriesLayer,
+        transformToVisualization: makePlannedWellTrajectoriesLayer3D,
         transformToBoundingBox: makeWellTrajectoriesBoundingBox,
         transformToHoverVisualization: makeWellTrajectoriesHoverVisualizationFunctions,
     },
