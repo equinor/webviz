@@ -72,7 +72,7 @@ logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
 logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
 # logging.getLogger("primary.middleware").setLevel(logging.DEBUG)
-# logging.getLogger("primary.auth").setLevel(logging.DEBUG)
+logging.getLogger("primary.auth").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
 
@@ -221,10 +221,14 @@ app.add_middleware(
     paths_redirected_to_login=paths_redirected_to_login,
 )
 
+# With the default lifetime=0 (browser-session cookie), starsessions uses gc_ttl as the Redis key TTL and resets it on
+# every save. This effectively gives a 1-day server-side idle timeout and ensures abandoned sessions are cleaned up.
 encrypted_session_store = EncryptedRedisSessionStore(
     fernet_key=config.SESSION_STORE_FERNET_KEY,
     redis_url=config.REDIS_AUTH_STORE_URL,
     prefix=config.AUTH_SESSION_STORE_PREFIX,
+    gc_ttl= 24 * 3600,
+
 )
 app.add_middleware(SessionMiddleware, store=encrypted_session_store)
 
