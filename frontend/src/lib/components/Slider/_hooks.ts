@@ -69,19 +69,21 @@ export function useLockedValueUpdate(props: {
     maxLocked: boolean;
     onValueChange?: (value: number | number[], eventDetails: SliderChangeEventDetails, commit: boolean) => void;
 }) {
+    const prevMinRef = React.useRef(props.min);
+    const prevMaxRef = React.useRef(props.max);
     const prevMinLockedRef = React.useRef(false);
     const prevMaxLockedRef = React.useRef(false);
 
     const { onValueChange } = props;
 
     React.useEffect(
-        function clampToToggledLocksEffec() {
+        function clampToToggledLocksEffect() {
             const value = props.value as number | number[];
             const isDualValue = isDualSliderValue(value);
             let newValue: number | number[] | null = null;
 
-            // Min lock was just enabled
-            if (props.minLocked && !prevMinLockedRef.current) {
+            // Min lock was just enabled, or the limits changed
+            if (props.minLocked && (!prevMinLockedRef.current || props.min !== prevMinRef.current)) {
                 if (isDualValue) {
                     newValue = [props.min, value[1]];
                 } else {
@@ -89,8 +91,8 @@ export function useLockedValueUpdate(props: {
                 }
             }
 
-            // Max lock was just enabled
-            if (props.maxLocked && !prevMaxLockedRef.current) {
+            // Max lock was just enabled, or the limits changed
+            if (props.maxLocked && (!prevMaxLockedRef.current || props.max !== prevMaxRef.current)) {
                 if (isDualValue && newValue !== null) {
                     newValue = [(newValue as number[])[0], props.max];
                 } else if (isDualValue) {
@@ -102,8 +104,10 @@ export function useLockedValueUpdate(props: {
 
             prevMinLockedRef.current = props.minLocked;
             prevMaxLockedRef.current = props.maxLocked;
+            prevMinRef.current = props.min;
+            prevMaxRef.current = props.max;
 
-            if (newValue !== null) {
+            if (newValue !== null && !isEqual(value, newValue)) {
                 onValueChange?.(newValue, { reason: "range-locked" }, true);
             }
         },

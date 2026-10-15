@@ -332,3 +332,16 @@ function SliderController(props: {
         </div>
     );
 }
+
+export const OutOfRange: Story = {
+    args: { defaultValue: [0, 110], min: 0, max: 100, markerLabels: true, valueLabelSide: "bottom" },
+    parameters: {
+        docs: {
+            description: {
+                story: `
+When dealing with dynamically changing min and max values, the slider's value might end up outside of the allowed range. The slider will in these cases keep the invalid value, clamping it only when interacting with the slider. 
+`,
+            },
+        },
+    },
+};
