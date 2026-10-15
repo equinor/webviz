@@ -281,7 +281,9 @@ def _acquire_refreshed_identity_and_tokens(
         user_name = curr_auth_info.user_name
         id_token_expiry_time = curr_auth_info.user_identity_expires_at
     else:
-        token_dict = cca.acquire_token_silent_with_error(scopes=config.GRAPH_SCOPES, account=account, force_refresh=True)
+        token_dict = cca.acquire_token_silent_with_error(
+            scopes=config.GRAPH_SCOPES, account=account, force_refresh=True
+        )
         if token_dict is None:
             LOGGER.error("No token found in cache when acquiring token silently for graph scopes")
             return None
