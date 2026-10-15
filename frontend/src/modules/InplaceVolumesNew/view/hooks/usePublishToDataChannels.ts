@@ -21,11 +21,7 @@ import {
     selectorColumnAtom,
     subplotByAtom,
 } from "../atoms/baseAtoms";
-import {
-    areSelectedTablesComparableAtom,
-    barSelectorIndexColumnAtom,
-    indicesWithValuesAtom,
-} from "../atoms/derivedAtoms";
+import { areSelectedTablesComparableAtom, indicesWithValuesAtom } from "../atoms/derivedAtoms";
 import { orderEntriesByPreferredValues } from "../utils/GroupedTableData";
 
 // SENSITIVITY is never split: the SensitivityPlot tornado needs the whole per-realization response.
@@ -130,7 +126,6 @@ export function usePublishToDataChannels(
     const resultName = useAtomValue(resultNameAtom);
     const plotType = useAtomValue(plotTypeAtom);
     const selectorColumn = useAtomValue(selectorColumnAtom);
-    const barSelectorIndexColumn = useAtomValue(barSelectorIndexColumnAtom);
     const indicesWithValues = useAtomValue(indicesWithValuesAtom);
     const areTableDefinitionSelectionsValid = useAtomValue(areTableDefinitionSelectionsValidAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
@@ -159,20 +154,7 @@ export function usePublishToDataChannels(
         );
     }
 
-    // A bar category the contents are not split by gives several rows per REAL in each content.
-    const contentSplitColumns: string[] = [
-        TableOriginKey.ENSEMBLE,
-        TableOriginKey.TABLE_NAME,
-        TableOriginKey.FLUID,
-        subplotBy,
-        colorBy,
-    ];
-    const hasSeveralRowsPerReal =
-        barSelectorIndexColumn !== null &&
-        !contentSplitColumns.includes(barSelectorIndexColumn) &&
-        (table?.getColumn(barSelectorIndexColumn)?.getUniqueValues().length ?? 0) > 1;
-
-    if (!table || !resultName || !table.getColumn("REAL") || !table.getColumn(resultName) || hasSeveralRowsPerReal) {
+    if (!table || !resultName || !table.getColumn("REAL") || !table.getColumn(resultName)) {
         viewContext.usePublishChannelContents({
             channelIdString: ChannelIds.RESPONSE_PER_REAL,
             dependencies,
@@ -185,6 +167,7 @@ export function usePublishToDataChannels(
     const colorByMap = createColumnValuesToColorMap(table, ensembleSet, colorBy, colorSet);
     const isStandardSubplotBy = STANDARD_ORIGIN_KEYS.includes(subplotBy as TableOriginKey);
     const isStandardColorBy = STANDARD_ORIGIN_KEYS.includes(colorBy as TableOriginKey);
+    let hasDuplicateRealizations = false;
 
     for (const [ensembleIdentStr, ensembleTable] of table.splitByColumn(TableOriginKey.ENSEMBLE).getCollectionMap()) {
         const ensembleIdent = getEnsembleIdentFromString(ensembleIdentStr.toString());
@@ -232,6 +215,7 @@ export function usePublishToDataChannels(
 
                     for (const { table: finalTable, colorByValue } of colorEntries) {
                         const ctx: ContentContext = { ...baseCtx, subplotByValue, colorByValue };
+                        hasDuplicateRealizations ||= hasSeveralRowsPerRealization(finalTable);
                         contents.push(createChannelContent(finalTable, ctx, colorByMap, colorBy));
                     }
                 }
@@ -243,8 +227,14 @@ export function usePublishToDataChannels(
         channelIdString: ChannelIds.RESPONSE_PER_REAL,
         dependencies,
         enabled,
-        contents,
+        // E.g. bars per zone without splitting by zone; a response per realization is required.
+        contents: hasDuplicateRealizations ? [] : contents,
     });
+}
+
+function hasSeveralRowsPerRealization(table: Table): boolean {
+    const realColumn = table.getColumn("REAL");
+    return realColumn !== undefined && realColumn.getUniqueValues().length < realColumn.getNumRows();
 }
 
 function createColumnValuesToColorMap(

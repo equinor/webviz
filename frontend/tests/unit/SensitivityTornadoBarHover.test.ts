@@ -74,7 +74,7 @@ describe("makeTornadoBarHoverTemplate", () => {
         expect(makeTornadoBarHoverTemplate(response("faultseal"), "low", dataset.referenceAverage)).toBe(expected);
     });
 
-    test("the percentage sign follows the signed reference, as in the relative chart", () => {
+    test("the percentage sign follows the difference for a negative reference", () => {
         const negativeDataset = computeSensitivitiesForResponse(
             sensitivities,
             { realizations: [1, 2, 3, 4, 5, 6, 7, 8], values: [-90, -100, -100, -110, -90, -90, -110, -110] },
@@ -88,6 +88,6 @@ describe("makeTornadoBarHoverTemplate", () => {
         );
 
         expect(templates.join()).not.toContain("+-");
-        expect(templates.some((template) => template.includes("+10 (-10.0%)"))).toBe(true);
+        expect(templates.some((template) => template.includes("+10 (+10.0%)"))).toBe(true);
     });
 });

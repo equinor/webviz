@@ -122,7 +122,8 @@ describe("InplaceVolumesNew plotly trace hovers", () => {
             expectEveryHoverToStartWithTitle(trace.hovertemplate);
         }
         const violin = traces.find((trace) => trace.type === "violin")!;
-        expect(violin.hoveron).toBe("points");
+        expect(violin.hoveron).toBe("points+kde");
+        expect(violin.hoverinfo).toContain("name");
         expect(violin.customdata).toEqual(REALIZATIONS);
         expect(violin.hovertemplate).toContain("Realization: %{customdata}");
     });

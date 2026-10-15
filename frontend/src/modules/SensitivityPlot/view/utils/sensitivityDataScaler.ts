@@ -23,6 +23,11 @@ export class SensitivityDataScaler {
         return this._scaling === SensitivityScaling.RELATIVE;
     }
 
+    // |reference| keeps the sign of the difference, so a negative reference does not flip the bars.
+    private _toPercentage(value: number): number {
+        return ((value - this._referenceAverage) / Math.abs(this._referenceAverage)) * 100;
+    }
+
     public calculateHighXValues(sensitivityResponses: SensitivityResponse[]): number[] {
         return sensitivityResponses.map((s) => {
             if (this.isAbsolute) {
@@ -31,9 +36,10 @@ export class SensitivityDataScaler {
                 return this._calculateHighX(lowDiff, highDiff);
             }
             if (this.isRelativePercentage) {
-                const lowDiff = ((s.lowCaseAverage - this._referenceAverage) / this._referenceAverage) * 100;
-                const highDiff = ((s.highCaseAverage - this._referenceAverage) / this._referenceAverage) * 100;
-                return this._calculateHighX(lowDiff, highDiff);
+                return this._calculateHighX(
+                    this._toPercentage(s.lowCaseAverage),
+                    this._toPercentage(s.highCaseAverage),
+                );
             }
             return this._calculateHighX(s.lowCaseReferenceDifference, s.highCaseReferenceDifference);
         });
@@ -47,9 +53,7 @@ export class SensitivityDataScaler {
                 return this._calculateLowX(lowDiff, highDiff);
             }
             if (this.isRelativePercentage) {
-                const lowDiff = ((s.lowCaseAverage - this._referenceAverage) / this._referenceAverage) * 100;
-                const highDiff = ((s.highCaseAverage - this._referenceAverage) / this._referenceAverage) * 100;
-                return this._calculateLowX(lowDiff, highDiff);
+                return this._calculateLowX(this._toPercentage(s.lowCaseAverage), this._toPercentage(s.highCaseAverage));
             }
             return this._calculateLowX(s.lowCaseReferenceDifference, s.highCaseReferenceDifference);
         });
@@ -63,9 +67,10 @@ export class SensitivityDataScaler {
                 return this._calculateHighBase(lowDiff, highDiff) + this._referenceAverage;
             }
             if (this.isRelativePercentage) {
-                const lowDiff = ((s.lowCaseAverage - this._referenceAverage) / this._referenceAverage) * 100;
-                const highDiff = ((s.highCaseAverage - this._referenceAverage) / this._referenceAverage) * 100;
-                return this._calculateHighBase(lowDiff, highDiff);
+                return this._calculateHighBase(
+                    this._toPercentage(s.lowCaseAverage),
+                    this._toPercentage(s.highCaseAverage),
+                );
             }
             return this._calculateHighBase(s.lowCaseReferenceDifference, s.highCaseReferenceDifference);
         });
@@ -79,9 +84,10 @@ export class SensitivityDataScaler {
                 return this._calculateLowBase(lowDiff, highDiff) + this._referenceAverage;
             }
             if (this.isRelativePercentage) {
-                const lowDiff = ((s.lowCaseAverage - this._referenceAverage) / this._referenceAverage) * 100;
-                const highDiff = ((s.highCaseAverage - this._referenceAverage) / this._referenceAverage) * 100;
-                return this._calculateLowBase(lowDiff, highDiff);
+                return this._calculateLowBase(
+                    this._toPercentage(s.lowCaseAverage),
+                    this._toPercentage(s.highCaseAverage),
+                );
             }
             return this._calculateLowBase(s.lowCaseReferenceDifference, s.highCaseReferenceDifference);
         });
@@ -92,7 +98,7 @@ export class SensitivityDataScaler {
             return realizationValues;
         }
         if (this.isRelativePercentage) {
-            return realizationValues.map((val) => ((val - this._referenceAverage) / this._referenceAverage) * 100);
+            return realizationValues.map((val) => this._toPercentage(val));
         }
         return realizationValues.map((val) => val - this._referenceAverage);
     }
@@ -127,12 +133,8 @@ export class SensitivityDataScaler {
             lowValues = sensitivityResponses.map((s) => s.lowCaseAverage);
             highValues = sensitivityResponses.map((s) => s.highCaseAverage);
         } else if (this.isRelativePercentage) {
-            lowValues = sensitivityResponses.map(
-                (s) => ((s.lowCaseAverage - this._referenceAverage) / this._referenceAverage) * 100,
-            );
-            highValues = sensitivityResponses.map(
-                (s) => ((s.highCaseAverage - this._referenceAverage) / this._referenceAverage) * 100,
-            );
+            lowValues = sensitivityResponses.map((s) => this._toPercentage(s.lowCaseAverage));
+            highValues = sensitivityResponses.map((s) => this._toPercentage(s.highCaseAverage));
         } else {
             lowValues = sensitivityResponses.map((s) => s.lowCaseReferenceDifference);
             highValues = sensitivityResponses.map((s) => s.highCaseReferenceDifference);
@@ -184,7 +186,7 @@ export class SensitivityDataScaler {
             return sensitivity.lowCaseAverage;
         }
         if (this.isRelativePercentage) {
-            return ((sensitivity.lowCaseAverage - this._referenceAverage) / this._referenceAverage) * 100;
+            return this._toPercentage(sensitivity.lowCaseAverage);
         }
         return sensitivity.lowCaseReferenceDifference;
     }
@@ -194,7 +196,7 @@ export class SensitivityDataScaler {
             return sensitivity.highCaseAverage;
         }
         if (this.isRelativePercentage) {
-            return ((sensitivity.highCaseAverage - this._referenceAverage) / this._referenceAverage) * 100;
+            return this._toPercentage(sensitivity.highCaseAverage);
         }
         return sensitivity.highCaseReferenceDifference;
     }

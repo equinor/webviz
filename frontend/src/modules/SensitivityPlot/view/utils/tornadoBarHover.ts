@@ -23,8 +23,8 @@ function summarizeCase(
     const name = isLow ? response.lowCaseName : response.highCaseName;
     const value = isLow ? response.lowCaseAverage : response.highCaseAverage;
     const difference = value - referenceAverage;
-    // Signed reference, as in the chart's relative scaling.
-    const percentageValue = referenceAverage !== 0 ? (difference / referenceAverage) * 100 : null;
+    // Same relative difference as the chart's "Relative %" scaling.
+    const percentageValue = referenceAverage !== 0 ? (difference / Math.abs(referenceAverage)) * 100 : null;
     const percentage =
         percentageValue !== null ? `${percentageValue > 0 ? "+" : ""}${percentageValue.toFixed(1)}%` : "";
     const numRealizations =

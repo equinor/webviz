@@ -42,3 +42,31 @@ describe("SensitivityDataScaler.calculateXAxisRange", () => {
         expect(maxWithoutPoints).toBeLessThan(maxWithPoints / 2);
     });
 });
+
+describe("SensitivityDataScaler relative percentage", () => {
+    test("a single-case scenario above a negative reference keeps its bar", () => {
+        const negativeReferenceDataset = computeSensitivitiesForResponse(
+            new EnsembleSensitivities([
+                {
+                    name: "rms_seed",
+                    type: SensitivityType.MONTECARLO,
+                    cases: [{ name: "p10_p90", realizations: [1, 2] }],
+                },
+                { name: "kvkh", type: SensitivityType.SCENARIO, cases: [{ name: "high", realizations: [3, 4] }] },
+            ]),
+            { realizations: [1, 2, 3, 4], values: [-100, -100, -90, -90] },
+            "rms_seed",
+            SensitivitySortBy.ALPHABETICAL,
+            false,
+        );
+        const kvkh = negativeReferenceDataset.sensitivityResponses.filter((s) => s.sensitivityName === "kvkh");
+        const percentageScaler = new SensitivityDataScaler(
+            SensitivityScaling.RELATIVE_PERCENTAGE,
+            negativeReferenceDataset.referenceAverage,
+        );
+
+        expect(percentageScaler.calculateHighXValues(kvkh)[0]).toBeCloseTo(10);
+        expect(percentageScaler.calculateHighLabelValue(kvkh[0])).toBeCloseTo(10);
+        expect(percentageScaler.calculateLowXValues(kvkh)[0]).toBe(0);
+    });
+});

@@ -30,7 +30,6 @@ export function makePlotlyDensityTraces({
         name: title,
         type: "violin",
         marker: { color },
-        // @ts-expect-error - violin attributes are missing in the plotly types
         side: "positive",
         y0: 0,
         orientation: "h",
@@ -38,8 +37,11 @@ export function makePlotlyDensityTraces({
         meanline: { visible: !showStatisticalMarkers },
         customdata: realizations,
         hovertemplate: `<b>${title}</b><br>Value: %{x}<br>Realization: %{customdata}<extra></extra>`,
-        // KDE hovers ignore the template and cannot show the trace name, so only points hover.
-        hoveron: "points",
+        // KDE hovers ignore the template; they name the trace via hoverinfo, uncut for long case names.
+        // @ts-expect-error - violin attributes are missing in the plotly types
+        hoveron: "points+kde",
+        hoverinfo: "x+name",
+        hoverlabel: { namelength: -1 },
         points: showRealizationPoints ? "all" : false,
         pointpos: -0.3,
         jitter: 0.1,
