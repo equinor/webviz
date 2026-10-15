@@ -59,13 +59,19 @@ export class DeserializationAssistant {
     }
 
     makeItem(serialized: SerializedItem): Item {
-        if (serialized.type === SerializedType.DATA_PROVIDER_MANAGER) {
-            throw new Error(
-                "Cannot deserialize a DataProviderManager in DeserializationFactory. A DataProviderManager can never be a descendant of a DataProviderManager.",
-            );
-        }
+        // The item being restored, once it has been constructed - from then on it may have started its dependencies
+        // (e.g. a provider fetching its settings' allowed values), so a failure after that has to tear it down
+        let constructedItem: Item | null = null;
 
+        // Every failure, including an unknown or invalid item type, becomes a placeholder that keeps the original state -
+        // so one bad item never prevents the items after it from being restored
         try {
+            if (serialized.type === SerializedType.DATA_PROVIDER_MANAGER) {
+                throw new Error(
+                    "Cannot deserialize a DataProviderManager in DeserializationFactory. A DataProviderManager can never be a descendant of a DataProviderManager.",
+                );
+            }
+
             if (serialized.type === SerializedType.DATA_PROVIDER) {
                 const serializedDataProvider = normalizeLegacyProviderSettings(
                     serialized as SerializedDataProvider<any>,
@@ -75,6 +81,7 @@ export class DeserializationAssistant {
                     this._dataProviderManager,
                     serializedDataProvider.name,
                 );
+                constructedItem = provider;
                 provider.deserializeState(serializedDataProvider);
                 provider.getItemDelegate().setId(serializedDataProvider.id);
                 provider.getItemDelegate().setName(serializedDataProvider.name);
@@ -84,6 +91,7 @@ export class DeserializationAssistant {
             if (serialized.type === SerializedType.GROUP) {
                 const serializedGroup = serialized as SerializedGroup<any>;
                 const group = GroupRegistry.makeGroup(serializedGroup.groupType, this._dataProviderManager);
+                constructedItem = group;
                 group.deserializeState(serializedGroup);
                 return group;
             }
@@ -91,6 +99,7 @@ export class DeserializationAssistant {
             if (serialized.type === SerializedType.CONTEXT_BOUNDARY) {
                 const serializedContextBoundary = serialized as SerializedContextBoundary;
                 const contextBoundary = new ContextBoundary(serializedContextBoundary.name, this._dataProviderManager);
+                constructedItem = contextBoundary;
                 contextBoundary.deserializeState(serializedContextBoundary);
                 return contextBoundary;
             }
@@ -102,10 +111,17 @@ export class DeserializationAssistant {
                     serializedSharedSetting.value,
                     this._dataProviderManager,
                 );
+                constructedItem = setting;
                 setting.deserializeState(serializedSharedSetting);
                 return setting;
             }
+
+            throw new Error(`Unhandled serialized item type: ${serialized.type}`);
         } catch (error) {
+            // Only the placeholder goes into the tree - nothing else would ever tear down the partially restored item,
+            // which would otherwise keep fetching and publishing to the manager. A group takes its children with it.
+            constructedItem?.beforeDestroy?.();
+
             const name = serialized.name ?? "Unknown item";
             const errorMessage = `Error deserializing item '${name}' - it might have been renamed or removed: ${error instanceof Error ? error.message : String(error)}`;
             const errorPlaceholder = new ErrorPlaceholder(
@@ -116,7 +132,5 @@ export class DeserializationAssistant {
             );
             return errorPlaceholder;
         }
-
-        throw new Error(`Unhandled serialized item type: ${serialized.type}`);
     }
 }

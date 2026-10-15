@@ -5,6 +5,12 @@
 
 # Changelog
 
+## October 2026
+
+### Fixed
+
+- **2D, 3D, Intersection and Well log viewers**: Fixed several issues with loading saved sessions and changing layer settings.
+
 ## September 2026
 
 ### Changed
