@@ -57,7 +57,7 @@ export function useSurfaceDataQuery(
     resampleTo: SurfaceDef_api | null,
     allowEnable: boolean,
 ): UseQueryResult<SurfaceDataFloat_trans | SurfaceDataPng_api> {
-    let cacheBustingQueryParam: { zCacheBust?: string } | undefined = undefined;
+    let cacheBustingQueryParam: { _cacheBusting?: string } | undefined = undefined;
     if (surfAddrStr) {
         const surfAddrType = peekSurfaceAddressType(surfAddrStr);
         if (surfAddrType !== "OBS" && surfAddrType !== "REAL" && surfAddrType !== "STAT") {

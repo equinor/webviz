@@ -1,6 +1,6 @@
 # Schema fingerprint (`_schema` query parameter)
 
-Every generated SDK function for a **browser-cached GET** endpoint sends a constant `_schema=<16 hex chars>` query
+Every generated SDK function for a **browser-cached GET** endpoint sends a constant `_schema=<6 hex chars>` query
 parameter. The value is a fingerprint of that endpoint's success-response schema (2xx and `default`) and its
 optional [result version](#result-version), computed when the SDK is generated.
 
@@ -11,7 +11,7 @@ export const getCases = <ThrowOnError extends boolean = false>(options: Options<
         responseType: "json",
         url: "/cases",
         ...options,
-        query: { ...options.query, _schema: "3f9a0c1b7d2e4a65" },
+        query: { ...options.query, _schema: "3f9a0c" },
     });
 ```
 
@@ -26,7 +26,7 @@ The browser cache is keyed by URL. When a response schema changes, regenerating 
 their URL and their cache. The same goes for a change to the values an endpoint returns, once the backend bumps
 its `result_version`.
 
-This is independent of `zCacheBust` (`../cachebusting-plugin`), which busts caches when _ensemble data_ changes.
+This is independent of `_cacheBusting` (`../cachebusting-plugin`), which busts caches when _ensemble data_ changes.
 
 - No runtime cost: the value is a string constant in the generated code.
 - Callers don't see it: the generated function signatures and types are unchanged, and a caller-supplied
@@ -59,7 +59,10 @@ operation (`add_cache_info_to_openapi()` in `cache_control_middleware.py`). Only
 4. Serialize `{ responses, references, resultVersion? }` as canonical JSON
    ([RFC 8785](https://www.rfc-editor.org/rfc/rfc8785), via the `canonicalize` package). Object keys are sorted,
    so property order doesn't matter. `resultVersion` is left out entirely when the operation has none.
-5. Hash `FINGERPRINT_ALGORITHM + "\n" + <canonical JSON>` with SHA-256 and keep the first 16 hex characters.
+5. Hash `FINGERPRINT_ALGORITHM + "\n" + <canonical JSON>` with SHA-256 and keep the first 6 hex characters
+   (24 bits). That is enough because only a collision between versions of the _same_ endpoint matters (the URL path
+   already tells endpoints apart), and only with versions still in browser caches (at most two weeks old). The
+   chance per response change is about 1 in 16 million.
 
 **Changes the fingerprint:** anything in those responses or the schemas they reference, including field
 additions, removals, type changes, `required`, enum values, nested schemas, status codes and media types.
@@ -146,7 +149,7 @@ The value is added with the public `$` builder (`$.object().spread(...).prop(...
 It goes after `...options`, so it takes precedence.
 
 If the operation declares no query parameters, `options.query` is typed `never` and can't be spread, so we emit
-`query: { _schema: "..." }` without it. In practice every operation currently has `zCacheBust`.
+`query: { _schema: "..." }` without it. In practice every operation currently has `_cacheBusting`.
 
 Which operations are eligible is decided by an `isEligible` predicate passed to `makeInjectSchemaQueryEvents`
 (see [Which endpoints](#which-endpoints)); the `plugin:handler:after` check uses the same predicate.

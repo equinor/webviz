@@ -134,7 +134,7 @@ function getSdkOperationRef(node: SdkNode | null): SdkOperationRef | null {
     return { operationId: meta.resourceId, path: pointer[1], method: pointer[2] };
 }
 
-// Query parameters as hey-api's IR sees them, i.e. including ones added by earlier plugins (zCacheBust)
+// Query parameters as hey-api's IR sees them, i.e. including ones added by earlier plugins (_cacheBusting)
 function getDeclaredQueryParameters(operation: SdkOperationRef, plugin: SdkPlugin): Record<string, unknown> {
     const irOperation = plugin.context.ir.paths?.[operation.path as `/${string}`]?.[operation.method as "get"] as
         | { parameters?: { query?: Record<string, unknown> } }

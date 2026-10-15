@@ -189,7 +189,7 @@ describe("generated SDK with schema fingerprints", () => {
         expect(cachedFunctions).toHaveLength(2);
         expect(otherFunctions).toHaveLength(2);
         for (const fn of cachedFunctions) {
-            expect(fn).toMatch(/_schema: ["'][0-9a-f]{16}["']/);
+            expect(fn).toMatch(/_schema: ["'][0-9a-f]{6}["']/);
         }
         for (const fn of otherFunctions) {
             expect(fn).not.toContain("_schema");
@@ -258,7 +258,7 @@ describe("generated SDK with schema fingerprints", () => {
 
         await sdk.getFields();
 
-        expect(lastRequest(transport).searchParams.get("_schema")).toMatch(/^[0-9a-f]{16}$/);
+        expect(lastRequest(transport).searchParams.get("_schema")).toMatch(/^[0-9a-f]{6}$/);
     });
 
     test("leaves GET requests to endpoints that aren't browser-cached unchanged", async () => {

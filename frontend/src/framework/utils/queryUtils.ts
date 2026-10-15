@@ -3,7 +3,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { calcFnv1aHash } from "@lib/utils/hashUtils";
 
 export function makeCacheBustingQueryParam(...ensembleIdents: (RegularEnsembleIdent | null)[]): {
-    zCacheBust?: string;
+    _cacheBusting?: string;
 } {
     // If no ensembles are provided, return an empty object
     if (ensembleIdents.length === 0) {
@@ -15,7 +15,7 @@ export function makeCacheBustingQueryParam(...ensembleIdents: (RegularEnsembleId
     for (const ident of ensembleIdents) {
         if (!ident) {
             return {
-                zCacheBust: "INVALID_CACHE_BUSTING_PARAM_NO_ENSEMBLE",
+                _cacheBusting: "INVALID_CACHE_BUSTING_PARAM_NO_ENSEMBLE",
             };
         }
         const fingerprint = EnsembleFingerprintStore.getFingerprintFromEnsembleIdentString(ident.toString());
@@ -33,5 +33,5 @@ export function makeCacheBustingQueryParam(...ensembleIdents: (RegularEnsembleId
     const hash = calcFnv1aHash(ensembleFingerprints.join(""));
 
     // Return the fingerprint query param
-    return { zCacheBust: hash };
+    return { _cacheBusting: hash };
 }
