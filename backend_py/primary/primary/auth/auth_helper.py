@@ -2,7 +2,7 @@ import base64
 import logging
 import os
 import time
-from typing import Callable, Literal, Optional, TypeAlias, Union, get_args
+from typing import Callable, Literal, Optional, TypeAlias, get_args
 from pathlib import Path
 
 import jwt
@@ -78,10 +78,10 @@ class AuthHelper:
             redirect_uri = str(request.url_for("_authorized_callback_route"))
 
         cca = _create_msal_confidential_client_app(token_cache=None)
-        auth_code_flow_dict = cca.initiate_auth_code_flow(scopes=all_scopes_list, redirect_uri=redirect_uri)
+        flow_dict = cca.initiate_auth_code_flow(scopes=all_scopes_list, redirect_uri=redirect_uri)
 
         # Store the auth code flow dict in the session for later use during the auth callback
-        request.session["flow"] = auth_code_flow_dict
+        request.session["flow"] = flow_dict
 
         # If a final redirect url was specified, store it in the session so we can redirect from the auth callback.
         # Note that the redirect_url_after_login query parameter is base64 encoded
@@ -89,7 +89,7 @@ class AuthHelper:
             target_url_str_after_auth = base64.urlsafe_b64decode(redirect_url_after_login.encode()).decode()
             request.session["target_url_str_after_auth"] = target_url_str_after_auth
 
-        return RedirectResponse(auth_code_flow_dict["auth_uri"])
+        return RedirectResponse(flow_dict["auth_uri"])
 
     # pylint: disable-next=async-suffix
     async def _authorized_callback_route(self, request: Request) -> Response:
@@ -99,27 +99,27 @@ class AuthHelper:
         auth_response_dict = dict(request.query_params)
 
         # Retrieve the auth code flow dict from the session so we can use it to redeem the authorization code
-        auth_code_flow_dict = request.session.get("flow")
-        if not isinstance(auth_code_flow_dict, dict):
+        flow_dict = request.session.get("flow")
+        if not isinstance(flow_dict, dict):
             LOGGER.error("Login flow not found in session")
             return PlainTextResponse("No login in progress. Please log in again.", 400)
 
         # If the state parameter in the auth response does not match the one in the auth code flow dict, it could
         # indicate a CSRF attack or a simultaneous login attempt. Note that the test here is mainly to notify the user
         # and is not critical since the token acquisition below will fail if the state does not match.
-        if auth_response_dict.get("state") != auth_code_flow_dict.get("state"):
-            LOGGER.error("Login response state value did not match the login flow state value")
+        if auth_response_dict.get("state") != flow_dict.get("state"):
+            LOGGER.error("Login response state value did not match the stored flow state value")
             return PlainTextResponse("Login could not be verified. Close other login tabs and try again.", 400)
 
         try:
-            new_token_cache = msal.SerializableTokenCache()
-            cca = _create_msal_confidential_client_app(new_token_cache)
+            token_cache = _load_token_cache_from_session(request)
+            cca = _create_msal_confidential_client_app(token_cache)
 
             # Ref msal.PublicClientApplication.acquire_token_by_auth_code_flow() docs, we can only get an access token
             # for ONE resource when redeeming the authorization code. Therefore, we simply get an access token for the
             # graph resource here, and leave the retrieval of access tokens for the other resources (and scopes) for later.
             token_dict = cca.acquire_token_by_auth_code_flow(
-                auth_code_flow=auth_code_flow_dict,
+                auth_code_flow=flow_dict,
                 auth_response=auth_response_dict,
                 scopes=config.GRAPH_SCOPES,
             )
@@ -130,24 +130,13 @@ class AuthHelper:
                 LOGGER.error(f"Microsoft Entra sign-in failed ({error=}, {error_description=})")
                 return PlainTextResponse(f"Microsoft Entra sign-in failed. Please try again. ({error})", 400)
 
+            _save_token_cache_in_session(request, token_cache)
+
         except ValueError as exc:
             LOGGER.error(f"Error processing auth response: {repr(exc)}")
             return PlainTextResponse("Invalid login response. Please try again.", 400)
 
-        new_user_auth_info = _acquire_refreshed_identity_and_tokens(cca, None)
-        if not new_user_auth_info:
-            LOGGER.error("Failed to acquire refreshed identity and tokens")
-            return PlainTextResponse("Login succeeded, but we could not retrieve user details. Please try again.", 500)
-
-        # Issue a new session ID now that the session becomes authenticated to prevent session fixation attacks
-        starsessions.regenerate_session_id(request)
-
-        _save_token_cache_in_session(request, new_token_cache)
-        _save_user_auth_info_in_session(request, new_user_auth_info)
-
-        # Clear (by popping) the auth flow and target URL from the session after handling login
-        request.session.pop("flow", None)
-        target_url_str_after_auth = request.session.pop("target_url_str_after_auth", None)
+        target_url_str_after_auth = request.session.get("target_url_str_after_auth")
         if target_url_str_after_auth is not None:
             return RedirectResponse(target_url_str_after_auth)
 
@@ -191,11 +180,8 @@ class AuthHelper:
             return None
         perf_metrics.record_lap("load-token-cache")
 
-        cca = _create_msal_confidential_client_app(token_cache)
-        perf_metrics.record_lap("create-cca")
-
         new_user_auth_info: _UserAuthInfo | None = _acquire_refreshed_identity_and_tokens(
-            cca, user_auth_info_from_session
+            token_cache, user_auth_info_from_session
         )
         if not new_user_auth_info:
             return None
@@ -251,7 +237,7 @@ def _acquire_access_token_for_resource_scopes(
     jwt_payload_dict = _decode_jwt(access_token)
     try:
         expires_at = int(jwt_payload_dict["exp"])
-    except (ValueError, KeyError):
+    except ValueError:
         LOGGER.error(f"Error getting expiration time claim (exp) from access token ({resource_name=})")
         return None
 
@@ -259,7 +245,7 @@ def _acquire_access_token_for_resource_scopes(
 
 
 def _acquire_refreshed_identity_and_tokens(
-    cca: msal.ConfidentialClientApplication, curr_auth_info: _UserAuthInfo | None
+    token_cache: msal.TokenCache, curr_auth_info: _UserAuthInfo | None
 ) -> _UserAuthInfo | None:
     """
     This function will return up to date information on the user's identity as well as valid access tokens.
@@ -269,6 +255,9 @@ def _acquire_refreshed_identity_and_tokens(
     so it is probably easier just to acquire them all.
     """
     perf_metrics = PerfMetrics()
+
+    cca = _create_msal_confidential_client_app(token_cache)
+    perf_metrics.record_lap("create-cca")
 
     account_list = cca.get_accounts()
     if not account_list:
@@ -308,16 +297,6 @@ def _acquire_refreshed_identity_and_tokens(
             LOGGER.error("Error acquiring ID token")
             return None
 
-
-        LOGGER.debug("------------------------------------------")
-        LOGGER.debug(token_dict)
-        LOGGER.debug("------------------------------------------")
-
-        LOGGER.debug("------------------------------------------")
-        LOGGER.debug(token_dict["id_token_claims"])
-        LOGGER.debug("------------------------------------------")
-    
-
         id_token_claims_dict = _decode_jwt(id_token)
         try:
 
@@ -331,7 +310,7 @@ def _acquire_refreshed_identity_and_tokens(
             user_id = id_token_claims_dict["oid"]
             user_name = id_token_claims_dict["preferred_username"]
             id_token_expiry_time = int(id_token_claims_dict["exp"])
-        except (ValueError, KeyError):
+        except ValueError:
             LOGGER.error("Error getting claims from ID token")
             return None
 
@@ -433,13 +412,12 @@ def _save_user_auth_info_in_session(request_with_session: Request, user_auth_inf
     request_with_session.session["user_auth_info"] = user_auth_info.model_dump_json()
 
 
-def _load_token_cache_from_session(request_with_session: Request) -> msal.SerializableTokenCache | None:
-    serialized_token_cache = request_with_session.session.get("token_cache")
-    if not serialized_token_cache:
-        return None
-
+def _load_token_cache_from_session(request_with_session: Request) -> msal.SerializableTokenCache:
     token_cache = msal.SerializableTokenCache()
-    token_cache.deserialize(serialized_token_cache)
+
+    serialized_token_cache = request_with_session.session.get("token_cache")
+    if serialized_token_cache:
+        token_cache.deserialize(serialized_token_cache)
 
     return token_cache
 
