@@ -11,7 +11,7 @@ export {
 export { SchemaQueryInjectionError } from "./inject-schema-query";
 
 /** Query parameter carrying the response fingerprint. */
-export const SCHEMA_QUERY_KEY = "_schema";
+export const SCHEMA_QUERY_KEY = "_rv";
 
 /**
  * Operation field set by the backend on every endpoint decorated with `@cache_time` or `@custom_cache_time`, i.e.
@@ -28,7 +28,7 @@ type OpenApiDocument = { paths?: Record<string, Record<string, unknown> | undefi
 
 /**
  * Event hooks for the `@hey-api/sdk` plugin that make every generated request to a browser-cached GET endpoint
- * (`x-browser-cached`) send `_schema=<fingerprint of the operation's 2xx and default responses and its
+ * (`x-browser-cached`) send `_rv=<fingerprint of the operation's 2xx and default responses and its
  * x-result-version>`. A response schema change or a result version bump therefore changes the request URL, so the
  * browser can't serve a body cached before it. See README.md.
  *

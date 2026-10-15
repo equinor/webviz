@@ -1,8 +1,8 @@
-# Schema fingerprint (`_schema` query parameter)
+# Response version (`_rv` query parameter)
 
-Every generated SDK function for a **browser-cached GET** endpoint sends a constant `_schema=<6 hex chars>` query
-parameter. The value is a fingerprint of that endpoint's success-response schema (2xx and `default`) and its
-optional [result version](#result-version), computed when the SDK is generated.
+Every generated SDK function for a **browser-cached GET** endpoint sends a constant `_rv=<6 hex chars>` query
+parameter, short for _response version_. The value is a fingerprint of that endpoint's success-response schema
+(2xx and `default`) and its optional [result version](#result-version), computed when the SDK is generated.
 
 ```ts
 // src/api/autogen/sdk.gen.ts (generated)
@@ -11,7 +11,7 @@ export const getCases = <ThrowOnError extends boolean = false>(options: Options<
         responseType: "json",
         url: "/cases",
         ...options,
-        query: { ...options.query, _schema: "3f9a0c" },
+        query: { ...options.query, _rv: "3f9a0c" },
     });
 ```
 
@@ -22,7 +22,7 @@ Some endpoints let the browser cache their responses for up to two weeks (`@cach
 model, the browser could keep serving a body with the old shape, which the new frontend code can't handle.
 
 The browser cache is keyed by URL. When a response schema changes, regenerating the SDK changes that endpoint's
-`_schema`, and so its URL, so the old cached response is never used. Endpoints whose schema didn't change keep
+`_rv`, and so its URL, so the old cached response is never used. Endpoints whose schema didn't change keep
 their URL and their cache. The same goes for a change to the values an endpoint returns, once the backend bumps
 its `result_version`.
 
@@ -30,7 +30,7 @@ This is independent of `_cacheBust` (`../cachebusting-plugin`), which busts cach
 
 - No runtime cost: the value is a string constant in the generated code.
 - Callers don't see it: the generated function signatures and types are unchanged, and a caller-supplied
-  `query._schema` is overwritten.
+  `query._rv` is overwritten.
 - The backend ignores it, like any undeclared query parameter.
 - Only endpoints the backend marks as browser-cached get it (see [Which endpoints](#which-endpoints)).
 
@@ -38,13 +38,13 @@ This is independent of `_cacheBust` (`../cachebusting-plugin`), which busts cach
 
 `@cache_time` and `@custom_cache_time` mark their endpoint with `x-browser-cached: true` in its OpenAPI
 operation (`add_cache_info_to_openapi()` in `cache_control_middleware.py`). Only GET operations with that marker get
-`_schema`. Other endpoints respond with `Cache-Control: no-store`, so there is no cached body to bust.
+`_rv`. Other endpoints respond with `Cache-Control: no-store`, so there is no cached body to bust.
 
-- The marker isn't part of the fingerprint, so adding it doesn't change an endpoint's `_schema`.
+- The marker isn't part of the fingerprint, so adding it doesn't change an endpoint's `_rv`.
 - Generation fails if a non-GET operation has the marker (browsers don't HTTP-cache other methods, so the backend's
   caching setup is wrong), or if its value isn't `true`.
 - Endpoints that opt in at runtime with `set_cache_time()` have no decorator, so they're **not** marked and get no
-  `_schema`. Currently that's `GET /surface/statistical_surface_data_hybrid`.
+  `_rv`. Currently that's `GET /surface/statistical_surface_data_hybrid`.
 
 ## How the fingerprint is computed
 
@@ -100,7 +100,7 @@ async def get_realization_surfaces_metadata(...): ...
 
 `result_version` (on `@cache_time` and `@custom_cache_time`) is published as `x-result-version` in the
 endpoint's OpenAPI operation, and the fingerprint includes it. Bumping it changes only that endpoint's
-`_schema`, in the same PR as the fix, and the regenerated SDK shows the change. It must be a positive integer:
+`_rv`, in the same PR as the fix, and the regenerated SDK shows the change. It must be a positive integer:
 the backend raises at import time otherwise (including for `bool` and `float` values).
 
 - Bump it for bug fixes, algorithm changes, and changes to units, filtering or defaults. That includes changes
@@ -149,7 +149,7 @@ The value is added with the public `$` builder (`$.object().spread(...).prop(...
 It goes after `...options`, so it takes precedence.
 
 If the operation declares no query parameters, `options.query` is typed `never` and can't be spread, so we emit
-`query: { _schema: "..." }` without it. In practice every operation currently has `_cacheBust`.
+`query: { _rv: "..." }` without it. In practice every operation currently has `_cacheBust`.
 
 Which operations are eligible is decided by an `isEligible` predicate passed to `makeInjectSchemaQueryEvents`
 (see [Which endpoints](#which-endpoints)); the `plugin:handler:after` check uses the same predicate.
@@ -159,7 +159,7 @@ The operation's spec entry is found via `node.name.symbol.meta.path` (`["paths",
 
 ### Safety nets
 
-So that a hey-api change can't silently drop `_schema`:
+So that a hey-api change can't silently drop `_rv`:
 
 1. **Every step of the walk asserts the expected shape** and throws `SchemaQueryInjectionError`, naming the
    operation and what was found instead.
@@ -170,10 +170,10 @@ So that a hey-api change can't silently drop `_schema`:
 3. **Unit tests** ([`tests/unit/SchemaFingerprint.test.ts`](../../tests/unit/SchemaFingerprint.test.ts),
    [`tests/unit/SchemaFingerprintSdk.test.ts`](../../tests/unit/SchemaFingerprintSdk.test.ts)) generate an
    SDK from a fixture spec with the installed hey-api. They then check the output compiles, exactly the
-   browser-cached GETs send `_schema`, serialization of other params is unchanged, and error handling still works.
+   browser-cached GETs send `_rv`, serialization of other params is unchanged, and error handling still works.
 
 Known unsupported configurations, each of which fails loudly: `paramsStructure: "flat"`, a class-based SDK, an
-operation that already declares a `_schema` query parameter.
+operation that already declares a `_rv` query parameter.
 
 ## When it breaks after a hey-api upgrade
 
@@ -229,27 +229,27 @@ or, from the safety net:
     ```sh
     npx vitest run tests/unit/SchemaFingerprint.test.ts tests/unit/SchemaFingerprintSdk.test.ts
     npm run generate:api    # backend running on :5000
-    git diff src/api/autogen/sdk.gen.ts   # only the expected changes; every browser-cached GET still has `_schema`
+    git diff src/api/autogen/sdk.gen.ts   # only the expected changes; every browser-cached GET still has `_rv`
     npm run typecheck
     ```
 
 ### If you need to ship before it's fixed
 
 Remove the `$hooks` entry from the `@hey-api/sdk` plugin in `openapi-ts.config.ts` and regenerate. The SDK
-then generates without `_schema`. Be aware that browsers can then serve responses cached under an old
+then generates without `_rv`. Be aware that browsers can then serve responses cached under an old
 response schema for up to their `max-age` (two weeks for `CacheTime.LONG`) after a deploy that changes that
 schema. Restore it before the next release that changes cached response models.
 
 ## Limitations
 
 - A backend change that alters what an endpoint returns without changing its schema (semantics, units,
-  filtering) only changes `_schema` if the author bumps `result_version`. Nothing checks that automatically.
+  filtering) only changes `_rv` if the author bumps `result_version`. Nothing checks that automatically.
 - Endpoints with an empty response schema can't be fingerprinted meaningfully (see warnings above).
-- TanStack Query keys don't include `_schema`. That's fine: its in-memory cache doesn't survive the page reload
+- TanStack Query keys don't include `_rv`. That's fine: its in-memory cache doesn't survive the page reload
   that loads a new frontend build.
-- `_schema` is only a client-side marker, and the backend doesn't check it. During a rolling deploy, the new
+- `_rv` is only a client-side marker, and the backend doesn't check it. During a rolling deploy, the new
   frontend can be served while some `/api` requests still reach old backend replicas. A request in that window
-  gets the old response shape under the new `_schema` URL, and the browser can cache it for up to two weeks.
+  gets the old response shape under the new `_rv` URL, and the browser can cache it for up to two weeks.
   This only affects requests made during the rollout, and deploys mostly happen overnight. If it shows up in
   practice, the fix is on the backend: the frontend sends its build commit in a header, and the backend marks
   responses `Cache-Control: no-store` when that commit doesn't match its own.

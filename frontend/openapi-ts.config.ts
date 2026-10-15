@@ -46,8 +46,8 @@ export default defineConfig({
         cacheBustingPlugin(),
         {
             name: "@hey-api/sdk",
-            // Adds `_schema=<response schema fingerprint>` to GET requests to bust browser caches when a
-            // response schema changes. See open-api/schema-fingerprint/README.md
+            // Adds `_rv=<response version>` to browser-cached GET requests to bust browser caches when a
+            // response schema or result version changes. See open-api/schema-fingerprint/README.md
             $hooks: { events: makeSchemaFingerprintEvents() },
         },
         { name: "@hey-api/client-axios", exportFromIndex: true },

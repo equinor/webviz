@@ -4,7 +4,7 @@ import type { Plugin } from "@hey-api/openapi-ts";
 /**
  * Injects a constant query parameter into the request options of generated `@hey-api/sdk` functions:
  *
- *     (options.client ?? client).get({ url: "/wells", ...options, query: { ...options.query, _schema: "<hash>" } })
+ *     (options.client ?? client).get({ url: "/wells", ...options, query: { ...options.query, _rv: "<hash>" } })
  *
  * hey-api has no public hook for the request options of an SDK function. We use the public
  * `node:set:before` event, which receives each finished SDK function before it is rendered, and walk

@@ -109,7 +109,7 @@ def cache_time(
         stale_while_revalidate: Optional StaleTime enum value
         result_version: Optional version of the returned values. Bump it when the values the endpoint returns change without its
             response schema changing (bug fix, algorithm change, units, filtering, defaults). It is published in
-            the endpoint's OpenAPI entry, and the frontend folds it into the endpoint's `_schema` query parameter,
+            the endpoint's OpenAPI entry, and the frontend folds it into the endpoint's `_rv` query parameter,
             so browsers stop using responses cached before the bump. Response schema changes need no bump.
 
     Examples:
@@ -132,7 +132,7 @@ def add_cache_info_to_openapi(app: FastAPI) -> None:
     """
     Marks every endpoint decorated with `@cache_time` or `@custom_cache_time` with the `x-browser-cached` field
     of its OpenAPI operation, and publishes its `result_version`, if any, as the `x-result-version` field. The
-    frontend only adds the `_schema` query parameter to operations with `x-browser-cached`.
+    frontend only adds the `_rv` query parameter to operations with `x-browser-cached`.
     Call it after all routers are included.
     """
     for route in app.routes:

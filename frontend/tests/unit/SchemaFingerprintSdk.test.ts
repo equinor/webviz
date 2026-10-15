@@ -178,7 +178,7 @@ describe("generated SDK with schema fingerprints", () => {
         await Promise.all(generatedDirs.map((dir) => rm(dir, { recursive: true, force: true })));
     });
 
-    test("injects _schema into every browser-cached GET function and nothing else", async () => {
+    test("injects _rv into every browser-cached GET function and nothing else", async () => {
         const source = await readFile(path.join(fingerprintedDir, "sdk.gen.ts"), "utf8");
         const functions = source.split(/^export const /m).slice(1);
 
@@ -189,14 +189,14 @@ describe("generated SDK with schema fingerprints", () => {
         expect(cachedFunctions).toHaveLength(2);
         expect(otherFunctions).toHaveLength(2);
         for (const fn of cachedFunctions) {
-            expect(fn).toMatch(/_schema: ["'][0-9a-f]{6}["']/);
+            expect(fn).toMatch(/_rv: ["'][0-9a-f]{6}["']/);
         }
         for (const fn of otherFunctions) {
-            expect(fn).not.toContain("_schema");
+            expect(fn).not.toContain("_rv");
         }
     });
 
-    test("compiles, keeps the public signatures, and does not expose _schema to callers", async () => {
+    test("compiles, keeps the public signatures, and does not expose _rv to callers", async () => {
         const usageFile = path.join(fingerprintedDir, "usage.ts");
         await writeFile(
             usageFile,
@@ -206,8 +206,8 @@ describe("generated SDK with schema fingerprints", () => {
                 `getFields();`,
                 `getAlive();`,
                 `createWell({ body: { name: "w", depth: 1 } });`,
-                `// @ts-expect-error _schema is not part of the operation's query type`,
-                `getWells({ path: { field_id: "f" }, query: { names: ["a"], _schema: "x" } });`,
+                `// @ts-expect-error _rv is not part of the operation's query type`,
+                `getWells({ path: { field_id: "f" }, query: { names: ["a"], _rv: "x" } });`,
             ].join("\n"),
         );
 
@@ -234,7 +234,7 @@ describe("generated SDK with schema fingerprints", () => {
         expect(diagnostics).toEqual([]);
     }, 60_000);
 
-    test("sends _schema while path and query parameters serialize exactly as without the plugin", async () => {
+    test("sends _rv while path and query parameters serialize exactly as without the plugin", async () => {
         const fingerprinted = await loadSdk(fingerprintedDir);
         const baseline = await loadSdk(baselineDir);
         const options = { path: { field_id: "field 1" }, query: { names: ["a", "b"], limit: 5 } };
@@ -246,19 +246,19 @@ describe("generated SDK with schema fingerprints", () => {
         const baselineUrl = lastRequest(baseline.transport);
         const expectedHash = fingerprintResponse(spec.paths["/wells/{field_id}"].get, spec);
 
-        expect(url.searchParams.get("_schema")).toBe(expectedHash);
-        url.searchParams.delete("_schema");
+        expect(url.searchParams.get("_rv")).toBe(expectedHash);
+        url.searchParams.delete("_rv");
         expect(url.href).toBe(baselineUrl.href);
         expect(baselineUrl.pathname).toBe("/wells/field%201");
         expect(baselineUrl.searchParams.getAll("names")).toEqual(["a", "b"]);
     });
 
-    test("sends _schema when the caller passes no options", async () => {
+    test("sends _rv when the caller passes no options", async () => {
         const { sdk, transport } = await loadSdk(fingerprintedDir);
 
         await sdk.getFields();
 
-        expect(lastRequest(transport).searchParams.get("_schema")).toMatch(/^[0-9a-f]{6}$/);
+        expect(lastRequest(transport).searchParams.get("_rv")).toMatch(/^[0-9a-f]{6}$/);
     });
 
     test("leaves GET requests to endpoints that aren't browser-cached unchanged", async () => {
@@ -269,13 +269,13 @@ describe("generated SDK with schema fingerprints", () => {
         expect(lastRequest(transport).search).toBe("");
     });
 
-    test("does not let the caller override _schema", async () => {
+    test("does not let the caller override _rv", async () => {
         const { sdk, transport } = await loadSdk(fingerprintedDir);
 
-        await sdk.getWells({ path: { field_id: "f" }, query: { names: ["a"], _schema: "stale" } });
+        await sdk.getWells({ path: { field_id: "f" }, query: { names: ["a"], _rv: "stale" } });
 
         const expectedHash = fingerprintResponse(spec.paths["/wells/{field_id}"].get, spec);
-        expect(lastRequest(transport).searchParams.getAll("_schema")).toEqual([expectedHash]);
+        expect(lastRequest(transport).searchParams.getAll("_rv")).toEqual([expectedHash]);
     });
 
     test("leaves non-GET requests unchanged", async () => {
@@ -300,15 +300,15 @@ describe("generated SDK with schema fingerprints", () => {
         expect(lastRequest(after.transport).href).toBe(lastRequest(before.transport).href);
     });
 
-    test("refuses to generate when an operation already declares a _schema query parameter", async () => {
+    test("refuses to generate when an operation already declares a _rv query parameter", async () => {
         const conflictingSpec = makeSpec();
         conflictingSpec.paths["/fields"].get.parameters = [
-            { name: "_schema", in: "query", schema: { type: "string" } },
+            { name: "_rv", in: "query", schema: { type: "string" } },
         ];
 
         const error = await generateSdk(conflictingSpec, { withFingerprint: true }).catch((e: unknown) => e);
 
-        expect(collectErrorMessages(error).join("\n")).toContain(`already declares a "_schema" query parameter`);
+        expect(collectErrorMessages(error).join("\n")).toContain(`already declares a "_rv" query parameter`);
     }, 60_000);
 
     test("refuses to generate when a non-GET operation is marked as browser-cached", async () => {
