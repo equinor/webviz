@@ -62,7 +62,7 @@ async def get_logged_in_user(
         has_sumo_access=authenticated_user.has_sumo_access_token(),
         has_smda_access=authenticated_user.has_smda_access_token(),
         has_ssdl_access=authenticated_user.has_ssdl_access_token(),
-        has_pdm_access=authenticated_user.has_pdm_access_token()
+        has_pdm_access=authenticated_user.has_pdm_access_token(),
     )
 
     if authenticated_user.has_graph_access_token() and includeGraphApiInfo:
