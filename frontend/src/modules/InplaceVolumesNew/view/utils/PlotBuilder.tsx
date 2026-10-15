@@ -12,7 +12,7 @@ import type { ColorEntry, GroupedTableData } from "./GroupedTableData";
 import { hideRepeatedLegendEntries } from "./plotComponentUtils";
 import { computeSubplotXAxisSpacing } from "./subplotSpacing";
 
-export type PlotFunction = (colorEntries: ColorEntry[]) => Partial<PlotData>[];
+export type PlotFunction = (colorEntries: ColorEntry[], subplotLabel: string) => Partial<PlotData>[];
 
 export type PlotBuilderOptions = Pick<
     MakeSubplotOptions,
@@ -192,7 +192,7 @@ export class PlotBuilder {
                     highlightedSubplots.push({ row, col });
                 }
 
-                const plotDataArr = this._plotFunction(subplotGroup.colorEntries);
+                const plotDataArr = this._plotFunction(subplotGroup.colorEntries, subplotGroup.subplotLabel);
                 for (const plotData of plotDataArr) {
                     traces.push({ row, col, trace: plotData });
                 }

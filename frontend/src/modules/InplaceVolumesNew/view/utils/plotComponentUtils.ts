@@ -20,6 +20,8 @@ export type MakePlotDataOptions = {
     showRealizationPoints: boolean;
     showPercentageInBar: boolean;
     showStatisticalLabels: boolean;
+    /** Name the subplot in hovers, e.g. the sensitivity case when the colour is a zone. */
+    showSubplotLabelInHover?: boolean;
 };
 
 /**
@@ -36,8 +38,9 @@ export function makePlotData({
     showRealizationPoints,
     showPercentageInBar,
     showStatisticalLabels,
-}: MakePlotDataOptions): (colorEntries: ColorEntry[]) => Partial<PlotData>[] {
-    return (colorEntries: ColorEntry[]): Partial<PlotData>[] => {
+    showSubplotLabelInHover = false,
+}: MakePlotDataOptions): (colorEntries: ColorEntry[], subplotLabel?: string) => Partial<PlotData>[] {
+    return (colorEntries: ColorEntry[], subplotLabel?: string): Partial<PlotData>[] => {
         const data: Partial<PlotData>[] = [];
 
         for (const entry of colorEntries) {
@@ -92,11 +95,29 @@ export function makePlotData({
 
             for (const trace of data.slice(firstEntryTraceIndex)) {
                 trace.legendgroup = entry.colorKey;
+                if (showSubplotLabelInHover && subplotLabel) {
+                    prependHoverLine(trace, subplotLabel);
+                }
             }
         }
 
         return data;
     };
+}
+
+/**
+ * Box statistics and density curves hover from the trace name instead, which is also the legend name.
+ */
+function prependHoverLine(trace: Partial<PlotData>, line: string): void {
+    const prepend = (text: string) => `${line}<br>${text}`;
+    if (typeof trace.hovertemplate === "string") {
+        trace.hovertemplate = prepend(trace.hovertemplate);
+    } else if (Array.isArray(trace.hovertemplate)) {
+        trace.hovertemplate = trace.hovertemplate.map(prepend);
+    }
+    if (trace.type === "box" && Array.isArray(trace.text)) {
+        trace.text = trace.text.map((text) => prepend(String(text)));
+    }
 }
 
 /**

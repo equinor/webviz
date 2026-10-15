@@ -112,6 +112,7 @@ export function useBuildPlotAndTable(
         showRealizationPoints,
         showPercentageInBar: showPercentageInHistogram,
         showStatisticalLabels,
+        showSubplotLabelInHover: subplotBy !== colorBy,
     };
 
     const plotBuilder = new PlotBuilder(groupedData, makePlotData(plotDataOptions));

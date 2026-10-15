@@ -20,7 +20,11 @@ function makeEntry(colorKey: string, colorLabel: string): ColorEntry {
     };
 }
 
-function makeTraces(plotType: PlotType, entries: ColorEntry[]): Partial<PlotData>[] {
+function makeTraces(
+    plotType: PlotType,
+    entries: ColorEntry[],
+    subplot?: { label: string; showInHover: boolean },
+): Partial<PlotData>[] {
     return makePlotData({
         plotType,
         firstResultName: "STOIIP",
@@ -31,7 +35,8 @@ function makeTraces(plotType: PlotType, entries: ColorEntry[]): Partial<PlotData
         showRealizationPoints: true,
         showPercentageInBar: false,
         showStatisticalLabels: false,
-    })(entries);
+        showSubplotLabelInHover: subplot?.showInHover,
+    })(entries, subplot?.label);
 }
 
 function legendTrace(legendgroup: string, showlegend?: boolean): Partial<PlotData> {
@@ -53,6 +58,39 @@ describe("makePlotData legend groups", () => {
             expect(groups.indexOf("volon:low")).toBe(traces.length / 2);
         },
     );
+});
+
+describe("makePlotData subplot label in hovers", () => {
+    function hoverTexts(trace: Partial<PlotData>): string[] {
+        const templates = trace.hovertemplate === undefined ? [] : [trace.hovertemplate].flat();
+        const boxTexts = trace.type === "box" ? [trace.text ?? []].flat() : [];
+        return [...templates, ...boxTexts].map(String);
+    }
+
+    test.each([PlotType.BAR, PlotType.HISTOGRAM, PlotType.BOX, PlotType.DISTRIBUTION, PlotType.CONVERGENCE])(
+        "%s hovers name the subplot, e.g. the sensitivity case when colouring by zone",
+        (plotType) => {
+            const traces = makeTraces(plotType, [makeEntry("Volon", "Volon")], {
+                label: "faults:low",
+                showInHover: true,
+            });
+
+            const texts = traces.flatMap(hoverTexts);
+            expect(texts.length).toBeGreaterThan(0);
+            for (const text of texts) {
+                expect(text.startsWith("faults:low<br>")).toBe(true);
+            }
+        },
+    );
+
+    test("the subplot is left out when it is also the colour", () => {
+        const traces = makeTraces(PlotType.HISTOGRAM, [makeEntry("Volon", "Volon")], {
+            label: "Volon",
+            showInHover: false,
+        });
+
+        expect(traces.flatMap(hoverTexts).some((text) => text.startsWith("Volon<br>"))).toBe(false);
+    });
 });
 
 describe("hideRepeatedLegendEntries", () => {
