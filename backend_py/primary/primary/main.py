@@ -22,7 +22,7 @@ from webviz_services.platform.message_bus import MessageBusSingleton
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
-from primary.middleware.cache_control_middleware import CacheControlMiddleware, add_result_versions_to_openapi
+from primary.middleware.cache_control_middleware import CacheControlMiddleware, add_cache_info_to_openapi
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanClientAddressEnrichmentMiddleware
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanEndUserEnrichmentMiddleware
 from primary.middleware.encrypted_redis_session_store import EncryptedRedisSessionStore
@@ -193,7 +193,7 @@ app.include_router(auth_helper.router)
 app.include_router(general_router)
 
 # Must run after all routers are included
-add_result_versions_to_openapi(app)
+add_cache_info_to_openapi(app)
 
 configure_service_level_exception_handlers(app)
 override_default_fastapi_exception_handlers(app)

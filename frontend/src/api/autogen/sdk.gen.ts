@@ -288,7 +288,6 @@ export const getAssetInfos = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/asset_infos",
         ...options,
-        query: { ...options?.query, _schema: "0a58037305788155" },
     });
 
 /**
@@ -303,7 +302,6 @@ export const getFieldIdentifiers = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/field_identifiers",
         ...options,
-        query: { ...options?.query, _schema: "364c1afc4d1268d6" },
     });
 
 /**
@@ -318,7 +316,6 @@ export const getCases = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/cases",
         ...options,
-        query: { ...options.query, _schema: "77c97f183a1430fb" },
     });
 
 /**
@@ -333,7 +330,7 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/cases/{case_uuid}/ensembles/{ensemble_name}",
         ...options,
-        query: { ...options.query, _schema: "b454e91c68a48fe2" },
+        query: { ...options.query, _rv: "b454e9" },
     });
 
 /**
@@ -376,7 +373,7 @@ export const getVectorList = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/timeseries/vector_list/",
         ...options,
-        query: { ...options.query, _schema: "2ae3f77fb7f3f5e1" },
+        query: { ...options.query, _rv: "2ae3f7" },
     });
 
 /**
@@ -399,7 +396,7 @@ export const getDeltaEnsembleVectorList = <ThrowOnError extends boolean = false>
         responseType: "json",
         url: "/timeseries/delta_ensemble_vector_list/",
         ...options,
-        query: { ...options.query, _schema: "9ce91f2628617eb7" },
+        query: { ...options.query, _rv: "9ce91f" },
     });
 
 /**
@@ -418,7 +415,7 @@ export const getRealizationsVectorData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/timeseries/realizations_vector_data/",
         ...options,
-        query: { ...options.query, _schema: "b0f4b7f052960daf" },
+        query: { ...options.query, _rv: "b0f4b7" },
     });
 
 /**
@@ -445,7 +442,7 @@ export const getDeltaEnsembleRealizationsVectorData = <ThrowOnError extends bool
         responseType: "json",
         url: "/timeseries/delta_ensemble_realizations_vector_data/",
         ...options,
-        query: { ...options.query, _schema: "557d6b620f195bbf" },
+        query: { ...options.query, _rv: "557d6b" },
     });
 
 /**
@@ -462,7 +459,7 @@ export const getHistoricalVectorData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/timeseries/historical_vector_data/",
         ...options,
-        query: { ...options.query, _schema: "e58ec28b088f3633" },
+        query: { ...options.query, _rv: "e58ec2" },
     });
 
 /**
@@ -481,7 +478,7 @@ export const getStatisticalVectorData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/timeseries/statistical_vector_data/",
         ...options,
-        query: { ...options.query, _schema: "e5a22f95df6d347a" },
+        query: { ...options.query, _rv: "e5a22f" },
     });
 
 /**
@@ -508,7 +505,7 @@ export const getDeltaEnsembleStatisticalVectorData = <ThrowOnError extends boole
         responseType: "json",
         url: "/timeseries/delta_ensemble_statistical_vector_data/",
         ...options,
-        query: { ...options.query, _schema: "e5a22f95df6d347a" },
+        query: { ...options.query, _rv: "e5a22f" },
     });
 
 /**
@@ -531,7 +528,7 @@ export const getStatisticalVectorDataPerSensitivity = <ThrowOnError extends bool
         responseType: "json",
         url: "/timeseries/statistical_vector_data_per_sensitivity/",
         ...options,
-        query: { ...options.query, _schema: "2e3104358c1bfb97" },
+        query: { ...options.query, _rv: "2e3104" },
     });
 
 /**
@@ -550,7 +547,7 @@ export const getInplaceTableDefinitions = <ThrowOnError extends boolean = false>
         responseType: "json",
         url: "/inplace_volumes/inplace_table_definitions/",
         ...options,
-        query: { ...options.query, _schema: "54ac4cbe78bd4eaf" },
+        query: { ...options.query, _rv: "54ac4c" },
     });
 
 /**
@@ -627,7 +624,7 @@ export const getRealizationSurfacesMetadata = <ThrowOnError extends boolean = fa
         responseType: "json",
         url: "/surface/realization_surfaces_metadata/",
         ...options,
-        query: { ...options.query, _schema: "8fec2505f04ba684" },
+        query: { ...options.query, _rv: "8fec25" },
     });
 
 /**
@@ -646,7 +643,7 @@ export const getObservedSurfacesMetadata = <ThrowOnError extends boolean = false
         responseType: "json",
         url: "/surface/observed_surfaces_metadata/",
         ...options,
-        query: { ...options.query, _schema: "8fec2505f04ba684" },
+        query: { ...options.query, _rv: "8fec25" },
     });
 
 /**
@@ -669,7 +666,7 @@ export const getInitialFluidContactSurfacesMetadata = <ThrowOnError extends bool
         responseType: "json",
         url: "/surface/initial_fluid_contact_surfaces_metadata/",
         ...options,
-        query: { ...options.query, _schema: "4ca1180f5955a673" },
+        query: { ...options.query, _rv: "4ca118" },
     });
 
 /**
@@ -713,7 +710,7 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/surface/surface_data",
         ...options,
-        query: { ...options.query, _schema: "1a245c4e7075e0d3" },
+        query: { ...options.query, _rv: "1a245c" },
     });
 
 /**
@@ -772,7 +769,6 @@ export const getStatisticalSurfaceDataHybrid = <ThrowOnError extends boolean = f
         responseType: "json",
         url: "/surface/statistical_surface_data_hybrid",
         ...options,
-        query: { ...options.query, _schema: "2c5234d2fcf9b516" },
     });
 
 /**
@@ -856,7 +852,6 @@ export const getDeltaSurfaceData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/surface/delta_surface_data",
         ...options,
-        query: { ...options.query, _schema: "95b4bbea845a7805" },
     });
 
 /**
@@ -869,7 +864,6 @@ export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/surface/misfit_surface_data",
         ...options,
-        query: { ...options.query, _schema: "e676697b97d96a5d" },
     });
 
 /**
@@ -886,7 +880,7 @@ export const getParametersAndSensitivities = <ThrowOnError extends boolean = fal
         responseType: "json",
         url: "/parameters/parameters_and_sensitivities/",
         ...options,
-        query: { ...options.query, _schema: "c609c0d6991dca80" },
+        query: { ...options.query, _rv: "c609c0" },
     });
 
 /**
@@ -901,7 +895,7 @@ export const getGridModelsInfo = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/grid3d/grid_models_info/",
         ...options,
-        query: { ...options.query, _schema: "84c43c202f8c7e90" },
+        query: { ...options.query, _rv: "84c43c" },
     });
 
 /**
@@ -916,7 +910,7 @@ export const getGridSurface = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/grid3d/grid_surface",
         ...options,
-        query: { ...options.query, _schema: "79cbd6695772f171" },
+        query: { ...options.query, _rv: "79cbd6" },
     });
 
 /**
@@ -931,7 +925,7 @@ export const getGridParameter = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/grid3d/grid_parameter",
         ...options,
-        query: { ...options.query, _schema: "3041db9332a5d885" },
+        query: { ...options.query, _rv: "3041db" },
     });
 
 /**
@@ -972,7 +966,7 @@ export const getRealizationFlowNetwork = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/flow_network/realization_flow_network/",
         ...options,
-        query: { ...options.query, _schema: "d9d317d36b7142f0" },
+        query: { ...options.query, _rv: "d9d317" },
     });
 
 /**
@@ -987,7 +981,7 @@ export const getProductionData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/flow_data/production_data/",
         ...options,
-        query: { ...options.query, _schema: "e75a4edf23f57fc4" },
+        query: { ...options.query, _rv: "e75a4e" },
     });
 
 /**
@@ -1002,7 +996,7 @@ export const getInjectionData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/flow_data/injection_data/",
         ...options,
-        query: { ...options.query, _schema: "eee1b30313927a69" },
+        query: { ...options.query, _rv: "eee1b3" },
     });
 
 /**
@@ -1017,7 +1011,7 @@ export const getPvtTableData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/pvt/pvt_table_data/",
         ...options,
-        query: { ...options.query, _schema: "9ddf814ace500cc4" },
+        query: { ...options.query, _rv: "9ddf81" },
     });
 
 /**
@@ -1031,7 +1025,7 @@ export const getWellCompletionsData = <ThrowOnError extends boolean = false>(
             responseType: "json",
             url: "/well_completions/well_completions_data/",
             ...options,
-            query: { ...options.query, _schema: "3fb75a148e89dd58" },
+            query: { ...options.query, _rv: "3fb75a" },
         },
     );
 
@@ -1051,7 +1045,7 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/drilled_wellbore_headers/",
         ...options,
-        query: { ...options.query, _schema: "9f35b94a66d7b720" },
+        query: { ...options.query, _rv: "9f35b9" },
     });
 
 /**
@@ -1070,7 +1064,7 @@ export const getPlannedWellboreHeaders = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/planned_wellbore_headers/",
         ...options,
-        query: { ...options.query, _schema: "25e410062a26a87d" },
+        query: { ...options.query, _rv: "25e410" },
     });
 
 /**
@@ -1085,7 +1079,7 @@ export const getFieldPerforations = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/field_perforations",
         ...options,
-        query: { ...options.query, _schema: "3e7ff38a4fa57ceb" },
+        query: { ...options.query, _rv: "3e7ff3" },
     });
 
 /**
@@ -1101,7 +1095,7 @@ export const getFieldScreens = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/field_screens",
         ...options,
-        query: { ...options.query, _schema: "dfa54b9d4fca7ee4" },
+        query: { ...options.query, _rv: "dfa54b" },
     });
 
 /**
@@ -1116,7 +1110,7 @@ export const getWellTrajectories = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/well_trajectories/",
         ...options,
-        query: { ...options.query, _schema: "8385e68cd04bfabb" },
+        query: { ...options.query, _rv: "8385e6" },
     });
 
 /**
@@ -1135,7 +1129,7 @@ export const getPlannedWellTrajectories = <ThrowOnError extends boolean = false>
         responseType: "json",
         url: "/well/planned_well_trajectories/",
         ...options,
-        query: { ...options.query, _schema: "a2672a592e989476" },
+        query: { ...options.query, _rv: "a2672a" },
     });
 
 /**
@@ -1154,7 +1148,7 @@ export const getWellborePickIdentifiers = <ThrowOnError extends boolean = false>
         responseType: "json",
         url: "/well/wellbore_pick_identifiers/",
         ...options,
-        query: { ...options.query, _schema: "5b8a12937018e2d3" },
+        query: { ...options.query, _rv: "5b8a12" },
     });
 
 /**
@@ -1180,7 +1174,7 @@ export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean =
         responseType: "json",
         url: "/well/wellbore_picks_for_pick_identifier/",
         ...options,
-        query: { ...options.query, _schema: "ad11dc9889f59d4e" },
+        query: { ...options.query, _rv: "ad11dc" },
     });
 
 /**
@@ -1199,7 +1193,7 @@ export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = fal
         responseType: "json",
         url: "/well/wellbore_picks_in_strat_column",
         ...options,
-        query: { ...options.query, _schema: "979713cc19484267" },
+        query: { ...options.query, _rv: "979713" },
     });
 
 /**
@@ -1222,7 +1216,7 @@ export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = f
         responseType: "json",
         url: "/well/wellbore_stratigraphic_columns/",
         ...options,
-        query: { ...options.query, _schema: "90047d19aca7c8eb" },
+        query: { ...options.query, _rv: "90047d" },
     });
 
 /**
@@ -1238,7 +1232,7 @@ export const getWellboreCompletions = <ThrowOnError extends boolean = false>(
             responseType: "json",
             url: "/well/wellbore_completions/",
             ...options,
-            query: { ...options.query, _schema: "e1bb0e4ae4c5fb6e" },
+            query: { ...options.query, _rv: "e1bb0e" },
         },
     );
 
@@ -1254,7 +1248,7 @@ export const getWellboreCasings = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/wellbore_casings/",
         ...options,
-        query: { ...options.query, _schema: "dc609d73e6b7231e" },
+        query: { ...options.query, _rv: "dc609d" },
     });
 
 /**
@@ -1273,7 +1267,7 @@ export const getWellborePerforations = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/wellbore_perforations/",
         ...options,
-        query: { ...options.query, _schema: "9ab160463764c3ad" },
+        query: { ...options.query, _rv: "9ab160" },
     });
 
 /**
@@ -1293,7 +1287,7 @@ export const getWellboreLogCurveHeaders = <ThrowOnError extends boolean = false>
         responseType: "json",
         url: "/well/wellbore_log_curve_headers/",
         ...options,
-        query: { ...options.query, _schema: "8ba0462e581cac25" },
+        query: { ...options.query, _rv: "8ba046" },
     });
 
 /**
@@ -1308,7 +1302,7 @@ export const getLogCurveData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/log_curve_data/",
         ...options,
-        query: { ...options.query, _schema: "b6e97cb35a73f1c9" },
+        query: { ...options.query, _rv: "b6e97c" },
     });
 
 /**
@@ -1324,7 +1318,7 @@ export const getSeismicCubeMetaList = <ThrowOnError extends boolean = false>(
             responseType: "json",
             url: "/seismic/seismic_cube_meta_list/",
             ...options,
-            query: { ...options.query, _schema: "68715e4e4429aa85" },
+            query: { ...options.query, _rv: "68715e" },
         },
     );
 
@@ -1340,7 +1334,7 @@ export const getSeismicSlices = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/seismic/get_seismic_slices/",
         ...options,
-        query: { ...options.query, _schema: "11b19cbd00097d87" },
+        query: { ...options.query, _rv: "11b19c" },
     });
 
 /**
@@ -1379,7 +1373,7 @@ export const getPolygonsDirectory = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/polygons/polygons_directory/",
         ...options,
-        query: { ...options.query, _schema: "714e98619db49d56" },
+        query: { ...options.query, _rv: "714e98" },
     });
 
 /**
@@ -1392,7 +1386,7 @@ export const getPolygonsData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/polygons/polygons_data/",
         ...options,
-        query: { ...options.query, _schema: "57d6180521f8e105" },
+        query: { ...options.query, _rv: "57d618" },
     });
 
 /**
@@ -1405,7 +1399,7 @@ export const getUserInfo = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/graph/user_info/{user_id_or_email}",
         ...options,
-        query: { ...options.query, _schema: "44f8fc4b01dbf4ec" },
+        query: { ...options.query, _rv: "44f8fc" },
     });
 
 /**
@@ -1420,7 +1414,7 @@ export const getUserPhoto = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/graph/user_photo/",
         ...options,
-        query: { ...options.query, _schema: "1fe1ad6e12e8ec16" },
+        query: { ...options.query, _rv: "1fe1ad" },
     });
 
 /**
@@ -1436,7 +1430,7 @@ export const getSummaryObservations = <ThrowOnError extends boolean = false>(
             responseType: "json",
             url: "/observations/summary_observations",
             ...options,
-            query: { ...options.query, _schema: "b80338504b88741a" },
+            query: { ...options.query, _rv: "b80338" },
         },
     );
 
@@ -1450,7 +1444,7 @@ export const getRelpermTableNames = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/relperm/table_names",
         ...options,
-        query: { ...options.query, _schema: "1ff84c3dd3c6fe90" },
+        query: { ...options.query, _rv: "1ff84c" },
     });
 
 /**
@@ -1467,7 +1461,7 @@ export const getRelpermTableDefinition = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/relperm/table_definition",
         ...options,
-        query: { ...options.query, _schema: "53b38ede3afbc339" },
+        query: { ...options.query, _rv: "53b38e" },
     });
 
 /**
@@ -1484,7 +1478,7 @@ export const getRelpermRealizationData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/relperm/realization_data",
         ...options,
-        query: { ...options.query, _schema: "e06a233497f31d9f" },
+        query: { ...options.query, _rv: "e06a23" },
     });
 
 /**
@@ -1499,7 +1493,7 @@ export const getRftTableDefinition = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/rft/rft_table_definition",
         ...options,
-        query: { ...options.query, _schema: "242418106e27c07f" },
+        query: { ...options.query, _rv: "242418" },
     });
 
 /**
@@ -1514,7 +1508,7 @@ export const getRftRealizationData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/rft/rft_realization_data",
         ...options,
-        query: { ...options.query, _schema: "70557ae423b293cb" },
+        query: { ...options.query, _rv: "70557a" },
     });
 
 /**
@@ -1529,7 +1523,7 @@ export const getRftObservations = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/rft/rft_observations",
         ...options,
-        query: { ...options.query, _schema: "cf11fc6294784ba9" },
+        query: { ...options.query, _rv: "cf11fc" },
     });
 
 /**
@@ -1544,7 +1538,7 @@ export const getVfpTables = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/vfp/vfp_tables/",
         ...options,
-        query: { ...options.query, _schema: "4c775b21a1bbec7d" },
+        query: { ...options.query, _rv: "4c775b" },
     });
 
 /**
@@ -1559,7 +1553,7 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/vfp/vfp_table/",
         ...options,
-        query: { ...options.query, _schema: "47651ec5b112bc29" },
+        query: { ...options.query, _rv: "47651e" },
     });
 
 /**
@@ -1582,7 +1576,6 @@ export const getSessionsMetadata = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/persistence/sessions",
         ...options,
-        query: { ...options?.query, _schema: "caab5a43664d3134" },
     });
 
 /**
@@ -1655,7 +1648,6 @@ export const getSession = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/persistence/sessions/{session_id}",
         ...options,
-        query: { ...options.query, _schema: "b8451456f2183e71" },
     });
 
 /**
@@ -1712,7 +1704,6 @@ export const getSessionMetadata = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/persistence/sessions/metadata/{session_id}",
         ...options,
-        query: { ...options.query, _schema: "d453600100e5922e" },
     });
 
 /**
@@ -1744,7 +1735,6 @@ export const getSnapshotAccessLogs = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/persistence/snapshot_access_logs",
         ...options,
-        query: { ...options?.query, _schema: "16e8d475160b8804" },
     });
 
 /**
@@ -1769,7 +1759,6 @@ export const getSnapshotsMetadata = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/persistence/snapshots",
         ...options,
-        query: { ...options?.query, _schema: "29aa2f963cdff19c" },
     });
 
 /**
@@ -1856,7 +1845,6 @@ export const getSnapshot = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/persistence/snapshots/{snapshot_id}",
         ...options,
-        query: { ...options.query, _schema: "e313826e82e01e9b" },
     });
 
 /**
@@ -1896,7 +1884,6 @@ export const getMediaSasToken = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/tutorials/media_sas_token",
         ...options,
-        query: { ...options?.query, _schema: "86edc310328d24ad" },
     });
 
 /**
@@ -1909,7 +1896,6 @@ export const loginRoute = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/login",
         ...options,
-        query: { ...options?.query, _schema: "fd0448008a4cafdf" },
     });
 
 /**
@@ -1922,7 +1908,6 @@ export const authorizedCallbackRoute = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/auth-callback",
         ...options,
-        query: { ...options?.query, _schema: "fd0448008a4cafdf" },
     });
 
 /**
@@ -1935,7 +1920,6 @@ export const getAlive = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/alive",
         ...options,
-        query: { ...options?.query, _schema: "f946f0c572e55767" },
     });
 
 /**
@@ -1948,7 +1932,6 @@ export const getAliveProtected = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/alive_protected",
         ...options,
-        query: { ...options?.query, _schema: "2787bd42badd2c19" },
     });
 
 /**
@@ -1973,7 +1956,6 @@ export const getLoggedInUser = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/logged_in_user",
         ...options,
-        query: { ...options?.query, _schema: "58a3751b9529d638" },
     });
 
 /**
@@ -1986,5 +1968,4 @@ export const root = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/",
         ...options,
-        query: { ...options?.query, _schema: "38794f509991ed60" },
     });

@@ -306,7 +306,7 @@ async function loadEnsembleApiDataMapFromBackend(
 
         const ensembleDetailsPromise = queryClient.fetchQuery({
             ...getEnsembleDetailsOptions({
-                query: { zCacheBust: fingerprintHash },
+                query: { _cacheBust: fingerprintHash },
                 path: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
@@ -323,7 +323,7 @@ async function loadEnsembleApiDataMapFromBackend(
                 query: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
-                    zCacheBust: fingerprintHash,
+                    _cacheBust: fingerprintHash,
                 },
                 throwOnError: false, // We will handle errors manually to be able to continue loading other ensembles even if one fails
             }),

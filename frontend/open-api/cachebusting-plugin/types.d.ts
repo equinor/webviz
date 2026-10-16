@@ -8,7 +8,7 @@ export interface Config {
 
     /**
      * The query parameter to use for caching
-     * @default "f"
+     * @default "_cacheBust"
      */
     cacheKey?: string | IR.ParameterObject;
 }
