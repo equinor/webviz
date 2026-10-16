@@ -31,6 +31,7 @@ import {
     distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
     economicAssumptionsAtom,
+    evaluationHorizonAtom,
     isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     resultModeAtom,
@@ -72,6 +73,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const cashFlowProfileType = useAtomValue(cashFlowProfileTypeAtom);
     const selectedRealization = useAtomValue(selectedRealizationAtom);
     const economicAssumptions = useAtomValue(economicAssumptionsAtom);
+    const evaluationHorizon = useAtomValue(evaluationHorizonAtom);
     const earlyValueConfiguration = useAtomValue(earlyValueConfigurationAtom);
     const earlyValueEndYear = earlyValueConfiguration.endYear;
     const isCostProfileDraftValid = useAtomValue(isCostProfileDraftValidAtom);
@@ -128,7 +130,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         `Currency ${currency}`,
     ].filter((assumption): assumption is string => assumption !== null);
     const pendingMessage =
-        economicAssumptions.predictionStartYear === null
+        evaluationHorizon.status === "NO_START"
             ? "Enter a prediction start year in the settings to calculate results."
             : null;
     const shownEarlyEndYear =

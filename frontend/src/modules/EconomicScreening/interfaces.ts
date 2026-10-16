@@ -12,13 +12,16 @@ import {
     isCostProfileDraftValidAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
-    predictionStartYearAtom,
     resultModeAtom,
     selectedMeasureAtom,
 } from "./settings/atoms/baseAtoms";
 import { displayedRealizationAtom } from "./settings/atoms/derivedAtoms";
 import { validRealizationNumbersAtom } from "./settings/atoms/sourceQueryAtoms";
-import { constituentGasConsumptionWarningAtom, sourceSnapshotAtom } from "./settings/atoms/sourceSnapshotAtoms";
+import {
+    constituentGasConsumptionWarningAtom,
+    evaluationHorizonStateAtom,
+    sourceSnapshotAtom,
+} from "./settings/atoms/sourceSnapshotAtoms";
 import type {
     CostProfileEntry,
     CashFlowProfileType,
@@ -29,10 +32,12 @@ import type {
     PriceAssumptions,
     ResultMode,
 } from "./typesAndEnums";
+import type { EvaluationHorizonState } from "./utils/evaluationHorizon";
 import type { EconomicSourceSnapshot } from "./utils/sourceSnapshot";
 
 export type SettingsToViewInterface = {
     sourceSnapshot: EconomicSourceSnapshot;
+    evaluationHorizon: EvaluationHorizonState;
     /** Filtered realizations of the snapshot's ensemble; results are calculated for these only. */
     realizationNumbers: number[] | null;
     constituentGasConsumptionWarning: string | null;
@@ -57,6 +62,9 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     sourceSnapshot: (get) => {
         return get(sourceSnapshotAtom);
     },
+    evaluationHorizon: (get) => {
+        return get(evaluationHorizonStateAtom);
+    },
     realizationNumbers: (get) => {
         return get(validRealizationNumbersAtom);
     },
@@ -66,7 +74,6 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     economicAssumptions: (get) => {
         return {
             discountRatePercent: get(discountRatePercentAtom),
-            predictionStartYear: get(predictionStartYearAtom),
         };
     },
     priceAssumptions: (get) => {

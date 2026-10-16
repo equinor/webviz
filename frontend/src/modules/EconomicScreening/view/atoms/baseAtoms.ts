@@ -16,16 +16,17 @@ import {
     OilPriceBasis,
     ResultMode,
 } from "@modules/EconomicScreening/typesAndEnums";
+import type { EvaluationHorizonState } from "@modules/EconomicScreening/utils/evaluationHorizon";
 import { EMPTY_SOURCE_SNAPSHOT, type EconomicSourceSnapshot } from "@modules/EconomicScreening/utils/sourceSnapshot";
 
 /** Read-only mirrors of the settings-to-view interface, written only by the interface effects. */
 export const sourceSnapshotAtom = atom<EconomicSourceSnapshot>(EMPTY_SOURCE_SNAPSHOT);
+export const evaluationHorizonAtom = atom<EvaluationHorizonState>({ status: "NO_START" });
 export const realizationNumbersAtom = atom<number[] | null>(null);
 export const constituentGasConsumptionWarningAtom = atom<string | null>(null);
 
 export const economicAssumptionsAtom = atom<EconomicAssumptions>({
     discountRatePercent: DEFAULT_DISCOUNT_RATE_PERCENT,
-    predictionStartYear: null,
 });
 
 export const priceAssumptionsAtom = atom<PriceAssumptions>({

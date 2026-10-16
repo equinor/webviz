@@ -8,27 +8,16 @@ import {
 
 import { formatMonthIndex } from "./calendar";
 import { hasIncludedNonZeroCost } from "./costProfile";
+import {
+    getEvaluationHorizonError,
+    isYearInHorizon,
+    type EvaluationHorizon,
+    type EvaluationHorizonState,
+} from "./evaluationHorizon";
 import { isProductConfirmedAbsent, isProductEstablished } from "./monthlyEconomics";
 import { isMonthCoverageEstablished, monthIndexOf, type MonthlyProductionProfile } from "./monthlyProduction";
 import { SourceStatus, type EconomicSourceSnapshot, type RealizationProfiles } from "./sourceSnapshot";
 import type { MissingComponentAssumptions } from "./vectorResolution";
-
-/** The prediction start must fall inside the source envelope; there is no evaluation otherwise. */
-export function getPredictionHorizonError(
-    predictionStartYear: number | null,
-    envelopeEndMonthIndex: number | null,
-): string | null {
-    if (predictionStartYear === null) {
-        return "Enter a prediction start year to calculate results.";
-    }
-    if (envelopeEndMonthIndex === null) {
-        return "Source coverage is unavailable, so the simulation end cannot be established.";
-    }
-    if (monthIndexOf(predictionStartYear, 1) > envelopeEndMonthIndex) {
-        return `The prediction start year ${predictionStartYear} is after the supported simulation end (${formatMonthIndex(envelopeEndMonthIndex)}).`;
-    }
-    return null;
-}
 
 /**
  * Years whose January has established source coverage in at least one realization and product, through
@@ -183,13 +172,13 @@ function summarizeProductSupport(
     };
 }
 
-function coverageMessage(productLabel: string, support: ProductSupport, startYear: number, endMonthIndex: number) {
-    const startMonthIndex = monthIndexOf(startYear, 1);
+function coverageMessage(productLabel: string, support: ProductSupport, horizon: EvaluationHorizon) {
+    const startMonthIndex = monthIndexOf(horizon.startYear, 1);
     const sourceStart =
         support.firstEstablishedMonthIndex !== null && support.firstEstablishedMonthIndex > startMonthIndex
             ? `; supported data starts ${formatMonthIndex(support.firstEstablishedMonthIndex)}`
             : "";
-    return `${productLabel} source coverage is incomplete between Jan ${startYear} and ${formatMonthIndex(endMonthIndex)} for every selected realization${sourceStart}.`;
+    return `${productLabel} source coverage is incomplete between Jan ${horizon.startYear} and ${formatMonthIndex(horizon.endMonthIndex)} for every selected realization${sourceStart}.`;
 }
 
 export type SetupReadiness = {
@@ -206,7 +195,7 @@ export type SetupReadinessInput = {
     /** Support of each product over the evaluation for the selected realizations; null until known. */
     productSupport: SelectedProductSupport | null;
     missingComponentAssumptions: MissingComponentAssumptions | undefined;
-    predictionStartYear: number | null;
+    evaluationHorizon: EvaluationHorizonState;
     oilPrice: number | null;
     gasPrice: number | null;
     costProfile: CostProfileEntry[];
@@ -233,7 +222,7 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
             issues: [{ kind: SetupIssueKind.INPUT, message: "Select an ensemble.", field: "ensemble" }],
         };
     }
-    const { snapshot, requirement, predictionStartYear, oilPrice, gasPrice } = input;
+    const { snapshot, requirement, evaluationHorizon, oilPrice, gasPrice } = input;
     const issues: SetupIssue[] = [];
     const addInput = (message: string, field: SetupField) =>
         issues.push({ kind: SetupIssueKind.INPUT, message, field });
@@ -242,18 +231,12 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
 
     const isLoading =
         input.vectorListStatus === "LOADING" || snapshot.status === SourceStatus.LOADING || snapshot.isFetching;
-    const isReady = snapshot.status === SourceStatus.READY;
-    const envelopeEndMonthIndex = isReady ? snapshot.envelopeEndMonthIndex : null;
-    const evaluationEndYear = envelopeEndMonthIndex === null ? null : Math.floor(envelopeEndMonthIndex / 12);
-    const isStartWithinSource =
-        predictionStartYear !== null &&
-        envelopeEndMonthIndex !== null &&
-        monthIndexOf(predictionStartYear, 1) <= envelopeEndMonthIndex;
+    const horizon = evaluationHorizon.status === "READY" ? evaluationHorizon.horizon : null;
 
-    if (predictionStartYear === null) {
+    if (evaluationHorizon.status === "NO_START") {
         addInput("Enter a prediction start year.", "predictionYear");
-    } else if (isReady) {
-        const horizonError = getPredictionHorizonError(predictionStartYear, envelopeEndMonthIndex);
+    } else if (snapshot.status === SourceStatus.READY) {
+        const horizonError = getEvaluationHorizonError(evaluationHorizon);
         if (horizonError) {
             addSource(horizonError, "predictionYear");
         }
@@ -287,14 +270,8 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
             if (isFinancial && oilPrice === null && !support?.oil.isConfirmedAbsent) {
                 addInput("Enter an oil price, or 0 to omit oil revenue.", "oilPrice");
             }
-            if (
-                needsOilCoverage &&
-                coverage &&
-                !coverage.some((entry) => entry.oil) &&
-                predictionStartYear !== null &&
-                envelopeEndMonthIndex !== null
-            ) {
-                addSource(coverageMessage("Oil", support!.oil, predictionStartYear, envelopeEndMonthIndex));
+            if (needsOilCoverage && coverage && !coverage.some((entry) => entry.oil) && horizon) {
+                addSource(coverageMessage("Oil", support!.oil, horizon));
             }
         }
 
@@ -334,14 +311,8 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
             }
             // An unresolved component already explains the missing sales gas; its coverage is not yet defined.
             needsGasCoverage = needsGasSource && !hasUnresolvedComponent;
-            if (
-                needsGasCoverage &&
-                coverage &&
-                !coverage.some((entry) => entry.gas) &&
-                predictionStartYear !== null &&
-                envelopeEndMonthIndex !== null
-            ) {
-                addSource(coverageMessage("Sales gas", support!.gas, predictionStartYear, envelopeEndMonthIndex));
+            if (needsGasCoverage && coverage && !coverage.some((entry) => entry.gas) && horizon) {
+                addSource(coverageMessage("Sales gas", support!.gas, horizon));
             }
         }
 
@@ -353,11 +324,10 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
             coverage.some((entry) => entry.oil) &&
             coverage.some((entry) => entry.gas) &&
             !coverage.some((entry) => entry.oil && entry.gas) &&
-            predictionStartYear !== null &&
-            envelopeEndMonthIndex !== null
+            horizon
         ) {
             addSource(
-                `No selected realization has both oil and sales gas source coverage between Jan ${predictionStartYear} and ${formatMonthIndex(envelopeEndMonthIndex)}.`,
+                `No selected realization has both oil and sales gas source coverage between Jan ${horizon.startYear} and ${formatMonthIndex(horizon.endMonthIndex)}.`,
             );
         }
     }
@@ -367,9 +337,8 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
     }
     if (
         requirement === ResultRequirement.BREAK_EVEN &&
-        isStartWithinSource &&
-        evaluationEndYear !== null &&
-        !hasIncludedNonZeroCost(input.costProfile, predictionStartYear, evaluationEndYear)
+        horizon &&
+        !hasIncludedNonZeroCost(input.costProfile, horizon.startYear, horizon.endYear)
     ) {
         addInput("Enter a non-zero CAPEX or OPEX within the evaluation.", "costs");
     }
@@ -378,13 +347,9 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
         const earlyEndYear = input.earlyValue.endYear;
         if (earlyEndYear === null) {
             addInput("Early value: enter a Calculate through year.", "earlyYear");
-        } else if (
-            isStartWithinSource &&
-            evaluationEndYear !== null &&
-            (earlyEndYear < predictionStartYear || earlyEndYear > evaluationEndYear)
-        ) {
+        } else if (horizon && !isYearInHorizon(earlyEndYear, horizon)) {
             addInput(
-                `Early value: choose a Calculate through year within ${predictionStartYear}-${evaluationEndYear}.`,
+                `Early value: choose a Calculate through year within ${horizon.startYear}-${horizon.endYear}.`,
                 "earlyYear",
             );
         }

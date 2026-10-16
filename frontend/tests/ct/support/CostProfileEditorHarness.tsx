@@ -2,6 +2,9 @@ import { useState } from "react";
 
 import { CostProfileEditor } from "@modules/EconomicScreening/settings/components/costProfileEditor";
 import type { CostProfileEntry } from "@modules/EconomicScreening/typesAndEnums";
+import { resolveEvaluationHorizon } from "@modules/EconomicScreening/utils/evaluationHorizon";
+import { monthIndexOf } from "@modules/EconomicScreening/utils/monthlyProduction";
+import { SourceStatus } from "@modules/EconomicScreening/utils/sourceSnapshot";
 
 const DEFAULT_COST_PROFILE: CostProfileEntry[] = [{ year: 2020, capex: 100, opex: 0 }];
 
@@ -29,10 +32,12 @@ export function CostProfileEditorHarness({
                 value={costProfile}
                 currency="USD"
                 isDelta={isDelta}
-                startYear={startYear}
-                endYear={endYear}
+                horizon={resolveEvaluationHorizon(startYear, {
+                    status: isHorizonLoading && endYear === null ? SourceStatus.LOADING : SourceStatus.READY,
+                    envelopeEndMonthIndex: endYear === null ? null : monthIndexOf(endYear, 12),
+                })}
                 ensembleKey={ensembleKey}
-                isHorizonLoading={isHorizonLoading}
+                isSourceLoading={isHorizonLoading}
                 onValueChange={setCostProfile}
                 onValidityChange={setIsReady}
             />

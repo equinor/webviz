@@ -8,6 +8,7 @@ import {
 } from "@modules/EconomicScreening/typesAndEnums";
 import { parseCalendarYear } from "@modules/EconomicScreening/utils/calendar";
 import { hasIncludedNonZeroCost } from "@modules/EconomicScreening/utils/costProfile";
+import { resolveEvaluationHorizon } from "@modules/EconomicScreening/utils/evaluationHorizon";
 import { isProductConfirmedAbsent } from "@modules/EconomicScreening/utils/monthlyEconomics";
 import {
     MonthCoverage,
@@ -67,8 +68,11 @@ const NONE_COVERED = support([
     { oil: false, gas: false },
 ]);
 
-function readyInput(overrides: Partial<SetupReadinessInput> = {}): SetupReadinessInput {
-    return {
+function readyInput(
+    overrides: Partial<SetupReadinessInput> & { predictionStartYear?: number | null } = {},
+): SetupReadinessInput {
+    const { predictionStartYear = null, ...inputOverrides } = overrides;
+    const input: Omit<SetupReadinessInput, "evaluationHorizon"> = {
         hasEnsemble: true,
         vectorListStatus: "READY",
         snapshot: {
@@ -80,15 +84,15 @@ function readyInput(overrides: Partial<SetupReadinessInput> = {}): SetupReadines
         hasOilVector: true,
         productSupport: ALL_COVERED,
         missingComponentAssumptions: undefined,
-        predictionStartYear: null,
         oilPrice: null,
         gasPrice: null,
         costProfile: [],
         isCostProfileDraftValid: true,
         earlyValue: { enabled: false, endYear: null },
         requirement: ResultRequirement.FINANCIAL,
-        ...overrides,
+        ...inputOverrides,
     };
+    return { ...input, evaluationHorizon: resolveEvaluationHorizon(predictionStartYear, input.snapshot) };
 }
 
 const messages = (input: SetupReadinessInput) => getSetupReadiness(input).issues.map((issue) => issue.message);

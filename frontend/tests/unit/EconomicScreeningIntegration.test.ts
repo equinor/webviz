@@ -26,7 +26,6 @@ import {
     validRealizationNumbersAtom,
     vectorDataQueriesAtom,
 } from "@modules/EconomicScreening/settings/atoms/sourceQueryAtoms";
-import { sourceHorizonAtom } from "@modules/EconomicScreening/settings/atoms/sourceSnapshotAtoms";
 import {
     Currency,
     EarlyEconomicMeasure,
@@ -38,7 +37,11 @@ import { monthStartUtcMs, SourceKind } from "@modules/EconomicScreening/utils/mo
 import { volumeUnitInSm3 } from "@modules/EconomicScreening/utils/unitConversion";
 import { economicScreeningResultsAtom } from "@modules/EconomicScreening/view/atoms/derivedAtoms";
 
-import { createEconomicScreeningInstance, mountView } from "./support/economicScreeningModuleHarness";
+import {
+    createEconomicScreeningInstance,
+    costYearHorizonAtom as sourceHorizonAtom,
+    mountView,
+} from "./support/economicScreeningModuleHarness";
 
 vi.mock("@modules/EconomicScreening/view/view", () => ({ View: () => null }));
 vi.mock("@modules/EconomicScreening/settings/settings", () => ({ Settings: () => null }));

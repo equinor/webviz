@@ -17,6 +17,7 @@ import {
     validateCostProfile,
     validatePastedCostYears,
 } from "@modules/EconomicScreening/utils/costProfile";
+import type { EvaluationHorizonState } from "@modules/EconomicScreening/utils/evaluationHorizon";
 
 const COST_INPUT_DEBOUNCE_MS = 500;
 
@@ -26,9 +27,9 @@ export type CostProfileEditorProps = {
     currency: string;
     isDelta: boolean;
     /** Generated cost years run from the prediction start through the simulation end, inclusive. */
-    startYear: number | null;
-    endYear: number | null;
-    isHorizonLoading?: boolean;
+    horizon: EvaluationHorizonState;
+    /** The source is loading or refetching; applying pasted costs waits for it. */
+    isSourceLoading?: boolean;
     ensembleKey?: string;
     onValueChange: (costProfile: CostProfileEntry[]) => void;
     onValidityChange: (isValid: boolean) => void;
@@ -51,7 +52,14 @@ function sortedByYear(costProfile: CostProfileEntry[]): CostProfileEntry[] {
 }
 
 export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNode {
-    const { value, onValueChange, onValidityChange, isDelta, startYear, endYear } = props;
+    const { value, onValueChange, onValidityChange, isDelta, horizon, isSourceLoading } = props;
+    // Start after end still names both years in its messages; other non-ready states have no cost years.
+    const [startYear, endYear] =
+        horizon.status === "READY"
+            ? [horizon.horizon.startYear, horizon.horizon.endYear]
+            : horizon.status === "START_AFTER_END"
+              ? [horizon.startYear, horizon.envelopeEndYear]
+              : [null, null];
 
     const [immediateValue, setImmediateValue] = React.useState<CostProfileEntry[]>(() => sortedByYear(value));
     const [previousValue, setPreviousValue] = React.useState<CostProfileEntry[]>(value);
@@ -117,7 +125,7 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
     function pastePreview() {
         if (!pasteDraft || pasteDraft.ensembleKey !== props.ensembleKey)
             return { error: "Paste costs for the current ensemble." };
-        if (startYear === null || endYear === null || startYear > endYear || props.isHorizonLoading)
+        if (startYear === null || endYear === null || startYear > endYear || isSourceLoading)
             return { error: "Cost years must be available before applying costs." };
         const parsed = parseCostProfilePaste(pasteDraft.text);
         if ("error" in parsed) return parsed;
@@ -153,9 +161,9 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
         return (
             <div className="gap-y-xs flex flex-col items-start">
                 <span className="text-sm font-light">
-                    {startYear === null
+                    {horizon.status === "NO_START"
                         ? "Enter a prediction start year to generate cost years."
-                        : props.isHorizonLoading
+                        : isSourceLoading || horizon.status === "LOADING"
                           ? "Cost years are generated when the simulation data has loaded."
                           : endYear === null
                             ? "Cost years are unavailable until source coverage establishes the simulation end."

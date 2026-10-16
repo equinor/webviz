@@ -1,6 +1,9 @@
 import { atom } from "jotai";
 
-import type { SourceHorizon } from "@modules/EconomicScreening/typesAndEnums";
+import {
+    resolveEvaluationHorizon,
+    type EvaluationHorizonState,
+} from "@modules/EconomicScreening/utils/evaluationHorizon";
 import {
     computeMonthlyVolumesFromCumulative,
     lastSupportedMonthIndex,
@@ -225,13 +228,17 @@ export const sourceSnapshotAtom = atom<EconomicSourceSnapshot>((get) => {
     };
 });
 
-/** Generated cost years run through this year; resolved from the settings' own acquisition. */
-export const sourceHorizonAtom = atom<SourceHorizon>((get) => {
-    const snapshot = get(sourceSnapshotAtom);
-    return {
-        endYear: snapshot.envelopeEndMonthIndex === null ? null : Math.floor(snapshot.envelopeEndMonthIndex / 12),
-        isLoading: snapshot.isFetching || snapshot.status === SourceStatus.LOADING,
-    };
+/** True while the source loads or refetches, including refetches that retain the previous envelope. */
+export const isSourceLoadingAtom = atom<boolean>((get) => {
+    return get(isFetchingAtom) || get(sourceStatusAtom) === SourceStatus.LOADING;
+});
+
+/** Reads the snapshot's inputs directly, so it keeps its identity while only the snapshot's fetching state changes. */
+export const evaluationHorizonStateAtom = atom<EvaluationHorizonState>((get) => {
+    return resolveEvaluationHorizon(get(predictionStartYearAtom), {
+        status: get(sourceStatusAtom),
+        envelopeEndMonthIndex: get(sourceEnvelopeEndMonthIndexAtom),
+    });
 });
 
 /** From the full-ensemble snapshot, so realization filtering does not change the suggestions. */
@@ -246,18 +253,17 @@ export const predictionStartYearSuggestionsAtom = atom<number[]>((get) => {
 /** Coverage and confirmed absence of each product over the evaluation for the filtered realizations; null until known. */
 export const selectedProductSupportAtom = atom<SelectedProductSupport | null>((get) => {
     const snapshot = get(sourceSnapshotAtom);
-    const predictionStartYear = get(predictionStartYearAtom);
-    const endMonthIndex = snapshot.envelopeEndMonthIndex;
-    if (predictionStartYear === null || endMonthIndex === null) {
+    const evaluationHorizon = get(evaluationHorizonStateAtom);
+    if (evaluationHorizon.status !== "READY") {
         return null;
     }
-    const startMonthIndex = monthIndexOf(predictionStartYear, 1);
     const realizations = new Set(get(validRealizationNumbersAtom) ?? []);
     const profiles = snapshot.realizationProfiles.filter((profile) => realizations.has(profile.realization));
-    if (startMonthIndex > endMonthIndex || profiles.length === 0) {
+    if (profiles.length === 0) {
         return null;
     }
-    return summarizeSelectedProductSupport(profiles, startMonthIndex, endMonthIndex);
+    const { startYear, endMonthIndex } = evaluationHorizon.horizon;
+    return summarizeSelectedProductSupport(profiles, monthIndexOf(startYear, 1), endMonthIndex);
 });
 
 /** Delta constituents' FGCT is reported for context only; it never gates results. */

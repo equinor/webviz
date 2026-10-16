@@ -1,9 +1,19 @@
 import { describe, expect, test } from "vitest";
 
+import {
+    getEvaluationHorizonError,
+    resolveEvaluationHorizon,
+} from "@modules/EconomicScreening/utils/evaluationHorizon";
 import { monthIndexOf } from "@modules/EconomicScreening/utils/monthlyProduction";
-import { getPredictionHorizonError } from "@modules/EconomicScreening/utils/setupReadiness";
+import { SourceStatus } from "@modules/EconomicScreening/utils/sourceSnapshot";
 
-describe("getPredictionHorizonError", () => {
+function getPredictionHorizonError(predictionStartYear: number | null, envelopeEndMonthIndex: number | null) {
+    return getEvaluationHorizonError(
+        resolveEvaluationHorizon(predictionStartYear, { status: SourceStatus.READY, envelopeEndMonthIndex }),
+    );
+}
+
+describe("getEvaluationHorizonError", () => {
     test("requires an explicit prediction start year", () => {
         expect(getPredictionHorizonError(null, monthIndexOf(2040, 12))).toBe(
             "Enter a prediction start year to calculate results.",

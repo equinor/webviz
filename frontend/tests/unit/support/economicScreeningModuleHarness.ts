@@ -1,4 +1,5 @@
 import type { createStore } from "jotai";
+import { atom } from "jotai";
 
 import type { Module } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -15,10 +16,19 @@ import {
     selectedRealizationAtom,
 } from "@modules/EconomicScreening/settings/atoms/persistableFixableAtoms";
 import { validRealizationNumbersAtom } from "@modules/EconomicScreening/settings/atoms/sourceQueryAtoms";
-import { sourceHorizonAtom } from "@modules/EconomicScreening/settings/atoms/sourceSnapshotAtoms";
+import { isSourceLoadingAtom, sourceSnapshotAtom } from "@modules/EconomicScreening/settings/atoms/sourceSnapshotAtoms";
 import { economicScreeningResultsAtom } from "@modules/EconomicScreening/view/atoms/derivedAtoms";
 
 type Store = ReturnType<typeof createStore>;
+
+/** The cost-year end and loading state that Settings passes to the cost editor. */
+export const costYearHorizonAtom = atom((get) => {
+    const envelopeEndMonthIndex = get(sourceSnapshotAtom).envelopeEndMonthIndex;
+    return {
+        endYear: envelopeEndMonthIndex === null ? null : Math.floor(envelopeEndMonthIndex / 12),
+        isLoading: get(isSourceLoadingAtom),
+    };
+});
 
 export type EconomicScreeningInstance = ModuleInstance<Interfaces, SerializedState>;
 
@@ -47,7 +57,7 @@ export function mountSettings(store: Store): () => void {
     const unsubscribers = [
         store.sub(selectedEnsembleIdentAtom, () => {}),
         store.sub(activeVectorListQueryAtom, () => {}),
-        store.sub(sourceHorizonAtom, () => {}),
+        store.sub(costYearHorizonAtom, () => {}),
         store.sub(selectedRealizationAtom, () => {}),
         store.sub(displayedRealizationAtom, () => {}),
         store.sub(validRealizationNumbersAtom, () => {}),

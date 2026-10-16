@@ -33,7 +33,6 @@ import {
     ResultModeEnumToStringMapping,
 } from "../typesAndEnums";
 import { getMeasureDisplayName } from "../utils/measureAccessors";
-import { monthIndexOf } from "../utils/monthlyProduction";
 import { getResultRequirement, getSetupReadiness, type SetupField } from "../utils/setupReadiness";
 import type { MissingComponentAssumptions, SalesGasStrategy } from "../utils/vectorResolution";
 import { CalculationHelpDialog } from "../view/components/calculationHelpDialog";
@@ -64,9 +63,10 @@ import {
 import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./atoms/persistableFixableAtoms";
 import { validRealizationNumbersAtom } from "./atoms/sourceQueryAtoms";
 import {
+    evaluationHorizonStateAtom,
+    isSourceLoadingAtom,
     predictionStartYearSuggestionsAtom,
     selectedProductSupportAtom,
-    sourceHorizonAtom,
     sourceSnapshotAtom,
 } from "./atoms/sourceSnapshotAtoms";
 import { CostProfileEditor } from "./components/costProfileEditor";
@@ -148,7 +148,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     const [missingComponentAssumptionsByEnsemble, setMissingComponentAssumptionsByEnsemble] = useAtom(
         missingComponentAssumptionsAtom,
     );
-    const sourceHorizon = useAtomValue(sourceHorizonAtom);
+    const evaluationHorizon = useAtomValue(evaluationHorizonStateAtom);
+    const isSourceLoading = useAtomValue(isSourceLoadingAtom);
     const sourceSnapshot = useAtomValue(sourceSnapshotAtom);
     const predictionStartYearSuggestions = useAtomValue(predictionStartYearSuggestionsAtom);
     const selectedProductSupport = useAtomValue(selectedProductSupportAtom);
@@ -254,7 +255,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
         hasOilVector: hasOilProductionVector,
         productSupport: selectedProductSupport,
         missingComponentAssumptions: selectedMissingComponentAssumptions,
-        predictionStartYear,
+        evaluationHorizon,
         oilPrice,
         gasPrice,
         costProfile,
@@ -268,11 +269,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
             : resultMode === ResultMode.ALL_RESULTS
               ? "all results"
               : getMeasureDisplayName(selectedMeasure, isDeltaEnsembleSelected).toLowerCase();
-    const envelopeEndMonthIndex = sourceSnapshot.envelopeEndMonthIndex;
-    const isPredictionStartAfterSource =
-        predictionStartYear !== null &&
-        envelopeEndMonthIndex !== null &&
-        monthIndexOf(predictionStartYear, 1) > envelopeEndMonthIndex;
 
     function fieldAnnotation(field: SetupField) {
         return (
@@ -335,10 +331,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                                 <PredictionYearSelector
                                     value={predictionStartYear}
                                     suggestedYears={predictionStartYearSuggestions}
-                                    isLoading={sourceHorizon.isLoading}
+                                    isLoading={isSourceLoading}
                                     onValueChange={setPredictionStartYear}
                                 />
-                                {predictionStartYear !== null && !isPredictionStartAfterSource && (
+                                {predictionStartYear !== null && evaluationHorizon.status !== "START_AFTER_END" && (
                                     <span className="text-body-xs text-subtle">
                                         Valuation: 1 January {predictionStartYear}
                                     </span>
@@ -517,9 +513,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                                 value={costProfile}
                                 currency={currency}
                                 isDelta={isDeltaEnsembleSelected}
-                                startYear={predictionStartYear}
-                                endYear={sourceHorizon.endYear}
-                                isHorizonLoading={sourceHorizon.isLoading}
+                                horizon={evaluationHorizon}
+                                isSourceLoading={isSourceLoading}
                                 onValueChange={setCostProfile}
                                 onValidityChange={setIsCostProfileDraftValid}
                             />

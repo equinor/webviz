@@ -39,7 +39,6 @@ import {
 } from "@modules/EconomicScreening/settings/atoms/persistableFixableAtoms";
 import {
     constituentGasConsumptionWarningAtom,
-    sourceHorizonAtom,
     sourceSnapshotAtom as settingsSourceSnapshotAtom,
 } from "@modules/EconomicScreening/settings/atoms/sourceSnapshotAtoms";
 import {
@@ -76,6 +75,7 @@ import {
 } from "../ct/support/economicScreeningConnectedFixtures";
 
 import {
+    costYearHorizonAtom as sourceHorizonAtom,
     createEconomicScreeningInstance,
     mountSettings,
     mountView,

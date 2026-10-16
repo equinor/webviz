@@ -8,6 +8,7 @@ import {
     distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
     economicAssumptionsAtom,
+    evaluationHorizonAtom,
     isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     realizationNumbersAtom,
@@ -20,6 +21,9 @@ import {
 export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInterface> = [
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(sourceSnapshotAtom, getInterfaceValue("sourceSnapshot"));
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(evaluationHorizonAtom, getInterfaceValue("evaluationHorizon"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(realizationNumbersAtom, getInterfaceValue("realizationNumbers"));

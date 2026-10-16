@@ -130,14 +130,6 @@ export type PriceAssumptions = {
 
 export type EconomicAssumptions = {
     discountRatePercent: number;
-    /** Valuation and evaluation both start on 1 January of this year. Null until entered. */
-    predictionStartYear: number | null;
-};
-
-/** Last year of the full-ensemble source envelope, used to generate cost years. */
-export type SourceHorizon = {
-    endYear: number | null;
-    isLoading: boolean;
 };
 
 export type EarlyValueConfiguration = {

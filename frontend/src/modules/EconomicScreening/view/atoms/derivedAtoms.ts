@@ -5,11 +5,15 @@ import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR } from "@modules/EconomicScreening/typesAndEnums";
 import { formatMonthIndex } from "@modules/EconomicScreening/utils/calendar";
 import {
+    getEvaluationHorizonError,
+    isYearInHorizon,
+    type EvaluationHorizon,
+} from "@modules/EconomicScreening/utils/evaluationHorizon";
+import {
     computeMonthlyRealizationEconomics,
     type MonthlyRealizationEconomicResult,
     type ResolvedMonthlyAssumptions,
 } from "@modules/EconomicScreening/utils/monthlyEconomics";
-import { getPredictionHorizonError } from "@modules/EconomicScreening/utils/setupReadiness";
 import { SourceStatus } from "@modules/EconomicScreening/utils/sourceSnapshot";
 import {
     convertGasPriceToSimulatorUnit,
@@ -22,17 +26,12 @@ import {
     costProfileAtom,
     earlyValueConfigurationAtom,
     economicAssumptionsAtom,
+    evaluationHorizonAtom,
     isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     realizationNumbersAtom,
     sourceSnapshotAtom,
 } from "./baseAtoms";
-
-export type EvaluationHorizon = {
-    startYear: number;
-    endYear: number;
-    endMonthIndex: number;
-};
 
 export type EconomicScreeningResults = {
     results: MonthlyRealizationEconomicResult[];
@@ -52,6 +51,7 @@ const unmaskedResultsAtom = atom<EconomicScreeningResults>((get) => {
     const isDeltaEnsemble = ensembleIdent ? isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent) : false;
     const constituentGasConsumptionWarning = get(constituentGasConsumptionWarningAtom);
     const economicAssumptions = get(economicAssumptionsAtom);
+    const evaluationHorizon = get(evaluationHorizonAtom);
     const priceAssumptions = get(priceAssumptionsAtom);
     const costProfile = get(costProfileAtom);
     const earlyValueConfiguration = get(earlyValueConfigurationAtom);
@@ -111,25 +111,19 @@ const unmaskedResultsAtom = atom<EconomicScreeningResults>((get) => {
         return withheld();
     }
 
-    const { predictionStartYear, discountRatePercent } = economicAssumptions;
-    const envelopeEndMonthIndex = snapshot.envelopeEndMonthIndex;
-    const horizonError = getPredictionHorizonError(predictionStartYear, envelopeEndMonthIndex);
+    const horizonError = getEvaluationHorizonError(evaluationHorizon);
     if (horizonError) {
         errors.push(horizonError);
     }
-    if (horizonError || predictionStartYear === null || envelopeEndMonthIndex === null) {
+    if (evaluationHorizon.status !== "READY") {
         return withheld();
     }
-    const horizon: EvaluationHorizon = {
-        startYear: predictionStartYear,
-        endYear: Math.floor(envelopeEndMonthIndex / 12),
-        endMonthIndex: envelopeEndMonthIndex,
-    };
+    const { horizon } = evaluationHorizon;
 
     if (
         earlyValueConfiguration.enabled &&
         earlyValueConfiguration.endYear !== null &&
-        (earlyValueConfiguration.endYear < horizon.startYear || earlyValueConfiguration.endYear > horizon.endYear)
+        !isYearInHorizon(earlyValueConfiguration.endYear, horizon)
     ) {
         errors.push(`The early-value year must be within ${horizon.startYear}-${horizon.endYear}.`);
         isEarlyValueConfigurationValid = false;
@@ -172,9 +166,9 @@ const unmaskedResultsAtom = atom<EconomicScreeningResults>((get) => {
     }
 
     const assumptions: ResolvedMonthlyAssumptions = {
-        discountRateFraction: discountRatePercent / 100,
-        predictionStartYear,
-        horizonEndMonthIndex: envelopeEndMonthIndex,
+        discountRateFraction: economicAssumptions.discountRatePercent / 100,
+        predictionStartYear: horizon.startYear,
+        horizonEndMonthIndex: horizon.endMonthIndex,
         gasToOilEquivalentDivisor: gasToOilEquivalentDivisor ?? DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR,
         oilPricePerVolume,
         gasPricePerVolume,
