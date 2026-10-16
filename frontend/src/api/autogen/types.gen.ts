@@ -2518,6 +2518,14 @@ export type UserInfo_api = {
      * Has Smda Access
      */
     has_smda_access: boolean;
+    /**
+     * Has Ssdl Access
+     */
+    has_ssdl_access: boolean;
+    /**
+     * Has Pdm Access
+     */
+    has_pdm_access: boolean;
 };
 
 /**
