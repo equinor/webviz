@@ -1,4 +1,4 @@
-import type { BoxPlotData, Layout, PlotData } from "plotly.js";
+import type { Layout, PlotData } from "plotly.js";
 
 import { Plot } from "@modules/_shared/components/Plot";
 import type { EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
@@ -27,7 +27,7 @@ export function MeasureDistributionPlot(props: MeasureDistributionPlotProps): Re
         : getMeasureDisplayName(props.measure, props.isDelta);
 
     const exceedancePoints = computeEmpiricalExceedance(scaledValues);
-    const data: Partial<PlotData | BoxPlotData>[] =
+    const data: Partial<PlotData>[] =
         props.plotType === DistributionPlotType.EXCEEDANCE
             ? [
                   {
@@ -42,26 +42,14 @@ export function MeasureDistributionPlot(props: MeasureDistributionPlotProps): Re
                           "Value: %{x}<br>Realizations above: %{customdata}<br>Above: %{y:.1f}%<extra></extra>",
                   } as Partial<PlotData>,
               ]
-            : props.plotType === DistributionPlotType.BOX
-              ? [
-                    {
-                        x: scaledValues,
-                        type: "box",
-                        name: "",
-                        boxpoints: "all",
-                        jitter: 0.5,
-                        marker: { color: props.color, size: 4 },
-                        hovertext: props.measureValues.realizations.map((realization) => `Realization ${realization}`),
-                    } as Partial<BoxPlotData>,
-                ]
-              : [
-                    {
-                        x: scaledValues,
-                        type: "histogram",
-                        marker: { color: props.color, line: { color: "white", width: 1 } },
-                        name: "",
-                    } as Partial<PlotData>,
-                ];
+            : [
+                  {
+                      x: scaledValues,
+                      type: "histogram",
+                      marker: { color: props.color, line: { color: "white", width: 1 } },
+                      name: "",
+                  } as Partial<PlotData>,
+              ];
 
     const layout: Partial<Layout> = {
         width: props.width,
@@ -73,9 +61,7 @@ export function MeasureDistributionPlot(props: MeasureDistributionPlotProps): Re
                 text:
                     props.plotType === DistributionPlotType.EXCEEDANCE
                         ? "Realizations above value (%)"
-                        : props.plotType === DistributionPlotType.BOX
-                          ? ""
-                          : "Realization count",
+                        : "Realization count",
             },
             ...(props.plotType === DistributionPlotType.EXCEEDANCE && { range: [0, 100] }),
         },

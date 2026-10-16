@@ -528,5 +528,24 @@ describe("Economic Screening query results to channel data", () => {
         const expected = metricData(store, EconomicMeasure.NPV);
         store.set(earlyValueConfigurationAtom, { enabled: true, endYear: 2030 });
         expect(metricData(store, EconomicMeasure.NPV)).toEqual(expected);
+        const { errors, isEarlyValueConfigurationValid, results } = store.get(economicScreeningResultsAtom);
+        expect(errors).toEqual(["The early-value year must be within 2020-2021."]);
+        expect(isEarlyValueConfigurationValid).toBe(false);
+        expect(results.every((result) => result.early === null)).toBe(true);
+    });
+
+    test("withholds all results for a blocking error alongside an invalid early end year", async () => {
+        const { store, gas } = await setup();
+        const oil = [series(7, 2020, OIL_7, { unit: "XYZ" }), series(42, 2020, OIL_42, { unit: "XYZ" })];
+        setQueries(store, query(oil), query(gas));
+        store.set(earlyValueConfigurationAtom, { enabled: true, endYear: 2030 });
+        const { errors, isEarlyValueConfigurationValid, results } = store.get(economicScreeningResultsAtom);
+        expect(errors).toEqual([
+            "The early-value year must be within 2020-2021.",
+            'Unrecognised oil volume unit "XYZ". Cannot apply the given oil price.',
+            'Cannot convert between oil unit "XYZ" and gas unit "SM3".',
+        ]);
+        expect(isEarlyValueConfigurationValid).toBe(false);
+        expect(results).toEqual([]);
     });
 });

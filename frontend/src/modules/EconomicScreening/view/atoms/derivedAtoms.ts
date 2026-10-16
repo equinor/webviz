@@ -156,16 +156,18 @@ const unmaskedResultsAtom = atom<EconomicScreeningResults>((get) => {
                   : null
               : convertGasPriceToSimulatorUnit(priceAssumptions.gasPrice, priceAssumptions.gasPriceBasis, gasUnit);
 
+    const blockingErrors: string[] = [];
     if (priceAssumptions.oilPrice !== null && oilUnit !== "" && oilPricePerVolume === null) {
-        errors.push(`Unrecognised oil volume unit "${oilUnit}". Cannot apply the given oil price.`);
+        blockingErrors.push(`Unrecognised oil volume unit "${oilUnit}". Cannot apply the given oil price.`);
     }
     if (priceAssumptions.gasPrice !== null && gasUnit !== "" && gasPricePerVolume === null) {
-        errors.push(`Unrecognised gas volume unit "${gasUnit}". Cannot apply the given gas price.`);
+        blockingErrors.push(`Unrecognised gas volume unit "${gasUnit}". Cannot apply the given gas price.`);
     }
     if (gasToOilEquivalentDivisor === null) {
-        errors.push(`Cannot convert between oil unit "${oilUnit}" and gas unit "${gasUnit}".`);
+        blockingErrors.push(`Cannot convert between oil unit "${oilUnit}" and gas unit "${gasUnit}".`);
     }
-    if (errors.some((error) => !error.startsWith("The early-value year"))) {
+    if (blockingErrors.length > 0) {
+        errors.push(...blockingErrors);
         return withheld();
     }
 

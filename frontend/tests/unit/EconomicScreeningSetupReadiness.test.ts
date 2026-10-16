@@ -332,6 +332,53 @@ describe("getSetupReadiness", () => {
         ]);
     });
 
+    test("reports missing FOPT only for results that need oil", () => {
+        const noOil = readyInput({
+            predictionStartYear: 2018,
+            oilPrice: 50,
+            gasPrice: 0.2,
+            missingComponentAssumptions: { assumeMissingConsumptionAsZero: true },
+            hasOilVector: false,
+        });
+        const missingOil = "Oil production (FOPT) is not available for this ensemble.";
+        for (const requirement of [
+            ResultRequirement.FINANCIAL,
+            ResultRequirement.BREAK_EVEN,
+            ResultRequirement.OIL_VOLUME,
+            ResultRequirement.OIL_AND_GAS_VOLUME,
+        ]) {
+            expect(messages({ ...noOil, requirement }).filter((message) => message === missingOil)).toHaveLength(1);
+        }
+        expect(messages({ ...noOil, requirement: ResultRequirement.GAS_VOLUME })).toEqual([]);
+        expect(messages({ ...noOil, oilPrice: 0 })).toEqual([]);
+    });
+
+    test("reports unavailable sales gas for gas volumes, and for financial results unless the gas price is 0", () => {
+        const noGas = readyInput({
+            predictionStartYear: 2018,
+            oilPrice: 50,
+            costProfile: [{ year: 2018, capex: 100, opex: 0 }],
+            snapshot: {
+                ...EMPTY_SOURCE_SNAPSHOT,
+                status: SourceStatus.READY,
+                salesGasStrategy: { kind: "UNAVAILABLE" },
+                envelopeEndMonthIndex: monthIndexOf(2020, 6),
+            },
+        });
+        const noGasVolume = "Sales gas is unavailable: neither FGST nor FGPT is available.";
+        const noGasRevenue = "Sales gas is unavailable: enter a gas price of 0 to calculate without gas revenue.";
+        for (const gasPrice of [null, 0, 0.2]) {
+            expect(messages({ ...noGas, gasPrice, requirement: ResultRequirement.GAS_VOLUME })).toEqual([noGasVolume]);
+            expect(messages({ ...noGas, gasPrice, requirement: ResultRequirement.OIL_AND_GAS_VOLUME })).toEqual([
+                noGasVolume,
+            ]);
+            expect(messages({ ...noGas, gasPrice, requirement: ResultRequirement.OIL_VOLUME })).toEqual([]);
+            for (const requirement of [ResultRequirement.FINANCIAL, ResultRequirement.BREAK_EVEN]) {
+                expect(messages({ ...noGas, gasPrice, requirement })).toEqual(gasPrice === 0 ? [] : [noGasRevenue]);
+            }
+        }
+    });
+
     test("reports invalid cost drafts and early-value years", () => {
         const base = readyInput({ predictionStartYear: 2018, oilPrice: 50, gasPrice: 0 });
         expect(messages({ ...base, isCostProfileDraftValid: false })).toEqual(["Finish or correct the cost schedule."]);

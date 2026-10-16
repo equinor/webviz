@@ -72,13 +72,11 @@ export const GasPriceBasisEnumToStringMapping: Record<GasPriceBasis, string> = {
 export enum DistributionPlotType {
     EXCEEDANCE = "EXCEEDANCE",
     HISTOGRAM = "HISTOGRAM",
-    BOX = "BOX",
 }
 
 export const DistributionPlotTypeEnumToStringMapping: Record<DistributionPlotType, string> = {
     [DistributionPlotType.EXCEEDANCE]: "Exceedance",
     [DistributionPlotType.HISTOGRAM]: "Histogram",
-    [DistributionPlotType.BOX]: "Box plot",
 };
 
 export enum CashFlowProfileType {

@@ -17,7 +17,12 @@ import {
     SALES_GAS_VECTOR,
 } from "@modules/EconomicScreening/utils/vectorResolution";
 
-import { hasOilProductionVectorAtom, isSelectedEnsembleDeltaAtom, salesGasStrategyAtom } from "./derivedAtoms";
+import {
+    availableVectorNamesAtom,
+    hasOilProductionVectorAtom,
+    isSelectedEnsembleDeltaAtom,
+    salesGasStrategyAtom,
+} from "./derivedAtoms";
 import { selectedEnsembleIdentAtom } from "./persistableFixableAtoms";
 
 /** Fixed positions of the vectors in `vectorDataQueriesAtom`. */
@@ -44,11 +49,6 @@ export const validRealizationNumbersAtom = atom<number[] | null>((get) => {
         return null;
     }
     return [...get(ValidEnsembleRealizationsFunctionAtom)(ensembleIdent)];
-});
-
-const encodedRealizationsAtom = atom<string | null>((get) => {
-    const validRealizationNumbers = get(validRealizationNumbersAtom);
-    return validRealizationNumbers ? encodeAsUintListStr(validRealizationNumbers) : null;
 });
 
 export function getAllEnsembleRealizationNumbers(
@@ -148,7 +148,8 @@ export const deltaConstituentGasConsumptionQueriesAtom = atomWithQueries((get) =
     const constituents = deltaEnsembleIdent
         ? [deltaEnsembleIdent.getComparisonEnsembleIdent(), deltaEnsembleIdent.getReferenceEnsembleIdent()]
         : [];
-    const realizationsEncodedAsUintListStr = get(encodedRealizationsAtom);
+    const realizationsEncodedAsUintListStr = get(encodedAllEnsembleRealizationsAtom);
+    const hasDeltaGasConsumption = get(availableVectorNamesAtom).includes(GAS_CONSUMPTION_VECTOR);
 
     const queries = constituents.map((constituent) => {
         const options = getRealizationsVectorDataOptions({
@@ -161,7 +162,7 @@ export const deltaConstituentGasConsumptionQueriesAtom = atomWithQueries((get) =
                 ...makeCacheBustingQueryParam(constituent),
             },
         });
-        return () => ({ ...options, enabled: true });
+        return () => ({ ...options, enabled: hasDeltaGasConsumption });
     });
 
     return { queries };

@@ -6,7 +6,6 @@ import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
@@ -88,7 +87,7 @@ const FIELD_SECTIONS: Record<SetupField, string> = {
     earlyYear: "Early cash-flow comparison",
 };
 
-const DISTRIBUTION_PLOT_TYPE_ITEMS = [DistributionPlotType.EXCEEDANCE, DistributionPlotType.HISTOGRAM].map((value) => ({
+const DISTRIBUTION_PLOT_TYPE_ITEMS = Object.values(DistributionPlotType).map((value) => ({
     value,
     label: DistributionPlotTypeEnumToStringMapping[value],
 }));
@@ -127,7 +126,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
         };
     }
     const ensembleSet = useEnsembleSet(props.workbenchSession);
-    const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useAtom(selectedEnsembleIdentAtom);
     const [discountRatePercent, setDiscountRatePercent] = useAtom(discountRatePercentAtom);
@@ -176,15 +174,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     );
 
     const selectedEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentAtom);
-
-    if (!vectorListQuery.isFetching && selectedEnsembleIdent.value && !hasOilProductionVector) {
-        statusWriter.addError("FOPT is not available for the selected ensemble.");
-    }
-    if (!vectorListQuery.isFetching && selectedEnsembleIdent.value && salesGasStrategy.kind === "UNAVAILABLE") {
-        statusWriter.addWarning(
-            "Neither FGST nor FGPT is available. Enter a gas price of 0 to calculate financial results without gas revenue.",
-        );
-    }
 
     useEffect(() => {
         if (vectorListQuery.isFetching || hasOilProductionVector || salesGasStrategy.kind === "UNAVAILABLE") {

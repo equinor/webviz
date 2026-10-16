@@ -360,6 +360,7 @@ describe("Economic Screening current-state persistence", () => {
         ["an unknown state format", (current) => ({ ...current, stateFormat: "MONTHLY_SETTINGS_OWNED_V3" })],
         ["an unsupported currency", (current) => ({ ...current, currency: "EUR" })],
         ["an unsupported result mode", (current) => ({ ...current, resultMode: "BOX_ONLY" })],
+        ["the removed box distribution plot", (current) => ({ ...current, distributionPlotType: "BOX" })],
     ])("rejects %s before changing any current setting", (_description, makeState) => {
         const target = makeStore();
         populate(target, { predictionStartYear: 2044, currency: Currency.USD, resultMode: ResultMode.DISTRIBUTION });

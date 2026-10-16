@@ -491,15 +491,9 @@ test("SensitivityPlot builds a regular designed-sensitivity tornado and rejects 
         expectedByKey(FULL_OIL_KEYS, (r) => expectedNpv(DESIGN_MONTHLY_OIL[r])),
     );
 
+    // The delta vector list has no FGCT, so no constituent FGCT diagnostics are requested.
     expect(sources.requests.sort()).toEqual(
-        [
-            ...DESIGN_REQUESTS,
-            "delta:FGST",
-            "delta:FOPT",
-            "delta_vector_list",
-            `diagnostics:${BASE_CASE_UUID}:FGCT`,
-            `diagnostics:${DESIGN_CASE_UUID}:FGCT`,
-        ].sort(),
+        [...DESIGN_REQUESTS, "delta:FGST", "delta:FOPT", "delta_vector_list"].sort(),
     );
     expect(sources.unexpected).toEqual([]);
 });

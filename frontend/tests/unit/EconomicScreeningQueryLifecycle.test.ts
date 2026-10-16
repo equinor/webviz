@@ -38,6 +38,7 @@ import {
     selectedRealizationAtom,
 } from "@modules/EconomicScreening/settings/atoms/persistableFixableAtoms";
 import {
+    constituentGasConsumptionWarningAtom,
     sourceHorizonAtom,
     sourceSnapshotAtom as settingsSourceSnapshotAtom,
 } from "@modules/EconomicScreening/settings/atoms/sourceSnapshotAtoms";
@@ -106,7 +107,8 @@ const requests: VectorRequest[] = [];
 const executedRequestKeys: string[] = [];
 const executedVectorListKeys: string[] = [];
 const deferredResponses = new Map<string, Deferred<Api.VectorRealizationData_api[]>>();
-const AVAILABLE_VECTORS = [{ name: "FOPT" }, { name: "FGST" }];
+const DEFAULT_AVAILABLE_VECTORS = [{ name: "FOPT" }, { name: "FGST" }];
+let availableVectors = DEFAULT_AVAILABLE_VECTORS;
 
 function makeDeferred<T>(): Deferred<T> {
     let resolve!: (value: T) => void;
@@ -144,7 +146,7 @@ function mockVectorListOptions(query: VectorListRequest) {
         queryKey: ["economic-screening-test", key],
         queryFn: () => {
             executedVectorListKeys.push(key);
-            return Promise.resolve(AVAILABLE_VECTORS);
+            return Promise.resolve(availableVectors);
         },
         retry: false,
     };
@@ -228,6 +230,7 @@ function resetRequests() {
     executedRequestKeys.length = 0;
     executedVectorListKeys.length = 0;
     deferredResponses.clear();
+    availableVectors = DEFAULT_AVAILABLE_VECTORS;
 }
 
 /** Economic inputs are entered in Settings; the view only receives them through the interface. */
@@ -428,20 +431,10 @@ describe("Economic Screening source query lifecycle", () => {
         expect(publishedThroughChannel(store, EconomicMeasure.NPV)).toEqual([
             { key: 3, value: expect.closeTo(50 * discountedMonthly(new Array(12).fill(-5), 0.1), 8) },
         ]);
-        // Constituent FGCT diagnostics keep their existing yearly request without coverage.
-        const diagnosticRequests = requests.filter((request) => request.comparison_case_uuid === undefined);
-        expect(diagnosticRequests.map((request) => request.case_uuid).sort()).toEqual(
-            [comparison.getCaseUuid(), reference.getCaseUuid()].sort(),
-        );
-        expect(
-            diagnosticRequests.every(
-                (request) =>
-                    request.vector_name === "FGCT" &&
-                    request.resampling_frequency === "YEARLY" &&
-                    request.include_source_coverage === undefined,
-            ),
-        ).toBe(true);
-        expect(executedRequestKeys).toHaveLength(4);
+        // Without FGCT in the delta vector list, no constituent FGCT diagnostics are requested.
+        expect(executedRequestKeys.filter((key) => !key.startsWith(caseKey))).toEqual([]);
+        expect(store.get(constituentGasConsumptionWarningAtom)).toBeNull();
+        expect(executedRequestKeys).toHaveLength(2);
 
         // Presentation edits on a delta ensemble neither refetch nor change published values.
         const npvBefore = publishedNpv(store);
@@ -451,8 +444,68 @@ describe("Economic Screening source query lifecycle", () => {
         await Promise.resolve();
         expect(store.get(viewSelectedRealizationAtom)).toBe(3);
         expect(publishedNpv(store)).toEqual(npvBefore);
-        expect(executedRequestKeys).toHaveLength(4);
+        expect(executedRequestKeys).toHaveLength(2);
         expect(executedVectorListKeys).toHaveLength(1);
+
+        cleanUp(queryClient, unmountView);
+    });
+
+    test("requests constituent FGCT diagnostics for the full ensemble and filters them client-side", async () => {
+        resetRequests();
+        availableVectors = [...DEFAULT_AVAILABLE_VECTORS, { name: "FGCT" }];
+        const comparison = makeEnsemble("44444444-4444-4444-8444-444444444444", "Comparison", [1, 3, 5]);
+        const reference = makeEnsemble("55555555-5555-4555-8555-555555555555", "Reference", [3, 5, 9]);
+        const delta = new DeltaEnsemble(comparison, reference, "#123456");
+        EnsembleFingerprintStore.setAll(
+            new Map([
+                [comparison.getIdent().toString(), "comparison-fingerprint"],
+                [reference.getIdent().toString(), "reference-fingerprint"],
+            ]),
+        );
+        const { store, queryClient } = makeStore(new EnsembleSet([comparison, reference], [delta]));
+        store.set(selectedEnsembleIdentAtom, delta.getIdent());
+        const { instance } = await createEconomicScreeningInstance(store);
+        const unmountView = mountView(store, instance);
+
+        const commonRealizations = "3!5";
+        const comparisonKey = requestKey(comparison.getCaseUuid(), "FGCT", commonRealizations);
+        const referenceKey = requestKey(reference.getCaseUuid(), "FGCT", commonRealizations);
+        const isConstituentKey = (key: string) => key === comparisonKey || key === referenceKey;
+        await waitFor(() => executedRequestKeys.filter(isConstituentKey).length === 2);
+        // Constituent FGCT diagnostics keep their yearly request without coverage.
+        expect(
+            requests
+                .filter((request) => request.comparison_case_uuid === undefined)
+                .every(
+                    (request) =>
+                        request.vector_name === "FGCT" &&
+                        request.resampling_frequency === "YEARLY" &&
+                        request.include_source_coverage === undefined,
+                ),
+        ).toBe(true);
+
+        const yearly = (realization: number, terminal: number): Api.VectorRealizationData_api => ({
+            realization,
+            unit: "SM3",
+            isRate: false,
+            timestampsUtcMs: [monthStartUtcMs(2030, 1), monthStartUtcMs(2031, 1)],
+            values: [0, terminal],
+        });
+        deferredResponses.get(comparisonKey)?.resolve([yearly(3, 10), yearly(5, 20)]);
+        deferredResponses.get(referenceKey)?.resolve([yearly(3, 10), yearly(5, 0)]);
+        await waitFor(() => store.get(constituentGasConsumptionWarningAtom) !== null);
+        expect(store.get(constituentGasConsumptionWarningAtom)).toBe(
+            "Gas consumption is modelled in 2 comparison and 1 reference realizations.",
+        );
+        const executedBeforeFilter = executedRequestKeys.length;
+
+        store.set(RealizationFilterSetAtom, makeFilterSet([5]));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(store.get(constituentGasConsumptionWarningAtom)).toBe(
+            "Gas consumption is modelled in 1 comparison and 0 reference realizations.",
+        );
+        expect(executedRequestKeys).toHaveLength(executedBeforeFilter);
+        expect(executedRequestKeys.filter(isConstituentKey)).toHaveLength(2);
 
         cleanUp(queryClient, unmountView);
     });
