@@ -950,6 +950,7 @@ export const getGridParameterTimeDiff = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/grid3d/grid_parameter_time_diff",
         ...options,
+        query: { ...options.query, _rv: "3041db" },
     });
 
 /**

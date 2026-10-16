@@ -5165,7 +5165,7 @@ export type GetGridParameterTimeDiffData_api = {
          * Max k index
          */
         k_max?: number;
-        zCacheBust?: string;
+        _cacheBust?: string;
     };
     url: "/grid3d/grid_parameter_time_diff";
 };
@@ -5301,7 +5301,7 @@ export type PostGetPolylineIntersectionTimeDiffData_api = {
          * Time point string of the monitor time step
          */
         monitor_time_str: string;
-        zCacheBust?: string;
+        _cacheBust?: string;
     };
     url: "/grid3d/get_polyline_intersection_time_diff";
 };
