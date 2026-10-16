@@ -6,6 +6,8 @@ import {
     ResultMode,
     type CostProfileEntry,
 } from "@modules/EconomicScreening/typesAndEnums";
+import { parseCalendarYear } from "@modules/EconomicScreening/utils/calendar";
+import { hasIncludedNonZeroCost } from "@modules/EconomicScreening/utils/costProfile";
 import { isProductConfirmedAbsent } from "@modules/EconomicScreening/utils/monthlyEconomics";
 import {
     MonthCoverage,
@@ -15,8 +17,6 @@ import {
 import {
     getResultRequirement,
     getSetupReadiness,
-    hasIncludedNonZeroCost,
-    parseCalendarYear,
     ResultRequirement,
     SetupIssueKind,
     suggestPredictionStartYears,
@@ -39,7 +39,6 @@ function profile(
             volume,
             coverage: coverageOf(index),
         })),
-        totalIncrement: volumes.reduce((sum, volume) => sum + volume, 0),
         rejection: null,
     };
 }

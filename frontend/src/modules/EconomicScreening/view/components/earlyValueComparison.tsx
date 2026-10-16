@@ -1,10 +1,10 @@
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 import { EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
+import { formatMonthIndex } from "@modules/EconomicScreening/utils/calendar";
 import { computeDistributionSummary } from "@modules/EconomicScreening/utils/distributionAggregation";
 import { getMeasureDisplayName, getMeasureDisplayScale } from "@modules/EconomicScreening/utils/measureAccessors";
 import type { MonthlyRealizationEconomicResult } from "@modules/EconomicScreening/utils/monthlyEconomics";
 import { monthIndexOf } from "@modules/EconomicScreening/utils/monthlyProduction";
-import { formatMonthIndex } from "@modules/EconomicScreening/utils/setupReadiness";
 import type { EvaluationHorizon } from "@modules/EconomicScreening/view/atoms/derivedAtoms";
 
 export type EarlyValueComparisonProps = {

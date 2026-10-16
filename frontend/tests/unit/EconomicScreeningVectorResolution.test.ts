@@ -9,7 +9,6 @@ import type {
 import { SourceCoverageIntervalStatus_api, SourceCoverageInterpolationMethod_api } from "@api";
 import {
     adaptSourceCoverage,
-    aggregateMonthlyVolumesByYear,
     computeMonthlyVolumesFromCumulative,
     isMonthCoverageEstablished,
     lastSupportedMonthIndex,
@@ -20,7 +19,6 @@ import {
     SourceKind,
 } from "@modules/EconomicScreening/utils/monthlyProduction";
 import {
-    countCumulativeVectorNonZeroRealizations,
     determineSalesGasStrategy,
     deriveSalesGasCumulative,
     isCumulativeVectorAllZero,
@@ -83,8 +81,6 @@ describe("deriveSalesGasCumulative", () => {
         const result = deriveSalesGasCumulative([makeVectorData(0, timestamps, [100, 200])], [], []);
 
         expect(result.series).toEqual([]);
-        expect(result.missingInjectionRealizations).toEqual([0]);
-        expect(result.missingConsumptionRealizations).toEqual([0]);
     });
 
     test("aligns components on timestamps rather than position", () => {
@@ -108,7 +104,6 @@ describe("deriveSalesGasCumulative", () => {
         );
 
         expect(result.series).toMatchObject([{ realization: 1, timestampsUtcMs: timestamps, values: [270, 360] }]);
-        expect(result.missingInjectionRealizations).toEqual([0]);
     });
 
     test("uses an explicitly accepted missing-component assumption only for an absent vector", () => {
@@ -139,16 +134,6 @@ describe("isCumulativeVectorAllZero", () => {
     });
 });
 
-test("counts realizations with non-zero terminal consumption", () => {
-    expect(
-        countCumulativeVectorNonZeroRealizations([
-            makeVectorData(1, [0, 1], [0, 0]),
-            makeVectorData(2, [0, 1], [0, 5]),
-            makeVectorData(3, [0, 1], [0, -2]),
-        ]),
-    ).toBe(2);
-});
-
 describe("summarizeCumulativeVectorTerminals", () => {
     test("reports missing, empty, and non-finite terminals as incomplete", () => {
         expect(
@@ -160,7 +145,7 @@ describe("summarizeCumulativeVectorTerminals", () => {
                 ],
                 [1, 2, 3, 4],
             ),
-        ).toEqual({ nonZeroCount: 0, zeroCount: 1, missingOrInvalidRealizations: [2, 3, 4] });
+        ).toEqual({ nonZeroCount: 0, missingOrInvalidRealizations: [2, 3, 4] });
     });
 
     test("confirms zero consumption only for a complete selected population", () => {
@@ -169,7 +154,7 @@ describe("summarizeCumulativeVectorTerminals", () => {
                 [makeVectorData(1, [0, 1], [0, 0]), makeVectorData(2, [0, 1], [0, 0])],
                 [1, 2],
             ),
-        ).toEqual({ nonZeroCount: 0, zeroCount: 2, missingOrInvalidRealizations: [] });
+        ).toEqual({ nonZeroCount: 0, missingOrInvalidRealizations: [] });
     });
 });
 
@@ -283,7 +268,7 @@ describe("adaptSourceCoverage", () => {
             MonthCoverage.PARTIAL,
         ]);
         expect(profile.months.map((entry) => entry.volume)).toEqual([160, 290, 150]);
-        expect(profile.totalIncrement).toBe(600);
+        expect(profile.months.reduce((sum, entry) => sum + entry.volume, 0)).toBe(600);
         expect(profile.months.map((entry) => isMonthCoverageEstablished(entry.coverage))).toEqual([false, true, false]);
         // Support ends on 16 March, not at the padded 1 April sample; the partial month is March.
         expect(adapted.supportEndUtcMs).toBe(ms("2020-03-16"));
@@ -549,9 +534,6 @@ describe("computeMonthlyVolumesFromCumulative", () => {
         expect(longProfile.months.map((entry) => entry.volume)).toEqual([-10, -15, 0]);
         expect(shortProfile.months).toHaveLength(2);
         expect(longProfile.months.every((entry) => entry.coverage === MonthCoverage.SOURCE_ALIGNED)).toBe(true);
-        expect(aggregateMonthlyVolumesByYear(shortProfile.months)).toEqual([
-            { year: 2030, volume: -25, isCoverageEstablished: true, monthCount: 2 },
-        ]);
     });
 
     test("leaves increments unverified when the coverage length does not match", () => {
@@ -561,19 +543,6 @@ describe("computeMonthlyVolumesFromCumulative", () => {
         expect(profile.months.map((entry) => entry.coverage)).toEqual([
             MonthCoverage.UNVERIFIED,
             MonthCoverage.UNVERIFIED,
-        ]);
-    });
-
-    test("aggregates to calendar years and keeps the weakest coverage of the year", () => {
-        const profile = computeMonthlyVolumesFromCumulative(
-            [monthStartUtcMs(2030, 11), monthStartUtcMs(2030, 12), monthStartUtcMs(2031, 1), monthStartUtcMs(2031, 2)],
-            [0, 100, 224, 300],
-            [MonthCoverage.SOURCE_ALIGNED, MonthCoverage.INTERPOLATED, MonthCoverage.PARTIAL],
-        );
-
-        expect(aggregateMonthlyVolumesByYear(profile.months)).toEqual([
-            { year: 2030, volume: 224, isCoverageEstablished: true, monthCount: 2 },
-            { year: 2031, volume: 76, isCoverageEstablished: false, monthCount: 1 },
         ]);
     });
 });

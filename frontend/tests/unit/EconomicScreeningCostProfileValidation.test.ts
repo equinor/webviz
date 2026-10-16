@@ -6,15 +6,9 @@ import {
     setCostEntry,
     validateCostProfile,
     validatePastedCostYears,
-} from "@modules/EconomicScreening/settings/components/costProfileEditor";
+} from "@modules/EconomicScreening/utils/costProfile";
 
 describe("validateCostProfile", () => {
-    test("rejects blank years while allowing blank cost cells to resolve as zero", () => {
-        expect(validateCostProfile([{ year: null, capex: 0, opex: 0 }], false)).toBe(
-            "Enter a calendar year for each cost row.",
-        );
-    });
-
     test("rejects duplicate calendar years", () => {
         expect(
             validateCostProfile(

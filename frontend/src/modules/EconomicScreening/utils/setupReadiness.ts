@@ -6,19 +6,12 @@ import {
     type EarlyValueConfiguration,
 } from "@modules/EconomicScreening/typesAndEnums";
 
+import { formatMonthIndex } from "./calendar";
+import { hasIncludedNonZeroCost } from "./costProfile";
 import { isProductConfirmedAbsent, isProductEstablished } from "./monthlyEconomics";
 import { isMonthCoverageEstablished, monthIndexOf, type MonthlyProductionProfile } from "./monthlyProduction";
 import { SourceStatus, type EconomicSourceSnapshot, type RealizationProfiles } from "./sourceSnapshot";
 import type { MissingComponentAssumptions } from "./vectorResolution";
-
-export const MIN_CALENDAR_YEAR = 1900;
-export const MAX_CALENDAR_YEAR = 2200;
-
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-export function formatMonthIndex(monthIndex: number): string {
-    return `${MONTH_NAMES[monthIndex % 12]} ${Math.floor(monthIndex / 12)}`;
-}
 
 /** The prediction start must fall inside the source envelope; there is no evaluation otherwise. */
 export function getPredictionHorizonError(
@@ -35,16 +28,6 @@ export function getPredictionHorizonError(
         return `The prediction start year ${predictionStartYear} is after the supported simulation end (${formatMonthIndex(envelopeEndMonthIndex)}).`;
     }
     return null;
-}
-
-/** A whole calendar year within the accepted bounds, or null for anything else. */
-export function parseCalendarYear(text: string): number | null {
-    const trimmed = text.trim();
-    if (!/^\d{4}$/.test(trimmed)) {
-        return null;
-    }
-    const year = Number(trimmed);
-    return year >= MIN_CALENDAR_YEAR && year <= MAX_CALENDAR_YEAR ? year : null;
 }
 
 /**
@@ -73,13 +56,6 @@ export function suggestPredictionStartYears(
         }
     }
     return [...years].sort((first, second) => first - second);
-}
-
-/** Individual included entries decide; signed entries that cancel are still non-zero costs. */
-export function hasIncludedNonZeroCost(costProfile: CostProfileEntry[], startYear: number, endYear: number): boolean {
-    return costProfile.some(
-        (entry) => entry.year >= startYear && entry.year <= endYear && (entry.capex !== 0 || entry.opex !== 0),
-    );
 }
 
 /** What the selected result needs from the setup, following the existing metric eligibility rules. */

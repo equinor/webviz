@@ -186,11 +186,7 @@ function makeMonthlyProfile(
             coverage,
         };
     });
-    return {
-        months,
-        totalIncrement: volumes.reduce((sum, volume) => sum + volume, 0),
-        rejection: null,
-    };
+    return { months, rejection: null };
 }
 
 function makeZeroProfile(startYear: number, monthCount: number): MonthlyProductionProfile {

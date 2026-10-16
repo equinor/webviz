@@ -4,6 +4,7 @@ import {
     type IrrStatus,
 } from "@modules/EconomicScreening/typesAndEnums";
 
+import { getCostYearsOutsideRange } from "./costProfile";
 import {
     BREAK_EVEN_OIL_VOLUME_TOLERANCE,
     computeInternalRateOfReturnFromEvents,
@@ -318,11 +319,7 @@ export function computeMonthlyRealizationEconomics(
     for (let year = predictionStartYear; year <= evaluationEndYear; year++) {
         years.push(year);
     }
-    const excludedCostYears = costProfile
-        .filter((entry) => entry.capex !== 0 || entry.opex !== 0)
-        .map((entry) => entry.year)
-        .filter((year) => year < predictionStartYear || year > evaluationEndYear)
-        .sort((first, second) => first - second);
+    const excludedCostYears = getCostYearsOutsideRange(costProfile, predictionStartYear, evaluationEndYear);
 
     const annualComponents: AnnualComponents[] = years.map((year) => {
         const oilMonths = monthsOfYear(oil, year);

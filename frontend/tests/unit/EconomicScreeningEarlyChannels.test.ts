@@ -18,7 +18,6 @@ const result = computeMonthlyRealizationEconomics(
                 volume,
                 coverage: MonthCoverage.SOURCE_ALIGNED,
             })),
-            totalIncrement: 30,
             rejection: null,
         },
         salesGasProfile: null,

@@ -218,7 +218,8 @@ async function readTraces(page: Page, regionName: string): Promise<PlotTrace[]> 
     const plot = region(page, regionName).locator(".js-plotly-plot").first();
     await expect(plot).toBeVisible();
     return plot.evaluate((element) =>
-        (element as unknown as { data: Record<string, unknown>[] }).data.map((trace) => ({
+        // Plotly clears `data` while re-rendering; report no traces so polling callers retry.
+        ((element as unknown as { data?: Record<string, unknown>[] }).data ?? []).map((trace) => ({
             type: String(trace.type),
             x: Array.from((trace.x as number[]) ?? []),
             y: Array.from((trace.y as (number | string)[]) ?? []),
@@ -231,6 +232,7 @@ async function readTraces(page: Page, regionName: string): Promise<PlotTrace[]> 
 /** Horizontal DistributionPlot bars carry values on x and realization keys on y. */
 async function readBarValuesByKey(page: Page): Promise<[number, number][]> {
     const [trace] = await readTraces(page, "Distribution consumer");
+    if (!trace) return [];
     expect(trace.type).toBe("bar");
     return trace.y
         .map((key, index): [number, number] => [Number(key), trace.x[index]])
@@ -361,6 +363,7 @@ const DESIGN_REQUESTS = ["design:FGST", "design:FOPT", `vector_list:${DESIGN_CAS
 
 async function readScatterByKey(page: Page): Promise<[number, number, number][]> {
     const [scatter] = await readTraces(page, "Distribution consumer");
+    if (!scatter) return [];
     expect(scatter.type).toBe("scatter");
     return scatter.hovertemplate!.map((text, index) => [
         Number(/Realization: <b>(\d+)<\/b>/.exec(text)![1]),
@@ -380,6 +383,7 @@ type Tornado = { names: string[]; low: number[]; high: number[]; lowBase: number
 
 async function readTornado(page: Page): Promise<Tornado> {
     const [low, high] = await readTraces(page, "Sensitivity consumer");
+    if (!low || !high) return { names: [], low: [], high: [], lowBase: [], highBase: [] };
     return {
         names: low.y.map(String),
         low: low.x,

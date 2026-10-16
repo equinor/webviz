@@ -3,12 +3,13 @@ import { atom } from "jotai";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR } from "@modules/EconomicScreening/typesAndEnums";
+import { formatMonthIndex } from "@modules/EconomicScreening/utils/calendar";
 import {
     computeMonthlyRealizationEconomics,
     type MonthlyRealizationEconomicResult,
     type ResolvedMonthlyAssumptions,
 } from "@modules/EconomicScreening/utils/monthlyEconomics";
-import { formatMonthIndex, getPredictionHorizonError } from "@modules/EconomicScreening/utils/setupReadiness";
+import { getPredictionHorizonError } from "@modules/EconomicScreening/utils/setupReadiness";
 import { SourceStatus } from "@modules/EconomicScreening/utils/sourceSnapshot";
 import {
     convertGasPriceToSimulatorUnit,

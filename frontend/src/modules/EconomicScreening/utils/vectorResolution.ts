@@ -35,15 +35,12 @@ export type MissingComponentAssumptions = {
 
 export type DerivedSalesGasCumulative = {
     series: RealizationCumulativeSeries[];
-    missingInjectionRealizations: number[];
-    missingConsumptionRealizations: number[];
     incompleteInjectionRealizations: number[];
     incompleteConsumptionRealizations: number[];
 };
 
 export type CumulativeTerminalSummary = {
     nonZeroCount: number;
-    zeroCount: number;
     missingOrInvalidRealizations: number[];
 };
 
@@ -129,8 +126,6 @@ export function deriveSalesGasCumulative(
 ): DerivedSalesGasCumulative {
     const injectionByRealization = makeDataByRealizationMap(gasInjectionData);
     const consumptionByRealization = makeDataByRealizationMap(gasConsumptionData);
-    const missingInjectionRealizations: number[] = [];
-    const missingConsumptionRealizations: number[] = [];
     const incompleteInjectionRealizations: number[] = [];
     const incompleteConsumptionRealizations: number[] = [];
     const series: RealizationCumulativeSeries[] = [];
@@ -138,16 +133,10 @@ export function deriveSalesGasCumulative(
     for (const production of gasProductionData) {
         const injection = injectionByRealization.get(production.realization);
         const consumption = consumptionByRealization.get(production.realization);
-        let hasMissingComponent = false;
-        if (!injection && !assumptions.assumeMissingInjectionAsZero) {
-            missingInjectionRealizations.push(production.realization);
-            hasMissingComponent = true;
-        }
-        if (!consumption && !assumptions.assumeMissingConsumptionAsZero) {
-            missingConsumptionRealizations.push(production.realization);
-            hasMissingComponent = true;
-        }
-        if (hasMissingComponent) {
+        if (
+            (!injection && !assumptions.assumeMissingInjectionAsZero) ||
+            (!consumption && !assumptions.assumeMissingConsumptionAsZero)
+        ) {
             continue;
         }
         const injectionByTimestamp = injection ? makeValueByTimestampMap(injection) : null;
@@ -198,8 +187,6 @@ export function deriveSalesGasCumulative(
 
     return {
         series,
-        missingInjectionRealizations,
-        missingConsumptionRealizations,
         incompleteInjectionRealizations,
         incompleteConsumptionRealizations,
     };
@@ -223,7 +210,6 @@ export function summarizeCumulativeVectorTerminals(
     const dataByRealization = makeDataByRealizationMap(data);
     const missingOrInvalidRealizations: number[] = [];
     let nonZeroCount = 0;
-    let zeroCount = 0;
 
     for (const realizationNumber of expectedRealizations) {
         const realization = dataByRealization.get(realizationNumber);
@@ -237,17 +223,8 @@ export function summarizeCumulativeVectorTerminals(
             missingOrInvalidRealizations.push(realizationNumber);
         } else if (Math.abs(terminalValue) > 1e-12) {
             nonZeroCount += 1;
-        } else {
-            zeroCount += 1;
         }
     }
 
-    return { nonZeroCount, zeroCount, missingOrInvalidRealizations };
-}
-
-export function countCumulativeVectorNonZeroRealizations(data: VectorRealizationData_api[]): number {
-    return data.filter((realization) => {
-        const terminalValue = realization.values.at(-1);
-        return terminalValue !== undefined && Number.isFinite(terminalValue) && Math.abs(terminalValue) > 1e-12;
-    }).length;
+    return { nonZeroCount, missingOrInvalidRealizations };
 }

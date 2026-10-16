@@ -26,6 +26,14 @@ export type MeasureUnitContext = {
     oilPriceBasis: OilPriceBasis;
 };
 
+export function isFinancialMeasure(measure: EconomicMeasure): boolean {
+    return (
+        measure === EconomicMeasure.NPV ||
+        measure === EconomicMeasure.IRR ||
+        measure === EconomicMeasure.BREAK_EVEN_OIL_PRICE
+    );
+}
+
 function rawMeasureValue(
     result: MonthlyRealizationEconomicResult,
     measure: EconomicMeasure,

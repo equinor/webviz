@@ -58,8 +58,6 @@ export enum MonthlySamplingRejection {
 
 export type MonthlyProductionProfile = {
     months: MonthlyVolumeSample[];
-    /** Sum of all increments, which equals the last minus the first cumulative sample. */
-    totalIncrement: number;
     /** Null when the samples form a valid monthly series. */
     rejection: MonthlySamplingRejection | null;
 };
@@ -246,7 +244,6 @@ export function computeMonthlyVolumesFromCumulative(
 ): MonthlyProductionProfile {
     const empty = (rejection: MonthlySamplingRejection): MonthlyProductionProfile => ({
         months: [],
-        totalIncrement: 0,
         rejection,
     });
 
@@ -283,11 +280,7 @@ export function computeMonthlyVolumesFromCumulative(
         });
     }
 
-    return {
-        months,
-        totalIncrement: cumulativeValues[cumulativeValues.length - 1] - cumulativeValues[0],
-        rejection: null,
-    };
+    return { months, rejection: null };
 }
 
 /** Coverage states that make a month's volume unusable as a complete observation of that month. */
@@ -299,21 +292,4 @@ const UNESTABLISHED_COVERAGE = new Set<MonthCoverage>([
 
 export function isMonthCoverageEstablished(coverage: MonthCoverage): boolean {
     return !UNESTABLISHED_COVERAGE.has(coverage);
-}
-
-/** Aggregates monthly volumes into calendar-year totals, keeping the weakest coverage per year. */
-export function aggregateMonthlyVolumesByYear(
-    months: MonthlyVolumeSample[],
-): { year: number; volume: number; isCoverageEstablished: boolean; monthCount: number }[] {
-    const byYear = new Map<number, { volume: number; isCoverageEstablished: boolean; monthCount: number }>();
-    for (const monthSample of months) {
-        const entry = byYear.get(monthSample.year) ?? { volume: 0, isCoverageEstablished: true, monthCount: 0 };
-        entry.volume += monthSample.volume;
-        entry.monthCount += 1;
-        entry.isCoverageEstablished = entry.isCoverageEstablished && isMonthCoverageEstablished(monthSample.coverage);
-        byYear.set(monthSample.year, entry);
-    }
-    return Array.from(byYear, ([year, entry]) => ({ year, ...entry })).sort(
-        (first, second) => first.year - second.year,
-    );
 }

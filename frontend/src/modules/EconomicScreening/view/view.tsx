@@ -17,7 +17,11 @@ import {
     ResultMode,
 } from "@modules/EconomicScreening/typesAndEnums";
 import { countPositiveNpvAtTarget } from "@modules/EconomicScreening/utils/distributionAggregation";
-import { getMeasureUnit, getMeasureValues } from "@modules/EconomicScreening/utils/measureAccessors";
+import {
+    getMeasureUnit,
+    getMeasureValues,
+    isFinancialMeasure,
+} from "@modules/EconomicScreening/utils/measureAccessors";
 import { SourceStatus } from "@modules/EconomicScreening/utils/sourceSnapshot";
 
 import type { Interfaces } from "../interfaces";
@@ -144,14 +148,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     ensembleIdentString={ensembleIdent?.toString() ?? ""}
                     ensembleDisplayName={ensembleDisplayName}
                     color={ensembleColor}
-                    enabled={
-                        !isFetching &&
-                        hasResults &&
-                        (isCostProfileDraftValid ||
-                            ![EconomicMeasure.NPV, EconomicMeasure.IRR, EconomicMeasure.BREAK_EVEN_OIL_PRICE].includes(
-                                measure,
-                            ))
-                    }
+                    enabled={!isFetching && hasResults && (isCostProfileDraftValid || !isFinancialMeasure(measure))}
                     assumptionContext={activeAssumptions.join("; ")}
                 />
             ))}

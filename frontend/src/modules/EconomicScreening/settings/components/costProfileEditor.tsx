@@ -9,11 +9,16 @@ import { Table } from "@lib/components/Table";
 import { TextArea } from "@lib/components/TextArea";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import type { CostProfileEntry } from "@modules/EconomicScreening/typesAndEnums";
-import { hasIncludedNonZeroCost } from "@modules/EconomicScreening/utils/setupReadiness";
+import {
+    getCostYearsOutsideRange,
+    hasIncludedNonZeroCost,
+    parseCostProfilePaste,
+    setCostEntry,
+    validateCostProfile,
+    validatePastedCostYears,
+} from "@modules/EconomicScreening/utils/costProfile";
 
 const COST_INPUT_DEBOUNCE_MS = 500;
-
-type EditableCostProfileEntry = Omit<CostProfileEntry, "year"> & { year: number | null };
 
 export type CostProfileEditorProps = {
     /** Every stored entry, including entries outside the generated years, which are kept for recovery. */
@@ -28,88 +33,6 @@ export type CostProfileEditorProps = {
     onValueChange: (costProfile: CostProfileEntry[]) => void;
     onValidityChange: (isValid: boolean) => void;
 };
-
-export function validateCostProfile(costProfile: EditableCostProfileEntry[], isDelta: boolean): string | null {
-    const years = new Set<number>();
-    for (const entry of costProfile) {
-        if (entry.year === null) {
-            return "Enter a calendar year for each cost row.";
-        }
-        if (!Number.isInteger(entry.year)) {
-            return "Each cost year must be a whole calendar year.";
-        }
-        if (years.has(entry.year)) {
-            return "Each calendar year can appear only once.";
-        }
-        years.add(entry.year);
-        if (!isDelta && (entry.capex < 0 || entry.opex < 0)) {
-            return "Investment and operating costs must be zero or greater.";
-        }
-    }
-    return null;
-}
-
-export function parseCostProfilePaste(text: string): { entries: EditableCostProfileEntry[] } | { error: string } {
-    const rows = text.replaceAll("\r", "").split("\n").filter(Boolean);
-    const entries: EditableCostProfileEntry[] = [];
-
-    for (const row of rows) {
-        const values = row.split("\t");
-        if (values.length !== 3) {
-            return { error: "Paste year, investment, and operating cost values in three tab-separated columns." };
-        }
-
-        const [yearText, capexText, opexText] = values;
-        const year = Number(yearText);
-        const capex = capexText.trim() === "" ? 0 : Number(capexText);
-        const opex = opexText.trim() === "" ? 0 : Number(opexText);
-        if (yearText.trim() === "" || !Number.isInteger(year) || !Number.isFinite(capex) || !Number.isFinite(opex)) {
-            return { error: "Each pasted row needs a calendar year and numeric costs." };
-        }
-        entries.push({ year, capex, opex });
-    }
-
-    return { entries };
-}
-
-/** Pasted rows must name distinct generated years; their order does not matter. */
-export function validatePastedCostYears(
-    entries: EditableCostProfileEntry[],
-    startYear: number,
-    endYear: number,
-): string | null {
-    const years = new Set<number>();
-    for (const entry of entries) {
-        if (entry.year === null || entry.year < startYear || entry.year > endYear) {
-            return `Pasted year ${entry.year ?? ""} is outside the cost years ${startYear}-${endYear}.`;
-        }
-        if (years.has(entry.year)) {
-            return `Pasted year ${entry.year} appears more than once.`;
-        }
-        years.add(entry.year);
-    }
-    return null;
-}
-
-/** Replaces the entry for a year; an all-zero entry is removed since blank cost cells mean zero. */
-export function setCostEntry(costProfile: CostProfileEntry[], entry: CostProfileEntry): CostProfileEntry[] {
-    const others = costProfile.filter((existing) => existing.year !== entry.year);
-    const updated = entry.capex === 0 && entry.opex === 0 ? others : [...others, entry];
-    return updated.sort((first, second) => first.year - second.year);
-}
-
-/** Stored entries with a non-zero cost outside the generated years. They are kept, but not used. */
-export function getCostYearsOutsideRange(
-    costProfile: CostProfileEntry[],
-    startYear: number | null,
-    endYear: number | null,
-): number[] {
-    return costProfile
-        .filter((entry) => entry.capex !== 0 || entry.opex !== 0)
-        .filter((entry) => startYear === null || endYear === null || entry.year < startYear || entry.year > endYear)
-        .map((entry) => entry.year)
-        .sort((first, second) => first - second);
-}
 
 function costProfilesMatch(draft: CostProfileEntry[], committed: CostProfileEntry[]): boolean {
     return (
@@ -188,9 +111,7 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
             setPasteError(yearError);
             return;
         }
-        updateProfile(
-            parsed.entries.reduce((profile, entry) => setCostEntry(profile, entry as CostProfileEntry), immediateValue),
-        );
+        updateProfile(parsed.entries.reduce((profile, entry) => setCostEntry(profile, entry), immediateValue));
     }
 
     function pastePreview() {
@@ -204,10 +125,7 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
         const error =
             validatePastedCostYears(parsed.entries, startYear, endYear) ?? validateCostProfile(parsed.entries, isDelta);
         if (error) return { error };
-        const updated = parsed.entries.reduce(
-            (profile, entry) => setCostEntry(profile, entry as CostProfileEntry),
-            immediateValue,
-        );
+        const updated = parsed.entries.reduce((profile, entry) => setCostEntry(profile, entry), immediateValue);
         const scheduleError = validateCostProfile(updated, isDelta);
         return scheduleError ? { error: scheduleError } : { entries: parsed.entries, updated };
     }

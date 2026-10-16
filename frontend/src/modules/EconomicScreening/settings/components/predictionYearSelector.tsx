@@ -1,11 +1,7 @@
 import React from "react";
 
 import { Combobox } from "@lib/components/Combobox";
-import {
-    MAX_CALENDAR_YEAR,
-    MIN_CALENDAR_YEAR,
-    parseCalendarYear,
-} from "@modules/EconomicScreening/utils/setupReadiness";
+import { MAX_CALENDAR_YEAR, MIN_CALENDAR_YEAR, parseCalendarYear } from "@modules/EconomicScreening/utils/calendar";
 
 export type PredictionYearSelectorProps = {
     value: number | null;

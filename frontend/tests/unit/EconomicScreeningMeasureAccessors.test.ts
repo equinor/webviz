@@ -5,7 +5,17 @@ import {
     getMeasureDisplayName,
     getMeasureDisplayScale,
     getMeasureUnit,
+    isFinancialMeasure,
 } from "@modules/EconomicScreening/utils/measureAccessors";
+
+describe("isFinancialMeasure", () => {
+    test("is true only for NPV, IRR and break-even oil price", () => {
+        const financialMeasures = Object.values(EconomicMeasure).filter(isFinancialMeasure);
+        expect(financialMeasures.sort()).toEqual(
+            [EconomicMeasure.NPV, EconomicMeasure.IRR, EconomicMeasure.BREAK_EVEN_OIL_PRICE].sort(),
+        );
+    });
+});
 
 describe("getMeasureDisplayName", () => {
     test("labels financial Delta measures as incremental", () => {
