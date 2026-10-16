@@ -7,9 +7,11 @@ import type { ColormapFunction } from "@webviz/well-log-viewer/dist/utils/color-
 
 import type { WellboreTrajectory_api } from "@api";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { isVisualizationLoading } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { Template, TemplatePlot, TemplateTrack } from "@modules/_shared/types/wellLogTemplates";
 import { getUniqueCurveNameForPlotConfig } from "@modules/_shared/utils/wellLog";
 import { MAIN_AXIS_CURVE } from "@modules/WellLogViewer/constants";
+import { CustomDataProviderType } from "@modules/WellLogViewer/DataProviderFramework/dataProviderTypes";
 import type { DiffVisualizationGroup } from "@modules/WellLogViewer/DataProviderFramework/visualizations/plots";
 import {
     COLOR_MAP_ACC_KEY,
@@ -51,8 +53,26 @@ function getProvidedPlots(
                 name: getUniqueCurveNameForPlotConfig(template, duplicatedCurveNames),
             });
         } else if (isDiffPlotGroup(child)) {
-            // ! Recursively get this group's children
-            const [primaryPlot, secondaryPlot] = getProvidedPlots(child, duplicatedCurveNames);
+            // ! Workaround: the VisualizationAssembler passes a group's sibling providers down into its child groups
+            // ! (intended for views in the 2D/3D viewers, where providers outside a view are shown in every view). A
+            // ! line or area plot next to this group in the track therefore also ends up among the group's children,
+            // ! ahead of its own two curves, and would be paired up as one of them. Only the DIFF_PLOT children are
+            // ! the group's own curves - DIFF_PLOT providers are only allowed inside a differential plot group, so they
+            // ! are never inherited. The inherited plots are drawn from their own place in the track.
+            // !
+            // ! A differential plot is one plot made from two curves, and a group is only used for it because a
+            // ! provider can't have two settings of the same type (two curves, two colors). The intended
+            // ! implementation is a delta group: a framework item with two fixed child slots that combines its
+            // ! children into one visualization and receives no inherited providers - the same concept DeltaSurface
+            // ! is meant to implement. Once that exists, the differential plot should become one, and this filter
+            // ! should be removed.
+            const ownCurves = child.children.filter(
+                (grandChild) => isPlotVisualization(grandChild) && grandChild.type === CustomDataProviderType.DIFF_PLOT,
+            );
+            const [primaryPlot, secondaryPlot] = getProvidedPlots(
+                { ...child, children: ownCurves },
+                duplicatedCurveNames,
+            );
 
             if (primaryPlot && secondaryPlot) {
                 plots.push({
@@ -154,7 +174,7 @@ export function ProviderVisualizationWrapper(props: ProviderVisualizationWrapper
         [factoryProduct, wellPicks, trajectoryData, limitDomainToData],
     );
 
-    if (!factoryProduct || factoryProduct.numLoadingDataProviders > 0) {
+    if (!factoryProduct || isVisualizationLoading(factoryProduct)) {
         return (
             <div className="z-elevated absolute flex h-full w-full items-center justify-center bg-white opacity-50">
                 <CircularProgress />

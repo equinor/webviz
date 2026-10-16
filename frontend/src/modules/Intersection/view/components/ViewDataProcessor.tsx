@@ -16,9 +16,10 @@ import { isColorScaleWithId } from "@modules/_shared/components/ColorLegendsCont
 import type { Bounds, EsvLayer } from "@modules/_shared/components/EsvIntersection";
 import { isValidBounds } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import type { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
-import type {
-    VisualizationGroup,
-    VisualizationTarget,
+import {
+    isVisualizationLoading,
+    type VisualizationGroup,
+    type VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 import type { TargetViewReturnTypes } from "@modules/Intersection/view/components/DataProvidersWrapper";
@@ -100,7 +101,7 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
     }
 
     // Only update cached provider layer items when no providers are loading
-    const hasLoadingProviders = (view.numLoadingDataProviders ?? 0) > 0;
+    const hasLoadingProviders = isVisualizationLoading(view);
     if (!hasLoadingProviders) {
         cachedVisualizationLayerItemsRef.current = newVisualizationLayerItems;
     }
@@ -159,9 +160,7 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
 function checkDataReady(
     view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, any>, GroupType>,
 ) {
-    const dataIsReady = (view.numLoadingDataProviders ?? 0) === 0;
-
-    return dataIsReady;
+    return !isVisualizationLoading(view);
 }
 
 /**
