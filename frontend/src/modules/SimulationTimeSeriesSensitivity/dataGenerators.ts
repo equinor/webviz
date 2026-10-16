@@ -25,7 +25,7 @@ export function makeVectorDataGenerator(
             data,
             metaData: {
                 ensembleIdentString: ensemble?.getIdent().toString() ?? "",
-                unit: "unit",
+                unit: vectorRealizationData?.[0]?.unit ?? "",
             },
         };
     };

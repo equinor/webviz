@@ -39,4 +39,10 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
         title: "Simulation Time Series",
         description: "Visualize simulated time series data, together with observations used in the assisted history matching process",
     },
+    {
+        slug: "inplace-volumes-sensitivity-analysis",
+        category: "Use cases",
+        title: "Inplace volumes in a sensitivity ensemble",
+        description: "Analyse STOIIP per sensitivity case in a design matrix ensemble with the table, plot, tornado and comparison modules.",
+    },
 ];

@@ -1,20 +1,31 @@
 import type { EnsembleSensitivities, Sensitivity } from "@framework/EnsembleSensitivities";
+import { SensitivityType } from "@framework/EnsembleSensitivities";
 
 import { SensitivitySortBy, type EnsemblePerRealizationResponse, type SensitivityResponse } from "./types";
 
-// Extract response values for the relevant realizations
+// Extract response values for the relevant realizations, in the order of `realizations`
 export function extractResponseValues(
     ensemblePerRealResponse: EnsemblePerRealizationResponse,
     realizations: number[],
 ): number[] {
-    return ensemblePerRealResponse.realizations
-        .map((real, idx) => ({ real, value: ensemblePerRealResponse.values[idx] }))
-        .filter(({ real }) => realizations.includes(real))
-        .map(({ value }) => value);
+    const valueByRealization = new Map(
+        ensemblePerRealResponse.realizations.map((real, idx) => [real, ensemblePerRealResponse.values[idx]]),
+    );
+    return realizations.flatMap((real) => {
+        const value = valueByRealization.get(real);
+        return value !== undefined ? [value] : [];
+    });
 }
 
 export function computeAverage(values: number[]): number {
     return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+}
+
+/** False for the empty side of a single-case scenario, which sits at the reference. */
+export function hasCaseOnSide(response: SensitivityResponse, side: "low" | "high"): boolean {
+    return side === "low"
+        ? response.lowCaseName !== "" || response.lowCaseRealizations.length > 0
+        : response.highCaseName !== "" || response.highCaseRealizations.length > 0;
 }
 
 // Sensitivity realizations extraction
@@ -52,25 +63,71 @@ export function computeReferenceAverage(
     const refValues = extractResponseValues(ensemblePerRealResponse, refRealizations);
     return computeAverage(refValues);
 }
+// Relative tolerance for "no impact": volumes summed in a different order differ in the last bits.
+const NO_IMPACT_RELATIVE_TOLERANCE = 1e-6;
+
+function isNegligibleDifference(difference: number, referenceAverage: number): boolean {
+    return Math.abs(difference) <= Math.abs(referenceAverage) * NO_IMPACT_RELATIVE_TOLERANCE;
+}
+
+function hasNoImpact(
+    response: SensitivityResponse,
+    referenceResponse: SensitivityResponse | undefined,
+    referenceAverage: number,
+): boolean {
+    if (response.sensitivityType === SensitivityType.MONTECARLO) {
+        // P10/P90 always differ from the reference mean by the seed spread, so compare with the reference's own stats.
+        if (!referenceResponse || referenceResponse.sensitivityType !== SensitivityType.MONTECARLO) {
+            return false;
+        }
+        return (
+            isNegligibleDifference((response.sensitivityAverage ?? 0) - referenceAverage, referenceAverage) &&
+            isNegligibleDifference(response.lowCaseAverage - referenceResponse.lowCaseAverage, referenceAverage) &&
+            isNegligibleDifference(response.highCaseAverage - referenceResponse.highCaseAverage, referenceAverage)
+        );
+    }
+    return (
+        isNegligibleDifference(response.lowCaseReferenceDifference, referenceAverage) &&
+        isNegligibleDifference(response.highCaseReferenceDifference, referenceAverage)
+    );
+}
+
 export function filterSensitivityResponses(
     responses: SensitivityResponse[],
     hideNoImpactSensitivities: boolean,
+    referenceSensitivity: string,
+    referenceAverage: number,
 ): SensitivityResponse[] {
     if (!hideNoImpactSensitivities) return responses;
 
-    return responses.filter((response) => {
-        return response.lowCaseReferenceDifference !== 0 || response.highCaseReferenceDifference !== 0;
-    });
+    const referenceResponse = responses.find((response) => response.sensitivityName === referenceSensitivity);
+    return responses.filter(
+        (response) =>
+            response.sensitivityName === referenceSensitivity ||
+            !hasNoImpact(response, referenceResponse, referenceAverage),
+    );
 }
+/** Default reference sensitivity: `rms_seed`, else `rms`, else the first available sensitivity. */
+export function pickDefaultReferenceSensitivityName(sensitivityNames: readonly string[]): string | null {
+    if (sensitivityNames.includes("rms_seed")) {
+        return "rms_seed";
+    }
+    if (sensitivityNames.includes("rms")) {
+        return "rms";
+    }
+    return sensitivityNames[0] ?? null;
+}
+
 export function getReferenceSensitivityName(
     sensitivities: EnsembleSensitivities,
     referenceSensitivity: string,
 ): string {
     if (!referenceSensitivity || !sensitivities.hasSensitivityName(referenceSensitivity)) {
-        if (sensitivities.getSensitivityNames().length === 0) {
+        const defaultName = pickDefaultReferenceSensitivityName(sensitivities.getSensitivityNames());
+        if (!defaultName) {
             throw new Error("No sensitivities available");
         }
-        return sensitivities.getSensitivityNames()[0]; // Default to first sensitivity
+        return defaultName;
     }
     return referenceSensitivity;
 }

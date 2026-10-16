@@ -13,8 +13,7 @@ import {
     showRealizationPointsAtom,
     sensitivityScalingAtom,
 } from "./settings/atoms/baseAtoms";
-import type { DisplayComponentType, SensitivityScaling } from "./typesAndEnums";
-import type { ColorBy } from "./view/components/sensitivityChartFigure";
+import type { ColorBy, DisplayComponentType, SensitivityScaling } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
     displayComponentType: DisplayComponentType;
