@@ -20,6 +20,7 @@ type ContinuousTrackCollectorArgs = GroupPropsCollectorArgs<ContinuousTrackSetti
 
 function getSharedConfig(args: GroupPropsCollectorArgs<typeof baseSettings>): TemplateTrack {
     return {
+        id: args.id,
         title: args.name,
         width: args.getSetting(Setting.TRACK_WIDTH) ?? undefined,
         required: true,

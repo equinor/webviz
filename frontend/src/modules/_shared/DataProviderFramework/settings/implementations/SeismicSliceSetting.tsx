@@ -202,7 +202,7 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                 }
             }
 
-            const labels: string[] = ["Col", "Row", "Depth"];
+            const labels = ["Col", "Row", "Depth"] as const;
             const hasChanges = props.value === null || props.value.applied === false;
             const MIN_SIZE = 250;
             let inputsVisible = true;
@@ -214,6 +214,7 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                 <>
                     <div className={resolveClassNames({ "outline-accent rounded outline-2": hasChanges })} ref={divRef}>
                         {labels.map((label, index) => (
+                            // eslint-disable-next-line @eslint-react/no-array-index-key -- Static array
                             <div key={`setting-${index}`} className="gap-x-sm flex items-center">
                                 <div className="pl-2xs flex w-8 flex-col items-start">{label}</div>
                                 <div className="min-w-4">

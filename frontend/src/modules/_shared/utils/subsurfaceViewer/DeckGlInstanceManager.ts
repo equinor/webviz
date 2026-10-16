@@ -10,6 +10,7 @@ import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/Publ
 import type { SubsurfaceViewerWithCameraStateProps } from "@modules/_shared/components/SubsurfaceViewer/_components/SubsurfaceViewerWithCameraState";
 
 export type ContextMenuItem = {
+    id: string;
     icon?: React.ReactElement;
     label: string;
     onClick: () => void;

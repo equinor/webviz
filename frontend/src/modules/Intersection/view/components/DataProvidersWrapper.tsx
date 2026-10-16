@@ -5,7 +5,7 @@ import { useAtom, useSetAtom } from "jotai";
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
@@ -18,6 +18,7 @@ import { IntersectionView } from "@modules/_shared/DataProviderFramework/groups/
 import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import {
+    isVisualizationLoading,
     VisualizationAssembler,
     VisualizationItemType,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -66,7 +67,7 @@ export type DataProvidersWrapperProps = {
     viewContext: ViewContext<Interfaces>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
-    workbenchServices: WorkbenchServices;
+    syncSettingsService: SyncSettingsService;
     hoverService: HoverService;
 };
 
@@ -173,7 +174,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     }
 
     // Set loading status
-    const isLoading = assemblerProduct.numLoadingDataProviders > 0;
+    const isLoading = isVisualizationLoading(assemblerProduct);
     statusWriter.setLoading(isLoading);
 
     // Shared field-level query (same result for all views)
@@ -245,7 +246,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
                         isLoading={isLoading}
                         wellboreHeadersQuery={wellboreHeadersQuery}
                         workbenchSession={props.workbenchSession}
-                        workbenchServices={props.workbenchServices}
+                        syncSettingsService={props.syncSettingsService}
                         hoverService={props.hoverService}
                         viewContext={props.viewContext}
                     />

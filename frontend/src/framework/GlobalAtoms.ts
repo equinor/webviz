@@ -27,8 +27,15 @@ export const EnsembleRealizationFilterFunctionAtom = atom<EnsembleRealizationFil
         return null;
     }
 
-    return (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) =>
-        realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent).getFilteredRealizations();
+    return (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => {
+        // The ensembleIdent may be stale (e.g. a not-yet-fixed-up persisted selection referring to an
+        // ensemble that was removed from the ensemble set), in which case no filter exists for it.
+        if (!realizationFilterSet.hasRealizationFilterForEnsembleIdent(ensembleIdent)) {
+            return [];
+        }
+
+        return realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent).getFilteredRealizations();
+    };
 });
 
 /**

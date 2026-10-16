@@ -3,12 +3,17 @@ import React from "react";
 import { WebAsset } from "@mui/icons-material";
 
 import { Drawer } from "@framework/internal/components/Drawer";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@framework/utils/debug";
 import type { Workbench } from "@framework/Workbench";
 import { Collapsible } from "@lib/components/Collapsible";
+import { Paragraph } from "@lib/components/Typography/compositions";
 import { isDevMode } from "@lib/utils/devMode";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+
+import { useActiveSession } from "../ActiveSessionBoundary";
 
 import { ModuleDetailsPopover } from "./moduleDetailsPopover";
 import { DevStateIcon } from "./moduleIcons";
@@ -28,17 +33,19 @@ const MODULE_CATEGORIES: { category: ModuleCategory; label: string }[] = [
     { category: ModuleCategory.DEBUG, label: "Debug modules" },
 ];
 
-// Opt-in dev and deprecated modules (included by default in dev mode)
+// Dev modules are shown by default; deprecated modules are opt-in (included by default in dev mode)
 type RequiredModuleDevState = ModuleDevState.PROD;
 type OptionalModuleDevState = Exclude<ModuleDevState, RequiredModuleDevState>;
-const INITIAL_OPTIONAL_DEV_STATES: OptionalModuleDevState[] = [];
+const INITIAL_OPTIONAL_DEV_STATES: OptionalModuleDevState[] = [ModuleDevState.DEV];
 if (isDevMode()) {
-    INITIAL_OPTIONAL_DEV_STATES.push(ModuleDevState.DEV);
     INITIAL_OPTIONAL_DEV_STATES.push(ModuleDevState.DEPRECATED);
 }
 
 export const ModulesList = React.memo(function ModulesList(props: ModulesListProps) {
     const ref = React.useRef<HTMLDivElement>(null);
+
+    const activeSession = useActiveSession();
+    const isSnapshot = usePublishSubscribeTopicValue(activeSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     const [searchQuery, setSearchQuery] = React.useState("");
     const [optionalDevStates, setOptionalDevStates] =
@@ -107,29 +114,36 @@ export const ModulesList = React.memo(function ModulesList(props: ModulesListPro
                 ]}
                 onFilterItemSelectionChange={setOptionalDevStates}
             >
-                <Collapsible.ScrollArea>
-                    {visibleModuleCategories.map((el) => (
-                        <Collapsible.Group key={el.category} title={el.label} defaultOpen>
-                            {filteredModules
-                                .filter((mod) => mod.getCategory() === el.category)
-                                .map((mod) => (
-                                    <ModulesListItem
-                                        key={mod.getName()}
-                                        name={mod.getName()}
-                                        devState={mod.getDevState()}
-                                        displayName={mod.getDefaultTitle()}
-                                        isSerializable={mod.canBeSerialized()}
-                                        description={mod.getDescription()}
-                                        drawPreviewFunc={mod.getDrawPreviewFunc()}
-                                        guiMessageBroker={props.workbench.getGuiMessageBroker()}
-                                        onDraggingStart={handleDraggingStart}
-                                        onShowDetails={handleShowDetails}
-                                        onHover={handleItemHover}
-                                    />
-                                ))}
-                        </Collapsible.Group>
-                    ))}
-                </Collapsible.ScrollArea>
+                {!isSnapshot && (
+                    <Collapsible.ScrollArea>
+                        {visibleModuleCategories.map((el) => (
+                            <Collapsible.Group key={el.category} title={el.label} defaultOpen>
+                                {filteredModules
+                                    .filter((mod) => mod.getCategory() === el.category)
+                                    .map((mod) => (
+                                        <ModulesListItem
+                                            key={mod.getName()}
+                                            name={mod.getName()}
+                                            devState={mod.getDevState()}
+                                            displayName={mod.getDefaultTitle()}
+                                            isSerializable={mod.canBeSerialized()}
+                                            description={mod.getDescription()}
+                                            drawPreviewFunc={mod.getDrawPreviewFunc()}
+                                            guiMessageBroker={props.workbench.getGuiMessageBroker()}
+                                            onDraggingStart={handleDraggingStart}
+                                            onShowDetails={handleShowDetails}
+                                            onHover={handleItemHover}
+                                        />
+                                    ))}
+                            </Collapsible.Group>
+                        ))}
+                    </Collapsible.ScrollArea>
+                )}
+                {isSnapshot && (
+                    <Paragraph size="md" tone="neutral" layoutClassName="h-full flex items-center justify-center">
+                        Modules cannot be added in snapshot mode.
+                    </Paragraph>
+                )}
             </Drawer>
 
             <ModuleDetailsPopover

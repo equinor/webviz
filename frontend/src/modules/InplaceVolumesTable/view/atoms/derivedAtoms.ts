@@ -95,3 +95,8 @@ export const haveAllQueriesFailedAtom = atom((get) => {
     }
     return false;
 });
+
+export const haveSomeQueriesFailedAtom = atom((get) => {
+    const activeQueriesResult = get(activeQueriesResultAtom);
+    return activeQueriesResult.errors.length > 0 && !activeQueriesResult.allQueriesFailed;
+});

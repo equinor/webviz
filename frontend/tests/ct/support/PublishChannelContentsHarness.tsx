@@ -5,10 +5,12 @@ import { usePublishChannelContents } from "@framework/internal/DataChannels/hook
 
 export function PublishChannelContentsHarness({ enabled }: { enabled: boolean }) {
     const [publishedContentCount, setPublishedContentCount] = useState(0);
-    const channel = useRef({ replaceContents: (contents: unknown[]) => setPublishedContentCount(contents.length) });
+    const channelRef = useRef({
+        replaceContents: (contents: unknown[]) => setPublishedContentCount(contents.length),
+    });
 
     usePublishChannelContents({
-        channel: channel.current as Channel,
+        channel: channelRef.current as Channel,
         dependencies: ["result"],
         enabled,
         contents: [

@@ -33,12 +33,14 @@ export enum GuiState {
     IsSavingSession = "isSavingSession",
     IsLoadingSession = "isLoadingSession",
     IsLoadingSnapshot = "isLoadingSnapshot",
+    IsSwitchingDashboard = "isSwitchingDashboard",
     IsMakingSnapshot = "isMakingSnapshot",
     EnsembleDialogOpen = "ensembleDialogOpen",
     MultiSessionsRecoveryDialogOpen = "multiSessionsRecoveryDialogOpen",
     ActiveSessionRecoveryDialogOpen = "activeSessionRecoveryDialogOpen",
     MakeSnapshotDialogOpen = "makeSnapshotDialogOpen",
     TemplatesDialogOpen = "templatesDialogOpen",
+    TutorialsDialogOpen = "tutorialsDialogOpen",
     SessionSnapshotOverviewDialogOpen = "sessionSnapshotOverviewDialogOpen",
     SessionSnapshotOverviewDialogMode = "sessionSnapshotOverviewDialogMode",
     EnsemblesLoadingErrorInfoMap = "ensemblesLoadingErrorInfoMap",
@@ -127,6 +129,7 @@ type GuiStateValueTypes = {
     [GuiState.IsLoadingEnsembleSet]: boolean;
     [GuiState.IsLoadingSession]: boolean;
     [GuiState.IsLoadingSnapshot]: boolean;
+    [GuiState.IsSwitchingDashboard]: boolean;
     [GuiState.IsSavingSession]: boolean;
     [GuiState.EnsembleDialogOpen]: boolean;
     [GuiState.MultiSessionsRecoveryDialogOpen]: boolean;
@@ -135,6 +138,7 @@ type GuiStateValueTypes = {
     [GuiState.IsMakingSnapshot]: boolean;
     [GuiState.SaveSessionDialogOpen]: boolean;
     [GuiState.TemplatesDialogOpen]: boolean;
+    [GuiState.TutorialsDialogOpen]: boolean;
     [GuiState.SessionSnapshotOverviewDialogOpen]: boolean;
     [GuiState.SessionSnapshotOverviewDialogMode]: "sessions" | "snapshots";
     [GuiState.EnsemblesLoadingErrorInfoMap]: EnsembleLoadingErrorInfoMap;
@@ -166,6 +170,7 @@ defaultStates.set(GuiState.ActiveSessionRecoveryDialogOpen, false);
 defaultStates.set(GuiState.MakeSnapshotDialogOpen, false);
 defaultStates.set(GuiState.IsMakingSnapshot, false);
 defaultStates.set(GuiState.TemplatesDialogOpen, false);
+defaultStates.set(GuiState.TutorialsDialogOpen, false);
 defaultStates.set(GuiState.SessionSnapshotOverviewDialogOpen, false);
 defaultStates.set(GuiState.SessionSnapshotOverviewDialogMode, "sessions");
 defaultStates.set(GuiState.EnsemblesLoadingErrorInfoMap, {});
@@ -173,6 +178,7 @@ defaultStates.set(GuiState.EnsembleLoadingErrorInfoDialogOpen, false);
 defaultStates.set(GuiState.EnsemblesLoadingWarningInfoMap, {});
 defaultStates.set(GuiState.EnsembleLoadingWarningInfoDialogOpen, false);
 defaultStates.set(GuiState.IsActionBarVisible, true);
+defaultStates.set(GuiState.IsSwitchingDashboard, false);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelIsCollapsed,

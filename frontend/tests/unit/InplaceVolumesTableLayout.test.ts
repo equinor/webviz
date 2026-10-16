@@ -1,0 +1,426 @@
+import { orderBy } from "lodash";
+import { describe, expect, test } from "vitest";
+
+import { InplaceVolumesStatistic_api } from "@api";
+import { SortDirection } from "@lib/components/Table/typesAndEnums";
+import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
+import type { TableColumnsConfig, TableHeading, TableRow } from "@modules/InplaceVolumesTable/view/types";
+import type { ColumnLayout } from "@modules/InplaceVolumesTable/view/utils/tableLayoutUtils";
+import {
+    CATEGORY_COLUMN_CHROME_PX,
+    CATEGORY_COLUMN_MAX_WIDTH_PX,
+    CATEGORY_COLUMN_MIN_WIDTH_PX,
+    CHAR_WIDTH_PX,
+    GROUP_HEADER_CHROME_PX,
+    RESULT_COLUMN_WIDTH_PX,
+    applyTableSort,
+    computeColumnPinning,
+    computeColumnWidths,
+    pruneHiddenColumnFilters,
+    sortStatisticsForDisplay,
+} from "@modules/InplaceVolumesTable/view/utils/tableLayoutUtils";
+
+const WIDE_WRAPPER_PX = 10_000;
+
+function formatPlain(value: string | number | null): string {
+    return value === null ? "-" : String(value);
+}
+
+function computeColumnLayout(
+    columnsConfig: TableColumnsConfig,
+    rows: TableRow<TableColumnsConfig>[],
+    formatDisplayValue: (value: string | number | null, heading: TableHeading) => string,
+    wrapperWidthPx: number,
+): ColumnLayout {
+    const widths = computeColumnWidths(columnsConfig, rows, formatDisplayValue);
+    return { ...widths, ...computeColumnPinning(widths, wrapperWidthPx) };
+}
+
+function expectedCategoryWidth(maxChars: number): number {
+    const width = Math.round(maxChars * CHAR_WIDTH_PX) + CATEGORY_COLUMN_CHROME_PX;
+    return Math.min(Math.max(width, CATEGORY_COLUMN_MIN_WIDTH_PX), CATEGORY_COLUMN_MAX_WIDTH_PX);
+}
+
+function makeStatisticalConfig(): TableColumnsConfig {
+    return {
+        ENSEMBLE: { label: "ENSEMBLE", columnType: ColumnType.ENSEMBLE },
+        ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
+        STOIIP: {
+            label: "STOIIP",
+            subHeading: {
+                "STOIIP-Mean": { label: "Mean", columnType: ColumnType.RESULT },
+                "STOIIP-P10": { label: "P10", columnType: ColumnType.RESULT },
+            },
+        },
+    };
+}
+
+function makeStatisticalRows(): TableRow<TableColumnsConfig>[] {
+    return [
+        { __id: "1", ENSEMBLE: "ens1", ZONE: "Valysar", "STOIIP-Mean": 1, "STOIIP-P10": 2 },
+        { __id: "2", ENSEMBLE: "ens2", ZONE: "Therys", "STOIIP-Mean": 1, "STOIIP-P10": 2 },
+        { __id: "3", ENSEMBLE: "ens1", ZONE: "Volon", "STOIIP-Mean": 1, "STOIIP-P10": 2 },
+    ];
+}
+
+describe("computeColumnLayout", () => {
+    test("result leaves get the fixed width; category widths follow the formula and clamps", () => {
+        const veryLong = "X".repeat(100);
+        const columnsConfig: TableColumnsConfig = {
+            A: { label: "A", columnType: ColumnType.INDEX },
+            ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
+            LONG: { label: "LONG", columnType: ColumnType.INDEX },
+            STOIIP: { label: "STOIIP", columnType: ColumnType.RESULT },
+        };
+        const rows = [
+            { __id: "1", A: "b", ZONE: "Valysar_Upper", LONG: veryLong, STOIIP: 1 },
+            { __id: "2", A: "c", ZONE: "Therys", LONG: "short", STOIIP: 2 },
+        ];
+
+        const layout = computeColumnLayout(columnsConfig, rows, formatPlain, WIDE_WRAPPER_PX);
+
+        expect(layout.widthPxByKey.get("STOIIP")).toBe(RESULT_COLUMN_WIDTH_PX);
+        expect(layout.widthPxByKey.get("A")).toBe(CATEGORY_COLUMN_MIN_WIDTH_PX);
+        expect(layout.widthPxByKey.get("ZONE")).toBe(expectedCategoryWidth("Valysar_Upper".length));
+        expect(layout.widthPxByKey.get("ZONE")).toBeGreaterThan(CATEGORY_COLUMN_MIN_WIDTH_PX);
+        expect(layout.widthPxByKey.get("ZONE")).toBeLessThan(CATEGORY_COLUMN_MAX_WIDTH_PX);
+        expect(layout.widthPxByKey.get("LONG")).toBe(CATEGORY_COLUMN_MAX_WIDTH_PX);
+    });
+
+    test("header label counts towards the category width", () => {
+        const columnsConfig: TableColumnsConfig = {
+            A_VERY_LONG_HEADER_LABEL: { label: "A_VERY_LONG_HEADER_LABEL", columnType: ColumnType.INDEX },
+        };
+        const rows = [
+            { __id: "1", A_VERY_LONG_HEADER_LABEL: "a" },
+            { __id: "2", A_VERY_LONG_HEADER_LABEL: "b" },
+        ];
+
+        const layout = computeColumnLayout(columnsConfig, rows, formatPlain, WIDE_WRAPPER_PX);
+
+        expect(layout.widthPxByKey.get("A_VERY_LONG_HEADER_LABEL")).toBe(
+            expectedCategoryWidth("A_VERY_LONG_HEADER_LABEL".length),
+        );
+    });
+
+    test("constant columns are hidden only with at least two rows", () => {
+        const columnsConfig: TableColumnsConfig = {
+            FLUID: { label: "FLUID", columnType: ColumnType.FLUID },
+            ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
+        };
+
+        const single = computeColumnLayout(
+            columnsConfig,
+            [{ __id: "1", FLUID: "oil", ZONE: "Valysar" }],
+            formatPlain,
+            WIDE_WRAPPER_PX,
+        );
+        expect(single.visibleLeaves.map((l) => l.key)).toEqual(["FLUID", "ZONE"]);
+        expect(single.constantColumns).toEqual([]);
+
+        const multiple = computeColumnLayout(
+            columnsConfig,
+            [
+                { __id: "1", FLUID: "oil", ZONE: "Valysar" },
+                { __id: "2", FLUID: "oil", ZONE: "Therys" },
+            ],
+            formatPlain,
+            WIDE_WRAPPER_PX,
+        );
+        expect(multiple.visibleLeaves.map((l) => l.key)).toEqual(["ZONE"]);
+        expect(multiple.constantColumns).toEqual([{ key: "FLUID", label: "FLUID", displayValue: "oil" }]);
+        expect(multiple.widthPxByKey.has("FLUID")).toBe(false);
+    });
+
+    test("constant detection uses the display value", () => {
+        const columnsConfig = makeStatisticalConfig();
+        const formatSameEnsembleName = (value: string | number | null, heading: TableHeading) =>
+            heading.columnType === ColumnType.ENSEMBLE ? "iter-0" : formatPlain(value);
+
+        const layout = computeColumnLayout(
+            columnsConfig,
+            makeStatisticalRows(),
+            formatSameEnsembleName,
+            WIDE_WRAPPER_PX,
+        );
+
+        expect(layout.constantColumns).toEqual([{ key: "ENSEMBLE", label: "ENSEMBLE", displayValue: "iter-0" }]);
+        expect(layout.visibleLeaves.map((l) => l.key)).not.toContain("ENSEMBLE");
+    });
+
+    test("result columns are never hidden, even when constant", () => {
+        const layout = computeColumnLayout(
+            makeStatisticalConfig(),
+            makeStatisticalRows(),
+            formatPlain,
+            WIDE_WRAPPER_PX,
+        );
+
+        expect(layout.visibleLeaves.map((l) => l.key)).toEqual(["ENSEMBLE", "ZONE", "STOIIP-Mean", "STOIIP-P10"]);
+        expect(layout.constantColumns).toEqual([]);
+    });
+
+    test("nested headings: groups are not leaves, their leaves are visible", () => {
+        const layout = computeColumnLayout(
+            makeStatisticalConfig(),
+            makeStatisticalRows(),
+            formatPlain,
+            WIDE_WRAPPER_PX,
+        );
+
+        const keys = layout.visibleLeaves.map((l) => l.key);
+        expect(keys).not.toContain("STOIIP");
+        expect(keys).toContain("STOIIP-Mean");
+        expect(keys).toContain("STOIIP-P10");
+        expect(layout.widthPxByKey.has("STOIIP")).toBe(false);
+    });
+
+    test("a result group's leaves are widened so a long group label fits", () => {
+        const columnsConfig: TableColumnsConfig = {
+            ZONE: { label: "ZONE", columnType: ColumnType.INDEX },
+            ASSOCIATEDGAS: {
+                label: "ASSOCIATEDGAS",
+                subHeading: { "ASSOCIATEDGAS-Mean": { label: "Mean", columnType: ColumnType.RESULT } },
+            },
+            STOIIP: {
+                label: "STOIIP",
+                subHeading: { "STOIIP-Mean": { label: "Mean", columnType: ColumnType.RESULT } },
+            },
+        };
+        const rows = [
+            { __id: "1", ZONE: "A", "ASSOCIATEDGAS-Mean": 1, "STOIIP-Mean": 2 },
+            { __id: "2", ZONE: "B", "ASSOCIATEDGAS-Mean": 3, "STOIIP-Mean": 4 },
+        ];
+
+        const widths = computeColumnWidths(columnsConfig, rows, formatPlain);
+
+        const required = Math.round("ASSOCIATEDGAS".length * CHAR_WIDTH_PX) + GROUP_HEADER_CHROME_PX;
+        expect(widths.widthPxByKey.get("ASSOCIATEDGAS-Mean")).toBeGreaterThanOrEqual(required);
+        expect(widths.widthPxByKey.get("STOIIP-Mean")).toBe(RESULT_COLUMN_WIDTH_PX);
+    });
+
+    test("sticky offsets are cumulative and the last identifier column is the edge", () => {
+        const layout = computeColumnLayout(
+            makeStatisticalConfig(),
+            makeStatisticalRows(),
+            formatPlain,
+            WIDE_WRAPPER_PX,
+        );
+
+        const ensembleWidth = layout.widthPxByKey.get("ENSEMBLE") ?? NaN;
+        expect(layout.stickyLeftPxByKey.get("ENSEMBLE")).toBe(0);
+        expect(layout.stickyLeftPxByKey.get("ZONE")).toBe(ensembleWidth);
+        expect(layout.stickyLeftPxByKey.has("STOIIP-Mean")).toBe(false);
+        expect(layout.lastPinnedKey).toBe("ZONE");
+    });
+
+    test("pins the longest leading run of identifier columns that fits half the wrapper", () => {
+        const wideLayout = computeColumnLayout(
+            makeStatisticalConfig(),
+            makeStatisticalRows(),
+            formatPlain,
+            WIDE_WRAPPER_PX,
+        );
+        const ensembleWidth = wideLayout.widthPxByKey.get("ENSEMBLE") ?? 0;
+        const pinnedWidth = ensembleWidth + (wideLayout.widthPxByKey.get("ZONE") ?? 0);
+
+        const atLimit = computeColumnLayout(
+            makeStatisticalConfig(),
+            makeStatisticalRows(),
+            formatPlain,
+            pinnedWidth * 2,
+        );
+        expect(atLimit.lastPinnedKey).toBe("ZONE");
+
+        const partial = computeColumnLayout(
+            makeStatisticalConfig(),
+            makeStatisticalRows(),
+            formatPlain,
+            pinnedWidth * 2 - 1,
+        );
+        expect(partial.stickyLeftPxByKey).toEqual(new Map([["ENSEMBLE", 0]]));
+        expect(partial.lastPinnedKey).toBe("ENSEMBLE");
+
+        const narrow = computeColumnLayout(
+            makeStatisticalConfig(),
+            makeStatisticalRows(),
+            formatPlain,
+            ensembleWidth * 2 - 1,
+        );
+        expect(narrow.stickyLeftPxByKey.size).toBe(0);
+        expect(narrow.lastPinnedKey).toBeNull();
+    });
+
+    test("pinning is computed from the widths alone, so a resize does not rescan the rows", () => {
+        const rowsSeen: number[] = [];
+        const countingFormat = (value: string | number | null) => {
+            rowsSeen.push(1);
+            return formatPlain(value);
+        };
+
+        const widths = computeColumnWidths(makeStatisticalConfig(), makeStatisticalRows(), countingFormat);
+        const callsAfterWidths = rowsSeen.length;
+        expect(callsAfterWidths).toBeGreaterThan(0);
+
+        computeColumnPinning(widths, WIDE_WRAPPER_PX);
+        computeColumnPinning(widths, 1);
+        expect(rowsSeen.length).toBe(callsAfterWidths);
+    });
+});
+
+describe("sortStatisticsForDisplay", () => {
+    const CANONICAL = [
+        InplaceVolumesStatistic_api.MEAN,
+        InplaceVolumesStatistic_api.STDDEV,
+        InplaceVolumesStatistic_api.P10,
+        InplaceVolumesStatistic_api.P90,
+        InplaceVolumesStatistic_api.MIN,
+        InplaceVolumesStatistic_api.MAX,
+    ];
+
+    test("any permutation gives the canonical order", () => {
+        const permutations = [
+            [...CANONICAL].reverse(),
+            [
+                InplaceVolumesStatistic_api.MAX,
+                InplaceVolumesStatistic_api.P10,
+                InplaceVolumesStatistic_api.MIN,
+                InplaceVolumesStatistic_api.MEAN,
+                InplaceVolumesStatistic_api.P90,
+                InplaceVolumesStatistic_api.STDDEV,
+            ],
+        ];
+        for (const permutation of permutations) {
+            expect(sortStatisticsForDisplay(permutation)).toEqual(CANONICAL);
+        }
+    });
+
+    test("subsets keep the canonical order", () => {
+        expect(
+            sortStatisticsForDisplay([
+                InplaceVolumesStatistic_api.MAX,
+                InplaceVolumesStatistic_api.P10,
+                InplaceVolumesStatistic_api.MEAN,
+            ]),
+        ).toEqual([InplaceVolumesStatistic_api.MEAN, InplaceVolumesStatistic_api.P10, InplaceVolumesStatistic_api.MAX]);
+    });
+
+    test("does not mutate the input", () => {
+        const input = [InplaceVolumesStatistic_api.MAX, InplaceVolumesStatistic_api.MEAN];
+        const result = sortStatisticsForDisplay(input);
+
+        expect(input).toEqual([InplaceVolumesStatistic_api.MAX, InplaceVolumesStatistic_api.MEAN]);
+        expect(result).not.toBe(input);
+    });
+});
+
+describe("pruneHiddenColumnFilters", () => {
+    test("removes filters on columns that are not visible", () => {
+        const pruned = pruneHiddenColumnFilters({ ZONE: "Val", FLUID: "oil", REGION: null }, new Set(["ZONE"]));
+
+        expect(pruned).toEqual({ ZONE: "Val" });
+    });
+
+    test("returns the same object when every filtered column is visible", () => {
+        const filterState = { ZONE: "Val" };
+
+        expect(pruneHiddenColumnFilters(filterState, new Set(["ZONE", "FLUID"]))).toBe(filterState);
+    });
+});
+
+describe("applyTableSort", () => {
+    // Responses in first-seen order BULK, STOIIP; ZONE groups each response
+    const rows: TableRow<TableColumnsConfig>[] = [
+        { __id: "1", ZONE: "A", RESPONSE: "BULK", Mean: 5 },
+        { __id: "2", ZONE: "A", RESPONSE: "STOIIP", Mean: 50 },
+        { __id: "3", ZONE: "B", RESPONSE: "BULK", Mean: 9 },
+        { __id: "4", ZONE: "B", RESPONSE: "STOIIP", Mean: 10 },
+        { __id: "5", ZONE: "C", RESPONSE: "BULK", Mean: 1 },
+        { __id: "6", ZONE: "C", RESPONSE: "STOIIP", Mean: 70 },
+    ];
+
+    const responseScope = { columnKey: "RESPONSE", scopedColumnKeys: new Set(["Mean"]) };
+
+    test("without a scope it matches a plain orderBy", () => {
+        const sortState = [
+            { columnKey: "ZONE", direction: SortDirection.DESC },
+            { columnKey: "Mean", direction: SortDirection.ASC },
+        ];
+
+        expect(applyTableSort(rows, sortState)).toEqual(orderBy(rows, ["ZONE", "Mean"], ["desc", "asc"]));
+    });
+
+    test("a scoped sort ranks within each response in first-seen order", () => {
+        const sorted = applyTableSort(rows, [{ columnKey: "Mean", direction: SortDirection.DESC }], responseScope);
+
+        expect(sorted.map((row) => `${row.RESPONSE}:${row.Mean}`)).toEqual([
+            "BULK:9",
+            "BULK:5",
+            "BULK:1",
+            "STOIIP:70",
+            "STOIIP:50",
+            "STOIIP:10",
+        ]);
+    });
+
+    test("an explicit sort on the scope column disables the implicit scope", () => {
+        const sortState = [
+            { columnKey: "RESPONSE", direction: SortDirection.DESC },
+            { columnKey: "Mean", direction: SortDirection.ASC },
+        ];
+
+        expect(applyTableSort(rows, sortState, responseScope)).toEqual(
+            orderBy(rows, ["RESPONSE", "Mean"], ["desc", "asc"]),
+        );
+    });
+
+    test("sorting only by non-scoped columns is not scoped", () => {
+        const sortState = [{ columnKey: "ZONE", direction: SortDirection.DESC }];
+
+        const sorted = applyTableSort(rows, sortState, responseScope);
+
+        expect(sorted).toEqual(orderBy(rows, ["ZONE"], ["desc"]));
+        expect(sorted.map((row) => `${row.ZONE}:${row.RESPONSE}`)).toEqual([
+            "C:BULK",
+            "C:STOIIP",
+            "B:BULK",
+            "B:STOIIP",
+            "A:BULK",
+            "A:STOIIP",
+        ]);
+    });
+
+    test("explicit keys before the first scoped key keep priority over the implicit response grouping", () => {
+        const mixedRows: TableRow<TableColumnsConfig>[] = [
+            { __id: "1", ZONE: "A", RESPONSE: "BULK", Mean: 5 },
+            { __id: "2", ZONE: "A", RESPONSE: "BULK", Mean: 3 },
+            { __id: "3", ZONE: "A", RESPONSE: "STOIIP", Mean: 50 },
+            { __id: "4", ZONE: "A", RESPONSE: "STOIIP", Mean: 60 },
+            { __id: "5", ZONE: "B", RESPONSE: "BULK", Mean: 9 },
+            { __id: "6", ZONE: "B", RESPONSE: "STOIIP", Mean: 10 },
+            { __id: "7", ZONE: "B", RESPONSE: "STOIIP", Mean: 8 },
+        ];
+        const sortState = [
+            { columnKey: "ZONE", direction: SortDirection.DESC },
+            { columnKey: "Mean", direction: SortDirection.ASC },
+        ];
+
+        const sorted = applyTableSort(mixedRows, sortState, responseScope);
+
+        // ZONE first, then responses in first-seen order within each zone, then Mean within each response
+        expect(sorted.map((row) => `${row.ZONE}:${row.RESPONSE}:${row.Mean}`)).toEqual([
+            "B:BULK:9",
+            "B:STOIIP:8",
+            "B:STOIIP:10",
+            "A:BULK:3",
+            "A:BULK:5",
+            "A:STOIIP:50",
+            "A:STOIIP:60",
+        ]);
+    });
+
+    test("an empty sort state keeps the input order", () => {
+        expect(applyTableSort(rows, [], responseScope).map((row) => row.__id)).toEqual(rows.map((row) => row.__id));
+        expect(applyTableSort(rows, []).map((row) => row.__id)).toEqual(rows.map((row) => row.__id));
+    });
+});

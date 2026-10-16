@@ -194,7 +194,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m23,
         matrix.m31,
         matrix.m32,
-        matrix.m33
+        matrix.m33,
     );
     const cofactor1 = getCofactor(
         matrix.m10,
@@ -205,7 +205,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m23,
         matrix.m30,
         matrix.m32,
-        matrix.m33
+        matrix.m33,
     );
     const cofactor2 = getCofactor(
         matrix.m10,
@@ -216,7 +216,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m23,
         matrix.m30,
         matrix.m31,
-        matrix.m33
+        matrix.m33,
     );
     const cofactor3 = getCofactor(
         matrix.m10,
@@ -227,7 +227,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m22,
         matrix.m30,
         matrix.m31,
-        matrix.m32
+        matrix.m32,
     );
 
     const determinant =
@@ -245,7 +245,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m23,
         matrix.m31,
         matrix.m32,
-        matrix.m33
+        matrix.m33,
     );
     const cofactor5 = getCofactor(
         matrix.m00,
@@ -256,7 +256,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m23,
         matrix.m30,
         matrix.m32,
-        matrix.m33
+        matrix.m33,
     );
     const cofactor6 = getCofactor(
         matrix.m00,
@@ -267,7 +267,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m23,
         matrix.m30,
         matrix.m31,
-        matrix.m33
+        matrix.m33,
     );
     const cofactor7 = getCofactor(
         matrix.m00,
@@ -278,7 +278,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m22,
         matrix.m30,
         matrix.m31,
-        matrix.m32
+        matrix.m32,
     );
 
     const cofactor8 = getCofactor(
@@ -290,7 +290,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m13,
         matrix.m31,
         matrix.m32,
-        matrix.m33
+        matrix.m33,
     );
     const cofactor9 = getCofactor(
         matrix.m00,
@@ -301,7 +301,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m13,
         matrix.m30,
         matrix.m32,
-        matrix.m33
+        matrix.m33,
     );
     const cofactor10 = getCofactor(
         matrix.m00,
@@ -312,7 +312,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m13,
         matrix.m30,
         matrix.m31,
-        matrix.m33
+        matrix.m33,
     );
     const cofactor11 = getCofactor(
         matrix.m00,
@@ -323,7 +323,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m12,
         matrix.m30,
         matrix.m31,
-        matrix.m32
+        matrix.m32,
     );
 
     const cofactor12 = getCofactor(
@@ -335,7 +335,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m13,
         matrix.m21,
         matrix.m22,
-        matrix.m23
+        matrix.m23,
     );
     const cofactor13 = getCofactor(
         matrix.m00,
@@ -346,7 +346,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m13,
         matrix.m20,
         matrix.m22,
-        matrix.m23
+        matrix.m23,
     );
     const cofactor14 = getCofactor(
         matrix.m00,
@@ -357,7 +357,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m13,
         matrix.m20,
         matrix.m21,
-        matrix.m23
+        matrix.m23,
     );
     const cofactor15 = getCofactor(
         matrix.m00,
@@ -368,7 +368,7 @@ export function invertGeneral(matrix: Mat4) {
         matrix.m12,
         matrix.m20,
         matrix.m21,
-        matrix.m22
+        matrix.m22,
     );
 
     const invDeterminant = 1 / determinant;
@@ -403,7 +403,7 @@ function getCofactor(
     m5: number,
     m6: number,
     m7: number,
-    m8: number
+    m8: number,
 ): number {
     return m0 * (m4 * m8 - m5 * m7) - m1 * (m3 * m8 - m5 * m6) + m2 * (m3 * m7 - m4 * m6);
 }
@@ -412,7 +412,6 @@ export function lookAt(matrix: Mat4, target: vec3.Vec3) {
     const position = { x: matrix.m30, y: matrix.m31, z: matrix.m32 };
     const forward = vec3.normalize(vec3.subtract(target, position));
     let up: vec3.Vec3 = { x: 0, y: 0, z: 1 };
-    let left: vec3.Vec3 = { x: 0, y: 1, z: 0 };
 
     if (Math.abs(forward.x) < EPSILON && Math.abs(forward.z) < EPSILON) {
         if (forward.y > 0) {
@@ -422,7 +421,7 @@ export function lookAt(matrix: Mat4, target: vec3.Vec3) {
         up = { x: 0, y: 1, z: 0 };
     }
 
-    left = vec3.normalize(vec3.cross(up, forward));
+    const left = vec3.normalize(vec3.cross(up, forward));
     up = vec3.cross(forward, left);
 
     matrix.m00 = left.x;

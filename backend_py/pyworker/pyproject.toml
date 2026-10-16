@@ -1,0 +1,28 @@
+[project]
+name = "pyworker"
+version = "0.0.1"
+requires-python = "^3.13"
+dynamic = ["dependencies"]
+
+[tool.poetry]
+requires-poetry = ">=2.1"
+packages = [{ include = "pyworker", from = "src" }]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+azure-servicebus = "^7.14.3"
+aiohttp = "^3.13.4"  # async transport for azure.servicebus.aio
+cryptography = "^48.0.1"
+
+### We have experienced unexpected behavioral changes in patch versions of 'azure-monitor-opentelemetry', so pin it.
+azure-monitor-opentelemetry = "1.8.10"
+
+# Currently used in docker compose
+watchfiles = "^1.1.0"
+
+webviz-core-utils = { path = "../libs/core_utils", develop = true }
+webviz-server-schemas = { path = "../libs/server_schemas", develop = true }
+webviz-services = { path = "../libs/services", develop = true }

@@ -14,7 +14,7 @@ export type NamedRadioGroupProps<TValue extends string> = {
  * shared composition names every option after the field label; the group keeps that field name.
  */
 export function NamedRadioGroup<TValue extends string>(props: NamedRadioGroupProps<TValue>): React.ReactNode {
-    const idPrefix = React.useId();
+    const groupId = React.useId();
 
     return (
         <RadioGroup
@@ -23,7 +23,7 @@ export function NamedRadioGroup<TValue extends string>(props: NamedRadioGroupPro
             layoutClassName="flex flex-row"
         >
             {props.options.map((option) => {
-                const labelId = `${idPrefix}-${option.value}`;
+                const labelId = `${groupId}-${option.value}`;
                 return (
                     <RadioCompositions.WithLabel
                         key={option.value}

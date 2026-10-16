@@ -15,6 +15,8 @@ class EncryptedRedisSessionStore(SessionStore):
 
     This class is a thin wrapper around starsessions.RedisStore that adds encryption.
     New fernet keys can be generated using: Fernet.generate_key()
+    Python one-liner:
+        python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 
     Args:
         fernet_key: A URL-safe base64-encoded 32-byte Fernet key.

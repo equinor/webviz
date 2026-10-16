@@ -247,6 +247,7 @@ async function makeLoadedStore(fixture: Fixture) {
 function makeFilterSet(realizations: number[]) {
     return {
         filterSet: {
+            hasRealizationFilterForEnsembleIdent: () => true,
             getRealizationFilterForEnsembleIdent: () => ({ getFilteredRealizations: () => realizations }),
         },
     } as unknown as { filterSet: RealizationFilterSet };

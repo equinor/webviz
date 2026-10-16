@@ -4,7 +4,6 @@ export type TableHeading = {
     label: string;
     hoverText?: string;
     sortable?: boolean;
-    sizeInPercent: number;
     subHeading?: TableColumnsConfig;
     columnType?: ColumnType;
 };

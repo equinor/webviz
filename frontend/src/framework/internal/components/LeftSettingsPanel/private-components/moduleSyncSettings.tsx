@@ -49,8 +49,7 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
         forceRerender();
     }
 
-    function handleGlobalSyncSettingChange(setting: SyncSettingKey, value: boolean) {
-        // @rmt: This has to be changed as soon as we support multiple pages
+    function handleDashboardSyncSettingChange(setting: SyncSettingKey, value: boolean) {
         for (const moduleInstance of moduleInstances) {
             if (moduleInstance.getModule().hasSyncableSettingKey(setting)) {
                 if (value) {
@@ -66,8 +65,7 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
         forceRerender();
     }
 
-    function isGlobalSyncSetting(setting: SyncSettingKey): boolean {
-        // @rmt: This has to be changed as soon as we support multiple pages
+    function isDashboardSyncSetting(setting: SyncSettingKey): boolean {
         for (const moduleInstance of moduleInstances) {
             if (moduleInstance.getModule().hasSyncableSettingKey(setting)) {
                 if (!moduleInstance.isSyncedSetting(setting)) {
@@ -98,9 +96,9 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
                     <tr className="border-neutral-subtle border-b">
                         <th
                             className="border-neutral-subtle px-xs py-xs w-4 border-r"
-                            title="Sync for all module instances"
+                            title="Sync for all modules in this dashboard"
                         >
-                            Global
+                            Dashboard
                         </th>
                         <th
                             className="border-neutral-subtle px-xs py-xs w-4 border-r"
@@ -113,15 +111,15 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
                 </thead>
                 <tbody>
                     {syncableSettingKeys.map((setting) => {
-                        const globallySynced = isGlobalSyncSetting(setting);
+                        const dashboardSynced = isDashboardSyncSetting(setting);
                         return (
                             <tr key={setting} className="hover:bg-neutral-subtle">
                                 <Tooltip title={disabledReason} disabled={!isSnapshot}>
                                     <td className="border-neutral-subtle px-xs py-3xs align-center border-r">
                                         <Checkbox
-                                            checked={globallySynced}
+                                            checked={dashboardSynced}
                                             onCheckedChange={(checked) =>
-                                                handleGlobalSyncSettingChange(setting, checked)
+                                                handleDashboardSyncSettingChange(setting, checked)
                                             }
                                             disabled={isSnapshot}
                                             size="small"
@@ -131,7 +129,7 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
                                 <Tooltip title={disabledReason} disabled={!isSnapshot}>
                                     <td className="border-neutral-subtle px-xs py-3xs align-center border-r">
                                         <Checkbox
-                                            checked={globallySynced || activeModuleInstance.isSyncedSetting(setting)}
+                                            checked={dashboardSynced || activeModuleInstance.isSyncedSetting(setting)}
                                             onCheckedChange={(checked) => handleSyncSettingChange(setting, checked)}
                                             disabled={isSnapshot}
                                             size="small"

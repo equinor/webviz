@@ -1,0 +1,38 @@
+# Docker Compose override file for running with the Service Bus Emulator
+# Usage: docker-compose -f docker-compose.yml -f docker-compose-service-bus.yml up
+
+services:
+  backend-primary:
+    environment:
+      - WEBVIZ_SKIP_AZURE_CREDENTIAL_CREATION
+      - WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING=Endpoint=sb://sb-emulator:5672/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;
+    depends_on:
+      - sb-emulator
+
+  pyworker-default:
+    environment:
+      - WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING=Endpoint=sb://sb-emulator:5672/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;
+    depends_on:
+      - sb-emulator
+
+  sb-emulator:
+    image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+    environment:
+      ACCEPT_EULA: Y
+      SQL_SERVER: mssql
+      MSSQL_SA_PASSWORD: NotSoSecretPassw0rd
+    volumes:
+      - ./docker/sb-emulator/SbEmulatorConfig.json:/ServiceBus_Emulator/ConfigFiles/Config.json
+    ports:
+      - "5672:5672"
+    depends_on:
+      - mssql
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: NotSoSecretPassw0rd
+    # Stop Compose from streaming SQL Server's noisy startup logs; still available via `docker compose logs mssql`.
+    attach: false
+

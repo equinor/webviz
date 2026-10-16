@@ -34,6 +34,7 @@ describe("simplifyLogName", () => {
 describe("getUniqueCurveNameForPlotConfig", () => {
     it("should return the plot name if it's unique", () => {
         const plot: TemplatePlot = {
+            id: "a",
             name: "unique",
             logName: "log",
         };
@@ -41,6 +42,7 @@ describe("getUniqueCurveNameForPlotConfig", () => {
     });
     it("should return a compound name if the plot name is not unique", () => {
         const plot: TemplatePlot = {
+            id: "a",
             name: "not_unique",
             logName: "log",
         };
@@ -49,11 +51,13 @@ describe("getUniqueCurveNameForPlotConfig", () => {
     });
     it("should throw for invalid config", () => {
         const plot1: TemplatePlot = {
+            id: "a",
             name: "",
             logName: "log",
         };
 
         const plot2: TemplatePlot = {
+            id: "b",
             name: "name",
             logName: "",
         };

@@ -52,9 +52,9 @@ export function ViewLinkManager({
     children,
 }: ViewLinkManagerProps): React.ReactNode {
     const [viewLinks, setViewLinks] = React.useState<ViewLink[]>([]);
-    const [hoveredViewIds, setHoveredViewIds] = React.useState<ReadonlySet<string>>(new Set<string>());
+    const [hoveredViewIds, setHoveredViewIds] = React.useState<ReadonlySet<string>>(() => new Set());
+    const [prevAllItemIds, setPrevAllItemIds] = React.useState(allItemIds);
 
-    const prevAllItemIdsRef = React.useRef<Set<string> | null>(null);
     const hasAppliedInitialRef = React.useRef(false);
     const viewLinksRef = React.useRef<ViewLink[]>(viewLinks);
     viewLinksRef.current = viewLinks;
@@ -82,37 +82,28 @@ export function ViewLinkManager({
 
     // Clean up ViewLinks when views are deleted/removed (not toggled visibility).
     // - Hidden views are still in `allItemIds`, until they are deleted/removed.
-    React.useEffect(
-        function handleAllItemIdsChange() {
-            if (!hasAppliedInitialRef.current) {
-                return;
-            }
-            if (prevAllItemIdsRef.current && isEqual(prevAllItemIdsRef.current, allItemIds)) {
-                return;
-            }
-            prevAllItemIdsRef.current = allItemIds;
+    if (hasAppliedInitialRef.current && !isEqual(allItemIds, prevAllItemIds)) {
+        setPrevAllItemIds(allItemIds);
 
-            setViewLinks((prev) => {
-                const cleanedLinks = prev
-                    .map((link) => {
-                        const keptViewIds = link.viewIds.filter((id) => allItemIds.has(id));
-                        if (keptViewIds.length === link.viewIds.length) {
-                            return link;
-                        }
+        setViewLinks((prev) => {
+            const cleanedLinks = prev
+                .map((link) => {
+                    const keptViewIds = link.viewIds.filter((id) => allItemIds.has(id));
+                    if (keptViewIds.length === link.viewIds.length) {
+                        return link;
+                    }
 
-                        return {
-                            ...link,
-                            viewIds: keptViewIds,
-                            viewportSourceViewId: getValidViewId(link.viewportSourceViewId, keptViewIds),
-                            bounds: null, // Reset bounds when membership changes so remaining views re-report fresh bounds
-                        };
-                    })
-                    .filter((link) => link.viewIds.length > 1);
-                return isEqual(cleanedLinks, prev) ? prev : cleanedLinks;
-            });
-        },
-        [allItemIds],
-    );
+                    return {
+                        ...link,
+                        viewIds: keptViewIds,
+                        viewportSourceViewId: getValidViewId(link.viewportSourceViewId, keptViewIds),
+                        bounds: null, // Reset bounds when membership changes so remaining views re-report fresh bounds
+                    };
+                })
+                .filter((link) => link.viewIds.length > 1);
+            return isEqual(cleanedLinks, prev) ? prev : cleanedLinks;
+        });
+    }
 
     // Stable callbacks — read latest viewLinks via ref so deps stay minimal
     const toggleViewLink = React.useCallback(

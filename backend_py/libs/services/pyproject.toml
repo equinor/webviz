@@ -17,6 +17,10 @@ sumo-wrapper-python = "^1.9.0"
 pottery = "^3.0.0"
 requests-toolbelt = "^1.0.0"
 xtgeo = "^4.18.0"
+azure-identity = "^1.25.3"
+azure-servicebus = "^7.14.3"
+aiohttp = "^3.13.4"  # async transport for azure.servicebus.aio
+
 webviz-core-utils = { path = "../core_utils", develop = true }
 webviz-server-schemas = { path = "../server_schemas", develop = true }
 
@@ -24,7 +28,6 @@ webviz-server-schemas = { path = "../server_schemas", develop = true }
 # and they are needed for type checking, we put them here instead.
 types-redis = "^4.6.0"
 pyarrow-stubs = "^20.0.0.20251215"
-
 
 # Special cases
 ### These might have breaking changes in minor versions

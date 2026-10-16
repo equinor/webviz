@@ -36,6 +36,10 @@ def _import_primary_config_offline() -> None:
         ]
     }
     dummy_env["WEBVIZ_SESSION_STORE_FERNET_KEY"] = os.environ.get("WEBVIZ_SESSION_STORE_FERNET_KEY", "A" * 43 + "=")
+    dummy_env["WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY"] = os.environ.get(
+        "WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY", "A" * 43 + "="
+    )
+    dummy_env["WEBVIZ_LOCAL_DEVELOPER_QUALIFIER"] = os.environ.get("WEBVIZ_LOCAL_DEVELOPER_QUALIFIER", "NoDeveloper")
     well_known_stub = mock.Mock()
     well_known_stub.json.return_value = {"envs": {os.getenv("WEBVIZ_SUMO_ENV", "prod"): {"resource_id": "offline"}}}
     with mock.patch.dict(os.environ, dummy_env), mock.patch.object(httpx, "get", return_value=well_known_stub):

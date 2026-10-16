@@ -17,18 +17,18 @@ type Context = {
 
 const createGenericContext = <T extends object>() => {
     // Create a context with a generic parameter or undefined
-    const genericContext = React.createContext<T | undefined>(undefined);
+    const GenericContext = React.createContext<T | undefined>(undefined);
 
     // Check if the value provided to the context is defined or throw an error
     const useGenericContext = () => {
-        const contextIsDefined = React.useContext(genericContext);
+        const contextIsDefined = React.useContext(GenericContext);
         if (!contextIsDefined) {
             throw new Error("useGenericContext must be used within a Provider");
         }
         return contextIsDefined;
     };
 
-    return [useGenericContext, genericContext.Provider] as const;
+    return [useGenericContext, GenericContext.Provider] as const;
 };
 
 const [useAuthContextProvider, AuthContextProvider] = createGenericContext<Context>();

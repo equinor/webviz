@@ -1,24 +1,7 @@
-import type { SurfaceStandardResult_api, SurfaceStatisticFunction_api } from "@api";
+import type { StdResAttribute_api, SurfaceStandardResult_api, SurfaceStatisticFunction_api, TagNameAttribute_api } from "@api";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 
-export interface TagNameAttribute {
-    attributeType: "TAGNAME";
-    tagName: string;
-}
-
-/**
- * Identifies a surface by the FMU standard result it belongs to.
- *
- * subName discriminates between surfaces within a standard result, e.g. the contact type for
- * fluid_contact_surface. It is null for standard results that do not need it.
- */
-export interface StdResAttribute {
-    attributeType: "STDRES";
-    stdResName: SurfaceStandardResult_api;
-    subName: string | null;
-}
-
-export type SurfaceAttribute = TagNameAttribute | StdResAttribute;
+export type SurfaceAttribute = TagNameAttribute_api | StdResAttribute_api;
 
 export interface RealizationSurfaceAddress {
     addressType: "REAL";
@@ -56,24 +39,24 @@ export type SurfaceAddressType = (typeof SurfaceAddressTypeValues)[number];
 
 const ADDR_COMP_DELIMITER = "~~";
 
-export function makeTagNameAttribute(tagName: string): TagNameAttribute {
-    return { attributeType: "TAGNAME", tagName };
+export function makeTagNameAttribute(tagName: string): TagNameAttribute_api {
+    return { kind: "TAGNAME", tag_name: tagName };
 }
 
 export function makeStdResAttribute(
     stdResName: SurfaceStandardResult_api,
     subName: string | null = null,
-): StdResAttribute {
-    return { attributeType: "STDRES", stdResName, subName };
+): StdResAttribute_api {
+    return { kind: "STDRES", std_res_name: stdResName, sub_name: subName };
 }
 
 // The attribute always spans three components so the fields after it sit at fixed positions
 function attributeToComponents(attr: SurfaceAttribute): string[] {
-    if (attr.attributeType === "TAGNAME") {
-        return ["TAGNAME", attr.tagName, ""];
+    if (attr.kind === "TAGNAME") {
+        return ["TAGNAME", attr.tag_name, ""];
     }
 
-    return ["STDRES", attr.stdResName, attr.subName ?? ""];
+    return ["STDRES", attr.std_res_name, attr.sub_name ?? ""];
 }
 
 export function encodeRealizationSurfAddrStr(addr: Omit<RealizationSurfaceAddress, "addressType">): string {

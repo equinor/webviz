@@ -101,7 +101,7 @@ export class WellCompletionsDataAccessor {
     ): PlotData | null {
         if (!this._data) return null;
 
-        let dateIndexRange: [number, number] | null = null;
+        let dateIndexRange: [number, number];
         if (typeof completionDateIndexSelection === "number") {
             const dateIndex = this.getValidIndexOf(completionDateIndexSelection);
             dateIndexRange = [dateIndex, dateIndex];
@@ -260,7 +260,7 @@ export class WellCompletionsDataAccessor {
         }
 
         // Sort wells based on selection
-        let sortedWells = null;
+        let sortedWells;
         if (sortWellsBy === SortWellsBy.WELL_NAME) {
             sortedWells = createSortedWells(wellPlotData, sortWellsBy, sortDirection);
         } else {

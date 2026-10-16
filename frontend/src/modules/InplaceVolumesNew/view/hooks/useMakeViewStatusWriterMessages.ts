@@ -6,12 +6,12 @@ import {
     makeDeltaRealizationAlignmentWarnings,
     makeDeltaRealizationCountWarnings,
 } from "@modules/_shared/ensembleDeltaWarnings";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import {
     makeDroppedFluidSelectionWarnings,
     makeUnmatchedDeltaRowWarnings,
 } from "@modules/_shared/InplaceVolumes/deltaEnsembleWarnings";
 import { FLUID_SPECIFIC_RESULT_NAMES, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import { filterAtom } from "../atoms/baseAtoms";
 import { indicesWithValuesAtom } from "../atoms/derivedAtoms";
@@ -31,7 +31,7 @@ export function useMakeViewStatusWriterMessages(
     const indicesWithValues = useAtomValue(indicesWithValuesAtom);
     const filter = useAtomValue(filterAtom);
 
-    usePropagateAllApiErrorsToStatusWriter(queriesResult.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(queriesResult.errors, statusWriter);
 
     for (const elm of indicesWithValues) {
         if (elm.values.length === 0) {

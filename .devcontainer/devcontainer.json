@@ -1,19 +1,31 @@
 {
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "moby": false
     },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "24"
+    },
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.13"
     },
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "24"
-    }
+    "ghcr.io/devcontainers/features/desktop-lite:1": {}
   },
+  "containerEnv": {
+    "VNC_RESOLUTION": "1920x1080",
+    "VNC_DPI": "96"
+  },
+  "updateContentCommand": "bash .devcontainer/update_content.sh",
+  "postCreateCommand": "if [ ! -f .env ]; then printf 'AZURE_TENANT_ID=3aa4a235-b6e2-48d5-9195-7fcf05b459b0\\nAZURE_CLIENT_ID=6e4f6e15-5b73-40e7-835e-f563fabd604a\\n' > .env; fi",
+  "waitFor": "updateContentCommand",
+  "forwardPorts": [6080],
   "hostRequirements": {
     "cpus": 4,
-    "memory": "8gb"
+    "memory": "8gb",
+    "storage": "64gb"
   },
   "otherPortsAttributes": {
     "onAutoForward": "silent"
@@ -28,6 +40,9 @@
   "portsAttributes": {
     "8080": {
       "label": "Development server"
+    },
+    "6080": {
+      "label": "noVNC desktop"
     }
   }
 }

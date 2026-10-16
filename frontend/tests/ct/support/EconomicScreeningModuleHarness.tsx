@@ -82,6 +82,7 @@ const ENSEMBLE_SET = new EnsembleSet([ENSEMBLE]);
 function makeWorkbenchSession(): WorkbenchSession {
     const delegate = new PublishSubscribeDelegate();
     const realizationFilterSet = {
+        hasRealizationFilterForEnsembleIdent: () => true,
         getRealizationFilterForEnsembleIdent: () => ({ getFilteredRealizations: () => HARNESS_REALIZATIONS }),
     };
     return {
@@ -181,10 +182,11 @@ export function EconomicScreeningModuleHarness(props: EconomicScreeningModuleHar
             filtered === null
                 ? null
                 : {
-                    filterSet: {
-                        getRealizationFilterForEnsembleIdent: () => ({ getFilteredRealizations: () => filtered }),
-                    } as unknown as RealizationFilterSet,
-                },
+                      filterSet: {
+                          hasRealizationFilterForEnsembleIdent: () => true,
+                          getRealizationFilterForEnsembleIdent: () => ({ getFilteredRealizations: () => filtered }),
+                      } as unknown as RealizationFilterSet,
+                  },
         );
     }, [store, filterKey]);
 

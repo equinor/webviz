@@ -29,6 +29,7 @@ services:
       - AZURE_TENANT_ID
       - AZURE_CLIENT_ID
       - AZURE_CLIENT_SECRET
+      - WEBVIZ_LOCAL_DEVELOPER_QUALIFIER
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
       - WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
       - WEBVIZ_SUMO_ENV
@@ -36,6 +37,7 @@ services:
       - WEBVIZ_PSEUDONYM_HMAC_KEY
       - WEBVIZ_SESSION_STORE_FERNET_KEY
       - WEBVIZ_REDIS_AUTH_STORE_PASSWORD
+      - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
       - WEBVIZ_REDIS_CACHE_PASSWORD
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
@@ -106,3 +108,26 @@ services:
     user: "999:999"
     # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
     command: ["--maxmemory", "1gb", "--maxmemory-policy", "allkeys-lru", "--loglevel", "notice"]
+
+  pyworker-default:
+    build:
+      context: .
+      dockerfile: ./backend_py/pyworker/Dockerfile
+    environment:
+      - AZURE_TENANT_ID
+      - AZURE_CLIENT_ID
+      - AZURE_CLIENT_SECRET
+      - WEBVIZ_LOCAL_DEVELOPER_QUALIFIER
+      - WEBVIZ_SUMO_ENV
+      - WEBVIZ_REDIS_CACHE_PASSWORD
+      - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
+      - WEBVIZ_PYWORKER_SERVICE_BUS_QUEUE_ROLE=default
+      - WEBVIZ_PYWORKER_MAX_CONCURRENT_TASKS=1
+      - APPLICATIONINSIGHTS_CONNECTION_STRING
+    volumes:
+      - ./backend_py/pyworker/src:/home/appuser/backend_py/pyworker/src
+      - ./backend_py/libs:/home/appuser/backend_py/libs
+    command: ["watchfiles", "python -m pyworker.worker_main", "/home/appuser/backend_py/pyworker/src"]
+    #command: ["python", "-m", "pyworker.worker_main"]
+    #restart: on-failure
+    restart: always

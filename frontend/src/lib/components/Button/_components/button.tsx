@@ -59,6 +59,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             {...baseProps}
             {...getDataAttributesForSelectableSize(size, true)}
             ref={ref}
+            disabled={defaultedProps.disabled}
             data-pressed={defaultedProps.pressed ? "" : undefined}
             className={resolveClassNames(baseProps.className, resolveButtonClassNames(size, defaultedProps))}
             style={{

@@ -1,11 +1,13 @@
 import React from "react";
 
+import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { PersistenceOrchestrator } from "@framework/internal/persistence/core/PersistenceOrchestrator";
 import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/core/PersistenceOrchestrator";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
+import { useActiveDashboard } from "../ActiveDashboardBoundary";
 import { useActiveSession } from "../ActiveSessionBoundary";
 
 const DEFAULT_DOCUMENT_TITLE = "Webviz | FMU results visualization";
@@ -17,7 +19,7 @@ function getFaviconLinkElement(): HTMLLinkElement | null {
     return document.querySelector<HTMLLinkElement>('link[rel="icon"]');
 }
 
-function useDocumentTitleAndFaviconSync(sessionTitle: string, faviconHref: string): void {
+function useDocumentTitleAndFaviconSync(title: string, faviconHref: string): void {
     // Captured once, synchronously during the first render (before any effect below can
     // overwrite them), so unmounting restores whatever title/favicon was actually in place
     // rather than a hard-coded value that can drift from index.html's real defaults.
@@ -28,9 +30,9 @@ function useDocumentTitleAndFaviconSync(sessionTitle: string, faviconHref: strin
 
     React.useEffect(
         function updateDocumentTitle() {
-            document.title = `${sessionTitle} | Webviz`;
+            document.title = `${title} | Webviz`;
         },
-        [sessionTitle],
+        [title],
     );
 
     React.useEffect(
@@ -88,9 +90,14 @@ export function DocumentTitleSync(props: DocumentTitleSyncProps): React.ReactNod
 
 function SnapshotDocumentTitleSync(): null {
     const activeSession = useActiveSession();
+    const activeDashboard = useActiveDashboard();
     const sessionMetadata = usePublishSubscribeTopicValue(activeSession, PrivateWorkbenchSessionTopic.METADATA);
+    const dashboardMetadata = usePublishSubscribeTopicValue(activeDashboard, DashboardTopic.METADATA);
 
-    useDocumentTitleAndFaviconSync(`${sessionMetadata.title} (snapshot)`, FAVICON_HREF_SNAPSHOT);
+    useDocumentTitleAndFaviconSync(
+        `${dashboardMetadata.name} - ${sessionMetadata.title} (snapshot)`,
+        FAVICON_HREF_SNAPSHOT,
+    );
 
     return null;
 }
@@ -101,7 +108,9 @@ type SessionDocumentTitleSyncProps = {
 
 function SessionDocumentTitleSync(props: SessionDocumentTitleSyncProps): null {
     const activeSession = useActiveSession();
+    const activeDashboard = useActiveDashboard();
     const sessionMetadata = usePublishSubscribeTopicValue(activeSession, PrivateWorkbenchSessionTopic.METADATA);
+    const dashboardMetadata = usePublishSubscribeTopicValue(activeDashboard, DashboardTopic.METADATA);
     const isPersisted = usePublishSubscribeTopicValue(activeSession, PrivateWorkbenchSessionTopic.IS_PERSISTED);
     const persistenceInfo = usePublishSubscribeTopicValue(
         props.persistenceOrchestrator,
@@ -110,7 +119,10 @@ function SessionDocumentTitleSync(props: SessionDocumentTitleSyncProps): null {
 
     const hasChanges = (persistenceInfo.hasChanges && persistenceInfo.lastPersistedMs !== null) || !isPersisted;
 
-    useDocumentTitleAndFaviconSync(sessionMetadata.title, hasChanges ? FAVICON_HREF_UNSAVED : FAVICON_HREF_DEFAULT);
+    useDocumentTitleAndFaviconSync(
+        `${dashboardMetadata.name} - ${sessionMetadata.title}`,
+        hasChanges ? FAVICON_HREF_UNSAVED : FAVICON_HREF_DEFAULT,
+    );
 
     return null;
 }

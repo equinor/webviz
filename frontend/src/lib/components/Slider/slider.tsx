@@ -192,6 +192,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
 
     if (defaultedProps.min > defaultedProps.max) throw new Error("Slider min cannot be greater than max");
 
+    // eslint-disable-next-line @eslint-react/naming-convention-ref-name
     const inputRefs = [React.useRef<HTMLInputElement | null>(null), React.useRef<HTMLInputElement | null>(null)];
 
     const wrapperRef = React.useRef<HTMLDivElement>(null);
@@ -222,7 +223,9 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
             .value();
     }, [defaultedProps.markers, defaultedProps.max, defaultedProps.min]);
 
-    const isDualSlider = Array.isArray(internalValue);
+    // Prioritize the controlled value if possible
+    const activeValue = props.value ?? internalValue;
+    const isDualSlider = Array.isArray(activeValue);
 
     const { minLocked, maxLocked, setMinLocked, setMaxLocked } = useLockState({
         isDualSlider,
@@ -271,6 +274,8 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
 
     const updateValue = React.useCallback(
         function updateValue(newValue: number | number[], eventDetails: SliderChangeEventDetails, commit?: boolean) {
+            // Rule gets flagged by the clamp-value use-effect below.
+            // eslint-disable-next-line @eslint-react/set-state-in-effect
             setInternalValue(newValue);
 
             onValueChange?.(newValue, eventDetails);
@@ -280,7 +285,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
     );
 
     useLockedValueUpdate({
-        value: internalValue,
+        value: activeValue,
         min: defaultedProps.min,
         max: defaultedProps.max,
         minLocked,
@@ -289,7 +294,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
     });
 
     useUnlockOnValueChange({
-        value: internalValue,
+        value: activeValue,
         min: defaultedProps.min,
         max: defaultedProps.max,
         minLocked,
@@ -299,38 +304,38 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
     });
 
     function onValueChangeInternal(newValue: number | number[], eventDetails: SliderBase.Root.ChangeEventDetails) {
-        const activeValue = isDualSliderValue(newValue) ? newValue[eventDetails.activeThumbIndex] : newValue;
-        const prevActiveValue = isDualSliderValue(internalValue)
-            ? internalValue[eventDetails.activeThumbIndex]
-            : internalValue;
+        const thumbValue = isDualSliderValue(newValue) ? newValue[eventDetails.activeThumbIndex] : newValue;
+        const prevThumbValue = isDualSliderValue(activeValue)
+            ? activeValue[eventDetails.activeThumbIndex]
+            : activeValue;
 
         if (isDualSliderValue(newValue)) {
-            if (eventDetails.activeThumbIndex === 0 && activeValue > defaultedProps.min) {
+            if (eventDetails.activeThumbIndex === 0 && thumbValue > defaultedProps.min) {
                 setMinLocked(false);
-            } else if (eventDetails.activeThumbIndex === 1 && activeValue < defaultedProps.max) {
+            } else if (eventDetails.activeThumbIndex === 1 && thumbValue < defaultedProps.max) {
                 setMaxLocked(false);
             }
         } else {
-            if (activeValue > defaultedProps.min) {
+            if (thumbValue > defaultedProps.min) {
                 setMinLocked(false);
             }
-            if (activeValue < defaultedProps.max) {
+            if (thumbValue < defaultedProps.max) {
                 setMaxLocked(false);
             }
         }
 
-        if (defaultedProps.snapToMarkers && !allMarkers.includes(activeValue)) {
+        if (defaultedProps.snapToMarkers && !allMarkers.includes(thumbValue)) {
             let snapTarget: SnapTarget = "nearest";
 
             // For keyboard movement, we should always go a new marker marker
             if (eventDetails.reason === "keyboard") {
-                snapTarget = prevActiveValue - activeValue < 0 ? "next" : "prev";
+                snapTarget = prevThumbValue - thumbValue < 0 ? "next" : "prev";
             }
 
             const snappedValue = getSnappedValue(allMarkers, newValue, snapTarget);
 
             // Only apply the snapped value if necessary
-            if (!isEqual(snappedValue, internalValue)) {
+            if (!isEqual(snappedValue, activeValue)) {
                 updateValue(snappedValue, eventDetails);
             }
         } else {
@@ -341,7 +346,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
     const showThumbValueLabels = defaultedProps.valueLabelDisplay === "auto" && (isHovered || isFocused);
 
     const [valueToClamp, setValueToClamp] = React.useState<null | number | number[]>(null);
-    let clampedValue = isDualSlider ? clone(internalValue as number[]) : ([internalValue, internalValue] as number[]);
+    let clampedValue = isDualSlider ? clone(activeValue as number[]) : ([activeValue, activeValue] as number[]);
 
     if (prevMin !== defaultedProps.min || prevMax !== defaultedProps.max) {
         setPrevMin(defaultedProps.min);
@@ -359,12 +364,18 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
             clampedValue[1] = defaultedProps.max;
         }
 
-        setValueToClamp(isDualSlider ? clampedValue : clampedValue[0]);
+        const newValue = isDualSlider ? clampedValue : clampedValue[0];
+
+        if (!isEqual(newValue, activeValue)) {
+            setValueToClamp(isDualSlider ? clampedValue : clampedValue[0]);
+        }
     }
 
     React.useEffect(() => {
         if (valueToClamp !== null) {
             updateValue(valueToClamp, { reason: "clamp-value" }, true);
+            // This effect should only trigger on a small set of prop changes, and there's isn't a simple way to avoid setting state here.
+            // eslint-disable-next-line @eslint-react/set-state-in-effect
             setValueToClamp(null);
         }
     }, [updateValue, valueToClamp]);
@@ -374,7 +385,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
             {...baseProps}
             className={resolveClassNames(baseProps.className, "px-2xs grid items-center")}
             ref={wrapperRef}
-            value={internalValue}
+            value={activeValue}
             onValueChange={onValueChangeInternal}
             style={
                 {
@@ -479,7 +490,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                 index={0}
                                 size={componentSize}
                                 showValue={showThumbValueLabels}
-                                sliderValue={internalValue}
+                                sliderValue={activeValue}
                                 inputRefs={inputRefs}
                                 disabled={state.disabled}
                                 min={defaultedProps.min}
@@ -498,7 +509,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                 index={1}
                                 size={componentSize}
                                 showValue={showThumbValueLabels}
-                                sliderValue={internalValue}
+                                sliderValue={activeValue}
                                 inputRefs={inputRefs}
                                 disabled={state.disabled}
                                 min={defaultedProps.min}
@@ -515,10 +526,10 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
 
                             {allMarkers.map((v, i) => (
                                 <Marker
+                                    key={v} // value should be unique
                                     // We always keep the min and max markers as dots
                                     variant={i !== 0 && i !== allMarkers.length - 1 ? activeMarkerVariant : "dot"}
                                     leftPosPercent={getMarkerPercentage(v, defaultedProps.min, defaultedProps.max)}
-                                    key={i}
                                 />
                             ))}
                         </SliderBase.Track>
@@ -559,7 +570,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                         >
                             {allMarkers.map((v, i) => (
                                 <MarkerLabel
-                                    key={i}
+                                    key={v} // Value should be unique
                                     leftPosPercent={getMarkerPercentage(v, defaultedProps.min, defaultedProps.max)}
                                     value={v}
                                     index={i}
@@ -568,15 +579,15 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                     disabled={props.disabled}
                                     labelFormat={markerLabelFormatFunc}
                                     onClick={(v) => {
-                                        if (!isDualSliderValue(internalValue)) {
+                                        if (!isDualSliderValue(activeValue)) {
                                             updateValue(v, { reason: "marker-clicked" }, true);
                                             inputRefs[0].current?.focus();
                                         } else {
                                             const nearestThumbIndex = minBy([0, 1], (idx) =>
-                                                Math.abs(internalValue[idx] - v),
+                                                Math.abs(activeValue[idx] - v),
                                             )!;
 
-                                            const newValue = [...internalValue];
+                                            const newValue = [...activeValue];
                                             newValue[nearestThumbIndex] = v;
 
                                             updateValue(newValue, { reason: "marker-clicked" }, true);

@@ -12,6 +12,8 @@ export type DropZoneProps = {
 export const NoDropZone = React.forwardRef<HTMLElement, DropZoneProps>(
     function NoDropZone(props, externalRef): React.ReactElement {
         const { registerNoDropZoneElement, unregisterNoDropZoneElement } = React.useContext(SortableListContext);
+
+        // eslint-disable-next-line @eslint-react/no-children-only -- Special use case to inject data attribute
         const only = React.Children.only(props.children) as React.ReactElement;
 
         const noDropZoneElementRef = React.useRef<HTMLElement | null>(null);
@@ -46,6 +48,7 @@ export const NoDropZone = React.forwardRef<HTMLElement, DropZoneProps>(
 
         return (
             <>
+                {/* eslint-disable-next-line @eslint-react/no-clone-element -- Special use case to inject data attribute */}
                 {React.cloneElement(only, {
                     ref: mergedRef,
                     "data-sortable": "noDropZone",

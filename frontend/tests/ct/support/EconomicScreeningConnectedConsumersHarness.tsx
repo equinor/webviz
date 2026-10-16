@@ -185,6 +185,7 @@ export type HarnessObservation = { t: number; event: string; keys?: number };
 function makeWorkbenchSession(): WorkbenchSession {
     const delegate = new PublishSubscribeDelegate();
     const realizationFilterSet = {
+        hasRealizationFilterForEnsembleIdent: () => true,
         getRealizationFilterForEnsembleIdent: (ident: { toString(): string }) => ({
             getFilteredRealizations: () =>
                 Object.values(ENSEMBLES)
@@ -367,6 +368,7 @@ export function EconomicScreeningConnectedConsumersHarness(props: ConnectedConsu
                 ? null
                 : {
                       filterSet: {
+                          hasRealizationFilterForEnsembleIdent: () => true,
                           getRealizationFilterForEnsembleIdent: () => ({ getFilteredRealizations: () => filtered }),
                       } as unknown as RealizationFilterSet,
                   },

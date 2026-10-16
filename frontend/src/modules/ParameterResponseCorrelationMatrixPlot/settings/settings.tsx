@@ -20,7 +20,7 @@ import {
     hideIndividualCellsAtom,
     plotTypeAtom,
     showLabelsAtom,
-    useFixedColorRangeAtom,
+    fixedColorRangeEnabledAtom,
     receivedChannelAtom,
     selectedParameterIdentsAtom,
 } from "./atoms/baseAtoms";
@@ -45,7 +45,7 @@ export function Settings({ settingsContext }: ModuleSettingsProps<Interfaces>) {
     const [parameterIdents, setParameterIdents] = useAtom(selectedParameterIdentsAtom);
     const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
-    const [useFixedColorRange, setUseFixedColorRange] = useAtom(useFixedColorRangeAtom);
+    const [useFixedColorRange, setUseFixedColorRange] = useAtom(fixedColorRangeEnabledAtom);
     const setReceivedChannel = useSetAtom(receivedChannelAtom);
     const availableParameterIdents = useAtomValue(availableParameterIdentsAtom);
     const [correlationThreshold, setCorrelationThreshold] = useAtom(correlationThresholdAtom);
@@ -73,7 +73,7 @@ export function Settings({ settingsContext }: ModuleSettingsProps<Interfaces>) {
         function updateReceivedChannel() {
             setReceivedChannel(receiverResponses);
         }, // We only want to listen to revision number changes, but we need the whole channel response to set it
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line @eslint-react/exhaustive-deps
         [
             receiverResponse.revisionNumber,
             receiverResponse2.revisionNumber,

@@ -25,6 +25,8 @@ export function DropIndicatorOverlay(props: DropIndicatorOverlayProps): React.Re
             const hoveredArea = props.hovered?.area;
 
             if (!containerEl || !scrollEl || !hoveredId || !hoveredArea) {
+                // Safety hatch  needed for missing values.
+                // eslint-disable-next-line @eslint-react/set-state-in-effect
                 setGeometry(null);
                 prevGeometryRef.current = null;
                 return;

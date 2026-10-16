@@ -1,5 +1,7 @@
 import React from "react";
 
+import { isEqual } from "lodash-es";
+
 import { ModuleDevState } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 
@@ -31,14 +33,15 @@ export function useModuleWarning(moduleInstance: ModuleInstance<any, any> | null
     const storageKey = moduleInstance ? `module-warning-dismissed-${moduleInstance.getId()}` : null;
     const warningText = useModuleWarningText(moduleInstance);
 
-    const [isDismissed, setIsDismissed] = React.useState(!!storageKey && localStorage.getItem(storageKey) === "true");
-
-    React.useEffect(
-        function initializeDismissedState() {
-            setIsDismissed(!!storageKey && localStorage.getItem(storageKey) === "true");
-        },
-        [storageKey],
+    const [prevStorageKey, setPrevStorageKey] = React.useState(storageKey);
+    const [isDismissed, setIsDismissed] = React.useState(
+        () => !!storageKey && localStorage.getItem(storageKey) === "true",
     );
+
+    if (!isEqual(storageKey, prevStorageKey)) {
+        setPrevStorageKey(storageKey);
+        setIsDismissed(() => !!storageKey && localStorage.getItem(storageKey) === "true");
+    }
 
     const dismissWarning = React.useCallback(
         function dismissWarning() {

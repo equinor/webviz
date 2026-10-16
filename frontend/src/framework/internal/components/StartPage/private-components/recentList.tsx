@@ -42,15 +42,9 @@ export function RecentList<TItemType, TQueryData = unknown>(
 
     const isFirstTimeFetching = itemsQuery.status === "pending" || lastUpdatedMs === null;
 
-    // Update lastUpdatedMs when query succeeds
-    React.useEffect(
-        function updateLastUpdatedTime() {
-            if (itemsQuery.isSuccess && itemsQuery.dataUpdatedAt > (lastUpdatedMs ?? 0)) {
-                setLastUpdatedMs(itemsQuery.dataUpdatedAt);
-            }
-        },
-        [itemsQuery.isSuccess, itemsQuery.dataUpdatedAt, lastUpdatedMs],
-    );
+    if (itemsQuery.isSuccess && itemsQuery.dataUpdatedAt > (lastUpdatedMs ?? 0)) {
+        setLastUpdatedMs(itemsQuery.dataUpdatedAt);
+    }
 
     function makeContent() {
         if (isFirstTimeFetching) {

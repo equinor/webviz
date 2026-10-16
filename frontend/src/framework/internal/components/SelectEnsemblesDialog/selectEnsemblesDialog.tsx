@@ -49,8 +49,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const [showEnsemblesLoadingErrorDialog, setShowEnsemblesLoadingErrorDialog] = React.useState(false);
 
     // States for ensemble explorer mode and delta ensemble editing
+    /* eslint-disable @eslint-react/use-state -- The full objects are being passed as is in hooks further down  */
     const ensembleExplorerModeState = React.useState<EnsembleExplorerMode | null>(null);
     const deltaEnsembleUuidToEditState = React.useState<string>("");
+    /* eslint-enable @eslint-react/use-state */
 
     // Gui states
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.EnsembleDialogOpen);
@@ -67,11 +69,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const dialogSizePercent = useResponsiveDialogSizePercent();
 
     // Set has opened flag when opening the ensemble explorer for the first time after dialog open
-    React.useEffect(() => {
-        if (isOpen && showEnsembleExplorer && !hasExplorerBeenOpened) {
-            setHasExplorerBeenOpened(true);
-        }
-    }, [isOpen, showEnsembleExplorer, hasExplorerBeenOpened]);
+    if (isOpen && showEnsembleExplorer && !hasExplorerBeenOpened) {
+        setHasExplorerBeenOpened(true);
+    }
 
     // Custom hook for state management, will reset states when ensemble set changes
     const {
@@ -92,16 +92,23 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const hasUnappliedChanges = currentHash !== ensembleSetHash;
 
     // Dialog confirmation actions
-    const handleClose = React.useCallback(
-        function handleClose() {
-            resetStatesFromEnsembleSet();
+    const closeDialog = React.useCallback(
+        function closeDialog() {
             setIsOpen(false);
             setShowEnsembleExplorer(false);
             setHasExplorerBeenOpened(false);
             setShowCancelDialog(false);
             setShowEnsemblesLoadingErrorDialog(false);
         },
-        [resetStatesFromEnsembleSet, setIsOpen],
+        [setIsOpen],
+    );
+
+    const handleClose = React.useCallback(
+        function handleClose() {
+            resetStatesFromEnsembleSet();
+            closeDialog();
+        },
+        [resetStatesFromEnsembleSet, closeDialog],
     );
 
     const handleCancel = React.useCallback(
@@ -141,7 +148,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 guiMessageBroker.setState(GuiState.EnsemblesLoadingWarningInfoMap, warningInfoMap);
                 guiMessageBroker.setState(GuiState.EnsembleLoadingWarningInfoDialogOpen, true);
             },
-            onSuccess: handleClose,
+            // Don't reset here: this callback is stale, and useEnsembleStateSync resyncs on the new set
+            onSuccess: closeDialog,
         });
 
     const handleFormSubmit = React.useCallback(

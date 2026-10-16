@@ -21,7 +21,7 @@ export type PolylinesLayerProps = ExtendedLayerProps & {
     hoverable?: boolean;
 };
 
-export type PolylinesLayerPickingInfo = PickingInfo & {
+export type PolylinesLayerPickingInfo = PickingInfo<Polyline> & {
     polylineId?: string;
     name?: string;
     coordinates?: number[];

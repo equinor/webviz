@@ -85,12 +85,38 @@ class InitialFluidContactSurfaceMeta(BaseModel):
     value_max: float | None
 
 
+class TagNameAttribute(BaseModel):
+    """Identifies a surface by the free text tagname it was exported with."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: Literal["TAGNAME"]
+    tag_name: str
+
+
+class StdResAttribute(BaseModel):
+    """Identifies a surface by the FMU standard result it belongs to.
+
+    sub_name discriminates between surfaces within a standard result, e.g. the contact
+    type for fluid_contact_surface. It is None for standard results that do not need it.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: Literal["STDRES"]
+    std_res_name: SurfaceStandardResult
+    sub_name: str | None = None
+
+
+SurfaceAttribute = Annotated[TagNameAttribute | StdResAttribute, Field(discriminator="kind")]
+
+
 class SurfaceMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str  # Svarte fm. top / Svarte fm. / Svarte fm. base
     name_is_stratigraphic_offical: bool
-    attribute_name: str
+    attribute: SurfaceAttribute
     attribute_type: SurfaceAttributeType
     time_type: SurfaceTimeType
     is_observation: bool  # Can only be true for seismic surfaces

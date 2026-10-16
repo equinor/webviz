@@ -16,9 +16,41 @@ import type {
     InplaceVolumesStatisticalTableData,
     InplaceVolumesTableData,
 } from "@modules/_shared/InplaceVolumes/types";
+import { InplaceVolumesStatisticEnumToStringMapping } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
-import type { TableColumnsConfig, TableRow } from "../types";
+import type { TableColumnsConfig, TableHeading, TableRow } from "../types";
+
+export type LeafColumn = {
+    /** Row property key for this leaf (e.g. "ZONE" or "STOIIP-Mean") */
+    key: string;
+    heading: TableHeading;
+    /** Labels from the top-level heading down to the leaf, e.g. ["STOIIP", "Mean"] */
+    labelPath: string[];
+};
+
+/**
+ * Flattens a `TableColumnsConfig` into ordered leaf columns, retaining the heading path.
+ * Preserves `Object.entries` insertion order at every level (on-screen column order).
+ */
+export function collectLeafColumns(columnsConfig: TableColumnsConfig): LeafColumn[] {
+    const leafColumns: LeafColumn[] = [];
+
+    function collectRecursive(heading: TableHeading, key: string, parentLabels: string[]) {
+        const labelPath = [...parentLabels, heading.label];
+        if (heading.subHeading) {
+            Object.entries(heading.subHeading).forEach(([subKey, subHeading]) =>
+                collectRecursive(subHeading, subKey, labelPath),
+            );
+        } else {
+            leafColumns.push({ key, heading, labelPath });
+        }
+    }
+
+    Object.entries(columnsConfig).forEach(([key, heading]) => collectRecursive(heading, key, []));
+
+    return leafColumns;
+}
 
 /**
  * Sorts rows by non-result columns in heading order. Index columns use the preferred category order;
@@ -66,7 +98,6 @@ export function createTableHeadingsAndRowsFromTablesData(tablesData: InplaceVolu
             columnType: column.getType(),
             label: column.getName(),
             hoverText: createHoverTextForVolume(column.getName()),
-            sizeInPercent: 100 / dataTable.getNumColumns(),
         };
     }
 
@@ -92,20 +123,11 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
     const nonStatisticalColumns = columnData.nonStatisticalColumns;
     const resultStatisticalColumns = columnData.resultStatisticalColumns;
 
-    const numNonStatisticalColumns = nonStatisticalColumns.length;
-    const numStatisticalResultColumns = resultStatisticalColumns.size;
-    const numStatisticOptions = statisticOptions.length;
-
-    // Give non-statistical columns a total width of 40%
-    const nonStatisticalColumnSizePercentage = 40;
-    const statisticalColumnSizePercentage = 100 - nonStatisticalColumnSizePercentage;
-
     // Headings for non-statistical columns
     for (const column of nonStatisticalColumns) {
         tableHeadings[column.getName()] = {
             label: column.getName(),
             columnType: column.getType(),
-            sizeInPercent: nonStatisticalColumnSizePercentage / numNonStatisticalColumns,
         };
     }
 
@@ -133,20 +155,17 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
 
         const subHeading: TableColumnsConfig = {};
         resultStatisticalTable.getColumns().forEach((column) => {
-            const columnSize = 100 / numStatisticOptions; // Size relative to parent heading (i.e. resultName)
             const columnId = `${resultName}-${column.getName()}`;
             subHeading[columnId] = {
                 label: column.getName(),
                 columnType: column.getType(),
                 hoverText: `${column.getName()} - ${resultHoverText}`,
-                sizeInPercent: columnSize,
             };
         });
 
         tableHeadings[resultName] = {
             label: resultName,
             hoverText: resultHoverText,
-            sizeInPercent: statisticalColumnSizePercentage / numStatisticalResultColumns,
             subHeading: subHeading,
         };
 
@@ -174,6 +193,85 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
 
     return { headings: tableHeadings, rows: tableRows };
 }
+
+export const RESPONSE_COLUMN_KEY = "RESPONSE";
+
+/** Row key for a statistic column in the responses-as-rows layout; distinct from any selector column name. */
+export function makeStatisticColumnKey(statisticLabel: string): string {
+    return `STATISTIC:${statisticLabel}`;
+}
+
+/**
+ * Long-format statistical table: identifier columns, then RESPONSE, then one column per statistic.
+ * Each base row is repeated once per response, in `sortResultNameStrings` order.
+ */
+export function createStatisticalResponsesAsRowsHeadingsAndRowsFromTablesData(
+    tablesData: InplaceVolumesStatisticalTableData[],
+    orderedStatistics: InplaceVolumesStatistic_api[],
+): {
+    headings: TableColumnsConfig;
+    rows: TableRow<any>[];
+} {
+    const tableHeadings: TableColumnsConfig = {};
+    const tableRows: TableRow<any>[] = [];
+
+    const columnData = makeStatisticalTableColumnDataFromApiData(tablesData, orderedStatistics);
+
+    for (const column of columnData.nonStatisticalColumns) {
+        if (column.getName() === RESPONSE_COLUMN_KEY) {
+            throw new Error(`Identifier column name "${RESPONSE_COLUMN_KEY}" collides with the response column.`);
+        }
+        tableHeadings[column.getName()] = {
+            label: column.getName(),
+            columnType: column.getType(),
+        };
+    }
+
+    tableHeadings[RESPONSE_COLUMN_KEY] = { label: RESPONSE_COLUMN_KEY, columnType: ColumnType.INDEX };
+
+    const statisticLabels = orderedStatistics.map((statistic) => InplaceVolumesStatisticEnumToStringMapping[statistic]);
+    const statisticKeys = statisticLabels.map(makeStatisticColumnKey);
+    statisticLabels.forEach((statisticLabel, index) => {
+        tableHeadings[statisticKeys[index]] = {
+            label: statisticLabel,
+            columnType: ColumnType.RESULT,
+        };
+    });
+
+    const baseRows = new Table(columnData.nonStatisticalColumns).getRows();
+    const numberOfRows = baseRows.length;
+
+    const sortedResultNames = sortResultNameStrings(Array.from(columnData.resultStatisticalColumns.keys()));
+    const statisticColumnsByResult = sortedResultNames.map((resultName) => {
+        const statisticalColumns = columnData.resultStatisticalColumns.get(resultName);
+        if (!statisticalColumns) {
+            throw new Error(`Statistical columns for result ${resultName} not found.`);
+        }
+
+        const numResultRows = Object.values(statisticalColumns)[0]?.getNumRows() ?? 0;
+        if (numResultRows > 0 && numResultRows !== numberOfRows) {
+            throw new Error(
+                "Number of rows in statistical table does not match the number of rows in the non-statistical table.",
+            );
+        }
+
+        return { resultName, statisticalColumns, hasRows: numResultRows > 0 };
+    });
+
+    for (let i = 0; i < numberOfRows; i++) {
+        for (const { resultName, statisticalColumns, hasRows } of statisticColumnsByResult) {
+            const row: TableRow<any> = { __id: v4(), ...baseRows[i], [RESPONSE_COLUMN_KEY]: resultName };
+            orderedStatistics.forEach((statistic, index) => {
+                const column = statisticalColumns[statistic];
+                row[statisticKeys[index]] = hasRows && column ? (column.getRowValue(i) ?? null) : null;
+            });
+            tableRows.push(row);
+        }
+    }
+
+    return { headings: tableHeadings, rows: tableRows };
+}
+
 export function isValidFluidType(type: string): type is keyof typeof PHASE_COLORS {
     return type in PHASE_COLORS;
 }

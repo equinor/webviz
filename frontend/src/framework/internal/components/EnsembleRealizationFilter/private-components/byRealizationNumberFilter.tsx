@@ -40,12 +40,12 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
         readonly RealizationNumberSelection[] | null
     >(props.realizationNumberSelections);
 
-    const [initialRangeTags, setInitialRangeTags] = React.useState<string[]>(
+    const [initialRangeTags, setInitialRangeTags] = React.useState<string[]>(() =>
         props.initialRealizationNumberSelections
             ? makeRealizationPickerTagsFromRealizationNumberSelections(props.initialRealizationNumberSelections)
             : [],
     );
-    const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>(
+    const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>(() =>
         props.realizationNumberSelections
             ? makeRealizationPickerTagsFromRealizationNumberSelections(props.realizationNumberSelections)
             : [],

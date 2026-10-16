@@ -114,8 +114,8 @@ export function computeInternalRateOfReturnFromEvents(events: TimedCashFlowEvent
 
     let low = IRR_LOWER_BOUND;
     let high = IRR_UPPER_BOUND;
-    let npvLow = npvAtRate(low);
-    let npvHigh = npvAtRate(high);
+    const npvLow = npvAtRate(low);
+    const npvHigh = npvAtRate(high);
 
     const npvLowSign = Number.isFinite(npvLow) ? npvLow : npvSignAtRate(low);
     const npvHighSign = Number.isFinite(npvHigh) ? npvHigh : npvSignAtRate(high);
@@ -135,7 +135,6 @@ export function computeInternalRateOfReturnFromEvents(events: TimedCashFlowEvent
             const npvTestSign = Number.isFinite(npvTest) ? npvTest : npvSignAtRate(testHigh);
             if (npvLowSign * npvTestSign <= 0) {
                 high = testHigh;
-                npvHigh = npvTest;
                 expanded = true;
                 break;
             }
@@ -154,10 +153,8 @@ export function computeInternalRateOfReturnFromEvents(events: TimedCashFlowEvent
         const npvMidSign = Number.isFinite(npvMid) ? npvMid : npvSignAtRate(mid);
         if (npvLowSign * npvMidSign < 0) {
             high = mid;
-            npvHigh = npvMid;
         } else {
             low = mid;
-            npvLow = npvMid;
         }
     }
 

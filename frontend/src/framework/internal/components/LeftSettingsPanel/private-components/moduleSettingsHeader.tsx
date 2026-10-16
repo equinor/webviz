@@ -102,15 +102,18 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
                 </span>
                 {warningText && (
                     <Tooltip content={`Module has warning${highlightWarning ? " (click to view)" : ""}`} delay="medium">
-                        <Button
-                            variant="ghost"
-                            disabled={!highlightWarning}
-                            tone="neutral"
-                            iconOnly
-                            onClick={handleWarningIconClick}
-                        >
-                            <WarningRounded fontSize="inherit" />
-                        </Button>
+                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                        <span>
+                            <Button
+                                variant="ghost"
+                                disabled={!highlightWarning}
+                                tone="neutral"
+                                iconOnly
+                                onClick={handleWarningIconClick}
+                            >
+                                <WarningRounded fontSize="inherit" />
+                            </Button>
+                        </span>
                     </Tooltip>
                 )}
                 <Button

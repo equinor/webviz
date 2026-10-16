@@ -1,6 +1,28 @@
-from webviz_services.sumo_access.vfp_types import VfpProdTable, VfpInjTable
+from webviz_services.sumo_access.vfp_types import VfpProdTable, VfpInjTable, VfpTableInfo, VfpType
 
 from . import schemas
+
+
+def to_api_vfp_type(vfp_type: VfpType) -> schemas.VfpType:
+    """Maps the sumo VFP type (VFPPROD/VFPINJ) to the API VFP type (PROD/INJ)."""
+    if vfp_type == VfpType.VFPPROD:
+        return schemas.VfpType.PROD
+    return schemas.VfpType.INJ
+
+
+def to_sumo_vfp_type(api_vfp_type: schemas.VfpType) -> VfpType:
+    """Maps the API VFP type (PROD/INJ) to the sumo VFP type (VFPPROD/VFPINJ)."""
+    if api_vfp_type == schemas.VfpType.PROD:
+        return VfpType.VFPPROD
+    return VfpType.VFPINJ
+
+
+def to_api_table_info(table_info: VfpTableInfo) -> schemas.VfpTableInfo:
+    """Converts a VFP table info (type and number) from the sumo service to the API format."""
+    return schemas.VfpTableInfo(
+        vfpType=to_api_vfp_type(table_info.vfp_type),
+        tableNumber=table_info.table_number,
+    )
 
 
 def to_api_table_definitions(

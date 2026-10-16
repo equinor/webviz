@@ -22,6 +22,7 @@ export const preview: DrawPreviewFunc = function (width: number, height: number)
             <line x1="12" y1="107" x2="143" y2="107" stroke={GRIDLINE_COLOR} strokeWidth="0.5" />
             {bars.map((bar, index) => (
                 <rect
+                    // eslint-disable-next-line @eslint-react/no-array-index-key -- Stable array
                     key={index}
                     x={bar.x}
                     y={bar.y}

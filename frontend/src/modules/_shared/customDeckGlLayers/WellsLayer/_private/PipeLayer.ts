@@ -256,6 +256,7 @@ export class PipesLayer extends Layer<PipeLayerProps> {
 
             normals[normalsIndex++] = endNormal.x;
             normals[normalsIndex++] = endNormal.y;
+            // eslint-disable-next-line no-useless-assignment -- We'll allow this for index increments
             normals[normalsIndex++] = endNormal.z;
 
             for (let j = 0; j < numVerticesPerContour; j++) {

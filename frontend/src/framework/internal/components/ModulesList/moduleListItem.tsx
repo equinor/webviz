@@ -100,6 +100,7 @@ export function ModulesListItem(props: ModulesListItemProps): React.ReactNode {
             };
 
             function addDraggingEventListeners() {
+                /* eslint-disable @eslint-react/web-api-no-leaked-event-listener -- False positive, removed by removeDraggingEventListeners */
                 document.addEventListener("pointerup", handlePointerUp);
                 document.addEventListener("pointermove", handlePointerMove);
                 document.addEventListener("pointercancel", handlePointerUp);
@@ -113,8 +114,8 @@ export function ModulesListItem(props: ModulesListItemProps): React.ReactNode {
                 document.removeEventListener("blur-sm", handlePointerUp);
             }
 
-            if (ref.current) {
-                ref.current.addEventListener("pointerdown", handlePointerDown);
+            if (refCurrent) {
+                refCurrent.addEventListener("pointerdown", handlePointerDown);
             }
 
             return () => {

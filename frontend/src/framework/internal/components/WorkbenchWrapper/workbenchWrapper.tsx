@@ -18,6 +18,7 @@ import { useGlobalErrorBoundaryContext } from "../../../../GlobalErrorBoundary";
 import { ActionBar } from "../ActionBar/actionBar";
 import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
+import { BottomBar } from "../BottomBar";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
 import { DocumentTitleSync } from "../DocumentTitleSync";
 import { InitialEnsemblesLoadingErrorInfoDialog } from "../InitialEnsemblesLoadingErrorInfoDialog";
@@ -29,6 +30,7 @@ import { SaveSessionDialog } from "../SaveSessionDialog";
 import { SessionErrorDialog } from "../SessionErrorDialog";
 import { StartPage } from "../StartPage/StartPage";
 import { TemplatesDialog } from "../TemplatesDialog/templatesDialog";
+import { TutorialsDialog } from "../TutorialsDialog/tutorialsDialog";
 
 export function WorkbenchWrapper() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -37,7 +39,7 @@ export function WorkbenchWrapper() {
     const queryClient = useQueryClient();
     const { registerActiveWorkbench } = useGlobalErrorBoundaryContext();
 
-    const [workbench] = React.useState(new Workbench(queryClient));
+    const [workbench] = React.useState(() => new Workbench(queryClient));
     const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
     const isSessionLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
     const isSnapshotLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSnapshot);
@@ -96,10 +98,12 @@ export function WorkbenchWrapper() {
                             <RightSideBar workbench={workbench} />
                         </div>
                     </div>
+                    <BottomBar workbench={workbench} />
                 </ActiveDashboardBoundary>
             </ActiveSessionBoundary>
             {content}
             <TemplatesDialog workbench={workbench} />
+            <TutorialsDialog workbench={workbench} />
             <MultiSessionsRecoveryDialog workbench={workbench} />
             <PersistenceManagementDialog workbench={workbench} />
             <SessionErrorDialog workbench={workbench} />

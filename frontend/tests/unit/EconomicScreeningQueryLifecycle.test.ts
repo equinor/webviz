@@ -253,6 +253,7 @@ function makeStore(ensembleSet: EnsembleSet) {
 function makeFilterSet(realizations: number[]): { filterSet: RealizationFilterSet } {
     return {
         filterSet: {
+            hasRealizationFilterForEnsembleIdent: () => true,
             getRealizationFilterForEnsembleIdent: () => ({ getFilteredRealizations: () => realizations }),
         },
     } as unknown as { filterSet: RealizationFilterSet };

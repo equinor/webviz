@@ -133,6 +133,9 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
             case "attribute":
                 groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.dataProviderManager));
                 return;
+            case "depth-attribute":
+                groupDelegate.appendChild(new SharedSetting(Setting.DEPTH_ATTRIBUTE, null, props.dataProviderManager));
+                return;
             case "date":
                 groupDelegate.appendChild(new SharedSetting(Setting.TIME_OR_INTERVAL, null, props.dataProviderManager));
                 return;
@@ -253,6 +256,11 @@ const SHARED_SETTINGS_CHILDREN = [
         identifier: "attribute",
         icon: <Icon data={settings} size={16} />,
         label: "Attribute",
+    },
+    {
+        identifier: "depth-attribute",
+        icon: <Icon data={settings} size={16} />,
+        label: "Depth Attribute",
     },
     {
         identifier: "date",

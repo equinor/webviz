@@ -55,7 +55,7 @@ STD_RES_SUB_NAME_FIELD: dict[SurfaceStandardResult, str] = {
 # pylint: disable=too-many-instance-attributes
 class SurfaceMeta:
     name: str
-    attribute_name: str
+    attribute: SurfaceAttribute
     content: SumoContent
     time_type: SurfTimeType
     is_observation: bool
