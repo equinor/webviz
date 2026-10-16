@@ -31,6 +31,8 @@ import { StaticRotationSetting } from "../implementations/StaticRotationSetting"
 import { StatisticFunctionSetting } from "../implementations/StatisticFunctionSetting";
 import { SurfaceAttributeSetting } from "../implementations/SurfaceAttributeSetting";
 import { TimeOrIntervalSetting } from "../implementations/TimeOrIntervalSetting";
+import { TimePointPairSetting } from "../implementations/TimePointPairSetting";
+import { TimeTypeSetting } from "../implementations/TimeTypeSetting";
 import { WellboreDepthFilterAttributeSetting } from "../implementations/WellboreDepthFilterAttributeSetting";
 import { WellboreDepthFilterSetting } from "../implementations/WellboreDepthFilterSetting";
 import { Setting } from "../settingsDefinitions";
@@ -144,9 +146,11 @@ SettingRegistry.registerSetting(Setting.FORMATION_NAME, "Formation Name", Dropdo
     customConstructorParameters: [{ showBrowseButtons: true }],
 });
 SettingRegistry.registerSetting(Setting.SURFACE_NAMES, "Surface Names", SelectStringSetting);
+SettingRegistry.registerSetting(Setting.TIME_TYPE, "Time Type", TimeTypeSetting);
 SettingRegistry.registerSetting(Setting.TIME_OR_INTERVAL, "Time or Interval", TimeOrIntervalSetting);
 SettingRegistry.registerSetting(Setting.TIME_POINT, "Time Point", TimeOrIntervalSetting);
 SettingRegistry.registerSetting(Setting.TIME_INTERVAL, "Time Interval", TimeOrIntervalSetting);
+SettingRegistry.registerSetting(Setting.TIME_POINT_PAIR, "Time Steps", TimePointPairSetting);
 
 SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Wellbore Picks", DrilledWellborePicksSetting);
 SettingRegistry.registerSetting(Setting.REPRESENTATION, "Representation", RepresentationSetting);
