@@ -2,7 +2,10 @@ import { Table } from "@lib/components/Table";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 import { EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
 import type { BreakEvenTargetCount } from "@modules/EconomicScreening/utils/distributionAggregation";
-import { computeDistributionSummary, countValuesAboveThreshold } from "@modules/EconomicScreening/utils/distributionAggregation";
+import {
+    computeDistributionSummary,
+    countValuesAboveThreshold,
+} from "@modules/EconomicScreening/utils/distributionAggregation";
 import type { MeasureValues } from "@modules/EconomicScreening/utils/measureAccessors";
 import {
     getMeasureDisplayName,
@@ -60,13 +63,17 @@ export function ResultsStatisticsTable(props: ResultsStatisticsTableProps): Reac
                                 <Table.Cell>{formatStatistic(summary.p90, displayScale.factor)}</Table.Cell>
                                 <Table.Cell>{formatStatistic(summary.median, displayScale.factor)}</Table.Cell>
                                 <Table.Cell>{formatStatistic(summary.p10, displayScale.factor)}</Table.Cell>
-                                <Table.Cell title={`${summary.count} valid of ${props.results.length} selected realizations`}>
+                                <Table.Cell
+                                    title={`${summary.count} valid of ${props.results.length} selected realizations`}
+                                >
                                     {summary.count}/{props.results.length}
                                 </Table.Cell>
                             </>
                         ) : (
                             <Table.Cell colSpan={5}>
-                                <span className="font-light">{getMeasureUnavailableReason(props.results, props.measure)}</span>
+                                <span className="font-light">
+                                    {getMeasureUnavailableReason(props.results, props.measure)}
+                                </span>
                             </Table.Cell>
                         )}
                     </Table.Row>

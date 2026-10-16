@@ -21,7 +21,14 @@ export type EarlyMeasureChannelPublisherProps = {
 export function EarlyMeasureChannelPublisher(props: EarlyMeasureChannelPublisherProps): null {
     props.viewContext.usePublishChannelContents({
         channelIdString: EARLY_MEASURE_CHANNEL_ID_MAP[props.measure],
-        dependencies: [props.results, props.endYear, props.unit, props.ensembleIdentString, props.color, props.assumptionContext],
+        dependencies: [
+            props.results,
+            props.endYear,
+            props.unit,
+            props.ensembleIdentString,
+            props.color,
+            props.assumptionContext,
+        ],
         enabled: props.enabled,
         contents: [
             {

@@ -30,19 +30,20 @@ export function MeasureDistributionPlot(props: MeasureDistributionPlotProps): Re
     const data: Partial<PlotData | BoxPlotData>[] =
         props.plotType === DistributionPlotType.EXCEEDANCE
             ? [
-                {
-                    x: exceedancePoints.map((point) => point.value),
-                    y: exceedancePoints.map((point) => point.percentAbove),
-                    customdata: exceedancePoints.map((point) => point.countAbove),
-                    type: "scatter",
-                    mode: "lines+markers",
-                    line: { color: props.color, shape: "hv" },
-                    marker: { color: props.color, size: 6 },
-                    hovertemplate: "Value: %{x}<br>Realizations above: %{customdata}<br>Above: %{y:.1f}%<extra></extra>",
-                } as Partial<PlotData>,
-            ]
+                  {
+                      x: exceedancePoints.map((point) => point.value),
+                      y: exceedancePoints.map((point) => point.percentAbove),
+                      customdata: exceedancePoints.map((point) => point.countAbove),
+                      type: "scatter",
+                      mode: "lines+markers",
+                      line: { color: props.color, shape: "hv" },
+                      marker: { color: props.color, size: 6 },
+                      hovertemplate:
+                          "Value: %{x}<br>Realizations above: %{customdata}<br>Above: %{y:.1f}%<extra></extra>",
+                  } as Partial<PlotData>,
+              ]
             : props.plotType === DistributionPlotType.BOX
-                ? [
+              ? [
                     {
                         x: scaledValues,
                         type: "box",
@@ -53,7 +54,7 @@ export function MeasureDistributionPlot(props: MeasureDistributionPlotProps): Re
                         hovertext: props.measureValues.realizations.map((realization) => `Realization ${realization}`),
                     } as Partial<BoxPlotData>,
                 ]
-                : [
+              : [
                     {
                         x: scaledValues,
                         type: "histogram",
@@ -73,8 +74,8 @@ export function MeasureDistributionPlot(props: MeasureDistributionPlotProps): Re
                     props.plotType === DistributionPlotType.EXCEEDANCE
                         ? "Realizations above value (%)"
                         : props.plotType === DistributionPlotType.BOX
-                            ? ""
-                            : "Realization count",
+                          ? ""
+                          : "Realization count",
             },
             ...(props.plotType === DistributionPlotType.EXCEEDANCE && { range: [0, 100] }),
         },
@@ -82,16 +83,16 @@ export function MeasureDistributionPlot(props: MeasureDistributionPlotProps): Re
             props.targetValue === null || props.targetValue === undefined
                 ? []
                 : [
-                    {
-                        type: "line",
-                        x0: props.targetValue / displayScale.factor,
-                        x1: props.targetValue / displayScale.factor,
-                        y0: 0,
-                        y1: 1,
-                        yref: "paper",
-                        line: { color: "#6b7280", width: 1, dash: "dot" },
-                    },
-                ],
+                      {
+                          type: "line",
+                          x0: props.targetValue / displayScale.factor,
+                          x1: props.targetValue / displayScale.factor,
+                          y0: 0,
+                          y1: 1,
+                          yref: "paper",
+                          line: { color: "#6b7280", width: 1, dash: "dot" },
+                      },
+                  ],
         showlegend: false,
         bargap: 0.05,
     };

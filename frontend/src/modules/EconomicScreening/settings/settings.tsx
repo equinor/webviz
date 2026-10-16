@@ -277,8 +277,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
         resultMode === ResultMode.TIME_PROFILE
             ? CashFlowProfileTypeEnumToStringMapping[cashFlowProfileType].toLowerCase()
             : resultMode === ResultMode.ALL_RESULTS
-                ? "all results"
-                : getMeasureDisplayName(selectedMeasure, isDeltaEnsembleSelected).toLowerCase();
+              ? "all results"
+              : getMeasureDisplayName(selectedMeasure, isDeltaEnsembleSelected).toLowerCase();
     const envelopeEndMonthIndex = sourceSnapshot.envelopeEndMonthIndex;
     const isPredictionStartAfterSource =
         predictionStartYear !== null &&

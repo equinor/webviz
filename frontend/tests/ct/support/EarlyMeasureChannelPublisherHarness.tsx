@@ -48,7 +48,9 @@ export function EarlyMeasureChannelPublisherHarness({ enabled }: { enabled: bool
     const [channelManager] = useState(() => {
         const manager = new ChannelManager("economic-screening");
         const channelIdString = EARLY_MEASURE_CHANNEL_ID_MAP[EarlyEconomicMeasure.DISCOUNTED_OIL_VOLUME];
-        manager.registerChannels([{ idString: channelIdString, displayName: "Early oil", kindOfKey: KeyKind.REALIZATION }]);
+        manager.registerChannels([
+            { idString: channelIdString, displayName: "Early oil", kindOfKey: KeyKind.REALIZATION },
+        ]);
         manager.registerReceivers([
             {
                 idString: "consumer",

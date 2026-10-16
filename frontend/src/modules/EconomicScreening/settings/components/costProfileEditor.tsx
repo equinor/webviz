@@ -71,7 +71,7 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
     React.useEffect(() => {
         onValidityChange(
             validateCostProfile(immediateValue, isDelta) === null &&
-            costProfilesMatch(immediateValue, sortedByYear(value)),
+                costProfilesMatch(immediateValue, sortedByYear(value)),
         );
     }, [immediateValue, isDelta, onValidityChange, value]);
 
@@ -156,10 +156,10 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
                     {startYear === null
                         ? "Enter a prediction start year to generate cost years."
                         : props.isHorizonLoading
-                            ? "Cost years are generated when the simulation data has loaded."
-                            : endYear === null
-                                ? "Cost years are unavailable until source coverage establishes the simulation end."
-                                : `The prediction start year is after the simulation end (${endYear}).`}
+                          ? "Cost years are generated when the simulation data has loaded."
+                          : endYear === null
+                            ? "Cost years are unavailable until source coverage establishes the simulation end."
+                            : `The prediction start year is after the simulation end (${endYear}).`}
                 </span>
                 {excludedNotice}
             </div>

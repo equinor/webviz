@@ -23,7 +23,13 @@ export type MeasureChannelPublisherProps = {
 export function MeasureChannelPublisher(props: MeasureChannelPublisherProps): null {
     props.viewContext.usePublishChannelContents({
         channelIdString: MEASURE_CHANNEL_ID_MAP[props.measure],
-        dependencies: [props.results, props.unitContext, props.ensembleIdentString, props.color, props.assumptionContext],
+        dependencies: [
+            props.results,
+            props.unitContext,
+            props.ensembleIdentString,
+            props.color,
+            props.assumptionContext,
+        ],
         enabled: props.enabled,
         contents: [
             {

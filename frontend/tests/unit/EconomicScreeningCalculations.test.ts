@@ -968,10 +968,7 @@ describe("monthly screening model", () => {
             ]);
             const base = computeMonthlyRealizationEconomics(input, assumptions, costs);
 
-            expect(savings.npv! - base.npv!).toBeCloseTo(
-                discountedAnnualOpex(13200, 2031, 2030, 0.1),
-                8,
-            );
+            expect(savings.npv! - base.npv!).toBeCloseTo(discountedAnnualOpex(13200, 2031, 2030, 0.1), 8);
             expect(discountedAnnualOpex(-1200, 2031, 2030, 0.1)).toBeCloseTo(-100 * 10.405320108228876, 9);
         });
 
