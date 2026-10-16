@@ -9,6 +9,7 @@ import type {
 import {
     DEFAULT_DISCOUNT_RATE_PERCENT,
     CashFlowProfileType,
+    CostDraftStatus,
     Currency,
     DistributionPlotType,
     EconomicMeasure,
@@ -38,7 +39,7 @@ export const priceAssumptionsAtom = atom<PriceAssumptions>({
 });
 
 export const costProfileAtom = atom<CostProfileEntry[]>([]);
-export const isCostProfileDraftValidAtom = atom<boolean>(true);
+export const costDraftStatusAtom = atom<CostDraftStatus>(CostDraftStatus.COMMITTED);
 
 export const earlyValueConfigurationAtom = atom<EarlyValueConfiguration>({ enabled: false, endYear: null });
 

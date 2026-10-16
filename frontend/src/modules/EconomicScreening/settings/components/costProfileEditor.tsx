@@ -8,7 +8,7 @@ import { NumberInput } from "@lib/components/NumberInput";
 import { Table } from "@lib/components/Table";
 import { TextArea } from "@lib/components/TextArea";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
-import type { CostProfileEntry } from "@modules/EconomicScreening/typesAndEnums";
+import { CostDraftStatus, type CostProfileEntry } from "@modules/EconomicScreening/typesAndEnums";
 import {
     getCostYearsOutsideRange,
     hasIncludedNonZeroCost,
@@ -32,7 +32,7 @@ export type CostProfileEditorProps = {
     isSourceLoading?: boolean;
     ensembleKey?: string;
     onValueChange: (costProfile: CostProfileEntry[]) => void;
-    onValidityChange: (isValid: boolean) => void;
+    onDraftStatusChange: (status: CostDraftStatus) => void;
 };
 
 function costProfilesMatch(draft: CostProfileEntry[], committed: CostProfileEntry[]): boolean {
@@ -52,7 +52,7 @@ function sortedByYear(costProfile: CostProfileEntry[]): CostProfileEntry[] {
 }
 
 export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNode {
-    const { value, onValueChange, onValidityChange, isDelta, horizon, isSourceLoading } = props;
+    const { value, onValueChange, onDraftStatusChange, isDelta, horizon, isSourceLoading } = props;
     // Start after end still names both years in its messages; other non-ready states have no cost years.
     const [startYear, endYear] =
         horizon.status === "READY"
@@ -76,12 +76,34 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
 
     const debouncedOnValueChange = useDebouncedFunction(onValueChange, COST_INPUT_DEBOUNCE_MS);
 
+    const draftStatus =
+        validateCostProfile(immediateValue, isDelta) !== null
+            ? CostDraftStatus.INVALID
+            : costProfilesMatch(immediateValue, sortedByYear(value))
+              ? CostDraftStatus.COMMITTED
+              : CostDraftStatus.PENDING;
+
     React.useEffect(() => {
-        onValidityChange(
-            validateCostProfile(immediateValue, isDelta) === null &&
-                costProfilesMatch(immediateValue, sortedByYear(value)),
-        );
-    }, [immediateValue, isDelta, onValidityChange, value]);
+        onDraftStatusChange(draftStatus);
+    }, [draftStatus, onDraftStatusChange]);
+
+    const latestDraftRef = React.useRef({ draft: immediateValue, draftStatus, onValueChange, onDraftStatusChange });
+    React.useEffect(() => {
+        latestDraftRef.current = { draft: immediateValue, draftStatus, onValueChange, onDraftStatusChange };
+    });
+
+    React.useEffect(function settleDraftOnUnmount() {
+        return function commitPendingDraft() {
+            const latest = latestDraftRef.current;
+            // The debounced commit is cancelled on unmount; an invalid draft is discarded with this component.
+            if (latest.draftStatus === CostDraftStatus.PENDING) {
+                latest.onValueChange(latest.draft);
+            }
+            if (latest.draftStatus !== CostDraftStatus.COMMITTED) {
+                latest.onDraftStatusChange(CostDraftStatus.COMMITTED);
+            }
+        };
+    }, []);
 
     if (previousValue !== value) {
         setPreviousValue(value);

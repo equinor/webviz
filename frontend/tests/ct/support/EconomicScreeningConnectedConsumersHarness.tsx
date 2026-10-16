@@ -55,6 +55,7 @@ import {
 } from "@modules/EconomicScreening/persistence";
 import { MODULE_NAME as ECONOMIC_MODULE_NAME } from "@modules/EconomicScreening/registerModule";
 import {
+    costDraftStatusAtom,
     costProfileAtom,
     currencyAtom,
     discountRatePercentAtom,
@@ -62,7 +63,6 @@ import {
     earlyValueConfigurationAtom,
     gasPriceAtom,
     gasPriceBasisAtom,
-    isCostProfileDraftValidAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
     predictionStartYearAtom,
@@ -71,6 +71,7 @@ import {
 } from "@modules/EconomicScreening/settings/atoms/baseAtoms";
 import { selectedEnsembleIdentAtom } from "@modules/EconomicScreening/settings/atoms/persistableFixableAtoms";
 import {
+    type CostDraftStatus,
     Currency,
     type DistributionPlotType,
     type EarlyValueConfiguration,
@@ -162,7 +163,7 @@ export type ProducerDisplay = { resultMode: ResultMode; measure: EconomicMeasure
 
 export type ConnectedConsumersHarnessProps = {
     producerEnsemble: ProducerEnsemble;
-    costDraftValid: boolean;
+    costDraftStatus: CostDraftStatus;
     early: EarlyValueConfiguration;
     producerDisplay?: ProducerDisplay;
     /** Producer channel id strings; null leaves a receiver disconnected. */
@@ -353,8 +354,8 @@ export function EconomicScreeningConnectedConsumersHarness(props: ConnectedConsu
         producerStore.set(selectedEnsembleIdentAtom, ENSEMBLES[props.producerEnsemble].getIdent());
     }, [producerStore, props.producerEnsemble]);
     useEffect(() => {
-        producerStore.set(isCostProfileDraftValidAtom, props.costDraftValid);
-    }, [producerStore, props.costDraftValid]);
+        producerStore.set(costDraftStatusAtom, props.costDraftStatus);
+    }, [producerStore, props.costDraftStatus]);
     const { enabled: earlyEnabled, endYear: earlyEndYear } = props.early;
     useEffect(() => {
         producerStore.set(earlyValueConfigurationAtom, { enabled: earlyEnabled, endYear: earlyEndYear });
@@ -385,7 +386,7 @@ export function EconomicScreeningConnectedConsumersHarness(props: ConnectedConsu
                 costProfileAtom,
                 earlyValueConfigurationAtom,
                 predictionStartYearAtom,
-                isCostProfileDraftValidAtom,
+                costDraftStatusAtom,
                 RealizationFilterSetAtom,
             }).map(([name, observedAtom]) =>
                 producerStore.sub(observedAtom, () =>

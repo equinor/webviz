@@ -18,6 +18,7 @@ import { EARLY_MEASURE_CHANNEL_ID_MAP, MEASURE_CHANNEL_ID_MAP } from "@modules/E
 import { makeEarlyMeasureDataGenerator, makeMeasureDataGenerator } from "@modules/EconomicScreening/dataGenerators";
 import {
     cashFlowProfileTypeAtom,
+    costDraftStatusAtom,
     costProfileAtom,
     currencyAtom,
     discountRatePercentAtom,
@@ -25,7 +26,6 @@ import {
     earlyValueConfigurationAtom,
     gasPriceAtom,
     gasPriceBasisAtom,
-    isCostProfileDraftValidAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
     predictionStartYearAtom,
@@ -43,6 +43,7 @@ import {
 } from "@modules/EconomicScreening/settings/atoms/sourceSnapshotAtoms";
 import {
     CashFlowProfileType,
+    CostDraftStatus,
     Currency,
     DistributionPlotType,
     EarlyEconomicMeasure,
@@ -650,10 +651,12 @@ describe("Economic Screening source queries and publication", () => {
         const npv = publishedNpv(store);
         const volumes = publishedThroughChannel(store, EconomicMeasure.DISCOUNTED_OIL_VOLUME);
 
-        store.set(isCostProfileDraftValidAtom, false);
+        store.set(costDraftStatusAtom, CostDraftStatus.PENDING);
+        expect(publishedNpv(store)).toEqual(npv);
+        store.set(costDraftStatusAtom, CostDraftStatus.INVALID);
         expect(publishedNpv(store)).toEqual([]);
         expect(publishedThroughChannel(store, EconomicMeasure.DISCOUNTED_OIL_VOLUME)).toEqual(volumes);
-        store.set(isCostProfileDraftValidAtom, true);
+        store.set(costDraftStatusAtom, CostDraftStatus.COMMITTED);
         expect(publishedNpv(store)).toEqual(npv);
 
         store.set(predictionStartYearAtom, null);
@@ -946,7 +949,7 @@ describe("Economic Screening at scale", () => {
         await nextTurn();
         store.set(gasPriceAtom, 0.18);
         await nextTurn();
-        store.set(isCostProfileDraftValidAtom, false);
+        store.set(costDraftStatusAtom, CostDraftStatus.INVALID);
         await nextTurn();
         store.set(discountRatePercentAtom, 7);
         await nextTurn();
@@ -954,7 +957,7 @@ describe("Economic Screening at scale", () => {
             cost.year === 2025 ? { ...cost, capex: 4_200_000 } : cost.year === 2040 ? { ...cost, opex: 50_000 } : cost,
         );
         store.set(costProfileAtom, costs);
-        store.set(isCostProfileDraftValidAtom, true);
+        store.set(costDraftStatusAtom, CostDraftStatus.COMMITTED);
         await nextTurn();
         store.set(earlyValueConfigurationAtom, { enabled: true, endYear: 2060 });
         await nextTurn();
@@ -1008,15 +1011,17 @@ describe("Economic Screening at scale", () => {
             expect(Math.abs(residual) / 4_200_000).toBeLessThan(1e-6);
         }
 
-        // Toggling draft validity masks financial values without recalculating the realizations.
+        // Draft status changes mask financial values only when invalid, without recalculating the realizations.
         const settled = store.get(economicScreeningResultsAtom);
-        store.set(isCostProfileDraftValidAtom, false);
+        store.set(costDraftStatusAtom, CostDraftStatus.PENDING);
+        expect(store.get(economicScreeningResultsAtom)).toBe(settled);
+        store.set(costDraftStatusAtom, CostDraftStatus.INVALID);
         const masked = store.get(economicScreeningResultsAtom);
         expect(masked.results.every((result) => result.npv === null && result.irr === null)).toBe(true);
         expect(masked.results.map((result) => result.discountedOilVolume)).toEqual(
             settled.results.map((result) => result.discountedOilVolume),
         );
-        store.set(isCostProfileDraftValidAtom, true);
+        store.set(costDraftStatusAtom, CostDraftStatus.COMMITTED);
         expect(store.get(economicScreeningResultsAtom)).toBe(settled);
 
         // Presentation choices do not recalculate; filtering narrows keys without rebasing values.

@@ -12,6 +12,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import {
     CashFlowProfileType,
+    CostDraftStatus,
     EarlyEconomicMeasure,
     EconomicMeasure,
     ResultMode,
@@ -28,11 +29,11 @@ import type { Interfaces } from "../interfaces";
 
 import {
     cashFlowProfileTypeAtom,
+    costDraftStatusAtom,
     distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
     economicAssumptionsAtom,
     evaluationHorizonAtom,
-    isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     resultModeAtom,
     selectedMeasureAtom,
@@ -76,7 +77,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const evaluationHorizon = useAtomValue(evaluationHorizonAtom);
     const earlyValueConfiguration = useAtomValue(earlyValueConfigurationAtom);
     const earlyValueEndYear = earlyValueConfiguration.endYear;
-    const isCostProfileDraftValid = useAtomValue(isCostProfileDraftValidAtom);
+    const isCostDraftInvalid = useAtomValue(costDraftStatusAtom) === CostDraftStatus.INVALID;
     const priceAssumptions = useAtomValue(priceAssumptionsAtom);
     const { results, oilUnit, gasUnit, isEarlyValueConfigurationValid, horizon } =
         useAtomValue(economicScreeningResultsAtom);
@@ -150,7 +151,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     ensembleIdentString={ensembleIdent?.toString() ?? ""}
                     ensembleDisplayName={ensembleDisplayName}
                     color={ensembleColor}
-                    enabled={!isFetching && hasResults && (isCostProfileDraftValid || !isFinancialMeasure(measure))}
+                    enabled={!isFetching && hasResults && (!isCostDraftInvalid || !isFinancialMeasure(measure))}
                     assumptionContext={activeAssumptions.join("; ")}
                 />
             ))}
@@ -174,7 +175,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     enabled={
                         !isFetching &&
                         hasResults &&
-                        (isCostProfileDraftValid || measure !== EarlyEconomicMeasure.DISCOUNTED_CASH_FLOW) &&
+                        (!isCostDraftInvalid || measure !== EarlyEconomicMeasure.DISCOUNTED_CASH_FLOW) &&
                         earlyValueConfiguration.enabled &&
                         isEarlyValueConfigurationValid &&
                         earlyValueEndYear !== null

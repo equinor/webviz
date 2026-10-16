@@ -1,6 +1,7 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
+    costDraftStatusAtom,
     costProfileAtom,
     cashFlowProfileTypeAtom,
     currencyAtom,
@@ -9,7 +10,6 @@ import {
     earlyValueConfigurationAtom,
     gasPriceAtom,
     gasPriceBasisAtom,
-    isCostProfileDraftValidAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
     resultModeAtom,
@@ -23,6 +23,7 @@ import {
     sourceSnapshotAtom,
 } from "./settings/atoms/sourceSnapshotAtoms";
 import type {
+    CostDraftStatus,
     CostProfileEntry,
     CashFlowProfileType,
     DistributionPlotType,
@@ -44,7 +45,7 @@ export type SettingsToViewInterface = {
     economicAssumptions: EconomicAssumptions;
     priceAssumptions: PriceAssumptions;
     costProfile: CostProfileEntry[];
-    isCostProfileDraftValid: boolean;
+    costDraftStatus: CostDraftStatus;
     earlyValueConfiguration: EarlyValueConfiguration;
     resultMode: ResultMode;
     selectedMeasure: EconomicMeasure;
@@ -88,8 +89,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     costProfile: (get) => {
         return get(costProfileAtom);
     },
-    isCostProfileDraftValid: (get) => {
-        return get(isCostProfileDraftValidAtom);
+    costDraftStatus: (get) => {
+        return get(costDraftStatusAtom);
     },
     earlyValueConfiguration: (get) => {
         return get(earlyValueConfigurationAtom);

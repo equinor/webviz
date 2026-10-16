@@ -4,12 +4,12 @@ import type { SettingsToViewInterface } from "@modules/EconomicScreening/interfa
 import {
     cashFlowProfileTypeAtom,
     constituentGasConsumptionWarningAtom,
+    costDraftStatusAtom,
     costProfileAtom,
     distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
     economicAssumptionsAtom,
     evaluationHorizonAtom,
-    isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     realizationNumbersAtom,
     resultModeAtom,
@@ -41,7 +41,7 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
         setAtomValue(costProfileAtom, getInterfaceValue("costProfile"));
     },
     (getInterfaceValue, setAtomValue) => {
-        setAtomValue(isCostProfileDraftValidAtom, getInterfaceValue("isCostProfileDraftValid"));
+        setAtomValue(costDraftStatusAtom, getInterfaceValue("costDraftStatus"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(earlyValueConfigurationAtom, getInterfaceValue("earlyValueConfiguration"));

@@ -4,6 +4,7 @@ import type { CostProfileEntry, EarlyValueConfiguration } from "@modules/Economi
 import {
     DEFAULT_DISCOUNT_RATE_PERCENT,
     CashFlowProfileType,
+    CostDraftStatus,
     Currency,
     DistributionPlotType,
     EconomicMeasure,
@@ -23,7 +24,7 @@ export const gasPriceAtom = atom<number | null>(null);
 export const gasPriceBasisAtom = atom<GasPriceBasis>(GasPriceBasis.PER_SM3);
 
 export const costProfileAtom = atom<CostProfileEntry[]>([]);
-export const isCostProfileDraftValidAtom = atom<boolean>(true);
+export const costDraftStatusAtom = atom<CostDraftStatus>(CostDraftStatus.COMMITTED);
 
 export const earlyValueConfigurationAtom = atom<EarlyValueConfiguration>({ enabled: false, endYear: null });
 

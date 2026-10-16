@@ -3,6 +3,7 @@ import type { Page } from "@playwright/test";
 import { PlotType } from "@modules/DistributionPlot/typesAndEnums";
 import { EARLY_MEASURE_CHANNEL_ID_MAP, MEASURE_CHANNEL_ID_MAP } from "@modules/EconomicScreening/channelDefs";
 import {
+    CostDraftStatus,
     DistributionPlotType,
     EarlyEconomicMeasure,
     EconomicMeasure,
@@ -12,6 +13,7 @@ import {
 import {
     EconomicScreeningConnectedConsumersHarness,
     type ConnectedConsumersHarnessProps,
+    type HarnessObservation,
 } from "./support/EconomicScreeningConnectedConsumersHarness";
 import {
     BASE_CASE_UUID,
@@ -83,7 +85,7 @@ const BREAK_EVEN_CHANNEL = MEASURE_CHANNEL_ID_MAP[EconomicMeasure.BREAK_EVEN_OIL
 
 const DEFAULT_PROPS: ConnectedConsumersHarnessProps = {
     producerEnsemble: "design",
-    costDraftValid: true,
+    costDraftStatus: CostDraftStatus.COMMITTED,
     early: { enabled: true, endYear: 2031 },
     distributionX: null,
     distributionY: null,
@@ -515,14 +517,20 @@ test("consumers withdraw and recover producer outputs for drafts, early settings
     await expectDesignNpvTornado(page);
 
     // Invalid financial draft: financial outputs disappear from both consumers.
-    await component.update(<EconomicScreeningConnectedConsumersHarness {...props} costDraftValid={false} />);
+    await component.update(
+        <EconomicScreeningConnectedConsumersHarness {...props} costDraftStatus={CostDraftStatus.INVALID} />,
+    );
     await expectDistributionMessage(page, "No data on", "X axis");
     await expectSensitivityWithoutTornado(page, "No data received on channel");
     await page.screenshot({ path: `${SCREENSHOT_DIR}/withdrawn-invalid-cost-draft.png` });
 
     // Volumes, full and early, remain available with the draft still invalid.
     await component.update(
-        <EconomicScreeningConnectedConsumersHarness {...props} costDraftValid={false} distributionX={OIL_CHANNEL} />,
+        <EconomicScreeningConnectedConsumersHarness
+            {...props}
+            costDraftStatus={CostDraftStatus.INVALID}
+            distributionX={OIL_CHANNEL}
+        />,
     );
     await expectDistributionBars(
         page,
@@ -531,7 +539,7 @@ test("consumers withdraw and recover producer outputs for drafts, early settings
     await component.update(
         <EconomicScreeningConnectedConsumersHarness
             {...props}
-            costDraftValid={false}
+            costDraftStatus={CostDraftStatus.INVALID}
             distributionX={EARLY_OIL_CHANNEL}
         />,
     );
@@ -543,7 +551,7 @@ test("consumers withdraw and recover producer outputs for drafts, early settings
     await component.update(
         <EconomicScreeningConnectedConsumersHarness
             {...props}
-            costDraftValid={false}
+            costDraftStatus={CostDraftStatus.INVALID}
             distributionX={EARLY_DCF_CHANNEL}
         />,
     );
@@ -614,6 +622,87 @@ test("consumers withdraw and recover producer outputs for drafts, early settings
     await expectDesignNpvTornado(page);
 
     expect(sources.requests.sort()).toEqual(DESIGN_REQUESTS);
+    expect(sources.unexpected).toEqual([]);
+});
+
+test("typing a valid cost keeps financial channels published until the debounced commit updates them", async ({
+    mount,
+    page,
+}) => {
+    const sources = await routeSources(page);
+    await page.setViewportSize({ width: 1400, height: 1000 });
+    await mount(
+        <EconomicScreeningConnectedConsumersHarness
+            {...DEFAULT_PROPS}
+            producerSettingsOpen
+            distributionX={NPV_CHANNEL}
+            distributionY={EARLY_DCF_CHANNEL}
+            distributionPlotType={PlotType.Scatter}
+        />,
+    );
+    await expect.poll(async () => (await readScatterByKey(page)).map(([key]) => key)).toEqual(FULL_OIL_KEYS);
+
+    const settings = region(page, "Producer settings");
+    const costsTrigger = settings.getByRole("button", { name: "Costs", exact: true });
+    if ((await costsTrigger.getAttribute("aria-expanded")) !== "true") await costsTrigger.click();
+    const capex2030 = settings.getByRole("textbox", { name: "CAPEX 2030", exact: true });
+    await expect(capex2030).toBeVisible();
+
+    type HarnessWindow = {
+        economicScreeningObservations: HarnessObservation[];
+        readEconomicScreeningProducerChannels: () => { channelIdString: string; contents: { data: unknown[] }[] }[];
+    };
+    const marker = await page.evaluate(() => (window as unknown as HarnessWindow).economicScreeningObservations.length);
+    const newCapex = 2 * CAPEX_2030_USD;
+    await capex2030.click();
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.type(String(newCapex));
+
+    // Sampled inside the debounce window: the committed financial outputs are still published.
+    const pendingSample = await page.evaluate(
+        ({ from, channelIds }) => {
+            const harness = window as unknown as HarnessWindow;
+            const channels = harness.readEconomicScreeningProducerChannels();
+            return {
+                isCostCommitted: harness.economicScreeningObservations
+                    .slice(from)
+                    .some((entry) => entry.event === "commit:costProfileAtom"),
+                keys: channelIds.map(
+                    (id) => channels.find((channel) => channel.channelIdString === id)?.contents[0]?.data.length ?? 0,
+                ),
+            };
+        },
+        { from: marker, channelIds: [NPV_CHANNEL, IRR_CHANNEL, BREAK_EVEN_CHANNEL, EARLY_DCF_CHANNEL] },
+    );
+    expect(pendingSample).toEqual({
+        isCostCommitted: false,
+        keys: [FULL_OIL_KEYS.length, FULL_OIL_KEYS.length, FULL_OIL_KEYS.length, DESIGN_REALIZATIONS.length],
+    });
+
+    const newCapexPv = newCapex * discountFactor(0.5);
+    await expect
+        .poll(async () => (await readScatterByKey(page))[0]?.[1])
+        .toBeCloseTo(expectedNpv(DESIGN_MONTHLY_OIL[FULL_OIL_KEYS[0]]) + CAPEX_PV - newCapexPv, 4);
+    const scatter = await readScatterByKey(page);
+    expect(scatter.map(([key]) => key)).toEqual(FULL_OIL_KEYS);
+    scatter.forEach(([key, x, y]) => {
+        expect(x).toBeCloseTo(expectedNpv(DESIGN_MONTHLY_OIL[key]) + CAPEX_PV - newCapexPv, 4);
+        expect(y).toBeCloseTo(expectedDcfThrough2031(DESIGN_MONTHLY_OIL[key]) + CAPEX_PV - newCapexPv, 4);
+    });
+
+    // No consumer ever received empty financial contents, and the status went pending before the cost committed.
+    const events = await page.evaluate(
+        (from) => (window as unknown as HarnessWindow).economicScreeningObservations.slice(from),
+        marker,
+    );
+    expect(events.filter((entry) => entry.event.startsWith("received:") && entry.keys === 0)).toEqual([]);
+    const statusChange = events.findIndex((entry) => entry.event === "commit:costDraftStatusAtom");
+    const costCommit = events.findIndex((entry) => entry.event === "commit:costProfileAtom");
+    expect(statusChange).toBeGreaterThan(-1);
+    expect(costCommit).toBeGreaterThan(statusChange);
+    expect(events.filter((entry) => entry.event === "received:channelX").at(-1)).toMatchObject({
+        keys: FULL_OIL_KEYS.length,
+    });
     expect(sources.unexpected).toEqual([]);
 });
 

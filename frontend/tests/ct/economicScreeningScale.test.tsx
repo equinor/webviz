@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 
 import { PlotType } from "@modules/DistributionPlot/typesAndEnums";
 import { EARLY_MEASURE_CHANNEL_ID_MAP, MEASURE_CHANNEL_ID_MAP } from "@modules/EconomicScreening/channelDefs";
-import { EarlyEconomicMeasure, EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
+import { CostDraftStatus, EarlyEconomicMeasure, EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
 
 import {
     EconomicScreeningConnectedConsumersHarness,
@@ -40,7 +40,7 @@ const PROPS: ConnectedConsumersHarnessProps = {
     producerEnsemble: "scale",
     producerSettingsOpen: true,
     initialEconomics: SCALE_BASE_INPUTS,
-    costDraftValid: true,
+    costDraftStatus: CostDraftStatus.COMMITTED,
     early: { enabled: true, endYear: INITIAL_EARLY_END_YEAR },
     distributionX: NPV_CHANNEL,
     distributionY: EARLY_DCF_CHANNEL,
@@ -379,7 +379,7 @@ test("500 realizations: rapid Settings edits, invalid draft, display changes and
     expect((await observationsSince(page, settledMarker)).filter((entry) => entry.event !== "longtask")).toEqual([]);
     expect(await readProducerChannels(page)).toEqual(settledChannels);
 
-    // Typing a cost holds the Settings draft invalid until its debounced commit; financial outputs withdraw meanwhile.
+    // A valid cost being typed is pending, not invalid: financial outputs stay published until its debounced commit.
     const draftMarker = await observationCount(page);
     state = withCost(state, 2041, { opex: 55_000 });
     await typeValue(page, inputs.cost(page, "OPEX", 2041), "55000");
@@ -387,15 +387,15 @@ test("500 realizations: rapid Settings edits, invalid draft, display changes and
     const draftEvents = (await observationsSince(page, draftMarker)).filter((entry) =>
         ["commit:costProfileAtom", "received:channelX"].includes(entry.event),
     );
-    const withdrawal = draftEvents.findIndex((entry) => entry.event === "received:channelX" && entry.keys === 0);
-    const costCommit = draftEvents.findIndex((entry) => entry.event === "commit:costProfileAtom");
-    expect(withdrawal).toBeGreaterThan(-1);
-    expect(withdrawal).toBeLessThan(costCommit);
+    expect(draftEvents.filter((entry) => entry.event === "received:channelX" && entry.keys === 0)).toEqual([]);
+    expect(draftEvents.findIndex((entry) => entry.event === "commit:costProfileAtom")).toBeGreaterThan(-1);
     expect(draftEvents.at(-1)).toMatchObject({ event: "received:channelX", keys: REALIZATIONS.length - 1 });
     await expectPublishedState(page, state, { financial: true });
 
     // A held invalid draft withdraws financial outputs but keeps full and early volumes; validity recovers them.
-    await component.update(<EconomicScreeningConnectedConsumersHarness {...PROPS} costDraftValid={false} />);
+    await component.update(
+        <EconomicScreeningConnectedConsumersHarness {...PROPS} costDraftStatus={CostDraftStatus.INVALID} />,
+    );
     await expect.poll(async () => (await readProducerChannels(page)).get(NPV_CHANNEL)!.length).toBe(0);
     await expectPublishedState(page, state, { financial: false });
     await component.update(<EconomicScreeningConnectedConsumersHarness {...PROPS} />);

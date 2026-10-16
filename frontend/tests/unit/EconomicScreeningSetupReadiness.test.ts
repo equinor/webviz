@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import {
     CashFlowProfileType,
+    CostDraftStatus,
     EconomicMeasure,
     ResultMode,
     type CostProfileEntry,
@@ -87,7 +88,7 @@ function readyInput(
         oilPrice: null,
         gasPrice: null,
         costProfile: [],
-        isCostProfileDraftValid: true,
+        costDraftStatus: CostDraftStatus.COMMITTED,
         earlyValue: { enabled: false, endYear: null },
         requirement: ResultRequirement.FINANCIAL,
         ...inputOverrides,
@@ -385,9 +386,10 @@ describe("getSetupReadiness", () => {
 
     test("reports invalid cost drafts and early-value years", () => {
         const base = readyInput({ predictionStartYear: 2018, oilPrice: 50, gasPrice: 0 });
-        expect(messages({ ...base, isCostProfileDraftValid: false })).toEqual(["Finish or correct the cost schedule."]);
+        expect(messages({ ...base, costDraftStatus: CostDraftStatus.INVALID })).toEqual(["Correct the cost schedule."]);
+        expect(messages({ ...base, costDraftStatus: CostDraftStatus.PENDING })).toEqual([]);
         expect(
-            messages({ ...base, isCostProfileDraftValid: false, requirement: ResultRequirement.OIL_VOLUME }),
+            messages({ ...base, costDraftStatus: CostDraftStatus.INVALID, requirement: ResultRequirement.OIL_VOLUME }),
         ).toEqual([]);
         expect(messages({ ...base, earlyValue: { enabled: true, endYear: null } })).toEqual([
             "Early value: enter a Calculate through year.",

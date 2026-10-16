@@ -1,5 +1,6 @@
 import {
     CashFlowProfileType,
+    CostDraftStatus,
     EconomicMeasure,
     ResultMode,
     type CostProfileEntry,
@@ -199,7 +200,7 @@ export type SetupReadinessInput = {
     oilPrice: number | null;
     gasPrice: number | null;
     costProfile: CostProfileEntry[];
-    isCostProfileDraftValid: boolean;
+    costDraftStatus: CostDraftStatus;
     earlyValue: EarlyValueConfiguration;
     requirement: ResultRequirement;
 };
@@ -332,8 +333,8 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
         }
     }
 
-    if (needsGasRevenue && !input.isCostProfileDraftValid) {
-        addInput("Finish or correct the cost schedule.", "costs");
+    if (needsGasRevenue && input.costDraftStatus === CostDraftStatus.INVALID) {
+        addInput("Correct the cost schedule.", "costs");
     }
     if (
         requirement === ResultRequirement.BREAK_EVEN &&

@@ -19,7 +19,7 @@ test("previews year-keyed costs without committing until Apply", async ({ mount,
     await dialog.getByRole("textbox").fill("2022\t50\t5\n2020\t\t10");
     await expect(dialog.getByRole("table", { name: "Cost paste preview" })).toBeVisible();
     await expect(committed).toHaveText(original!);
-    await expect(page.getByTestId("cost-schedule-ready")).toHaveText("ready");
+    await expect(page.getByTestId("cost-draft-status")).toHaveText("COMMITTED");
     await dialog.getByRole("button", { name: "Apply", exact: true }).click();
     await expect(dialog).toHaveCount(0);
     await expect(committed).toHaveText(
@@ -47,7 +47,7 @@ test("rejects malformed, duplicate, excluded and negative regular paste without 
         await expect(dialog.getByRole("alert")).toContainText(error);
         await expect(dialog.getByRole("button", { name: "Apply", exact: true })).toBeDisabled();
         await expect(page.getByTestId("committed-cost-profile")).toHaveText(original!);
-        await expect(page.getByTestId("cost-schedule-ready")).toHaveText("ready");
+        await expect(page.getByTestId("cost-draft-status")).toHaveText("COMMITTED");
     }
 });
 
@@ -189,21 +189,56 @@ test("does not treat signed cancellation or an invalid draft as zero costs", asy
     await expect(zeroNotice).toHaveCount(0);
 });
 
-test("keeps an edited cost schedule unavailable until its debounced commit", async ({ mount, page }) => {
+test("reports a valid edit as pending, not invalid, until its debounced commit", async ({ mount, page }) => {
     await mount(<CostProfileEditorHarness />);
 
     const capex2021 = page.getByRole("textbox").nth(2);
-    await expect(page.getByTestId("cost-schedule-ready")).toHaveText("ready");
+    await expect(page.getByTestId("cost-draft-status")).toHaveText("COMMITTED");
 
     await capex2021.fill("50");
     await capex2021.blur();
-    await expect(page.getByTestId("cost-schedule-ready")).toHaveText("pending");
+    await expect(page.getByTestId("cost-draft-status")).toHaveText("PENDING");
     await expect(page.getByTestId("committed-cost-profile")).toHaveText('[{"year":2020,"capex":100,"opex":0}]');
 
-    await expect(page.getByTestId("cost-schedule-ready")).toHaveText("ready", { timeout: 2_000 });
+    await expect(page.getByTestId("cost-draft-status")).toHaveText("COMMITTED", { timeout: 2_000 });
     await expect(page.getByTestId("committed-cost-profile")).toHaveText(
         '[{"year":2020,"capex":100,"opex":0},{"year":2021,"capex":50,"opex":0}]',
     );
+});
+
+test("commits a valid pending draft when the editor unmounts", async ({ mount, page }) => {
+    const component = await mount(<CostProfileEditorHarness />);
+
+    const capex2021 = page.getByRole("textbox", { name: "CAPEX 2021", exact: true });
+    await capex2021.fill("50");
+    await capex2021.blur();
+    await expect(page.getByTestId("cost-draft-status")).toHaveText("PENDING");
+    await component.update(<CostProfileEditorHarness showEditor={false} />);
+
+    await expect(capex2021).toHaveCount(0);
+    await expect(page.getByTestId("committed-cost-profile")).toHaveText(
+        '[{"year":2020,"capex":100,"opex":0},{"year":2021,"capex":50,"opex":0}]',
+    );
+    await expect(page.getByTestId("cost-draft-status")).toHaveText("COMMITTED");
+});
+
+test("discards an invalid draft and clears its status when the editor unmounts", async ({ mount, page }) => {
+    const component = await mount(<CostProfileEditorHarness />);
+
+    const capex2021 = page.getByRole("textbox", { name: "CAPEX 2021", exact: true });
+    await capex2021.focus();
+    await page.evaluate(() => {
+        const data = new DataTransfer();
+        data.setData("text", "2021\t-5\t0");
+        document.activeElement?.dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true }));
+    });
+    await expect(page.getByRole("alert")).toHaveText("Investment and operating costs must be zero or greater.");
+    await expect(page.getByTestId("cost-draft-status")).toHaveText("INVALID");
+    await component.update(<CostProfileEditorHarness showEditor={false} />);
+
+    await expect(capex2021).toHaveCount(0);
+    await expect(page.getByTestId("cost-draft-status")).toHaveText("COMMITTED");
+    await expect(page.getByTestId("committed-cost-profile")).toHaveText('[{"year":2020,"capex":100,"opex":0}]');
 });
 
 test("revalidates signed Delta costs when switched to a regular ensemble", async ({ mount, page }) => {
@@ -211,12 +246,12 @@ test("revalidates signed Delta costs when switched to a regular ensemble", async
         <CostProfileEditorHarness initialCostProfile={[{ year: 2020, capex: -100, opex: 0 }]} isDelta />,
     );
 
-    await expect(page.getByTestId("cost-schedule-ready")).toHaveText("ready");
+    await expect(page.getByTestId("cost-draft-status")).toHaveText("COMMITTED");
     await component.update(
         <CostProfileEditorHarness initialCostProfile={[{ year: 2020, capex: -100, opex: 0 }]} isDelta={false} />,
     );
 
-    await expect(page.getByTestId("cost-schedule-ready")).toHaveText("pending");
+    await expect(page.getByTestId("cost-draft-status")).toHaveText("INVALID");
     await expect(page.getByText("Investment and operating costs must be zero or greater.")).toBeVisible();
 });
 

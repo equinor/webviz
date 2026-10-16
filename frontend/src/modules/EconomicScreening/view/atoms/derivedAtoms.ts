@@ -2,7 +2,7 @@ import { atom } from "jotai";
 
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
-import { DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR } from "@modules/EconomicScreening/typesAndEnums";
+import { CostDraftStatus, DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR } from "@modules/EconomicScreening/typesAndEnums";
 import { formatMonthIndex } from "@modules/EconomicScreening/utils/calendar";
 import {
     getEvaluationHorizonError,
@@ -23,11 +23,11 @@ import {
 
 import {
     constituentGasConsumptionWarningAtom,
+    costDraftStatusAtom,
     costProfileAtom,
     earlyValueConfigurationAtom,
     economicAssumptionsAtom,
     evaluationHorizonAtom,
-    isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     realizationNumbersAtom,
     sourceSnapshotAtom,
@@ -43,7 +43,7 @@ export type EconomicScreeningResults = {
     horizon: EvaluationHorizon | null;
 };
 
-/** Everything except the cost-draft mask, so toggling draft validity does not recalculate every realization. */
+/** Everything except the cost-draft mask, so a draft status change does not recalculate every realization. */
 const unmaskedResultsAtom = atom<EconomicScreeningResults>((get) => {
     const snapshot = get(sourceSnapshotAtom);
     const salesGas = snapshot.salesGas;
@@ -206,8 +206,8 @@ const unmaskedResultsAtom = atom<EconomicScreeningResults>((get) => {
 
 export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get) => {
     const unmasked = get(unmaskedResultsAtom);
-    // Only a completed evaluation has a horizon; withheld results carry no financial values to mask.
-    if (get(isCostProfileDraftValidAtom) || unmasked.horizon === null) {
+    // A pending valid draft keeps the committed results. Withheld results carry no financial values to mask.
+    if (get(costDraftStatusAtom) !== CostDraftStatus.INVALID || unmasked.horizon === null) {
         return unmasked;
     }
     return {

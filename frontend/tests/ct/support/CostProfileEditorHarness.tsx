@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { StrictMode, useState } from "react";
 
 import { CostProfileEditor } from "@modules/EconomicScreening/settings/components/costProfileEditor";
-import type { CostProfileEntry } from "@modules/EconomicScreening/typesAndEnums";
+import { CostDraftStatus, type CostProfileEntry } from "@modules/EconomicScreening/typesAndEnums";
 import { resolveEvaluationHorizon } from "@modules/EconomicScreening/utils/evaluationHorizon";
 import { monthIndexOf } from "@modules/EconomicScreening/utils/monthlyProduction";
 import { SourceStatus } from "@modules/EconomicScreening/utils/sourceSnapshot";
@@ -15,6 +15,7 @@ export function CostProfileEditorHarness({
     endYear = 2022,
     ensembleKey = "regular-a",
     isHorizonLoading = false,
+    showEditor = true,
 }: {
     initialCostProfile?: CostProfileEntry[];
     isDelta?: boolean;
@@ -22,27 +23,30 @@ export function CostProfileEditorHarness({
     endYear?: number | null;
     ensembleKey?: string;
     isHorizonLoading?: boolean;
+    showEditor?: boolean;
 }) {
     const [costProfile, setCostProfile] = useState<CostProfileEntry[]>(initialCostProfile);
-    const [isReady, setIsReady] = useState(true);
+    const [draftStatus, setDraftStatus] = useState(CostDraftStatus.COMMITTED);
 
     return (
-        <>
-            <CostProfileEditor
-                value={costProfile}
-                currency="USD"
-                isDelta={isDelta}
-                horizon={resolveEvaluationHorizon(startYear, {
-                    status: isHorizonLoading && endYear === null ? SourceStatus.LOADING : SourceStatus.READY,
-                    envelopeEndMonthIndex: endYear === null ? null : monthIndexOf(endYear, 12),
-                })}
-                ensembleKey={ensembleKey}
-                isSourceLoading={isHorizonLoading}
-                onValueChange={setCostProfile}
-                onValidityChange={setIsReady}
-            />
-            <output data-testid="cost-schedule-ready">{isReady ? "ready" : "pending"}</output>
+        <StrictMode>
+            {showEditor && (
+                <CostProfileEditor
+                    value={costProfile}
+                    currency="USD"
+                    isDelta={isDelta}
+                    horizon={resolveEvaluationHorizon(startYear, {
+                        status: isHorizonLoading && endYear === null ? SourceStatus.LOADING : SourceStatus.READY,
+                        envelopeEndMonthIndex: endYear === null ? null : monthIndexOf(endYear, 12),
+                    })}
+                    ensembleKey={ensembleKey}
+                    isSourceLoading={isHorizonLoading}
+                    onValueChange={setCostProfile}
+                    onDraftStatusChange={setDraftStatus}
+                />
+            )}
+            <output data-testid="cost-draft-status">{draftStatus}</output>
             <output data-testid="committed-cost-profile">{JSON.stringify(costProfile)}</output>
-        </>
+        </StrictMode>
     );
 }

@@ -38,6 +38,7 @@ import type { MissingComponentAssumptions, SalesGasStrategy } from "../utils/vec
 import { CalculationHelpDialog } from "../view/components/calculationHelpDialog";
 
 import {
+    costDraftStatusAtom,
     costProfileAtom,
     cashFlowProfileTypeAtom,
     currencyAtom,
@@ -46,7 +47,6 @@ import {
     earlyValueConfigurationAtom,
     gasPriceAtom,
     gasPriceBasisAtom,
-    isCostProfileDraftValidAtom,
     missingComponentAssumptionsAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
@@ -137,7 +137,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     const [gasPrice, setGasPrice] = useAtom(gasPriceAtom);
     const [gasPriceBasis, setGasPriceBasis] = useAtom(gasPriceBasisAtom);
     const [costProfile, setCostProfile] = useAtom(costProfileAtom);
-    const [isCostProfileDraftValid, setIsCostProfileDraftValid] = useAtom(isCostProfileDraftValidAtom);
+    const [costDraftStatus, setCostDraftStatus] = useAtom(costDraftStatusAtom);
     const [selectedMeasure, setSelectedMeasure] = useAtom(selectedMeasureAtom);
     const [cashFlowProfileType, setCashFlowProfileType] = useAtom(cashFlowProfileTypeAtom);
     const [resultMode, setResultMode] = useAtom(resultModeAtom);
@@ -259,7 +259,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
         oilPrice,
         gasPrice,
         costProfile,
-        isCostProfileDraftValid,
+        costDraftStatus,
         earlyValue: earlyValueConfiguration,
         requirement: getResultRequirement(resultMode, selectedMeasure, cashFlowProfileType),
     });
@@ -516,7 +516,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                                 horizon={evaluationHorizon}
                                 isSourceLoading={isSourceLoading}
                                 onValueChange={setCostProfile}
-                                onValidityChange={setIsCostProfileDraftValid}
+                                onDraftStatusChange={setCostDraftStatus}
                             />
                         </Setting.Field>
                     </Setting.Section>

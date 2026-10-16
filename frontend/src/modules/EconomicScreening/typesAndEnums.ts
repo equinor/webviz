@@ -118,6 +118,13 @@ export type CostProfileEntry = {
     opex: number;
 };
 
+export enum CostDraftStatus {
+    COMMITTED = "COMMITTED",
+    /** Valid, but not yet committed by the debounce. */
+    PENDING = "PENDING",
+    INVALID = "INVALID",
+}
+
 export type PriceAssumptions = {
     currency: Currency;
     /** Null means unspecified. Zero intentionally omits oil revenue. */
