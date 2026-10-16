@@ -149,6 +149,8 @@ export interface CustomDataProviderImplementation<
     /**
      * This optional method is called when the settings of the provider are changed. It should return true if the new settings
      * require a refetch of the data, or false if the data can be reused.
+     * Hidden settings are passed as undefined, as they don't apply to the current configuration - comparing them is safe,
+     * but they never differ while hidden.
      *
      * @param prevSettings The previous settings of the provider.
      * @param newSettings The new settings of the provider.
