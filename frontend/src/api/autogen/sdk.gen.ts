@@ -547,7 +547,7 @@ export const getInplaceTableDefinitions = <ThrowOnError extends boolean = false>
         responseType: "json",
         url: "/inplace_volumes/inplace_table_definitions/",
         ...options,
-        query: { ...options.query, _rv: "54ac4c" },
+        query: { ...options.query, _rv: "522dd4" },
     });
 
 /**
