@@ -59,7 +59,7 @@ const template: Template = {
                     channelIdString: TimeSeriesChannelIds.TIME_SERIES,
                 },
                 channelResponse2: {
-                    listensToInstanceRef: "MainInplaceVolumesPlotInstance",
+                    listensToInstanceRef: "MainInplaceVolumesNewInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: InplaceChannelIds.RESPONSE_PER_REAL,
                 },

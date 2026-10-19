@@ -1,3 +1,4 @@
+import type { VfpType_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
@@ -6,8 +7,8 @@ import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { VfpParam } from "@modules/Vfp/types";
 import { isProdTable } from "@modules/Vfp/utils/vfpTableClassifier";
 
-import { availableRealizationNumbersAtom, availableVfpTableNamesAtom } from "./derivedAtoms";
-import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
+import { availableRealizationNumbersAtom, availableVfpTableNumbersAtom, availableVfpTypesAtom } from "./derivedAtoms";
+import { vfpTablesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
 
 export const selectedEnsembleIdentAtom = persistableFixableAtom<RegularEnsembleIdent | null>({
     initialValue: null,
@@ -43,35 +44,56 @@ export const selectedRealizationNumberAtom = persistableFixableAtom<number | nul
     },
 });
 
-export const selectedVfpTableNameAtom = persistableFixableAtom<string | null>({
+function computeVfpTablesQueryDependenciesState({
+    get,
+}: {
+    get: (atom: any) => any;
+}): "error" | "loading" | "loaded" {
+    const vfpTablesQuery = get(vfpTablesQueryAtom);
+    if (vfpTablesQuery.isError) {
+        return "error";
+    }
+    if (vfpTablesQuery.isFetching) {
+        return "loading";
+    }
+    return "loaded";
+}
+
+export const selectedVfpTypeAtom = persistableFixableAtom<VfpType_api | null>({
     initialValue: null,
-    computeDependenciesState: ({ get }) => {
-        const vfpTableNamesQuery = get(vfpTableNamesQueryAtom);
-
-        if (vfpTableNamesQuery.isError) {
-            return "error";
-        }
-        if (vfpTableNamesQuery.isFetching) {
-            return "loading";
-        }
-
-        return "loaded";
-    },
+    computeDependenciesState: computeVfpTablesQueryDependenciesState,
     isValidFunction: ({ get, value }) => {
-        const availableVfpTableNames = get(availableVfpTableNamesAtom);
-        if (!value) {
-            return availableVfpTableNames.length === 0;
+        const availableVfpTypes = get(availableVfpTypesAtom);
+        if (value === null) {
+            return availableVfpTypes.length === 0;
         }
-        return availableVfpTableNames.includes(value);
+        return availableVfpTypes.includes(value);
     },
     fixupFunction: ({ get, value }) => {
-        const availableVfpTableNames = get(availableVfpTableNamesAtom);
-        if (!value) {
-            return availableVfpTableNames[0] ?? null;
+        const availableVfpTypes = get(availableVfpTypesAtom);
+        if (value === null || value === undefined || !availableVfpTypes.includes(value)) {
+            return availableVfpTypes[0] ?? null;
         }
+        return value;
+    },
+});
 
-        // When value is invalid string, enforce user to reselect
-        return null;
+export const selectedVfpTableNumberAtom = persistableFixableAtom<number | null>({
+    initialValue: null,
+    computeDependenciesState: computeVfpTablesQueryDependenciesState,
+    isValidFunction: ({ get, value }) => {
+        const availableVfpTableNumbers = get(availableVfpTableNumbersAtom);
+        if (value === null) {
+            return availableVfpTableNumbers.length === 0;
+        }
+        return availableVfpTableNumbers.includes(value);
+    },
+    fixupFunction: ({ get, value }) => {
+        const availableVfpTableNumbers = get(availableVfpTableNumbersAtom);
+        if (value === null || value === undefined || !availableVfpTableNumbers.includes(value)) {
+            return availableVfpTableNumbers[0] ?? null;
+        }
+        return value;
     },
 });
 

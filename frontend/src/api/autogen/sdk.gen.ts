@@ -82,6 +82,8 @@ import type {
     GetLoggedInUserData_api,
     GetLoggedInUserErrors_api,
     GetLoggedInUserResponses_api,
+    GetMediaSasTokenData_api,
+    GetMediaSasTokenResponses_api,
     GetMisfitSurfaceDataData_api,
     GetMisfitSurfaceDataErrors_api,
     GetMisfitSurfaceDataResponses_api,
@@ -186,10 +188,10 @@ import type {
     GetVectorListResponses_api,
     GetVfpTableData_api,
     GetVfpTableErrors_api,
-    GetVfpTableNamesData_api,
-    GetVfpTableNamesErrors_api,
-    GetVfpTableNamesResponses_api,
     GetVfpTableResponses_api,
+    GetVfpTablesData_api,
+    GetVfpTablesErrors_api,
+    GetVfpTablesResponses_api,
     GetWellboreCasingsData_api,
     GetWellboreCasingsErrors_api,
     GetWellboreCasingsResponses_api,
@@ -328,6 +330,7 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/cases/{case_uuid}/ensembles/{ensemble_name}",
         ...options,
+        query: { ...options.query, _rv: "b454e9" },
     });
 
 /**
@@ -370,6 +373,7 @@ export const getVectorList = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/timeseries/vector_list/",
         ...options,
+        query: { ...options.query, _rv: "2ae3f7" },
     });
 
 /**
@@ -392,6 +396,7 @@ export const getDeltaEnsembleVectorList = <ThrowOnError extends boolean = false>
         responseType: "json",
         url: "/timeseries/delta_ensemble_vector_list/",
         ...options,
+        query: { ...options.query, _rv: "9ce91f" },
     });
 
 /**
@@ -410,6 +415,7 @@ export const getRealizationsVectorData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/timeseries/realizations_vector_data/",
         ...options,
+        query: { ...options.query, _rv: "b0f4b7" },
     });
 
 /**
@@ -436,6 +442,7 @@ export const getDeltaEnsembleRealizationsVectorData = <ThrowOnError extends bool
         responseType: "json",
         url: "/timeseries/delta_ensemble_realizations_vector_data/",
         ...options,
+        query: { ...options.query, _rv: "557d6b" },
     });
 
 /**
@@ -452,6 +459,7 @@ export const getHistoricalVectorData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/timeseries/historical_vector_data/",
         ...options,
+        query: { ...options.query, _rv: "e58ec2" },
     });
 
 /**
@@ -470,6 +478,7 @@ export const getStatisticalVectorData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/timeseries/statistical_vector_data/",
         ...options,
+        query: { ...options.query, _rv: "e5a22f" },
     });
 
 /**
@@ -496,6 +505,7 @@ export const getDeltaEnsembleStatisticalVectorData = <ThrowOnError extends boole
         responseType: "json",
         url: "/timeseries/delta_ensemble_statistical_vector_data/",
         ...options,
+        query: { ...options.query, _rv: "e5a22f" },
     });
 
 /**
@@ -518,6 +528,7 @@ export const getStatisticalVectorDataPerSensitivity = <ThrowOnError extends bool
         responseType: "json",
         url: "/timeseries/statistical_vector_data_per_sensitivity/",
         ...options,
+        query: { ...options.query, _rv: "2e3104" },
     });
 
 /**
@@ -536,6 +547,7 @@ export const getInplaceTableDefinitions = <ThrowOnError extends boolean = false>
         responseType: "json",
         url: "/inplace_volumes/inplace_table_definitions/",
         ...options,
+        query: { ...options.query, _rv: "54ac4c" },
     });
 
 /**
@@ -612,6 +624,7 @@ export const getRealizationSurfacesMetadata = <ThrowOnError extends boolean = fa
         responseType: "json",
         url: "/surface/realization_surfaces_metadata/",
         ...options,
+        query: { ...options.query, _rv: "8fec25" },
     });
 
 /**
@@ -630,6 +643,7 @@ export const getObservedSurfacesMetadata = <ThrowOnError extends boolean = false
         responseType: "json",
         url: "/surface/observed_surfaces_metadata/",
         ...options,
+        query: { ...options.query, _rv: "8fec25" },
     });
 
 /**
@@ -652,6 +666,7 @@ export const getInitialFluidContactSurfacesMetadata = <ThrowOnError extends bool
         responseType: "json",
         url: "/surface/initial_fluid_contact_surfaces_metadata/",
         ...options,
+        query: { ...options.query, _rv: "4ca118" },
     });
 
 /**
@@ -695,6 +710,7 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/surface/surface_data",
         ...options,
+        query: { ...options.query, _rv: "1a245c" },
     });
 
 /**
@@ -864,6 +880,7 @@ export const getParametersAndSensitivities = <ThrowOnError extends boolean = fal
         responseType: "json",
         url: "/parameters/parameters_and_sensitivities/",
         ...options,
+        query: { ...options.query, _rv: "c609c0" },
     });
 
 /**
@@ -878,6 +895,7 @@ export const getGridModelsInfo = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/grid3d/grid_models_info/",
         ...options,
+        query: { ...options.query, _rv: "84c43c" },
     });
 
 /**
@@ -892,6 +910,7 @@ export const getGridSurface = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/grid3d/grid_surface",
         ...options,
+        query: { ...options.query, _rv: "79cbd6" },
     });
 
 /**
@@ -906,6 +925,7 @@ export const getGridParameter = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/grid3d/grid_parameter",
         ...options,
+        query: { ...options.query, _rv: "3041db" },
     });
 
 /**
@@ -946,6 +966,7 @@ export const getRealizationFlowNetwork = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/flow_network/realization_flow_network/",
         ...options,
+        query: { ...options.query, _rv: "d9d317" },
     });
 
 /**
@@ -960,6 +981,7 @@ export const getProductionData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/flow_data/production_data/",
         ...options,
+        query: { ...options.query, _rv: "e75a4e" },
     });
 
 /**
@@ -974,6 +996,7 @@ export const getInjectionData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/flow_data/injection_data/",
         ...options,
+        query: { ...options.query, _rv: "eee1b3" },
     });
 
 /**
@@ -988,6 +1011,7 @@ export const getPvtTableData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/pvt/pvt_table_data/",
         ...options,
+        query: { ...options.query, _rv: "9ddf81" },
     });
 
 /**
@@ -1001,6 +1025,7 @@ export const getWellCompletionsData = <ThrowOnError extends boolean = false>(
             responseType: "json",
             url: "/well_completions/well_completions_data/",
             ...options,
+            query: { ...options.query, _rv: "3fb75a" },
         },
     );
 
@@ -1020,6 +1045,7 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/drilled_wellbore_headers/",
         ...options,
+        query: { ...options.query, _rv: "9f35b9" },
     });
 
 /**
@@ -1038,6 +1064,7 @@ export const getPlannedWellboreHeaders = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/planned_wellbore_headers/",
         ...options,
+        query: { ...options.query, _rv: "25e410" },
     });
 
 /**
@@ -1052,6 +1079,7 @@ export const getFieldPerforations = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/field_perforations",
         ...options,
+        query: { ...options.query, _rv: "3e7ff3" },
     });
 
 /**
@@ -1067,6 +1095,7 @@ export const getFieldScreens = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/field_screens",
         ...options,
+        query: { ...options.query, _rv: "dfa54b" },
     });
 
 /**
@@ -1081,6 +1110,7 @@ export const getWellTrajectories = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/well_trajectories/",
         ...options,
+        query: { ...options.query, _rv: "8385e6" },
     });
 
 /**
@@ -1099,6 +1129,7 @@ export const getPlannedWellTrajectories = <ThrowOnError extends boolean = false>
         responseType: "json",
         url: "/well/planned_well_trajectories/",
         ...options,
+        query: { ...options.query, _rv: "a2672a" },
     });
 
 /**
@@ -1117,6 +1148,7 @@ export const getWellborePickIdentifiers = <ThrowOnError extends boolean = false>
         responseType: "json",
         url: "/well/wellbore_pick_identifiers/",
         ...options,
+        query: { ...options.query, _rv: "5b8a12" },
     });
 
 /**
@@ -1142,6 +1174,7 @@ export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean =
         responseType: "json",
         url: "/well/wellbore_picks_for_pick_identifier/",
         ...options,
+        query: { ...options.query, _rv: "ad11dc" },
     });
 
 /**
@@ -1160,6 +1193,7 @@ export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = fal
         responseType: "json",
         url: "/well/wellbore_picks_in_strat_column",
         ...options,
+        query: { ...options.query, _rv: "979713" },
     });
 
 /**
@@ -1182,6 +1216,7 @@ export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = f
         responseType: "json",
         url: "/well/wellbore_stratigraphic_columns/",
         ...options,
+        query: { ...options.query, _rv: "90047d" },
     });
 
 /**
@@ -1197,6 +1232,7 @@ export const getWellboreCompletions = <ThrowOnError extends boolean = false>(
             responseType: "json",
             url: "/well/wellbore_completions/",
             ...options,
+            query: { ...options.query, _rv: "e1bb0e" },
         },
     );
 
@@ -1212,6 +1248,7 @@ export const getWellboreCasings = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/wellbore_casings/",
         ...options,
+        query: { ...options.query, _rv: "dc609d" },
     });
 
 /**
@@ -1230,6 +1267,7 @@ export const getWellborePerforations = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/wellbore_perforations/",
         ...options,
+        query: { ...options.query, _rv: "9ab160" },
     });
 
 /**
@@ -1249,6 +1287,7 @@ export const getWellboreLogCurveHeaders = <ThrowOnError extends boolean = false>
         responseType: "json",
         url: "/well/wellbore_log_curve_headers/",
         ...options,
+        query: { ...options.query, _rv: "8ba046" },
     });
 
 /**
@@ -1263,6 +1302,7 @@ export const getLogCurveData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/well/log_curve_data/",
         ...options,
+        query: { ...options.query, _rv: "b6e97c" },
     });
 
 /**
@@ -1278,6 +1318,7 @@ export const getSeismicCubeMetaList = <ThrowOnError extends boolean = false>(
             responseType: "json",
             url: "/seismic/seismic_cube_meta_list/",
             ...options,
+            query: { ...options.query, _rv: "68715e" },
         },
     );
 
@@ -1293,6 +1334,7 @@ export const getSeismicSlices = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/seismic/get_seismic_slices/",
         ...options,
+        query: { ...options.query, _rv: "11b19c" },
     });
 
 /**
@@ -1331,6 +1373,7 @@ export const getPolygonsDirectory = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/polygons/polygons_directory/",
         ...options,
+        query: { ...options.query, _rv: "714e98" },
     });
 
 /**
@@ -1343,6 +1386,7 @@ export const getPolygonsData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/polygons/polygons_data/",
         ...options,
+        query: { ...options.query, _rv: "57d618" },
     });
 
 /**
@@ -1355,6 +1399,7 @@ export const getUserInfo = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/graph/user_info/{user_id_or_email}",
         ...options,
+        query: { ...options.query, _rv: "44f8fc" },
     });
 
 /**
@@ -1369,6 +1414,7 @@ export const getUserPhoto = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/graph/user_photo/",
         ...options,
+        query: { ...options.query, _rv: "1fe1ad" },
     });
 
 /**
@@ -1384,6 +1430,7 @@ export const getSummaryObservations = <ThrowOnError extends boolean = false>(
             responseType: "json",
             url: "/observations/summary_observations",
             ...options,
+            query: { ...options.query, _rv: "b80338" },
         },
     );
 
@@ -1397,6 +1444,7 @@ export const getRelpermTableNames = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/relperm/table_names",
         ...options,
+        query: { ...options.query, _rv: "1ff84c" },
     });
 
 /**
@@ -1413,6 +1461,7 @@ export const getRelpermTableDefinition = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/relperm/table_definition",
         ...options,
+        query: { ...options.query, _rv: "53b38e" },
     });
 
 /**
@@ -1429,6 +1478,7 @@ export const getRelpermRealizationData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/relperm/realization_data",
         ...options,
+        query: { ...options.query, _rv: "e06a23" },
     });
 
 /**
@@ -1443,6 +1493,7 @@ export const getRftTableDefinition = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/rft/rft_table_definition",
         ...options,
+        query: { ...options.query, _rv: "242418" },
     });
 
 /**
@@ -1457,6 +1508,7 @@ export const getRftRealizationData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/rft/rft_realization_data",
         ...options,
+        query: { ...options.query, _rv: "70557a" },
     });
 
 /**
@@ -1471,26 +1523,28 @@ export const getRftObservations = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/rft/rft_observations",
         ...options,
+        query: { ...options.query, _rv: "cf11fc" },
     });
 
 /**
- * Get Vfp Table Names
+ * Get Vfp Tables
  *
- * Get the available VFP table names for a given ensemble and realization.
+ * Get the available VFP tables (type and number) for a given ensemble and realization.
  */
-export const getVfpTableNames = <ThrowOnError extends boolean = false>(
-    options: Options<GetVfpTableNamesData_api, ThrowOnError>,
-): RequestResult<GetVfpTableNamesResponses_api, GetVfpTableNamesErrors_api, ThrowOnError> =>
-    (options.client ?? client).get<GetVfpTableNamesResponses_api, GetVfpTableNamesErrors_api, ThrowOnError>({
+export const getVfpTables = <ThrowOnError extends boolean = false>(
+    options: Options<GetVfpTablesData_api, ThrowOnError>,
+): RequestResult<GetVfpTablesResponses_api, GetVfpTablesErrors_api, ThrowOnError> =>
+    (options.client ?? client).get<GetVfpTablesResponses_api, GetVfpTablesErrors_api, ThrowOnError>({
         responseType: "json",
-        url: "/vfp/vfp_table_names/",
+        url: "/vfp/vfp_tables/",
         ...options,
+        query: { ...options.query, _rv: "4c775b" },
     });
 
 /**
  * Get Vfp Table
  *
- * Get the VFP table for a given ensemble, realization and table name.
+ * Get the VFP table for a given ensemble, realization, type and table number.
  */
 export const getVfpTable = <ThrowOnError extends boolean = false>(
     options: Options<GetVfpTableData_api, ThrowOnError>,
@@ -1499,6 +1553,7 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/vfp/vfp_table/",
         ...options,
+        query: { ...options.query, _rv: "47651e" },
     });
 
 /**
@@ -1814,6 +1869,20 @@ export const deleteSnapshotAccessLog = <ThrowOnError extends boolean = false>(
     >({
         responseType: "json",
         url: "/persistence/snapshot_access_logs/{snapshot_id}",
+        ...options,
+    });
+
+/**
+ * Get Media Sas Token
+ *
+ * Return a short-lived, read-only container SAS token for fetching tutorial media.
+ */
+export const getMediaSasToken = <ThrowOnError extends boolean = false>(
+    options?: Options<GetMediaSasTokenData_api, ThrowOnError>,
+): RequestResult<GetMediaSasTokenResponses_api, unknown, ThrowOnError> =>
+    (options?.client ?? client).get<GetMediaSasTokenResponses_api, unknown, ThrowOnError>({
+        responseType: "json",
+        url: "/tutorials/media_sas_token",
         ...options,
     });
 

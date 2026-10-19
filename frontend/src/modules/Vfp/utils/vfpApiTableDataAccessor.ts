@@ -151,6 +151,8 @@ export class VfpApiTableDataAccessor {
         if (!isProdTable(this._vfpTable)) {
             throw Error("The getVfpProdBhpValues function is only valid for Production VFP tables.");
         }
+        // Decodes the flat bhpValues produced by _flatten_bhp_values in
+        // backend_py/libs/services/src/webviz_services/sumo_access/vfp_access.py
         const nbWfrValues = this._vfpTable.wfrValues.length;
         const nbGfrValues = this._vfpTable.gfrValues.length;
         const nbAlqValues = this._vfpTable.alqValues.length;
@@ -164,6 +166,8 @@ export class VfpApiTableDataAccessor {
         if (isProdTable(this._vfpTable)) {
             throw Error("The getVfpInjBhpValues function is only valid for Injection VFP tables.");
         }
+        // Decodes the flat bhpValues produced by _flatten_bhp_values in
+        // backend_py/libs/services/src/webviz_services/sumo_access/vfp_access.py
         const nbFlowRates = this._vfpTable.flowRateValues.length;
         const startIndex = nbFlowRates * thpIndex;
         return this._vfpTable.bhpValues.slice(startIndex, startIndex + nbFlowRates);

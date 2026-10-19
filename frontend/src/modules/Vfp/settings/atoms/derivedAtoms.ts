@@ -1,16 +1,35 @@
 import { atom } from "jotai";
 
+import { VfpType_api, type VfpTableInfo_api } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { VfpApiTableDataAccessor } from "@modules/Vfp/utils/vfpApiTableDataAccessor";
 
 import { type TableDataAccessorWithStatusFlags } from "../../types";
 
-import { selectedEnsembleIdentAtom } from "./persistableFixableAtoms";
-import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
+import { selectedEnsembleIdentAtom, selectedVfpTypeAtom } from "./persistableFixableAtoms";
+import { vfpTablesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
 
-export const availableVfpTableNamesAtom = atom<string[]>((get) => {
-    const vfpTableNamesQuery = get(vfpTableNamesQueryAtom);
-    return vfpTableNamesQuery.data?.map((item) => item) ?? [];
+export const availableVfpTablesAtom = atom<VfpTableInfo_api[]>((get) => {
+    const vfpTablesQuery = get(vfpTablesQueryAtom);
+    return vfpTablesQuery.data ?? [];
+});
+
+export const availableVfpTypesAtom = atom<VfpType_api[]>((get) => {
+    const availableVfpTables = get(availableVfpTablesAtom);
+    const presentTypes = new Set(availableVfpTables.map((tableInfo) => tableInfo.vfpType));
+    return [VfpType_api.PROD, VfpType_api.INJ].filter((vfpType) => presentTypes.has(vfpType));
+});
+
+export const availableVfpTableNumbersAtom = atom<number[]>((get) => {
+    const availableVfpTables = get(availableVfpTablesAtom);
+    const selectedVfpType = get(selectedVfpTypeAtom).value;
+    if (!selectedVfpType) {
+        return [];
+    }
+    return availableVfpTables
+        .filter((tableInfo) => tableInfo.vfpType === selectedVfpType)
+        .map((tableInfo) => tableInfo.tableNumber)
+        .sort((a, b) => a - b);
 });
 
 export const availableRealizationNumbersAtom = atom<number[]>((get) => {
@@ -25,7 +44,7 @@ export const availableRealizationNumbersAtom = atom<number[]>((get) => {
 
 export const tableDataAccessorWithStatusFlagsAtom = atom<TableDataAccessorWithStatusFlags>((get) => {
     const vfpTableDataQuery = get(vfpTableQueryAtom);
-    const vfpTableNamesQuery = get(vfpTableNamesQueryAtom);
+    const vfpTablesQuery = get(vfpTablesQueryAtom);
 
     const vfpTableData = vfpTableDataQuery.data ?? null;
 
@@ -35,9 +54,9 @@ export const tableDataAccessorWithStatusFlagsAtom = atom<TableDataAccessorWithSt
             isFetching: vfpTableDataQuery.isFetching,
             isError: vfpTableDataQuery.isError,
         },
-        tableNamesStatus: {
-            isError: vfpTableNamesQuery.isError,
-            isFetching: vfpTableNamesQuery.isFetching,
+        tablesStatus: {
+            isError: vfpTablesQuery.isError,
+            isFetching: vfpTablesQuery.isFetching,
         },
     };
 });

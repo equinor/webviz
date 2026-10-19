@@ -34,16 +34,17 @@ export default defineConfig({
     forbidOnly: !!process.env.CI,
     retries: 0,
     workers: 1,
-    /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-    reporter: "html",
+    /*
+     * Reporter to use. See https://playwright.dev/docs/test-reporters
+     * On CI we additionally enable the "github" reporter, which annotates the failing file/line
+     * and error message directly on the run summary (no need to download the HTML report).
+     */
+    reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "html",
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */
         baseURL: BASE_URL,
-
-        /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-        trace: record ? "on" : "on-first-retry",
-
+        trace: record ? { mode: "retain-on-failure", screenshots: false } : "on-first-retry",
         /* If recording, record in full HD  (matches the 1920x1080 viewport set below). */
         video: record ? { mode: "on", size: { width: 1920, height: 1080 } } : "off",
         screenshot: record ? "on" : "off",
@@ -62,6 +63,11 @@ export default defineConfig({
                 ...devices["Desktop Chrome"],
                 storageState: STORAGE_STATE_PATH,
                 ...(record ? { viewport: { width: 1920, height: 1080 } } : {}),
+                // CI runners have a tiny /dev/shm; without this Chromium can abort (SIGABRT) when
+                // flushing the full-HD video/trace at context teardown. Point it at /tmp instead.
+                launchOptions: {
+                    args: ["--disable-dev-shm-usage"],
+                },
             },
         },
     ],

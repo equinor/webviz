@@ -9,7 +9,7 @@
 //   node tests/e2e/support/add-narration.mjs [testResultsDir]
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,6 +17,8 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_RESULTS_DIR = resolve(scriptDir, "../../../test-results");
 const MANIFEST_NAME = "narration.json";
 const NARRATED_SUFFIX = ".narrated.webm";
+const STEPS_SUFFIX = ".steps.json";
+const CAPTIONS_SUFFIX = ".vtt";
 
 function ffmpegAvailable() {
     const result = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" });
@@ -92,16 +94,70 @@ function buildFfmpegArgs(videoPath, clips, outputPath) {
         "1",
         "-c:a",
         "libopus",
+        // The seek index is written at the end of a WebM by default,
+        // which a streaming player never reaches unless it downloads the whole file
+        "-cues_to_front",
+        "1",
         outputPath,
     );
     return args;
 }
 
+function writeSteps(videoPath, steps, trimStartMs) {
+    const stepsPath = videoPath.replace(/\.webm$/, STEPS_SUFFIX);
+    if (!steps || steps.length === 0) {
+        rmSync(stepsPath, { force: true });
+        return;
+    }
+    const normalized = steps.map((step) => ({
+        title: step.title,
+        startSeconds: Math.max(0, step.startMs - trimStartMs) / 1000,
+    }));
+    writeFileSync(stepsPath, JSON.stringify({ steps: normalized }, null, 2));
+}
+
+/** Format a millisecond offset as a WebVTT timestamp (HH:MM:SS.mmm). */
+function formatVttTimestamp(totalMs) {
+    const ms = Math.max(0, Math.round(totalMs));
+    const pad = (value, width = 2) => String(value).padStart(width, "0");
+    const hours = Math.floor(ms / 3_600_000);
+    const minutes = Math.floor((ms % 3_600_000) / 60_000);
+    const seconds = Math.floor((ms % 60_000) / 1000);
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${pad(ms % 1000, 3)}`;
+}
+
+/** Write a WebVTT caption track (one cue per narration clip) on the same trimmed timeline as the video. */
+function writeCaptions(videoPath, clips, trimStartMs) {
+    const captionsPath = videoPath.replace(/\.webm$/, CAPTIONS_SUFFIX);
+    const cues = clips
+        .filter((clip) => typeof clip.text === "string" && clip.text.trim().length > 0)
+        .map((clip) => {
+            const startMs = Math.max(0, clip.startMs - trimStartMs);
+            return { startMs, endMs: startMs + clip.durationMs, text: clip.text.trim() };
+        })
+        .sort((a, b) => a.startMs - b.startMs);
+    if (cues.length === 0) {
+        rmSync(captionsPath, { force: true });
+        return;
+    }
+    const body = cues
+        .map((cue) => `${formatVttTimestamp(cue.startMs)} --> ${formatVttTimestamp(cue.endMs)}\n${cue.text}`)
+        .join("\n\n");
+    writeFileSync(captionsPath, `WEBVTT\n\n${body}\n`);
+}
+
 /** Mux one folder's clips into its video. Returns true on success, false on any failure. */
 function narrateFolder(dir) {
     const manifestPath = join(dir, MANIFEST_NAME);
-    const clips = JSON.parse(readFileSync(manifestPath, "utf-8")).clips ?? [];
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+    const clips = manifest.clips ?? [];
+    const steps = manifest.steps ?? [];
     if (clips.length === 0) {
+        const videoPath = findSourceVideo(dir);
+        if (videoPath) {
+            writeSteps(videoPath, steps, 0);
+            writeCaptions(videoPath, clips, 0);
+        }
         return true;
     }
 
@@ -118,6 +174,9 @@ function narrateFolder(dir) {
         console.error(`  [narration] ffmpeg failed for ${videoPath}:\n${result.stderr ?? result.error}`);
         return false;
     }
+    const trimStartMs = Math.max(0, Math.min(...clips.map((clip) => clip.startMs)));
+    writeSteps(videoPath, steps, trimStartMs);
+    writeCaptions(videoPath, clips, trimStartMs);
     console.log(`  [narration] Wrote ${outputPath} (${clips.length} clip(s)).`);
     return true;
 }
