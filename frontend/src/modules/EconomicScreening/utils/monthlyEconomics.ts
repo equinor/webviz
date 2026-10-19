@@ -6,12 +6,17 @@ import {
 
 import { getCostYearsOutsideRange } from "./costProfile";
 import {
-    BREAK_EVEN_OIL_VOLUME_TOLERANCE,
     computeInternalRateOfReturnFromEvents,
     makeCostLookup,
     type IrrComputationResult,
     type TimedCashFlowEvent,
 } from "./economicCalculations";
+import {
+    getBreakEvenIneligibility,
+    getRevenueIneligibility,
+    isRevenueResolved,
+    type Ineligibility,
+} from "./eligibility";
 import {
     isMonthCoverageEstablished,
     monthIndexOf,
@@ -90,10 +95,12 @@ export type MonthlyRealizationEconomicResult = {
     undiscountedOilVolume: number;
     undiscountedSalesGasVolume: number;
     npv: number | null;
-    financialReason?: string;
+    /** Why NPV, IRR and the cash-flow profile are unavailable; null when they are calculated. */
+    financialIneligibility: Ineligibility | null;
     irr: number | null;
     irrStatus?: IrrStatus;
     breakEvenOilPrice: number | null;
+    breakEvenIneligibility: Ineligibility | null;
     breakEvenSlopeDirection?: BreakEvenSlopeDirection;
     /** Years of non-zero cost entries outside the evaluated horizon, which are kept out of every total. */
     excludedCostYears: number[];
@@ -204,29 +211,6 @@ export function isProductConfirmedAbsent(
         startMonthIndex,
         endMonthIndex,
     );
-}
-
-/** A zero price omits the revenue; otherwise the product needs established data and a price unless absent. */
-function isRevenueResolved(price: number | null, isDataEstablished: boolean, isConfirmedAbsent: boolean): boolean {
-    return price === 0 || (isDataEstablished && (price !== null || isConfirmedAbsent));
-}
-
-function revenueReason(
-    productLabel: string,
-    price: number | null,
-    isDataEstablished: boolean,
-    isConfirmedAbsent: boolean,
-): string | undefined {
-    if (price === 0) {
-        return undefined;
-    }
-    if (!isDataEstablished) {
-        return `${productLabel} source coverage is not established for every month of the evaluation.`;
-    }
-    if (price === null && !isConfirmedAbsent) {
-        return `Enter ${productLabel.toLowerCase()} price.`;
-    }
-    return undefined;
 }
 
 type AnnualComponents = {
@@ -349,12 +333,10 @@ export function computeMonthlyRealizationEconomics(
     const effectiveOilPrice = oilPricePerVolume ?? 0;
     const effectiveGasPrice = gasPricePerVolume ?? 0;
 
-    const isGasRevenueResolved = isRevenueResolved(gasPricePerVolume, hasSalesGasData, isGasAbsent);
-    const canComputeFinancialNpv =
-        years.length > 0 && isRevenueResolved(oilPricePerVolume, hasOilData, isOilAbsent) && isGasRevenueResolved;
-    const financialReason =
-        revenueReason("Oil", oilPricePerVolume, hasOilData, isOilAbsent) ??
-        revenueReason("Gas", gasPricePerVolume, hasSalesGasData, isGasAbsent);
+    const gasRevenueIneligibility = getRevenueIneligibility("gas", gasPricePerVolume, hasSalesGasData, isGasAbsent);
+    const financialIneligibility =
+        getRevenueIneligibility("oil", oilPricePerVolume, hasOilData, isOilAbsent) ?? gasRevenueIneligibility;
+    const canComputeFinancialNpv = years.length > 0 && financialIneligibility === null;
 
     let npv: number | null = null;
     let irrResult: IrrComputationResult | null = null;
@@ -402,16 +384,16 @@ export function computeMonthlyRealizationEconomics(
     const discountedOilVolume = annualComponents.reduce((sum, entry) => sum + entry.discountedOilVolume, 0);
     const discountedSalesGasVolume = annualComponents.reduce((sum, entry) => sum + entry.discountedSalesGasVolume, 0);
     const pvCosts = annualComponents.reduce((sum, entry) => sum + entry.discountedCosts, 0);
-    const hasAnyCostEntry = annualComponents.some((entry) => entry.capex !== 0 || entry.opex !== 0);
+    const breakEvenIneligibility = getBreakEvenIneligibility({
+        hasOilData,
+        gasRevenueIneligibility,
+        hasIncludedNonZeroCost: annualComponents.some((entry) => entry.capex !== 0 || entry.opex !== 0),
+        discountedOilVolume,
+    });
 
     let breakEvenOilPrice: number | null = null;
     let breakEvenSlopeDirection: BreakEvenSlopeDirection | undefined = undefined;
-    if (
-        hasOilData &&
-        isGasRevenueResolved &&
-        hasAnyCostEntry &&
-        Math.abs(discountedOilVolume) > BREAK_EVEN_OIL_VOLUME_TOLERANCE
-    ) {
+    if (breakEvenIneligibility === null) {
         breakEvenOilPrice = (pvCosts - effectiveGasPrice * discountedSalesGasVolume) / discountedOilVolume;
         breakEvenSlopeDirection =
             discountedOilVolume > 0 ? BreakEvenSlopeDirection.POSITIVE : BreakEvenSlopeDirection.NEGATIVE;
@@ -432,10 +414,11 @@ export function computeMonthlyRealizationEconomics(
         undiscountedOilVolume: annualComponents.reduce((sum, entry) => sum + entry.oilVolume, 0),
         undiscountedSalesGasVolume: annualComponents.reduce((sum, entry) => sum + entry.salesGasVolume, 0),
         npv,
-        financialReason,
+        financialIneligibility,
         irr: irrResult?.irr ?? null,
         irrStatus: irrResult?.status,
         breakEvenOilPrice,
+        breakEvenIneligibility,
         breakEvenSlopeDirection,
         excludedCostYears,
         early: computeEarlyValue(annualComponents, oil, gas, assumptions, startMonthIndex),

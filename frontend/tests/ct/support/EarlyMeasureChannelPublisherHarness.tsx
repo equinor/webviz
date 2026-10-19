@@ -11,6 +11,7 @@ import { KeyKind } from "@framework/types/dataChannnel";
 import { EARLY_MEASURE_CHANNEL_ID_MAP } from "@modules/EconomicScreening/channelDefs";
 import type { Interfaces } from "@modules/EconomicScreening/interfaces";
 import { EarlyEconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
+import { Ineligibility } from "@modules/EconomicScreening/utils/eligibility";
 import type { MonthlyRealizationEconomicResult } from "@modules/EconomicScreening/utils/monthlyEconomics";
 import { EarlyMeasureChannelPublisher } from "@modules/EconomicScreening/view/components/earlyMeasureChannelPublisher";
 
@@ -29,8 +30,10 @@ const RESULTS: MonthlyRealizationEconomicResult[] = [
         undiscountedOilVolume: 100,
         undiscountedSalesGasVolume: 0,
         npv: 90,
+        financialIneligibility: null,
         irr: null,
         breakEvenOilPrice: null,
+        breakEvenIneligibility: Ineligibility.NO_INCLUDED_COSTS,
         excludedCostYears: [],
         early: {
             endYear: 2020,

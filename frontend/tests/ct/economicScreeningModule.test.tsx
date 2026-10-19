@@ -821,6 +821,9 @@ test("suggests covered years, accepts typed years and keeps the choice under fil
     await expect(setupStatus(page)).toContainText(
         "The prediction start year 2031 is after the supported simulation end (Jun 2020).",
     );
+    await expect(
+        viewRegion(page).getByText("The prediction start year 2031 is after the supported simulation end (Jun 2020)."),
+    ).toBeVisible();
 
     // Pointer selection, then clearing back to blank.
     await settings.getByRole("button", { name: "Prediction start year" }).click();

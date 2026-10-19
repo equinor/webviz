@@ -32,8 +32,9 @@ import {
     ResultMode,
     ResultModeEnumToStringMapping,
 } from "../typesAndEnums";
+import { getResultRequirement } from "../utils/eligibility";
 import { getMeasureDisplayName } from "../utils/measureAccessors";
-import { getResultRequirement, getSetupReadiness, type SetupField } from "../utils/setupReadiness";
+import { getSetupReadiness, type SetupField } from "../utils/setupReadiness";
 import type { MissingComponentAssumptions, SalesGasStrategy } from "../utils/vectorResolution";
 import { CalculationHelpDialog } from "../view/components/calculationHelpDialog";
 

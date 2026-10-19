@@ -370,15 +370,12 @@ describe("Economic Screening query results to channel data", () => {
 
         store.set(predictionStartYearAtom, null);
         expect(metricData(store, EconomicMeasure.DISCOUNTED_OIL_VOLUME)).toEqual([]);
-        expect(store.get(economicScreeningResultsAtom).errors).toContain(
-            "Enter a prediction start year to calculate results.",
-        );
+        // The Settings setup summary reports the horizon; the View status does not repeat it.
+        expect(store.get(economicScreeningResultsAtom).errors).toEqual([]);
 
         store.set(predictionStartYearAtom, 2022);
         expect(metricData(store, EconomicMeasure.NPV)).toEqual([]);
-        expect(store.get(economicScreeningResultsAtom).errors).toContain(
-            "The prediction start year 2022 is after the supported simulation end (Dec 2021).",
-        );
+        expect(store.get(economicScreeningResultsAtom).errors).toEqual([]);
     });
 
     test("publishes a cost-only early horizon only when zero production is source-covered", async () => {
@@ -453,9 +450,7 @@ describe("Economic Screening query results to channel data", () => {
         expect(store.get(sourceHorizonAtom).endYear).toBeNull();
         expect(metricData(store, EconomicMeasure.NPV)).toEqual([]);
         expect(metricData(store, EconomicMeasure.DISCOUNTED_OIL_VOLUME)).toEqual([]);
-        expect(store.get(economicScreeningResultsAtom).errors).toContain(
-            "Source coverage is unavailable, so the simulation end cannot be established.",
-        );
+        expect(store.get(economicScreeningResultsAtom).errors).toEqual([]);
     });
 
     test("satisfies the signed delta NPV identity with delta-shaped coverage", async () => {
@@ -532,7 +527,7 @@ describe("Economic Screening query results to channel data", () => {
         store.set(earlyValueConfigurationAtom, { enabled: true, endYear: 2030 });
         expect(metricData(store, EconomicMeasure.NPV)).toEqual(expected);
         const { errors, isEarlyValueConfigurationValid, results } = store.get(economicScreeningResultsAtom);
-        expect(errors).toEqual(["The early-value year must be within 2020-2021."]);
+        expect(errors).toEqual([]);
         expect(isEarlyValueConfigurationValid).toBe(false);
         expect(results.every((result) => result.early === null)).toBe(true);
     });
@@ -544,7 +539,6 @@ describe("Economic Screening query results to channel data", () => {
         store.set(earlyValueConfigurationAtom, { enabled: true, endYear: 2030 });
         const { errors, isEarlyValueConfigurationValid, results } = store.get(economicScreeningResultsAtom);
         expect(errors).toEqual([
-            "The early-value year must be within 2020-2021.",
             'Unrecognised oil volume unit "XYZ". Cannot apply the given oil price.',
             'Cannot convert between oil unit "XYZ" and gas unit "SM3".',
         ]);

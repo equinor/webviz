@@ -1,14 +1,12 @@
 import {
-    CashFlowProfileType,
     CostDraftStatus,
-    EconomicMeasure,
-    ResultMode,
     type CostProfileEntry,
     type EarlyValueConfiguration,
 } from "@modules/EconomicScreening/typesAndEnums";
 
 import { formatMonthIndex } from "./calendar";
 import { hasIncludedNonZeroCost } from "./costProfile";
+import { REQUIREMENT_NEEDS, revenueNeeds, type MeasureRequirement } from "./eligibility";
 import {
     getEvaluationHorizonError,
     isYearInHorizon,
@@ -46,50 +44,6 @@ export function suggestPredictionStartYears(
         }
     }
     return [...years].sort((first, second) => first - second);
-}
-
-/** What the selected result needs from the setup, following the existing metric eligibility rules. */
-export enum ResultRequirement {
-    FINANCIAL = "FINANCIAL",
-    BREAK_EVEN = "BREAK_EVEN",
-    OIL_VOLUME = "OIL_VOLUME",
-    GAS_VOLUME = "GAS_VOLUME",
-    OIL_AND_GAS_VOLUME = "OIL_AND_GAS_VOLUME",
-}
-
-export function getResultRequirement(
-    resultMode: ResultMode,
-    selectedMeasure: EconomicMeasure,
-    cashFlowProfileType: CashFlowProfileType,
-): ResultRequirement {
-    if (resultMode === ResultMode.TIME_PROFILE) {
-        switch (cashFlowProfileType) {
-            case CashFlowProfileType.ANNUAL_OIL_VOLUME:
-                return ResultRequirement.OIL_VOLUME;
-            case CashFlowProfileType.ANNUAL_SALES_GAS_VOLUME:
-                return ResultRequirement.GAS_VOLUME;
-            default:
-                return ResultRequirement.FINANCIAL;
-        }
-    }
-    if (resultMode === ResultMode.ALL_RESULTS) {
-        return ResultRequirement.FINANCIAL;
-    }
-    switch (selectedMeasure) {
-        case EconomicMeasure.NPV:
-        case EconomicMeasure.IRR:
-            return ResultRequirement.FINANCIAL;
-        case EconomicMeasure.BREAK_EVEN_OIL_PRICE:
-            return ResultRequirement.BREAK_EVEN;
-        case EconomicMeasure.DISCOUNTED_OIL_VOLUME:
-        case EconomicMeasure.UNDISCOUNTED_OIL_VOLUME:
-            return ResultRequirement.OIL_VOLUME;
-        case EconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME:
-        case EconomicMeasure.UNDISCOUNTED_SALES_GAS_VOLUME:
-            return ResultRequirement.GAS_VOLUME;
-        case EconomicMeasure.DISCOUNTED_OIL_EQUIVALENTS:
-            return ResultRequirement.OIL_AND_GAS_VOLUME;
-    }
 }
 
 export enum SetupIssueKind {
@@ -202,7 +156,7 @@ export type SetupReadinessInput = {
     costProfile: CostProfileEntry[];
     costDraftStatus: CostDraftStatus;
     earlyValue: EarlyValueConfiguration;
-    requirement: ResultRequirement;
+    requirement: MeasureRequirement;
 };
 
 function missingComponentMessage(componentLabel: string, checkboxLabel: string, needsGasVolume: boolean): string {
@@ -212,9 +166,8 @@ function missingComponentMessage(componentLabel: string, checkboxLabel: string, 
 }
 
 /**
- * Every currently known requirement of the selected result, reported together. Mirrors the calculation's
- * eligibility rules: a zero price omits that revenue, confirmed-absent products need no price, break-even
- * needs no oil price, and volume results need no prices.
+ * Every currently known requirement of the selected result, reported together. Applies the shared
+ * eligibility rules to the selected realizations' support, worded for the setup rather than per realization.
  */
 export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
     if (!input.hasEnsemble) {
@@ -249,38 +202,37 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
         addSource("No oil or sales-gas vectors are available for this ensemble.");
     }
 
-    const isFinancial = requirement === ResultRequirement.FINANCIAL;
-    const needsGasRevenue = isFinancial || requirement === ResultRequirement.BREAK_EVEN;
-    const needsOilVolume =
-        requirement === ResultRequirement.BREAK_EVEN ||
-        requirement === ResultRequirement.OIL_VOLUME ||
-        requirement === ResultRequirement.OIL_AND_GAS_VOLUME;
-    const needsGasVolume =
-        requirement === ResultRequirement.GAS_VOLUME || requirement === ResultRequirement.OIL_AND_GAS_VOLUME;
+    const needs = REQUIREMENT_NEEDS[requirement];
+    const oilRevenue = revenueNeeds(oilPrice, input.productSupport?.oil.isConfirmedAbsent ?? false);
+    const gasRevenue = revenueNeeds(gasPrice, input.productSupport?.gas.isConfirmedAbsent ?? false);
+    const needsOilSource = needs.oilVolume || (needs.oilRevenue && oilRevenue.needsSourceCoverage);
+    const gasRevenueNeedsSource = needs.gasRevenue && gasRevenue.needsSourceCoverage;
+    const needsGasSource = needs.gasVolume || gasRevenueNeedsSource;
 
     if (input.vectorListStatus === "READY" && snapshot.status !== SourceStatus.NO_SOURCES) {
         const support = input.productSupport;
         const coverage = support?.realizations;
-        const needsOilCoverage = input.hasOilVector && (needsOilVolume || (isFinancial && oilPrice !== 0));
+        const needsOilCoverage = input.hasOilVector && needsOilSource;
         let needsGasCoverage = false;
         if (!input.hasOilVector) {
-            if (needsOilVolume || (isFinancial && oilPrice !== 0)) {
+            if (needsOilSource) {
                 addSource("Oil production (FOPT) is not available for this ensemble.");
             }
         } else {
-            if (isFinancial && oilPrice === null && !support?.oil.isConfirmedAbsent) {
+            if (needs.oilRevenue && oilRevenue.needsPrice) {
                 addInput("Enter an oil price, or 0 to omit oil revenue.", "oilPrice");
             }
             if (needsOilCoverage && coverage && !coverage.some((entry) => entry.oil) && horizon) {
                 addSource(coverageMessage("Oil", support!.oil, horizon));
             }
+            if (needs.nonZeroOilVolume && support?.oil.isConfirmedAbsent) {
+                addSource("Oil production is zero in every selected realization, so break-even cannot be solved.");
+            }
         }
 
-        const gasRevenueNeedsSource = needsGasRevenue && gasPrice !== 0;
-        const needsGasSource = needsGasVolume || gasRevenueNeedsSource;
         const strategy = snapshot.salesGasStrategy;
         if (strategy.kind === "UNAVAILABLE") {
-            if (needsGasVolume) {
+            if (needs.gasVolume) {
                 addSource("Sales gas is unavailable: neither FGST nor FGPT is available.");
             } else if (gasRevenueNeedsSource) {
                 addSource(
@@ -289,7 +241,7 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
                 );
             }
         } else {
-            if (gasRevenueNeedsSource && gasPrice === null && !support?.gas.isConfirmedAbsent) {
+            if (needs.gasRevenue && gasRevenue.needsPrice) {
                 addInput("Enter a gas price, or 0 to omit gas revenue.", "gasPrice");
             }
             let hasUnresolvedComponent = false;
@@ -298,14 +250,14 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
                 if (!strategy.hasGasInjection && !assumptions?.assumeMissingInjectionAsZero) {
                     hasUnresolvedComponent = true;
                     addInput(
-                        missingComponentMessage("Gas injection (FGIT)", "Assume no gas injection", needsGasVolume),
+                        missingComponentMessage("Gas injection (FGIT)", "Assume no gas injection", needs.gasVolume),
                         "injection",
                     );
                 }
                 if (!strategy.hasGasConsumption && !assumptions?.assumeMissingConsumptionAsZero) {
                     hasUnresolvedComponent = true;
                     addInput(
-                        missingComponentMessage("Gas consumption (FGCT)", "Assume no gas consumption", needsGasVolume),
+                        missingComponentMessage("Gas consumption (FGCT)", "Assume no gas consumption", needs.gasVolume),
                         "consumption",
                     );
                 }
@@ -333,11 +285,11 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
         }
     }
 
-    if (needsGasRevenue && input.costDraftStatus === CostDraftStatus.INVALID) {
+    if (needs.validCostDraft && input.costDraftStatus === CostDraftStatus.INVALID) {
         addInput("Correct the cost schedule.", "costs");
     }
     if (
-        requirement === ResultRequirement.BREAK_EVEN &&
+        needs.includedNonZeroCosts &&
         horizon &&
         !hasIncludedNonZeroCost(input.costProfile, horizon.startYear, horizon.endYear)
     ) {

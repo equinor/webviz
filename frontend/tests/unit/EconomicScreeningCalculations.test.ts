@@ -7,6 +7,7 @@ import {
     isConventionalCashFlow,
     makeCostLookup,
 } from "@modules/EconomicScreening/utils/economicCalculations";
+import { Ineligibility } from "@modules/EconomicScreening/utils/eligibility";
 import type { ResolvedMonthlyAssumptions } from "@modules/EconomicScreening/utils/monthlyEconomics";
 import {
     capexDiscountFactor,
@@ -316,7 +317,7 @@ describe("monthly screening model", () => {
         expect(result.hasSalesGasData).toBe(false);
         expect(result.npv).toBeNull();
         expect(result.breakEvenOilPrice).toBeNull();
-        expect(result.financialReason).toContain("coverage");
+        expect(result.financialIneligibility).toBe(Ineligibility.OIL_COVERAGE);
         expect(result.undiscountedOilVolume).toBeCloseTo(1200, 9);
         expect(result.annualProfile[0].oilVolume).toBe(0);
     });
@@ -357,7 +358,7 @@ describe("monthly screening model", () => {
         expect(result.hasOilData).toBe(true);
         expect(result.hasSalesGasData).toBe(false);
         expect(result.npv).toBeNull();
-        expect(result.financialReason).toContain("Gas source coverage");
+        expect(result.financialIneligibility).toBe(Ineligibility.GAS_COVERAGE);
         expect(result.undiscountedOilVolume).toBeCloseTo(2400, 9);
     });
 
@@ -435,7 +436,7 @@ describe("monthly screening model", () => {
         );
 
         expect(blank.npv).toBeNull();
-        expect(blank.financialReason).toBe("Enter oil price.");
+        expect(blank.financialIneligibility).toBe(Ineligibility.OIL_PRICE_MISSING);
         expect(zero.npv).toBeCloseTo(0.1 * zero.discountedSalesGasVolume - 100 * Math.pow(1.1, -0.5), 9);
         expect(zero.undiscountedOilVolume).toBeCloseTo(1200, 9);
     });
@@ -827,7 +828,7 @@ describe("monthly screening model", () => {
 
         expect(blankGasPrice.undiscountedSalesGasVolume).toBe(0);
         expect(blankGasPrice.npv).toBeNull();
-        expect(blankGasPrice.financialReason).toBe("Enter gas price.");
+        expect(blankGasPrice.financialIneligibility).toBe(Ineligibility.GAS_PRICE_MISSING);
         expect(blankGasPrice.breakEvenOilPrice).toBeNull();
         // Their discounted values do not cancel either, since the months are discounted differently.
         expect(blankGasPrice.discountedSalesGasVolume).not.toBe(0);
@@ -850,7 +851,7 @@ describe("monthly screening model", () => {
         expect(result.npv).toBeCloseTo(50 * result.discountedOilVolume - 100 * Math.pow(1.1, -0.5), 9);
         expect(result.breakEvenOilPrice).not.toBeNull();
         expect(blank.npv).toBeNull();
-        expect(blank.financialReason).toContain("Gas source coverage");
+        expect(blank.financialIneligibility).toBe(Ineligibility.GAS_COVERAGE);
     });
 
     test("matches the worked example in the calculation guide", () => {

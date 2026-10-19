@@ -6,6 +6,13 @@ import {
     OilPriceBasisEnumToStringMapping,
 } from "@modules/EconomicScreening/typesAndEnums";
 
+import {
+    getIneligibilityMessage,
+    getMeasureRequirement,
+    Ineligibility,
+    MeasureRequirement,
+    REQUIREMENT_NEEDS,
+} from "./eligibility";
 import type { MonthlyRealizationEconomicResult } from "./monthlyEconomics";
 import { convertOilPriceFromSimulatorUnit } from "./unitConversion";
 
@@ -26,12 +33,9 @@ export type MeasureUnitContext = {
     oilPriceBasis: OilPriceBasis;
 };
 
+/** Measures withheld by an invalid cost draft: NPV, IRR and break-even oil price. */
 export function isFinancialMeasure(measure: EconomicMeasure): boolean {
-    return (
-        measure === EconomicMeasure.NPV ||
-        measure === EconomicMeasure.IRR ||
-        measure === EconomicMeasure.BREAK_EVEN_OIL_PRICE
-    );
+    return REQUIREMENT_NEEDS[getMeasureRequirement(measure)].validCostDraft;
 }
 
 function rawMeasureValue(
@@ -136,24 +140,57 @@ export function getMeasureDisplayName(measure: EconomicMeasure, isDelta = false)
     }
 }
 
+/** Ties go to the reason seen first. */
+function mostCommonReason(reasons: (Ineligibility | null)[]): Ineligibility | null {
+    const counts = new Map<Ineligibility, number>();
+    let mostCommon: Ineligibility | null = null;
+    for (const reason of reasons) {
+        if (reason === null) {
+            continue;
+        }
+        const count = (counts.get(reason) ?? 0) + 1;
+        counts.set(reason, count);
+        if (mostCommon === null || count > counts.get(mostCommon)!) {
+            mostCommon = reason;
+        }
+    }
+    return mostCommon;
+}
+
+function measureIneligibility(
+    result: MonthlyRealizationEconomicResult,
+    measure: EconomicMeasure,
+): Ineligibility | null {
+    const oilCoverage = result.hasOilData ? null : Ineligibility.OIL_COVERAGE;
+    const gasCoverage = result.hasSalesGasData ? null : Ineligibility.GAS_COVERAGE;
+    switch (getMeasureRequirement(measure)) {
+        case MeasureRequirement.FINANCIAL:
+            return result.financialIneligibility;
+        case MeasureRequirement.BREAK_EVEN:
+            return result.breakEvenIneligibility;
+        case MeasureRequirement.OIL_VOLUME:
+            return oilCoverage;
+        case MeasureRequirement.GAS_VOLUME:
+            return gasCoverage;
+        case MeasureRequirement.OIL_AND_GAS_VOLUME:
+            return oilCoverage ?? gasCoverage;
+    }
+}
+
+/** The most common reason over the given realizations, or the IRR solver status when IRR was calculated. */
 export function getMeasureUnavailableReason(
     results: MonthlyRealizationEconomicResult[],
     measure: EconomicMeasure,
 ): string {
-    if (measure === EconomicMeasure.NPV || measure === EconomicMeasure.IRR) {
-        const financialReason = results.find((result) => result.financialReason)?.financialReason;
-        if (financialReason) {
-            return financialReason;
-        }
-        if (measure === EconomicMeasure.IRR) {
-            const status = results.find((result) => result.irrStatus)?.irrStatus;
-            if (status === "NO_FINITE_ROOT") return "No finite IRR for the available cash-flow signs.";
-            if (status === "NON_CONVENTIONAL") return "Non-conventional cash flow has no selected IRR root.";
-            if (status === "OUT_OF_DOMAIN") return "IRR could not be solved within the supported rate range.";
-        }
+    const reason = mostCommonReason(results.map((result) => measureIneligibility(result, measure)));
+    if (reason !== null) {
+        return getIneligibilityMessage(reason);
     }
-    if (measure === EconomicMeasure.BREAK_EVEN_OIL_PRICE) {
-        return "Break-even requires oil coverage over the whole evaluation, a resolved gas price, and non-zero costs.";
+    if (measure === EconomicMeasure.IRR) {
+        const status = results.find((result) => result.irrStatus)?.irrStatus;
+        if (status === "NO_FINITE_ROOT") return "No finite IRR for the available cash-flow signs.";
+        if (status === "NON_CONVENTIONAL") return "Non-conventional cash flow has no selected IRR root.";
+        if (status === "OUT_OF_DOMAIN") return "IRR could not be solved within the supported rate range.";
     }
     return "No valid values are available for this metric.";
 }

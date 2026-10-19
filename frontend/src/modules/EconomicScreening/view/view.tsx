@@ -18,6 +18,7 @@ import {
     ResultMode,
 } from "@modules/EconomicScreening/typesAndEnums";
 import { countPositiveNpvAtTarget } from "@modules/EconomicScreening/utils/distributionAggregation";
+import { getEvaluationHorizonError } from "@modules/EconomicScreening/utils/evaluationHorizon";
 import {
     getMeasureUnit,
     getMeasureValues,
@@ -133,7 +134,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const pendingMessage =
         evaluationHorizon.status === "NO_START"
             ? "Enter a prediction start year in the settings to calculate results."
-            : null;
+            : sourceSnapshot.status === SourceStatus.READY
+              ? getEvaluationHorizonError(evaluationHorizon)
+              : null;
     const shownEarlyEndYear =
         earlyValueConfiguration.enabled && isEarlyValueConfigurationValid && horizon !== null
             ? earlyValueEndYear

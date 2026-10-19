@@ -9,6 +9,7 @@ import {
 } from "@modules/EconomicScreening/typesAndEnums";
 import { parseCalendarYear } from "@modules/EconomicScreening/utils/calendar";
 import { hasIncludedNonZeroCost } from "@modules/EconomicScreening/utils/costProfile";
+import { getResultRequirement, MeasureRequirement } from "@modules/EconomicScreening/utils/eligibility";
 import { resolveEvaluationHorizon } from "@modules/EconomicScreening/utils/evaluationHorizon";
 import { isProductConfirmedAbsent } from "@modules/EconomicScreening/utils/monthlyEconomics";
 import {
@@ -17,9 +18,7 @@ import {
     type MonthlyProductionProfile,
 } from "@modules/EconomicScreening/utils/monthlyProduction";
 import {
-    getResultRequirement,
     getSetupReadiness,
-    ResultRequirement,
     SetupIssueKind,
     suggestPredictionStartYears,
     summarizeSelectedProductSupport,
@@ -90,7 +89,7 @@ function readyInput(
         costProfile: [],
         costDraftStatus: CostDraftStatus.COMMITTED,
         earlyValue: { enabled: false, endYear: null },
-        requirement: ResultRequirement.FINANCIAL,
+        requirement: MeasureRequirement.FINANCIAL,
         ...inputOverrides,
     };
     return { ...input, evaluationHorizon: resolveEvaluationHorizon(predictionStartYear, input.snapshot) };
@@ -139,7 +138,7 @@ describe("getSetupReadiness", () => {
                 readyInput({
                     predictionStartYear: 2018,
                     gasPrice: 0,
-                    requirement: ResultRequirement.GAS_VOLUME,
+                    requirement: MeasureRequirement.GAS_VOLUME,
                 }),
             ),
         ).toEqual(["Gas consumption (FGCT) is missing: accept “Assume no gas consumption” to calculate sales gas."]);
@@ -163,20 +162,33 @@ describe("getSetupReadiness", () => {
             predictionStartYear: 2018,
             missingComponentAssumptions: { assumeMissingConsumptionAsZero: true },
         });
-        expect(messages({ ...base, requirement: ResultRequirement.OIL_VOLUME })).toEqual([]);
-        expect(messages({ ...base, requirement: ResultRequirement.OIL_AND_GAS_VOLUME })).toEqual([]);
-        expect(messages({ ...base, requirement: ResultRequirement.BREAK_EVEN })).toEqual([
+        expect(messages({ ...base, requirement: MeasureRequirement.OIL_VOLUME })).toEqual([]);
+        expect(messages({ ...base, requirement: MeasureRequirement.OIL_AND_GAS_VOLUME })).toEqual([]);
+        expect(messages({ ...base, requirement: MeasureRequirement.BREAK_EVEN })).toEqual([
             "Enter a gas price, or 0 to omit gas revenue.",
             "Enter a non-zero CAPEX or OPEX within the evaluation.",
         ]);
         expect(
             messages({
                 ...base,
-                requirement: ResultRequirement.BREAK_EVEN,
+                requirement: MeasureRequirement.BREAK_EVEN,
                 gasPrice: 0.2,
                 costProfile: [{ year: 2019, capex: 10, opex: 0 }],
             }),
         ).toEqual([]);
+    });
+
+    test("break-even needs oil production in some selected realization", () => {
+        const zeroOil = readyInput({
+            predictionStartYear: 2018,
+            gasPrice: 0,
+            costProfile: [{ year: 2019, capex: 10, opex: 0 }],
+            productSupport: { ...ALL_COVERED, oil: { ...PRODUCT_SUPPORT, isConfirmedAbsent: true } },
+        });
+        expect(messages({ ...zeroOil, requirement: MeasureRequirement.BREAK_EVEN })).toEqual([
+            "Oil production is zero in every selected realization, so break-even cannot be solved.",
+        ]);
+        expect(messages({ ...zeroOil, requirement: MeasureRequirement.OIL_VOLUME })).toEqual([]);
     });
 
     test("confirmed-absent products need no price", () => {
@@ -245,11 +257,11 @@ describe("getSetupReadiness", () => {
         expect(messages({ ...beforeSource, oilPrice: 0, gasPrice: 0 })).toEqual([]);
         // Break-even and volume results need the product's coverage regardless of its price.
         expect(
-            messages({ ...beforeSource, oilPrice: 0, gasPrice: 0, requirement: ResultRequirement.BREAK_EVEN }),
+            messages({ ...beforeSource, oilPrice: 0, gasPrice: 0, requirement: MeasureRequirement.BREAK_EVEN }),
         ).toContain(
             "Oil source coverage is incomplete between Jan 2016 and Jun 2020 for every selected realization; supported data starts Jan 2018.",
         );
-        expect(messages({ ...beforeSource, requirement: ResultRequirement.GAS_VOLUME })).toEqual([
+        expect(messages({ ...beforeSource, requirement: MeasureRequirement.GAS_VOLUME })).toEqual([
             "Sales gas source coverage is incomplete between Jan 2016 and Jun 2020 for every selected realization; supported data starts Jan 2018.",
         ]);
         // A realization with both products covered still produces results, so it is not a blocker here.
@@ -284,15 +296,15 @@ describe("getSetupReadiness", () => {
         const noOverlap =
             "No selected realization has both oil and sales gas source coverage between Jan 2018 and Jun 2020.";
         expect(getSetupReadiness(disjoint).issues).toEqual([{ kind: SetupIssueKind.SOURCE, message: noOverlap }]);
-        expect(messages({ ...disjoint, requirement: ResultRequirement.BREAK_EVEN })).toEqual([noOverlap]);
-        expect(messages({ ...disjoint, requirement: ResultRequirement.OIL_AND_GAS_VOLUME })).toEqual([noOverlap]);
+        expect(messages({ ...disjoint, requirement: MeasureRequirement.BREAK_EVEN })).toEqual([noOverlap]);
+        expect(messages({ ...disjoint, requirement: MeasureRequirement.OIL_AND_GAS_VOLUME })).toEqual([noOverlap]);
         // A zero price removes that product from the joint requirement.
         expect(messages({ ...disjoint, gasPrice: 0 })).toEqual([]);
         expect(messages({ ...disjoint, oilPrice: 0 })).toEqual([]);
-        expect(messages({ ...disjoint, gasPrice: 0, requirement: ResultRequirement.BREAK_EVEN })).toEqual([]);
+        expect(messages({ ...disjoint, gasPrice: 0, requirement: MeasureRequirement.BREAK_EVEN })).toEqual([]);
         // Single-product volume results need only their own product.
-        expect(messages({ ...disjoint, requirement: ResultRequirement.OIL_VOLUME })).toEqual([]);
-        expect(messages({ ...disjoint, requirement: ResultRequirement.GAS_VOLUME })).toEqual([]);
+        expect(messages({ ...disjoint, requirement: MeasureRequirement.OIL_VOLUME })).toEqual([]);
+        expect(messages({ ...disjoint, requirement: MeasureRequirement.GAS_VOLUME })).toEqual([]);
     });
 
     test("separates unavailable source data from missing inputs", () => {
@@ -347,14 +359,14 @@ describe("getSetupReadiness", () => {
         });
         const missingOil = "Oil production (FOPT) is not available for this ensemble.";
         for (const requirement of [
-            ResultRequirement.FINANCIAL,
-            ResultRequirement.BREAK_EVEN,
-            ResultRequirement.OIL_VOLUME,
-            ResultRequirement.OIL_AND_GAS_VOLUME,
+            MeasureRequirement.FINANCIAL,
+            MeasureRequirement.BREAK_EVEN,
+            MeasureRequirement.OIL_VOLUME,
+            MeasureRequirement.OIL_AND_GAS_VOLUME,
         ]) {
             expect(messages({ ...noOil, requirement }).filter((message) => message === missingOil)).toHaveLength(1);
         }
-        expect(messages({ ...noOil, requirement: ResultRequirement.GAS_VOLUME })).toEqual([]);
+        expect(messages({ ...noOil, requirement: MeasureRequirement.GAS_VOLUME })).toEqual([]);
         expect(messages({ ...noOil, oilPrice: 0 })).toEqual([]);
     });
 
@@ -373,12 +385,12 @@ describe("getSetupReadiness", () => {
         const noGasVolume = "Sales gas is unavailable: neither FGST nor FGPT is available.";
         const noGasRevenue = "Sales gas is unavailable: enter a gas price of 0 to calculate without gas revenue.";
         for (const gasPrice of [null, 0, 0.2]) {
-            expect(messages({ ...noGas, gasPrice, requirement: ResultRequirement.GAS_VOLUME })).toEqual([noGasVolume]);
-            expect(messages({ ...noGas, gasPrice, requirement: ResultRequirement.OIL_AND_GAS_VOLUME })).toEqual([
+            expect(messages({ ...noGas, gasPrice, requirement: MeasureRequirement.GAS_VOLUME })).toEqual([noGasVolume]);
+            expect(messages({ ...noGas, gasPrice, requirement: MeasureRequirement.OIL_AND_GAS_VOLUME })).toEqual([
                 noGasVolume,
             ]);
-            expect(messages({ ...noGas, gasPrice, requirement: ResultRequirement.OIL_VOLUME })).toEqual([]);
-            for (const requirement of [ResultRequirement.FINANCIAL, ResultRequirement.BREAK_EVEN]) {
+            expect(messages({ ...noGas, gasPrice, requirement: MeasureRequirement.OIL_VOLUME })).toEqual([]);
+            for (const requirement of [MeasureRequirement.FINANCIAL, MeasureRequirement.BREAK_EVEN]) {
                 expect(messages({ ...noGas, gasPrice, requirement })).toEqual(gasPrice === 0 ? [] : [noGasRevenue]);
             }
         }
@@ -389,7 +401,7 @@ describe("getSetupReadiness", () => {
         expect(messages({ ...base, costDraftStatus: CostDraftStatus.INVALID })).toEqual(["Correct the cost schedule."]);
         expect(messages({ ...base, costDraftStatus: CostDraftStatus.PENDING })).toEqual([]);
         expect(
-            messages({ ...base, costDraftStatus: CostDraftStatus.INVALID, requirement: ResultRequirement.OIL_VOLUME }),
+            messages({ ...base, costDraftStatus: CostDraftStatus.INVALID, requirement: MeasureRequirement.OIL_VOLUME }),
         ).toEqual([]);
         expect(messages({ ...base, earlyValue: { enabled: true, endYear: null } })).toEqual([
             "Early value: enter a Calculate through year.",
@@ -405,16 +417,16 @@ describe("getResultRequirement", () => {
     test("follows the selected measure or profile", () => {
         const profileType = CashFlowProfileType.ANNUAL_OIL_VOLUME;
         expect(getResultRequirement(ResultMode.DISTRIBUTION, EconomicMeasure.IRR, profileType)).toBe(
-            ResultRequirement.FINANCIAL,
+            MeasureRequirement.FINANCIAL,
         );
         expect(getResultRequirement(ResultMode.DISTRIBUTION, EconomicMeasure.BREAK_EVEN_OIL_PRICE, profileType)).toBe(
-            ResultRequirement.BREAK_EVEN,
+            MeasureRequirement.BREAK_EVEN,
         );
         expect(
             getResultRequirement(ResultMode.DISTRIBUTION, EconomicMeasure.DISCOUNTED_OIL_EQUIVALENTS, profileType),
-        ).toBe(ResultRequirement.OIL_AND_GAS_VOLUME);
+        ).toBe(MeasureRequirement.OIL_AND_GAS_VOLUME);
         expect(getResultRequirement(ResultMode.TIME_PROFILE, EconomicMeasure.NPV, profileType)).toBe(
-            ResultRequirement.OIL_VOLUME,
+            MeasureRequirement.OIL_VOLUME,
         );
         expect(
             getResultRequirement(
@@ -422,9 +434,9 @@ describe("getResultRequirement", () => {
                 EconomicMeasure.DISCOUNTED_OIL_VOLUME,
                 CashFlowProfileType.CUMULATIVE_DISCOUNTED_CASH_FLOW,
             ),
-        ).toBe(ResultRequirement.FINANCIAL);
+        ).toBe(MeasureRequirement.FINANCIAL);
         expect(getResultRequirement(ResultMode.ALL_RESULTS, EconomicMeasure.DISCOUNTED_OIL_VOLUME, profileType)).toBe(
-            ResultRequirement.FINANCIAL,
+            MeasureRequirement.FINANCIAL,
         );
     });
 });

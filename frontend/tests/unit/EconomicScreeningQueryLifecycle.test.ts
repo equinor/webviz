@@ -52,6 +52,7 @@ import {
     OilPriceBasis,
     ResultMode,
 } from "@modules/EconomicScreening/typesAndEnums";
+import { Ineligibility } from "@modules/EconomicScreening/utils/eligibility";
 import { monthStartUtcMs } from "@modules/EconomicScreening/utils/monthlyProduction";
 import { EMPTY_SOURCE_SNAPSHOT, SourceStatus } from "@modules/EconomicScreening/utils/sourceSnapshot";
 import {
@@ -656,8 +657,13 @@ describe("Economic Screening source queries and publication", () => {
         store.set(costDraftStatusAtom, CostDraftStatus.INVALID);
         expect(publishedNpv(store)).toEqual([]);
         expect(publishedThroughChannel(store, EconomicMeasure.DISCOUNTED_OIL_VOLUME)).toEqual(volumes);
+        for (const result of store.get(economicScreeningResultsAtom).results) {
+            expect(result.financialIneligibility).toBe(Ineligibility.COST_DRAFT_INVALID);
+            expect(result.breakEvenIneligibility).toBe(Ineligibility.COST_DRAFT_INVALID);
+        }
         store.set(costDraftStatusAtom, CostDraftStatus.COMMITTED);
         expect(publishedNpv(store)).toEqual(npv);
+        expect(store.get(economicScreeningResultsAtom).results[0].financialIneligibility).toBeNull();
 
         store.set(predictionStartYearAtom, null);
         expect(publishedNpv(store)).toEqual([]);
@@ -889,7 +895,9 @@ describe("Economic Screening settings-to-view ownership boundary", () => {
 });
 
 async function waitForSavedState(instance: EconomicScreeningInstance) {
-    for (let attempt = 0; attempt < 50; attempt++) {
+    // Generous budget: serialization is asynchronous and slows down under a parallel full-suite run.
+    const deadline = Date.now() + 2_000;
+    while (Date.now() < deadline) {
         const state = instance.serializeState();
         const settings = state.serializedState?.settings;
         if (settings && JSON.parse(settings).selectedRealization === 21) {

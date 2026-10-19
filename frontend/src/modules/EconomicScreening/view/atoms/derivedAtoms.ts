@@ -4,11 +4,8 @@ import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { CostDraftStatus, DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR } from "@modules/EconomicScreening/typesAndEnums";
 import { formatMonthIndex } from "@modules/EconomicScreening/utils/calendar";
-import {
-    getEvaluationHorizonError,
-    isYearInHorizon,
-    type EvaluationHorizon,
-} from "@modules/EconomicScreening/utils/evaluationHorizon";
+import { getIneligibilityMessage, Ineligibility } from "@modules/EconomicScreening/utils/eligibility";
+import { isYearInHorizon, type EvaluationHorizon } from "@modules/EconomicScreening/utils/evaluationHorizon";
 import {
     computeMonthlyRealizationEconomics,
     type MonthlyRealizationEconomicResult,
@@ -111,21 +108,17 @@ const unmaskedResultsAtom = atom<EconomicScreeningResults>((get) => {
         return withheld();
     }
 
-    const horizonError = getEvaluationHorizonError(evaluationHorizon);
-    if (horizonError) {
-        errors.push(horizonError);
-    }
     if (evaluationHorizon.status !== "READY") {
         return withheld();
     }
     const { horizon } = evaluationHorizon;
 
+    // The Settings setup summary reports an out-of-range early year; only the early outputs are withheld here.
     if (
         earlyValueConfiguration.enabled &&
         earlyValueConfiguration.endYear !== null &&
         !isYearInHorizon(earlyValueConfiguration.endYear, horizon)
     ) {
-        errors.push(`The early-value year must be within ${horizon.startYear}-${horizon.endYear}.`);
         isEarlyValueConfigurationValid = false;
     }
 
@@ -212,13 +205,15 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
     }
     return {
         ...unmasked,
-        warnings: [...unmasked.warnings, "Financial results are unavailable until the cost schedule is valid."],
+        warnings: [...unmasked.warnings, getIneligibilityMessage(Ineligibility.COST_DRAFT_INVALID)],
         results: unmasked.results.map((result) => ({
             ...result,
             npv: null,
+            financialIneligibility: Ineligibility.COST_DRAFT_INVALID,
             irr: null,
             irrStatus: undefined,
             breakEvenOilPrice: null,
+            breakEvenIneligibility: Ineligibility.COST_DRAFT_INVALID,
             breakEvenSlopeDirection: undefined,
             annualProfile: result.annualProfile.map((entry) => ({
                 ...entry,
