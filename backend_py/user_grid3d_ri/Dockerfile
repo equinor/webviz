@@ -35,7 +35,7 @@ ENV PATH="${PATH}:/home/appuser/.local/bin"
 
 RUN python3.13 -m ensurepip --upgrade
 RUN python3.13 -m pip install --upgrade pip setuptools wheel
-RUN python3.13 -m pip install --upgrade poetry==2.4.1
+RUN python3.13 -m pip install --upgrade poetry==2.5.1
 
 # This can probably be optimized wrt space usage by fetching and preparing Resinsight using a multi-stage build
 ADD --chown=appuser https://github.com/CeetronSolutions/ResInsight/releases/download/webviz.test.0.0.2/ResInsight-Ubuntu_20.04_gcc.tar.gz /home/appuser/ri_bin/dist_archive/
