@@ -656,14 +656,15 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             return;
         }
 
-        this._activeSession.beforeDestroy();
-        // Global, so only cleared along with the active session - not when destroying e.g. a save-as copy
-        EnsembleFingerprintStore.clear();
-
+        // Stopped first - it may flush a pending refresh to the local backup, which needs the session still intact
         if (this._persistenceOrchestrator) {
             this._persistenceOrchestrator.stop(options);
             this._persistenceOrchestrator = null;
         }
+
+        this._activeSession.beforeDestroy();
+        // Global, so only cleared along with the active session - not when destroying e.g. a save-as copy
+        EnsembleFingerprintStore.clear();
 
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("activeDashboardUrl");
 
