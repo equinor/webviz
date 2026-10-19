@@ -111,7 +111,7 @@ export function makeIntersectionRealizationGridLayer({
         }),
         ZIncreasingDownwards: false,
         gridLines: showGridLines ?? false,
-        material: { ambient: 0.4, diffuse: 0.7, shininess: 8, specularColor: [25, 25, 25] },
+        material: { ambient: 0.5, diffuse: 0.7, shininess: 8, specularColor: [0, 0, 0] },
         pickable: true,
         opacity: opacity / 100,
     });

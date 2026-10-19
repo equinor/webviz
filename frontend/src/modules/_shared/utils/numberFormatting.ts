@@ -13,6 +13,8 @@ export type NumberFormatOptions = {
     notation?: NumberFormatNotation;
     /** Prefix system for scaling large/small values. Default: "none" */
     unitSystem?: NumberFormatUnitSystem;
+    /** Whether SI formatting may use prefixes below the base unit. Default: true */
+    useSubUnitPrefixes?: boolean;
     /** Unit label appended after any prefix, e.g. "m", "Hz", "B". */
     unit?: string;
 };
@@ -21,6 +23,7 @@ export const DEFAULT_FORMAT_OPTIONS = {
     numSignificantDigits: 3,
     notation: "standard" as NumberFormatNotation,
     unitSystem: "none" as NumberFormatUnitSystem,
+    useSubUnitPrefixes: true,
     unit: "",
 } satisfies Required<Omit<NumberFormatOptions, "maxNumDecimalPlaces">>;
 
@@ -38,6 +41,8 @@ const SI_PREFIXES: readonly [number, string][] = [
     [1e-12, "p"],
     [1e-15, "f"],
 ];
+
+const BASE_AND_LARGER_SI_PREFIXES = SI_PREFIXES.filter(([factor]) => factor >= 1);
 
 const BINARY_PREFIXES: readonly [number, string][] = [
     [2 ** 50, "Pi"],
@@ -83,6 +88,7 @@ export function formatNumber(value: number, options?: NumberFormatOptions): stri
     const maxDecimals = rawOpts.maxNumDecimalPlaces;
     const notation = rawOpts.notation ?? DEFAULT_FORMAT_OPTIONS.notation;
     const unitSystem = rawOpts.unitSystem ?? DEFAULT_FORMAT_OPTIONS.unitSystem;
+    const useSubUnitPrefixes = rawOpts.useSubUnitPrefixes ?? DEFAULT_FORMAT_OPTIONS.useSubUnitPrefixes;
     const unit = rawOpts.unit ?? DEFAULT_FORMAT_OPTIONS.unit;
 
     if (value === 0) return unit ? `0 ${unit}` : "0";
@@ -126,7 +132,8 @@ export function formatNumber(value: number, options?: NumberFormatOptions): stri
         // Pre-round before prefix selection to avoid "1000 k" instead of "1 M"
         const preRounded =
             maxDecimals !== undefined ? absValue : parseFloat(absValue.toPrecision(numSigDigits));
-        const [factor, prefix] = SI_PREFIXES.find(([f]) => preRounded >= f) ?? SI_PREFIXES.at(-1)!;
+        const prefixes = useSubUnitPrefixes ? SI_PREFIXES : BASE_AND_LARGER_SI_PREFIXES;
+        const [factor, prefix] = prefixes.find(([f]) => preRounded >= f) ?? prefixes.at(-1)!;
         const scaled = absValue / factor;
         const formatted = formatAbsValue(scaled, maxDecimals, numSigDigits);
         const combined = prefix + unit;

@@ -2,10 +2,11 @@ import React from "react";
 
 import { BugReport, ContentCopy } from "@mui/icons-material";
 
+import { SupportDocumentsGenerator } from "@framework/components/SupportDocumentsGenerator";
+import { SERVICE_NOW_HREF } from "@framework/utils/externalUrls";
+import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
-import { reportErrorToGithub } from "@lib/utils/errors";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
 
 type Props = {
     children?: React.ReactNode;
@@ -13,22 +14,82 @@ type Props = {
 
 interface State {
     error: Error | null;
+    componentStack: string | null;
     copiedToClipboard: boolean;
-    symbolicatingStack: boolean;
+    activeWorkbench: Workbench | null;
+}
+
+// Anything can be thrown or used as a rejection reason, but the fallback and the support documents expect an Error.
+// Must never throw, since it runs while an error is being handled.
+function toError(value: unknown): Error {
+    try {
+        if (value instanceof Error) {
+            return value;
+        }
+        if (typeof value === "string") {
+            return makeErrorWithoutStack(value);
+        }
+
+        return makeErrorWithoutStack(`Non-Error value: ${describeValue(value)}`);
+    } catch {
+        // instanceof throws for revoked proxies and proxies with a throwing getPrototypeOf trap
+        return makeErrorWithoutStack(`Non-Error value: ${describeUnserializable(value)}`);
+    }
+}
+
+// Must never throw, since it runs while handling an error. JSON.stringify throws on circular references and throwing
+// getters/toJSON, and String throws on a throwing toString or on objects without a prototype.
+function describeValue(value: unknown): string {
+    try {
+        const json = JSON.stringify(value);
+        if (json !== undefined) {
+            return json;
+        }
+    } catch {
+        // Fall back to String below
+    }
+
+    try {
+        return String(value);
+    } catch {
+        return describeUnserializable(value);
+    }
+}
+
+function describeUnserializable(value: unknown): string {
+    // typeof never throws, not even for revoked proxies
+    return `[unserializable ${typeof value}]`;
+}
+
+function makeErrorWithoutStack(message: string): Error {
+    const error = new Error(message);
+    // The stack would point to this file rather than to where the value was thrown, which is misleading in reports
+    error.stack = undefined;
+    return error;
 }
 
 export class GlobalErrorBoundary extends React.Component<Props, State> {
     state: State = {
         error: null,
         copiedToClipboard: false,
-        symbolicatingStack: false,
+        componentStack: null,
+        activeWorkbench: null,
     };
 
     private _boundHandleWindowError: (event: ErrorEvent) => void;
     private _boundHandleUnhandledRejection: (event: PromiseRejectionEvent) => void;
+    private _boundRegisterActiveWorkbench: (wb: Workbench | null) => void;
 
-    static getDerivedStateFromError(err: Error): State {
-        return { error: err, copiedToClipboard: false, symbolicatingStack: false };
+    // Called during the render phase when a descendant throws while rendering (errors from window events go through
+    // setErrorIfNoneSet instead). React renders the boundary again right away using the returned state, and that
+    // render is what replaces the children with the fallback. The error must therefore be set here rather than in
+    // componentDidCatch, which only runs once that render has been committed:
+    // - If only componentDidCatch set the error, React would commit the boundary with no children at all, and the
+    //   fallback would only appear after a second render.
+    // React does not pass the component stack to this method, so it is reset here and set by componentDidCatch.
+    // See also: https://legacy.reactjs.org/docs/error-boundaries.html
+    static getDerivedStateFromError(err: unknown): Partial<State> {
+        return { error: toError(err), componentStack: null, copiedToClipboard: false };
     }
 
     constructor(props: Props) {
@@ -36,6 +97,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
 
         this._boundHandleWindowError = this.handleWindowError.bind(this);
         this._boundHandleUnhandledRejection = this.handleUnhandledRejection.bind(this);
+        this._boundRegisterActiveWorkbench = this.registerActiveWorkbench.bind(this);
     }
 
     private handleWindowError(event: ErrorEvent) {
@@ -47,11 +109,40 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
         if (import.meta.env.DEV) {
             return;
         }
-        this.setState({ error: event.error });
+        this.setErrorIfNoneSet(event.error);
     }
 
     private handleUnhandledRejection(event: PromiseRejectionEvent) {
-        this.setState({ error: event.reason });
+        this.setErrorIfNoneSet(event.reason);
+    }
+
+    private setErrorIfNoneSet(value: unknown) {
+        // ErrorEvent.error is null for e.g. ResizeObserver loop notifications and cross-origin script errors,
+        // which should not terminate the app
+        if (value == null) {
+            return;
+        }
+
+        const error = toError(value);
+
+        // Keep the first error, as it is most likely the root cause. Errors arriving after the app has been
+        // terminated (e.g. pending promises rejecting) would otherwise replace it and mismatch the componentStack.
+        // Errors from window events never have a component stack.
+        this.setState((prevState) => (prevState.error ? null : { error, componentStack: null }));
+    }
+
+    private registerActiveWorkbench(wb: Workbench | null) {
+        // When we get an error, the entire component tree gets unmounted, which in turn means the workbench-wrapper will unmount. Avoid setting in this case so we can get info from the most recent workbench
+        if (!(this.state.error && wb == null)) {
+            this.setState({ activeWorkbench: wb });
+        }
+    }
+
+    // Called in the commit phase, after the fallback has been rendered, with the same error that
+    // getDerivedStateFromError received. React only provides the component stack here, so it is set here rather than
+    // together with the error. Until then componentStack is null, so it never belongs to a different error.
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+        this.setState({ componentStack: errorInfo.componentStack ?? null });
     }
 
     componentDidMount() {
@@ -67,23 +158,6 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
     render() {
         const freshStartUrl = new URL(window.location.protocol + "//" + window.location.host);
         freshStartUrl.searchParams.set("cleanStart", "true");
-
-        const reportIssue = async (error: Error) => {
-            let customStackTrace;
-            if (shouldSymbolicate()) {
-                this.setState({ symbolicatingStack: true });
-
-                try {
-                    customStackTrace = await symbolicateStackTrace(error);
-                } catch (err) {
-                    console.error("Failed to symbolicate stack trace:", err);
-                }
-
-                this.setState({ symbolicatingStack: false });
-            }
-
-            reportErrorToGithub(error, customStackTrace);
-        };
 
         const copyToClipboard = () => {
             navigator.clipboard.writeText(freshStartUrl.toString());
@@ -108,17 +182,17 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                             <div className="gap-y-2xs flex flex-col">
                                 You can use the following URL to start a clean session:
                                 <div>
-                                    <div className="bg-neutral text-body-sm p-xs flex items-center font-mono whitespace-nowrap">
-                                        <a href={freshStartUrl.toString()} className="grow">
+                                    <div className="bg-neutral text-body-sm flex items-center font-mono whitespace-nowrap">
+                                        <a href={freshStartUrl.toString()} className="p-xs grow">
                                             {freshStartUrl.toString()}
                                         </a>
                                         <Button
+                                            layoutClassName="m-4xs"
                                             onClick={copyToClipboard}
                                             title="Copy URL to clipboard"
                                             tone="accent"
                                             variant="ghost"
                                             iconOnly
-                                            size="small"
                                         >
                                             <ContentCopy fontSize="small" />
                                         </Button>
@@ -136,19 +210,43 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                                 </div>
                             </div>
                         </div>
-                        <div className="gap-x-xs p-sm bg-canvas flex shadow-sm">
-                            <Button
-                                onClick={() => this.state.error && reportIssue(this.state.error)}
-                                disabled={this.state.symbolicatingStack}
-                            >
-                                <BugReport fontSize="small" />{" "}
-                                {this.state.symbolicatingStack ? "Symbolicating stack..." : "Report issue"}
-                            </Button>
+                        <div className="gap-x-xs p-sm bg-canvas flex justify-end shadow-sm">
+                            <SupportDocumentsGenerator
+                                error={this.state.error}
+                                session={
+                                    this.state.activeWorkbench?.getSessionManager().getActiveSessionOrNull() ?? null
+                                }
+                                componentStack={this.state.componentStack}
+                            />
+                            <Button.AsLink href={SERVICE_NOW_HREF} target="_blank" rel="noopener noreferrer" external>
+                                <BugReport fontSize="small" />
+                                Report issue
+                            </Button.AsLink>
                         </div>
                     </div>
                 </div>
             );
         }
-        return this.props.children;
+        return (
+            <GlobalErrorBoundaryContext.Provider
+                value={{
+                    registerActiveWorkbench: this._boundRegisterActiveWorkbench,
+                }}
+            >
+                {this.props.children}
+            </GlobalErrorBoundaryContext.Provider>
+        );
     }
+}
+
+export const GlobalErrorBoundaryContext = React.createContext<{
+    registerActiveWorkbench: (workbench: Workbench | null) => void;
+} | null>(null);
+
+export function useGlobalErrorBoundaryContext() {
+    const context = React.useContext(GlobalErrorBoundaryContext);
+    if (!context) {
+        throw new Error("useGlobalErrorBoundaryContext must be used within a GlobalErrorBoundaryContext.Provider");
+    }
+    return context;
 }

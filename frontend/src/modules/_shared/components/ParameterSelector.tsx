@@ -1,5 +1,7 @@
 import React from "react";
 
+import { isEqual } from "lodash-es";
+
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
@@ -19,30 +21,41 @@ enum GroupType {
     NO_GROUP = "NO GROUP",
 }
 
+function parameterIdentsToGroupSelection(parameterIdents: ParameterIdent[]): string[] {
+    return Array.from(new Set(parameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)));
+}
+
 export function ParametersSelector({
     allParameterIdents,
     selectedParameterIdents,
     onChange,
 }: ParametersSelectorProps): React.ReactNode {
+    const [prevAllParameterIdents, setPrevAllParameterIdents] = React.useState(allParameterIdents);
     const [autoSelectAllOnGroupChange, setAutoSelectAllOnGroupChange] = React.useState<boolean>(true);
     const [userHasInteracted, setUserHasInteracted] = React.useState<boolean>(false);
-    const [selectedGroupFilterValues, setSelectedGroupFilterValues] = React.useState<string[]>([]);
+    const [selectedGroupFilterValues, setSelectedGroupFilterValues] = React.useState<string[]>(() =>
+        parameterIdentsToGroupSelection(selectedParameterIdents.length ? selectedParameterIdents : allParameterIdents),
+    );
 
     const [prevSelectedParameterIdents, setPrevSelectedParameterIdents] =
         React.useState<ParameterIdent[]>(selectedParameterIdents);
+
     if (prevSelectedParameterIdents !== selectedParameterIdents) {
         setPrevSelectedParameterIdents(selectedParameterIdents);
         if (selectedGroupFilterValues.length === 0 && selectedParameterIdents.length > 0) {
-            setSelectedGroupFilterValues(
-                Array.from(new Set(selectedParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP))),
-            );
+            setSelectedGroupFilterValues(parameterIdentsToGroupSelection(selectedParameterIdents));
         }
     }
+
+    // While no interaction has happened, always auto-select all parameters
+    if (!userHasInteracted && allParameterIdents.length > 0 && !isEqual(allParameterIdents, prevAllParameterIdents)) {
+        setPrevAllParameterIdents(allParameterIdents);
+        setSelectedGroupFilterValues(parameterIdentsToGroupSelection(allParameterIdents));
+    }
+
     React.useEffect(
         function selectAllParametersUntilUserInteracts() {
             if (!userHasInteracted && allParameterIdents.length > 0) {
-                const allGroups = Array.from(new Set(allParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)));
-                setSelectedGroupFilterValues(allGroups);
                 onChange(allParameterIdents);
             }
         },
@@ -70,7 +83,7 @@ export function ParametersSelector({
                     ),
                 );
 
-                let newSelectedParameters: ParameterIdent[] = [];
+                let newSelectedParameters: ParameterIdent[];
 
                 if (autoSelectAllOnGroupChange) {
                     newSelectedParameters = parametersThatMatchNewGroups;

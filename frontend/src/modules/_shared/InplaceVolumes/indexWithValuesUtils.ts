@@ -2,6 +2,11 @@ import type { InplaceVolumesIndexWithValues_api } from "@api";
 import type { FixupSelection } from "@lib/utils/fixupUserSelection";
 import { fixupUserSelection } from "@lib/utils/fixupUserSelection";
 
+export function filterAndOrderSelectedIndexValues(selectedValues: string[], availableValues: string[]): string[] {
+    const selectedValueSet = new Set(selectedValues);
+    return availableValues.filter((value) => selectedValueSet.has(value));
+}
+
 // Utility function to check if a selection is a valid subset of available options
 export function isSelectedIndicesWithValuesValidSubset(
     selectedIndicesWithValues: InplaceVolumesIndexWithValues_api[],
@@ -51,10 +56,13 @@ export function fixupUserSelectedIndexValues(
         }
         fixedUpIndexValues.push({
             indexColumn: entry.indexColumn,
-            values: fixupUserSelection(
-                entry.values,
+            values: filterAndOrderSelectedIndexValues(
+                fixupUserSelection(
+                    entry.values,
+                    uniqueIndexValues.find((el) => el.indexColumn === entry.indexColumn)?.values ?? [],
+                    fixupSelection,
+                ),
                 uniqueIndexValues.find((el) => el.indexColumn === entry.indexColumn)?.values ?? [],
-                fixupSelection,
             ),
         });
     }

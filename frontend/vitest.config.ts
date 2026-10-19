@@ -8,7 +8,7 @@ import aliases from "./aliases.json";
 export default defineConfig({
     test: {
         coverage: {
-            include: ["src/**/**.{ts}"],
+            include: ["src/**/*.ts"],
             provider: "istanbul", // or 'v8'
             reportsDirectory: "./coverage/unit/",
             exclude: ["**/api/**", "**/assets/**", "**/templates/**"],

@@ -1,11 +1,9 @@
-import os
 import asyncio
 import logging
 import signal
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus.aio import ServiceBusClient, ServiceBusReceiver, AutoLockRenewer
 from azure.servicebus import ServiceBusReceivedMessage
 from azure.servicebus.exceptions import ServiceBusError
@@ -14,6 +12,8 @@ from opentelemetry.sdk.resources import Resource
 
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 from webviz_core_utils.azure_monitor_destination import AzureMonitorDestination
+from webviz_core_utils.service_bus_destination import ensure_fq_sb_namespace
+from webviz_services.platform.azure_credentials import log_azure_credential_env_var_status, create_azure_credential
 from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
@@ -47,21 +47,15 @@ def _setup_azure_monitor_telemetry_for_worker(service_name: str) -> None:
         return
 
     _logger.info(
-        f"Configuring Azure Monitor telemetry for {service_name}, resource attributes: {azmon_dest.resource_attributes}"
+        f"Configuring Azure Monitor telemetry for {service_name} with resource attributes: {azmon_dest.resource_attributes}"
     )
 
-    # !!!!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!
-    # We should revisit the logging formatter we use for telemetry
-    # I don't think we should include the logger name in the log message, since that is already included in the telemetry data.
-    # !!!!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!
+    # Unlike our other azure monitor configurations, here we are not including the logger name in the log message.
+    # Going forward, we should probably ensure that our other azure monitor configs do the same.
     configure_azure_monitor(
         connection_string=azmon_dest.insights_connection_string,
         resource=Resource.create(attributes=azmon_dest.resource_attributes),
         sampling_ratio=1.0,
-        # logging_formatter=logging.Formatter("[%(name)s]: %(message)s"),
     )
 
 
@@ -102,7 +96,7 @@ def _create_shutdown_event() -> asyncio.Event:
 
 
 @asynccontextmanager
-async def _authenticated_sb_client(config: WorkerConfig) -> AsyncIterator[ServiceBusClient]:
+async def _authenticated_sb_client_async(config: WorkerConfig) -> AsyncGenerator[ServiceBusClient]:
     """
     Async context manager yielding a ServiceBusClient (auth chosen from config).
     """
@@ -111,34 +105,25 @@ async def _authenticated_sb_client(config: WorkerConfig) -> AsyncIterator[Servic
 
     if not is_on_radix_platform and config.sb_emulator_connection_string:
         _logger.info("Using Service Bus emulator connection string for local development")
-        _logger.info(f"{config.sb_emulator_connection_string=}")
+        _logger.info(f"Emulator connection string: {config.sb_emulator_connection_string}")
         async with ServiceBusClient.from_connection_string(conn_str=config.sb_emulator_connection_string) as sb_client:
             # The emulator may not be ready when the worker starts, so wait for it before yielding the client.
             await _wait_for_emulator_ready_async(sb_client, config.sb_queue_name)
             yield sb_client
         return
 
-    # For now, we will use DefaultAzureCredential for both local dev and in Radix.
-    # For Radix, this relies on then environment variables AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_FEDERATED_TOKEN_FILE being set by Radix.
-    # For local dev, this relies on the environment variables AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_CLIENT_SECRET being set.
-    _logger.info("Using DefaultAzureCredential for authentication")
-    _logger.info(f"AZURE_TENANT_ID: {os.getenv('AZURE_TENANT_ID')}")
-    _logger.info(f"AZURE_CLIENT_ID: {os.getenv('AZURE_CLIENT_ID')}")
-    _logger.info(f"AZURE_FEDERATED_TOKEN_FILE present: {"AZURE_FEDERATED_TOKEN_FILE" in os.environ}")
-    _logger.info(f"AZURE_CLIENT_SECRET present: {"AZURE_CLIENT_SECRET" in os.environ}")
+    sb_fq_namespace = ensure_fq_sb_namespace(config.sb_namespace)
+    _logger.info(f"Using Service Bus with Azure credential, SB namespace: {sb_fq_namespace}")
 
-    _logger.info(f"Using Service Bus with DefaultAzureCredential, sb namespace: {config.sb_fq_namespace}")
-
-    async with DefaultAzureCredential() as credential:
-        _logger.info(f"{type(credential)=}")
-        async with ServiceBusClient(fully_qualified_namespace=config.sb_fq_namespace, credential=credential) as client:
+    async with create_azure_credential() as credential:
+        async with ServiceBusClient(fully_qualified_namespace=sb_fq_namespace, credential=credential) as client:
             yield client
 
 
-async def _run_worker_loop_async(worker_config: WorkerConfig, shutdown_event: asyncio.Event) -> None:
-    max_concurrency = max(1, worker_config.max_concurrent_tasks)
+async def _run_worker_loop_async(config: WorkerConfig, shutdown_event: asyncio.Event) -> None:
+    max_concurrency = max(1, config.max_concurrent_tasks)
 
-    _logger.info(f"Worker will receive messages from queue: {worker_config.sb_queue_name}")
+    _logger.info(f"Worker will receive messages from: queue={config.sb_queue_name}, namespace={config.sb_namespace}")
     _logger.info(f"Max concurrent tasks: {max_concurrency}")
 
     # Use AutoLockRenewer to automatically renew the lock on messages while they are being processed.
@@ -146,77 +131,86 @@ async def _run_worker_loop_async(worker_config: WorkerConfig, shutdown_event: as
     # the message will be unlocked and may be received by another worker, leading to duplicate processing.
     lock_renewer = AutoLockRenewer(max_lock_renewal_duration=15 * 60)
 
-    async with _authenticated_sb_client(worker_config) as sb_client, lock_renewer:
+    async with _authenticated_sb_client_async(config) as sb_client, lock_renewer:
         # The reason for the type ignore below is that the async get_queue_receiver is mis-annotated in the SDK to
         # expect the sync AutoLockRenewer, but at runtime it requires the async one (from azure.servicebus.aio)
         sb_receiver: ServiceBusReceiver = sb_client.get_queue_receiver(
-            client_identifier="pyworker-default",
-            queue_name=worker_config.sb_queue_name,
+            client_identifier="pyworker",
+            queue_name=config.sb_queue_name,
             auto_lock_renewer=lock_renewer,  # type: ignore[arg-type]
         )
 
         async with sb_receiver:
-            _logger.info("=== WORKER READY: waiting to receive messages")
+            _logger.info(
+                f"=== WORKER READY: waiting to receive messages (queue={config.sb_queue_name}, namespace={config.sb_namespace})"
+            )
 
             # Cooperative abort signal passed to tasks so they can abort promptly when a shutdown is requested
             abort_signal = AbortSignal(shutdown_event)
 
             in_flight_tasks: set[asyncio.Task[None]] = set()
 
-            while not shutdown_event.is_set():
-                # If we're at capacity, wait for at least one task to finish before retrying the loop.
-                # The continuation of the loop will then check for shutdown events before trying to receive more messages.
-                if len(in_flight_tasks) >= max_concurrency:
-                    await asyncio.wait(in_flight_tasks, return_when=asyncio.FIRST_COMPLETED)
-                    continue
+            try:
+                while not shutdown_event.is_set():
+                    # If we're at capacity, wait for at least one task to finish before retrying the loop.
+                    # The continuation of the loop will then check for shutdown events before trying to receive more messages.
+                    if len(in_flight_tasks) >= max_concurrency:
+                        await asyncio.wait(in_flight_tasks, return_when=asyncio.FIRST_COMPLETED)
+                        continue
 
-                # We poll for messages with a short timeout, so we can check for shutdown events frequently.
-                num_free_slots = max_concurrency - len(in_flight_tasks)
-                messages: list[ServiceBusReceivedMessage] = await sb_receiver.receive_messages(
-                    max_message_count=num_free_slots, max_wait_time=2
-                )
+                    # We poll for messages with a short timeout, so we can check for shutdown events frequently.
+                    num_free_slots = max_concurrency - len(in_flight_tasks)
+                    messages: list[ServiceBusReceivedMessage] = await sb_receiver.receive_messages(
+                        max_message_count=num_free_slots, max_wait_time=2
+                    )
 
-                if len(messages) > 0:
-                    _logger.debug(f"Worker got {len(messages)} new message(s), ({len(in_flight_tasks)} in flight)")
+                    if len(messages) > 0:
+                        _logger.debug(f"Worker got {len(messages)} new message(s), ({len(in_flight_tasks)} in flight)")
 
-                # Make sure we don't start any new processing if a shutdown has been requested
-                # Abandon any messages we received so they can be retried later (by another worker).
-                if shutdown_event.is_set():
-                    _logger.info("Worker shutdown requested; abandoning received messages before exiting worker")
+                    # Make sure we don't start any new processing if a shutdown has been requested
+                    # Abandon any messages we received so they can be retried later (by another worker).
+                    if shutdown_event.is_set():
+                        _logger.info("Worker shutdown requested; abandoning received messages before exiting worker")
+                        for msg in messages:
+                            await sb_receiver.abandon_message(msg)
+                        break
+
+                    # Spawn each message as its own task so they are processed concurrently.
                     for msg in messages:
-                        await sb_receiver.abandon_message(msg)
-                    break
+                        task = asyncio.create_task(process_message_async(sb_receiver, msg, abort_signal))
+                        in_flight_tasks.add(task)
 
-                # Spawn each message as its own task so they are processed concurrently.
-                for msg in messages:
-                    task = asyncio.create_task(process_message_async(sb_receiver, msg, abort_signal))
-                    in_flight_tasks.add(task)
+                        # The discard callback is used to remove the task from the in_flight_tasks set when it is done
+                        task.add_done_callback(in_flight_tasks.discard)
+            finally:
+                # This runs either after a controlled worker shutdown has been started or an exception from above.
+                # The signal handler may have set the event already that should not be a problem.
+                # Ensure cooperative shutdown is signaled and drain handlers before closing the receiver and renewer.
+                shutdown_event.set()
+                _logger.info("Worker stopping; waiting for in-flight messages to finish")
+                if in_flight_tasks:
+                    await asyncio.gather(*in_flight_tasks, return_exceptions=True)
 
-                    # The discard callback is used to remove the task from the in_flight_tasks set when it is done
-                    task.add_done_callback(in_flight_tasks.discard)
-
-            # Drain any tasks that are still running.
-            # The abort_signal has already been tripped so cooperative tasks should wind down promptly.
-            _logger.info("Worker shutdown requested; waiting for in-flight messages to finish")
-            if in_flight_tasks:
-                await asyncio.gather(*in_flight_tasks, return_exceptions=True)
-
-            _logger.info("Worker shutdown requested; exiting worker loop")
+                _logger.info("Worker loop cleanup complete")
 
 
 async def run_app_async() -> None:
 
     configure_logging()
 
-    logging.getLogger("pyworker_default").setLevel(logging.DEBUG)
+    logging.getLogger("pyworker").setLevel(logging.DEBUG)
 
     # Limit logging from the more noisy loggers
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("azure.servicebus").setLevel(logging.WARNING)
+    logging.getLogger("azure.servicebus").setLevel(logging.WARNING)
+    logging.getLogger("azure.identity").setLevel(logging.WARNING)
+    _logger.info("=== Starting pyworker...")
 
-    _logger.info("=== Starting worker pyworker-default...")
+    # Do a dump of key AZURE_ env variables that we rely on
+    log_azure_credential_env_var_status()
 
-    _setup_azure_monitor_telemetry_for_worker("pyworker-default")
+    _setup_azure_monitor_telemetry_for_worker("pyworker")
 
     # Read our own config from environment variables
     worker_config: WorkerConfig = load_worker_config_from_env()

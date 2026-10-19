@@ -504,7 +504,7 @@ async def get_statistical_vector_data_per_sensitivity(
     parameter_access = ParameterAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    _, sensitivities = await parameter_access.get_parameters_and_sensitivities_async()
+    sensitivities = (await parameter_access.get_parameters_and_sensitivities_async()).sensitivities
 
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
@@ -676,11 +676,11 @@ from webviz_services.utils.task_meta_tracker import TaskState
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
 from webviz_services.derived_smry_table.create_and_store_job import bgjob_create_and_store_derived_table_async
 from webviz_services.utils.sumo_blob_cache import SumoBlobCache
+from webviz_services.platform.message_bus import MessageBusSingleton, MessageBus
 from webviz_core_utils.background_tasks import run_in_background_task
 from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg, WorkerOperation
 
 from primary import config
-from primary.utils.message_bus import MessageBus, MessageBusSingleton
 
 from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp, LroCommandResp
 
@@ -790,7 +790,7 @@ async def get_derived_vector_table_hybrid(
 
         message_bus: MessageBus = MessageBusSingleton.get_instance()
         sb_msg = ServiceBusMessage(subject=WorkerOperation.CREATE_DERIVED_SMRY_TABLE, body=msg.model_dump_json())
-        await message_bus.send_to_queue_async(queue_name=config.SERVICE_BUS_QUEUE_NAME, message=sb_msg)
+        await message_bus.send_to_queue_async(queue_name=config.SERVICE_BUS_DEFAULT_QUEUE, message=sb_msg)
 
         new_task_was_submitted = True
         LOGGER.info(f"{dbg_prefix}Submitted new task to create derived table [{table_handle=}, {task_meta.task_id=}]")

@@ -26,11 +26,15 @@ function SharedMenuItemComponent<TProps extends MenuVariantItemProps>(
     const BaseComp = BASE_COMPONENT[menuVariant];
 
     return (
-        <BaseComp {...mergedProps} ref={ref}>
-            <ItemContent icon={props.icon} description={props.description} text={props.text}>
-                {props.children}
-            </ItemContent>
-        </BaseComp>
+        <ItemContent
+            {...mergedProps}
+            render={<BaseComp ref={ref} />}
+            icon={props.icon}
+            description={props.description}
+            text={props.text}
+        >
+            {props.children}
+        </ItemContent>
     );
 }
 

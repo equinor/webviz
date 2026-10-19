@@ -3,7 +3,6 @@ from contextvars import ContextVar, Token
 from types import TracebackType
 from typing import Any, Self
 
-
 type LogProperties = dict[str, object]
 
 
@@ -13,6 +12,7 @@ class LogScope:
     All properties will be added as attributes to the log record, much like the `extra` parameter of logging methods,
     but without having to pass them explicitly to each logging call.
     """
+
     _properties_var: ContextVar[LogProperties] = ContextVar("log_properties", default={})
 
     def __init__(
@@ -47,7 +47,7 @@ class LogScope:
         self,
         _exc_type: type[BaseException] | None,
         _exc: BaseException | None,
-       _tb: TracebackType | None,
+        _tb: TracebackType | None,
     ) -> None:
         if self._token is not None:
             self._properties_var.reset(self._token)
@@ -61,6 +61,7 @@ class LogRecordEnricher:
     """
     A log record factory that enriches log records with properties from the current LogScope.
     """
+
     _old_factory = logging.getLogRecordFactory()
     _is_installed = False
 
@@ -88,6 +89,7 @@ class WorkerConsoleFormatter(logging.Formatter):
     A custom log formatter for console output that includes a known selection of properties from the current LogScope
     in the log message.
     """
+
     def __init__(self) -> None:
         super().__init__(
             fmt=("%(asctime)s %(levelname)-7s %(message)s %(scope_suffix)s [logger=%(name)s]"),

@@ -5,17 +5,18 @@ Each of the main three exceptions map deterministically to a Service Bus settlem
 The base classes below correspond 1:1 to the three possible settlement outcomes.
 The subclasses only add diagnostic/telemetry nuance and share their base's settlement behaviour.
 
-    | Exception (base)          | SB message settlement   | Resulting task state     |
-    |---------------------------|-------------------------|--------------------------|
-    | TaskFailedError           | complete                | FAILED (user facing msg) |
-    |                           |                         |                          |
-    | TaskDeferredError         | abandon (retry message) | untouched                |
-    |   - TaskRetryError        |                         |                          |
-    |   - TaskAbortedError      |                         |                          |
-    |                           |                         |                          |
-    | TaskInternalError         | dead-letter             | FAILED (generic msg)     |
-    |   - MalformedMessageError |                         |                          |
-    |   - TaskTrackingError     |                         |                          |
+    | Exception (base)            | SB message settlement   | Resulting task state     |
+    |-----------------------------|-------------------------|--------------------------|
+    | TaskFailedError             | complete                | FAILED (user facing msg) |
+    |                             |                         |                          |
+    | TaskDeferredError           | abandon (retry message) | untouched                |
+    |   - TaskRetryError          |                         |                          |
+    |   - TaskAbortedError        |                         |                          |
+    |                             |                         |                          |
+    | TaskInternalError           | dead-letter             | FAILED (generic msg)     |
+    |   - TaskRetryExhaustedError |                         |                          |
+    |   - MalformedMessageError   |                         |                          |
+    |   - TaskTrackingError       |                         |                          |
 
 Any exception that is NOT one of these is treated like TaskInternalError:
     => SB message settled as DEAD-LETTERED, task marked FAILED with a generic message.
@@ -29,27 +30,27 @@ and do not affect the settlement behaviour.
 
 class TaskFailedError(Exception):
     """
-    The task failed in a final, user-facing way and the end user should be informed. Returning it to the message queue
-    for automatic retrying would not help.
+    The task failed in a final, user-facing way and the end user should be informed.
+    Returning it to the message queue for automatic retrying would not help.
 
     Raise this to report an expected/business failure the user cares about (e.g. invalid input, requested
-    data not found, not authorized). `status_message` is surfaced to the user, while the optional
-    `internal_error_message` is retained for logging/telemetry only and never shown to the user.
+    data not found, not authorized). `status_msg` is surfaced to the user, while the optional
+    `internal_error_msg` is retained for logging/telemetry only and never shown to the user.
 
-    => SB message COMPLETED, task state FAILED with `status_message` (not retried, not dead-lettered).
+    => SB message COMPLETED, task state FAILED with `status_msg` (not retried, not dead-lettered).
     """
 
-    def __init__(self, status_message: str, internal_error_message: str | None = None) -> None:
-        super().__init__(status_message)
-        self.status_message = status_message
-        self.internal_error_message = internal_error_message
+    def __init__(self, status_msg: str, internal_error_msg: str | None = None) -> None:
+        super().__init__(status_msg)
+        self.status_msg = status_msg
+        self.internal_error_msg = internal_error_msg
 
 
 class TaskDeferredError(Exception):
     """
     Base class for "try again later" outcomes: the task was not completed and the message should be
     delivered again (possibly picked up by another worker).
-    
+
     => SB message ABANDONED (returned to the queue for redelivery), task state left untouched.
     """
 
@@ -74,6 +75,12 @@ class TaskInternalError(Exception):
     retrying would not help; the message needs a human to inspect it.
 
     => SB message DEAD-LETTERED, task state FAILED with a generic user facing message + possibly internal error details.
+    """
+
+
+class TaskRetryExhaustedError(TaskInternalError):
+    """
+    A deferred task failure that has reached the queue's maximum delivery count.
     """
 
 

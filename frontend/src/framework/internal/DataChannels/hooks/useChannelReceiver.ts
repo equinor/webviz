@@ -35,8 +35,11 @@ export function useChannelReceiver<TKeyKinds extends KeyKind[]>(
 
                 const channel = receiver.getChannel();
                 if (!channel) {
+                    // TODO: We will rework channels to use pubsub/syncExternalStore in a separate PR
+                    /* eslint-disable @eslint-react/set-state-in-effect */
                     setContents([]);
                     setRevisionNumber((prev) => prev + 1);
+                    /* eslint-enable @eslint-react/set-state-in-effect */
                     return;
                 }
 

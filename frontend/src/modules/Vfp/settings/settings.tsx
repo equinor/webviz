@@ -1,5 +1,6 @@
 import { useAtom, useAtomValue } from "jotai";
 
+import { VfpType_api } from "@api";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -10,7 +11,7 @@ import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { Select, type SelectOption } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { PressureOption, VfpParam, VfpType } from "../types";
@@ -18,7 +19,8 @@ import type { VfpApiTableDataAccessor } from "../utils/vfpApiTableDataAccessor";
 
 import { selectedPressureOptionAtom } from "./atoms/baseAtoms";
 import {
-    availableVfpTableNamesAtom,
+    availableVfpTableNumbersAtom,
+    availableVfpTypesAtom,
     availableRealizationNumbersAtom,
     tableDataAccessorWithStatusFlagsAtom,
 } from "./atoms/derivedAtoms";
@@ -29,17 +31,18 @@ import {
     selectedGfrIndicesAtom,
     selectedRealizationNumberAtom,
     selectedThpIndicesAtom,
-    selectedVfpTableNameAtom,
+    selectedVfpTableNumberAtom,
+    selectedVfpTypeAtom,
     selectedWfrIndicesAtom,
 } from "./atoms/persistableFixableAtoms";
-import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./atoms/queryAtoms";
+import { vfpTablesQueryAtom, vfpTableQueryAtom } from "./atoms/queryAtoms";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
     const ensembleSet = useEnsembleSet(workbenchSession);
 
     const vfpTableQuery = useAtomValue(vfpTableQueryAtom);
-    const vfpTableNamesQuery = useAtomValue(vfpTableNamesQueryAtom);
+    const vfpTablesQuery = useAtomValue(vfpTablesQueryAtom);
 
     const vfpDataAccessorWithStatus = useAtomValue(tableDataAccessorWithStatusFlagsAtom);
     const vfpDataAccessor = vfpDataAccessorWithStatus.tableDataAccessor;
@@ -48,7 +51,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useAtom(selectedEnsembleIdentAtom);
     const [selectedRealizationNumber, setSelectedRealizationNumber] = useAtom(selectedRealizationNumberAtom);
-    const [selectedVfpTableName, setSelectedVfpTableName] = useAtom(selectedVfpTableNameAtom);
+    const [selectedVfpType, setSelectedVfpType] = useAtom(selectedVfpTypeAtom);
+    const [selectedVfpTableNumber, setSelectedVfpTableNumber] = useAtom(selectedVfpTableNumberAtom);
     const [selectedThpIndices, setSelectedThpIndices] = useAtom(selectedThpIndicesAtom);
     const [selectedWfrIndices, setSelectedWfrIndices] = useAtom(selectedWfrIndicesAtom);
     const [selectedGfrIndices, setSelectedGfrIndices] = useAtom(selectedGfrIndicesAtom);
@@ -56,10 +60,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
 
     const availableRealizationNumbers = useAtomValue(availableRealizationNumbersAtom);
-    const validVfpTableNames = useAtomValue(availableVfpTableNamesAtom);
+    const availableVfpTypes = useAtomValue(availableVfpTypesAtom);
+    const availableVfpTableNumbers = useAtomValue(availableVfpTableNumbersAtom);
 
-    usePropagateQueryErrorToStatusWriter(vfpTableQuery, statusWriter);
-    usePropagateQueryErrorToStatusWriter(vfpTableNamesQuery, statusWriter);
+    propagateQueryErrorToStatusWriter(vfpTableQuery, statusWriter);
+    propagateQueryErrorToStatusWriter(vfpTablesQuery, statusWriter);
 
     function handleThpIndicesSelectionChange(thpIndices: string[]) {
         const thpIndicesNumbers = thpIndices.map((value) => parseInt(value));
@@ -102,7 +107,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentAtom);
     const selectedRealizationNumberAnnotations =
         useMakePersistableFixableAtomAnnotations(selectedRealizationNumberAtom);
-    const selectedVfpTableNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedVfpTableNameAtom);
+    const selectedVfpTypeAnnotations = useMakePersistableFixableAtomAnnotations(selectedVfpTypeAtom);
+    const selectedVfpTableNumberAnnotations = useMakePersistableFixableAtomAnnotations(selectedVfpTableNumberAtom);
     const selectedThpIndicesAnnotations = useMakePersistableFixableAtomAnnotations(selectedThpIndicesAtom);
     const selectedWfrIndicesAnnotations = useMakePersistableFixableAtomAnnotations(selectedWfrIndicesAtom);
     const selectedGfrIndicesAnnotations = useMakePersistableFixableAtomAnnotations(selectedGfrIndicesAtom);
@@ -131,21 +137,44 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         />
                     </Setting.Field>
                     <Setting.Field
-                        label="VFP Name"
-                        annotations={selectedVfpTableNameAnnotations}
-                        loadingOverlay={selectedVfpTableName.isLoading}
+                        label="VFP Type"
+                        annotations={selectedVfpTypeAnnotations}
+                        loadingOverlay={selectedVfpType.isLoading}
                         errorOverlay={
-                            selectedVfpTableName.depsHaveError
-                                ? "Error loading table names. See log for details."
+                            selectedVfpType.depsHaveError
+                                ? "Error loading VFP tables. See log for details."
                                 : undefined
                         }
                     >
-                        <Combobox<string>
-                            items={validVfpTableNames.map((name) => {
-                                return { value: name, label: name };
+                        <RadioCompositions.GroupWithLabels
+                            value={selectedVfpType.value}
+                            options={[
+                                { label: "Production", value: VfpType_api.PROD },
+                                { label: "Injection", value: VfpType_api.INJ },
+                            ]}
+                            onValueChange={(value) => setSelectedVfpType(value as VfpType_api)}
+                            // Disable only when current selection is valid,
+                            // such that the user can switch away from an invalid persisted type.
+                            disabled={availableVfpTypes.length < 2 && selectedVfpType.isValidInContext}
+                            layout="horizontal"
+                        />
+                    </Setting.Field>
+                    <Setting.Field
+                        label="VFP Table Number"
+                        annotations={selectedVfpTableNumberAnnotations}
+                        loadingOverlay={selectedVfpTableNumber.isLoading}
+                        errorOverlay={
+                            selectedVfpTableNumber.depsHaveError
+                                ? "Error loading table numbers. See log for details."
+                                : undefined
+                        }
+                    >
+                        <Combobox<number>
+                            items={availableVfpTableNumbers.map((tableNumber) => {
+                                return { value: tableNumber, label: tableNumber.toString() };
                             })}
-                            value={selectedVfpTableName.value}
-                            onValueChange={setSelectedVfpTableName}
+                            value={selectedVfpTableNumber.value}
+                            onValueChange={setSelectedVfpTableNumber}
                         />
                     </Setting.Field>
                 </Setting.Section>

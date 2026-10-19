@@ -14,6 +14,7 @@ export type ScrollContainerProps = {
 
 export const ScrollContainer = React.forwardRef<HTMLElement, ScrollContainerProps>(
     function ScrollContainer(props, forwardedRef): React.ReactElement {
+        // eslint-disable-next-line @eslint-react/no-children-only -- Special use case
         const onlyChild = React.Children.only(props.children) as React.ReactElement;
         const lastNodeRef = React.useRef<HTMLElement | null>(null);
         const { registerScrollContainerElement, setScrollOverlayMargins } = React.useContext(SortableListContext);
@@ -47,6 +48,7 @@ export const ScrollContainer = React.forwardRef<HTMLElement, ScrollContainerProp
 
         const mergedRef = useComposedRefs<HTMLElement>(forwardedRef, setScroller, (onlyChild as any).ref);
 
+        // eslint-disable-next-line @eslint-react/no-clone-element -- Special use case
         return React.cloneElement(onlyChild, {
             ref: mergedRef,
             "data-sl-scroll-container": "",

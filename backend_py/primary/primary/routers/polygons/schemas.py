@@ -21,6 +21,7 @@ class PolygonsAttributeType(str, Enum):
     SUBCROP = "subcrop"  # Values are subcrops
     FAULT_LINES = "fault_lines"  # Values are fault lines
     NAMED_AREA = "named_area"  # Values are named areas, e.g. CCS containment polygons
+    REGIONS = "regions"  # Values are regions
 
 
 class PolygonsMeta(BaseModel):

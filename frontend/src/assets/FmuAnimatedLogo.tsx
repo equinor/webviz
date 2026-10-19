@@ -121,6 +121,7 @@ function SpinnerBody() {
     return (
         <>
             {PATHS.map((d, i) => (
+                // eslint-disable-next-line @eslint-react/no-array-index-key -- Static array
                 <OrbitalGroup key={i} group={i + 1}>
                     <path className="fmu-p" d={d} />
                     <circle className="fmu-c" cx={CIRCLES[i][0]} cy={CIRCLES[i][1]} r="16.7" />
@@ -140,7 +141,8 @@ export function FmuAnimatedLogo(props: FmuAnimatedLogoProps): React.ReactNode {
             style={{ overflow: "visible" }}
             {...props}
         >
-            { }
+            {}
+            {/* eslint-disable-next-line @eslint-react/dom-no-dangerously-set-innerhtml -- Static code controlled by us */}
             <style dangerouslySetInnerHTML={{ __html: CSS }} />
             <g>
                 <g className="fmu-spinner fmu-ghost1" transform="rotate(-2 234.4 238.3)">

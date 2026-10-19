@@ -1,6 +1,6 @@
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
+import { getEnsembleIdentsFromStrings } from "@framework/utils/ensembleIdentUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
@@ -91,7 +91,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
     const ensembleIdents = raw.ensembleIdentStrings
-        ? raw.ensembleIdentStrings.map((id) => RegularEnsembleIdent.fromString(id))
+        ? getEnsembleIdentsFromStrings(raw.ensembleIdentStrings)
         : undefined;
     setIfDefined(set, selectedEnsembleIdentsAtom, ensembleIdents);
     setIfDefined(set, selectedResultNameAtom, raw.resultName);

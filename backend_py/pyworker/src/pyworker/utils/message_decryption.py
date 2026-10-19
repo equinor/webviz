@@ -1,10 +1,17 @@
 from cryptography.fernet import Fernet
 
-_fernet: Fernet | None = None
+# Module-level singleton
+_fernet: Fernet | None = None  # pylint: disable=invalid-name
 
 
 def initialize(fernet_key: str) -> None:
-    global _fernet
+    """
+    Initialize the module-level Fernet instance with the given key.
+
+    Python one-liner to generate a new Fernet key:
+        python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    """
+    global _fernet  # pylint: disable=global-statement
     _fernet = Fernet(fernet_key)
 
 

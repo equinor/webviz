@@ -76,6 +76,15 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 );
                 return;
 
+            case "initial-fluid-contact-surface":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.INITIAL_FLUID_CONTACT_SURFACE,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
+
             case "seismic-3d-surface":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
@@ -138,6 +147,14 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     ),
                 );
                 return;
+            case "planned-wellbore-trajectories":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.PLANNED_WELL_TRAJECTORIES,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
             case "drilled-wellbore-picks":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
@@ -168,6 +185,11 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 return;
             case "attribute":
                 groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.dataProviderManager));
+                return;
+            case "surface-attribute":
+                groupDelegate.appendChild(
+                    new SharedSetting(Setting.SURFACE_ATTRIBUTE, null, props.dataProviderManager),
+                );
                 return;
             case "seismic-attribute":
                 groupDelegate.appendChild(
@@ -314,6 +336,11 @@ const ACTIONS: ActionGroup[] = [
                         label: "Depth",
                     },
                     {
+                        identifier: "initial-fluid-contact-surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Initial Fluid Contact",
+                    },
+                    {
                         identifier: "seismic-3d-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Seismic 3D",
@@ -347,6 +374,11 @@ const ACTIONS: ActionGroup[] = [
                         identifier: "drilled-wellbore-trajectories",
                         icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Trajectories (Official)",
+                    },
+                    {
+                        identifier: "planned-wellbore-trajectories",
+                        icon: <Icon data={wellbore} fontSize="small" />,
+                        label: "Trajectories (Planned)",
                     },
                     {
                         identifier: "drilled-wellbore-picks",
@@ -409,6 +441,11 @@ const ACTIONS: ActionGroup[] = [
                 identifier: "attribute",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Unsorted Attribute",
+            },
+            {
+                identifier: "surface-attribute",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Surface Attribute",
             },
             {
                 identifier: "seismic-attribute",

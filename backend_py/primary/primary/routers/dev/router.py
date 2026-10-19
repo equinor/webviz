@@ -5,8 +5,12 @@ from typing import Annotated, Literal
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Response
+from azure.servicebus import ServiceBusMessage
+from opentelemetry import trace
+from cryptography.fernet import Fernet
 
 from webviz_core_utils.background_tasks import run_in_background_task
+from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg, DevTestMsg, WorkerOperation
 from webviz_services.user_session_manager.user_session_manager import UserSessionManager
 from webviz_services.user_session_manager.user_session_manager import UserComponent
 from webviz_services.user_session_manager.user_session_manager import _USER_SESSION_DEFS
@@ -15,8 +19,10 @@ from webviz_services.user_session_manager._user_session_directory import UserSes
 from webviz_services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
 from webviz_services.service_exceptions import Service, ServiceUnavailableError, ServiceRequestError
 from webviz_services.utils.otel_span_tracing import start_otel_span_async
-from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
+from webviz_services.utils.task_meta_tracker import TaskState, get_task_meta_tracker_for_user
+from webviz_services.platform.message_bus import MessageBusSingleton, MessageBus
 
+from primary import config
 from primary.auth.auth_helper import AuthenticatedUser, AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
@@ -316,73 +322,76 @@ async def get_ri_isect(
     return "OK"
 
 
-# Used for troubleshooting and testing, to what the client IP is as seen by this service
-# @router.get("/whoami")
-# async def whoami(request: Request) -> dict:
-#     return {
-#         "client_host": request.client.host if request.client else None,
-#         "xff": request.headers.get("x-forwarded-for"),
-#         "xreal": request.headers.get("x-real-ip"),
-#         "proto": request.headers.get("x-forwarded-proto"),
-#         "host": request.headers.get("host"),
-#     }
-
-
-from azure.servicebus import ServiceBusMessage
-from primary.utils.message_bus import MessageBusSingleton, MessageBus
-from primary import config
-
-from cryptography.fernet import Fernet
-
-from webviz_services.utils.task_meta_tracker import TaskState, get_task_meta_tracker_for_user_id
-from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg, WorkerOperation
-
-from opentelemetry import trace
-tracer = trace.get_tracer(__name__)
-
-
-
-
-
 @router.get("/sb/{msg_text}")
 async def get_send_sb_msg(
-    # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     msg_text: Annotated[str, Path(description="The string to send")],
     count: Annotated[int, Query(description="Number of messages to send")] = 1,
-    # fmt:on
 ) -> str:
 
+    tracer = trace.get_tracer(__name__)
     perf_metrics = ResponsePerfMetrics(response)
 
-    queue_name = config.SERVICE_BUS_QUEUE_NAME
+    queue_name = config.SERVICE_BUS_DEFAULT_QUEUE
     LOGGER.info(f"About to send message on service bus {queue_name=} {msg_text=}")
 
     message_bus: MessageBus = MessageBusSingleton.get_instance()
+    fernet = Fernet(config.SERVICE_BUS_PAYLOAD_FERNET_KEY)
+
+    task_tracker = get_task_meta_tracker_for_user(authenticated_user)
+
+    # my_task_ids: list[str] = []
 
     # for i in range(count):
-    #     with tracer.start_as_current_span(f"SigSubmittingMessageToQueue_{i}", kind=trace.SpanKind.PRODUCER):
-    #         msg = ServiceBusMessage(subject=WorkerOperation.DUMMY, body=msg_text)
-    #         await message_bus.send_to_queue_async(queue_name=queue_name, message=msg)
-    #         LOGGER.info(f"Sent message {i} on service bus {msg.message_id=}")
+    #     with tracer.start_as_current_span(f"SubmittingDevTestMessageToQueue_{i}", kind=trace.SpanKind.PRODUCER):
+    #         msg = DevTestMsg(
+    #             text=msg_text,
+    #             encrypted_text=fernet.encrypt(msg_text.encode()),
+    #             sleep_duration_s=5,
+    #         )
+
+    #         sb_msg = ServiceBusMessage(subject=WorkerOperation.DEV_TEST, body=msg.model_dump_json())
+    #         await message_bus.send_to_queue_async(queue_name=queue_name, message=sb_msg)
+
+    #         task_id = task_tracker.generate_task_id("testTaskId")
+    #         my_task_ids.append(task_id)
+
+    #         task_meta = await task_tracker.register_task_async(task_id, ttl_s=2)
+    #         if task_meta.state != TaskState.PENDING:
+    #             LOGGER.error(f"Task {task_id} is not in PENDING state ({task_meta.state=})")
+
+    #         await task_tracker.set_state_async(task_id, TaskState.RUNNING, None)
+    #         new_task_meta = await task_tracker.get_task_meta_async(task_id)
+    #         if new_task_meta is None:
+    #             LOGGER.error(f"Task {task_id} could not be retrieved")
+    #         elif new_task_meta.state != TaskState.RUNNING:
+    #             LOGGER.error(f"Task {task_id} is not in PENDING state ({task_meta.state=})")
+
+    #         LOGGER.info(f"Sent message {i} on service bus {sb_msg.message_id=}")
     #     if i == 0:
     #         perf_metrics.record_lap("send-first-msg")
 
     # if count > 1:
     #     perf_metrics.record_lap("send-remaining-msgs")
 
-    # LOGGER.info(f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}")
-    # return f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}"
+    # # Sleep so that all tasks in tracker time out
+    # # All the task tracker updates below should now fail
+    # await asyncio.sleep(3)
+    # for task_id in my_task_ids:
+    #     ok = await task_tracker.set_state_async(task_id, TaskState.FAILED, None)
+    #     if ok:
+    #         LOGGER.error(f"Setting of task {task_id} to FAILED succeeded unexpectedly")
 
+    # LOGGER.info(
+    #     f"Sent {count} message(s) with {msg_text=} on service bus queue {queue_name} in {perf_metrics.to_string()}"
+    # )
+    # return f"Sent {count} message(s) with {msg_text=} on service bus queue {queue_name} in {perf_metrics.to_string()}"
 
+    # ---------------------------------------------
     my_dummy_access_token = f"MyToken__{msg_text}"
-
-    fernet = Fernet(config.SERVICE_BUS_PAYLOAD_FERNET_KEY)
     encrypted_access_token = fernet.encrypt(my_dummy_access_token.encode())
-
     user_id = authenticated_user.get_user_id()
-    task_tracker = get_task_meta_tracker_for_user_id(user_id)
     task_id = task_tracker.generate_task_id("tst")
     _task_meta = await task_tracker.register_task_async(task_id=task_id, ttl_s=60, actual_start_time_utc_s=None, expected_store_key=None)
 
@@ -398,7 +407,7 @@ async def get_send_sb_msg(
         
         sb_msg = ServiceBusMessage(subject=WorkerOperation.CREATE_DERIVED_SMRY_TABLE, body=msg.model_dump_json())
         await message_bus.send_to_queue_async(queue_name=queue_name, message=sb_msg)
-        perf_metrics.record_lap("send-first-msg")
+        perf_metrics.record_lap("send-msg")
         # LOGGER.info(f"Sent message CreateDerivedSmryTableMsg on service bus {sb_msg.message_id=}")
         # return f"Sent message CreateDerivedSmryTableMsg on service bus {sb_msg.message_id=} in {perf_metrics.to_string()}"
 
@@ -413,9 +422,18 @@ async def get_send_sb_msg(
 
     LOGGER.info(f"Task {task_id} completed with state: {task_meta.state}")
     return f"Task {task_id} completed with state: {task_meta.state} in {perf_metrics.to_string()}"
+    # ---------------------------------------------
 
 
 
 
-
-
+# Used for troubleshooting and testing, to what the client IP is as seen by this service
+# @router.get("/whoami")
+# async def whoami(request: Request) -> dict:
+#     return {
+#         "client_host": request.client.host if request.client else None,
+#         "xff": request.headers.get("x-forwarded-for"),
+#         "xreal": request.headers.get("x-real-ip"),
+#         "proto": request.headers.get("x-forwarded-proto"),
+#         "host": request.headers.get("host"),
+#     }

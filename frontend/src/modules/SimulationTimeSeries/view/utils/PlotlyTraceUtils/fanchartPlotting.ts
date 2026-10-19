@@ -183,8 +183,7 @@ export function createFanchartTraces({
 
     validateFanchartData(data);
 
-    // False positive
-    // eslint-disable-next-line react-hooks/rules-of-hooks
+    // eslint-disable-next-line @eslint-react/rules-of-hooks -- False positive
     const convertRgb = useMode(modeRgb);
     const rgb = convertRgb(hexColor);
     if (rgb === undefined) {
@@ -197,6 +196,10 @@ export function createFanchartTraces({
     function getDefaultTrace(statisticsName: string, values: number[]): Partial<TimeSeriesPlotData> {
         const trace: Partial<TimeSeriesPlotData> = {
             name: name ?? legendGroup,
+            // Tag the trace with the statistic it represents (unique within a fanchart). The optional
+            // min/max and low/high pairs make array position unstable when they are toggled, so a
+            // caller assigning Plotly uids must key them off this rather than the index.
+            uid: statisticsName,
             x: direction === TraceDirection.HORIZONTAL ? data.samples : values,
             y: direction === TraceDirection.HORIZONTAL ? values : data.samples,
             xaxis: xaxis,

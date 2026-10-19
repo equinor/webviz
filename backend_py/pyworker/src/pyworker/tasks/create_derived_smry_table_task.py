@@ -54,7 +54,7 @@ async def create_derived_smry_table_task_async(
 
     async def _update_status_msg_async(status_msg: str) -> None:
         _logger.debug(f"-- updating status message: {status_msg=}")
-        await task_tracker.set_status_message_async(task_id, status_message=status_msg)
+        await task_tracker.set_status_message_async(task_id, status_msg=status_msg)
 
     cache_key = task_meta.expected_store_key
     if not cache_key:
@@ -68,7 +68,7 @@ async def create_derived_smry_table_task_async(
     try:
         await ensure_vectors_aggregated_async(sumo_client, msg.case_uuid, msg.ensemble_name, None, msg.vector_names, progress_cb=_update_status_msg_async)
     except ServiceLayerException as exc:
-        raise TaskFailedError(f"Error aggregating vectors: {str(exc)}", internal_error_message=repr(exc)) from exc
+        raise TaskFailedError(f"Error aggregating vectors: {str(exc)}", internal_error_msg=repr(exc)) from exc
 
     perf_metrics.record_lap("ensure-aggregated")
     abort_signal.raise_if_aborted()
@@ -76,7 +76,7 @@ async def create_derived_smry_table_task_async(
     try:
         derived_table_pa, derived_table_info = await create_derived_smry_table_async(sumo_client, msg.case_uuid, msg.ensemble_name, None, msg.vector_names, progress_cb=_update_status_msg_async)
     except ServiceLayerException as exc:
-        raise TaskFailedError(f"Failed to create derived table: {str(exc)}", internal_error_message=repr(exc)) from exc
+        raise TaskFailedError(f"Failed to create derived table: {str(exc)}", internal_error_msg=repr(exc)) from exc
 
     perf_metrics.record_lap("create-table")
     abort_signal.raise_if_aborted()

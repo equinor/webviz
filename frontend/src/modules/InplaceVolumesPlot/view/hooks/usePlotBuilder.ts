@@ -5,6 +5,7 @@ import { useAtomValue } from "jotai";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { ColorSet } from "@lib/utils/ColorSet";
+import { makeInplaceVolumesAxisFormat } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { PlotBuilder } from "@modules/_shared/InplaceVolumes/PlotBuilder";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { makeTableFromApiData } from "@modules/_shared/InplaceVolumes/tableUtils";
@@ -67,6 +68,7 @@ export function useBuildPlotAndTable(
 
     plotbuilder.setSubplotByColumn(subplotBy);
     plotbuilder.setFormatLabelFunction(makeFormatLabelFunction(ensembleSet));
+    const firstResultAxisFormat = makeInplaceVolumesAxisFormat(firstResultName);
 
     if (hoveredRegion) {
         plotbuilder.setHighlightedSubPlots([hoveredRegion]);
@@ -79,15 +81,24 @@ export function useBuildPlotAndTable(
     }
 
     if (plotType === PlotType.SCATTER) {
+        plotbuilder.setXAxisNumberFormatOptions(firstResultAxisFormat);
+        plotbuilder.setYAxisNumberFormatOptions(makeInplaceVolumesAxisFormat(secondResultName));
         plotbuilder.setXAxisOptions({ title: { text: firstResultName ?? "", standoff: 20 } });
         plotbuilder.setYAxisOptions({ title: { text: secondResultName ?? "", standoff: 20 } });
     } else if (plotType === PlotType.CONVERGENCE) {
+        plotbuilder.setYAxisNumberFormatOptions(firstResultAxisFormat);
         plotbuilder.setXAxisOptions({ title: { text: "Realizations", standoff: 5 } });
         plotbuilder.setYAxisOptions({ title: { text: firstResultName ?? "", standoff: 5 } });
     } else if (plotType === PlotType.BOX) {
+        plotbuilder.setXAxisNumberFormatOptions(firstResultAxisFormat);
         plotbuilder.setYAxisOptions({ showticklabels: false });
     } else if (plotType === PlotType.HISTOGRAM) {
+        plotbuilder.setXAxisNumberFormatOptions(firstResultAxisFormat);
         plotbuilder.setYAxisOptions({ title: { text: "Percentage (%)" } });
+    } else if (plotType === PlotType.BAR) {
+        plotbuilder.setYAxisNumberFormatOptions(firstResultAxisFormat);
+    } else if (plotType === PlotType.DISTRIBUTION) {
+        plotbuilder.setXAxisNumberFormatOptions(firstResultAxisFormat);
     }
 
     const horizontalSpacing = 80 / width;

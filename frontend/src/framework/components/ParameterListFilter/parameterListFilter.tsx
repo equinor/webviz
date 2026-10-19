@@ -30,14 +30,18 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
     const { onChange } = props;
 
     const smartNodeSelectorId = React.useId();
-    const [selectedTags, setSelectedTags] = React.useState<string[]>(
-        props.initialFilters ?? [ParameterParentNodeNames.IS_NONCONSTANT],
-    );
+    const smartNodeSelectorDelimiter = ":";
+    const initFiltersOrDefault = props.initialFilters ?? [ParameterParentNodeNames.IS_NONCONSTANT];
+
+    const [selectedTags, setSelectedTags] = React.useState<string[]>(initFiltersOrDefault);
     const [selectedNodes, setSelectedNodes] = React.useState<string[]>([]);
-    const [numberOfMatchingParameters, setNumberOfMatchingParameters] = React.useState<number>(0);
     const [parameters, setParameters] = React.useState<Parameter[] | null>(null);
     const [previousTreeDataNodeList, setPreviousTreeDataNodeList] = React.useState<TreeDataNode[]>([]);
-    const smartNodeSelectorDelimiter = ":";
+
+    const filteredParameters = React.useMemo(() => {
+        if (!parameters?.length) return [];
+        return getParametersMatchingSelectedNodes(parameters, selectedNodes, smartNodeSelectorDelimiter);
+    }, [parameters, selectedNodes]);
 
     let newTreeDataNodeList: TreeDataNode[] | null = null;
     if (parameters === null || !isEqual(props.parameters, parameters)) {
@@ -50,25 +54,9 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
     // Utilizing useEffect to prevent re-render of parent component during rendering of this component
     React.useEffect(
         function createFilterParameters() {
-            if (parameters === null || parameters.length === 0) {
-                setNumberOfMatchingParameters(0);
-                if (onChange) {
-                    onChange([]);
-                }
-                return;
-            }
-
-            const filteredParameters = getParametersMatchingSelectedNodes(
-                parameters,
-                selectedNodes,
-                smartNodeSelectorDelimiter,
-            );
-            setNumberOfMatchingParameters(filteredParameters.length);
-            if (onChange) {
-                onChange(filteredParameters);
-            }
+            onChange?.(filteredParameters);
         },
-        [selectedNodes, parameters, onChange, smartNodeSelectorDelimiter],
+        [filteredParameters, onChange],
     );
 
     function handleSmartNodeSelectorChange(selection: SmartNodeSelectorSelection) {
@@ -91,7 +79,7 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
                 <div
                     className={resolveClassNames("mt-2xs text-body-sm text-neutral-subtle relative w-full text-right")}
                 >
-                    Number of matches: {numberOfMatchingParameters}
+                    Number of matches: {filteredParameters.length}
                 </div>
             </>
         </div>

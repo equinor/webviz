@@ -13,6 +13,7 @@ services:
       - ./frontend/src:/usr/src/app/frontend/src
       - ./frontend/theme:/usr/src/app/frontend/theme
       - ./frontend/index.html:/usr/src/app/frontend/index.html
+      - ./docs:/usr/src/app/docs
 
   backend-primary:
     build:
@@ -25,7 +26,10 @@ services:
       - UVICORN_PORT=5000
       - UVICORN_RELOAD=true
       - UVICORN_RELOAD_DIRS=/home/appuser/backend_py
-      - WEBVIZ_CLIENT_SECRET
+      - AZURE_TENANT_ID
+      - AZURE_CLIENT_ID
+      - AZURE_CLIENT_SECRET
+      - WEBVIZ_LOCAL_DEVELOPER_QUALIFIER
       - WEBVIZ_SMDA_SUBSCRIPTION_KEY
       - WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
       - WEBVIZ_SUMO_ENV
@@ -33,11 +37,8 @@ services:
       - WEBVIZ_PSEUDONYM_HMAC_KEY
       - WEBVIZ_SESSION_STORE_FERNET_KEY
       - WEBVIZ_REDIS_AUTH_STORE_PASSWORD
-      - WEBVIZ_REDIS_CACHE_PASSWORD
-      - WEBVIZ_SERVICE_BUS_FQ_NAMESPACE
-      - WEBVIZ_SERVICE_BUS_QUEUE_NAME
       - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
-      - WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING # For local development only
+      - WEBVIZ_REDIS_CACHE_PASSWORD
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
     volumes:
@@ -108,85 +109,25 @@ services:
     # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
     command: ["--maxmemory", "1gb", "--maxmemory-policy", "allkeys-lru", "--loglevel", "notice"]
 
-
   pyworker-default:
     build:
       context: .
-      dockerfile: ./backend_py/pyworker_default/Dockerfile
+      dockerfile: ./backend_py/pyworker/Dockerfile
     environment:
       - AZURE_TENANT_ID
       - AZURE_CLIENT_ID
       - AZURE_CLIENT_SECRET
+      - WEBVIZ_LOCAL_DEVELOPER_QUALIFIER
       - WEBVIZ_SUMO_ENV
       - WEBVIZ_REDIS_CACHE_PASSWORD
-      - WEBVIZ_SERVICE_BUS_FQ_NAMESPACE
-      - WEBVIZ_SERVICE_BUS_QUEUE_NAME
       - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
-      - WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING # For local development only
-      - WEBVIZ_WORKER_MAX_CONCURRENT_TASKS
+      - WEBVIZ_PYWORKER_SERVICE_BUS_QUEUE_ROLE=default
+      - WEBVIZ_PYWORKER_MAX_CONCURRENT_TASKS=1
       - APPLICATIONINSIGHTS_CONNECTION_STRING
-      # For debugging instrumentation
-      - OTEL_LOG_LEVEL=debug
-      - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
     volumes:
-      - ./backend_py/pyworker_default/src:/home/appuser/backend_py/pyworker_default/src
+      - ./backend_py/pyworker/src:/home/appuser/backend_py/pyworker/src
       - ./backend_py/libs:/home/appuser/backend_py/libs
-    command: ["watchfiles", "python -m pyworker_default.worker_main", "/home/appuser/backend_py/pyworker_default/src"]
-    #command: ["python", "-m", "pyworker_default.worker_main"]
+    command: ["watchfiles", "python -m pyworker.worker_main", "/home/appuser/backend_py/pyworker/src"]
+    #command: ["python", "-m", "pyworker.worker_main"]
     #restart: on-failure
-    #stop_grace_period: 30s
     restart: always
-    # depends_on:
-    #   - sb-emulator
-
-
-  sb-emulator:
-    image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
-    environment:
-      ACCEPT_EULA: Y
-      SQL_SERVER: mssql
-      MSSQL_SA_PASSWORD: MySecretPassw0rd
-    volumes:
-      - ./docker/sb-emulator/SbEmulatorConfig.json:/ServiceBus_Emulator/ConfigFiles/Config.json
-    ports:
-      - "5672:5672"
-    depends_on:
-      - mssql
-
-  mssql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    environment:
-      ACCEPT_EULA: Y
-      MSSQL_SA_PASSWORD: MySecretPassw0rd
-
-
-# When using the Cosmos DB Emulator, make sure to uncomment the relevant parts in the backend-primary service as well,
-# to ensure it waits for the emulator to be healthy before starting.
-#
-# depends_on:
-#   cosmos-db-emulator:
-#     condition: service_healthy
-#
-# Also make sure to comment / uncomment the relevant parts in the backend_py code to use the emulator (main.py).
-#   cosmos-db-emulator:
-#     image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
-#     platform: linux/amd64
-#     tty: true
-#     mem_limit: 4GB
-#     ports:
-#       - "8081:8081" # HTTPS endpoint
-#       - "10250-10255:10250-10255" # Internal emulator ports (needed)
-#     environment:
-#       - AZURE_COSMOS_EMULATOR_PARTITION_COUNT=1
-#       - AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE=true
-#     healthcheck:
-#       test: curl -k https://127.0.0.1:8081/_explorer/emulator.pem || exit 1
-#       interval: 10s
-#       retries: 12 # 2 minutes
-#       start_period: 30s
-#       timeout: 5s
-#     volumes:
-#       - cosmosdrive:/var/lib/cosmosdb/emulator
-
-# volumes:
-#   cosmosdrive:

@@ -27,7 +27,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
                 ViewLayout.HORIZONTAL,
                 ViewLayout.GRID,
 
-                // ! Legacy workaround – awaiting DPF versioning
+                // ! Legacy workaround – awaiting versioning system
                 // ! Allow de-serializing the previous PreferredViewLayout enum
                 ViewLayout.VERTICAL.toUpperCase() as ViewLayout,
                 ViewLayout.HORIZONTAL.toUpperCase() as ViewLayout,

@@ -8,6 +8,7 @@ import type {
     Perforation,
     SchematicData,
 } from "@equinor/esv-intersection";
+import { clamp, sortedIndexBy } from "lodash-es";
 
 import { ijkFromCellIndex } from "@framework/utils/cellIndexUtils";
 
@@ -433,20 +434,50 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
     if (isSeismicLayer(layer)) {
         const seismicData = layer.getData();
         const seismicInfo = layer.getSeismicInfo();
-        if (seismicData && seismicInfo) {
+        const fenceProjection = seismicData?.trajectoryFenceProjection ?? [];
+        if (seismicData && seismicInfo && fenceProjection.length >= 2) {
             const x = readoutItem.point[0];
             const y = readoutItem.point[1];
 
-            const height = Math.abs(seismicData.maxFenceDepth - seismicData.minFenceDepth);
-            const width = Math.abs(seismicInfo.maxX - seismicInfo.minX);
-            const rowHeight = height / seismicData.numSamplesPerTrace;
-            const columnWidth = width / seismicData.numTraces;
+            const fenceDepthSpan = Math.abs(seismicData.maxFenceDepth - seismicData.minFenceDepth);
+            const rowHeight = fenceDepthSpan / seismicData.numSamplesPerTrace;
 
-            const sampleNum = Math.floor((y - seismicData.minFenceDepth) / rowHeight);
-            const traceNum = Math.floor((x - seismicInfo.minX) / columnWidth);
+            // Samples are evenly spaced between min and max fence depth, so the fractional sample
+            // index is a plain linear mapping.
+            const samplePos = clamp(
+                (y - seismicData.minFenceDepth) / rowHeight,
+                0,
+                seismicData.numSamplesPerTrace - 1,
+            );
+            const sample0 = Math.floor(samplePos);
+            const sample1 = Math.min(sample0 + 1, seismicData.numSamplesPerTrace - 1);
+            const sampleFrac = samplePos - sample0;
 
-            const index = traceNum * seismicData.numSamplesPerTrace + sampleNum;
-            const value = seismicData.fenceTracesArray[index];
+            // Traces sit at the vertices of the fence-polyline projection, which are not evenly
+            // spaced (per-section resampling leaves a shorter remainder at each original vertex).
+            // Mirror SeismicLayer's rendering: find the projection segment containing x and take the
+            // fraction from that segment's end points instead of assuming a uniform trace width.
+            const trace1 = clamp(
+                sortedIndexBy(fenceProjection, [x], (point) => point[0]),
+                1,
+                fenceProjection.length - 1,
+            );
+            const trace0 = trace1 - 1;
+            const traceSpan = fenceProjection[trace1][0] - fenceProjection[trace0][0];
+            const traceFrac = traceSpan > 0 ? clamp((x - fenceProjection[trace0][0]) / traceSpan, 0, 1) : 0;
+
+            const valueAt = (traceNum: number, sampleNum: number) => {
+                const sample = seismicData.fenceTracesArray[traceNum * seismicData.numSamplesPerTrace + sampleNum];
+                // The rendered image replaces missing samples (stored as NaN by the backend) with 0
+                // before interpolating (see createSeismicSliceImageDatapointsArrayFromFenceTracesArray);
+                // do the same so a single missing corner doesn't turn the readout into NaN.
+                return Number.isNaN(sample) ? 0 : sample;
+            };
+
+            // Bilinear interpolation between the four surrounding samples.
+            const top = valueAt(trace0, sample0) + (valueAt(trace1, sample0) - valueAt(trace0, sample0)) * traceFrac;
+            const bottom = valueAt(trace0, sample1) + (valueAt(trace1, sample1) - valueAt(trace0, sample1)) * traceFrac;
+            const value = top + (bottom - top) * sampleFrac;
 
             items.push({
                 label: seismicData.propertyName,
@@ -462,12 +493,14 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
 
 export function esvReadoutToGenericReadout(
     readout: ReadoutItem,
-    index: number,
     layerIdToNameMap: Record<string, string>,
     axesLabels?: { xLabel?: string; yLabel?: string },
 ): GenericReadoutItem {
+    const readoutLabel = makeLabelFromLayer(readout.layer, layerIdToNameMap) ?? getLabelFromLayerData(readout);
     return {
-        label: makeLabelFromLayer(readout.layer, layerIdToNameMap) ?? getLabelFromLayerData(readout),
+        // ! It's assumed that each readout item has a unique label per layer
+        id: `readout-${readout.layer.id}-${readoutLabel}`,
+        label: readoutLabel,
         color: getColorFromLayerData(readout.layer, readout.index),
         info: esvReadoutToInfoItems(readout, axesLabels),
     };
@@ -490,6 +523,7 @@ function esvReadoutToInfoItems(item: ReadoutItem, axesLabels?: { xLabel?: string
                 name = axesLabels.yLabel;
             }
             return {
+                id: `info-${name}`,
                 name,
                 unit: el.unit,
                 adornment: makeAdornment(el),

@@ -57,7 +57,7 @@ export function useSubscribedProviderHoverVisualizations<TTarget extends Visuali
                 unsubscribeFunctions.push(topicUnsubFunc);
             }
 
-            return function unsubscribeFromWorkbenchServices() {
+            return function unsubscribeFromHoverService() {
                 for (const unsubscribeFunction of unsubscribeFunctions) {
                     unsubscribeFunction();
                 }

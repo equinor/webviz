@@ -2,8 +2,9 @@ import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { UseQueryResult } from "@tanstack/react-query";
 
 import type { WellboreCasing_api, WellboreHeader_api } from "@api";
-import { IntersectionType } from "@framework/types/intersection";
+import { IntersectionType, isWellboreIntersectionType } from "@framework/types/intersection";
 import type { EsvLayer } from "@modules/_shared/components/EsvIntersection";
+import { PLANNED_WELL_COLOR_CSS } from "@modules/_shared/constants/wellsLayer";
 import type { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import {
     VisualizationItemType,
@@ -51,20 +52,32 @@ export function createLayerItemsForIntersectionType(
         const layerItem = createReferenceLinesLayerItem();
         return [layerItem];
     }
-    if (intersectionType === IntersectionType.WELLBORE) {
+    if (isWellboreIntersectionType(intersectionType)) {
         const layerItems: EsvLayer[] = [];
-        if (wellboreHeadersQuery.data && wellboreHeadersQuery.data.length > 0) {
+
+        // Planned wellbores are not yet drilled, so they have neither precise depth-reference metadata
+        // nor casing data; fall back to a default reference line and omit casings for them.
+        const isPlanned = intersectionType === IntersectionType.PLANNED_WELLBORE;
+
+        if (!isPlanned && wellboreHeadersQuery.data && wellboreHeadersQuery.data.length > 0) {
             layerItems.push(
                 createReferenceLinesLayerItem({
                     depthReferenceElevation: wellboreHeadersQuery.data[0].depthReferenceElevation,
                     depthReferencePoint: wellboreHeadersQuery.data[0].depthReferencePoint,
                 }),
             );
+        } else {
+            layerItems.push(createReferenceLinesLayerItem());
         }
 
         const wellboreCasingsData =
-            wellboreCasingsQuery.data && wellboreCasingsQuery.data.length > 0 ? wellboreCasingsQuery.data : null;
-        layerItems.push(...createWellboreLayerItems(wellboreCasingsData, intersectionReferenceSystem, layerOrder));
+            !isPlanned && wellboreCasingsQuery.data && wellboreCasingsQuery.data.length > 0
+                ? wellboreCasingsQuery.data
+                : null;
+        const pathStroke = isPlanned ? PLANNED_WELL_COLOR_CSS : undefined;
+        layerItems.push(
+            ...createWellboreLayerItems(wellboreCasingsData, intersectionReferenceSystem, layerOrder, pathStroke),
+        );
         return layerItems;
     }
 

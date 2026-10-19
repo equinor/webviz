@@ -38,7 +38,8 @@ module = [
     "sumo.wrapper.*",
     "requests_toolbelt.*",
     "msal",
-    "diskcache" # Used by user_grid3d_ri
+    "diskcache", # Used by user_grid3d_ri
+    "fsspec"
 ]
 follow_untyped_imports = true
 

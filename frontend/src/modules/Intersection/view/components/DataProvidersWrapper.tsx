@@ -5,7 +5,7 @@ import { useAtom, useSetAtom } from "jotai";
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
@@ -18,6 +18,7 @@ import { IntersectionView } from "@modules/_shared/DataProviderFramework/groups/
 import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import {
+    isVisualizationLoading,
     VisualizationAssembler,
     VisualizationItemType,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -29,15 +30,18 @@ import {
     makeSeismicColorScaleAnnotation,
 } from "@modules/Intersection/DataProviderFramework/annotations/makeColorScaleAnnotation";
 import { makeGridBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeGridBoundingBox";
+import { makeInitialFluidContactSurfacesBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeInitialFluidContactSurfacesBoundingBox";
 import { makeSeismicBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeSeismicBoundingBox";
 import { makeSurfacesBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeSurfacesBoundingBox";
 import { makeSurfacesUncertaintiesBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeSurfacesUncertaintiesBoundingBox";
 import { CustomDataProviderType } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { EnsembleWellborePicksProvider } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/EnsembleWellborePicksProvider";
+import { InitialFluidContactSurfacesProvider } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/InitialFluidContactSurfacesProvider";
 import { RealizationSurfacesProvider } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/RealizationSurfacesProvider";
 import { SurfacesPerRealizationValuesProvider } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/SurfacesPerRealizationValuesProvider";
 import type { IntersectionInjectedData } from "@modules/Intersection/DataProviderFramework/injectedDataType";
 import { createGridLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createGridLayerItemsMaker";
+import { createInitialFluidContactSurfacesLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createInitialFluidContactSurfacesLayerItemsMaker";
 import { createSeismicLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createSeismicLayerItemsMaker";
 import { createSurfacesLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createSurfacesLayerItemsMaker";
 import { createSurfacesUncertaintiesLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createSurfacesUncertaintiesLayerItemsMaker";
@@ -63,7 +67,7 @@ export type DataProvidersWrapperProps = {
     viewContext: ViewContext<Interfaces>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
-    workbenchServices: WorkbenchServices;
+    syncSettingsService: SyncSettingsService;
     hoverService: HoverService;
 };
 
@@ -132,6 +136,15 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 );
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.INITIAL_FLUID_CONTACT_SURFACES,
+    InitialFluidContactSurfacesProvider,
+    {
+        transformToVisualization: createInitialFluidContactSurfacesLayerItemsMaker,
+        transformToBoundingBox: makeInitialFluidContactSurfacesBoundingBox,
+    },
+);
+
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     CustomDataProviderType.SURFACES_REALIZATIONS_UNCERTAINTY,
     SurfacesPerRealizationValuesProvider,
     {
@@ -161,7 +174,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     }
 
     // Set loading status
-    const isLoading = assemblerProduct.numLoadingDataProviders > 0;
+    const isLoading = isVisualizationLoading(assemblerProduct);
     statusWriter.setLoading(isLoading);
 
     // Shared field-level query (same result for all views)
@@ -233,7 +246,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
                         isLoading={isLoading}
                         wellboreHeadersQuery={wellboreHeadersQuery}
                         workbenchSession={props.workbenchSession}
-                        workbenchServices={props.workbenchServices}
+                        syncSettingsService={props.syncSettingsService}
                         hoverService={props.hoverService}
                         viewContext={props.viewContext}
                     />

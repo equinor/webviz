@@ -12,11 +12,21 @@ export const BACKEND_POLLING_INTERVAL_MS = 10000;
 // CosmosDB has a 2MB document limit; we use 1.5MB to leave room for metadata
 export const MAX_CONTENT_SIZE_BYTES = 1.5 * 1024 * 1024; // 1.5MB
 
-// Maximum lengths for user input
+// Length limits for session and snapshot titles/descriptions
 export const MAX_TITLE_LENGTH = 50;
 export const MIN_TITLE_LENGTH = 10;
 export const MAX_DESCRIPTION_LENGTH = 250;
 
+// Length limits for dashboard names/descriptions
+export const MIN_DASHBOARD_NAME_LENGTH = 1;
+export const MAX_DASHBOARD_NAME_LENGTH = 50;
+export const MAX_DASHBOARD_DESCRIPTION_LENGTH = 250;
+
+// Base name for new dashboards - PrivateWorkbenchSession numbers them ("Dashboard 1", ...)
+export const DEFAULT_DASHBOARD_NAME = "Dashboard";
+
 // Nano ID lengths for sessions and snapshots
 export const SESSION_ID_LENGTH = 12;
 export const SNAPSHOT_ID_LENGTH = 12;
+
+export const DASHBOARD_ID_LENGTH = 12;

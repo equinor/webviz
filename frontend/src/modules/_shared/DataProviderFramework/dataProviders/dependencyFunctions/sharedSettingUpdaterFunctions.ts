@@ -48,10 +48,13 @@ export function getAvailableRealizationsForEnsembleIdent(
 
 /**
  * Get available intersection options for the given wellbore headers and custom intersection polylines.
+ *
+ * Planned (not yet drilled) wellbore headers are emitted as separate PLANNED_WELLBORE options.
  */
 export function getAvailableIntersectionOptions(
     wellboreHeaders: WellboreHeader_api[],
     intersectionPolylines: IntersectionPolyline[],
+    plannedWellboreHeaders: WellboreHeader_api[] = [],
 ): IntersectionSettingOption[] {
     const intersectionOptions: IntersectionSettingOption[] = [];
     for (const wellboreHeader of wellboreHeaders) {
@@ -59,6 +62,14 @@ export function getAvailableIntersectionOptions(
             type: IntersectionType.WELLBORE,
             name: wellboreHeader.uniqueWellboreIdentifier,
             uuid: wellboreHeader.wellboreUuid,
+        });
+    }
+
+    for (const plannedWellboreHeader of plannedWellboreHeaders) {
+        intersectionOptions.push({
+            type: IntersectionType.PLANNED_WELLBORE,
+            name: plannedWellboreHeader.uniqueWellboreIdentifier,
+            uuid: plannedWellboreHeader.wellboreUuid,
         });
     }
 

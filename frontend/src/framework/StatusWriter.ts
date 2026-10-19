@@ -63,7 +63,7 @@ export class SettingsStatusWriter {
 export function useViewStatusWriter(viewContext: ViewContext<any>): ViewStatusWriter {
     const statusController = viewContext.getStatusController();
 
-    const statusWriter = React.useRef<ViewStatusWriter>(new ViewStatusWriter(statusController));
+    const statusWriterRef = React.useRef<ViewStatusWriter>(new ViewStatusWriter(statusController));
 
     statusController.clearHotMessageCache(StatusSource.View);
     statusController.incrementReportedComponentRenderCount(StatusSource.View);
@@ -72,13 +72,13 @@ export function useViewStatusWriter(viewContext: ViewContext<any>): ViewStatusWr
         statusController.reviseAndPublishState();
     });
 
-    return statusWriter.current;
+    return statusWriterRef.current;
 }
 
 export function useSettingsStatusWriter(settingsContext: SettingsContext<any>): SettingsStatusWriter {
     const statusController = settingsContext.getStatusController();
 
-    const statusWriter = React.useRef<SettingsStatusWriter>(new SettingsStatusWriter(statusController));
+    const statusWriterRef = React.useRef<SettingsStatusWriter>(new SettingsStatusWriter(statusController));
 
     statusController.clearHotMessageCache(StatusSource.Settings);
     statusController.incrementReportedComponentRenderCount(StatusSource.Settings);
@@ -87,5 +87,5 @@ export function useSettingsStatusWriter(settingsContext: SettingsContext<any>): 
         statusController.reviseAndPublishState();
     });
 
-    return statusWriter.current;
+    return statusWriterRef.current;
 }

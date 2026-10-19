@@ -3,6 +3,7 @@ import { DrilledWellborePicksProvider } from "../implementations/DrilledWellbore
 import { DrilledWellboreTrajectoriesProvider } from "../implementations/DrilledWellboreTrajectoriesProvider";
 import { FaultPolygonsProvider } from "../implementations/FaultPolygonsProvider";
 import { IntersectionRealizationGridProvider } from "../implementations/IntersectionRealizationGridProvider";
+import { PlannedWellboreTrajectoriesProvider } from "../implementations/PlannedWellboreTrajectoriesProvider";
 import { RealizationPolygonsProvider } from "../implementations/RealizationPolygonsProvider";
 import { IntersectionSeismicProvider } from "../implementations/seismicProviders/IntersectionSeismicProvider";
 import {
@@ -10,6 +11,7 @@ import {
     AttributeSurfaceType,
 } from "../implementations/surfaceProviders/AttributeSurfaceProvider";
 import { DepthSurfaceProvider } from "../implementations/surfaceProviders/DepthSurfaceProvider";
+import { InitialFluidContactSurfaceProvider } from "../implementations/surfaceProviders/InitialFluidContactSurfaceProvider";
 import { SeismicSurfaceProvider, SeismicSurfaceType } from "../implementations/surfaceProviders/SeismicSurfaceProvider";
 
 import { DataProviderRegistry } from "./_DataProviderRegistry";
@@ -18,6 +20,10 @@ DataProviderRegistry.registerDataProvider(DataProviderType.DRILLED_WELLBORE_PICK
 DataProviderRegistry.registerDataProvider(
     DataProviderType.DRILLED_WELL_TRAJECTORIES,
     DrilledWellboreTrajectoriesProvider,
+);
+DataProviderRegistry.registerDataProvider(
+    DataProviderType.PLANNED_WELL_TRAJECTORIES,
+    PlannedWellboreTrajectoriesProvider,
 );
 DataProviderRegistry.registerDataProvider(
     DataProviderType.INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID,
@@ -35,6 +41,10 @@ DataProviderRegistry.registerDataProvider(
 );
 
 DataProviderRegistry.registerDataProvider(DataProviderType.DEPTH_SURFACE, DepthSurfaceProvider);
+DataProviderRegistry.registerDataProvider(
+    DataProviderType.INITIAL_FLUID_CONTACT_SURFACE,
+    InitialFluidContactSurfaceProvider,
+);
 
 DataProviderRegistry.registerDataProvider(DataProviderType.SEISMIC_3D_SURFACE, SeismicSurfaceProvider, [
     { surfaceType: SeismicSurfaceType.SEISMIC_SURVEY },

@@ -118,6 +118,18 @@ export const ComplexItems: Story = {
                 </Button>
             </Menu.Trigger>
             <Menu.Popup side={side} align={align} itemSize={itemSize}>
+                <Menu.Item tone="neutral" icon={<Square />}>
+                    Neutral Option
+                </Menu.Item>
+                <Menu.Item tone="warning" icon={<Square />}>
+                    Warning Option
+                </Menu.Item>
+                <Menu.Item tone="danger" icon={<Square />}>
+                    Danger Option
+                </Menu.Item>
+
+                <Menu.Separator />
+
                 <Menu.Item
                     icon={<Star fontSize="inherit" />}
                     description="Option 1 is a thing indeed, and it's using the built in icon and description props"
@@ -151,10 +163,20 @@ export const SubMenu: Story = {
                 <Menu.Item icon={<Square />}>Option 1</Menu.Item>
                 <Menu.Item icon={<Square />}>Option 2</Menu.Item>
                 <Menu.Separator />
-                <Menu.SubmenuItem triggerContent={"Sub menu"} triggerIcon={<Circle />}>
+                <Menu.SubmenuItem triggerTone="danger" triggerContent={"Sub menu"} triggerIcon={<Circle />}>
                     <Menu.Item>Option 3</Menu.Item>
                     <Menu.Item>Option 4</Menu.Item>
                     <Menu.Item>Option 5</Menu.Item>
+                </Menu.SubmenuItem>
+
+                <Menu.SubmenuItem
+                    triggerDescription="and this has a description"
+                    triggerContent={"A second sub menu"}
+                    triggerIcon={<Circle />}
+                >
+                    <Menu.Item>Option 6</Menu.Item>
+                    <Menu.Item>Option 7</Menu.Item>
+                    <Menu.Item>Option 8</Menu.Item>
                 </Menu.SubmenuItem>
             </Menu.Popup>
         </Menu.Root>

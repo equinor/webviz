@@ -26,16 +26,11 @@ void main(void) {
     return;
   }
 
-  vec3 normal;
-  if(simpleMesh.flatShading) {
-    normal = normalize(cross(dFdx(position_commonspace.xyz), dFdy(position_commonspace.xyz)));
-  } else {
-    normal = normals_commonspace;
-  }
-
   vec4 color = simpleMesh.hasTexture ? texture(sampler, vTexCoord) : vColor;
   DECKGL_FILTER_COLOR(color, geometry);
 
-  vec3 lightColor = lighting_getLightColor(color.rgb, cameraPosition, position_commonspace.xyz, normal);
-  fragColor = vec4(lightColor, color.a * layer.opacity);
+  // Seismic data surfaces are rendered unlit: the color already encodes the data, and directional lighting would
+  // wash out amplitudes (especially on near-horizontal depth slices) and make the same surface look different
+  // depending on which side it is viewed from.
+  fragColor = vec4(color.rgb, color.a * layer.opacity);
 }

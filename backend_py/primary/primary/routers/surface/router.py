@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Annotated, List, Optional, Literal
+from typing import Annotated, List, Literal
 
 import xtgeo
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
@@ -55,7 +55,6 @@ GENERAL_SURF_ADDR_DOC_STR = """
 - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
 - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
 - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
-- *PARTIAL* - Partial surface address. Similar to a realization surface address, but does not include a specific realization number.
 
 Structure of the different types of address strings:
 
@@ -63,8 +62,18 @@ Structure of the different types of address strings:
 REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
 STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
 OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
-PARTIAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>[~~<iso_date_or_interval>]
 ```
+
+The `<attribute>` component always spans three sub-components and says how the surface is identified:
+
+```
+TAGNAME~~<tagname>~~-
+STDRES~~<standard_result>~~<sub_name>
+```
+
+A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+contact type for `fluid_contact_surface`. Unused components are set to "-".
 
 The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
 encoded as a `UintListStr` or "*" to include all realizations.
@@ -73,7 +82,7 @@ encoded as a `UintListStr` or "*" to include all realizations.
 
 
 @router.get("/realization_surfaces_metadata/")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.NORMAL)
 async def get_realization_surfaces_metadata(
     response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -118,7 +127,7 @@ async def get_realization_surfaces_metadata(
 
 
 @router.get("/observed_surfaces_metadata/")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.NORMAL)
 async def get_observed_surfaces_metadata(
     response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -159,6 +168,21 @@ async def get_observed_surfaces_metadata(
     return api_surf_meta_set
 
 
+@router.get("/initial_fluid_contact_surfaces_metadata/")
+@cache_time(CacheTime.LONG)
+async def get_initial_fluid_contact_surfaces_metadata(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+) -> list[schemas.InitialFluidContactSurfaceMeta]:
+    """
+    Get metadata for the initial fluid contact surfaces in a Sumo ensemble
+    """
+    access = SurfaceAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    metadata = await access.get_initial_fluid_contact_surfaces_metadata_async()
+    return converters.to_api_initial_fluid_contact_surface_meta(metadata)
+
+
 @router.get("/surface_data", description="Get surface data for the specified surface." + GENERAL_SURF_ADDR_DOC_STR)
 @cache_time(CacheTime.LONG)
 async def get_surface_data(
@@ -174,22 +198,13 @@ async def get_surface_data(
 
     access_token = authenticated_user.get_sumo_access_token()
 
-    addr = decode_surf_addr_str(surf_addr_str)
-    if not isinstance(addr, RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress):
-        raise HTTPException(status_code=404, detail="Endpoint only supports address types REAL, OBS and STAT")
-
     xtgeo_surf = await _get_xtgeo_surface_from_sumo_async(
         access_token=access_token, surf_addr_str=surf_addr_str, perf_metrics=perf_metrics
     )
 
-    if not xtgeo_surf:
-        raise HTTPException(status_code=500, detail="Did not get a valid xtgeo surface from Sumo")
-
     surf_data_response = _resample_and_convert_to_surface_data_response(
         xtgeo_surf=xtgeo_surf, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
     )
-
-    LOGGER.info(f"Got {addr.address_type} surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 
@@ -371,30 +386,34 @@ async def get_statistical_surface_data_hybrid(
         raise
 
 
-@router.post("/get_surface_intersection")
+@router.post(
+    "/get_surface_intersection",
+    description="Get surface intersection data for the specified surface." + GENERAL_SURF_ADDR_DOC_STR,
+)
 async def post_get_surface_intersection(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    realization_num: int = Query(description="Realization number"),
-    name: str = Query(description="Surface name"),
-    attribute: str = Query(description="Surface attribute"),
-    time_or_interval_str: Optional[str] = Query(None, description="Time point or time interval string"),
-    cumulative_length_polyline: schemas.SurfaceIntersectionCumulativeLengthPolyline = Body(embed=True),
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    surf_addr_str: Annotated[str, Query(description="Surface address string, supported address types are *REAL*, *OBS* and *STAT*")],
+    cumulative_length_polyline: Annotated[schemas.SurfaceIntersectionCumulativeLengthPolyline, Body(embed=True)],
+    # fmt:on
 ) -> schemas.SurfaceIntersectionData:
     """Get surface intersection data for requested surface name.
 
     The surface intersection data for surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
     and cumulative lengths, the accumulated length at each z-point in the array.
     """
-    access = SurfaceAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    perf_metrics = ResponsePerfMetrics(response)
 
-    surface = await access.get_realization_surface_data_async(
-        real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval_str
+    addr = decode_surf_addr_str(surf_addr_str)
+    surface = await _get_xtgeo_surface_from_sumo_async(
+        access_token=authenticated_user.get_sumo_access_token(),
+        surf_addr_str=surf_addr_str,
+        perf_metrics=perf_metrics,
     )
 
     # Ensure name is applied
-    surface.name = name
+    surface.name = addr.name
 
     intersection_polyline = converters.from_api_cumulative_length_polyline_to_xtgeo_polyline(cumulative_length_polyline)
     surface_intersection = intersect_surface_with_polyline(surface, intersection_polyline)
@@ -409,9 +428,9 @@ async def post_get_sample_surface_in_points(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     surface_name: str = Query(description="Surface name"),
-    surface_attribute: str = Query(description="Surface attribute"),
     realization_nums: List[int] = Query(description="Realization numbers"),
     sample_points: schemas.PointSetXY = Body(embed=True),
+    surface_attribute: schemas.SurfaceAttribute = Body(embed=True, description="Surface attribute"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[schemas.SurfaceRealizationSampleValues]:
 
@@ -422,7 +441,7 @@ async def post_get_sample_surface_in_points(
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
         surface_name=surface_name,
-        surface_attribute=surface_attribute,
+        surface_attribute=converters.from_api_surface_attribute(surface_attribute),
         realizations=realization_nums,
         x_coords=sample_points.x_points,
         y_coords=sample_points.y_points,
@@ -460,7 +479,7 @@ async def get_misfit_surface_data(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     obs_surf_addr_str: Annotated[str, Query(description="Address of observed surface, only supported address type is *OBS*")],
-    sim_surf_addr_str: Annotated[str, Query(description="Address of simulated surface, supported type is *PARTIAL*")],
+    sim_surf_addr_str: Annotated[str, Query(description="Address of simulated surface, only supported address type is *REAL*")],
     statistic_functions: Annotated[list[schemas.SurfaceStatisticFunction], Query(description="Statistics to calculate")],
     realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
@@ -523,11 +542,9 @@ async def _get_xtgeo_surface_from_sumo_async(
     """
 
     addr = decode_surf_addr_str(surf_addr_str)
-    if not isinstance(addr, RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress):
-        raise HTTPException(status_code=404, detail="Endpoint only supports address types REAL, OBS and STAT")
 
     xtgeo_surf: xtgeo.RegularSurface | None = None
-    if addr.address_type == "REAL":
+    if isinstance(addr, RealizationSurfaceAddress):
         access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
         xtgeo_surf = await access.get_realization_surface_data_async(
             real_num=addr.realization,
@@ -537,7 +554,7 @@ async def _get_xtgeo_surface_from_sumo_async(
         )
         perf_metrics.record_lap("get-surf")
 
-    elif addr.address_type == "STAT":
+    elif isinstance(addr, StatisticalSurfaceAddress):
         service_stat_func_to_compute = StatisticFunction.from_string_value(addr.stat_function)
         if service_stat_func_to_compute is None:
             raise HTTPException(status_code=404, detail="Invalid statistic requested")
@@ -552,12 +569,16 @@ async def _get_xtgeo_surface_from_sumo_async(
         )
         perf_metrics.record_lap("sumo-calc")
 
-    elif addr.address_type == "OBS":
+    elif isinstance(addr, ObservedSurfaceAddress):
         access = SurfaceAccess.from_case_uuid_no_ensemble(access_token, addr.case_uuid)
         xtgeo_surf = await access.get_observed_surface_data_async(
             name=addr.name, attribute=addr.attribute, time_or_interval_str=addr.iso_time_or_interval
         )
         perf_metrics.record_lap("get-surf")
+
+    if not xtgeo_surf:
+        raise HTTPException(status_code=500, detail="Did not get a valid xtgeo surface from Sumo")
+
     LOGGER.info(f"Got {addr.address_type} surface in: {perf_metrics.to_string()}")
 
     return xtgeo_surf

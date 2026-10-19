@@ -47,11 +47,12 @@ function createCasingLayerItem(
 function createWellborePathLayerItem(
     intersectionReferenceSystem: IntersectionReferenceSystem,
     layerOrder: number,
+    stroke: string,
 ): EsvLayer {
     return new WellborePathLayer(
         "wellbore-path",
         {
-            stroke: "red",
+            stroke,
             strokeWidth: "2",
             order: layerOrder,
             data: intersectionReferenceSystem.projectedPath as [number, number][],
@@ -69,6 +70,7 @@ export function createWellboreLayerItems(
     wellboreCasingData: WellboreCasing_api[] | null,
     intersectionReferenceSystem: IntersectionReferenceSystem,
     layerOrder: number,
+    pathStroke = "red",
 ): EsvLayer[] {
     const layerItems: EsvLayer[] = [];
 
@@ -78,8 +80,9 @@ export function createWellboreLayerItems(
         layerItems.push(createCasingLayerItem(wellboreCasingData, intersectionReferenceSystem, casingLayerOrder));
     }
     if (intersectionReferenceSystem) {
+        // eslint-disable-next-line no-useless-assignment -- We allow this for increments
         const pathLayerOrder = newLayerOrder++;
-        layerItems.push(createWellborePathLayerItem(intersectionReferenceSystem, pathLayerOrder));
+        layerItems.push(createWellborePathLayerItem(intersectionReferenceSystem, pathLayerOrder, pathStroke));
     }
 
     return layerItems;

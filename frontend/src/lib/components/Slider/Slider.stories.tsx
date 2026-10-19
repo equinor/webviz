@@ -152,9 +152,9 @@ The size will affect the slider controller area; this means the slider height wi
     argTypes: { size: { table: { disable: true } } },
     render: (args) => (
         <div className="gap-y-lg flex flex-col">
-            <Slider defaultValue={25} valueLabelDisplay="always" {...args} size="small" />
-            <Slider defaultValue={50} valueLabelDisplay="always" {...args} size="default" />
-            <Slider defaultValue={75} valueLabelDisplay="always" {...args} size="large" />
+            <Slider defaultValue={25} {...args} size="small" />
+            <Slider defaultValue={50} {...args} size="default" />
+            <Slider defaultValue={75} {...args} size="large" />
         </div>
     ),
 };
@@ -287,11 +287,6 @@ export const ValueLabelDisplaySettings: Story = {
             <Slider {...args} defaultValue={25} valueLabelDisplay="auto" />
 
             <code className="bg-canvas text-body-xs border-neutral-strong px-2xs ml-auto w-fit rounded border">
-                valueLabelDisplay=&quot;always&quot;
-            </code>
-            <Slider {...args} defaultValue={[25, 75]} valueLabelDisplay="always" />
-
-            <code className="bg-canvas text-body-xs border-neutral-strong px-2xs ml-auto w-fit rounded border">
                 valueLabelDisplay=&quot;off&quot;
             </code>
             <Slider {...args} defaultValue={[25, 75]} valueLabelDisplay="off" />
@@ -303,12 +298,11 @@ export const ValueLabelFormatting: Story = {
     args: { min: 0, max: 100 },
     render: (args) => (
         <div className="gap-y-3xl flex flex-col">
-            <Slider {...args} defaultValue={25} valueLabelDisplay="always" valueLabelFormat={(v) => `${v} %`} />
+            <Slider {...args} defaultValue={25} valueLabelFormat={(v) => `${v} %`} />
 
             <Slider
                 {...args}
                 defaultValue={[25, 75]}
-                valueLabelDisplay="always"
                 valueLabelFormat={(v) => {
                     return (
                         <>

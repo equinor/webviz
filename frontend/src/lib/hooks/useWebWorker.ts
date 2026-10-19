@@ -12,7 +12,7 @@ type WorkerConstructor = new () => Worker;
  */
 export function useWebWorkerProxy<WorkerApi>(WorkerCtor: WorkerConstructor): Remote<WorkerApi> {
     const ref = React.useRef<{ worker: Worker; proxy: Remote<WorkerApi> } | null>(null);
-    const prevWorkerCtor = React.useRef(WorkerCtor);
+    const prevWorkerCtorRef = React.useRef(WorkerCtor);
 
     const resetWorker = React.useCallback(function resetWorker() {
         if (ref.current) {
@@ -21,9 +21,9 @@ export function useWebWorkerProxy<WorkerApi>(WorkerCtor: WorkerConstructor): Rem
         }
     }, []);
 
-    if (prevWorkerCtor.current !== WorkerCtor) {
+    if (prevWorkerCtorRef.current !== WorkerCtor) {
         resetWorker();
-        prevWorkerCtor.current = WorkerCtor;
+        prevWorkerCtorRef.current = WorkerCtor;
     }
 
     if (!ref.current) {

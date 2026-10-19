@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEqual, orderBy } from "lodash";
+import { orderBy } from "lodash";
 
 import type { CaseInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
@@ -15,7 +15,7 @@ import { Virtualization } from "@lib/components/Virtualization";
 import { formatDate } from "@lib/utils/dates";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { AuthorCell, CaseNameAndIdCell, DescriptionCell } from "./_components";
+import { AuthorCell, CaseNameAndIdCell, DescriptionCell, NullableTextCell } from "./_components";
 import type { CaseTableFilterState } from "./CaseTableFilterRow";
 import { CaseTableFilterRow, useCaseDataFilter } from "./CaseTableFilterRow";
 
@@ -29,8 +29,8 @@ export type CaseTableProps = {
     caseData: CaseInfo_api[] | undefined;
 
     disabledColumnFilters?: string[];
-    showOnlyMyCases?: boolean;
-    showOnlyOfficialCases?: boolean;
+    showOnlyMyCases: boolean;
+    showOnlyOfficialCases: boolean;
 
     onCaseSelected?: (selectedCase: string | null) => void;
     onDataCollated?: (collatedData: CaseInfo_api[]) => void;
@@ -48,7 +48,7 @@ type EnsembleCounts = {
 type CaseDataWithEnsembleCount = CaseInfo_api & EnsembleCounts;
 
 export function CaseTable(props: CaseTableProps): React.ReactNode {
-    const { onDataCollated } = props;
+    const { onDataCollated, showOnlyMyCases, showOnlyOfficialCases } = props;
     const tableOverflowWrapperRef = React.useRef<HTMLDivElement>(null);
 
     const { userInfo } = useAuthProvider();
@@ -64,24 +64,28 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
         },
     ]);
 
-    const [prevShowOnlyMyCases, setPrevShowOnlyMyCases] = React.useState(props.showOnlyMyCases);
-    const [prevShowOnlyOfficialCases, setPrevShowOnlyOfficialCases] = React.useState(props.showOnlyOfficialCases);
+    // Initialized to null so the filter state also gets synced on the initial render
+    const [prevShowOnlyMyCases, setPrevShowOnlyMyCases] = React.useState<boolean | null>(null);
+    const [prevShowOnlyOfficialCases, setPrevShowOnlyOfficialCases] = React.useState<boolean | null>(null);
+    // The username resolves asynchronously, so the author filter must be re-synced when it arrives
+    const [prevUserName, setPrevUserName] = React.useState<string | null>(null);
 
-    if (!isEqual(props.showOnlyOfficialCases, prevShowOnlyOfficialCases)) {
-        setPrevShowOnlyOfficialCases(props.showOnlyOfficialCases);
+    if (showOnlyOfficialCases !== prevShowOnlyOfficialCases) {
+        setPrevShowOnlyOfficialCases(showOnlyOfficialCases);
 
         setTableFilterState((prev) => ({
             ...prev,
-            status: props.showOnlyOfficialCases ? ["official"] : [],
+            status: showOnlyOfficialCases ? ["official"] : [],
         }));
     }
 
-    if (!isEqual(props.showOnlyMyCases, prevShowOnlyMyCases)) {
-        setPrevShowOnlyMyCases(props.showOnlyMyCases);
+    if (showOnlyMyCases !== prevShowOnlyMyCases || userName !== prevUserName) {
+        setPrevShowOnlyMyCases(showOnlyMyCases);
+        setPrevUserName(userName);
 
         setTableFilterState((prev) => ({
             ...prev,
-            author: props.showOnlyMyCases ? userName : "",
+            author: showOnlyMyCases ? userName : "",
         }));
     }
 
@@ -269,15 +273,19 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                                     />
                                 </Table.Cell>
                                 <Table.Cell>
-                                    <DescriptionCell description={caseRow.description} />
+                                    <DescriptionCell description={caseRow.description} caseId={caseRow.uuid} />
                                 </Table.Cell>
                                 <Table.Cell>
-                                    <AuthorCell author={caseRow.user} />
+                                    <AuthorCell author={caseRow.user} caseId={caseRow.uuid} />
                                 </Table.Cell>
                                 <Table.Cell>{caseRow.status}</Table.Cell>
                                 <Table.Cell>{formatDate(caseRow.updatedAtUtcMs)}</Table.Cell>
-                                <Table.Cell>{formatNullableText(caseRow.modelName)}</Table.Cell>
-                                <Table.Cell>{formatNullableText(caseRow.modelRevision)}</Table.Cell>
+                                <Table.Cell>
+                                    <NullableTextCell value={caseRow.modelName} caseId={caseRow.uuid} />
+                                </Table.Cell>
+                                <Table.Cell>
+                                    <NullableTextCell value={caseRow.modelRevision} caseId={caseRow.uuid} />
+                                </Table.Cell>
                             </Table.Row>
                         );
                     }}
@@ -285,8 +293,4 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
             </Table.Body>
         </Table.Root>
     );
-}
-
-function formatNullableText(value: string | null): string {
-    return value ?? "";
 }

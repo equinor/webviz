@@ -11,12 +11,14 @@ import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { formatNumber } from "../utils/numberFormatting";
 
 export type ReadoutItem = {
+    id: string;
     label: string;
     info: InfoItem[];
     color?: string;
 };
 
 export type InfoItem = {
+    id: string;
     adornment?: React.ReactNode;
     name: React.ReactNode;
     value: string | number | boolean | number[];
@@ -52,20 +54,20 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
     const [flipped, setFlipped] = React.useState<boolean>(false);
     const [stableEdgeDistanceRem] = useStableProp(props.edgeDistanceRem);
     const edgeDistance = React.useMemo(() => computeEdgeDistance(stableEdgeDistanceRem), [stableEdgeDistanceRem]);
-    const readoutRoot = React.useRef<HTMLDivElement>(null);
+    const readoutRootRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(
         function addListenersForFlip() {
             if (props.flipDisabled) return;
 
             function maybeFlipBox(evt: MouseEvent) {
-                if (!readoutRoot.current) return;
+                if (!readoutRootRef.current) return;
 
-                const offsetParent = readoutRoot.current.offsetParent;
+                const offsetParent = readoutRootRef.current.offsetParent;
                 if (!offsetParent) return; // Not floating, I believe
 
                 const parentRect = offsetParent.getBoundingClientRect();
-                const { top, bottom, width } = readoutRoot.current.getBoundingClientRect();
+                const { top, bottom, width } = readoutRootRef.current.getBoundingClientRect();
 
                 // If above, or below, it's guaranteed to fit
                 if (evt.clientY < top || evt.clientY > bottom) {
@@ -102,7 +104,7 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
 
     return (
         <div
-            ref={readoutRoot}
+            ref={readoutRootRef}
             className={resolveClassNames(
                 "border-neutral-subtle bg-surface/75 z-tooltip pointer-events-none absolute grid items-center rounded-sm border backdrop-blur-xs",
                 {
@@ -129,12 +131,12 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
                     <Close fontSize="inherit" />
                 </Button>
             )}
-            {visibleReadoutItems.map((item, idx) => (
-                <React.Fragment key={idx}>
+            {visibleReadoutItems.map((item) => (
+                <React.Fragment key={item.id}>
                     <InfoLabel item={item} noLabelColor={props.noLabelColor} />
 
-                    {item.info.map((i: InfoItem, idx: number) => (
-                        <InfoItem key={idx} {...i} />
+                    {item.info.map((i: InfoItem) => (
+                        <InfoItem key={i.id} {...i} />
                     ))}
                 </React.Fragment>
             ))}
@@ -187,19 +189,15 @@ function computeEdgeDistance(edgeDistanceProp?: number | PartialEdgeDistance): E
 }
 
 function makeFormattedInfoValue(value: string | number | boolean | number[]): string {
-    let formattedValue = "";
-
     if (value instanceof Array) {
         if (value.length === 3) {
-            formattedValue = value.map((el) => formatValue(el)).join(", ");
+            return value.map((el) => formatValue(el)).join(", ");
         } else {
-            formattedValue = value.map((el) => formatValue(el)).join(" - ");
+            return value.map((el) => formatValue(el)).join(" - ");
         }
     } else {
-        formattedValue = formatValue(value);
+        return formatValue(value);
     }
-
-    return formattedValue;
 }
 
 function formatValue(value: number | string | boolean): string {

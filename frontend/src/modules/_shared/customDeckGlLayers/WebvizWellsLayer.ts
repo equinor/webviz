@@ -1,0 +1,152 @@
+import React from "react";
+
+import type { FilterContext, GetPickingInfoParams, LayersList, UpdateParameters } from "@deck.gl/core";
+import { Layer } from "@deck.gl/core";
+import type { GeoJsonLayerProps } from "@deck.gl/layers";
+import { GeoJsonLayer } from "@deck.gl/layers";
+import { Icon } from "@equinor/eds-core-react";
+import { wellbore } from "@equinor/eds-icons";
+import type { BoundingBox3D } from "@webviz/subsurface-viewer";
+import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import type { MarkerData } from "@webviz/subsurface-viewer/dist/layers/wells/layers/flatWellMarkersLayer";
+import type { WellFeature } from "@webviz/subsurface-viewer/dist/layers/wells/types";
+import { GetBoundingBox } from "@webviz/subsurface-viewer/dist/layers/wells/utils/spline";
+import type { WellsLayerProps } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
+import { SubLayerId } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
+
+import type { FlowDataColors } from "@framework/types/wellbore";
+
+import type { ReadoutProperty } from "../components/Readout/types";
+import type { LayerPickInfoWithReadout } from "../utils/subsurfaceViewerLayers";
+import {
+    getFlowReadout,
+    getDepthFromSubsurfaceReadout,
+    getMarkerReadout,
+    getWellMetaReadout,
+} from "../utils/subsurfaceViewerLayers";
+
+export interface WebvizWellsLayerProps extends WellsLayerProps {
+    productionColors: FlowDataColors;
+    injectionColors: FlowDataColors;
+}
+
+export class WebvizWellsLayer extends WellsLayer {
+    static layerName: string = "WebvizWellsLayer";
+
+    constructor(props?: Partial<WebvizWellsLayerProps>) {
+        // ! Subsurface comp does not allow us to override the prop type. With how Deck.gl works, we need to access the new props using this.props in the later life-cycles to get the most recent values. We're just adding new fields, so forwarding them directly wont affect the base layer, so this is okay
+        super(props as any);
+    }
+
+    filterSubLayer(context: FilterContext): boolean {
+        if (context.layer.id.includes("labels")) {
+            return context.viewport.zoom > -2;
+        }
+
+        return true;
+    }
+
+    updateState(params: UpdateParameters<WellsLayer>): void {
+        super.updateState(params);
+        const { props, changeFlags } = params;
+        if (props.reportBoundingBox && changeFlags.dataChanged) {
+            props.reportBoundingBox({
+                layerBoundingBox: this.calcBoundingBox(),
+            });
+        }
+    }
+
+    private calcBoundingBox(): BoundingBox3D {
+        if (!this.state.data) {
+            return [0, 0, 0, 0, 0, 0];
+        }
+
+        return GetBoundingBox(this.state.data);
+    }
+
+    renderLayers(): LayersList {
+        const layers = super.renderLayers();
+
+        if (!Array.isArray(layers)) {
+            return layers;
+        }
+
+        // With `markers.showScreenTrajectoryAsDash` the trajectory sublayer is SCREEN_TRAJECTORY instead of COLORS.
+        // Match on the exact id: SCREEN_TRAJECTORY_OUTLINE contains SCREEN_TRAJECTORY as a substring.
+        const trajectorySubLayerId = this.props.markers?.showScreenTrajectoryAsDash
+            ? SubLayerId.SCREEN_TRAJECTORY
+            : SubLayerId.COLORS;
+        const fullTrajectorySubLayerId = this.getSubLayerProps({ id: trajectorySubLayerId }).id;
+
+        const trajectoryLayer = layers.find((layer) => layer instanceof Layer && layer.id === fullTrajectorySubLayerId);
+
+        if (!(trajectoryLayer instanceof GeoJsonLayer)) {
+            return layers;
+        }
+
+        const newTrajectoryLayer = new GeoJsonLayer(
+            super.getSubLayerProps({
+                ...trajectoryLayer.props,
+                data: trajectoryLayer.props.data,
+                pickable: true,
+                stroked: false,
+                pointRadiusUnits: "meters",
+                lineWidthUnits: "meters",
+                pointRadiusScale: this.props.pointRadiusScale,
+                lineWidthScale: this.props.lineWidthScale,
+                lineBillboard: true,
+                pointBillboard: true,
+                id: trajectorySubLayerId,
+                lineWidthMinPixels: 3,
+                lineWidthMaxPixels: 8,
+                onHover: () => {},
+            } as GeoJsonLayerProps),
+        );
+
+        return [newTrajectoryLayer, ...layers.filter((layer) => layer !== trajectoryLayer)];
+    }
+
+    getPickingInfo({ info, sourceLayer }: GetPickingInfoParams): LayerPickInfoWithReadout<WellFeature> {
+        const props = this.props as unknown as WebvizWellsLayerProps;
+        const superInfo = super.getPickingInfo({ info });
+        // The well's layer modifies the z-coordinate during picking, so we need to scale it back so readouts are correct
+        // ! Mutates the original coordinate object
+        if (superInfo.coordinate && superInfo.coordinate.length === 3) {
+            const zScale = this.props.modelMatrix ? this.props.modelMatrix[10] : 1;
+            superInfo.coordinate[2] *= zScale;
+        }
+
+        // Return early if there's no relevant information to look at
+        if (!info.object || !sourceLayer || info.index === -1) {
+            return superInfo;
+        }
+
+        let wellFeature: WellFeature;
+        const properties: ReadoutProperty[] = [];
+
+        properties.push(...getDepthFromSubsurfaceReadout(superInfo));
+
+        if (sourceLayer.id.endsWith(SubLayerId.MARKERS)) {
+            const wellMarker = superInfo.object as any as MarkerData<WellFeature>;
+            wellFeature = wellMarker.sourceObject;
+
+            properties.push(...getMarkerReadout(wellMarker));
+        } else {
+            wellFeature = info.object as WellFeature;
+        }
+
+        properties.push(...getWellMetaReadout(wellFeature));
+        properties.push(...getFlowReadout(wellFeature, props.productionColors, props.injectionColors));
+
+        return {
+            ...superInfo,
+            readout: {
+                group: "Wells",
+                // Don't want to elevate the file to a .tsx just for the icon, so manually creating icon
+                icon: React.createElement(Icon, { className: "size-[inherit]", data: wellbore }),
+                name: wellFeature.properties.name,
+                properties: properties,
+            },
+        };
+    }
+}

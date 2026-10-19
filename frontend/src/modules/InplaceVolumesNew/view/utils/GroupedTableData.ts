@@ -1,11 +1,17 @@
 import type { EnsembleSet } from "@framework/EnsembleSet";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
-import { isConstant } from "./statistics";
+function isConstant(values: number[]): boolean {
+    if (values.length === 0) {
+        return true;
+    }
+    const firstValue = values[0];
+    return values.every((v) => v === firstValue);
+}
 
 export interface GroupedEntry {
     subplotKey: string;
@@ -35,6 +41,41 @@ export interface GroupedTableDataOptions {
     colorBy: string;
     ensembleSet: EnsembleSet;
     colorSet: ColorSet;
+    categoryOrder?: ReadonlyMap<string, readonly string[]>;
+}
+
+/**
+ * Orders entries by their key's position in `preferredValues`. Entries absent from the preferred
+ * order remain at the end in their original relative order. With no preferred order, input order is preserved.
+ */
+export function orderEntriesByPreferredValues<TValue>(
+    entries: [string | number, TValue][],
+    preferredValues?: readonly string[],
+): [string | number, TValue][] {
+    if (!preferredValues) {
+        return entries;
+    }
+
+    const preferredPosition = new Map(preferredValues.map((value, index) => [value, index]));
+    return entries.toSorted((left, right) => {
+        const leftPosition = preferredPosition.get(left[0].toString()) ?? Number.MAX_SAFE_INTEGER;
+        const rightPosition = preferredPosition.get(right[0].toString()) ?? Number.MAX_SAFE_INTEGER;
+        return leftPosition - rightPosition;
+    });
+}
+
+export function orderColorValues(
+    values: (string | number)[],
+    preferredValues?: readonly string[],
+): (string | number)[] {
+    if (preferredValues) {
+        return orderEntriesByPreferredValues(
+            values.map((value) => [value, value]),
+            preferredValues,
+        ).map(([value]) => value);
+    }
+
+    return values.toSorted((left, right) => left.toString().localeCompare(right.toString()));
 }
 
 /**
@@ -46,15 +87,17 @@ export class GroupedTableData {
     private _colorBy: string;
     private _ensembleSet: EnsembleSet;
     private _colorSet: ColorSet;
+    private _categoryOrder?: ReadonlyMap<string, readonly string[]>;
     private _subplotGroups: SubplotGroup[] = [];
     private _colorMap: Map<string, string> = new Map();
     private _allEntries: GroupedEntry[] = [];
 
-    constructor({ table, subplotBy, colorBy, ensembleSet, colorSet }: GroupedTableDataOptions) {
+    constructor({ table, subplotBy, colorBy, ensembleSet, colorSet, categoryOrder }: GroupedTableDataOptions) {
         this._subplotBy = subplotBy;
         this._colorBy = colorBy;
         this._ensembleSet = ensembleSet;
         this._colorSet = colorSet;
+        this._categoryOrder = categoryOrder;
 
         this.buildColorMap(table);
         this.buildGroups(table);
@@ -66,17 +109,18 @@ export class GroupedTableData {
             return;
         }
 
-        const uniqueValues = colorByColumn.getUniqueValues();
-        // Create a copy before sorting for consistent color assignment
-        const sortedValues = uniqueValues.toSorted((a, b) => a.toString().localeCompare(b.toString()));
+        const orderedValues = orderColorValues(
+            colorByColumn.getUniqueValues(),
+            this._categoryOrder?.get(this._colorBy),
+        );
         let color = this._colorSet.getFirstColor();
 
-        for (const value of sortedValues) {
+        for (const value of orderedValues) {
             const key = value.toString();
 
             if (this._colorBy === TableOriginKey.ENSEMBLE) {
-                const ensembleIdent = RegularEnsembleIdent.fromString(key);
-                const ensemble = this._ensembleSet.findEnsemble(ensembleIdent);
+                const ensembleIdent = getEnsembleIdentFromString(key);
+                const ensemble = ensembleIdent ? this._ensembleSet.findEnsemble(ensembleIdent) : null;
                 if (ensemble) {
                     this._colorMap.set(key, ensemble.getColor());
                     continue;
@@ -90,13 +134,10 @@ export class GroupedTableData {
 
     private formatLabel(columnName: string, value: string | number): string {
         if (columnName === TableOriginKey.ENSEMBLE) {
-            const ensembleIdent = RegularEnsembleIdent.fromString(value.toString());
-            const ensemble = this._ensembleSet.findEnsemble(ensembleIdent);
-            if (ensemble) {
-                return makeDistinguishableEnsembleDisplayName(
-                    ensembleIdent,
-                    this._ensembleSet.getRegularEnsembleArray(),
-                );
+            const ensembleIdent = getEnsembleIdentFromString(value.toString());
+            const ensemble = ensembleIdent ? this._ensembleSet.findEnsemble(ensembleIdent) : null;
+            if (ensembleIdent && ensemble) {
+                return makeDistinguishableEnsembleDisplayName(ensembleIdent, this._ensembleSet.getEnsembleArray());
             }
         }
         return value.toString();
@@ -107,7 +148,11 @@ export class GroupedTableData {
         if (this._subplotBy === this._colorBy) {
             const collection = table.splitByColumn(this._subplotBy, true);
 
-            for (const [key, splitTable] of collection.getCollectionMap()) {
+            const orderedEntries = orderEntriesByPreferredValues(
+                Array.from(collection.getCollectionMap()),
+                this._categoryOrder?.get(this._subplotBy),
+            );
+            for (const [key, splitTable] of orderedEntries) {
                 const keyStr = key.toString();
                 const label = this.formatLabel(this._subplotBy, key);
                 const color = this._colorMap.get(keyStr) ?? this._colorSet.getFirstColor();
@@ -141,14 +186,22 @@ export class GroupedTableData {
         // Normal case: different subplotBy and colorBy
         const subplotCollection = table.splitByColumn(this._subplotBy, true);
 
-        for (const [subplotKey, subplotTable] of subplotCollection.getCollectionMap()) {
+        const orderedSubplotEntries = orderEntriesByPreferredValues(
+            Array.from(subplotCollection.getCollectionMap()),
+            this._categoryOrder?.get(this._subplotBy),
+        );
+        for (const [subplotKey, subplotTable] of orderedSubplotEntries) {
             const subplotKeyStr = subplotKey.toString();
             const subplotLabel = this.formatLabel(this._subplotBy, subplotKey);
             const colorEntries: ColorEntry[] = [];
 
             const colorByCollection = subplotTable.splitByColumn(this._colorBy, true);
 
-            for (const [colorByKey, colorByTable] of colorByCollection.getCollectionMap()) {
+            const orderedColorEntries = orderEntriesByPreferredValues(
+                Array.from(colorByCollection.getCollectionMap()),
+                this._categoryOrder?.get(this._colorBy),
+            );
+            for (const [colorByKey, colorByTable] of orderedColorEntries) {
                 const colorKeyStr = colorByKey.toString();
                 const colorLabel = this.formatLabel(this._colorBy, colorByKey);
                 const color = this._colorMap.get(colorKeyStr) ?? this._colorSet.getFirstColor();

@@ -179,6 +179,31 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
         }
     }
 
+    function makeRangeItems() {
+        const rangeCounts = new Map<string, number>();
+
+        return rangeValues.map((rangeValue, index) => {
+            const rangeCount = rangeCounts.get(rangeValue) ?? 0;
+            rangeCounts.set(rangeValue, rangeCount + 1);
+
+            return (
+                <RealizationRangeTag
+                    key={`${rangeValue}__${rangeCount}`}
+                    value={rangeValue}
+                    disabled={props.disabled}
+                    selected={selectedIndices.includes(index)}
+                    focusMovementDirection={listFocus.direction}
+                    realizationNumberLimits={props.realizationNumberLimits}
+                    focused={index === listFocus.focusedIndex}
+                    onFocus={() => listFocus.focusItem(index)}
+                    onMoveFocus={(direction) => moveFocusAndSelect(direction)}
+                    onRemove={() => removeRangeAtIndex(index)}
+                    onChange={(newValue) => changeRangeAtIndex(index, newValue)}
+                />
+            );
+        });
+    }
+
     return (
         <div
             className="form-element gap-x-xs px-xs py-xs flex cursor-text items-center"
@@ -223,21 +248,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                     />
                 </li>
 
-                {rangeValues.map((rangeValue, index) => (
-                    <RealizationRangeTag
-                        key={`${rangeValue}__${index}`}
-                        value={rangeValue}
-                        disabled={props.disabled}
-                        selected={selectedIndices.includes(index)}
-                        focusMovementDirection={listFocus.direction}
-                        realizationNumberLimits={props.realizationNumberLimits}
-                        focused={index === listFocus.focusedIndex}
-                        onFocus={() => listFocus.focusItem(index)}
-                        onMoveFocus={(direction) => moveFocusAndSelect(direction)}
-                        onRemove={() => removeRangeAtIndex(index)}
-                        onChange={(newValue) => changeRangeAtIndex(index, newValue)}
-                    />
-                ))}
+                {makeRangeItems()}
             </ul>
 
             <Button

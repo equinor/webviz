@@ -10,24 +10,30 @@ import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolum
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
-import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import {
     InplaceVolumesStatisticEnumToStringMapping,
+    isFluidSpecificResultName,
+    TableOriginKey,
     TableType,
     TableTypeToStringMapping,
 } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
+import { StatisticsLayout, StatisticsLayoutToStringMapping } from "../types";
 
-import { selectedIndexValueCriteriaAtom, selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./atoms/baseAtoms";
+import {
+    selectedIndexValueCriteriaAtom,
+    selectedStatisticOptionsAtom,
+    selectedStatisticsLayoutAtom,
+    selectedTableTypeAtom,
+} from "./atoms/baseAtoms";
 import { tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
 import {
     selectedEnsembleIdentsAtom,
@@ -67,6 +73,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         DEBOUNCE_TIME_MS,
     );
 
+    const [settledSelectedStatisticsLayout, setSettledSelectedStatisticsLayout] = useAtom(selectedStatisticsLayoutAtom);
+    const [selectedStatisticsLayout, setSelectedStatisticsLayoutChange] = useDebouncedOnChange<StatisticsLayout>(
+        settledSelectedStatisticsLayout,
+        setSettledSelectedStatisticsLayout,
+        DEBOUNCE_TIME_MS,
+    );
+
     const [settledSelectedResultNames, setSettledSelectedResultNames] = useAtom(selectedResultNamesAtom);
     const [selectedResultNames, setSelectedResultNames] = useDebouncedOnChange(
         settledSelectedResultNames.value,
@@ -81,7 +94,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         DEBOUNCE_TIME_MS,
     );
 
-    usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
 
     useApplyInitialSettingsToState(
         props.initialSettings,
@@ -106,9 +119,26 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedTableTypeChange(value as TableType);
     }
 
-    const resultNameOptions: SelectOption<string>[] = tableDefinitionsAccessor
+    function handleSelectedStatisticsLayoutChange(value: string | null) {
+        if (value === null) throw new Error("Statistics layout value cannot be null");
+
+        setSelectedStatisticsLayoutChange(value as StatisticsLayout);
+    }
+
+    const isGroupedByFluid = selectedGroupByIndices.includes(TableOriginKey.FLUID);
+    const resultNameOptions: ComboboxItem<string>[] = tableDefinitionsAccessor
         .getResultNamesIntersection()
-        .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
+        .map((name) => {
+            const requiresFluidGrouping = isFluidSpecificResultName(name) && !isGroupedByFluid;
+            return {
+                label: name,
+                value: name,
+                description: requiresFluidGrouping
+                    ? `${name} is only defined per fluid. Add FLUID to Grouping to select it.`
+                    : createHoverTextForVolume(name),
+                disabled: requiresFluidGrouping,
+            };
+        });
 
     const groupByIndicesOptions: ComboboxItem<string>[] = [];
     for (const indicesWithValues of tableDefinitionsAccessor.getCommonIndicesWithValues()) {
@@ -128,7 +158,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
 
     const tableSettings = (
-        <Setting.Section title="Result and grouping" defaultOpen>
+        <Setting.Section title="Responses and grouping" defaultOpen>
             <Setting.Field label="Table type" stacked>
                 <Combobox
                     value={selectedTableType}
@@ -149,12 +179,25 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     />
                 </Setting.Field>
             )}
-            <Setting.Field label="Results" annotations={selectedResultNamesAnnotations}>
-                <Select
+            {settledSelectedTableType === TableType.STATISTICAL && (
+                <Setting.Field label="Statistics layout" stacked>
+                    <Combobox
+                        value={selectedStatisticsLayout}
+                        items={Object.values(StatisticsLayout).map((val: StatisticsLayout) => {
+                            return { value: val, label: StatisticsLayoutToStringMapping[val] };
+                        })}
+                        onValueChange={handleSelectedStatisticsLayoutChange}
+                    />
+                </Setting.Field>
+            )}
+            <Setting.Field label="Responses" annotations={selectedResultNamesAnnotations}>
+                <Combobox
                     value={selectedResultNames}
-                    options={resultNameOptions}
+                    items={resultNameOptions}
                     multiple
-                    size={5}
+                    selectionMode="chips"
+                    showClearAllButton
+                    placeholder="Select responses..."
                     onValueChange={setSelectedResultNames}
                 />
             </Setting.Field>
@@ -179,7 +222,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     ensembleSet={ensembleSet}
                     settingsContext={props.settingsContext}
                     workbenchSession={props.workbenchSession}
-                    workbenchServices={props.workbenchServices}
+                    syncSettingsService={props.syncSettingsService}
                     isPending={tableDefinitionsQuery.isLoading}
                     availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
                     availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
@@ -192,6 +235,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     additionalSettings={tableSettings}
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
                     selectionAnnotations={selectedIndicesWithValuesAnnotations}
+                    allowDeltaEnsembles
                     onChange={handleFilterChange}
                 />
             </Setting.Panel>

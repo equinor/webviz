@@ -13,13 +13,12 @@ export interface UsePublishChannelContentsOptions {
 }
 
 export function usePublishChannelContents(options: UsePublishChannelContentsOptions): void {
-    const [prevDependencies, setPrevDependencies] = React.useState<any[]>([]);
+    const prevDependenciesRef = React.useRef<any[]>([]);
 
     React.useEffect(() => {
-        if ((options.enabled || options.enabled === undefined) && !isEqual(prevDependencies, options.dependencies)) {
-            setPrevDependencies(options.dependencies);
-
+        if ((options.enabled ?? true) && !isEqual(options.dependencies, prevDependenciesRef.current)) {
+            prevDependenciesRef.current = options.dependencies;
             options.channel.replaceContents(options.contents);
         }
-    }, [options.channel, options.contents, options.dependencies, prevDependencies, options.enabled]);
+    }, [options.channel, options.contents, options.dependencies, options.enabled]);
 }

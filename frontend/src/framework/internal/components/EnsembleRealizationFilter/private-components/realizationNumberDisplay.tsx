@@ -128,6 +128,7 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
                                 );
                             })}
                             {Array.from({ length: 5 - group.length }).map((_, i) => (
+                                // eslint-disable-next-line @eslint-react/no-array-index-key -- Simple placeholders
                                 <div key={`placeholder-${i}`} style={{ width: dotSizePx, height: dotSizePx }} />
                             ))}
                         </div>

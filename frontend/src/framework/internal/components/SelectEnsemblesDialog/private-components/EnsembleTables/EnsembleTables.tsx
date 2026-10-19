@@ -126,7 +126,12 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
             <div className="gap-y-xs flex min-h-0 flex-1 flex-col">
                 <div className="gap-x-sm flex shrink-0 items-center">
                     <Heading as="h6">Regular Ensembles</Heading>
-                    <Button variant="contained" size="small" onClick={handleAddRegularEnsemble}>
+                    <Button
+                        data-testid="add-regular-ensemble-button"
+                        variant="contained"
+                        size="small"
+                        onClick={handleAddRegularEnsemble}
+                    >
                         <Add fontSize="inherit" />
                         Add
                     </Button>

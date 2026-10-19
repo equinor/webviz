@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getSessionMetadataOptions } from "@api";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { loadAllWorkbenchSessionsFromLocalStorage } from "@framework/internal/WorkbenchSession/utils/loaders";
-import { buildSessionUrl } from "@framework/internal/WorkbenchSession/utils/url";
+import { buildWorkbenchUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import {
     isPersisted,
     type WorkbenchSessionDataContainer,
@@ -69,7 +69,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
     }
 
     function handleOpenInNewTab(sessionId: string | undefined) {
-        const url = buildSessionUrl(sessionId ?? "");
+        const url = buildWorkbenchUrl({ kind: "session", sessionId: sessionId ?? "", dashboardId: null });
         window.open(url, "_blank");
     }
 
@@ -105,9 +105,10 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                     </Table.Head>
 
                     <Table.Body>
-                        {sessions.map((session, i) => (
+                        {sessions.map((session) => (
                             <SessionRecoveryRow
-                                key={session.id ?? i}
+                                // Missing ID would be an unsaved local session, and there should never be more than one
+                                key={session.id ?? "unsaved-session"}
                                 session={session}
                                 onOpenInNewTab={handleOpenInNewTab}
                                 onOpen={handleOpen}

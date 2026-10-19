@@ -8,7 +8,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 
@@ -29,10 +29,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const curveType = viewContext.useSettingsToViewInterfaceValue("curveType");
     const visualizationSettings = viewContext.useSettingsToViewInterfaceValue("visualizationSettings");
     const relPermDataAccessorStatus = viewContext.useSettingsToViewInterfaceValue("relPermDataAccessorStatus");
-    const propagatedErrorMessages = usePropagateAllApiErrorsToStatusWriter(
-        relPermDataAccessorStatus.errors,
-        statusWriter,
-    );
+    const propagatedErrorMessages = propagateAllApiErrorsToStatusWriter(relPermDataAccessorStatus.errors, statusWriter);
     const propagatedErrorMessage = propagatedErrorMessages[0] ?? null;
     const instanceTitle = makeRelPermPlotTitle(curveType, curveNames, visualizationSettings.groupBy);
 
@@ -129,7 +126,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     }
 
     return (
-        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
+        <div className="h-full w-full overflow-hidden" ref={wrapperDivRef}>
             <div style={{ height: wrapperDivSize.height }}>{makeContent()}</div>
         </div>
     );

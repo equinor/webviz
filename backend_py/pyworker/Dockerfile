@@ -13,14 +13,14 @@ ENV VIRTUAL_ENV=/home/appuser/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-WORKDIR /home/appuser/backend_py/pyworker_default
+WORKDIR /home/appuser/backend_py/pyworker
 
-COPY --chown=appuser ./backend_py/pyworker_default/pyproject.toml  /home/appuser/backend_py/pyworker_default
-COPY --chown=appuser ./backend_py/pyworker_default/poetry.lock     /home/appuser/backend_py/pyworker_default
+COPY --chown=appuser ./backend_py/pyworker/pyproject.toml  /home/appuser/backend_py/pyworker
+COPY --chown=appuser ./backend_py/pyworker/poetry.lock     /home/appuser/backend_py/pyworker
 RUN poetry install --only main --no-root --no-directory
 
-COPY --chown=appuser ./backend_py/libs              /home/appuser/backend_py/libs
-COPY --chown=appuser ./backend_py/pyworker_default  /home/appuser/backend_py/pyworker_default
+COPY --chown=appuser ./backend_py/libs      /home/appuser/backend_py/libs
+COPY --chown=appuser ./backend_py/pyworker  /home/appuser/backend_py/pyworker
 RUN poetry install --only main
 
-CMD ["python", "-m", "pyworker_default.worker_main"]
+CMD ["python", "-m", "pyworker.worker_main"]

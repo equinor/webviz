@@ -37,7 +37,6 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             getInitialViewState={getViewState}
             workbenchSession={props.workbenchSession}
             workbenchSettings={props.workbenchSettings}
-            workbenchServices={props.workbenchServices}
         />
     );
 }

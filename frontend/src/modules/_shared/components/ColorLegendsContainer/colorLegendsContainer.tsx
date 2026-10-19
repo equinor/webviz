@@ -423,9 +423,9 @@ function GradientDef(props: GradientDefProps): React.ReactNode {
 
     return (
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            {colorStops.toReversed().map((colorStop, index) => (
+            {colorStops.toReversed().map((colorStop) => (
                 <stop
-                    key={index}
+                    key={`color-stop-${colorStop.offset}`}
                     offset={`${((1 - colorStop.offset) * 100).toFixed(2)}%`}
                     stopColor={colorStop.color}
                 />

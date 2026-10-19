@@ -46,10 +46,13 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
         if (
             typeof v.logName !== "string" ||
             typeof v.curveName !== "string" ||
-            typeof v.curveUnit !== "string" ||
-            typeof v.curveDescription !== "string"
+            // Unitless curves (e.g. the discrete geology and stratigraphy curves) have no unit
+            (typeof v.curveUnit !== "string" && v.curveUnit !== null) ||
+            typeof v.source !== "string"
         ) {
-            throw new Error("Expected object with string properties: logName, curveName, curveUnit, curveDescription");
+            throw new Error(
+                "Expected object with string properties logName, curveName and source, and curveUnit as string or null",
+            );
         }
 
         return parsed as ValueType;
@@ -76,7 +79,13 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
     }
 
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
-        return isValueValid<ValueType, WellboreLogCurveHeader_api>(value, valueConstraints, (v) => v);
+        // A curve is identified by its log and its name - the same curve name occurs in several logs, and a log has
+        // several curves
+        return isValueValid<string, WellboreLogCurveHeader_api>(
+            value ? `${value.logName}::${value.curveName}` : null,
+            valueConstraints,
+            (v) => `${v.logName}::${v.curveName}`,
+        );
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {

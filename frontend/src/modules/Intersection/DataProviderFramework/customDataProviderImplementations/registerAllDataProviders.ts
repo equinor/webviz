@@ -2,12 +2,17 @@ import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dat
 
 import { CustomDataProviderType } from "./dataProviderTypes";
 import { EnsembleWellborePicksProvider } from "./EnsembleWellborePicksProvider";
+import { InitialFluidContactSurfacesProvider } from "./InitialFluidContactSurfacesProvider";
 import { RealizationSurfacesProvider } from "./RealizationSurfacesProvider";
 import { SurfacesPerRealizationValuesProvider } from "./SurfacesPerRealizationValuesProvider";
 
 DataProviderRegistry.registerDataProvider(
     CustomDataProviderType.ENSEMBLE_WELLBORE_PICKS,
     EnsembleWellborePicksProvider,
+);
+DataProviderRegistry.registerDataProvider(
+    CustomDataProviderType.INITIAL_FLUID_CONTACT_SURFACES,
+    InitialFluidContactSurfacesProvider,
 );
 DataProviderRegistry.registerDataProvider(CustomDataProviderType.REALIZATION_SURFACES, RealizationSurfacesProvider);
 DataProviderRegistry.registerDataProvider(

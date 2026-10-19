@@ -33,6 +33,7 @@ export function useBuildPlotAndTable(
     const selectorColumn = useAtomValue(selectorColumnAtom);
     const subplotBy = useAtomValue(subplotByAtom);
     const colorBy = useAtomValue(colorByAtom);
+    const filter = viewContext.useSettingsToViewInterfaceValue("filter");
     const {
         histogramType,
         histogramBins,
@@ -77,6 +78,7 @@ export function useBuildPlotAndTable(
         colorBy,
         ensembleSet,
         colorSet,
+        categoryOrder: new Map(filter.indicesWithValues.map((index) => [index.indexColumn, index.values])),
     });
 
     // Filter out grouped entries where all values are constant (zero variance)

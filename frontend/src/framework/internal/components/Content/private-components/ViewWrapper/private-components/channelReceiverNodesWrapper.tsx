@@ -2,7 +2,7 @@ import React from "react";
 
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
+import { useDashboard } from "@framework/internal/components/DashboardContext";
 import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
@@ -22,7 +22,7 @@ export type ChannelReceiverNodesWrapperProps = {
 };
 
 export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperProps> = (props) => {
-    const dashboard = useActiveDashboard();
+    const { dashboard, isActive: isActiveDashboard } = useDashboard();
 
     const [visible, setVisible] = React.useState<boolean>(false);
     const [currentReceiver, setCurrentReceiver] = React.useState<ChannelReceiver | null>(null);
@@ -41,7 +41,22 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
         GuiState.EditDataChannelConnections,
     );
 
+    // Reset when the dashboard goes inactive: the effect below doesn't run then, so a drag in progress
+    // would never end and reappear stuck later. An open channel selector (own portal, with a scrim) would
+    // otherwise stay on top of the dashboard switched to.
+    if (!isActiveDashboard && (visible || channelSelectorCenterPoint !== null)) {
+        setVisible(false);
+        setChannelSelectorCenterPoint(null);
+        setSelectableChannels([]);
+        setCurrentReceiver(null);
+        setCurrentOriginModuleInstanceId(null);
+    }
+
     React.useEffect(() => {
+        if (!isActiveDashboard) {
+            return;
+        }
+
         let localVisible = false;
 
         function handleDataChannelOriginPointerDown() {
@@ -108,6 +123,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
         channelSelectorCenterPoint,
         editDataChannelConnections,
         setEditDataChannelConnections,
+        isActiveDashboard,
     ]);
 
     const handleChannelConnect = React.useCallback(
@@ -263,7 +279,11 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
     return createPortal(
         <div
             className={resolveClassNames("z-modal flex- absolute flex items-center justify-center", {
-                invisible: !((editDataChannelConnections && visible) || visible),
+                // This renders into the shared #portal-root, outside the DashboardStack's own
+                // display:none toggling for inactive dashboards - gate visibility on isActiveDashboard
+                // directly instead of relying solely on `visible` being reset in time.
+                invisible: !isActiveDashboard || !((editDataChannelConnections && visible) || visible),
+                "pointer-events-none": !isActiveDashboard,
             })}
             style={{
                 left: elementRect.x,

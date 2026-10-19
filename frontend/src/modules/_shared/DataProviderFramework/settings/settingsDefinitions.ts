@@ -11,6 +11,7 @@ import type { ColorScaleSpecification } from "@framework/components/ColorScaleSe
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ProductionPhase, InjectionPhase } from "@framework/types/wellbore";
 import type { ColorSet } from "@lib/utils/ColorSet";
+import type { SurfaceAttribute } from "@modules/_shared/Surface";
 
 import type { IntersectionSettingOption, IntersectionSettingValue } from "./implementations/IntersectionSetting";
 import type { PolygonVisualizationSpec } from "./implementations/PolygonVisualizationSetting";
@@ -30,6 +31,7 @@ export enum Setting {
     DEPTH_ATTRIBUTE = "depthAttribute",
     SEISMIC_ATTRIBUTE = "seismicAttribute",
     ATTRIBUTE = "attribute",
+    SURFACE_ATTRIBUTE = "surfaceAttribute",
     WELLBORE_DEPTH_FILTER_ATTRIBUTE = "wellboreDepthFilterAttribute",
     ENSEMBLE = "ensemble",
     COLOR_SCALE = "colorScale",
@@ -41,6 +43,7 @@ export enum Setting {
     GRID_LAYER_RANGE = "gridLayerRange",
     GRID_LAYER_K = "gridLayerK",
     GRID_NAME = "gridName",
+    FLUID_CONTACT = "fluidContact",
     INTERSECTION = "intersection",
     MD_RANGE = "mdRange",
     OPACITY_PERCENT = "opacityPercent",
@@ -149,22 +152,32 @@ export type SettingTypeDefinitions = {
         externalValue: string | null;
         valueConstraints: string[];
     };
+    [Setting.SURFACE_ATTRIBUTE]: {
+        internalValue: SurfaceAttribute | null;
+        externalValue: SurfaceAttribute | null;
+        valueConstraints: SurfaceAttribute[];
+    };
     [Setting.DEPTH_ATTRIBUTE]: {
-        internalValue: string | null;
-        externalValue: string | null;
-        valueConstraints: string[];
+        internalValue: SurfaceAttribute | null;
+        externalValue: SurfaceAttribute | null;
+        valueConstraints: SurfaceAttribute[];
     };
     [Setting.SEISMIC_ATTRIBUTE]: {
-        internalValue: string | null;
-        externalValue: string | null;
-        valueConstraints: string[];
+        internalValue: SurfaceAttribute | null;
+        externalValue: SurfaceAttribute | null;
+        valueConstraints: SurfaceAttribute[];
     };
     [Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE]: {
+        internalValue: SurfaceAttribute | null;
+        externalValue: SurfaceAttribute | null;
+        valueConstraints: SurfaceAttribute[];
+    };
+    [Setting.GRID_NAME]: {
         internalValue: string | null;
         externalValue: string | null;
         valueConstraints: string[];
     };
-    [Setting.GRID_NAME]: {
+    [Setting.FLUID_CONTACT]: {
         internalValue: string | null;
         externalValue: string | null;
         valueConstraints: string[];

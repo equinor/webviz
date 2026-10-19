@@ -9,17 +9,21 @@ from fastapi.responses import ORJSONResponse
 from fastapi.routing import APIRoute
 from starsessions import SessionMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+from azure.identity.aio import WorkloadIdentityCredential, ClientSecretCredential
 
 from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.sumo_access.sumo_fingerprinter import SumoFingerprinterFactory
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
 from webviz_services.utils.user_cache import UserCacheFactory
+from webviz_services.platform.azure_credentials import create_azure_credential
+from webviz_services.platform.azure_credentials import log_azure_credential_env_var_status
+from webviz_services.platform.message_bus import MessageBusSingleton
 
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
-from primary.middleware.cache_control_middleware import CacheControlMiddleware
+from primary.middleware.cache_control_middleware import CacheControlMiddleware, add_cache_info_to_openapi
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanClientAddressEnrichmentMiddleware
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanEndUserEnrichmentMiddleware
 from primary.middleware.encrypted_redis_session_store import EncryptedRedisSessionStore
@@ -45,12 +49,12 @@ from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
 from primary.routers.persistence.router import router as persistence_router
+from primary.routers.tutorials.router import router as tutorials_router
+from primary.services.tutorial_media.tutorial_media_signer import TutorialMediaSignerSingleton
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry_for_primary
-from primary.utils.azure_service_credentials import ClientSecretVars, create_credential_for_azure_services
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
-from primary.utils.message_bus import MessageBusSingleton
 
 from . import config
 
@@ -64,19 +68,22 @@ logging.getLogger("webviz_services.smda_access").setLevel(logging.DEBUG)
 logging.getLogger("webviz_services.ssdl_access").setLevel(logging.DEBUG)
 logging.getLogger("webviz_services.user_grid3d_service").setLevel(logging.DEBUG)
 logging.getLogger("webviz_services.surface_query_service").setLevel(logging.DEBUG)
+logging.getLogger("webviz_services.utils.sumo_blob_cache").setLevel(logging.DEBUG)
+logging.getLogger("webviz_services.derived_smry_table").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.timeseries").setLevel(logging.DEBUG)
 logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
-logging.getLogger("webviz_services.derived_smry_table").setLevel(logging.DEBUG)
-logging.getLogger("webviz_services.utils.sumo_blob_cache").setLevel(logging.DEBUG)
 # logging.getLogger("primary.middleware").setLevel(logging.DEBUG)
 # logging.getLogger("primary.auth").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
+
+# Do a dump of key AZURE_ env variables that we rely on
+log_azure_credential_env_var_status()
 
 services_config = ServicesConfig(
     sumo_env=config.SUMO_ENV,
@@ -98,38 +105,49 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
-    client_secret_vars_for_dev = ClientSecretVars(
-        tenant_id=config.TENANT_ID,
-        client_id=config.CLIENT_ID,
-        client_secret=config.CLIENT_SECRET,
-    )
-    azure_services_credential = create_credential_for_azure_services(client_secret_vars_for_dev)
+    # The opt-out for the credential creation here is only meant for special scenarios such as e2e testing.
+    azure_credential: WorkloadIdentityCredential | ClientSecretCredential | None = None
+    if "WEBVIZ_SKIP_AZURE_CREDENTIAL_CREATION" not in os.environ:
+        azure_credential = create_azure_credential()
 
-    # For local development, you can use the Cosmos DB Emulator. The emulator does not require credentials,
-    # so we can initialize the PersistenceStoresSingleton with the emulator connection settings.
-    # PersistenceStoresSingleton.initialize_with_emulator()
-    LOGGER.info(
-        f"Using credential for azure services to initialize PersistenceStoresSingleton with: {config.COSMOS_DB_URL}"
-    )
-    await PersistenceStoresSingleton.initialize_with_credential_async(config.COSMOS_DB_URL, azure_services_credential)
+    if config.COSMOS_DB_EMULATOR_HOST:
+        LOGGER.info(
+            f"Using Cosmos DB Emulator at {config.COSMOS_DB_EMULATOR_HOST} to initialize PersistenceStoresSingleton"
+        )
+        PersistenceStoresSingleton.initialize_with_emulator(config.COSMOS_DB_EMULATOR_HOST)
+    else:
+        LOGGER.info(f"Using Azure credential to initialize PersistenceStoresSingleton with: {config.COSMOS_DB_URL}")
+        if azure_credential is None:
+            raise RuntimeError("Cannot proceed without an Azure credential.")
 
-    if config.SERVICE_BUS_EMULATOR_CONNECTION_STRING is not None:
-        LOGGER.info("Initializing MessageBusSingleton using emulator connection string from environment")
+        await PersistenceStoresSingleton.initialize_with_credential_async(config.COSMOS_DB_URL, azure_credential)
+
+    if config.SERVICE_BUS_EMULATOR_CONNECTION_STRING:
+        LOGGER.info("Initializing MessageBusSingleton using Service Bus emulator")
         MessageBusSingleton.initialize_with_connection_string(config.SERVICE_BUS_EMULATOR_CONNECTION_STRING)
     else:
-        LOGGER.info(f"Initializing MessageBusSingleton using credential for azure services, {config.SERVICE_BUS_FQ_NAMESPACE=}")
-        await MessageBusSingleton.initialize_with_credential_async(config.SERVICE_BUS_FQ_NAMESPACE, azure_services_credential)
+        LOGGER.info(f"Initializing MessageBusSingleton using Azure credential, {config.SERVICE_BUS_NAMESPACE=}")
+        if azure_credential is None:
+            raise RuntimeError("Cannot proceed without an Azure credential.")
+
+        await MessageBusSingleton.initialize_with_credential_async(config.SERVICE_BUS_NAMESPACE, azure_credential)
 
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     UserCacheFactory.initialize(use_shared_client=True, redis_url=config.REDIS_CACHE_URL)
+    if azure_credential is not None:
+        TutorialMediaSignerSingleton.initialize(credential=azure_credential)
 
     # This part, after the yield, will be executed after the application has finished.
     yield
 
     await MessageBusSingleton.shutdown_async()
     await PersistenceStoresSingleton.shutdown_async()
-    await azure_services_credential.close()
+    await TutorialMediaSignerSingleton.shutdown_async()
+
+    if azure_credential is not None:
+        await azure_credential.close()
+
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
 
 
@@ -137,7 +155,7 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
 # we skip the actual initialization of the FastAPI app and just set lifespan_handler_async to None.
 # This allows us to import this module and access the app object without running the lifespan handler,
 # which may be desirable in certain contexts such as API code generation.
-if os.getenv("WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY") is not None:
+if "WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY" in os.environ:
     lifespan_handler_async = None  # type: ignore[assignment]
 
 app = FastAPI(
@@ -173,10 +191,14 @@ app.include_router(rft_router, prefix="/rft", tags=["rft"])
 app.include_router(vfp_router, prefix="/vfp", tags=["vfp"])
 app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
 app.include_router(persistence_router, prefix="/persistence", tags=["persistence"])
+app.include_router(tutorials_router, prefix="/tutorials", tags=["tutorials"])
 
 auth_helper = AuthHelper()
 app.include_router(auth_helper.router)
 app.include_router(general_router)
+
+# Must run after all routers are included
+add_cache_info_to_openapi(app)
 
 configure_service_level_exception_handlers(app)
 override_default_fastapi_exception_handlers(app)
@@ -196,7 +218,7 @@ if config.PSEUDONYM_HMAC_KEY is not None:
 
 # Add our custom middleware to enforce that user is logged in
 # Also redirects to /login endpoint for some select paths
-unprotected_paths = ["/logout", "/logged_in_user", "/alive", "/openapi.json"]
+unprotected_paths = ["/logout", "/alive", "/openapi.json"]
 paths_redirected_to_login = ["/", "/alive_protected"]
 app.add_middleware(
     EnforceLoggedInMiddleware,
@@ -205,7 +227,9 @@ app.add_middleware(
 )
 
 encrypted_session_store = EncryptedRedisSessionStore(
-    fernet_key=config.SESSION_STORE_FERNET_KEY, redis_url=config.REDIS_AUTH_STORE_URL, prefix="auth-sessions:"
+    fernet_key=config.SESSION_STORE_FERNET_KEY,
+    redis_url=config.REDIS_AUTH_STORE_URL,
+    prefix=config.AUTH_SESSION_STORE_PREFIX,
 )
 app.add_middleware(SessionMiddleware, store=encrypted_session_store)
 

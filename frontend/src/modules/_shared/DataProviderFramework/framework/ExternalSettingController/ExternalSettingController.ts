@@ -76,6 +76,19 @@ export class ExternalSettingController<
     registerSetting(settingManager: SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>): void {
         this._controlledSettings.set(settingManager.getId(), settingManager);
         settingManager.registerExternalSettingController(this);
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "controlled-settings",
+            settingManager.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.ATTRIBUTES)(() => {
+                this.makeIntersectionOfValueConstraints();
+            }),
+        );
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "controlled-settings",
+            settingManager.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(() => {
+                this.syncStateFromControlledSettings();
+            }),
+        );
     }
 
     getSetting(): SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints> {
@@ -177,6 +190,7 @@ export class ExternalSettingController<
     }
 
     unregisterAllControlledSettings(): void {
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("controlled-settings");
         for (const setting of this._controlledSettings.values()) {
             setting.unregisterExternalSettingController();
         }
@@ -194,6 +208,10 @@ export class ExternalSettingController<
         let hasUninitialized = false;
 
         for (const setting of this._controlledSettings.values()) {
+            // A hidden setting does not contribute constraints, so it must not block the shared setting
+            if (setting.getAttributes().visible === false) {
+                continue;
+            }
             if (setting.isLoading(true)) {
                 hasLoading = true;
             }
@@ -238,7 +256,11 @@ export class ExternalSettingController<
         let index = 0;
         let isInvalid = false;
 
-        for (const value of this._valueConstraintsMap.values()) {
+        for (const [settingId, value] of this._valueConstraintsMap) {
+            // A hidden setting is not used by its provider, so it must not narrow the shared constraints
+            if (this._controlledSettings.get(settingId)?.getAttributes().visible === false) {
+                continue;
+            }
             if (value === null) {
                 isInvalid = true;
                 break;
@@ -248,7 +270,8 @@ export class ExternalSettingController<
 
         this._setting.setLoading(false);
 
-        if (!isValid(valueConstraints as any) || isInvalid) {
+        // No visible setting uses the shared value, or one has no constraints yet
+        if (isInvalid || index === 0 || !isValid(valueConstraints as any)) {
             this._setting.setValueConstraints(null);
             return;
         }

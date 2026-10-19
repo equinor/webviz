@@ -45,17 +45,14 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const [numberOfCases, setNumberOfCases] = React.useState<number>(0);
 
     const [showOnlyMyCases, setShowOnlyMyCases] = React.useState<boolean>(
-        readInitialStateFromLocalStorage("showOnlyMyCases") === "true",
+        () => readInitialStateFromLocalStorage("showOnlyMyCases") === "true",
     );
     const [showOnlyOfficialCases, setShowOnlyOfficialCases] = React.useState<boolean>(
-        readInitialStateFromLocalStorage("showOfficialCases") === "true",
+        () => readInitialStateFromLocalStorage("showOfficialCases") === "true",
     );
 
     // Have without fixup to allow resetting to null when table filters out selected case
     const [selectedCaseUuid, setSelectedCaseUuid] = React.useState<string | null>(null);
-
-    // Keep the prevCaseSelection state that was already defined
-    const [prevCaseSelection, setPrevCaseSelection] = React.useState<CaseSelection | null>(null);
 
     // --- Queries ---
     const assetsQuery = useQuery({
@@ -80,15 +77,15 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
     });
 
-    // Ensure valid selected case uuid, use casesQuery data to utilize fetching state
-    React.useEffect(
-        function ensureValidSelectedCaseUuid() {
-            if (selectedCaseUuid && casesQuery.data && !casesQuery.data.some((c) => c.uuid === selectedCaseUuid)) {
-                setSelectedCaseUuid(null);
-            }
-        },
-        [selectedCaseUuid, casesQuery.data],
-    );
+    const [prevCaseQueryData, setPrevCaseQueryData] = React.useState(casesQuery.data);
+
+    if (casesQuery.data !== prevCaseQueryData) {
+        setPrevCaseQueryData(casesQuery.data);
+
+        if (selectedCaseUuid && casesQuery.data && !casesQuery.data.some((c) => c.uuid === selectedCaseUuid)) {
+            setSelectedCaseUuid(null);
+        }
+    }
 
     // Refresh query handlers
     const { isRefreshing: isAssetsQueryRefreshing, refresh: refreshAssets } = useRefreshQuery(assetsQuery);
@@ -165,12 +162,13 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     }, [casesQuery.data, selectedCaseUuid, selectedStandardResults]);
 
     // Add useEffect that compares with previous selection before calling the callback
+    const prevCaseSelectionRef = React.useRef<CaseSelection | null>(null);
     React.useEffect(() => {
-        if (!isEqual(currentCaseSelection, prevCaseSelection)) {
-            setPrevCaseSelection(currentCaseSelection);
+        if (!isEqual(currentCaseSelection, prevCaseSelectionRef.current)) {
+            prevCaseSelectionRef.current = currentCaseSelection;
             onCaseSelectionChange(currentCaseSelection);
         }
-    }, [currentCaseSelection, onCaseSelectionChange, prevCaseSelection]);
+    }, [currentCaseSelection, onCaseSelectionChange]);
 
     // --- Handlers ---
     function handleAssetChanged(assetName: string | null) {

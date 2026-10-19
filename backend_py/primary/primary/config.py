@@ -1,11 +1,8 @@
 import os
 import httpx
 
+from webviz_core_utils.service_bus_destination import ServiceBusDestination
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
-
-TENANT_ID = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
-CLIENT_ID = "900ed417-a860-4970-bd37-73b059ca6f0d"
-CLIENT_SECRET = os.environ["WEBVIZ_CLIENT_SECRET"]
 
 PSEUDONYM_HMAC_KEY = os.getenv("WEBVIZ_PSEUDONYM_HMAC_KEY")
 
@@ -30,22 +27,37 @@ RESOURCE_SCOPES_DICT = {
 SESSION_STORE_FERNET_KEY = os.environ["WEBVIZ_SESSION_STORE_FERNET_KEY"]
 REDIS_AUTH_STORE_PASSWORD = os.environ["WEBVIZ_REDIS_AUTH_STORE_PASSWORD"]
 REDIS_AUTH_STORE_URL = f"redis://:{REDIS_AUTH_STORE_PASSWORD}@redis-auth-store:6379"
+# Redis key prefix for the encrypted auth session store. Shared so the e2e seed script writes to the
+# same keys the SessionMiddleware reads (see scripts/seed_e2e_session.py).
+AUTH_SESSION_STORE_PREFIX = "auth-sessions:"
 
 REDIS_CACHE_PASSWORD = os.environ["WEBVIZ_REDIS_CACHE_PASSWORD"]
 REDIS_CACHE_URL = f"redis://:{REDIS_CACHE_PASSWORD}@redis-cache:6379"
 
+
 _is_on_radix_platform = is_running_on_radix_platform()
+
+
+# Config for Cosmos DB
 if _is_on_radix_platform:
     COSMOS_DB_URL = os.getenv("WEBVIZ_COSMOS_DB_URL", "https://webviz-db.documents.azure.com:443/")
 else:
     COSMOS_DB_URL = os.getenv("WEBVIZ_COSMOS_DB_URL", "https://webviz-dev-db.documents.azure.com:443/")
 
+# Backend will use local cosmos DB emulator when this env. variable is set:
+COSMOS_DB_EMULATOR_HOST = os.getenv("WEBVIZ_COSMOS_DB_EMULATOR_HOST")
 
-# !!!!!!!!!!!!!!!!!!
-SERVICE_BUS_FQ_NAMESPACE = os.environ["WEBVIZ_SERVICE_BUS_FQ_NAMESPACE"]
-SERVICE_BUS_QUEUE_NAME = os.environ["WEBVIZ_SERVICE_BUS_QUEUE_NAME"]
+
+# Config related to Azure Service Bus
+if _is_on_radix_platform:
+    _sb_dest = ServiceBusDestination.from_radix_env(queue_role="default")
+    SERVICE_BUS_NAMESPACE = _sb_dest.namespace
+    SERVICE_BUS_DEFAULT_QUEUE = _sb_dest.queue_name
+    SERVICE_BUS_EMULATOR_CONNECTION_STRING = None
+else:
+    _sb_dest = ServiceBusDestination.for_local_dev(queue_role="default")
+    SERVICE_BUS_NAMESPACE = _sb_dest.namespace
+    SERVICE_BUS_DEFAULT_QUEUE = _sb_dest.queue_name
+    SERVICE_BUS_EMULATOR_CONNECTION_STRING = _sb_dest.emulator_connection_string
+
 SERVICE_BUS_PAYLOAD_FERNET_KEY = os.environ["WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY"]
-
-SERVICE_BUS_EMULATOR_CONNECTION_STRING: str | None = None
-if not _is_on_radix_platform:
-    SERVICE_BUS_EMULATOR_CONNECTION_STRING = os.getenv("WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING")

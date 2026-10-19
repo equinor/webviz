@@ -30,6 +30,13 @@ export function createEnsembleRealizationFilterFuncForWorkbenchSession(workbench
         ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent,
     ): readonly number[] {
         const realizationFilterSet = workbenchSession.getRealizationFilterSet();
+
+        // The ensembleIdent may be stale (e.g. a not-yet-fixed-up persisted selection referring to an
+        // ensemble that was removed from the ensemble set), in which case no filter exists for it.
+        if (!realizationFilterSet.hasRealizationFilterForEnsembleIdent(ensembleIdent)) {
+            return [];
+        }
+
         const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
 
         return realizationFilter.getFilteredRealizations();

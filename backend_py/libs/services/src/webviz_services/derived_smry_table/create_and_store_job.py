@@ -34,14 +34,14 @@ async def bgjob_create_and_store_derived_table_async(user_id: str, task_id: str,
     cache_key = initial_task_meta.expected_store_key
     if not cache_key:
         LOGGER.error(f"{log_prefix}No cache_key (expected_store_key) found in task meta, cannot proceed")
-        await task_tracker.fail_task_async(task_id, status_message="Internal error: missing expected_store_key in task meta")
+        await task_tracker.fail_task_async(task_id, status_msg="Internal error: missing expected_store_key in task meta")
         return False
 
-    await task_tracker.set_state_async(task_id, TaskState.RUNNING, status_message="Creating derived summary table")
+    await task_tracker.set_state_async(task_id, TaskState.RUNNING, status_msg="Creating derived summary table")
 
     async def _update_status_msg_async(msg: str) -> None:
         LOGGER.info(f"{log_prefix} * {msg}")
-        await task_tracker.set_status_message_async(task_id, status_message=msg)
+        await task_tracker.set_status_message_async(task_id, status_msg=msg)
 
     try:
         sumo_client = create_sumo_client(sumo_access_token)
@@ -53,7 +53,7 @@ async def bgjob_create_and_store_derived_table_async(user_id: str, task_id: str,
         derived_table_pa, derived_table_info = await create_derived_smry_table_async(sumo_client, case_uuid, ensemble_name, None, vector_names, progress_cb=_update_status_msg_async)
         perf_metrics.record_lap("create-table")
 
-        await task_tracker.set_status_message_async(task_id, status_message="Storing derived summary table")
+        await task_tracker.set_status_message_async(task_id, status_msg="Storing derived summary table")
 
         byte_stream = io.BytesIO()
         pq.write_table(derived_table_pa, byte_stream, compression="zstd")
@@ -68,11 +68,11 @@ async def bgjob_create_and_store_derived_table_async(user_id: str, task_id: str,
         await blob_cache.upload_reserved_blob_async(blob_sas_url, byte_stream.getvalue())
         perf_metrics.record_lap("write_cache")
 
-        await task_tracker.set_state_async(task_id, TaskState.SUCCEEDED, status_message="Derived summary table ready")
+        await task_tracker.set_state_async(task_id, TaskState.SUCCEEDED, status_msg="Derived summary table ready")
         LOGGER.info(f"{log_prefix}Finished creating and storing derived summary table in cache with key {cache_key}. Perf metrics: {perf_metrics.to_string()}")
         return True
 
     except Exception as e:
         LOGGER.error(f"{log_prefix}Failed to create derived summary table: {e}")
-        await task_tracker.fail_task_async(task_id, status_message="Failed to create derived summary table", internal_error_message=repr(e))
+        await task_tracker.fail_task_async(task_id, status_msg="Failed to create derived summary table", internal_error_msg=repr(e))
         raise

@@ -206,32 +206,38 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                             </Field.Root>
                             <Hidden hidden={!props.multiSelect}>
                                 <Tooltip content="Add all ensembles from selected case">
-                                    <Button
-                                        variant="contained"
-                                        size="small"
-                                        onClick={handleSelectAllEnsembles}
-                                        tone="accent"
-                                        disabled={
-                                            ensemblesInSelectedCase.length === 0 ||
-                                            ensemblesInSelectedCase.every((ens) => isEnsembleSelected(ens.name))
-                                        }
-                                    >
-                                        <Add style={{ fontSize: 16 }} /> Add all
-                                    </Button>
+                                    {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                                    <span>
+                                        <Button
+                                            variant="contained"
+                                            size="small"
+                                            onClick={handleSelectAllEnsembles}
+                                            tone="accent"
+                                            disabled={
+                                                ensemblesInSelectedCase.length === 0 ||
+                                                ensemblesInSelectedCase.every((ens) => isEnsembleSelected(ens.name))
+                                            }
+                                        >
+                                            <Add style={{ fontSize: 16 }} /> Add all
+                                        </Button>
+                                    </span>
                                 </Tooltip>
                                 <Tooltip content="Remove all ensembles from selected case">
-                                    <Button
-                                        variant="contained"
-                                        size="small"
-                                        onClick={handleRemoveAll}
-                                        tone="danger"
-                                        disabled={
-                                            ensemblesInSelectedCase.length === 0 ||
-                                            !ensemblesInSelectedCase.some((ens) => isEnsembleSelected(ens.name))
-                                        }
-                                    >
-                                        <Remove style={{ fontSize: 16 }} /> Remove all
-                                    </Button>
+                                    {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                                    <span>
+                                        <Button
+                                            variant="contained"
+                                            size="small"
+                                            onClick={handleRemoveAll}
+                                            tone="danger"
+                                            disabled={
+                                                ensemblesInSelectedCase.length === 0 ||
+                                                !ensemblesInSelectedCase.some((ens) => isEnsembleSelected(ens.name))
+                                            }
+                                        >
+                                            <Remove style={{ fontSize: 16 }} /> Remove all
+                                        </Button>
+                                    </span>
                                 </Tooltip>
                             </Hidden>
                             <span className="grow" />

@@ -7,8 +7,8 @@ import { isEqual } from "lodash-es";
 import type { WellboreHeader_api } from "@api";
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
-import { IntersectionType } from "@framework/types/intersection";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { SyncSettingsService } from "@framework/SyncSettingsService";
+import { IntersectionType, isWellboreIntersectionType } from "@framework/types/intersection";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { BBox } from "@lib/utils/bbox";
 import { combine } from "@lib/utils/bbox";
@@ -16,9 +16,10 @@ import { isColorScaleWithId } from "@modules/_shared/components/ColorLegendsCont
 import type { Bounds, EsvLayer } from "@modules/_shared/components/EsvIntersection";
 import { isValidBounds } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import type { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
-import type {
-    VisualizationGroup,
-    VisualizationTarget,
+import {
+    isVisualizationLoading,
+    type VisualizationGroup,
+    type VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 import type { TargetViewReturnTypes } from "@modules/Intersection/view/components/DataProvidersWrapper";
@@ -47,7 +48,7 @@ export type ViewDataProcessorProps = {
     isLoading: boolean;
     wellboreHeadersQuery: UseQueryResult<WellboreHeader_api[]>;
     workbenchSession: WorkbenchSession;
-    workbenchServices: WorkbenchServices;
+    syncSettingsService: SyncSettingsService;
     hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
 };
@@ -70,7 +71,7 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
         props.workbenchSession,
     );
 
-    const dataIsReady = useDataIsReady(view);
+    const dataIsReady = checkDataReady(view);
     const dataBounds = useDataBounds(dataIsReady, view, intersectionReferenceSystem);
     const focusBounds = useFocusBounds(dataIsReady, view, intersectionReferenceSystem);
 
@@ -100,7 +101,7 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
     }
 
     // Only update cached provider layer items when no providers are loading
-    const hasLoadingProviders = (view.numLoadingDataProviders ?? 0) > 0;
+    const hasLoadingProviders = isVisualizationLoading(view);
     if (!hasLoadingProviders) {
         cachedVisualizationLayerItemsRef.current = newVisualizationLayerItems;
     }
@@ -145,7 +146,7 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
             layerItemsBounds={dataBounds}
             focusBounds={focusBounds}
             colorScales={colorScales}
-            workbenchServices={props.workbenchServices}
+            syncSettingsService={props.syncSettingsService}
             hoverService={props.hoverService}
             viewContext={props.viewContext}
             intersectionSource={viewIntersection}
@@ -156,12 +157,10 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
 /**
  * Checks if the view's provider data is ready to be aggregated.
  */
-function useDataIsReady(
+function checkDataReady(
     view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, any>, GroupType>,
 ) {
-    const dataIsReady = (view.numLoadingDataProviders ?? 0) === 0;
-
-    return dataIsReady;
+    return !isVisualizationLoading(view);
 }
 
 /**
@@ -182,7 +181,7 @@ function useDataBounds(
         let combinedBbox: BBox | null = null;
 
         if (viewIntersection && intersectionReferenceSystem) {
-            if (viewIntersection.type === IntersectionType.WELLBORE) {
+            if (isWellboreIntersectionType(viewIntersection.type)) {
                 const wellborePathBoundingBox = createBBoxForWellborePath(
                     intersectionReferenceSystem.projectedPath,
                     viewExtensionLength,

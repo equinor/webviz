@@ -8,10 +8,12 @@ export type SortableListGroupContentProps = {
 
 export const GroupContent = React.forwardRef<HTMLElement, SortableListGroupContentProps>(
     function GroupContent(props, forwardedRef) {
+        // eslint-disable-next-line @eslint-react/no-children-only -- Special use case
         const onlyChild = React.Children.only(props.children) as React.ReactElement;
 
         const mergedRef = useComposedRefs<HTMLElement>(forwardedRef as React.Ref<HTMLElement>, (onlyChild as any).ref);
 
+        // eslint-disable-next-line @eslint-react/no-clone-element -- Special use case
         return React.cloneElement(onlyChild, {
             ref: mergedRef,
             "data-sortable-list-group-content": "",

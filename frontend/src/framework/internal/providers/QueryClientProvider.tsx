@@ -22,7 +22,7 @@ type QueryError = {
 export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement }> = (props) => {
     const authProvider = useAuthProvider();
 
-    const queryClient = React.useRef<QueryClient>(
+    const queryClientRef = React.useRef<QueryClient>(
         new QueryClient({
             defaultOptions: {
                 queries: {
@@ -45,7 +45,7 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
     );
 
     return (
-        <QueryClientProvider client={queryClient.current}>
+        <QueryClientProvider client={queryClientRef.current}>
             <Provider>
                 <HydrateQueryClientAtom>{props.children}</HydrateQueryClientAtom>
             </Provider>

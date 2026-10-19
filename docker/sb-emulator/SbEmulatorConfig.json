@@ -2,10 +2,10 @@
   "UserConfig": {
     "Namespaces": [
       {
-        "Name": "SbEmulatorNs",
+        "Name": "sbemulatorns",
         "Queues": [
           {
-            "Name": "test-queue",
+            "Name": "default",
             "Properties": {
               "DeadLetteringOnMessageExpiration": false,
               "DefaultMessageTimeToLive": "PT1H",

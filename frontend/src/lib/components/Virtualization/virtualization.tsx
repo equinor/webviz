@@ -38,7 +38,7 @@ export function Virtualization(props: VirtualizationProps) {
     const containerSize = useElementSize(defaultedProps.containerRef);
 
     // Ref to avoid unnecessary callbacks
-    const lastScrolledRange = React.useRef({ start: -1, end: -1 });
+    const lastScrolledRangeRef = React.useRef({ start: -1, end: -1 });
     const [range, setRange] = React.useState<{ start: number; end: number }>({
         start: defaultedProps.startIndex,
         end: 0,
@@ -59,7 +59,6 @@ export function Virtualization(props: VirtualizationProps) {
             const scrollSide = defaultedProps.direction === "horizontal" ? "scrollLeft" : "scrollTop";
 
             // ! This will trigger the onScroll event handler
-            // eslint-disable-next-line react-hooks/immutability -- Current version of eslint doesn't properly recognize ref objects as mutable
             defaultedProps.containerRef.current[scrollSide] = Math.max(
                 0,
                 defaultedProps.startIndex * defaultedProps.itemSize,
@@ -95,8 +94,8 @@ export function Virtualization(props: VirtualizationProps) {
                         ),
                     };
 
-                    if (!isEqual(newRange, lastScrolledRange.current)) {
-                        lastScrolledRange.current = newRange;
+                    if (!isEqual(newRange, lastScrolledRangeRef.current)) {
+                        lastScrolledRangeRef.current = newRange;
                         setRange(newRange);
                         onScroll?.(newRange.start, newRange.end);
                     }

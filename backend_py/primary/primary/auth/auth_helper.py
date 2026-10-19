@@ -2,15 +2,17 @@ import base64
 import logging
 import os
 import time
-from typing import Literal, Optional, TypeAlias, get_args
+from typing import Callable, Literal, Optional, TypeAlias, get_args
+from pathlib import Path
 
 import jwt
 import msal
 import starsessions
 from fastapi import APIRouter, Request, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from pydantic import BaseModel, ValidationError
 from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.radix_utils import is_running_on_radix_platform
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary import config
@@ -78,11 +80,11 @@ class AuthHelper:
         cca = _create_msal_confidential_client_app(token_cache=None)
         flow_dict = cca.initiate_auth_code_flow(scopes=all_scopes_list, redirect_uri=redirect_uri)
 
+        # Store the auth code flow dict in the session for later use during the auth callback
         request.session["flow"] = flow_dict
 
-        # If a final redirect url was specified, store it in session storage so we can
-        # redirect once we get the auth callback. Note that the redirect_url_after_login
-        # query parameter is base64 encoded
+        # If a final redirect url was specified, store it in the session so we can redirect from the auth callback.
+        # Note that the redirect_url_after_login query parameter is base64 encoded
         if redirect_url_after_login is not None:
             target_url_str_after_auth = base64.urlsafe_b64decode(redirect_url_after_login.encode()).decode()
             request.session["target_url_str_after_auth"] = target_url_str_after_auth
@@ -93,37 +95,52 @@ class AuthHelper:
     async def _authorized_callback_route(self, request: Request) -> Response:
         await starsessions.load_session(request)
 
+        # Convert the query params since MSAL expects a plain dict, not Starlette's QueryParams
+        auth_response_dict = dict(request.query_params)
+
+        # Retrieve the auth code flow dict from the session so we can use it to redeem the authorization code
+        flow_dict = request.session.get("flow")
+        if not isinstance(flow_dict, dict):
+            LOGGER.error("Login flow not found in session")
+            return PlainTextResponse("No login in progress. Please log in again.", 400)
+
+        # If the state parameter in the auth response does not match the one in the auth code flow dict, it could
+        # indicate a CSRF attack or a simultaneous login attempt. Note that the test here is mainly to notify the user
+        # and is not critical since the token acquisition below will fail if the state does not match.
+        if auth_response_dict.get("state") != flow_dict.get("state"):
+            LOGGER.error("Login response state value did not match the stored flow state value")
+            return PlainTextResponse("Login could not be verified. Close other login tabs and try again.", 400)
+
         try:
             token_cache = _load_token_cache_from_session(request)
             cca = _create_msal_confidential_client_app(token_cache)
-
-            auth_response_dict = {}
-            for key, value in request.query_params.items():
-                auth_response_dict[key] = value
 
             # Ref msal.PublicClientApplication.acquire_token_by_auth_code_flow() docs, we can only get an access token
             # for ONE resource when redeeming the authorization code. Therefore, we simply get an access token for the
             # graph resource here, and leave the retrieval of access tokens for the other resources (and scopes) for later.
             token_dict = cca.acquire_token_by_auth_code_flow(
-                auth_code_flow=request.session.get("flow", {}),
+                auth_code_flow=flow_dict,
                 auth_response=auth_response_dict,
                 scopes=config.GRAPH_SCOPES,
             )
 
             if "error" in token_dict:
-                return Response(f"Error validating redirected auth response, error: {token_dict['error']}", 400)
+                error = token_dict.get("error")
+                error_description = token_dict.get("error_description")
+                LOGGER.error(f"Microsoft Entra sign-in failed ({error=}, {error_description=})")
+                return PlainTextResponse(f"Microsoft Entra sign-in failed. Please try again. ({error})", 400)
 
             _save_token_cache_in_session(request, token_cache)
 
-        except ValueError:
-            # Usually caused by CSRF
-            return Response("Error processing auth response, probably CSRF error", 400)
+        except ValueError as exc:
+            LOGGER.error(f"Error processing auth response: {repr(exc)}")
+            return PlainTextResponse("Invalid login response. Please try again.", 400)
 
         target_url_str_after_auth = request.session.get("target_url_str_after_auth")
         if target_url_str_after_auth is not None:
             return RedirectResponse(target_url_str_after_auth)
 
-        return Response("Login OK")
+        return PlainTextResponse("Login OK")
 
     @staticmethod
     def get_authenticated_user(request_with_session: Request) -> Optional[AuthenticatedUser]:
@@ -188,7 +205,7 @@ class AuthHelper:
 
 
 def _acquire_access_token_for_resource_scopes(
-    cca: msal.ConfidentialClientApplication, resource_name: _ResourceName, account: str
+    cca: msal.ConfidentialClientApplication, resource_name: _ResourceName, account: dict
 ) -> _TokenEntry | None:
     scopes_list: list[str] | None = None
     if resource_name == "graph":
@@ -199,8 +216,20 @@ def _acquire_access_token_for_resource_scopes(
     if not scopes_list:
         return None
 
-    token_dict = cca.acquire_token_silent(scopes=scopes_list, account=account)
-    access_token = token_dict.get("access_token") if token_dict else None
+    # Earlier we used acquire_token_silent() here, but it doesn't give any feedback on why a call failed,
+    # so we switched to acquire_token_silent_with_error() instead and log errors.
+    token_dict = cca.acquire_token_silent_with_error(scopes=scopes_list, account=account)
+    if token_dict is None:
+        LOGGER.error(f"No token found in cache when acquiring token silently ({resource_name=}, {scopes_list=})")
+        return None
+
+    if "error" in token_dict:
+        LOGGER.error(
+            f"Error acquiring token silently ({resource_name=}, {scopes_list=}), error: {token_dict['error']}, error_description: {token_dict.get('error_description')}"
+        )
+        return None
+
+    access_token = token_dict.get("access_token")
     if not access_token:
         return None
 
@@ -232,7 +261,8 @@ def _acquire_refreshed_identity_and_tokens(
 
     account_list = cca.get_accounts()
     if not account_list:
-        LOGGER.error("Error getting accounts")
+        # The session may outlive its MSAL account entries; treat this as an unauthenticated state.
+        LOGGER.debug("No accounts found in MSAL token cache")
         return None
     account = account_list[0]
     perf_metrics.record_lap("get-accounts")
@@ -251,8 +281,20 @@ def _acquire_refreshed_identity_and_tokens(
         user_name = curr_auth_info.user_name
         id_token_expiry_time = curr_auth_info.user_identity_expires_at
     else:
-        token_dict = cca.acquire_token_silent(scopes=config.GRAPH_SCOPES, account=account, force_refresh=True)
-        id_token = token_dict.get("id_token") if token_dict else None
+        token_dict = cca.acquire_token_silent_with_error(
+            scopes=config.GRAPH_SCOPES, account=account, force_refresh=True
+        )
+        if token_dict is None:
+            LOGGER.error("No token found in cache when acquiring token silently for graph scopes")
+            return None
+
+        if "error" in token_dict:
+            LOGGER.error(
+                f"Error acquiring token silently for graph scopes, error: {token_dict['error']}, error_description: {token_dict.get('error_description')}"
+            )
+            return None
+
+        id_token = token_dict.get("id_token")
         if not id_token:
             LOGGER.error("Error acquiring ID token")
             return None
@@ -309,15 +351,50 @@ def _acquire_refreshed_identity_and_tokens(
     return new_auth_info
 
 
-def _create_msal_confidential_client_app(token_cache: msal.TokenCache) -> msal.ConfidentialClientApplication:
-    authority = f"https://login.microsoftonline.com/{config.TENANT_ID}"
+def _create_msal_confidential_client_app(token_cache: msal.TokenCache | None) -> msal.ConfidentialClientApplication:
+    tenant_id = os.environ["AZURE_TENANT_ID"]
+    client_id = os.environ["AZURE_CLIENT_ID"]
+    authority = f"https://login.microsoftonline.com/{tenant_id}"
+
+    is_on_radix_platform = is_running_on_radix_platform()
+
+    # Select how MSAL should prove the app's identity (the "client credential"):
+    # * On Radix we use workload identity federation. There is no client secret; instead the app authenticates with a
+    #   short-lived federated token presented as a client assertion. We pass _get_client_assertion as a callable so MSAL
+    #   invokes it each time it needs the assertion, ensuring the rotated token file is always re-read.
+    # * Locally (dev/docker-compose) we authenticate with a plain client secret from AZURE_CLIENT_SECRET.
+    client_credential_to_use: str | dict[str, Callable]
+    if is_on_radix_platform:
+        client_credential_to_use = {"client_assertion": _get_client_assertion}
+    else:
+        client_credential_to_use = os.environ["AZURE_CLIENT_SECRET"]
+
     return msal.ConfidentialClientApplication(
-        client_id=config.CLIENT_ID,
-        client_credential=config.CLIENT_SECRET,
+        client_id=client_id,
+        client_credential=client_credential_to_use,
         authority=authority,
         token_cache=token_cache,
         instance_discovery=False,
     )
+
+
+def _get_client_assertion() -> str:
+    """
+    Read and return the workload identity federated token used as the MSAL client assertion on Radix.
+    """
+    token_file_path = os.environ.get("AZURE_FEDERATED_TOKEN_FILE")
+    if not token_file_path:
+        raise RuntimeError("Cannot get client assertion: environment variable AZURE_FEDERATED_TOKEN_FILE not set.")
+
+    try:
+        assertion = Path(token_file_path).read_text(encoding="utf-8").strip()
+    except OSError as exc:
+        raise RuntimeError(f"Cannot get client assertion: failed to read token file '{token_file_path}'") from exc
+
+    if not assertion:
+        raise RuntimeError(f"Cannot get client assertion: federated token file '{token_file_path}' is empty")
+
+    return assertion
 
 
 def _load_user_auth_info_from_session(request_with_session: Request) -> _UserAuthInfo | None:
