@@ -56,6 +56,7 @@ type FakeItemDelegate = {
     setParentGroup: ReturnType<typeof vi.fn>;
     getOrder: () => number;
     getId: () => string;
+    getPublishSubscribeDelegate: () => { makeSubscriberFunction: () => () => () => void };
 };
 
 type FakeProvider = {
@@ -72,6 +73,8 @@ function makeFakeProvider(id = "fake-provider-id"): FakeProvider {
         setParentGroup: vi.fn(),
         getOrder: () => 0,
         getId: () => id,
+        // The parent group subscribes to every child's expansion state when taking ownership of it
+        getPublishSubscribeDelegate: () => ({ makeSubscriberFunction: () => () => () => {} }),
     };
     return {
         deserializeState: vi.fn(),

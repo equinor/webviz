@@ -74,7 +74,7 @@ class EnforceLoggedInMiddleware:
                     await redirect_response(scope, receive, send)
                     return
 
-                LOGGER.info("EnforceLoggedInMiddleware - user is not authorized yet")
+                LOGGER.debug("EnforceLoggedInMiddleware - user is not authorized yet")
                 text_response = PlainTextResponse("Not authorized yet, must log in", 401)
                 await text_response(scope, receive, send)
                 return
