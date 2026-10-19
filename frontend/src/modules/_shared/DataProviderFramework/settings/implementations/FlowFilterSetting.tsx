@@ -416,7 +416,11 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
     const debouncedOnValueChange = useDebouncedFunction(onValueChange, 500);
 
     const handleSliderChange = React.useCallback(
-        function handleSliderChange(value: number | readonly number[]) {
+        function handleSliderChange(value: number | readonly number[], eventDetails: { reason: string }) {
+            // Bounds changes make the slider emit a clamped value; ignore it so a retained out-of-range
+            // threshold stays visible (and invalid) until the user edits it
+            if (eventDetails.reason === "clamp-value") return;
+
             const newValue = Array.isArray(value) ? value[0] : value;
             setLocalValue(newValue);
             debouncedOnValueChange(newValue);

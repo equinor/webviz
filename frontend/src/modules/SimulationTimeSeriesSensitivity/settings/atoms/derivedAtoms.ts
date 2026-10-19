@@ -46,17 +46,25 @@ export const selectedVectorNameHasHistoricalAtom = atom<boolean>((get) => {
 });
 
 export const vectorSpecificationAtom = atom<VectorSpec | null>((get) => {
-    const selectedRegularEnsembleIdent = get(selectedRegularEnsembleIdentAtom).value;
-    const selectedVectorName = get(selectedVectorNameAndTagAtom).value?.name ?? null;
+    const selectedRegularEnsembleIdent = get(selectedRegularEnsembleIdentAtom);
+    const selectedVectorNameAndTag = get(selectedVectorNameAndTagAtom);
     const selectedVectorNameHasHistorical = get(selectedVectorNameHasHistoricalAtom);
 
-    if (!selectedRegularEnsembleIdent || !selectedVectorName) {
+    // The view's data queries are enabled whenever a specification exists, so withhold it while
+    // either selection is invalid
+    if (!selectedRegularEnsembleIdent.isValidInContext || !selectedVectorNameAndTag.isValidInContext) {
+        return null;
+    }
+
+    const ensembleIdent = selectedRegularEnsembleIdent.value;
+    const vectorName = selectedVectorNameAndTag.value?.name ?? null;
+    if (!ensembleIdent || !vectorName) {
         return null;
     }
 
     return {
-        ensembleIdent: selectedRegularEnsembleIdent,
-        vectorName: selectedVectorName,
+        ensembleIdent,
+        vectorName,
         hasHistorical: selectedVectorNameHasHistorical,
     };
 });

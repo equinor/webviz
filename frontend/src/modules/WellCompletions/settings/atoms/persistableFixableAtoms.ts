@@ -2,29 +2,21 @@ import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
 
-import { syncedEnsembleIdentsAtom } from "./baseAtoms";
 import { availableRealizationsAtom, sortedCompletionDatesAtom, wellCompletionsDataAccessorAtom } from "./derivedAtoms";
 import { wellCompletionsQueryAtom } from "./queryAtoms";
 
+// Synced ensembles are written straight into this atom by the settings' sync handler, so validity
+// only needs to check against the ensemble set.
 export const selectedEnsembleIdentAtom = persistableFixableAtom<RegularEnsembleIdent | null>({
     initialValue: null,
     isValidFunction: ({ get, value }) => {
-        const syncedEnsembleIdents = get(syncedEnsembleIdentsAtom);
         const ensembleSet = get(EnsembleSetAtom);
-
-        if (syncedEnsembleIdents && syncedEnsembleIdents.length > 0) {
-            return value === syncedEnsembleIdents[0];
-        }
 
         return value !== null && ensembleSet.hasEnsemble(value);
     },
     fixupFunction: ({ get }) => {
-        const syncedEnsembleIdents = get(syncedEnsembleIdentsAtom);
         const ensembleSet = get(EnsembleSetAtom);
 
-        if (syncedEnsembleIdents && syncedEnsembleIdents.length > 0) {
-            return syncedEnsembleIdents[0];
-        }
         return ensembleSet.getRegularEnsembleArray()[0]?.getIdent() || null;
     },
 });

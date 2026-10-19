@@ -116,6 +116,7 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<
                         ]}
                         layout="horizontal"
                         size="small"
+                        disabled={props.disabled}
                     />
                     {!isAllSelected && (
                         <Select

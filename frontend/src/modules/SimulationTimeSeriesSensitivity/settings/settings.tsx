@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { isEqual } from "lodash-es";
 
 import { Frequency_api } from "@api";
@@ -27,8 +27,6 @@ import {
     showHistoricalAtom,
     showRealizationsAtom,
     showStatisticsAtom,
-    syncedRegularEnsembleIdentsAtom,
-    syncedVectorNameAtom,
 } from "./atoms/baseAtoms";
 import { availableSensitivityNamesAtom, vectorSelectorDataAtom } from "./atoms/derivedAtoms";
 import {
@@ -42,9 +40,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
-
-    const setSyncedRegularEnsembleIdents = useSetAtom(syncedRegularEnsembleIdentsAtom);
-    const setSyncedVectorName = useSetAtom(syncedVectorNameAtom);
 
     const [selectedRegularEnsembleIdent, setSelectedRegularEnsembleIdent] = useAtom(selectedRegularEnsembleIdentAtom);
     const [selectedSensitivityNames, setSelectedSensitivityNamesAtom] = useAtom(selectedSensitivityNamesAtom);
@@ -70,16 +65,20 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
 
     propagateQueryErrorToStatusWriter(vectorListQuery, statusWriter);
 
+    // Write synced values explicitly - the selected atoms no longer fix up to them on their own
     if (!isEqual(syncedValueEnsembles, prevSyncedEnsembleIdents)) {
         setPrevSyncedEnsembleIdents(syncedValueEnsembles);
-        if (syncedValueEnsembles) {
-            setSyncedRegularEnsembleIdents(syncedValueEnsembles);
+        if (syncedValueEnsembles && syncedValueEnsembles.length > 0) {
+            setSelectedRegularEnsembleIdent(syncedValueEnsembles[0]);
         }
     }
     if (!isEqual(syncedValueSummaryVector, prevSyncedSummaryVector)) {
         setPrevSyncedSummaryVector(syncedValueSummaryVector);
         if (syncedValueSummaryVector) {
-            setSyncedVectorName(syncedValueSummaryVector.vectorName);
+            setSelectedVectorNameAndTag({
+                name: syncedValueSummaryVector.vectorName,
+                tag: syncedValueSummaryVector.vectorName,
+            });
         }
     }
 

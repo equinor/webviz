@@ -28,7 +28,6 @@ import { RealizationMode, TimeAggregationMode, TimeAggregationModeEnumToStringMa
 
 import {
     selectedStratigraphyColorSetAtom,
-    syncedEnsembleIdentsAtom,
     wellExclusionTextAtom,
     wellSearchTextAtom,
     isZeroCompletionsHiddenAtom,
@@ -52,7 +51,6 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
     const stratigraphyColorSet = useColorSet(props.workbenchSettings);
 
-    const setSyncedEnsembleIdents = useSetAtom(syncedEnsembleIdentsAtom);
     const setSelectedStratigraphyColorSet = useSetAtom(selectedStratigraphyColorSetAtom);
 
     const availableRealizations = useAtomValue(availableRealizationsAtom);
@@ -90,11 +88,12 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
         setPrevSyncedEnsembleIdents(syncedEnsembleIdents);
     }
 
+    // Write the synced ensemble explicitly - the selected-ensemble atom no longer fixes up to it on its own
     React.useEffect(() => {
-        if (prevSyncedEnsembleIdents) {
-            setSyncedEnsembleIdents(syncedEnsembleIdents);
+        if (prevSyncedEnsembleIdents && prevSyncedEnsembleIdents.length > 0) {
+            setSelectedEnsembleIdent(prevSyncedEnsembleIdents[0]);
         }
-    }, [prevSyncedEnsembleIdents, setSyncedEnsembleIdents, syncedEnsembleIdents]);
+    }, [prevSyncedEnsembleIdents, setSelectedEnsembleIdent]);
     React.useEffect(() => {
         if (prevStratigraphyColorSet) {
             setSelectedStratigraphyColorSet(stratigraphyColorSet);

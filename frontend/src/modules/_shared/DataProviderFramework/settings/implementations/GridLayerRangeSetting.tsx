@@ -324,16 +324,18 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
             ) {
                 // Lock callbacks handle sentinel updates when locking; skip to avoid overwriting them
                 if (reason === "range-locked") return;
+                // Bounds changes make the slider emit a clamped value; ignore it so a retained
+                // out-of-range draft stays visible (and invalid) until the user edits it. Sentinels
+                // already follow the new bounds on their own.
+                if (reason === "clamp-value") return;
 
                 const base = internalValue ?? defaultBase;
 
-                // Preserve a sentinel when:
-                // - the constraint changed (clamp-value): keep all existing sentinels
-                // - the value for that position didn't move (still at the constraint boundary):
-                //   the other thumb was dragged, so this position should stay locked
+                // Preserve a sentinel when the value for that position didn't move (still at the
+                // constraint boundary): the other thumb was dragged, so this position should stay locked
                 function keepSentinel(current: number | "min" | "max", newVal: number, constraintVal: number): boolean {
                     if (current !== "min" && current !== "max") return false;
-                    return reason === "clamp-value" || newVal === constraintVal;
+                    return newVal === constraintVal;
                 }
 
                 if (key === "k") {

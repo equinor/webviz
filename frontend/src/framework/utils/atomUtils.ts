@@ -348,8 +348,7 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
     });
 
     // One-way latch: becomes true the first time this atom's dependencies have resolved at least once
-    // (computeDependenciesState reports anything but "loading", or immediately if that callback
-    // wasn't given). While false, a USER-sourced value is masked on every read exactly as before this
+    // (computeDependenciesState reports "loaded", or immediately if that callback wasn't given). While false, a USER-sourced value is masked on every read exactly as before this
     // change, so a freshly-mounted atom still lands on a sensible default instead of flashing
     // "invalid" while its dependencies are still loading for the first time. Once true, masking stops
     // for good for USER-sourced values: an invalid value is kept as-is and reported as invalid via
@@ -511,11 +510,10 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
             const settled = get(settledAtom);
             const internalState = get(internalStateAtom);
             const { dependenciesState, isValid, computeFixup } = deriveState(get, internalState.value);
-            const nowResolved = dependenciesState !== "loading" && dependenciesState !== "blocked";
-
-            if (!nowResolved) {
-                // Dependencies regressed since this was queued - nothing to do now, a future
-                // resolution of the (now-changed) dependency will re-trigger this effect.
+            if (dependenciesState !== "loaded") {
+                // Dependencies regressed (or failed) since this was queued - nothing to do now, a
+                // future successful resolution of the (now-changed) dependency will re-trigger this
+                // effect.
                 return;
             }
 
