@@ -142,6 +142,16 @@ export type SetupReadiness = {
     issues: SetupIssue[];
 };
 
+/** The messages of every issue for `field`, joined; undefined when there is none. */
+export function getFieldIssueText(readiness: SetupReadiness, field: SetupField): string | undefined {
+    return (
+        readiness.issues
+            .filter((issue) => issue.field === field)
+            .map((issue) => issue.message)
+            .join(" ") || undefined
+    );
+}
+
 export type SetupReadinessInput = {
     hasEnsemble: boolean;
     vectorListStatus: "LOADING" | "ERROR" | "READY";

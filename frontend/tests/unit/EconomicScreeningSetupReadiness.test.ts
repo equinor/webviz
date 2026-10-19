@@ -18,6 +18,7 @@ import {
     type MonthlyProductionProfile,
 } from "@modules/EconomicScreening/utils/monthlyProduction";
 import {
+    getFieldIssueText,
     getSetupReadiness,
     SetupIssueKind,
     suggestPredictionStartYears,
@@ -529,5 +530,25 @@ describe("prediction and cost helpers", () => {
         expect(isProductConfirmedAbsent(profile(2018, [5, -5, ...new Array(10).fill(0)]), start, end)).toBe(false);
         expect(isProductConfirmedAbsent(profile(2018, new Array(11).fill(0)), start, end)).toBe(false);
         expect(isProductConfirmedAbsent(null, start, end)).toBe(false);
+    });
+});
+
+describe("getFieldIssueText", () => {
+    const readiness = {
+        isLoading: false,
+        issues: [
+            { kind: SetupIssueKind.INPUT, message: "Enter an oil price.", field: "oilPrice" as const },
+            { kind: SetupIssueKind.SOURCE, message: "No source data." },
+            { kind: SetupIssueKind.SOURCE, message: "Oil coverage is incomplete.", field: "oilPrice" as const },
+        ],
+    };
+
+    test("joins the messages of the field's issues in order", () => {
+        expect(getFieldIssueText(readiness, "oilPrice")).toBe("Enter an oil price. Oil coverage is incomplete.");
+    });
+
+    test("is undefined when the field has no issue", () => {
+        expect(getFieldIssueText(readiness, "gasPrice")).toBeUndefined();
+        expect(getFieldIssueText({ isLoading: false, issues: [] }, "oilPrice")).toBeUndefined();
     });
 });
