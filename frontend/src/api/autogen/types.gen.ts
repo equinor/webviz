@@ -4232,7 +4232,7 @@ export type GetDerivedVectorTableHybridData_api = {
          * Can be used to retry the derived table creation task
          */
         retry_creation_task?: boolean | null;
-        zCacheBust?: string;
+        _cacheBust?: string;
     };
     url: "/timeseries/derived_vector_table_hybrid";
 };
@@ -4269,7 +4269,7 @@ export type GetDerivedTableInfoData_api = {
          * Handle for the derived table
          */
         table_handle: string;
-        zCacheBust?: string;
+        _cacheBust?: string;
     };
     url: "/timeseries/derived_table_info";
 };
@@ -4308,7 +4308,7 @@ export type GetCalcSomethingOnDerivedTableData_api = {
          * Some parameter for the calculation
          */
         calculation_params: string;
-        zCacheBust?: string;
+        _cacheBust?: string;
     };
     url: "/timeseries/calc_something_on_derived_table";
 };
