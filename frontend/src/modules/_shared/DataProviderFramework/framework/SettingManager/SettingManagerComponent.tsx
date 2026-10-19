@@ -30,6 +30,7 @@ export function SettingManagerComponent<
     );
     const value = usePublishSubscribeTopicValue(props.setting, SettingTopic.INTERNAL_VALUE);
     const attributes = usePublishSubscribeTopicValue(props.setting, SettingTopic.ATTRIBUTES);
+    const areAttributesResolved = usePublishSubscribeTopicValue(props.setting, SettingTopic.ARE_ATTRIBUTES_RESOLVED);
     const isValid = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_VALID);
     const isPersisted = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED);
     const isValidPersistedValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED_VALUE_VALID);
@@ -60,7 +61,8 @@ export function SettingManagerComponent<
         [props.setting],
     );
 
-    if (!attributes.visible) {
+    // Until its attributes are resolved, a setting that is about to be hidden would flash up
+    if (!attributes.visible || !areAttributesResolved) {
         return null;
     }
 
