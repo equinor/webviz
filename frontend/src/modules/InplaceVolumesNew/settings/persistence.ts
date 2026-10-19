@@ -1,6 +1,8 @@
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { getEnsembleIdentsFromStrings } from "@framework/utils/ensembleIdentUtils";
+import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { SENSITIVITY_CASE_REF_SCHEMA } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
@@ -19,6 +21,7 @@ import {
     selectedResultNameAtom,
     selectedIndicesWithValuesAtom,
     selectedSelectorColumnAtom,
+    selectedSensitivityCasesAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
 } from "./atoms/persistableFixableAtoms";
@@ -35,6 +38,7 @@ export type SerializedSettings = {
     plotOptions: InplaceVolumesPlotOptions;
     indexValueCriteria: IndexValueCriteria;
     showTable: boolean;
+    sensitivityCases?: SensitivityCaseRef[];
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
@@ -64,6 +68,11 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
         },
         showTable: { type: "boolean" },
     },
+    optionalProperties: {
+        sensitivityCases: {
+            elements: SENSITIVITY_CASE_REF_SCHEMA,
+        },
+    },
 }));
 
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
@@ -86,6 +95,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         plotType: get(selectedPlotTypeAtom),
         plotOptions: get(plotOptionsAtom),
         showTable: get(showTableAtom),
+        sensitivityCases: get(selectedSensitivityCasesAtom).value,
     };
 };
 
@@ -104,4 +114,5 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedPlotTypeAtom, raw.plotType);
     setIfDefined(set, plotOptionsAtom, raw.plotOptions);
     setIfDefined(set, showTableAtom, raw.showTable);
+    setIfDefined(set, selectedSensitivityCasesAtom, raw.sensitivityCases);
 };

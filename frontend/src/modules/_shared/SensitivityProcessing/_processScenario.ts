@@ -13,25 +13,40 @@ export const processScenarioSensitivity = (
         throw new Error(`Scenario sensitivity ${sensitivity.name} has more than 2 cases`);
     }
 
-    // Single case scenario
+    // Single case scenario: the case goes on the side of the reference it falls on, the other side is the reference.
     if (sensitivity.cases.length === 1) {
         const sensitivityCase = sensitivity.cases[0];
         const responseValues = extractResponseValues(ensemblePerRealResponse, sensitivityCase.realizations);
         const average = computeAverage(responseValues);
+        const caseSide = {
+            name: sensitivityCase.name,
+            average,
+            referenceDifference: average - referenceAverage,
+            realizations: sensitivityCase.realizations,
+            realizationValues: responseValues,
+        };
+        const referenceSide = {
+            name: "",
+            average: referenceAverage,
+            referenceDifference: 0,
+            realizations: [],
+            realizationValues: [],
+        };
+        const [low, high] = average < referenceAverage ? [caseSide, referenceSide] : [referenceSide, caseSide];
 
         return {
             sensitivityName: sensitivity.name,
             sensitivityType: SensitivityType.SCENARIO,
-            lowCaseName: sensitivityCase.name,
-            lowCaseAverage: average,
-            lowCaseReferenceDifference: average - referenceAverage,
-            lowCaseRealizations: sensitivityCase.realizations,
-            lowCaseRealizationValues: responseValues,
-            highCaseName: "",
-            highCaseAverage: referenceAverage,
-            highCaseReferenceDifference: 0,
-            highCaseRealizations: [],
-            highCaseRealizationValues: [],
+            lowCaseName: low.name,
+            lowCaseAverage: low.average,
+            lowCaseReferenceDifference: low.referenceDifference,
+            lowCaseRealizations: low.realizations,
+            lowCaseRealizationValues: low.realizationValues,
+            highCaseName: high.name,
+            highCaseAverage: high.average,
+            highCaseReferenceDifference: high.referenceDifference,
+            highCaseRealizations: high.realizations,
+            highCaseRealizationValues: high.realizationValues,
         };
     }
 

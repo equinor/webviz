@@ -1,6 +1,8 @@
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
+import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { SENSITIVITY_CASE_REF_SCHEMA } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
@@ -8,9 +10,11 @@ import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 import { selectedIndexValueCriteriaAtom, showTableAtom } from "./atoms/baseAtoms";
 import {
     selectedComparisonEnsembleIdentAtom,
+    selectedComparisonSensitivityCaseAtom,
     selectedComparisonTableNameAtom,
     selectedIndicesWithValuesAtom,
     selectedReferenceEnsembleIdentAtom,
+    selectedReferenceSensitivityCaseAtom,
     selectedReferenceTableNameAtom,
     selectedResultNameAtom,
     selectedSubplotByAtom,
@@ -26,7 +30,14 @@ export type SerializedSettings = {
     indicesWithValues: InplaceVolumesIndexWithValuesAsStrings[];
     indexValueCriteria: IndexValueCriteria;
     showTable: boolean;
+    referenceSensitivityCase?: SensitivityCaseRef | null;
+    comparisonSensitivityCase?: SensitivityCaseRef | null;
 };
+
+const NULLABLE_SENSITIVITY_CASE_SCHEMA = {
+    ...SENSITIVITY_CASE_REF_SCHEMA,
+    nullable: true,
+} as const;
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
     properties: {
@@ -39,6 +50,10 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
         indicesWithValues: { ...inject("InplaceVolumesIndexWithValues") },
         indexValueCriteria: { enum: Object.values(IndexValueCriteria) },
         showTable: { type: "boolean" },
+    },
+    optionalProperties: {
+        referenceSensitivityCase: NULLABLE_SENSITIVITY_CASE_SCHEMA,
+        comparisonSensitivityCase: NULLABLE_SENSITIVITY_CASE_SCHEMA,
     },
 }));
 
@@ -58,6 +73,8 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         })),
         indexValueCriteria: get(selectedIndexValueCriteriaAtom),
         showTable: get(showTableAtom),
+        referenceSensitivityCase: get(selectedReferenceSensitivityCaseAtom).value,
+        comparisonSensitivityCase: get(selectedComparisonSensitivityCaseAtom).value,
     };
 };
 
@@ -85,4 +102,6 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedIndicesWithValuesAtom, raw.indicesWithValues);
     setIfDefined(set, selectedIndexValueCriteriaAtom, raw.indexValueCriteria);
     setIfDefined(set, showTableAtom, raw.showTable);
+    setIfDefined(set, selectedReferenceSensitivityCaseAtom, raw.referenceSensitivityCase);
+    setIfDefined(set, selectedComparisonSensitivityCaseAtom, raw.comparisonSensitivityCase);
 };

@@ -7,6 +7,7 @@ import { computeStatistics } from "@modules/_shared/utils/math/statistics";
 export type PlotlyHistogramTracesOptions = {
     title: string;
     values: number[];
+    realizations: number[];
     resultName: string;
     color: string;
     numBins: number;
@@ -18,6 +19,7 @@ export type PlotlyHistogramTracesOptions = {
 export function makePlotlyHistogramTraces({
     title,
     values,
+    realizations,
     resultName,
     color,
     numBins,
@@ -41,8 +43,8 @@ export function makePlotlyHistogramTraces({
     });
 
     histogram.name = title;
-    histogram.legendgroup = title;
     histogram.showlegend = true;
+    histogram.hovertemplate = `<b>${title}</b><br>Range: %{x}<br>Percentage: %{y:.2f}%<extra></extra>`;
 
     if (showStatisticalMarkers) {
         const statisticLines = createStatisticLinesForHistogram(
@@ -57,7 +59,7 @@ export function makePlotlyHistogramTraces({
     }
     data.push(histogram);
     if (showRealizationPoints) {
-        const rugTrace = createRugTraceForHistogram(values, title, color);
+        const rugTrace = createRugTraceForHistogram(values, realizations, title, color);
         data.push(rugTrace);
     }
 
@@ -104,7 +106,6 @@ function createStatisticLinesForHistogram(
             line: { color, width: 4, dash },
             showlegend: false,
             name: label,
-            legendgroup: title,
             hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatInplaceVolumesValue(value)}<extra></extra>`,
         };
 
@@ -122,7 +123,12 @@ function createStatisticLinesForHistogram(
 /**
  * Creates a rug trace showing individual realization points
  */
-function createRugTraceForHistogram(xValues: number[], title: string, color: string): Partial<PlotData> {
+function createRugTraceForHistogram(
+    xValues: number[],
+    realizations: number[],
+    title: string,
+    color: string,
+): Partial<PlotData> {
     return {
         x: xValues,
         y: new Array(xValues.length).fill(-2),
@@ -137,7 +143,7 @@ function createRugTraceForHistogram(xValues: number[], title: string, color: str
         },
         showlegend: false,
         name: "Realizations",
-        legendgroup: title,
-        hovertemplate: `<b>${title}</b><br>Value: %{x}<br>Realization: %{pointNumber}<extra></extra>`,
+        customdata: realizations,
+        hovertemplate: `<b>${title}</b><br>Value: %{x}<br>Realization: %{customdata}<extra></extra>`,
     };
 }

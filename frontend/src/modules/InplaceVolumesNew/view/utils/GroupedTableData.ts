@@ -5,9 +5,13 @@ import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembl
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
+// A single value is not "constant": hiding it would drop every single-realization sensitivity case.
 function isConstant(values: number[]): boolean {
     if (values.length === 0) {
         return true;
+    }
+    if (values.length === 1) {
+        return false;
     }
     const firstValue = values[0];
     return values.every((v) => v === firstValue);
@@ -42,6 +46,7 @@ export interface GroupedTableDataOptions {
     ensembleSet: EnsembleSet;
     colorSet: ColorSet;
     categoryOrder?: ReadonlyMap<string, readonly string[]>;
+    colorOverrides?: ReadonlyMap<string, string>;
 }
 
 /**
@@ -88,16 +93,26 @@ export class GroupedTableData {
     private _ensembleSet: EnsembleSet;
     private _colorSet: ColorSet;
     private _categoryOrder?: ReadonlyMap<string, readonly string[]>;
+    private _colorOverrides?: ReadonlyMap<string, string>;
     private _subplotGroups: SubplotGroup[] = [];
     private _colorMap: Map<string, string> = new Map();
     private _allEntries: GroupedEntry[] = [];
 
-    constructor({ table, subplotBy, colorBy, ensembleSet, colorSet, categoryOrder }: GroupedTableDataOptions) {
+    constructor({
+        table,
+        subplotBy,
+        colorBy,
+        ensembleSet,
+        colorSet,
+        categoryOrder,
+        colorOverrides,
+    }: GroupedTableDataOptions) {
         this._subplotBy = subplotBy;
         this._colorBy = colorBy;
         this._ensembleSet = ensembleSet;
         this._colorSet = colorSet;
         this._categoryOrder = categoryOrder;
+        this._colorOverrides = colorOverrides;
 
         this.buildColorMap(table);
         this.buildGroups(table);
@@ -117,6 +132,12 @@ export class GroupedTableData {
 
         for (const value of orderedValues) {
             const key = value.toString();
+
+            const overrideColor = this._colorOverrides?.get(key);
+            if (overrideColor) {
+                this._colorMap.set(key, overrideColor);
+                continue;
+            }
 
             if (this._colorBy === TableOriginKey.ENSEMBLE) {
                 const ensembleIdent = getEnsembleIdentFromString(key);
@@ -247,6 +268,16 @@ export class GroupedTableData {
 
     getColorMap(): Map<string, string> {
         return this._colorMap;
+    }
+
+    /**
+     * Labels of the colour groups that have entries, in display order.
+     */
+    getColorLabels(): string[] {
+        const colorKeysWithEntries = new Set(this._allEntries.map((entry) => entry.colorKey));
+        return Array.from(this._colorMap.keys())
+            .filter((key) => colorKeysWithEntries.has(key))
+            .map((key) => this.formatLabel(this._colorBy, key));
     }
 
     getAllEntries(): GroupedEntry[] {

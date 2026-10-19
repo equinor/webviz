@@ -1,7 +1,13 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { SensitivitySelection } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 import { plotOptionsAtom, selectedPlotTypeAtom, showTableAtom } from "./settings/atoms/baseAtoms";
-import { areSelectedTablesComparableAtom, areTableDefinitionSelectionsValidAtom } from "./settings/atoms/derivedAtoms";
+import {
+    areSelectedTablesComparableAtom,
+    areTableDefinitionSelectionsValidAtom,
+    isSensitivityEnsembleSelectionBlockedAtom,
+    sensitivitySelectionAtom,
+} from "./settings/atoms/derivedAtoms";
 import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
@@ -23,6 +29,8 @@ export type SettingsToViewInterface = {
     areTableDefinitionSelectionsValid: boolean;
     plotOptions: InplaceVolumesPlotOptions;
     showTable: boolean;
+    sensitivitySelection: SensitivitySelection | null;
+    isSensitivityEnsembleSelectionBlocked: boolean;
 };
 
 export type Interfaces = {
@@ -46,4 +54,6 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     areTableDefinitionSelectionsValid: (get) => get(areTableDefinitionSelectionsValidAtom),
     plotOptions: (get) => get(plotOptionsAtom),
     showTable: (get) => get(showTableAtom),
+    sensitivitySelection: (get) => get(sensitivitySelectionAtom),
+    isSensitivityEnsembleSelectionBlocked: (get) => get(isSensitivityEnsembleSelectionBlockedAtom),
 };

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -9,11 +9,10 @@ import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Combobox } from "@lib/components/Combobox";
 import { Setting } from "@lib/components/Setting";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
-import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
+import { pickDefaultReferenceSensitivityName, SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
 
 import type { Interfaces } from "../interfaces";
-import { DisplayComponentType, SensitivityScaling } from "../typesAndEnums";
-import { ColorBy } from "../view/components/sensitivityChartFigure";
+import { ColorBy, DisplayComponentType, SensitivityScaling } from "../typesAndEnums";
 
 import {
     sensitivitySortByAtom,
@@ -33,20 +32,12 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [showSensitivityMeanPoints, setShowSensitivityMeanPoints] = useAtom(showSensitivityMeanPointsAtom);
     const [showRealizationPoints, setShowRealizationPoints] = useAtom(showRealizationPointsAtom);
-    const setModuleReferenceSensitivityName = useSetAtom(referenceSensitivityNameAtom);
+    const [referenceSensitivityName, setReferenceSensitivityName] = useAtom(referenceSensitivityNameAtom);
     const [sensitivitySortBy, setSensitivitySortBy] = useAtom(sensitivitySortByAtom);
     const [sensitivityScaling, setSensitivityScaling] = useAtom(sensitivityScalingAtom);
-    const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
     const [colorBy, setColorBy] = useAtom(colorByAtom);
 
     const ensembleSet = workbenchSession.getEnsembleSet();
-
-    React.useEffect(
-        function propagateReferenceSensitivityName() {
-            setModuleReferenceSensitivityName(referenceSensitivityName);
-        },
-        [referenceSensitivityName, setModuleReferenceSensitivityName],
-    );
 
     const responseReceiver = settingsContext.useChannelReceiver({
         receiverIdString: "response",
@@ -54,44 +45,46 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     });
 
     const sensitivityNames: string[] = [];
-    if (responseReceiver.channel) {
-        if (
-            responseReceiver.channel.contents.length > 0 &&
-            responseReceiver.channel.contents[0].metaData.ensembleIdentString
-        ) {
-            const ensembleIdentString = responseReceiver.channel.contents[0].metaData.ensembleIdentString;
+    let invalidEnsembleType: "Invalid" | "Delta" | null = null;
+    for (const content of responseReceiver.channel?.contents ?? []) {
+        if (!content.metaData.ensembleIdentString) {
+            continue;
+        }
+        const ensemble = ensembleSet.findEnsembleByIdentString(content.metaData.ensembleIdentString);
+        if (!ensemble || ensemble instanceof DeltaEnsemble) {
+            invalidEnsembleType = !ensemble ? "Invalid" : "Delta";
+            break;
+        }
 
-            const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-            if (!ensemble || ensemble instanceof DeltaEnsemble) {
-                const ensembleType = !ensemble ? "Invalid" : "Delta";
-                return (
-                    <ContentWarning>
-                        <p>{ensembleType} ensemble detected in the data channel.</p>
-                        <p>Unable to compute parameter correlations.</p>
-                    </ContentWarning>
-                );
+        for (const sensitivity of ensemble.getSensitivities()?.getSensitivityArr() ?? []) {
+            if (!sensitivityNames.includes(sensitivity.name)) {
+                sensitivityNames.push(sensitivity.name);
             }
-
-            sensitivityNames.push(
-                ...(ensemble
-                    .getSensitivities()
-                    ?.getSensitivityArr()
-                    .map((el) => el.name) ?? []),
-            );
         }
     }
 
-    if (
-        (!referenceSensitivityName || !sensitivityNames.includes(referenceSensitivityName)) &&
-        sensitivityNames.length > 0
-    ) {
-        if (sensitivityNames.includes("rms_seed")) {
-            setReferenceSensitivityName("rms_seed");
-        } else if (sensitivityNames.includes("rms")) {
-            setReferenceSensitivityName("rms");
-        } else {
-            setReferenceSensitivityName(sensitivityNames[0]);
-        }
+    const defaultReferenceSensitivityName =
+        invalidEnsembleType === null &&
+        (!referenceSensitivityName || !sensitivityNames.includes(referenceSensitivityName))
+            ? pickDefaultReferenceSensitivityName(sensitivityNames)
+            : null;
+
+    React.useEffect(
+        function applyDefaultReferenceSensitivityName() {
+            if (defaultReferenceSensitivityName !== null) {
+                setReferenceSensitivityName(defaultReferenceSensitivityName);
+            }
+        },
+        [defaultReferenceSensitivityName, setReferenceSensitivityName],
+    );
+
+    if (invalidEnsembleType) {
+        return (
+            <ContentWarning>
+                <p>{invalidEnsembleType} ensemble detected in the data channel.</p>
+                <p>Unable to compute parameter correlations.</p>
+            </ContentWarning>
+        );
     }
 
     const isChartSettingsDisabled = displayComponentType !== DisplayComponentType.SENSITIVITY_CHART;
@@ -126,8 +119,9 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             onValueChange={(value) => value && setDisplayComponentType(value)}
                         />
                     </Setting.Field>
-                    <Setting.Field label="Scaling">
+                    <Setting.Field label="Scaling" infoAnnotation={chartSettingsInfoAnnotation}>
                         <Combobox<SensitivityScaling>
+                            disabled={isChartSettingsDisabled}
                             items={[
                                 {
                                     label: "Relative",

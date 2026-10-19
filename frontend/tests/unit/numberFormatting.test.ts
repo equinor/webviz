@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 
-import { formatNumber } from "../../src/modules/_shared/utils/numberFormatting";
+import {
+    formatNumber,
+    formatWithLargeValuePrefixes,
+    makeLargeValuePrefixAxisFormat,
+} from "../../src/modules/_shared/utils/numberFormatting";
 
 describe("formatNumber", () => {
     describe("default (significant digits, 3 sig figs)", () => {
@@ -21,8 +25,8 @@ describe("formatNumber", () => {
 
         test("trailing zeros are stripped", () => {
             expect(formatNumber(1.0)).toBe("1");
-            expect(formatNumber(1.10)).toBe("1.1");
-            expect(formatNumber(1.200)).toBe("1.2");
+            expect(formatNumber(1.1)).toBe("1.1");
+            expect(formatNumber(1.2)).toBe("1.2");
         });
 
         test("non-finite values", () => {
@@ -185,5 +189,20 @@ describe("formatNumber", () => {
         test("without unit label", () => {
             expect(formatNumber(2 ** 10, { unitSystem: "binary" })).toBe("1 Ki");
         });
+    });
+});
+
+describe("formatWithLargeValuePrefixes", () => {
+    test("uses metric prefixes (G, not B) for large values and keeps fractions plain", () => {
+        expect(formatWithLargeValuePrefixes(2.5e9)).toMatch(/^2\.5 ?G$/);
+        expect(formatWithLargeValuePrefixes(-560450)).toMatch(/^-560 ?k$/);
+        expect(formatWithLargeValuePrefixes(0.25)).toBe("0.25");
+    });
+});
+
+describe("makeLargeValuePrefixAxisFormat", () => {
+    test("uses SI only when the axis reaches 1000, so fractions never get milli prefixes", () => {
+        expect(makeLargeValuePrefixAxisFormat([-2e6, 3e7])).toEqual({ exponentformat: "SI", hoverformat: ".3s" });
+        expect(makeLargeValuePrefixAxisFormat([-0.4, 0.8])).toEqual({ exponentformat: "none", hoverformat: "" });
     });
 });

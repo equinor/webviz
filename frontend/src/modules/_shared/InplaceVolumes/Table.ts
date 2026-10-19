@@ -6,6 +6,7 @@ export enum ColumnType {
     ENSEMBLE = "ensemble",
     TABLE = "table",
     FLUID = "fluid",
+    SENSITIVITY = "sensitivity",
     REAL = "real",
     INDEX = "index",
     RESULT = "result",
