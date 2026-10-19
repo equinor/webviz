@@ -641,8 +641,11 @@ export class SettingManager<
 
     private applyValueConstraints(): boolean {
         let valueChanged = false;
+        // Once initialized, an invalid value is kept for the user to resolve - only an empty one is still filled
         const isValueFixedUp =
-            !this._initialized && !this.checkIfValueIsValid(this.getInternalValue()) && this.maybeFixupValue();
+            (!this._initialized || this.getInternalValue() === null) &&
+            !this.checkIfValueIsValid(this.getInternalValue()) &&
+            this.maybeFixupValue();
         const isPersistedValueReset = this.maybeResetPersistedValue();
         if (isValueFixedUp || isPersistedValueReset) {
             valueChanged = true;

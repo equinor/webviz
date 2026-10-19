@@ -1,7 +1,8 @@
 import type { VfpType_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { persistableFixableAtom } from "@framework/utils/atomUtils";
+import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
+import { computeQueryDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 import { areEnsembleIdentsEqual } from "@framework/utils/ensembleIdentUtils";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { VfpParam } from "@modules/Vfp/types";
@@ -48,15 +49,8 @@ function computeVfpTablesQueryDependenciesState({
     get,
 }: {
     get: (atom: any) => any;
-}): "error" | "loading" | "loaded" {
-    const vfpTablesQuery = get(vfpTablesQueryAtom);
-    if (vfpTablesQuery.isError) {
-        return "error";
-    }
-    if (vfpTablesQuery.isFetching) {
-        return "loading";
-    }
-    return "loaded";
+}): PersistableAtomDependenciesState {
+    return computeQueryDependenciesState(get(vfpTablesQueryAtom));
 }
 
 export const selectedVfpTypeAtom = persistableFixableAtom<VfpType_api | null>({
@@ -223,14 +217,6 @@ export const selectedColorByAtom = persistableFixableAtom<VfpParam>({
 });
 
 // Utility function to compute dependencies state from vfpTableQueryAtom
-function computeVfpTableQueryDependenciesState({ get }: { get: (atom: any) => any }): "error" | "loading" | "loaded" {
-    const vfpTableQuery = get(vfpTableQueryAtom);
-
-    if (vfpTableQuery.isError) {
-        return "error";
-    }
-    if (vfpTableQuery.isFetching) {
-        return "loading";
-    }
-    return "loaded";
+function computeVfpTableQueryDependenciesState({ get }: { get: (atom: any) => any }): PersistableAtomDependenciesState {
+    return computeQueryDependenciesState(get(vfpTableQueryAtom));
 }

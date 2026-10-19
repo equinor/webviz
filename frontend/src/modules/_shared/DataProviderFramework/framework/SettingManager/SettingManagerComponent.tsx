@@ -158,7 +158,7 @@ export function SettingManagerComponent<
                         {!isPersisted && !isValid && !actuallyLoading && (
                             <span
                                 className="gap-x-3xs text-body-xs text-danger-strong flex items-center"
-                                title="This setting's value is invalid, likely because a dependency changed. Use a fix-up action to repair it, or adjust the value manually."
+                                title="This setting's value is invalid, likely because a dependency changed. Please choose a valid value."
                             >
                                 <Warning fontSize="inherit" />
                                 <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">

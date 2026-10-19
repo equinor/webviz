@@ -141,12 +141,11 @@ describe("Validity", () => {
 });
 
 /*
- * Pins the current fix-up strategy: a value that is no longer allowed after a change elsewhere is replaced by the first
- * allowed value. This is planned to change, so that user-selected values are kept even when invalid - update these
- * tests with that change. (Filling an empty setting with the first allowed value is not part of this.)
+ * Pins the fix-up strategy: a value that is no longer allowed after a change elsewhere is kept, and makes its provider
+ * invalid until a valid value is chosen. Only an empty setting is still filled with the first allowed value.
  */
-describe("Fix-up of values that became invalid - current strategy", () => {
-    test("replaces a value that an upstream setting change made invalid with the first allowed value", async () => {
+describe("Fix-up of values that became invalid", () => {
+    test("keeps a value that an upstream setting change made invalid, and makes its provider invalid", async () => {
         const manager = await restore(surfaceProvider("Surface", { realization: 3 }));
         const provider = findProvider(manager, "Surface");
         expect(getProviderSetting(provider, Setting.REALIZATION).getValue()).toBe(3);
@@ -154,12 +153,13 @@ describe("Fix-up of values that became invalid - current strategy", () => {
         getProviderSetting(provider, Setting.SURFACE_NAME).setValue("Base reservoir");
         await settle(manager);
 
-        expect(getProviderSetting(provider, Setting.REALIZATION).getValue()).toBe(1);
-        expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
-        expect(backend.callsTo("getSurfaceData").at(-1)).toEqual(["field-a", "depth", "Base reservoir", 1]);
+        expect(getProviderSetting(provider, Setting.REALIZATION).getValue()).toBe(3);
+        expect(getProviderSetting(provider, Setting.REALIZATION).isValueValid()).toBe(false);
+        expect(provider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
+        expect(backend.callsTo("getSurfaceData")).not.toContainEqual(["field-a", "depth", "Base reservoir", 3]);
     });
 
-    test("replaces the values that a global setting change made invalid, all the way down the graph", async () => {
+    test("keeps the values that a global setting change made invalid, all the way down the graph, until valid ones are chosen", async () => {
         const manager = await restore(surfaceProvider("Surface", { attribute: "depth", surfaceName: "Top reservoir" }));
         const provider = findProvider(manager, "Surface");
 
@@ -167,9 +167,33 @@ describe("Fix-up of values that became invalid - current strategy", () => {
         await settle(manager);
 
         expect(getProviderSetting(provider, Setting.ATTRIBUTE).getValue()).toBe("depth");
-        expect(getProviderSetting(provider, Setting.SURFACE_NAME).getValue()).toBe("New surface");
+        expect(getProviderSetting(provider, Setting.SURFACE_NAME).getValue()).toBe("Top reservoir");
+        expect(getProviderSetting(provider, Setting.SURFACE_NAME).isValueValid()).toBe(false);
         expect(getProviderSetting(provider, Setting.REALIZATION).getValue()).toBe(1);
+        expect(getProviderSetting(provider, Setting.REALIZATION).isValueValid()).toBe(false);
+        expect(provider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
+        expect(provider.getData()).toBeNull();
+
+        // The kept realization becomes valid again along with the surface it is allowed for
+        getProviderSetting(provider, Setting.SURFACE_NAME).setValue("New surface");
+        await settle(manager);
+
+        expect(getProviderSetting(provider, Setting.REALIZATION).getValue()).toBe(1);
+        expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
         expect(provider.getData()?.surfaceName).toBe("New surface");
+    });
+
+    test("still fills an empty setting with the first allowed value once there are any", async () => {
+        const manager = await restore(surfaceProvider("Surface", { surfaceName: "Gone surface" }));
+        const provider = findProvider(manager, "Surface");
+        expect(getProviderSetting(provider, Setting.REALIZATION).getValue()).toBeNull();
+
+        getProviderSetting(provider, Setting.SURFACE_NAME).setValue("Base reservoir");
+        await settle(manager);
+
+        expect(getProviderSetting(provider, Setting.REALIZATION).getValue()).toBe(1);
+        expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+        expect(backend.callsTo("getSurfaceData").at(-1)).toEqual(["field-a", "depth", "Base reservoir", 1]);
     });
 });
 
