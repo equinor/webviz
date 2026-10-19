@@ -1318,7 +1318,7 @@ export const getSeismicCubeMetaList = <ThrowOnError extends boolean = false>(
             responseType: "json",
             url: "/seismic/seismic_cube_meta_list/",
             ...options,
-            query: { ...options.query, _rv: "68715e" },
+            query: { ...options.query, _rv: "d893b2" },
         },
     );
 
@@ -1373,7 +1373,7 @@ export const getPolygonsDirectory = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/polygons/polygons_directory/",
         ...options,
-        query: { ...options.query, _rv: "714e98" },
+        query: { ...options.query, _rv: "ff99cc" },
     });
 
 /**
