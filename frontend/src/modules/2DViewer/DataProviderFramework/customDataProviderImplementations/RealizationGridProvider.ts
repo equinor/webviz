@@ -9,6 +9,8 @@ import {
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import {
     getAvailableTimeTypes,
+    getGridTimeOrIntervalStr,
+    isGridTimeSelectionValid,
     isoDateTimeToGridTime,
     makeGridPropertyTimeInfo,
 } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/gridPropertyTimeFunctions";
@@ -145,20 +147,16 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                 }),
             ).then(transformGridMappedProperty);
         } else {
-            let timeOrIntervalStr: string | null = null;
-            if (timeType === TimeType.TIME_POINT) {
-                timeOrIntervalStr = getSetting(Setting.TIME_POINT);
-            } else if (timeType === TimeType.INTERVAL) {
-                timeOrIntervalStr = getSetting(Setting.TIME_INTERVAL);
-            }
-
             gridParameterPromise = fetchQuery(
                 getGridParameterOptions({
                     query: {
                         ...commonQuery,
                         parameter_name: attribute ?? "",
-                        parameter_time_or_interval_str:
-                            timeOrIntervalStr === null ? null : isoDateTimeToGridTime(timeOrIntervalStr),
+                        parameter_time_or_interval_str: getGridTimeOrIntervalStr(
+                            timeType,
+                            getSetting(Setting.TIME_POINT),
+                            getSetting(Setting.TIME_INTERVAL),
+                        ),
                     },
                 }),
             ).then(transformGridMappedProperty);
@@ -189,18 +187,12 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
             return false;
         }
 
-        switch (getSetting(Setting.TIME_TYPE)) {
-            case TimeType.NO_TIME:
-                return true;
-            case TimeType.TIME_POINT:
-                return getSetting(Setting.TIME_POINT) !== null;
-            case TimeType.INTERVAL:
-                return getSetting(Setting.TIME_INTERVAL) !== null;
-            case TimeType.COMPUTED_INTERVAL:
-                return getSetting(Setting.TIME_POINT_PAIR) !== null;
-            default:
-                return false;
-        }
+        return isGridTimeSelectionValid(
+            getSetting(Setting.TIME_TYPE),
+            getSetting(Setting.TIME_POINT),
+            getSetting(Setting.TIME_INTERVAL),
+            getSetting(Setting.TIME_POINT_PAIR),
+        );
     }
 
     setupBindings({
@@ -340,7 +332,7 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                 return { timeInfo: read.sharedResult(timeInfo) };
             },
             resolve({ timeInfo }) {
-                return timeInfo ? getAvailableTimeTypes(timeInfo, { allowComputedInterval: true }) : [];
+                return timeInfo ? getAvailableTimeTypes(timeInfo) : [];
             },
         });
 

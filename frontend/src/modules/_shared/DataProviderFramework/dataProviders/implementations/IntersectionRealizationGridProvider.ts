@@ -22,6 +22,8 @@ import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettin
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 import {
     getAvailableTimeTypes,
+    getGridTimeOrIntervalStr,
+    isGridTimeSelectionValid,
     isoDateTimeToGridTime,
     makeGridPropertyTimeInfo,
 } from "../dependencyFunctions/gridPropertyTimeFunctions";
@@ -131,18 +133,12 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
             return false;
         }
 
-        switch (getSetting(Setting.TIME_TYPE)) {
-            case TimeType.NO_TIME:
-                return true;
-            case TimeType.TIME_POINT:
-                return getSetting(Setting.TIME_POINT) !== null;
-            case TimeType.INTERVAL:
-                return getSetting(Setting.TIME_INTERVAL) !== null;
-            case TimeType.COMPUTED_INTERVAL:
-                return getSetting(Setting.TIME_POINT_PAIR) !== null;
-            default:
-                return false;
-        }
+        return isGridTimeSelectionValid(
+            getSetting(Setting.TIME_TYPE),
+            getSetting(Setting.TIME_POINT),
+            getSetting(Setting.TIME_INTERVAL),
+            getSetting(Setting.TIME_POINT_PAIR),
+        );
     }
 
     setupBindings({
@@ -309,7 +305,7 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
                 return { timeInfo: read.sharedResult(timeInfoDep) };
             },
             resolve({ timeInfo }) {
-                return timeInfo ? getAvailableTimeTypes(timeInfo, { allowComputedInterval: true }) : [];
+                return timeInfo ? getAvailableTimeTypes(timeInfo) : [];
             },
         });
 
@@ -449,19 +445,15 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
             ).then(transformPolylineIntersection);
         }
 
-        let timeOrInterval: string | null = null;
-        if (timeType === TimeType.TIME_POINT) {
-            timeOrInterval = getSetting(Setting.TIME_POINT);
-        } else if (timeType === TimeType.INTERVAL) {
-            timeOrInterval = getSetting(Setting.TIME_INTERVAL);
-        }
-
         return fetchQuery(
             postGetPolylineIntersectionOptions({
                 query: {
                     ...commonQuery,
-                    parameter_time_or_interval_str:
-                        timeOrInterval === null ? null : isoDateTimeToGridTime(timeOrInterval),
+                    parameter_time_or_interval_str: getGridTimeOrIntervalStr(
+                        timeType,
+                        getSetting(Setting.TIME_POINT),
+                        getSetting(Setting.TIME_INTERVAL),
+                    ),
                 },
                 body,
             }),

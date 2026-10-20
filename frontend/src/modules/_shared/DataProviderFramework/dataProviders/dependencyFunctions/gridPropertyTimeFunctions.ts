@@ -67,13 +67,7 @@ export function makeGridPropertyTimeInfo(
     };
 }
 
-/**
- * Computed intervals require a backend endpoint that can diff two time steps, so they must be opted into.
- */
-export function getAvailableTimeTypes(
-    timeInfo: GridPropertyTimeInfo,
-    options?: { allowComputedInterval?: boolean },
-): TimeType[] {
+export function getAvailableTimeTypes(timeInfo: GridPropertyTimeInfo): TimeType[] {
     const availableTimeTypes: TimeType[] = [];
 
     if (timeInfo.hasStatic) {
@@ -85,9 +79,49 @@ export function getAvailableTimeTypes(
     if (timeInfo.intervals.length > 0) {
         availableTimeTypes.push(TimeType.INTERVAL);
     }
-    if (options?.allowComputedInterval && timeInfo.timePoints.length >= 2) {
+    if (timeInfo.timePoints.length >= 2) {
         availableTimeTypes.push(TimeType.COMPUTED_INTERVAL);
     }
 
     return availableTimeTypes;
+}
+
+/**
+ * Whether the value setting that the selected time type uses has a value.
+ */
+export function isGridTimeSelectionValid(
+    timeType: TimeType | null,
+    timePoint: string | null,
+    timeInterval: string | null,
+    timePointPair: [string, string] | null,
+): boolean {
+    switch (timeType) {
+        case TimeType.NO_TIME:
+            return true;
+        case TimeType.TIME_POINT:
+            return timePoint !== null;
+        case TimeType.INTERVAL:
+            return timeInterval !== null;
+        case TimeType.COMPUTED_INTERVAL:
+            return timePointPair !== null;
+        default:
+            return false;
+    }
+}
+
+/**
+ * The time or interval to fetch a single grid property for, in the grid's own format - null when it has no time.
+ */
+export function getGridTimeOrIntervalStr(
+    timeType: TimeType | null,
+    timePoint: string | null,
+    timeInterval: string | null,
+): string | null {
+    if (timeType === TimeType.TIME_POINT && timePoint !== null) {
+        return isoDateTimeToGridTime(timePoint);
+    }
+    if (timeType === TimeType.INTERVAL && timeInterval !== null) {
+        return isoDateTimeToGridTime(timeInterval);
+    }
+    return null;
 }
