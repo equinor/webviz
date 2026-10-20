@@ -3,10 +3,19 @@ import { atom } from "jotai";
 import { VfpType_api, type VfpTableInfo_api } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { VfpApiTableDataAccessor } from "@modules/Vfp/utils/vfpApiTableDataAccessor";
+import { isProdTable } from "@modules/Vfp/utils/vfpTableClassifier";
 
 import { type TableDataAccessorWithStatusFlags } from "../../types";
 
-import { selectedEnsembleIdentAtom, selectedVfpTypeAtom } from "./persistableFixableAtoms";
+import {
+    selectedAlqIndicesAtom,
+    selectedColorByAtom,
+    selectedEnsembleIdentAtom,
+    selectedGfrIndicesAtom,
+    selectedThpIndicesAtom,
+    selectedVfpTypeAtom,
+    selectedWfrIndicesAtom,
+} from "./persistableFixableAtoms";
 import { vfpTablesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
 
 export const availableVfpTablesAtom = atom<VfpTableInfo_api[]>((get) => {
@@ -59,4 +68,28 @@ export const tableDataAccessorWithStatusFlagsAtom = atom<TableDataAccessorWithSt
             isFetching: vfpTablesQuery.isFetching,
         },
     };
+});
+
+/**
+ * Whether every parameter selection the current table type plots with is valid. Invalid indices are
+ * retained rather than fixed up, and the flattened BHP lookup doesn't bounds-check them - e.g. a WFR
+ * index past the table's WFR count would read the next THP slice - so the view withholds plotting
+ * while this is false.
+ */
+export const isParameterSelectionValidAtom = atom<boolean>((get) => {
+    const vfpTable = get(vfpTableQueryAtom).data;
+    const isThpSelectionValid = get(selectedThpIndicesAtom).isValidInContext;
+
+    // Injection tables are only plotted by THP
+    if (!vfpTable || !isProdTable(vfpTable)) {
+        return isThpSelectionValid;
+    }
+
+    return (
+        isThpSelectionValid &&
+        get(selectedWfrIndicesAtom).isValidInContext &&
+        get(selectedGfrIndicesAtom).isValidInContext &&
+        get(selectedAlqIndicesAtom).isValidInContext &&
+        get(selectedColorByAtom).isValidInContext
+    );
 });

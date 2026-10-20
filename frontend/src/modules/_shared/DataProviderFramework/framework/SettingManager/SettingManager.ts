@@ -23,6 +23,7 @@ export enum SettingTopic {
     IS_EXTERNALLY_CONTROLLED = "IS_EXTERNALLY_CONTROLLED",
     EXTERNAL_CONTROLLER_PROVIDER = "EXTERNAL_CONTROLLER_PROVIDER",
     IS_LOADING = "IS_LOADING",
+    IS_BLOCKED = "IS_BLOCKED",
     IS_INITIALIZED = "IS_INITIALIZED",
     IS_PERSISTED = "IS_PERSISTED",
     ATTRIBUTES = "ATTRIBUTES",
@@ -39,6 +40,7 @@ export type SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstrain
     [SettingTopic.IS_EXTERNALLY_CONTROLLED]: boolean;
     [SettingTopic.EXTERNAL_CONTROLLER_PROVIDER]: ExternalControllerProviderType | undefined;
     [SettingTopic.IS_LOADING]: boolean;
+    [SettingTopic.IS_BLOCKED]: boolean;
     [SettingTopic.IS_INITIALIZED]: boolean;
     [SettingTopic.IS_PERSISTED]: boolean;
     [SettingTopic.ATTRIBUTES]: SettingAttributes;
@@ -103,6 +105,10 @@ export class SettingManager<
     >();
     private _valueConstraints: TValueConstraints | null = null;
     private _loading: boolean = false;
+    // Blocked: the value constraints can't be resolved, as a setting they are read from is invalid (or blocked itself).
+    // The current value and constraints are kept until they can be resolved again.
+    private _blocked: boolean = false;
+    private _blockedBy: string[] = [];
     private _initialized: boolean = false;
     private _currentValueFromPersistence: TInternalValue | null = null;
     private _currentValueFromPersistenceIsValid: boolean = true;
@@ -186,6 +192,15 @@ export class SettingManager<
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingTopic.IS_LOADING)(() => {
                 this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+            }),
+        );
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController
+                .getSetting()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingTopic.IS_BLOCKED)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_BLOCKED);
             }),
         );
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -460,13 +475,33 @@ export class SettingManager<
     setLoading(loading: boolean): void {
         // An external controller derives the shared setting's loading state from its visible controlled settings
         // via the IS_LOADING topic, so a single (possibly hidden) setting must not set it directly
-        if (this._loading === loading) {
+        if (this._loading !== loading) {
+            this._loading = loading;
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+        }
+
+        // Resolving again ends being blocked - only after the loading state is published, so nothing that reacts to
+        // the setting no longer being blocked resolves against its current, outdated value
+        if (loading) {
+            this.setBlocked(false);
+        }
+    }
+
+    /*
+     * A setting is blocked when its value constraints can't be resolved, as a shown setting they are read from is invalid
+     * or blocked itself - see Dependency. It keeps its value and constraints, and is no longer blocked as soon as it
+     * resolves again: when it starts loading or gets value constraints.
+     */
+    setBlocked(blocked: boolean, blockedBy: string[] = []): void {
+        const newBlockedBy = blocked ? blockedBy : [];
+        if (this._blocked === blocked && isEqual(this._blockedBy, newBlockedBy)) {
             return;
         }
 
-        this._loading = loading;
+        this._blocked = blocked;
+        this._blockedBy = newBlockedBy;
 
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_BLOCKED);
     }
 
     initialize(): void {
@@ -491,6 +526,21 @@ export class SettingManager<
             return this._externalController.getSetting().isLoading();
         }
         return this._loading;
+    }
+
+    isBlocked(itself: boolean = false): boolean {
+        if (this._externalController && !itself) {
+            return this._externalController.getSetting().isBlocked();
+        }
+        return this._blocked;
+    }
+
+    // The labels of the settings it is waiting for
+    getBlockedBy(itself: boolean = false): string[] {
+        if (this._externalController && !itself) {
+            return this._externalController.getSetting().getBlockedBy();
+        }
+        return this._blockedBy;
     }
 
     valueToRepresentation(
@@ -578,6 +628,8 @@ export class SettingManager<
                     return undefined;
                 case SettingTopic.IS_LOADING:
                     return this.isLoading();
+                case SettingTopic.IS_BLOCKED:
+                    return this.isBlocked();
                 case SettingTopic.IS_PERSISTED:
                     return this.isPersistedValue();
                 case SettingTopic.IS_PERSISTED_VALUE_VALID:
@@ -660,6 +712,9 @@ export class SettingManager<
     }
 
     setValueConstraints(valueConstraints: TValueConstraints | null): void {
+        // Usually no longer blocked already, as it started loading before these were resolved
+        this.setBlocked(false);
+
         if (this._externalController) {
             this.setValueConstraintsAndInvalidateCache(valueConstraints);
             this.maybeResetPersistedValue();
@@ -745,6 +800,7 @@ export class SettingManager<
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INTERNAL_VALUE);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_VALID);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_BLOCKED);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_INITIALIZED);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CONSTRAINTS);
