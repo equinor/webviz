@@ -152,12 +152,17 @@ export class SettingsContextDelegate<
         return this._dependencyStatusMessages;
     }
 
+    /*
+     * The values that decide whether the provider's data is outdated. A persisted value that is still held has not been
+     * adopted yet, and a hidden setting does not apply to the current configuration (e.g. a shared setting may still
+     * change it) - both are left undefined, so that changing them never makes the provider refetch.
+     */
     getValues(): { [K in TSettingKey]?: TSettingTypes[K] } {
         const settings: { [K in TSettingKey]?: TSettingTypes[K] } = {} as {
             [K in TSettingKey]?: TSettingTypes[K];
         };
         for (const key in this._settings) {
-            if (this._settings[key].isPersistedValue()) {
+            if (this._settings[key].isPersistedValue() || !this.isSettingApplicable(key)) {
                 settings[key] = undefined;
                 continue;
             }
