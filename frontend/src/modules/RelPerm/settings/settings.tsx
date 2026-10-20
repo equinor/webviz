@@ -121,9 +121,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
     const selectedTableNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedTableNameAtom);
-    const selectedSaturationAxisNameAnnotations = useMakePersistableFixableAtomAnnotations(
-        selectedSaturationAxisNameAtom,
-    );
+    const selectedSaturationAxisNameAnnotations =
+        useMakePersistableFixableAtomAnnotations(selectedSaturationAxisNameAtom);
     const selectedCurveNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedCurveNamesAtom);
     const selectedSatnumsAnnotations = useMakePersistableFixableAtomAnnotations(selectedSatnumsAtom);
 
