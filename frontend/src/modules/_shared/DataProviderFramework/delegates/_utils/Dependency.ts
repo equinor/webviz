@@ -16,6 +16,10 @@ export type NoUpdate = typeof NO_UPDATE;
 const PENDING = Symbol("PENDING");
 export type Pending = typeof PENDING;
 
+// A read setting or shared result can't be used, as it is shown but invalid, or blocked itself - see getLocalSetting()
+const BLOCKED = Symbol("BLOCKED");
+type Blocked = typeof BLOCKED;
+
 const MAX_EXTERNAL_CANCELLATION_RETRIES = 3;
 
 export type Accessors<
@@ -51,7 +55,14 @@ export class Dependency<
     private _resolverSpec: ResolverSpec<TReturnValue, TSettings, TSettingTypes, TKey, TReads>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
     private _loadingDependencies: Set<(loading: boolean, hasDependencies: boolean) => void> = new Set();
+    private _blockedDependencies: Set<(blockedBy: string[]) => void> = new Set();
     private _isLoading = false;
+    // Blocked: the last run didn't resolve, as a read setting or shared result can't be used (see getLocalSetting())
+    private _isBlocked = false;
+    private _blockedBy: string[] = [];
+    private _blockedByInRun: string[] = [];
+    // Whether each read local setting blocked this dependency when last read - to only run again once that changes
+    private _localSettingBlockingStates: Map<string, boolean> = new Map();
 
     private _localSettingManagerGetter: <K extends TKey>(key: K) => SettingManager<K>;
     private _globalSettingGetter: <K extends keyof GlobalSettings>(key: K) => GlobalSettings[K] | null;
@@ -123,6 +134,7 @@ export class Dependency<
         this._statusStore.clear();
         this._dependencies.clear();
         this._loadingDependencies.clear();
+        this._blockedDependencies.clear();
     }
 
     hasChildDependencies(): boolean {
@@ -135,6 +147,25 @@ export class Dependency<
 
     getIsLoading(): boolean {
         return this._isLoading;
+    }
+
+    getIsBlocked(): boolean {
+        return this._isBlocked;
+    }
+
+    // The labels of the settings it is waiting for
+    getBlockedBy(): string[] {
+        return this._blockedBy;
+    }
+
+    // The local settings the resolver reads - known once initialized, as reading them is what subscribes to them
+    getReadLocalSettingKeys(): string[] {
+        return [...this._cachedSettingsMap.keys()];
+    }
+
+    // The shared results the resolver reads - known once initialized
+    getReadSharedResults(): Dependency<any, TSettings, TSettingTypes, any, any>[] {
+        return [...this._cachedDependenciesMap.keys()];
     }
 
     subscribe(callback: (value: Awaited<TReturnValue> | null) => void, childDependency: boolean = false): () => void {
@@ -160,6 +191,18 @@ export class Dependency<
         };
     }
 
+    /*
+     * Called when a run ends blocked. It stops loading then, which is not published to the loading subscribers - a
+     * blocked subscriber takes care of that. Being blocked ends when a new run starts loading.
+     */
+    subscribeBlocked(callback: (blockedBy: string[]) => void): () => void {
+        this._blockedDependencies.add(callback);
+
+        return () => {
+            this._blockedDependencies.delete(callback);
+        };
+    }
+
     getStatusMessages() {
         return this._statusStore.getMessages();
     }
@@ -172,7 +215,7 @@ export class Dependency<
         return this._statusStore;
     }
 
-    private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[K] | Pending {
+    private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[K] | Pending | Blocked {
         const setting = this._localSettingManagerGetter(settingName);
 
         if (!this._isInitialized && !setting.isStatic()) {
@@ -192,6 +235,17 @@ export class Dependency<
             return PENDING;
         }
 
+        // A shown setting that is invalid (or waiting for one itself) would only lead to requests for a selection that
+        // can't be used - wait until it is valid instead. A hidden setting does not apply, so it never blocks.
+        if (this._isInitialized) {
+            const isBlocking = isSettingBlocking(setting);
+            this._localSettingBlockingStates.set(settingName as string, isBlocking);
+            if (isBlocking) {
+                this._blockedByInRun.push(setting.getLabel());
+                return BLOCKED;
+            }
+        }
+
         // If the dependency has already subscribed to this setting, return the cached value
         // that is updated when the setting changes
         if (this._cachedSettingsMap.has(settingName as string)) {
@@ -200,6 +254,26 @@ export class Dependency<
 
         const value = setting.getValue();
         this._cachedSettingsMap.set(settingName as string, value);
+
+        // Being shown or hidden, or blocked itself, decides whether the setting blocks this dependency - run again once
+        // that differs from when it was last read (validity changes are published as value changes already)
+        this._localSettingBlockingStates.set(settingName as string, isSettingBlocking(setting));
+        const handleBlockingStateMaybeChanged = () => {
+            if (!this._isInitialized) {
+                return;
+            }
+            if (isSettingBlocking(setting) !== this._localSettingBlockingStates.get(settingName as string)) {
+                this.invalidate();
+            }
+        };
+        this._unsubscribers.push(
+            setting.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.ATTRIBUTES)(
+                handleBlockingStateMaybeChanged,
+            ),
+            setting.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_BLOCKED)(
+                handleBlockingStateMaybeChanged,
+            ),
+        );
 
         setting.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(() => {
             const loading = setting.isLoading();
@@ -226,6 +300,11 @@ export class Dependency<
 
     private setLoadingState(loading: boolean) {
         this._isLoading = loading;
+        // The only way out of being blocked - every run starts by loading, and a blocked dependency is not loading
+        if (loading) {
+            this._isBlocked = false;
+            this._blockedBy = [];
+        }
         for (const callback of this._loadingDependencies) {
             callback(loading, this.hasChildDependencies());
         }
@@ -255,13 +334,18 @@ export class Dependency<
 
     private getHelperDependency<TDep, TDepReads extends Record<string, Read<any>> = Record<string, never>>(
         dep: Dependency<TDep, TSettings, TSettingTypes, TKey, TDepReads>,
-    ): Awaited<TDep> | Pending | null {
+    ): Awaited<TDep> | Pending | Blocked | null {
         if (!this._isInitialized) {
             this._hasParentDependencies = true;
         }
 
         if (dep.getIsLoading() && this._isInitialized) {
             return PENDING;
+        }
+
+        if (dep.getIsBlocked() && this._isInitialized) {
+            this._blockedByInRun.push(...dep.getBlockedBy());
+            return BLOCKED;
         }
 
         if (this._cachedDependenciesMap.has(dep)) {
@@ -288,6 +372,12 @@ export class Dependency<
             // #Waterfall
         });
         this._unsubscribers.push(unsubscribeLoading);
+
+        // Until now, the shared result was loading - which only marked this dependency as loading, so it has to run again
+        const unsubscribeBlocked = dep.subscribeBlocked(() => {
+            this.invalidate();
+        });
+        this._unsubscribers.push(unsubscribeBlocked);
 
         return value;
     }
@@ -317,18 +407,12 @@ export class Dependency<
 
     private makeAccessors(): Accessors<TSettings, TSettingTypes, TKey> {
         return {
-            localSetting: (key) => {
-                const value = this.getLocalSetting(key);
-                return value === PENDING ? ({ __ready: false } as const) : ({ __ready: true, value } as const);
-            },
+            localSetting: (key) => toRead(this.getLocalSetting(key)),
             globalSetting: (key) => {
                 const value = this.getGlobalSetting(key);
                 return value === PENDING ? ({ __ready: false } as const) : ({ __ready: true, value } as const);
             },
-            sharedResult: (handle) => {
-                const value = this.getHelperDependency(handle);
-                return value === PENDING ? ({ __ready: false } as const) : ({ __ready: true, value } as const);
-            },
+            sharedResult: (handle) => toRead(this.getHelperDependency(handle)),
         };
     }
 
@@ -339,7 +423,7 @@ export class Dependency<
         this._resolverSpec.read(this.makeAccessors());
     }
 
-    private async runResolver(): Promise<Awaited<TReturnValue> | NoUpdate | Pending> {
+    private async runResolver(): Promise<Awaited<TReturnValue> | NoUpdate | Pending | Blocked> {
         if (this._isProbing) return PENDING;
 
         const abortSignal = this._abortController?.signal;
@@ -355,10 +439,12 @@ export class Dependency<
             })) as any;
         }
 
+        this._blockedByInRun = [];
         const reads = this._resolverSpec.read(this.makeAccessors());
 
         if (!allReady(reads)) {
-            return PENDING;
+            // Something that is still loading may turn out valid - only blocked once nothing is loading anymore
+            return isSomeReadPending(reads) ? PENDING : BLOCKED;
         }
 
         const values = unwrapReads(reads);
@@ -405,7 +491,7 @@ export class Dependency<
         this._abortController = abortController;
         this._statusStore.clear();
 
-        let newValue: Awaited<TReturnValue> | null | NoUpdate | Pending;
+        let newValue: Awaited<TReturnValue> | null | NoUpdate | Pending | Blocked;
         try {
             newValue = await this.runResolver();
 
@@ -456,11 +542,30 @@ export class Dependency<
             return;
         }
 
+        if (newValue === BLOCKED) {
+            this.applyBlockedState();
+            return;
+        }
+
         if (newValue === NO_UPDATE) {
             newValue = this._cachedValue;
         }
 
         this.applyNewValue(newValue);
+    }
+
+    /*
+     * Nothing was resolved: the current value is kept, without notifying the value subscribers. It is no longer loading,
+     * which the blocked subscribers take care of instead of the loading subscribers.
+     */
+    private applyBlockedState() {
+        this._numConsecutiveExternalCancellations = 0;
+        this._isLoading = false;
+        this._isBlocked = true;
+        this._blockedBy = [...new Set(this._blockedByInRun)];
+        for (const callback of this._blockedDependencies) {
+            callback(this._blockedBy);
+        }
     }
 
     private handleExternalCancellation(): void {
@@ -494,7 +599,8 @@ function isAbortLike(e: any) {
 }
 
 type Ready<T> = { readonly __ready: true; readonly value: T };
-type NotReady = { readonly __ready: false; readonly value?: never };
+// Blocked: it can't be used until other settings are valid, as opposed to still loading - see Dependency.getLocalSetting()
+type NotReady = { readonly __ready: false; readonly value?: never; readonly __blocked?: true };
 
 export type Read<T> = Ready<T> | NotReady;
 export type UnwrapRead<R> = R extends Ready<infer V> ? V : never;
@@ -508,6 +614,25 @@ function allReady(reads: Record<string, Read<any>>): boolean {
         if (!isReady(r)) return false;
     }
     return true;
+}
+
+function isSomeReadPending(reads: Record<string, Read<any>>): boolean {
+    return Object.values(reads).some((r) => !isReady(r) && !r.__blocked);
+}
+
+function toRead<T>(value: T | Pending | Blocked): Read<T> {
+    if (value === PENDING) {
+        return { __ready: false };
+    }
+    if (value === BLOCKED) {
+        return { __ready: false, __blocked: true };
+    }
+    return { __ready: true, value: value as T };
+}
+
+// A hidden setting does not apply to the current configuration, so only a shown one blocks
+function isSettingBlocking(setting: SettingManager<any>): boolean {
+    return setting.getAttributes().visible && (setting.isBlocked() || !setting.isValueValid());
 }
 
 function unwrapReads<TReads extends Record<string, Read<any>>>(

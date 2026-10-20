@@ -17,6 +17,7 @@ import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../interfacesAn
 import { SettingRegistry } from "../settings/SettingRegistry";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
+import { assertNoCircularValueConstraints } from "./_utils/assertNoCircularValueConstraints";
 import { Dependency, type Read } from "./_utils/Dependency";
 
 export enum SharedSettingsDelegateTopic {
@@ -180,6 +181,7 @@ export class SharedSettingsDelegate<
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("dependencies");
 
         this._dependencies = [];
+        const valueConstraintsDependencies = new Map<string, Dependency<any, TSettings, any, any, any>[]>();
 
         const makeLocalSettingGetter = <K extends TSettingKey>(key: K, handler: (value: TSettingTypes[K]) => void) => {
             const handleChange = (): void => {
@@ -294,6 +296,10 @@ export class SharedSettingsDelegate<
 
             const debugName = `ValueConstraintsUpdater_${settingKey}`;
             const dependency = createDependency(debugName, resolverSpec);
+            valueConstraintsDependencies.set(settingKey, [
+                ...(valueConstraintsDependencies.get(settingKey) ?? []),
+                dependency,
+            ]);
 
             dependency.subscribe((valueConstraints) => {
                 // Set the value constraints on the internal setting, not the wrapped setting
@@ -308,6 +314,12 @@ export class SharedSettingsDelegate<
                 if (loading) {
                     internalSetting.setLoading(loading);
                 }
+            });
+
+            // Blocked before it stops loading, so the external setting controller sees it blocked rather than resolved
+            dependency.subscribeBlocked((blockedBy) => {
+                internalSetting.setBlocked(true, blockedBy);
+                internalSetting.setLoading(false);
             });
 
             this.subscribeToDependencyStatusMessages(dependency);
@@ -337,6 +349,11 @@ export class SharedSettingsDelegate<
             dependency.subscribeLoading(() => {
                 this.handleSettingChanged();
             });
+            // The current attributes stay - while it waits, the setting must neither disappear nor hold up a restore
+            dependency.subscribeBlocked(() => {
+                markAttributesResolved();
+                this.handleSettingChanged();
+            });
             this.subscribeToDependencyStatusMessages(dependency);
 
             return dependency;
@@ -349,6 +366,9 @@ export class SharedSettingsDelegate<
             const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribeLoading(() => {
+                this.handleSettingChanged();
+            });
+            dependency.subscribeBlocked(() => {
                 this.handleSettingChanged();
             });
             this.subscribeToDependencyStatusMessages(dependency);
@@ -390,6 +410,11 @@ export class SharedSettingsDelegate<
         if (this._setupBasicBindingsContext) {
             this._setupBasicBindingsContext(context);
         }
+
+        // Settings blocking each other would wait for each other for good - see Dependency
+        assertNoCircularValueConstraints(valueConstraintsDependencies, (settingKey) =>
+            this._wrappedSettings[settingKey as TSettingKey].getLabel(),
+        );
     }
 
     private subscribeToDependencyStatusMessages(dependency: Dependency<any, any, any, any, any>): void {

@@ -159,26 +159,34 @@ describe("Fix-up of values that became invalid", () => {
         expect(backend.callsTo("getSurfaceData")).not.toContainEqual(["field-a", "depth", "Base reservoir", 3]);
     });
 
-    test("keeps the values that a global setting change made invalid, all the way down the graph, until valid ones are chosen", async () => {
+    test("keeps the values that a global setting change made invalid, and blocks the settings below them until valid ones are chosen", async () => {
         const manager = await restore(surfaceProvider("Surface", { attribute: "depth", surfaceName: "Top reservoir" }));
         const provider = findProvider(manager, "Surface");
+        const surfaceName = getProviderSetting(provider, Setting.SURFACE_NAME);
+        const realization = getProviderSetting(provider, Setting.REALIZATION);
 
         manager.updateGlobalSetting("fieldId", "field-b");
         await settle(manager);
 
         expect(getProviderSetting(provider, Setting.ATTRIBUTE).getValue()).toBe("depth");
-        expect(getProviderSetting(provider, Setting.SURFACE_NAME).getValue()).toBe("Top reservoir");
-        expect(getProviderSetting(provider, Setting.SURFACE_NAME).isValueValid()).toBe(false);
-        expect(getProviderSetting(provider, Setting.REALIZATION).getValue()).toBe(1);
-        expect(getProviderSetting(provider, Setting.REALIZATION).isValueValid()).toBe(false);
+        expect(surfaceName.getValue()).toBe("Top reservoir");
+        expect(surfaceName.isValueValid()).toBe(false);
+        // Nothing is requested for the invalid surface - the realization waits for it instead, keeping its value
+        expect(backend.callsTo("getRealizations")).not.toContainEqual(["field-b", "depth", "Top reservoir"]);
+        expect(realization.getValue()).toBe(1);
+        expect(realization.isBlocked()).toBe(true);
+        expect(realization.getBlockedBy()).toEqual([surfaceName.getLabel()]);
         expect(provider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
+        expect(provider.getSettingsContextDelegate().getInvalidSettings()).toEqual([surfaceName.getLabel()]);
         expect(provider.getData()).toBeNull();
 
-        // The kept realization becomes valid again along with the surface it is allowed for
-        getProviderSetting(provider, Setting.SURFACE_NAME).setValue("New surface");
+        // The kept realization resolves again along with the surface, and is valid for it
+        surfaceName.setValue("New surface");
         await settle(manager);
 
-        expect(getProviderSetting(provider, Setting.REALIZATION).getValue()).toBe(1);
+        expect(realization.isBlocked()).toBe(false);
+        expect(realization.getValue()).toBe(1);
+        expect(realization.isValueValid()).toBe(true);
         expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
         expect(provider.getData()?.surfaceName).toBe("New surface");
     });

@@ -711,27 +711,33 @@ export class SettingManager<
         return shouldNotifyValueChanged;
     }
 
+    /*
+     * Getting value constraints ends being blocked. Usually it isn't blocked anymore already, as it started loading before
+     * they were resolved - otherwise, it ends once the validity is up to date, so that nothing reacting to it no longer
+     * being blocked judges it by the outdated constraints.
+     */
     setValueConstraints(valueConstraints: TValueConstraints | null): void {
-        // Usually no longer blocked already, as it started loading before these were resolved
-        this.setBlocked(false);
-
         if (this._externalController) {
             this.setValueConstraintsAndInvalidateCache(valueConstraints);
             this.maybeResetPersistedValue();
             this._loading = false;
             this.initialize();
             this._externalController.setValueConstraints(this.getId(), valueConstraints);
+            // Only now - the controller would otherwise make the intersection from the outdated constraints first
+            this.setBlocked(false);
             return;
         }
 
         if (isEqual(this._valueConstraints, valueConstraints) && this._initialized) {
             this.setLoading(false);
+            this.setBlocked(false);
             return;
         }
 
         this.setValueConstraintsAndInvalidateCache(valueConstraints);
 
         const shouldNotifyValueChanged = this.applyValueConstraints();
+        this.setBlocked(false);
         this.initialize();
         if (shouldNotifyValueChanged) {
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
