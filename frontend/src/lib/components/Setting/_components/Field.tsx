@@ -126,18 +126,26 @@ export function Field(props: SettingFieldProps) {
     const isInvalid = annotations.some((a) => a.type === "error");
     const isWarning = annotations.some((a) => a.type === "warning");
 
+    // The section summary also reflects overlays - e.g. a failed query reports through errorOverlay while
+    // its annotations stay empty
+    const sectionHasError = isInvalid || overlay?.type === "error";
+    const sectionHasWarning = isWarning || overlay?.type === "warning";
+
     const sectionAnnotationsContext = React.useContext(SectionAnnotationsContext);
     React.useEffect(
         function registerAnnotationsEffect() {
             if (!sectionAnnotationsContext) {
                 return;
             }
-            sectionAnnotationsContext.reportField(generatedInputId, { hasError: isInvalid, hasWarning: isWarning });
+            sectionAnnotationsContext.reportField(generatedInputId, {
+                hasError: sectionHasError,
+                hasWarning: sectionHasWarning,
+            });
             return () => {
                 sectionAnnotationsContext.unregisterField(generatedInputId);
             };
         },
-        [sectionAnnotationsContext, generatedInputId, isInvalid, isWarning],
+        [sectionAnnotationsContext, generatedInputId, sectionHasError, sectionHasWarning],
     );
 
     if (!props.label) {

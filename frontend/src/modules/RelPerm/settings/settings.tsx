@@ -219,7 +219,12 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const allTableNameQueriesLoaded =
         selectedEnsembleIdents.length > 0 && loadedTableNameSets.length === selectedEnsembleIdents.length;
     const commonTableNamesAreMissing = allTableNameQueriesLoaded && availableTableNames.length === 0;
-    const showTableSelector = availableTableNames.length > 1 || commonTableNamesAreMissing;
+    // Also show it when a retained table name doesn't match the only available table, so the user can
+    // pick that table - nothing replaces the invalid selection automatically
+    const showTableSelector =
+        availableTableNames.length > 1 ||
+        commonTableNamesAreMissing ||
+        (availableTableNames.length === 1 && selectedTableName !== availableTableNames[0]);
     const showTableSetting = showTableSelector || Boolean(tableNamesErrorMessage);
     const tableNameAnnotations = [
         ...selectedTableNameAnnotations,
