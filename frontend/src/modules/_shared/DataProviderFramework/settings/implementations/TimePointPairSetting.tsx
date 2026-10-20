@@ -50,11 +50,6 @@ export class TimePointPairSetting implements CustomSettingImplementation<ValueTy
     }
 
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
-        // A pair cannot be formed from less than two time points, so don't hold back the whole settings context
-        if (valueConstraints.length < 2) {
-            return true;
-        }
-
         if (value === null) {
             return false;
         }
