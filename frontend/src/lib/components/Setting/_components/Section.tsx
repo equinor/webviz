@@ -147,19 +147,19 @@ function EndActions(props: EndActionsProps) {
 
     return (
         <div className="gap-x-2xs px-selectable flex items-center">
-            {numInvalid > 0 && (
+            {numWarnings > 0 && (
                 <Tooltip
-                    content={`${numInvalid} setting${numInvalid === 1 ? "" : "s"} with an invalid value - click to show`}
+                    content={`${numWarnings} setting${numWarnings === 1 ? "" : "s"} with a warning - click to show`}
                     side="bottom"
                 >
                     <Button
                         onClick={onShowSection}
                         variant="ghost"
-                        tone="danger"
+                        tone="warning"
                         size="small"
                         iconOnly
-                        icon={<Block style={{ fontSize: 16 }} />}
-                        aria-label="Invalid settings - show the section"
+                        icon={<Warning style={{ fontSize: 16 }} />}
+                        aria-label="Settings with warnings - show the section"
                     />
                 </Tooltip>
             )}
@@ -179,19 +179,19 @@ function EndActions(props: EndActionsProps) {
                     />
                 </Tooltip>
             )}
-            {numWarnings > 0 && (
+            {numInvalid > 0 && (
                 <Tooltip
-                    content={`${numWarnings} setting${numWarnings === 1 ? "" : "s"} with a warning - click to show`}
+                    content={`${numInvalid} setting${numInvalid === 1 ? "" : "s"} with an invalid value - click to show`}
                     side="bottom"
                 >
                     <Button
                         onClick={onShowSection}
                         variant="ghost"
-                        tone="warning"
+                        tone="danger"
                         size="small"
                         iconOnly
-                        icon={<Warning style={{ fontSize: 16 }} />}
-                        aria-label="Settings with warnings - show the section"
+                        icon={<Block style={{ fontSize: 16 }} />}
+                        aria-label="Invalid settings - show the section"
                     />
                 </Tooltip>
             )}
