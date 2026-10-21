@@ -5,7 +5,7 @@ requires-python = "^3.13"
 dynamic = ["dependencies"]
 
 [tool.poetry]
-requires-poetry = ">=2.1"
+requires-poetry = ">=2.5"
 packages = [{ include = "webviz_services", from = "src" }]
 
 [tool.poetry.dependencies]
@@ -19,7 +19,7 @@ requests-toolbelt = "^1.0.0"
 xtgeo = "^4.18.0"
 azure-identity = "^1.25.3"
 azure-servicebus = "^7.14.3"
-aiohttp = "^3.13.4"  # async transport for azure.servicebus.aio
+aiohttp = "^3.13.4"            # async transport for azure.servicebus.aio
 azure-storage-blob = "^12.30.0"
 msgpack = "^1.2.1"
 

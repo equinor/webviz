@@ -17,7 +17,8 @@ export function AuthenticationBoundary(props: AuthenticationBoundaryProps) {
     const { authState } = useAuthProvider();
 
     function signIn() {
-        window.location.href = `/api/login?redirect_url_after_login=${btoa(window.location.pathname + window.location.search + window.location.hash)}`;
+        const redirectTargetAfterLogin = window.location.pathname + window.location.search + window.location.hash;
+        window.location.href = `/api/login?${new URLSearchParams({ redirect_target_after_login: redirectTargetAfterLogin })}`;
     }
 
     let content: React.ReactNode = null;

@@ -39,10 +39,12 @@ class PolygonsAccess:
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
     async def get_polygons_directory_async(self) -> List[PolygonsMeta]:
-        realizations = await self._ensemble_context.realizationids_async
+        realizations = await self._ensemble_context.polygons.filter(realization=True).realizationids_async
+        if not realizations:
+            return []
 
         polygons_context = self._ensemble_context.polygons.filter(
-            realization=realizations[0],
+            realization=min(realizations),
         )
 
         poly_meta_arr: list[PolygonsMeta] = []
