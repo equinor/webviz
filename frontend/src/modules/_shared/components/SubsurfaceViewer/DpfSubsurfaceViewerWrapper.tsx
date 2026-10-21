@@ -10,6 +10,7 @@ import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ContentActionRequired } from "@modules/_shared/components/ContentMessage";
 import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
 import { WebvizWellsLayer } from "@modules/_shared/customDeckGlLayers/WebvizWellsLayer";
 import {
@@ -187,6 +188,16 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         statusWriter.addError(message);
     }
 
+    for (const message of props.visualizationAssemblerProduct.aggregatedActionRequiredMessages) {
+        statusWriter.addActionRequired(message);
+    }
+
+    const hasRenderableLayers = deckGlLayers.length > 0;
+    const showActionRequiredFallback =
+        !hasRenderableLayers &&
+        props.visualizationAssemblerProduct.numLoadingDataProviders === 0 &&
+        props.visualizationAssemblerProduct.aggregatedActionRequiredMessages.length > 0;
+
     let bounds3D: BoundingBox3D | undefined = undefined;
     let bounds2D: BoundingBox2D | undefined = undefined;
     if (props.visualizationAssemblerProduct.combinedBoundingBox) {
@@ -263,6 +274,16 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     );
 
     // -----------------------------------------------------------------------------
+
+    if (showActionRequiredFallback) {
+        return (
+            <ContentActionRequired>
+                {props.visualizationAssemblerProduct.aggregatedActionRequiredMessages
+                    .map((message) => (typeof message === "string" ? message : message.message))
+                    .join(", ")}
+            </ContentActionRequired>
+        );
+    }
 
     return (
         <DpfSubsurfaceViewerContext.Provider

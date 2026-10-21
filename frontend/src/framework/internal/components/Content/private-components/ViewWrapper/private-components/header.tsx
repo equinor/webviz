@@ -2,6 +2,7 @@ import React from "react";
 
 import type { BaseUIEvent, PopoverRootActions } from "@base-ui/react";
 import {
+    Block,
     Close,
     CloseFullscreen,
     Error,
@@ -156,6 +157,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
     const hasErrors = hotStatusMessages.some((entry) => entry.type === StatusMessageType.Error);
     const numErrors = hotStatusMessages.filter((m) => m.type === StatusMessageType.Error).length;
     const numWarnings = hotStatusMessages.filter((m) => m.type === StatusMessageType.Warning).length;
+    const numActionRequired = hotStatusMessages.filter((m) => m.type === StatusMessageType.ActionRequired).length;
 
     const sharedActionProps: HeaderActionsProps = {
         workbench: props.workbench,
@@ -172,6 +174,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
         isLoading,
         numErrors,
         numWarnings,
+        numActionRequired,
         hasDataReceiver: receivers.length > 0,
         onShowLog: showLog,
         onEditConnections: editConnections,
@@ -307,18 +310,20 @@ function DefaultHeaderActions(props: HeaderActionsProps): React.ReactNode {
 type MenuBadgeProps = {
     numErrors: number;
     numWarnings: number;
+    numActionRequired: number;
     numSyncedSettings: number;
     children: React.ReactNode;
 };
 
 function MenuBadge(props: MenuBadgeProps): React.ReactNode {
     const hasErrors = props.numErrors > 0;
+    const hasActionRequired = props.numActionRequired > 0;
     const hasWarnings = props.numWarnings > 0;
     const hasSyncedSettings = props.numSyncedSettings > 0;
 
-    if (hasErrors) {
+    if (hasErrors || hasActionRequired) {
         return (
-            <Badge badgeContent={props.numErrors} tone="danger">
+            <Badge badgeContent={props.numErrors + props.numActionRequired} tone="danger">
                 {props.children}
             </Badge>
         );
@@ -347,6 +352,7 @@ type CompactHeaderActionsProps = HeaderActionsProps & {
     isLoading: boolean;
     numErrors: number;
     numWarnings: number;
+    numActionRequired: number;
     hasDataReceiver: boolean;
     onShowLog: () => void;
     onEditConnections: () => void;
@@ -372,6 +378,7 @@ function CompactHeaderActions(props: CompactHeaderActionsProps): React.ReactNode
                         <MenuBadge
                             numErrors={props.numErrors}
                             numWarnings={props.numWarnings}
+                            numActionRequired={props.numActionRequired}
                             numSyncedSettings={syncedSettings.length}
                         >
                             <MoreVert fontSize="inherit" />
@@ -397,11 +404,13 @@ function CompactHeaderActions(props: CompactHeaderActionsProps): React.ReactNode
                             ))}
                         </Menu.SubmenuItem>
                     )}
-                    {props.numErrors > 0 || props.numWarnings > 0 ? (
+                    {props.numErrors > 0 || props.numWarnings > 0 || props.numActionRequired > 0 ? (
                         <Menu.Item
                             icon={
                                 <span className="relative flex size-[1em] items-center justify-center">
-                                    {props.numErrors > 0 ? (
+                                    {props.numActionRequired > 0 ? (
+                                        <Block fontSize="inherit" color="error" />
+                                    ) : props.numErrors > 0 ? (
                                         <>
                                             <Error fontSize="inherit" color="error" />
                                             {props.numWarnings > 0 && (
@@ -418,6 +427,9 @@ function CompactHeaderActions(props: CompactHeaderActionsProps): React.ReactNode
                                 </span>
                             }
                             text={[
+                                props.numActionRequired > 0
+                                    ? `${props.numActionRequired} action${props.numActionRequired > 1 ? "s" : ""} required`
+                                    : "",
                                 props.numErrors > 0 ? `${props.numErrors} error${props.numErrors > 1 ? "s" : ""}` : "",
                                 props.numWarnings > 0
                                     ? `${props.numWarnings} warning${props.numWarnings > 1 ? "s" : ""}`
@@ -678,10 +690,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     const { dashboard } = useDashboard();
 
     const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
-    const hotStatusMessages = useStatusControllerStateValue(
-        props.moduleInstance.getStatusController(),
-        "hotMessageCache",
-    );
+    const statusMessages = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "hotMessageCache");
     const log = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "log");
     const setRightDrawerContent = useSetGuiState(guiMessageBroker, GuiState.RightDrawerContent);
     const setRightSettingsPanelWidth = useSetGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
@@ -705,7 +714,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     function makeHotStatusMessages(): React.ReactNode {
         return (
             <ul className="gap-y-2xs p-2xs flex flex-col">
-                {hotStatusMessages.map((entry) => (
+                {statusMessages.map((entry) => (
                     <li
                         key={`${entry.message}-${entry.source}-${entry.datetimeMs}
                         datetimeMs}`}
@@ -720,6 +729,9 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
                         >
                             {entry.type === StatusMessageType.Error && <Error fontSize="inherit" color="error" />}
                             {entry.type === StatusMessageType.Warning && <Warning fontSize="inherit" color="warning" />}
+                            {entry.type === StatusMessageType.ActionRequired && (
+                                <Block fontSize="inherit" color="error" />
+                            )}
                             {entry.message}
                         </Typography>
                     </li>
@@ -739,29 +751,44 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
             </Tooltip>,
         );
     }
-    const numErrors = hotStatusMessages.filter((message) => message.type === StatusMessageType.Error).length;
-    const numWarnings = hotStatusMessages.filter((message) => message.type === StatusMessageType.Warning).length;
+    const numErrors = statusMessages.filter((message) => message.type === StatusMessageType.Error).length;
+    const numWarnings = statusMessages.filter((message) => message.type === StatusMessageType.Warning).length;
+    const numActionRequired = statusMessages.filter(
+        (message) => message.type === StatusMessageType.ActionRequired,
+    ).length;
 
     let badgeTitle = "";
+    if (numActionRequired > 0) {
+        badgeTitle += `${numActionRequired} action${numActionRequired > 1 ? "s" : ""} required`;
+    }
+
     if (numErrors > 0) {
-        badgeTitle += `${numErrors} error${numErrors > 1 ? "s" : ""}`;
+        badgeTitle += `${badgeTitle.length > 0 ? ", " : ""}${numErrors} error${numErrors > 1 ? "s" : ""}`;
     }
 
     if (numWarnings > 0) {
         badgeTitle += `${badgeTitle.length > 0 ? ", " : ""}${numWarnings} warning${numWarnings > 1 ? "s" : ""}`;
     }
 
-    if (numErrors > 0 || numWarnings > 0) {
+    if (numErrors > 0 || numWarnings > 0 || numActionRequired > 0) {
         stateIndicators.push(
             <Popover.Root key="state-indicator-warning" actionsRef={popoverActionRef}>
                 <Popover.Trigger variant="ghost" size="small" iconOnly tone="neutral">
                     <Tooltip content={badgeTitle} side="bottom">
-                        <Badge badgeContent={numErrors + numWarnings} invisible={props.isMinimized}>
+                        <Badge badgeContent={numActionRequired + numErrors + numWarnings} invisible={props.isMinimized}>
                             <div className="gap-x-4xs flex items-center whitespace-nowrap">
+                                <Block
+                                    fontSize="inherit"
+                                    color="error"
+                                    style={{ display: numActionRequired === 0 ? "none" : "block" }}
+                                />
                                 <Error
                                     fontSize="inherit"
                                     color="error"
                                     style={{ display: numErrors === 0 ? "none" : "block" }}
+                                    className={resolveClassNames({
+                                        "-ml-xs": numActionRequired > 0,
+                                    })}
                                 />
                                 <div className="overflow-hidden">
                                     <Warning
@@ -769,7 +796,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
                                         color="warning"
                                         style={{ display: numWarnings === 0 ? "none" : "block" }}
                                         className={resolveClassNames({
-                                            "-ml-xs": numErrors > 0,
+                                            "-ml-xs": numErrors > 0 || numActionRequired > 0,
                                         })}
                                     />
                                 </div>

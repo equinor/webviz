@@ -21,6 +21,7 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Paragraph } from "@lib/components/Typography/compositions";
 
+import { ActionRequiredOverlayBar } from "./actionRequiredOverlayBar";
 import { CrashView } from "./crashView";
 
 type ViewContentProps = {
@@ -151,32 +152,37 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     const View = props.moduleInstance.getViewFC();
     return (
         <ErrorBoundary moduleInstance={props.moduleInstance}>
-            <div className="px-2xs py-2xs h-full w-full">
-                <DebugProfiler
-                    id={`${props.moduleInstance.getId()}-view`}
-                    statusController={props.moduleInstance.getStatusController()}
-                    source={StatusSource.View}
-                    guiMessageBroker={props.workbench.getGuiMessageBroker()}
-                >
-                    <Provider store={atomStore}>
-                        <HydrateQueryClientAtom>
-                            <ApplyInterfaceEffectsToView moduleInstance={props.moduleInstance}>
-                                {/* eslint-disable-next-line @eslint-react/static-components -- Legacy */}
-                                <View
-                                    viewContext={props.moduleInstance.getContext()}
-                                    workbenchSession={props.workbench.getSessionManager().getActiveSession()}
-                                    syncSettingsService={dashboard.getSyncSettingsService()}
-                                    hoverService={dashboard.getHoverService()}
-                                    workbenchSettings={props.workbench
-                                        .getSessionManager()
-                                        .getActiveSession()
-                                        .getWorkbenchSettings()}
-                                    initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                                />
-                            </ApplyInterfaceEffectsToView>
-                        </HydrateQueryClientAtom>
-                    </Provider>
-                </DebugProfiler>
+            <div className="relative h-full w-full">
+                <div className="absolute top-0 right-0 left-0 z-10">
+                    <ActionRequiredOverlayBar workbench={props.workbench} moduleInstance={props.moduleInstance} />
+                </div>
+                <div className="px-2xs py-2xs h-full w-full">
+                    <DebugProfiler
+                        id={`${props.moduleInstance.getId()}-view`}
+                        statusController={props.moduleInstance.getStatusController()}
+                        source={StatusSource.View}
+                        guiMessageBroker={props.workbench.getGuiMessageBroker()}
+                    >
+                        <Provider store={atomStore}>
+                            <HydrateQueryClientAtom>
+                                <ApplyInterfaceEffectsToView moduleInstance={props.moduleInstance}>
+                                    {/* eslint-disable-next-line @eslint-react/static-components -- Legacy */}
+                                    <View
+                                        viewContext={props.moduleInstance.getContext()}
+                                        workbenchSession={props.workbench.getSessionManager().getActiveSession()}
+                                        syncSettingsService={dashboard.getSyncSettingsService()}
+                                        hoverService={dashboard.getHoverService()}
+                                        workbenchSettings={props.workbench
+                                            .getSessionManager()
+                                            .getActiveSession()
+                                            .getWorkbenchSettings()}
+                                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                                    />
+                                </ApplyInterfaceEffectsToView>
+                            </HydrateQueryClientAtom>
+                        </Provider>
+                    </DebugProfiler>
+                </div>
             </div>
         </ErrorBoundary>
     );

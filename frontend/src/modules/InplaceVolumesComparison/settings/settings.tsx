@@ -161,7 +161,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 <Setting.Section title="Sources" defaultOpen>
                     <Setting.Field
                         label="Reference ensemble"
-
                         help={{
                             title: "Reference and comparison",
                             content: (
@@ -194,8 +193,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                                referenceEnsembleIdent.value &&
-                                referenceTableNameOptions.length === 0
+                            referenceEnsembleIdent.value &&
+                            referenceTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
@@ -215,7 +214,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             value={comparisonEnsembleIdent.value}
                             ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
                             onValueChange={setComparisonEnsembleIdent}
-
                         />
                     </Setting.Field>
                     <Setting.Field
@@ -224,8 +222,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                                comparisonEnsembleIdent.value &&
-                                comparisonTableNameOptions.length === 0
+                            comparisonEnsembleIdent.value &&
+                            comparisonTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
