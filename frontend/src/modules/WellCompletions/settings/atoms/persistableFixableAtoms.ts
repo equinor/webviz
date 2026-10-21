@@ -1,6 +1,9 @@
+import type { Getter } from "jotai";
+
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { persistableFixableAtom } from "@framework/utils/atomUtils";
+import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
+import { computeQueryDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 
 import { availableRealizationsAtom, sortedCompletionDatesAtom, wellCompletionsDataAccessorAtom } from "./derivedAtoms";
 import { wellCompletionsQueryAtom } from "./queryAtoms";
@@ -39,17 +42,7 @@ export const selectedRealizationAtom = persistableFixableAtom<number | null>({
 
 export const selectedCompletionDateIndexAtom = persistableFixableAtom<number | null>({
     initialValue: null,
-    computeDependenciesState: ({ get }) => {
-        const wellCompletionsQuery = get(wellCompletionsQueryAtom);
-        const wellCompletionsDataAccessor = get(wellCompletionsDataAccessorAtom);
-        if (wellCompletionsQuery.isError) {
-            return "error";
-        }
-        if (wellCompletionsQuery.isFetching) {
-            return "loading";
-        }
-        return !wellCompletionsDataAccessor ? "error" : "loaded";
-    },
+    computeDependenciesState: computeWellCompletionsDependenciesState,
     isValidFunction: ({ get, value }) => {
         const sortedCompletionDates = get(sortedCompletionDatesAtom);
 
@@ -75,17 +68,7 @@ export const selectedCompletionDateIndexAtom = persistableFixableAtom<number | n
 
 export const selectedCompletionDateIndexRangeAtom = persistableFixableAtom<[number, number] | null>({
     initialValue: null,
-    computeDependenciesState: ({ get }) => {
-        const wellCompletionsQuery = get(wellCompletionsQueryAtom);
-        const wellCompletionsDataAccessor = get(wellCompletionsDataAccessorAtom);
-        if (wellCompletionsQuery.isError) {
-            return "error";
-        }
-        if (wellCompletionsQuery.isFetching) {
-            return "loading";
-        }
-        return !wellCompletionsDataAccessor ? "error" : "loaded";
-    },
+    computeDependenciesState: computeWellCompletionsDependenciesState,
     isValidFunction: ({ get, value }) => {
         const sortedCompletionDates = get(sortedCompletionDatesAtom);
 
@@ -127,3 +110,12 @@ export const selectedCompletionDateIndexRangeAtom = persistableFixableAtom<[numb
         return [limitedStartIndex, limitedEndIndex];
     },
 });
+
+// A disabled query is "blocked" whatever it has cached, so a stale error doesn't surface for an invalid selection
+function computeWellCompletionsDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
+    const queryDependenciesState = computeQueryDependenciesState(get(wellCompletionsQueryAtom));
+    if (queryDependenciesState !== "loaded") {
+        return queryDependenciesState;
+    }
+    return get(wellCompletionsDataAccessorAtom) ? "loaded" : "error";
+}

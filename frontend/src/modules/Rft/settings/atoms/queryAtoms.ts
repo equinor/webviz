@@ -60,6 +60,7 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
 
     const realizationsEncodedAsUintListStr =
         validRealizationNumbers.length > 0 ? encodeAsUintListStr(validRealizationNumbers) : null;
+    const areSelectionsValid = ensembleIdentsValid && wellNameValid && responseNameValid && timestampValid;
 
     const queries = selectedEnsembleIdents.map(function makeRftRealizationDataQuery(ensembleIdent) {
         const options = getRftRealizationDataOptions({
@@ -81,16 +82,19 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
                     selectedWellName &&
                         selectedResponseName &&
                         selectedTimestampUtcMs !== null &&
-                        ensembleIdentsValid &&
-                        wellNameValid &&
-                        responseNameValid &&
-                        timestampValid,
+                        areSelectionsValid,
                 ),
             };
         };
     });
 
     function combine(results: UseQueryResult<RftRealizationData_api[], RftApiError>[]): RftRealizationDataResult {
+        // A disabled query keeps its cached data and error, which must not be exposed for an invalid selection
+        // (e.g. a removed ensemble whose query key is still cached)
+        if (!areSelectionsValid) {
+            return { dataAccessor: null, isFetching: false, isError: false, errors: [] };
+        }
+
         const ensembleData: RftEnsembleRealizationData[] = [];
 
         results.forEach(function collectEnsembleData(result, index) {
@@ -139,6 +143,11 @@ export const rftObservationsQueriesAtom = atomWithQueries(function makeRftObserv
     });
 
     function combine(results: UseQueryResult<RftObservations_api[], RftApiError>[]): RftObservationsResult {
+        // Like the realization data, cached observations must not be exposed for an invalid ensemble selection
+        if (!ensembleIdentsValid) {
+            return { observationsData: [], isFetching: false, isError: false, errors: [] };
+        }
+
         const observationsData: RftEnsembleObservationsData[] = [];
 
         results.forEach(function collectObservationsData(result, index) {

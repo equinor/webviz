@@ -21,6 +21,7 @@ import { FrequencyEnumToStringMapping, NodeTypeEnumToStringMapping } from "../ty
 
 import { selectedNodeTypesAtom, selectedResamplingFrequencyAtom } from "./atoms/baseAtoms";
 import {
+    areQuerySelectionsValidAtom,
     availableDateTimesAtom,
     availableRealizationsAtom,
     availableTreeTypesAtom,
@@ -58,8 +59,12 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [selectedDateTime, setSelectedDateTime] = useAtom(selectedDateTimeAtom);
 
     const flowNetworkQuery = useAtomValue(realizationFlowNetworkQueryAtom);
+    const areQuerySelectionsValid = useAtomValue(areQuerySelectionsValidAtom);
 
-    propagateQueryErrorToStatusWriter(flowNetworkQuery, statusWriter);
+    // A disabled query keeps its cached error, which must not be reported for an invalid selection
+    if (areQuerySelectionsValid) {
+        propagateQueryErrorToStatusWriter(flowNetworkQuery, statusWriter);
+    }
 
     const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(workbenchSession);
     const timeStepSliderDebounceTimeMs = 10;

@@ -2,7 +2,8 @@ import type { Getter } from "jotai";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { persistableFixableAtom } from "@framework/utils/atomUtils";
+import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
+import { computeQueriesDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { fixupUserSelection } from "@lib/utils/fixupUserSelection";
@@ -64,16 +65,7 @@ export const selectedTimestampUtcMsAtom = persistableFixableAtom<number | null, 
     },
 });
 
-function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): "error" | "loading" | "loaded" {
-    const tableDefinitionQueries = get(rftTableDefinitionQueriesAtom);
-
-    if (tableDefinitionQueries.some((query: { isFetching: boolean }) => query.isFetching)) {
-        return "loading";
-    }
-    if (tableDefinitionQueries.some((query: { isError: boolean }) => query.isError)) {
-        return "error";
-    }
-
-    return "loaded";
+function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
+    return computeQueriesDependenciesState(get(rftTableDefinitionQueriesAtom));
 }
 

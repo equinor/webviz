@@ -77,7 +77,15 @@ export const tableDataAccessorWithStatusFlagsAtom = atom<TableDataAccessorWithSt
  * while this is false.
  */
 export const isParameterSelectionValidAtom = atom<boolean>((get) => {
-    const vfpTable = get(vfpTableQueryAtom).data;
+    const vfpTableQuery = get(vfpTableQueryAtom);
+
+    // A disabled query keeps its cached table, which may belong to a selection that is no longer valid
+    // (e.g. an excluded realization) - parameters validated against it must not allow plotting
+    if (!vfpTableQuery.isEnabled) {
+        return false;
+    }
+
+    const vfpTable = vfpTableQuery.data;
     const isThpSelectionValid = get(selectedThpIndicesAtom).isValidInContext;
 
     // Injection tables are only plotted by THP

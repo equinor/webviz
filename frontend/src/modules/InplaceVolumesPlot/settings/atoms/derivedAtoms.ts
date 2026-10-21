@@ -4,10 +4,12 @@ import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableD
 
 import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
 import {
+    selectedColorByAtom,
     selectedEnsembleIdentsAtom,
     selectedFirstResultNameAtom,
     selectedIndicesWithValuesAtom,
     selectedSecondResultNameAtom,
+    selectedSubplotByAtom,
     selectedTableNamesAtom,
 } from "./persistableFixableAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
@@ -55,6 +57,17 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
     }
 
     if (!tableDefinitionsAccessor.hasIndicesWithValues(selectedIndicesWithValues.value)) {
+        return false;
+    }
+
+    // A retained subplot column may be missing from the current tables (e.g. REGION), and would then
+    // be neither fetched as a group-by column nor found by the plot builder
+    if (!get(selectedSubplotByAtom).isValidInContext) {
+        return false;
+    }
+
+    // Likewise for the color-by column, which the plot data builder requires to exist in the table
+    if (!get(selectedColorByAtom).isValidInContext) {
         return false;
     }
 

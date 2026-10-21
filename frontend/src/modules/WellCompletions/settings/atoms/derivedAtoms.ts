@@ -36,7 +36,8 @@ export const dataLoadingStatusAtom = atom<DataLoadingStatus>((get) => {
 
     if (wellCompletionsQuery.isFetching) {
         return DataLoadingStatus.LOADING;
-    } else if (wellCompletionsQuery.isError) {
+    } else if (wellCompletionsQuery.isError && wellCompletionsQuery.isEnabled) {
+        // A disabled query's cached error belongs to a selection that may no longer be valid
         return DataLoadingStatus.ERROR;
     }
     return DataLoadingStatus.IDLE;
@@ -46,7 +47,10 @@ export const wellCompletionsDataAccessorAtom = atom<WellCompletionsDataAccessor 
     const wellCompletionsQuery = get(wellCompletionsQueryAtom);
     const selectedStratigraphyColorSet = get(selectedStratigraphyColorSetAtom);
 
-    if (!wellCompletionsQuery.data || !selectedStratigraphyColorSet) {
+    // A disabled query keeps its cached data, which may belong to a selection that is no longer valid
+    // (e.g. a single realization excluded by the realization filter). Whether the query is enabled
+    // already depends on the realization selection only in single-realization mode.
+    if (!wellCompletionsQuery.isEnabled || !wellCompletionsQuery.data || !selectedStratigraphyColorSet) {
         return null;
     }
 

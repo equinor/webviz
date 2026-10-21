@@ -38,6 +38,12 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
         .flat();
 
     function combine(results: UseQueryResult<PvtData_api[], Error>[]): CombinedPvtDataResult {
+        // A disabled query keeps its cached data and error, which must not be exposed for an invalid
+        // selection (e.g. a realization excluded by the realization filter)
+        if (!ensembleIdentsValid || !realizationsValid) {
+            return { tableCollections: [], errors: [], isFetching: false, allQueriesFailed: false };
+        }
+
         return {
             tableCollections: ensembleIdentsAndRealizations.map((el, idx) => {
                 return {
