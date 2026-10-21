@@ -44,6 +44,7 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
     const isAnyQueryLoading = useAtomValue(queryIsFetchingAtom);
 
+    const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
     const setActiveTimestampUtcMs = useSetAtom(activeTimestampUtcMsAtom);
 
     const moduleInstanceId = viewContext.getInstanceIdString();
@@ -92,6 +93,9 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
 
     const handleClickInChart = React.useCallback(
         function handleClickInChart(e: PlotMouseEvent) {
+            if (!showTimestampMarker) {
+                return;
+            }
             const clickedPoint: PlotDatum = e.points[0];
             if (!clickedPoint) {
                 return;
@@ -104,7 +108,7 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
                 }
             }
         },
-        [setActiveTimestampUtcMs],
+        [setActiveTimestampUtcMs, showTimestampMarker],
     );
 
     const handleHoverInChart = React.useCallback(

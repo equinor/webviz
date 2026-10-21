@@ -9,6 +9,7 @@ import {
     groupByAtom,
     resampleFrequencyAtom,
     showHistoricalAtom,
+    showTimestampMarkerAtom,
     showObservationsAtom,
     statisticsSelectionAtom,
     subplotLimitDirectionAtom,
@@ -38,6 +39,7 @@ export type SettingsToViewInterface = {
     visualizationMode: VisualizationMode;
     showObservations: boolean;
     showHistorical: boolean;
+    showTimestampMarker: boolean;
     vectorSpecifications: VectorSpec[];
     statisticsSelection: StatisticsSelection;
     colorByParameter: boolean;
@@ -69,6 +71,9 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     showHistorical: (get) => {
         return get(showHistoricalAtom);
+    },
+    showTimestampMarker: (get) => {
+        return get(showTimestampMarkerAtom);
     },
     vectorSpecifications: (get) => {
         return get(vectorSpecificationsAtom);

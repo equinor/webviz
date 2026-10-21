@@ -25,6 +25,7 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
 
     const statusWriter = useViewStatusWriter(viewContext);
 
+    const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
     const [activeTimestampUtcMs, setSelectedTimestampUtcMs] = useAtom(activeTimestampUtcMsAtom);
     const vectorSpecification = useAtomValue(vectorSpecificationAtom);
 
@@ -44,7 +45,7 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
 
     function handleHoverInChart(hoverInfo: TimeSeriesChartHoverInfo | null) {
         if (hoverInfo) {
-            if (hoverInfo.shiftKeyIsDown) {
+            if (hoverInfo.shiftKeyIsDown && showTimestampMarker) {
                 setSelectedTimestampUtcMs(hoverInfo.timestampUtcMs);
             }
 
@@ -60,17 +61,20 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
     }
 
     function handleClickInChart(timestampUtcMs: number) {
+        if (!showTimestampMarker) {
+            return;
+        }
         setSelectedTimestampUtcMs(timestampUtcMs);
     }
 
     // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
     return (
-        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
+        <div className="h-full w-full overflow-hidden" ref={wrapperDivRef}>
             <TimeSeriesChart
                 traceDataArr={traceDataArr}
                 title={descriptiveVectorName}
                 uirevision={vectorSpecification?.vectorName}
-                activeTimestampUtcMs={activeTimestampUtcMs.value ?? undefined}
+                activeTimestampUtcMs={showTimestampMarker ? (activeTimestampUtcMs.value ?? undefined) : undefined}
                 hoveredTimestampUtcMs={subscribedHoverTimestampUtcMs ?? undefined}
                 isHoverExternal={hoverService.getLastHoveredModule() !== moduleInstanceId}
                 onClick={handleClickInChart}

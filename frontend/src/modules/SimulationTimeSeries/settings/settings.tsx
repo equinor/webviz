@@ -50,6 +50,7 @@ import {
     selectedVectorTagsAtom,
     showHistoricalAtom,
     showObservationsAtom,
+    showTimestampMarkerAtom,
     statisticsSelectionAtom,
     subplotLimitDirectionAtom,
     subplotMaxDirectionElementsAtom,
@@ -85,6 +86,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const [visualizationMode, setVisualizationMode] = useAtom(visualizationModeAtom);
     const [showHistorical, setShowHistorical] = useAtom(showHistoricalAtom);
     const [showObservations, setShowObservations] = useAtom(showObservationsAtom);
+    const [showTimestampMarker, setShowTimestampMarker] = useAtom(showTimestampMarkerAtom);
     const [statisticsSelection, setStatisticsSelection] = useAtom(statisticsSelectionAtom);
     const [selectedVectorTags, setSelectedVectorTags] = useAtom(selectedVectorTagsAtom);
     const [selectedVectorNames, setSelectedVectorNames] = useAtom(selectedVectorNamesAtom);
@@ -424,6 +426,16 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             </div>
                         </Setting.Field>
                     </Hidden>
+                </Setting.Section>
+                <Setting.Section title="Data channel">
+                    <Setting.Field>
+                        <SwitchCompositions.WithLabel
+                            label="Show timestamp marker in plot"
+                            checked={showTimestampMarker}
+                            onCheckedChange={setShowTimestampMarker}
+                            size="small"
+                        />
+                    </Setting.Field>
                 </Setting.Section>
             </Setting.Panel>
         </Setting.ScrollArea>

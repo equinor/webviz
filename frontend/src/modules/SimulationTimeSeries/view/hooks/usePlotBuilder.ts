@@ -49,6 +49,7 @@ export function usePlotBuilder(
         loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     );
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
+    const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
@@ -60,7 +61,7 @@ export function usePlotBuilder(
 
     const scatterType =
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
-            visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
+        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
             ? "scattergl"
             : "scatter";
 
@@ -125,7 +126,7 @@ export function usePlotBuilder(
     }
 
     // Add time annotation if active timestamp is set
-    if (activeTimestampUtcMs) {
+    if (showTimestampMarker && activeTimestampUtcMs) {
         plotBuilder.addTimeAnnotation(activeTimestampUtcMs);
     }
 
