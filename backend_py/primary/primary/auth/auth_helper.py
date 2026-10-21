@@ -1,14 +1,15 @@
 import logging
 import os
 import time
+from html import escape
+from textwrap import dedent
 from typing import Callable, Literal, Optional, TypeAlias, get_args
 from pathlib import Path
 
-import jwt
 import msal
 import starsessions
 from fastapi import APIRouter, Request, Response
-from fastapi.responses import PlainTextResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from pydantic import BaseModel, ValidationError
 
 from webviz_core_utils.perf_metrics import PerfMetrics
@@ -70,7 +71,7 @@ class AuthHelper:
         if redirect_target_after_login is not None:
             if not is_safe_redirect_target(redirect_target_after_login):
                 LOGGER.warning("Rejected unsafe post-login redirect path")
-                return PlainTextResponse("Invalid post-login redirect specified.", 400)
+                return _html_error_response("Invalid post-login redirect specified.", 400)
 
         await starsessions.load_session(request)
         request.session.clear()
@@ -107,14 +108,14 @@ class AuthHelper:
         flow_dict = request.session.get("flow")
         if not isinstance(flow_dict, dict):
             LOGGER.error("Login flow not found in session")
-            return PlainTextResponse("No login in progress. Please log in again.", 400)
+            return _html_error_response("No login in progress. Please log in again.", 400)
 
         # If the state parameter in the auth response does not match the one in the auth code flow dict, it could
         # indicate a CSRF attack or a simultaneous login attempt. Note that the test here is mainly to notify the user
         # and is not critical since the token acquisition below will fail if the state does not match.
         if auth_response_dict.get("state") != flow_dict.get("state"):
             LOGGER.error("Login response state value did not match the stored flow state value")
-            return PlainTextResponse("Login could not be verified. Close other login tabs and try again.", 400)
+            return _html_error_response("Login could not be verified. Close other login tabs and try again.", 400)
 
         try:
             new_token_cache = msal.SerializableTokenCache()
@@ -133,16 +134,24 @@ class AuthHelper:
                 error = token_dict.get("error")
                 error_description = token_dict.get("error_description")
                 LOGGER.error(f"Microsoft Entra sign-in failed ({error=}, {error_description=})")
-                return PlainTextResponse(f"Microsoft Entra sign-in failed. Please try again. ({error})", 400)
+                return _html_error_response(f"Microsoft Entra sign-in failed. Please try again. ({error})", 400)
 
         except ValueError as exc:
             LOGGER.error(f"Error processing auth response: {repr(exc)}")
-            return PlainTextResponse("Invalid login response. Please try again.", 400)
+            return _html_error_response("Invalid login response. Please try again.", 400)
 
+        # !!!!!!!!
+        # !!!!!!!!
+        # TODO:
+        # Avoid forcing another full ID-token refresh by using claims from the token result already in hand.
+        # We should produce an initial _UserAuthInfo directly from the claims and pass that to _acquire_refreshed_identity_and_tokens()
+        #
+        # Check that a SUMO access token was acquired, and report an error if not.
+        # No point in having a logged in user, but without SUMO access
         new_user_auth_info = _acquire_refreshed_identity_and_tokens(cca, None)
         if not new_user_auth_info:
             LOGGER.error("Failed to acquire refreshed identity and tokens")
-            return PlainTextResponse("Login succeeded, but we could not retrieve user details. Please try again.", 500)
+            return _html_error_response("Login succeeded, but we could not get user details. Please try again.", 500)
 
         # Issue a new session ID now that the session becomes authenticated to prevent session fixation attacks
         starsessions.regenerate_session_id(request)
@@ -157,6 +166,10 @@ class AuthHelper:
         if redirect_target_after_login is not None:
             return RedirectResponse(redirect_target_after_login)
 
+        # !!!!!!!!
+        # !!!!!!!!
+        # TODO:
+        # Consider redirecting to a default page or showing a more user-friendly message after login
         return PlainTextResponse("Login OK")
 
     @staticmethod
@@ -249,19 +262,18 @@ def _acquire_access_token_for_resource_scopes(
         )
         return None
 
-    access_token = token_dict.get("access_token")
-    if not access_token:
-        return None
-
-    # Should we be validating the tokens here?
-    jwt_payload_dict = _decode_jwt(access_token)
+    # We expect the dict to contain both a valid access token and its remaining lifetime in seconds (expires_in)
     try:
-        expires_at = int(jwt_payload_dict["exp"])
-    except (ValueError, KeyError):
-        LOGGER.error(f"Error getting expiration time claim (exp) from access token ({resource_name=})")
+        access_token = token_dict["access_token"]
+        expires_in = int(token_dict["expires_in"])
+    except (ValueError, KeyError) as exc:
+        LOGGER.error(f"Error extracting access token and lifetime ({resource_name=}, {scopes_list=}) {repr(exc)}")
         return None
 
-    return _TokenEntry(token=access_token, expires_at=expires_at)
+    # Approximate the expiration time of the access token
+    approx_expires_at = int(time.time()) + expires_in
+
+    return _TokenEntry(token=access_token, expires_at=approx_expires_at)
 
 
 def _acquire_refreshed_identity_and_tokens(
@@ -311,24 +323,23 @@ def _acquire_refreshed_identity_and_tokens(
             )
             return None
 
-        id_token = token_dict.get("id_token")
-        if not id_token:
-            LOGGER.error("Error acquiring ID token")
+
+        # LOGGER.debug("------------------------------------------")
+        # LOGGER.debug(token_dict)
+        # LOGGER.debug("------------------------------------------")
+
+        # LOGGER.debug("------------------------------------------")
+        # LOGGER.debug(token_dict["id_token_claims"])
+        # LOGGER.debug("------------------------------------------")
+
+
+        # We ignore the actual ID token, but what we want is the decoded claims that MSAL returns
+        id_token_claims_dict = token_dict.get("id_token_claims")
+        if not id_token_claims_dict:
+            LOGGER.error("Error getting decoded ID token claims")
             return None
 
-
-        LOGGER.debug("------------------------------------------")
-        LOGGER.debug(token_dict)
-        LOGGER.debug("------------------------------------------")
-
-        LOGGER.debug("------------------------------------------")
-        LOGGER.debug(token_dict["id_token_claims"])
-        LOGGER.debug("------------------------------------------")
-    
-
-        id_token_claims_dict = _decode_jwt(id_token)
         try:
-
             # We use the 'oid' value here so that we tie persisted user items (such as sessions) to the profile.
             # This does mean we need the 'profile' scope, but that should be injected by msal by default anyways
 
@@ -339,8 +350,8 @@ def _acquire_refreshed_identity_and_tokens(
             user_id = id_token_claims_dict["oid"]
             user_name = id_token_claims_dict["preferred_username"]
             id_token_expiry_time = int(id_token_claims_dict["exp"])
-        except (ValueError, KeyError):
-            LOGGER.error("Error getting claims from ID token")
+        except (ValueError, KeyError, TypeError,) as exc:
+            LOGGER.error(f"Error getting required claims for ID token: {repr(exc)}")
             return None
 
         perf_metrics.record_lap("get-id-token")
@@ -457,5 +468,22 @@ def _save_token_cache_in_session(request_with_session: Request, token_cache: msa
         request_with_session.session["token_cache"] = token_cache.serialize()
 
 
-def _decode_jwt(jwt_str: str) -> dict:
-    return jwt.decode(jwt_str, algorithms=["RS256"], options={"verify_signature": False})
+def _html_error_response(message: str, status_code: int) -> HTMLResponse:
+    escaped_message = escape(message)
+    content_str=dedent(f"""\
+        <!doctype html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <title>Webviz sign-in problem</title>
+        </head>
+        <body>
+            <h1>Webviz was unable to complete sign-in</h1>
+            <p>{escaped_message}</p>
+            <p><a href="/api/login?redirect_target_after_login=/">Sign in again</a></p>
+        </body>
+        </html>
+    """)
+
+    return HTMLResponse(content=content_str, status_code=status_code)
+
