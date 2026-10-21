@@ -9,6 +9,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Combobox } from "@lib/components/Combobox/combobox";
@@ -44,6 +45,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
+    const selectedTimestampUtcMs = props.settingsContext.useViewToSettingsInterfaceValue("selectedTimestampUtcMs");
 
     const setSyncedRegularEnsembleIdents = useSetAtom(syncedRegularEnsembleIdentsAtom);
     const setSyncedVectorName = useSetAtom(syncedVectorNameAtom);
@@ -198,6 +200,20 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             onCheckedChange={setShowTimestampMarker}
                             size="small"
                         />
+                    </Setting.Field>
+                    <Setting.Field
+                        label="Selected timestamp"
+                        contentClassName="flex"
+                        help={{
+                            content:
+                                "The timestamp currently selected in the view (read-only). Enable the marker and click in the plot to select a new one.",
+                        }}
+                    >
+                        <span className="text-sm">
+                            {selectedTimestampUtcMs === null
+                                ? "None"
+                                : timestampUtcMsToCompactIsoString(selectedTimestampUtcMs)}
+                        </span>
                     </Setting.Field>
                 </Setting.Section>
             </Setting.Panel>

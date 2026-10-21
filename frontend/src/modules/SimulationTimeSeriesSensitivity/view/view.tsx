@@ -27,6 +27,7 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
 
     const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
     const [activeTimestampUtcMs, setSelectedTimestampUtcMs] = useAtom(activeTimestampUtcMsAtom);
+
     const vectorSpecification = useAtomValue(vectorSpecificationAtom);
 
     const descriptiveVectorName = vectorSpecification

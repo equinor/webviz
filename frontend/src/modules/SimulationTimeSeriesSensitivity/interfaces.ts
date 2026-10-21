@@ -11,6 +11,7 @@ import {
 import { vectorSpecificationAtom } from "./settings/atoms/derivedAtoms";
 import { selectedSensitivityNamesAtom } from "./settings/atoms/persistableFixableAtoms";
 import type { VectorSpec } from "./typesAndEnums";
+import { activeTimestampUtcMsAtom } from "./view/atoms/persistableFixableAtoms";
 
 export type SettingsToViewInterface = {
     vectorSpecification: VectorSpec | null;
@@ -22,8 +23,13 @@ export type SettingsToViewInterface = {
     showTimestampMarker: boolean;
 };
 
+export type ViewToSettingsInterface = {
+    selectedTimestampUtcMs: number | null;
+};
+
 export type Interfaces = {
     settingsToView: SettingsToViewInterface;
+    viewToSettings: ViewToSettingsInterface;
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
@@ -47,5 +53,11 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     showTimestampMarker: (get) => {
         return get(showTimestampMarkerAtom);
+    },
+};
+
+export const viewToSettingsInterfaceInitialization: InterfaceInitialization<ViewToSettingsInterface> = {
+    selectedTimestampUtcMs: (get) => {
+        return get(activeTimestampUtcMsAtom).value;
     },
 };
