@@ -734,9 +734,13 @@ export class SettingManager<
             return;
         }
 
+        // The external value may depend on the constraints alone (e.g. "all" mapping to every available item),
+        // so it can change even though the internal value and its validity stay the same
+        const prevExternalValue = this.getValue();
         this.setValueConstraintsAndInvalidateCache(valueConstraints);
 
-        const shouldNotifyValueChanged = this.applyValueConstraints();
+        const shouldNotifyValueChanged =
+            this.applyValueConstraints() || !isEqual(prevExternalValue, this.getValue());
         this.setBlocked(false);
         this.initialize();
         if (shouldNotifyValueChanged) {
