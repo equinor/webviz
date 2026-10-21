@@ -1,8 +1,9 @@
 import { atom } from "jotai";
 
 import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
+import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
-import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
+import { selectedIndexValueCriteriaAtom, selectedPlotTypeAtom } from "./baseAtoms";
 import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
@@ -52,7 +53,13 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
         return false;
     }
 
-    if (selectedSecondResultName.value && !tableDefinitionsAccessor.hasResultName(selectedSecondResultName.value)) {
+    // The second response is only used (and its control only shown) for scatter plots, so a retained but
+    // unavailable one must not block the other plot types
+    if (
+        get(selectedPlotTypeAtom) === PlotType.SCATTER &&
+        selectedSecondResultName.value &&
+        !tableDefinitionsAccessor.hasResultName(selectedSecondResultName.value)
+    ) {
         return false;
     }
 

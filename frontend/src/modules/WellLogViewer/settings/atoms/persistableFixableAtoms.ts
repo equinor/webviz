@@ -1,5 +1,5 @@
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { persistableFixableAtom } from "@framework/utils/atomUtils";
+import { computeQueryDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 
 import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./queryAtoms";
 
@@ -33,14 +33,8 @@ export const selectedFieldIdentAtom = persistableFixableAtom<string | null>({
 
 export const selectedWellboreUuidAtom = persistableFixableAtom<string | null>({
     initialValue: null,
-    computeDependenciesState: ({ get }) => {
-        const headersQuery = get(drilledWellboreHeadersQueryAtom);
-
-        if (headersQuery.isLoading) return "loading";
-        if (headersQuery.isError) return "error";
-
-        return "loaded";
-    },
+    // A disabled query is "blocked" whatever it has cached, so a stale error doesn't surface for an invalid field
+    computeDependenciesState: ({ get }) => computeQueryDependenciesState(get(drilledWellboreHeadersQueryAtom)),
     isValidFunction: ({ get, value }) => {
         const availableHeaders = get(drilledWellboreHeadersQueryAtom)?.data;
         if (!availableHeaders?.length) return value === null;

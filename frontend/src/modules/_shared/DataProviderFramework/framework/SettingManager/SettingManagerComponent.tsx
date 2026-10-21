@@ -1,6 +1,6 @@
 import React from "react";
 
-import { HourglassEmpty, Link, Warning } from "@mui/icons-material";
+import { Error, HourglassEmpty, Link, Warning } from "@mui/icons-material";
 
 import { Field } from "@lib/components/Field";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
@@ -43,6 +43,7 @@ export function SettingManagerComponent<
     );
     const isLoading = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_LOADING);
     const isBlocked = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_BLOCKED);
+    const blockedBy = usePublishSubscribeTopicValue(props.setting, SettingTopic.BLOCKED_BY);
     const isInitialized = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_INITIALIZED);
     const globalSettings = usePublishSubscribeTopicValue(props.manager, DataProviderManagerTopic.GLOBAL_SETTINGS);
 
@@ -106,7 +107,7 @@ export function SettingManagerComponent<
                 </div>
                 <div className="gap-x-2xs py-4xs px-2xs flex w-full items-center">
                     {isBlocked ? (
-                        <i className="text-neutral-subtle">{makeBlockedMessage(props.setting.getBlockedBy())}</i>
+                        <i className="text-neutral-subtle">{makeBlockedMessage(blockedBy)}</i>
                     ) : isValid ? (
                         valueAsString
                     ) : (
@@ -162,7 +163,7 @@ export function SettingManagerComponent<
                                     className="gap-x-3xs text-body-xs text-warning-subtle flex items-center"
                                     title="The persisted value for this setting is not valid in the current context. It could also be that the data source has changed."
                                 >
-                                    <Warning fontSize="inherit" />
+                                    <Error fontSize="inherit" />
                                     <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
                                         Persisted value not valid.
                                     </span>
@@ -173,7 +174,7 @@ export function SettingManagerComponent<
                                 className="gap-x-3xs text-body-xs text-danger-strong flex items-center"
                                 title="The persisted value for this setting has an invalid structure and could not be loaded."
                             >
-                                <Warning fontSize="inherit" />
+                                <Error fontSize="inherit" />
                                 <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
                                     Persisted value has invalid structure.
                                 </span>
@@ -184,7 +185,7 @@ export function SettingManagerComponent<
                                 className="gap-x-3xs text-body-xs text-danger-strong flex items-center"
                                 title="This setting's value is invalid, likely because a dependency changed. Please choose a valid value."
                             >
-                                <Warning fontSize="inherit" />
+                                <Error fontSize="inherit" />
                                 <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
                                     The current value is invalid.
                                 </span>
@@ -197,7 +198,7 @@ export function SettingManagerComponent<
                             >
                                 <HourglassEmpty fontSize="inherit" />
                                 <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
-                                    {makeBlockedMessage(props.setting.getBlockedBy())}
+                                    {makeBlockedMessage(blockedBy)}
                                 </span>
                             </span>
                         )}

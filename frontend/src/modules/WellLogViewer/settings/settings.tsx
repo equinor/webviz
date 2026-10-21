@@ -85,7 +85,10 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
 
     // Error messages
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
-    const wellboreHeadersErrorMessage = propagateQueryErrorToStatusWriter(wellboreHeadersQuery, statusWriter) ?? "";
+    // A disabled query keeps its cached error, which must not be reported for an invalid field
+    const wellboreHeadersErrorMessage = wellboreHeadersQuery.isEnabled
+        ? (propagateQueryErrorToStatusWriter(wellboreHeadersQuery, statusWriter) ?? "")
+        : "";
 
     React.useEffect(() => {
         providerManager?.updateGlobalSetting("fieldId", selectedField.value);

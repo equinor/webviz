@@ -24,6 +24,7 @@ export enum SettingTopic {
     EXTERNAL_CONTROLLER_PROVIDER = "EXTERNAL_CONTROLLER_PROVIDER",
     IS_LOADING = "IS_LOADING",
     IS_BLOCKED = "IS_BLOCKED",
+    BLOCKED_BY = "BLOCKED_BY",
     IS_INITIALIZED = "IS_INITIALIZED",
     IS_PERSISTED = "IS_PERSISTED",
     ATTRIBUTES = "ATTRIBUTES",
@@ -41,6 +42,8 @@ export type SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstrain
     [SettingTopic.EXTERNAL_CONTROLLER_PROVIDER]: ExternalControllerProviderType | undefined;
     [SettingTopic.IS_LOADING]: boolean;
     [SettingTopic.IS_BLOCKED]: boolean;
+    // The labels of the settings it is waiting for - the same reference while unchanged
+    [SettingTopic.BLOCKED_BY]: string[];
     [SettingTopic.IS_INITIALIZED]: boolean;
     [SettingTopic.IS_PERSISTED]: boolean;
     [SettingTopic.ATTRIBUTES]: SettingAttributes;
@@ -201,6 +204,15 @@ export class SettingManager<
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingTopic.IS_BLOCKED)(() => {
                 this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_BLOCKED);
+            }),
+        );
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController
+                .getSetting()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingTopic.BLOCKED_BY)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.BLOCKED_BY);
             }),
         );
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -494,14 +506,22 @@ export class SettingManager<
      */
     setBlocked(blocked: boolean, blockedBy: string[] = []): void {
         const newBlockedBy = blocked ? blockedBy : [];
-        if (this._blocked === blocked && isEqual(this._blockedBy, newBlockedBy)) {
+        const isBlockedByChanged = !isEqual(this._blockedBy, newBlockedBy);
+        if (this._blocked === blocked && !isBlockedByChanged) {
             return;
         }
 
         this._blocked = blocked;
-        this._blockedBy = newBlockedBy;
+        // Only replaced when changed, so the BLOCKED_BY snapshot keeps its reference otherwise
+        if (isBlockedByChanged) {
+            this._blockedBy = newBlockedBy;
+        }
 
+        // Also notified when only the labels change, as ExternalSettingController combines them on this topic
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_BLOCKED);
+        if (isBlockedByChanged) {
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.BLOCKED_BY);
+        }
     }
 
     initialize(): void {
@@ -630,6 +650,8 @@ export class SettingManager<
                     return this.isLoading();
                 case SettingTopic.IS_BLOCKED:
                     return this.isBlocked();
+                case SettingTopic.BLOCKED_BY:
+                    return this.getBlockedBy();
                 case SettingTopic.IS_PERSISTED:
                     return this.isPersistedValue();
                 case SettingTopic.IS_PERSISTED_VALUE_VALID:
@@ -811,6 +833,7 @@ export class SettingManager<
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_VALID);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_BLOCKED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.BLOCKED_BY);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_INITIALIZED);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CONSTRAINTS);
