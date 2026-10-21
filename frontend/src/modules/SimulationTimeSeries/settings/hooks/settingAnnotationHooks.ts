@@ -1,11 +1,13 @@
-import type { QueryObserverResult } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 
-import type { SettingAnnotation } from "@lib/components/Setting";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { SettingAnnotation, SettingOverlay } from "@lib/components/Setting";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { makeResampleFrequencyWarningString } from "@modules/SimulationTimeSeries/utils/resamplingFrequencyUtils";
+import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 
 import { resampleFrequencyAtom, visualizationModeAtom } from "../atoms/baseAtoms";
+import { ensembleVectorListsHelperAtom, isVectorListQueriesFetchingAtom } from "../atoms/derivedAtoms";
 import { selectedEnsembleIdentsAtom, selectedParameterIdentStringAtom } from "../atoms/persistableFixableAtoms";
 import { vectorListQueriesAtom } from "../atoms/queryAtoms";
 
@@ -39,14 +41,72 @@ export function useResampleFrequencyWarningAnnotation(): string | undefined {
 }
 
 /**
- * Hook to get error annotation for vector list queries
- *
- * Returns an error annotation if all vector list queries have failed
+ * Vector list queries' load status for the Vectors field: a blocking `overlay` (loading, or error
+ * if *all* selected ensembles' queries failed) and/or a non-blocking `warningMessage` naming the
+ * failing ensemble(s) if only *some* failed.
  */
-export function useVectorListQueriesErrorAnnotation(): string | undefined {
+export function useVectorListQueriesFieldStatus(ensembleSet: EnsembleSet): {
+    overlay?: SettingOverlay;
+    warningMessage?: string;
+} {
+    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value ?? [];
     const vectorListQueries = useAtomValue(vectorListQueriesAtom);
+    const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
 
-    return vectorListQueries.length > 0 && vectorListQueries.every((q: QueryObserverResult<unknown>) => q.isError)
-        ? "Could not load vectors for selected ensembles"
-        : undefined;
+    const isLoading = isVectorListQueriesFetching || vectorListQueries.some((query) => query.isFetching);
+
+    const queriesWithIdent = vectorListQueries
+        .map((query, index) => ({ query, ensembleIdent: selectedEnsembleIdents[index] }))
+        .filter((item): item is typeof item & { ensembleIdent: NonNullable<(typeof item)["ensembleIdent"]> } =>
+            Boolean(item.ensembleIdent),
+        );
+
+    const failingEnsembleNames = queriesWithIdent
+        .filter((item) => item.query.isError)
+        .map(
+            ({ ensembleIdent }) =>
+                ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString(),
+        );
+
+    if (failingEnsembleNames.length === 0) {
+        return isLoading ? { overlay: { type: "loading", message: "Loading vectors..." } } : {};
+    }
+
+    const message = `Could not load vectors for ensemble${failingEnsembleNames.length > 1 ? "s" : ""}: ${joinStringArrayToHumanReadableString(failingEnsembleNames)}`;
+
+    const hasAnySuccessfulQuery = queriesWithIdent.some((item) => !item.query.isError);
+    if (hasAnySuccessfulQuery) {
+        return {
+            warningMessage: message,
+            overlay: isLoading ? { type: "loading", message: "Loading vectors..." } : undefined,
+        };
+    }
+
+    return { overlay: { type: "error", message } };
+}
+
+/**
+ * Hook to get an annotation for vectors not available in any of the selected ensembles
+ */
+export function useInvalidVectorsAnnotation(selectedVectorTags: string[]): SettingAnnotation[] {
+    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value ?? [];
+    const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
+
+    const isValidVector = (vector: string): boolean =>
+        selectedEnsembleIdents.length === 0 ||
+        selectedEnsembleIdents.some((ensembleIdent) =>
+            ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector),
+        );
+
+    const invalidVectors = selectedVectorTags.filter((vector) => !isValidVector(vector));
+    if (invalidVectors.length === 0) {
+        return [];
+    }
+
+    return [
+        {
+            type: "error",
+            message: `Invalid vector${invalidVectors.length > 1 ? "s" : ""}`,
+        },
+    ];
 }

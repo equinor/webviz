@@ -141,9 +141,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         annotations={selectedVfpTypeAnnotations}
                         loadingOverlay={selectedVfpType.isLoading}
                         errorOverlay={
-                            selectedVfpType.depsHaveError
-                                ? "Error loading VFP tables. See log for details."
-                                : undefined
+                            selectedVfpType.depsHaveError ? "Error loading VFP tables. See log for details." : undefined
                         }
                     >
                         <RadioCompositions.GroupWithLabels

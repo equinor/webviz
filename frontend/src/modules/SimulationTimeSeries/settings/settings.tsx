@@ -64,12 +64,12 @@ import {
     vectorSelectorDataAtom,
 } from "./atoms/derivedAtoms";
 import { selectedEnsembleIdentsAtom, selectedParameterIdentStringAtom } from "./atoms/persistableFixableAtoms";
-import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import {
+    useInvalidVectorsAnnotation,
     useResampleFrequencyWarningAnnotation,
     useSelectedEnsembleIdentsAnnotations,
     useSelectedParameterIdentStringAnnotations,
-    useVectorListQueriesErrorAnnotation,
+    useVectorListQueriesFieldStatus,
 } from "./hooks/settingAnnotationHooks";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
@@ -94,12 +94,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const [filteredParameterIdentList, setFilteredParameterIdentList] = useAtom(filteredParameterIdentListAtom);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
     const numericAndNonConstantParametersUnion = useAtomValue(numericAndNonConstantParametersUnionAtom);
-    const vectorListQueries = useAtomValue(vectorListQueriesAtom);
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
     const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useAtom(selectedParameterIdentStringAtom);
 
     const vectorSelectorRef = React.useRef<HTMLInputElement>(null);
+
+    const { handlePanelAnnotationsChange } = useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
     // Receive global parameter string and update local state if different
     useSyncSetting({
@@ -110,8 +111,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         value: selectedParameterIdentStr.value,
         setValue: setSelectedParameterIdentStr,
     });
-
-    useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
     function handleSubplotLimitDirectionChange(newLimitDirection: SubplotLimitDirection | null) {
         if (newLimitDirection === null) {
@@ -265,13 +264,19 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const selectedEnsembleIdentsAnnotations = useSelectedEnsembleIdentsAnnotations();
     const selectedParameterIdentStringAnnotations = useSelectedParameterIdentStringAnnotations();
     const resampleFrequencyWarningAnnotation = useResampleFrequencyWarningAnnotation();
-    const vectorListQueriesErrorAnnotation = useVectorListQueriesErrorAnnotation();
+    const vectorListQueriesFieldStatus = useVectorListQueriesFieldStatus(ensembleSet);
+    const invalidVectorsAnnotation = useInvalidVectorsAnnotation(selectedVectorTags);
 
     return (
         <Setting.ScrollArea>
-            <Setting.Panel>
+            <Setting.Panel onAnnotationsChange={handlePanelAnnotationsChange}>
                 <Setting.Section title="Data" defaultOpen>
-                    <Setting.Field label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
+                    <Setting.Field
+                        label="Ensembles"
+                        annotations={selectedEnsembleIdentsAnnotations}
+                        warningMessage={vectorListQueriesFieldStatus.warningMessage}
+                        stacked
+                    >
                         <EnsemblePicker
                             ensembles={ensembleSet.getEnsembleArray()}
                             value={selectedEnsembleIdents.value ?? []}
@@ -289,12 +294,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 </span>
                             </span>
                         }
-                        overlay={
-                            isVectorListQueriesFetching || vectorListQueries.some((query) => query.isFetching)
-                                ? { type: "loading", message: "Loading vectors..." }
-                                : undefined
-                        }
-                        errorAnnotation={vectorListQueriesErrorAnnotation}
+                        overlay={vectorListQueriesFieldStatus.overlay}
+                        annotations={invalidVectorsAnnotation}
                         contentClassName="flex flex-col gap-y-3xs"
                         stacked
                         labelFor={vectorSelectorRef}
