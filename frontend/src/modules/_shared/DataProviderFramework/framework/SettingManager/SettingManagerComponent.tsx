@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Error, HourglassEmpty, Link, Warning } from "@mui/icons-material";
+import { Error, HourglassEmpty, Link } from "@mui/icons-material";
 
 import { Field } from "@lib/components/Field";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
