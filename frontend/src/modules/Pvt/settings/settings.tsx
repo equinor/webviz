@@ -80,14 +80,24 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     function handleGroupByChange(groupBy: GroupBy) {
         setSelectedGroupBy(groupBy);
+        // The remembered multi-selections are only updated by the change handlers, so they miss later fixups and can
+        // be empty (e.g. PVT nums not loaded yet when the settings mounted). Narrow from the current selections instead,
+        // and never index into a possibly empty array - that would select `undefined`.
         if (groupBy === GroupBy.PVT_NUM) {
-            setSelectedEnsembleIdents([selectedMultiEnsembleIdents[0]]);
-            setSelectedRealizations([selectedMultiRealizations[0]]);
-            setSelectedPvtNums(selectedMultiPvtNums);
+            setSelectedMultiEnsembleIdents(selectedEnsembleIdents.value);
+            setSelectedMultiRealizations(selectedRealizations.value);
+            setSelectedEnsembleIdents(selectedEnsembleIdents.value.slice(0, 1));
+            setSelectedRealizations(selectedRealizations.value.slice(0, 1));
+            setSelectedPvtNums(selectedMultiPvtNums.length > 0 ? selectedMultiPvtNums : selectedPvtNums.value);
         } else {
-            setSelectedEnsembleIdents(selectedMultiEnsembleIdents);
-            setSelectedRealizations(selectedMultiRealizations);
-            setSelectedPvtNums([selectedMultiPvtNums[0]]);
+            setSelectedMultiPvtNums(selectedPvtNums.value);
+            setSelectedEnsembleIdents(
+                selectedMultiEnsembleIdents.length > 0 ? selectedMultiEnsembleIdents : selectedEnsembleIdents.value,
+            );
+            setSelectedRealizations(
+                selectedMultiRealizations.length > 0 ? selectedMultiRealizations : selectedRealizations.value,
+            );
+            setSelectedPvtNums(selectedPvtNums.value.slice(0, 1));
         }
     }
 

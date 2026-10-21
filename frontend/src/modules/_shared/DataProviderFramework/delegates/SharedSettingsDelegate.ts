@@ -254,6 +254,10 @@ export class SharedSettingsDelegate<
             return this._parentItem.getItemDelegate().getDataProviderManager().getGlobalSetting(key);
         };
 
+        const globalSettingValidityGetter = (key: keyof GlobalSettings): boolean => {
+            return this._parentItem.getItemDelegate().getDataProviderManager().isGlobalSettingValid(key);
+        };
+
         const createDependency = <T, TReads extends Record<string, Read<any>> = Record<string, never>>(
             debugName: string,
             resolverSpec: ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads>,
@@ -266,6 +270,7 @@ export class SharedSettingsDelegate<
                 loadingStateGetter,
                 makeGlobalSettingGetter,
                 debugName,
+                globalSettingValidityGetter,
             );
             this._dependencies.push(dependency);
             dependency.initialize();

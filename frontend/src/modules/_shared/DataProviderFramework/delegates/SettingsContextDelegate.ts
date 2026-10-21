@@ -434,6 +434,10 @@ export class SettingsContextDelegate<
             return this.getDataProviderManager.bind(this)().getGlobalSetting(key);
         };
 
+        const globalSettingValidityGetter = (key: keyof GlobalSettings): boolean => {
+            return this.getDataProviderManager.bind(this)().isGlobalSettingValid(key);
+        };
+
         const createDependency = <T, TReads extends Record<string, Read<any>> = Record<string, never>>(
             debugName: string,
             resolverSpec: ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads>,
@@ -446,6 +450,7 @@ export class SettingsContextDelegate<
                 loadingStateGetter,
                 makeGlobalSettingGetter,
                 debugName,
+                globalSettingValidityGetter,
             );
             this._dependencies.push(dependency);
             dependency.initialize();

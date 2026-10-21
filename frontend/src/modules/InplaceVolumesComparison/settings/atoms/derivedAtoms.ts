@@ -235,18 +235,32 @@ export const areSelectedIndicesWithValuesValidAtom = atom<boolean>((get) => {
  * here so settings and view read the same combination of ensemble and table.
  */
 export const waterfallSourcesAtom = atom<{ reference: WaterfallSource; comparison: WaterfallSource } | null>((get) => {
-    const referenceEnsembleIdent = get(selectedReferenceEnsembleIdentAtom).value;
-    const comparisonEnsembleIdent = get(selectedComparisonEnsembleIdentAtom).value;
-    const referenceTableName = get(selectedReferenceTableNameAtom).value;
-    const comparisonTableName = get(selectedComparisonTableNameAtom).value;
+    const referenceEnsembleIdent = get(selectedReferenceEnsembleIdentAtom);
+    const comparisonEnsembleIdent = get(selectedComparisonEnsembleIdentAtom);
+    const referenceTableName = get(selectedReferenceTableNameAtom);
+    const comparisonTableName = get(selectedComparisonTableNameAtom);
 
-    if (!referenceEnsembleIdent || !comparisonEnsembleIdent || !referenceTableName || !comparisonTableName) {
+    // A retained but invalid selection (e.g. a table missing from the newly selected comparison ensemble) leaves no
+    // source - otherwise the accessor, built from the remaining side alone, could still judge the rest valid and
+    // statistical data would be requested for the missing table
+    const areSelectionsValid =
+        referenceEnsembleIdent.isValidInContext &&
+        comparisonEnsembleIdent.isValidInContext &&
+        referenceTableName.isValidInContext &&
+        comparisonTableName.isValidInContext;
+    if (
+        !areSelectionsValid ||
+        !referenceEnsembleIdent.value ||
+        !comparisonEnsembleIdent.value ||
+        !referenceTableName.value ||
+        !comparisonTableName.value
+    ) {
         return null;
     }
 
     return {
-        reference: { ensembleIdent: referenceEnsembleIdent, tableName: referenceTableName },
-        comparison: { ensembleIdent: comparisonEnsembleIdent, tableName: comparisonTableName },
+        reference: { ensembleIdent: referenceEnsembleIdent.value, tableName: referenceTableName.value },
+        comparison: { ensembleIdent: comparisonEnsembleIdent.value, tableName: comparisonTableName.value },
     };
 });
 

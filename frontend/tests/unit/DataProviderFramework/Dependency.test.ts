@@ -22,9 +22,10 @@ async function flush(): Promise<void> {
 }
 
 // A dependency without local settings - it is a root node, which resolves as part of initialize().
-// Global settings can be read, and changed through the returned setGlobalSetting().
+// Global settings can be read, and changed through the returned setGlobalSetting() - optionally as invalid.
 function makeRootDependency(resolverSpec: ResolverSpec<string, any, any, any, any>) {
     const globalSettings: Partial<Record<keyof GlobalSettings, any>> = {};
+    const invalidGlobalSettingKeys = new Set<keyof GlobalSettings>();
     const globalSettingHandlers = new Map<keyof GlobalSettings, (value: any) => void>();
 
     const dependency = new Dependency<string, any, any, any, any>(
@@ -39,10 +40,16 @@ function makeRootDependency(resolverSpec: ResolverSpec<string, any, any, any, an
             globalSettingHandlers.set(key, handler);
         },
         "test",
+        (key) => !invalidGlobalSettingKeys.has(key),
     );
 
-    function setGlobalSetting(key: keyof GlobalSettings, value: any) {
+    function setGlobalSetting(key: keyof GlobalSettings, value: any, isValid: boolean = true) {
         globalSettings[key] = value;
+        if (isValid) {
+            invalidGlobalSettingKeys.delete(key);
+        } else {
+            invalidGlobalSettingKeys.add(key);
+        }
         globalSettingHandlers.get(key)?.(value);
     }
 
@@ -189,6 +196,35 @@ describe("Dependency", () => {
         await flush();
 
         expect(appliedValues).toEqual(["result-new"]);
+        expect(dependency.getIsLoading()).toBe(false);
+    });
+
+    test("is blocked, without loading or resolving, while a read global setting is invalid", async () => {
+        const resolve = vi.fn(async (values: Record<string, unknown>) => `headers-${String(values.fieldId)}`);
+        const { dependency, globalSettings, setGlobalSetting } = makeRootDependency({
+            read: (read) => ({ fieldId: read.globalSetting("fieldId") }),
+            resolve,
+        });
+        globalSettings.fieldId = "field-a";
+
+        dependency.initialize();
+        await flush();
+        expect(dependency.getValue()).toBe("headers-field-a");
+
+        // E.g. the last ensemble for the field was removed - the field is retained, but must not be requested for
+        setGlobalSetting("fieldId", "field-a", false);
+        await flush();
+
+        expect(resolve).toHaveBeenCalledTimes(1);
+        expect(dependency.getIsBlocked()).toBe(true);
+        expect(dependency.getBlockedBy()).toEqual(["Field"]);
+        expect(dependency.getIsLoading()).toBe(false);
+
+        setGlobalSetting("fieldId", "field-b");
+        await flush();
+
+        expect(dependency.getValue()).toBe("headers-field-b");
+        expect(dependency.getIsBlocked()).toBe(false);
         expect(dependency.getIsLoading()).toBe(false);
     });
 });

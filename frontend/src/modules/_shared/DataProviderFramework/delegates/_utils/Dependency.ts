@@ -4,7 +4,7 @@ import { GenericStatusMessageStore } from "@framework/GenericStatusMessageStore"
 import type { PublishSubscribeStatusMessageStore, StatusWriter } from "@framework/types/statusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 
-import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";
+import { GLOBAL_SETTING_LABELS, type GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";
 import { SettingTopic, type SettingManager } from "../../framework/SettingManager/SettingManager";
 import type { ResolverSpec, SharedResult } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
@@ -66,6 +66,7 @@ export class Dependency<
 
     private _localSettingManagerGetter: <K extends TKey>(key: K) => SettingManager<K>;
     private _globalSettingGetter: <K extends keyof GlobalSettings>(key: K) => GlobalSettings[K] | null;
+    private _globalSettingValidityGetter: (key: keyof GlobalSettings) => boolean;
 
     private _makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void;
     private _localSettingLoadingStateGetter: <K extends TKey>(key: K) => boolean;
@@ -103,8 +104,10 @@ export class Dependency<
             handler: (value: GlobalSettings[K] | null) => void,
         ) => void,
         debugName: string,
+        globalSettingValidityGetter: (key: keyof GlobalSettings) => boolean,
     ) {
         this.debugName = debugName;
+        this._globalSettingValidityGetter = globalSettingValidityGetter;
 
         this._localSettingManagerGetter = localSettingManagerGetter;
         this._globalSettingGetter = globalSettingGetter;
@@ -310,7 +313,7 @@ export class Dependency<
         }
     }
 
-    private getGlobalSetting<K extends keyof GlobalSettings>(settingName: K): GlobalSettings[K] | Pending {
+    private getGlobalSetting<K extends keyof GlobalSettings>(settingName: K): GlobalSettings[K] | Pending | Blocked {
         if (!this._cachedGlobalSettingsMap.has(settingName as string)) {
             // Subscribing to the global setting changes so that we can update our value and invalidate
             // the result of the update function when any of the dependencies change
@@ -318,6 +321,14 @@ export class Dependency<
                 this._cachedGlobalSettingsMap.set(settingName as string, value);
                 this.invalidate();
             });
+        }
+
+        // Like an invalid local setting (see getLocalSetting()): a retained but invalid value (e.g. a field no longer in
+        // the ensemble set) would only lead to requests that can't be used. Blocked rather than pending, so that it stops
+        // loading - a change of the value or its validity is published as a global settings change, which runs it again.
+        if (this._isInitialized && !this._globalSettingValidityGetter(settingName)) {
+            this._blockedByInRun.push(GLOBAL_SETTING_LABELS[settingName]);
+            return BLOCKED;
         }
 
         if (this._globalSettingGetter(settingName) === null && this._isInitialized) {
@@ -408,10 +419,7 @@ export class Dependency<
     private makeAccessors(): Accessors<TSettings, TSettingTypes, TKey> {
         return {
             localSetting: (key) => toRead(this.getLocalSetting(key)),
-            globalSetting: (key) => {
-                const value = this.getGlobalSetting(key);
-                return value === PENDING ? ({ __ready: false } as const) : ({ __ready: true, value } as const);
-            },
+            globalSetting: (key) => toRead(this.getGlobalSetting(key)),
             sharedResult: (handle) => toRead(this.getHelperDependency(handle)),
         };
     }
