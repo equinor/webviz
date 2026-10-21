@@ -14,6 +14,7 @@ import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
+    requireRegularEnsembleIdent,
 } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 const realizationPolygonsSettings = [
@@ -74,7 +75,8 @@ export class FaultPolygonsProvider implements CustomDataProviderImplementation<
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
+                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -133,7 +135,7 @@ export class FaultPolygonsProvider implements CustomDataProviderImplementation<
         getSetting,
         fetchQuery,
     }: FetchDataParams<FaultPolygonsSettings, FaultPolygonsData>): Promise<PolygonData_api[]> {
-        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const ensembleIdent = requireRegularEnsembleIdent(getSetting(Setting.ENSEMBLE));
         const realizationNum = getSetting(Setting.REALIZATION);
         const surfaceName = getSetting(Setting.SURFACE_NAME);
         const polygonsAttribute = getSetting(Setting.POLYGONS_ATTRIBUTE);

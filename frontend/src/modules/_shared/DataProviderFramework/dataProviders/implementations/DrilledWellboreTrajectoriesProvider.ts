@@ -38,7 +38,10 @@ import type {
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
-import { getAvailableEnsembleIdentsForField } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
+import {
+    getAvailableEnsembleIdentsForField,
+    requireRegularEnsembleIdent,
+} from "../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 const drilledWellboreTrajectoriesSettings = [
     Setting.ENSEMBLE,
@@ -132,7 +135,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
     >): Promise<DrilledWellboreTrajectoriesData> {
         const statusWriter = getStatusWriter();
         const fieldIdentifier = getGlobalSetting("fieldId");
-        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const ensembleIdent = requireRegularEnsembleIdent(getSetting(Setting.ENSEMBLE));
         const selectedWellboreHeaders = getSetting(Setting.WELLBORES);
         const depthFilterType = getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
         const productionData = getStoredData("productionData");
@@ -316,7 +319,8 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
+                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -482,7 +486,8 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
+                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }

@@ -22,7 +22,12 @@ import type {
 import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { SurfaceAddressBuilder, dedupeSurfaceAttributes, isSameAttribute, type AnySurfaceAddress } from "@modules/_shared/Surface";
+import {
+    SurfaceAddressBuilder,
+    dedupeSurfaceAttributes,
+    isSameAttribute,
+    type AnySurfaceAddress,
+} from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
@@ -30,6 +35,7 @@ import { Representation } from "../../../settings/implementations/Representation
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
+    requireRegularEnsembleIdent,
 } from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 import { resolveSensitivityConstraints, resolveStatisticFunctionConstraints } from "./_commonSettingsUpdaters";
@@ -154,7 +160,7 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             resolve({ ensembleIdent }) {
-                return resolveSensitivityConstraints(ensembleIdent, workbenchSession);
+                return resolveSensitivityConstraints(requireRegularEnsembleIdent(ensembleIdent), workbenchSession);
             },
         });
 
@@ -163,7 +169,8 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
             read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
+                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -266,7 +273,7 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
             onFetchCancelOrFinish,
         } = params;
 
-        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const ensembleIdent = requireRegularEnsembleIdent(getSetting(Setting.ENSEMBLE));
         let filteredRealizations = getStoredData("realizations") ?? [];
         const surfaceName = getSetting(Setting.SURFACE_NAME);
         const attribute = getSetting(Setting.DEPTH_ATTRIBUTE);

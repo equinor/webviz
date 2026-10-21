@@ -15,7 +15,10 @@ import type {
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
-import { getAvailableEnsembleIdentsForField } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
+import {
+    getAvailableEnsembleIdentsForField,
+    requireRegularEnsembleIdent,
+} from "../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.WELLBORES, Setting.SURFACE_NAME] as const;
 export type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
@@ -120,7 +123,8 @@ export class DrilledWellborePicksProvider implements CustomDataProviderImplement
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
+                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }

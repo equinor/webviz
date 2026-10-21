@@ -31,6 +31,7 @@ import { Representation } from "../../../settings/implementations/Representation
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
+    requireRegularEnsembleIdent,
 } from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 import { resolveSensitivityConstraints, resolveStatisticFunctionConstraints } from "./_commonSettingsUpdaters";
@@ -207,7 +208,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             resolve({ ensembleIdent }) {
-                return resolveSensitivityConstraints(ensembleIdent, workbenchSession);
+                return resolveSensitivityConstraints(requireRegularEnsembleIdent(ensembleIdent), workbenchSession);
             },
         });
 
@@ -216,7 +217,8 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
             read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
+                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -381,7 +383,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
             onFetchCancelOrFinish,
         } = params;
 
-        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const ensembleIdent = requireRegularEnsembleIdent(getSetting(Setting.ENSEMBLE));
         let filteredRealizations = getStoredData("realizations") ?? [];
         const formationName = getSetting(Setting.FORMATION_NAME);
         const attribute = getSetting(Setting.SURFACE_ATTRIBUTE);

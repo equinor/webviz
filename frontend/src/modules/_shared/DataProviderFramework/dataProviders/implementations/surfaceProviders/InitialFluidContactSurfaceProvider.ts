@@ -31,6 +31,7 @@ import { Representation } from "../../../settings/implementations/Representation
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
+    requireRegularEnsembleIdent,
 } from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 import { resolveSensitivityConstraints, resolveStatisticFunctionConstraints } from "./_commonSettingsUpdaters";
@@ -137,7 +138,7 @@ export class InitialFluidContactSurfaceProvider implements CustomDataProviderImp
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             resolve({ ensembleIdent }) {
-                return resolveSensitivityConstraints(ensembleIdent, workbenchSession);
+                return resolveSensitivityConstraints(requireRegularEnsembleIdent(ensembleIdent), workbenchSession);
             },
         });
 
@@ -170,7 +171,8 @@ export class InitialFluidContactSurfaceProvider implements CustomDataProviderImp
             read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
+                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -242,7 +244,10 @@ export class InitialFluidContactSurfaceProvider implements CustomDataProviderImp
             setProgressMessage,
             onFetchCancelOrFinish,
         } = params;
-        const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
+        const ensembleIdent = assertNonNull(
+            requireRegularEnsembleIdent(getSetting(Setting.ENSEMBLE)),
+            "No ensemble selected",
+        );
         const surfaceName = assertNonNull(getSetting(Setting.SURFACE_NAME), "No surface selected");
         const contact = assertNonNull(getSetting(Setting.FLUID_CONTACT), "No fluid contact selected");
         const representation = getSetting(Setting.REPRESENTATION);

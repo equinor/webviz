@@ -8,6 +8,7 @@ import type {
     WellborePick_api,
 } from "@api";
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ProductionPhase, InjectionPhase } from "@framework/types/wellbore";
 import type { ColorSet } from "@lib/utils/ColorSet";
@@ -278,9 +279,9 @@ export type SettingTypeDefinitions = {
         valueConstraints: WellboreLogCurveHeader_api[];
     };
     [Setting.ENSEMBLE]: {
-        internalValue: RegularEnsembleIdent | null;
-        externalValue: RegularEnsembleIdent | null;
-        valueConstraints: RegularEnsembleIdent[];
+        internalValue: RegularEnsembleIdent | DeltaEnsembleIdent | null;
+        externalValue: RegularEnsembleIdent | DeltaEnsembleIdent | null;
+        valueConstraints: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
     };
     [Setting.INTERSECTION]: {
         internalValue: IntersectionSettingValue | null;
