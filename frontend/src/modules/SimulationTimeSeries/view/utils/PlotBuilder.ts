@@ -15,6 +15,8 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 import type { Figure } from "@modules/_shared/Figure";
 import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
+import type { BadgeColors } from "@modules/_shared/utils/plotlyBadge";
+import { makeRoundedBadge } from "@modules/_shared/utils/plotlyBadge";
 import type { VectorHexColorMap, VectorSpec, VectorSpecWithData } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { FrequencyEnumToStringMapping, SubplotLimitDirection } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
@@ -311,8 +313,12 @@ export class PlotBuilder {
         // Add time annotations and shapes
         for (let index = 0; index < this._numberOfSubplots; index++) {
             const { row, col } = this.getSubplotRowAndColFromIndex(index);
-            for (const timeAnnotation of this.createTimeAnnotations()) {
-                this._figure.addAnnotation(timeAnnotation, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
+            const badges = this.createTimeBadges();
+            for (const badgeShape of badges.shapes) {
+                this._figure.addShape(badgeShape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
+            }
+            for (const badgeAnnotation of badges.annotations) {
+                this._figure.addAnnotation(badgeAnnotation, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
             }
             for (const timeShape of this.createTimeShapes()) {
                 this._figure.addShape(timeShape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
@@ -660,24 +666,47 @@ export class PlotBuilder {
         this._hoveredTimestampIsExternal = isExternal;
     }
 
-    private createTimeAnnotations(): Partial<Annotations>[] {
-        const timeAnnotations: Partial<Annotations>[] = [];
+    private getHoverBadgeColors(): BadgeColors {
+        const color = this.getHoverColor();
+        return this._hoveredTimestampIsExternal
+            ? { bgColor: "white", textColor: "black", borderColor: color }
+            : { bgColor: color, textColor: "white", borderColor: color };
+    }
+
+    private getHoverColor(): string {
+        return this._hoveredTimestampIsExternal ? "rgba(220, 38, 38, 0.9)" : "rgba(107, 114, 128, 0.8)";
+    }
+
+    private createTimeBadges(): { shapes: Partial<Shape>[]; annotations: Partial<Annotations>[] } {
+        const shapes: Partial<Shape>[] = [];
+        const annotations: Partial<Annotations>[] = [];
 
         for (const timestampUtcMs of this._timeAnnotationTimestamps) {
-            timeAnnotations.push({
-                x: timestampUtcMs, // Data coordinate
-                y: -0.02, // Domain coordinate [0, 1]
-                text: timestampUtcMsToCompactIsoString(timestampUtcMs),
-                showarrow: false,
-                arrowhead: 0,
-                bgcolor: "rgba(255, 255, 255, 1)",
-                bordercolor: "black",
-                borderwidth: 1,
-                borderpad: 4,
+            // y is in domain coordinates [0, 1]
+            const badge = makeRoundedBadge(timestampUtcMsToCompactIsoString(timestampUtcMs), timestampUtcMs, -0.02, {
+                bgColor: "black",
+                textColor: "white",
+                borderColor: "black",
             });
+            shapes.push(badge.shape);
+            annotations.push(badge.annotation);
         }
 
-        return timeAnnotations;
+        if (
+            this._hoveredTimestampUtcMs !== null &&
+            !this._timeAnnotationTimestamps.includes(this._hoveredTimestampUtcMs)
+        ) {
+            const badge = makeRoundedBadge(
+                timestampUtcMsToCompactIsoString(this._hoveredTimestampUtcMs),
+                this._hoveredTimestampUtcMs,
+                -0.02,
+                this.getHoverBadgeColors(),
+            );
+            shapes.push(badge.shape);
+            annotations.push(badge.annotation);
+        }
+
+        return { shapes, annotations };
     }
 
     private createTimeShapes(): Partial<Shape>[] {
@@ -706,7 +735,7 @@ export class PlotBuilder {
                 y0: 0,
                 y1: 1,
                 line: {
-                    color: this._hoveredTimestampIsExternal ? "rgba(220, 38, 38, 0.9)" : "rgba(107, 114, 128, 0.8)",
+                    color: this.getHoverColor(),
                     width: 1,
                     dash: "dot",
                 },
