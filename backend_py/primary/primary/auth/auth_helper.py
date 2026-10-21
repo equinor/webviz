@@ -8,7 +8,7 @@ import jwt
 import msal
 import starsessions
 from fastapi import APIRouter, Request, Response
-from fastapi.responses import RedirectResponse, PlainTextResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from pydantic import BaseModel, ValidationError
 
 from webviz_core_utils.perf_metrics import PerfMetrics
@@ -87,6 +87,7 @@ class AuthHelper:
         cca = _create_msal_confidential_client_app(token_cache=None)
         flow_dict = cca.initiate_auth_code_flow(scopes=all_scopes_list, redirect_uri=redirect_uri)
 
+        # Store the auth code flow dict in the session for later use during the auth callback
         request.session["flow"] = flow_dict
 
         # If a final redirect url was specified, store it in the session so we can redirect from the auth callback.
@@ -99,31 +100,46 @@ class AuthHelper:
     async def _authorized_callback_route(self, request: Request) -> Response:
         await starsessions.load_session(request)
 
+        # Convert the query params since MSAL expects a plain dict, not Starlette's QueryParams
+        auth_response_dict = dict(request.query_params)
+
+        # Retrieve the auth code flow dict from the session so we can use it to redeem the authorization code
+        flow_dict = request.session.get("flow")
+        if not isinstance(flow_dict, dict):
+            LOGGER.error("Login flow not found in session")
+            return PlainTextResponse("No login in progress. Please log in again.", 400)
+
+        # If the state parameter in the auth response does not match the one in the auth code flow dict, it could
+        # indicate a CSRF attack or a simultaneous login attempt. Note that the test here is mainly to notify the user
+        # and is not critical since the token acquisition below will fail if the state does not match.
+        if auth_response_dict.get("state") != flow_dict.get("state"):
+            LOGGER.error("Login response state value did not match the stored flow state value")
+            return PlainTextResponse("Login could not be verified. Close other login tabs and try again.", 400)
+
         try:
             token_cache = _load_token_cache_from_session(request)
             cca = _create_msal_confidential_client_app(token_cache)
-
-            auth_response_dict = {}
-            for key, value in request.query_params.items():
-                auth_response_dict[key] = value
 
             # Ref msal.PublicClientApplication.acquire_token_by_auth_code_flow() docs, we can only get an access token
             # for ONE resource when redeeming the authorization code. Therefore, we simply get an access token for the
             # graph resource here, and leave the retrieval of access tokens for the other resources (and scopes) for later.
             token_dict = cca.acquire_token_by_auth_code_flow(
-                auth_code_flow=request.session.get("flow", {}),
+                auth_code_flow=flow_dict,
                 auth_response=auth_response_dict,
                 scopes=config.GRAPH_SCOPES,
             )
 
             if "error" in token_dict:
-                return Response(f"Error validating redirected auth response, error: {token_dict['error']}", 400)
+                error = token_dict.get("error")
+                error_description = token_dict.get("error_description")
+                LOGGER.error(f"Microsoft Entra sign-in failed ({error=}, {error_description=})")
+                return PlainTextResponse(f"Microsoft Entra sign-in failed. Please try again. ({error})", 400)
 
             _save_token_cache_in_session(request, token_cache)
 
-        except ValueError:
-            # Usually caused by CSRF
-            return PlainTextResponse("Error processing auth response, probably CSRF error", 400)
+        except ValueError as exc:
+            LOGGER.error(f"Error processing auth response: {repr(exc)}")
+            return PlainTextResponse("Invalid login response. Please try again.", 400)
 
         redirect_target_after_login = request.session.get("redirect_target_after_login")
         if redirect_target_after_login is not None:
@@ -194,7 +210,7 @@ class AuthHelper:
 
 
 def _acquire_access_token_for_resource_scopes(
-    cca: msal.ConfidentialClientApplication, resource_name: _ResourceName, account: str
+    cca: msal.ConfidentialClientApplication, resource_name: _ResourceName, account: dict
 ) -> _TokenEntry | None:
     scopes_list: list[str] | None = None
     if resource_name == "graph":
@@ -250,7 +266,8 @@ def _acquire_refreshed_identity_and_tokens(
 
     account_list = cca.get_accounts()
     if not account_list:
-        LOGGER.error("Error getting accounts")
+        # The session may outlive its MSAL account entries; treat this as an unauthenticated state.
+        LOGGER.debug("No accounts found in MSAL token cache")
         return None
     account = account_list[0]
     perf_metrics.record_lap("get-accounts")
@@ -269,8 +286,20 @@ def _acquire_refreshed_identity_and_tokens(
         user_name = curr_auth_info.user_name
         id_token_expiry_time = curr_auth_info.user_identity_expires_at
     else:
-        token_dict = cca.acquire_token_silent(scopes=config.GRAPH_SCOPES, account=account, force_refresh=True)
-        id_token = token_dict.get("id_token") if token_dict else None
+        token_dict = cca.acquire_token_silent_with_error(
+            scopes=config.GRAPH_SCOPES, account=account, force_refresh=True
+        )
+        if token_dict is None:
+            LOGGER.error("No token found in cache when acquiring token silently for graph scopes")
+            return None
+
+        if "error" in token_dict:
+            LOGGER.error(
+                f"Error acquiring token silently for graph scopes, error: {token_dict['error']}, error_description: {token_dict.get('error_description')}"
+            )
+            return None
+
+        id_token = token_dict.get("id_token")
         if not id_token:
             LOGGER.error("Error acquiring ID token")
             return None

@@ -4,7 +4,7 @@ requires-python = "^3.13"
 dynamic = ["dependencies"]
 
 [tool.poetry]
-requires-poetry = ">=2.1"
+requires-poetry = ">=2.5"
 package-mode = false
 
 [build-system]
@@ -22,7 +22,7 @@ azure-storage-blob = { version = "12.28.0", extras = ["aio"] }
 
 # From ResInsight's requirements.txt
 protobuf = "^6.33.5"
-grpcio = "1.78.0" # Pin version temporarily to avoid yanked 1.78.1 version
+grpcio = "1.78.0"    # Pin version temporarily to avoid yanked 1.78.1 version
 
 webviz-core-utils = { path = "../libs/core_utils", develop = true }
 webviz-server-schemas = { path = "../libs/server_schemas", develop = true }
@@ -43,4 +43,3 @@ opentelemetry-instrumentation-grpc = "*"
 types-aiofiles = "^25.1.0.20251011"
 types-psutil = "^7.2.2.20260130"
 types-grpcio = "^1.0.0.20251009"
-
