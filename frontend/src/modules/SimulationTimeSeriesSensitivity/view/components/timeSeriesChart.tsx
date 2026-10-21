@@ -18,6 +18,7 @@ export type TimeSeriesChartProps = {
     title: string;
     activeTimestampUtcMs?: number;
     hoveredTimestampUtcMs?: number;
+    isHoverExternal?: boolean;
     uirevision?: string;
     onHover?: (hoverData: TimeSeriesChartHoverInfo | null) => void;
     onClick?: (timestampUtcMs: number) => void;
@@ -111,10 +112,13 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
         });
         layout.annotations?.push({
             bgcolor: "white",
+            bordercolor: "black",
+            borderwidth: 1,
+            borderpad: 4,
             showarrow: false,
             text: timestampUtcMsToCompactIsoString(props.activeTimestampUtcMs),
             x: props.activeTimestampUtcMs,
-            y: 1,
+            y: -0.02,
             yref: "paper",
         });
     }
@@ -128,7 +132,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
             y0: 0,
             x1: props.hoveredTimestampUtcMs,
             y1: 0.99,
-            line: { color: "red", width: 1, dash: "dot" },
+            line: { color: props.isHoverExternal ? "rgba(220, 38, 38, 0.9)" : "rgba(107, 114, 128, 0.8)", width: 1, dash: "dot" },
         });
     }
 

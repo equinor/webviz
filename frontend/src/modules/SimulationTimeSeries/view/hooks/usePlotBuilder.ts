@@ -31,6 +31,8 @@ export function usePlotBuilder(
     vectorHexColorMap: VectorHexColorMap,
     subplotOwner: SubplotOwner,
     ensemblesParameterColoring: EnsemblesParameterColoring | null,
+    hoveredTimestampUtcMs: number | null = null,
+    isHoverExternal = false,
 ): PlotBuilder | null {
     const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
@@ -126,6 +128,8 @@ export function usePlotBuilder(
     if (activeTimestampUtcMs) {
         plotBuilder.addTimeAnnotation(activeTimestampUtcMs);
     }
+
+    plotBuilder.setHoveredTimestamp(hoveredTimestampUtcMs, isHoverExternal);
 
     plotBuilder.prepareLegendsAndTitles();
     plotBuilder.prepareAnnotations();

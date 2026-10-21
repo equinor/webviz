@@ -83,6 +83,8 @@ export class PlotBuilder {
     private _vectorNameSubplotTitleMap: VectorNameSubplotTitleMap = {};
 
     private _timeAnnotationTimestamps: number[] = [];
+    private _hoveredTimestampUtcMs: number | null = null;
+    private _hoveredTimestampIsExternal = false;
 
     private _figure: Figure;
     private _numRows = 1;
@@ -653,6 +655,11 @@ export class PlotBuilder {
         this._timeAnnotationTimestamps.push(timestampUtcMs);
     }
 
+    setHoveredTimestamp(timestampUtcMs: number | null, isExternal = false): void {
+        this._hoveredTimestampUtcMs = timestampUtcMs;
+        this._hoveredTimestampIsExternal = isExternal;
+    }
+
     private createTimeAnnotations(): Partial<Annotations>[] {
         const timeAnnotations: Partial<Annotations>[] = [];
 
@@ -664,7 +671,7 @@ export class PlotBuilder {
                 showarrow: false,
                 arrowhead: 0,
                 bgcolor: "rgba(255, 255, 255, 1)",
-                bordercolor: "rgba(255, 0, 0, 1)",
+                bordercolor: "black",
                 borderwidth: 1,
                 borderpad: 4,
             });
@@ -684,7 +691,22 @@ export class PlotBuilder {
                 y0: 0, // Domain coordinate
                 y1: 1, // Domain coordinate
                 line: {
-                    color: "red",
+                    color: "black",
+                    width: 2,
+                    dash: "dot",
+                },
+            });
+        }
+
+        if (this._hoveredTimestampUtcMs !== null) {
+            timeShapes.push({
+                type: "line",
+                x0: this._hoveredTimestampUtcMs,
+                x1: this._hoveredTimestampUtcMs,
+                y0: 0,
+                y1: 1,
+                line: {
+                    color: this._hoveredTimestampIsExternal ? "rgba(220, 38, 38, 0.9)" : "rgba(107, 114, 128, 0.8)",
                     width: 1,
                     dash: "dot",
                 },

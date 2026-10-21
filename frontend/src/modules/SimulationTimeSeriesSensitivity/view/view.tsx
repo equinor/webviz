@@ -72,6 +72,7 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
                 uirevision={vectorSpecification?.vectorName}
                 activeTimestampUtcMs={activeTimestampUtcMs.value ?? undefined}
                 hoveredTimestampUtcMs={subscribedHoverTimestampUtcMs ?? undefined}
+                isHoverExternal={hoverService.getLastHoveredModule() !== moduleInstanceId}
                 onClick={handleClickInChart}
                 onHover={handleHoverInChart}
                 height={wrapperDivSize.height}
