@@ -75,7 +75,9 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     // Wellbore selection
     const wellboreHeadersQuery = useAtomValue(drilledWellboreHeadersQueryAtom);
     const [selectedWellboreHeader, setSelectedWellboreHeader] = useSyncedWellboreSetting(syncHelper);
-    const isSelectedWellboreValid = useAtomValue(selectedWellboreUuidAtom).isValidInContext;
+    // A blocked selection (e.g. while the field is invalid) can still report a retained null as valid - it is not usable
+    const selectedWellboreUuid = useAtomValue(selectedWellboreUuidAtom);
+    const isSelectedWellboreValid = selectedWellboreUuid.isValidInContext && !selectedWellboreUuid.isBlocked;
 
     const handleWellboreSelectionChange = React.useCallback(
         function handleWellboreSelectionChange(wellboreUuid: string | null) {

@@ -326,7 +326,9 @@ export class Dependency<
         // Like an invalid local setting (see getLocalSetting()): a retained but invalid value (e.g. a field no longer in
         // the ensemble set) would only lead to requests that can't be used. Blocked rather than pending, so that it stops
         // loading - a change of the value or its validity is published as a global settings change, which runs it again.
-        if (this._isInitialized && !this._globalSettingValidityGetter(settingName)) {
+        // Only skipped while probing for subscriptions - not until initialized, as a root dependency's first real run
+        // happens before that (see initialize()), and must not request data for an already invalid value either
+        if (!this._isProbing && !this._globalSettingValidityGetter(settingName)) {
             this._blockedByInRun.push(GLOBAL_SETTING_LABELS[settingName]);
             return BLOCKED;
         }

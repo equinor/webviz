@@ -227,4 +227,21 @@ describe("Dependency", () => {
         expect(dependency.getIsBlocked()).toBe(false);
         expect(dependency.getIsLoading()).toBe(false);
     });
+
+    test("does not resolve on its first run when a read global setting is already invalid", async () => {
+        const resolve = vi.fn(async (values: Record<string, unknown>) => `headers-${String(values.fieldId)}`);
+        const { dependency, setGlobalSetting } = makeRootDependency({
+            read: (read) => ({ fieldId: read.globalSetting("fieldId") }),
+            resolve,
+        });
+        // E.g. a provider added or restored while the field is retained but invalid
+        setGlobalSetting("fieldId", "field-a", false);
+
+        await dependency.initialize();
+
+        expect(resolve).not.toHaveBeenCalled();
+        expect(dependency.getIsBlocked()).toBe(true);
+        expect(dependency.getBlockedBy()).toEqual(["Field"]);
+        expect(dependency.getIsLoading()).toBe(false);
+    });
 });
