@@ -1,0 +1,76 @@
+import numpy as np
+import xtgeo
+
+
+class SurfaceDefinitionMismatchError(Exception):
+    pass
+
+
+def assert_same_surface_definition(a: xtgeo.RegularSurface, b: xtgeo.RegularSurface) -> None:
+    """
+    Raise SurfaceDefinitionMismatchError if the two surfaces do not share the same grid definition.
+    """
+    mismatching_fields: list[str] = []
+
+    if a.ncol != b.ncol:
+        mismatching_fields.append(f"ncol ({a.ncol} vs {b.ncol})")
+    if a.nrow != b.nrow:
+        mismatching_fields.append(f"nrow ({a.nrow} vs {b.nrow})")
+    if not np.isclose(a.xinc, b.xinc):
+        mismatching_fields.append(f"xinc ({a.xinc} vs {b.xinc})")
+    if not np.isclose(a.yinc, b.yinc):
+        mismatching_fields.append(f"yinc ({a.yinc} vs {b.yinc})")
+    if not np.isclose(a.xori, b.xori):
+        mismatching_fields.append(f"xori ({a.xori} vs {b.xori})")
+    if not np.isclose(a.yori, b.yori):
+        mismatching_fields.append(f"yori ({a.yori} vs {b.yori})")
+    if not np.isclose(a.rotation, b.rotation):
+        mismatching_fields.append(f"rotation ({a.rotation} vs {b.rotation})")
+    if a.yflip != b.yflip:
+        mismatching_fields.append(f"yflip ({a.yflip} vs {b.yflip})")
+
+    if mismatching_fields:
+        raise SurfaceDefinitionMismatchError(
+            f"Surfaces have different definitions, mismatching fields: {', '.join(mismatching_fields)}"
+        )
+
+
+def subtract_surfaces(minuend: xtgeo.RegularSurface, subtrahend: xtgeo.RegularSurface) -> xtgeo.RegularSurface:
+    """
+    Returns minuend - subtrahend as a new surface. Cells undefined in either input are undefined in the result.
+    """
+    assert_same_surface_definition(minuend, subtrahend)
+
+    result = minuend.copy()
+    result.values = minuend.values - subtrahend.values
+
+    return result
+
+
+def compute_delta_surface(
+    comparison_monitor: xtgeo.RegularSurface,
+    comparison_base: xtgeo.RegularSurface | None,
+    reference_monitor: xtgeo.RegularSurface | None,
+    reference_base: xtgeo.RegularSurface | None,
+) -> xtgeo.RegularSurface:
+    """
+    Computes (comparison_monitor - comparison_base) - (reference_monitor - reference_base) for a single realization.
+    Terms that are None are omitted. reference_base may only be given together with reference_monitor and comparison_base.
+    """
+    if reference_base is not None and (reference_monitor is None or comparison_base is None):
+        raise ValueError("reference_base requires both reference_monitor and comparison_base")
+    if comparison_base is None and reference_monitor is None:
+        raise ValueError("At least one of comparison_base and reference_monitor must be given")
+
+    comparison_term = comparison_monitor
+    if comparison_base is not None:
+        comparison_term = subtract_surfaces(comparison_monitor, comparison_base)
+
+    if reference_monitor is None:
+        return comparison_term
+
+    reference_term = reference_monitor
+    if reference_base is not None:
+        reference_term = subtract_surfaces(reference_monitor, reference_base)
+
+    return subtract_surfaces(comparison_term, reference_term)
