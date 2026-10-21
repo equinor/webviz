@@ -1,4 +1,7 @@
 def is_safe_redirect_target(target: object) -> bool:
+    """
+    Checks if the given target URL is a safe redirect target.
+    """
     if not isinstance(target, str):
         return False
 
