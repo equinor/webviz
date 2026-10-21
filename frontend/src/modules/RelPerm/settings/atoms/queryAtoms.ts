@@ -170,13 +170,17 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
         combine: function combineRelPermRealizationDataQueryResults(
             results: UseQueryResult<RelpermRealizationDataResponse_api, RelPermApiError>[],
         ): RelPermDataAccessorStatus {
+            // A disabled query keeps its cached data and error, which may not match the current selections
+            // (e.g. relative-permeability curves after switching to capillary pressure)
+            if (!areSelectionsValid) {
+                return { dataAccessor: null, isFetching: false, isError: false, errors: [] };
+            }
+
             const ensembleData: RelPermEnsembleRealizationData[] = [];
 
             results.forEach(function collectEnsembleData(result, index) {
                 const data = result.data;
-                // A disabled query keeps its cached data, which may not match the current selections
-                // (e.g. relative-permeability curves after switching to capillary pressure)
-                if (!data || !areSelectionsValid) {
+                if (!data) {
                     return;
                 }
                 ensembleData.push({ ensembleIdent: queryContexts[index].ensembleIdent, data });
