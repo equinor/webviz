@@ -19,6 +19,29 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 LOGGER = logging.getLogger(__name__)
 
 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# Rename Namespace -> Operation
+# Operations have a cache_version, code_version
+# Mayby for now just keep it embedded in the string
+#
+# At runtime:
+# (global_)runtime_generation  Generation for all entries in the cache
+# runtime_generation, enten per operation, eller per operation,code_version
+#
+# Bruk noe annet en simppel streng som input til compute cahce key
+#
+# Utvid app begrepet til: webviz-prod, webviz-review, webviz-local(-sipet)
+#
+# cache_key_data: JsonValue og så:
+# serialized = json.dumps(
+#    cache_key_data,
+#    sort_keys=True,
+#    separators=(",", ":"),
+#    allow_nan=False,
+#)
+
 class SumoBlobCache:
     # Well-known cache namespaces used to partition the SumoBlobCache key space.
     class Namespace(StrEnum):
