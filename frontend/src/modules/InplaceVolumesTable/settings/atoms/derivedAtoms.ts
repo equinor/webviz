@@ -5,6 +5,7 @@ import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableD
 import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
+    selectedGroupByIndicesAtom,
     selectedIndicesWithValuesAtom,
     selectedResultNamesAtom,
     selectedTableNamesAtom,
@@ -51,6 +52,11 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
     // Persisted/template selections are passed through unfixed, so they may still hold results that
     // are invalid in the current context (e.g. BO/BG without FLUID grouping)
     if (!selectedResultNames.isValidInContext) {
+        return false;
+    }
+
+    // Likewise, a retained grouping may hold index columns the current tables don't have (e.g. REGION)
+    if (!get(selectedGroupByIndicesAtom).isValidInContext) {
         return false;
     }
 

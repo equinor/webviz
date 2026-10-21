@@ -127,6 +127,8 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
     }
 
     const queryContexts = selectedEnsembleIdents.map(makeQueryContext);
+    const areSelectionsValid =
+        ensembleIdentsValid && tableNameValid && saturationAxisNameValid && curveNamesValid && satnumsValid;
 
     return {
         queries: queryContexts.map(function makeRelPermRealizationDataQuery({
@@ -160,11 +162,7 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
                         selectedSatnums.length > 0 &&
                         tableDefinitionIsLoaded &&
                         (filteredRealizations === null || filteredRealizations.length > 0) &&
-                        ensembleIdentsValid &&
-                        tableNameValid &&
-                        saturationAxisNameValid &&
-                        curveNamesValid &&
-                        satnumsValid,
+                        areSelectionsValid,
                     ),
                 };
             };
@@ -176,7 +174,9 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
 
             results.forEach(function collectEnsembleData(result, index) {
                 const data = result.data;
-                if (!data) {
+                // A disabled query keeps its cached data, which may not match the current selections
+                // (e.g. relative-permeability curves after switching to capillary pressure)
+                if (!data || !areSelectionsValid) {
                     return;
                 }
                 ensembleData.push({ ensembleIdent: queryContexts[index].ensembleIdent, data });
