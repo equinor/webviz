@@ -1,12 +1,13 @@
 import datetime
 import hashlib
+import json
 import logging
 import uuid
 from enum import StrEnum
 from typing import TypeVar
 
 import httpx
-from pydantic import BaseModel
+from pydantic import BaseModel, JsonValue
 from azure.storage.blob.aio import BlobClient, StorageStreamDownloader
 from azure.core.exceptions import ResourceNotFoundError
 from fmu.sumo.explorer.explorer import SumoClient
@@ -30,17 +31,8 @@ LOGGER = logging.getLogger(__name__)
 # (global_)runtime_generation  Generation for all entries in the cache
 # runtime_generation, enten per operation, eller per operation,code_version
 #
-# Bruk noe annet en simppel streng som input til compute cahce key
-#
 # Utvid app begrepet til: webviz-prod, webviz-review, webviz-local(-sipet)
 #
-# cache_key_data: JsonValue og så:
-# serialized = json.dumps(
-#    cache_key_data,
-#    sort_keys=True,
-#    separators=(",", ":"),
-#    allow_nan=False,
-#)
 
 class SumoBlobCache:
     # Well-known cache namespaces used to partition the SumoBlobCache key space.
@@ -55,22 +47,25 @@ class SumoBlobCache:
 
     @classmethod
     def from_access_token(cls, sumo_access_token: str, namespace: Namespace) -> "SumoBlobCache":
-        sumo_client = create_sumo_client(sumo_access_token)
-        return cls(sumo_client=sumo_client, namespace=namespace)
+        new_sumo_client = create_sumo_client(sumo_access_token)
+        return cls(sumo_client=new_sumo_client, namespace=namespace)
 
     @classmethod
     def from_sumo_client(cls, sumo_client: SumoClient, namespace: Namespace) -> "SumoBlobCache":
         return cls(sumo_client=sumo_client, namespace=namespace)
 
-    def compute_cache_key(self, cache_key_data: str) -> str:
+    def compute_cache_key(self, cache_key_data: JsonValue) -> str:
         """
         Creates a cache key by hashing the provided data using shake128 to produce a UUID string.
         The namespace is also embedded in the cache key data to ensure uniqueness across different namespaces.
         """
-        # We also embed the namespace in the cache key data, to ensure that cache keys are unique across different namespaces, even if the input data is the same
-        hash_data = f"{self._namespace}@{cache_key_data}"
+        # Deterministically serialize the cache key data to get consistent hashing
+        serialized_data = json.dumps(cache_key_data, sort_keys=True, separators=(',', ':'), allow_nan=False)
 
-        digest: bytes = hashlib.shake_128(hash_data.encode()).digest(16)
+        # Also embed the namespace in the cache key to ensure that cache keys are unique across different namespaces
+        string_to_hash = f"{self._namespace}@{serialized_data}"
+
+        digest: bytes = hashlib.shake_128(string_to_hash.encode()).digest(16)
         hash_uuid = uuid.UUID(bytes=digest)
         return str(hash_uuid)
 
