@@ -4,7 +4,7 @@ import type { Layout, PlotDatum, PlotHoverEvent, PlotMouseEvent } from "plotly.j
 
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { Plot } from "@modules/_shared/components/Plot";
-import { makeRoundedBadge } from "@modules/_shared/utils/plotlyBadge";
+import { getNumericXExtent, makeRoundedBadge } from "@modules/_shared/utils/plotlyBadge";
 
 import type { TimeSeriesPlotlyTrace } from "../utils/createTracesUtils";
 
@@ -100,6 +100,8 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
         uirevision: props.uirevision,
     };
 
+    const xExtent = getNumericXExtent(props.traceDataArr);
+
     if (props.activeTimestampUtcMs !== undefined) {
         layout.shapes?.push({
             type: "line",
@@ -116,6 +118,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
             props.activeTimestampUtcMs,
             -0.02,
             { bgColor: "black", textColor: "white", borderColor: "black" },
+            xExtent,
         );
         layout.shapes?.push({ ...badge.shape, xref: "x", yref: "y domain" });
         layout.annotations?.push({ ...badge.annotation, xref: "x", yref: "y domain" });
@@ -145,6 +148,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
                 props.isHoverExternal
                     ? { bgColor: "white", textColor: "black", borderColor: hoverColor }
                     : { bgColor: hoverColor, textColor: "white", borderColor: hoverColor },
+                xExtent,
             );
             layout.shapes?.push({ ...hoverBadge.shape, xref: "x", yref: "y domain" });
             layout.annotations?.push({ ...hoverBadge.annotation, xref: "x", yref: "y domain" });
