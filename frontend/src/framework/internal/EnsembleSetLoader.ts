@@ -37,7 +37,7 @@ type EnsembleIdentStringToEnsembleApiDataMap = {
 };
 
 export type EnsembleLoadingErrorInfoMap = {
-    [ensembleIdentString: string]: { errorMessage: string; displayName: string };
+    [ensembleIdentString: string]: { errorMessage: string; displayName: string; details?: string };
 };
 
 export type EnsembleLoadingWarningInfoMap = {
@@ -279,9 +279,11 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     };
 }
 
-function withBackendErrorMessage(baseMessage: string, reason: unknown): string {
-    const backendMessage = reason instanceof Error ? ApiErrorHelper.fromError(reason)?.getMessage() : null;
-    return backendMessage ? `${baseMessage} ${backendMessage}` : baseMessage;
+function getBackendErrorMessage(reason: unknown): string | undefined {
+    if (!(reason instanceof Error)) {
+        return undefined;
+    }
+    return ApiErrorHelper.fromError(reason)?.getMessage() ?? undefined;
 }
 
 async function loadEnsembleApiDataMapFromBackend(
@@ -354,14 +356,13 @@ async function loadEnsembleApiDataMapFromBackend(
         const ensembleDetailsOutcome = ensembleDetailsOutcomeArray[i];
         console.debug(`ensembleDetailsOutcome[${i}]:`, ensembleDetailsOutcome.status);
         if (ensembleDetailsOutcome.status === "rejected") {
-            const errorMessage = withBackendErrorMessage(
-                "Error fetching ensemble details, dropping ensemble.",
-                ensembleDetailsOutcome.reason,
-            );
-            console.error(errorMessage, ensembleIdentString);
+            const errorMessage = "Error fetching ensemble details, dropping ensemble.";
+            const details = getBackendErrorMessage(ensembleDetailsOutcome.reason);
+            console.error(errorMessage, ensembleIdentString, details);
             ensembleLoadingErrorInfoMap[ensembleIdentString] = {
                 errorMessage: errorMessage,
                 displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
+                details: details,
             };
             continue;
         }
@@ -385,14 +386,13 @@ async function loadEnsembleApiDataMapFromBackend(
         const parametersAndSensitivitiesOutcome = parametersAndSensitivitiesOutcomeArray[i];
         console.debug(`parametersAndSensitivitiesOutcome[${i}]:`, parametersAndSensitivitiesOutcome.status);
         if (parametersAndSensitivitiesOutcome.status === "rejected") {
-            const errorMessage = withBackendErrorMessage(
-                "Error fetching ensemble parameters and sensitivities, dropping ensemble.",
-                parametersAndSensitivitiesOutcome.reason,
-            );
-            console.error(errorMessage, ensembleIdentString);
+            const errorMessage = "Error fetching ensemble parameters and sensitivities, dropping ensemble.";
+            const details = getBackendErrorMessage(parametersAndSensitivitiesOutcome.reason);
+            console.error(errorMessage, ensembleIdentString, details);
             ensembleLoadingErrorInfoMap[ensembleIdentString] = {
                 errorMessage: errorMessage,
                 displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
+                details: details,
             };
             continue;
         }
