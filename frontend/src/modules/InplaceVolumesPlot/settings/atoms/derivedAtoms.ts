@@ -10,6 +10,7 @@ import {
     selectedFirstResultNameAtom,
     selectedIndicesWithValuesAtom,
     selectedSecondResultNameAtom,
+    selectedSelectorColumnAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
 } from "./persistableFixableAtoms";
@@ -41,7 +42,12 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
         return false;
     }
 
-    if (!tableDefinitionsAccessor.hasEnsembleIdents(selectedEnsembleIdents.value)) {
+    // Disabled definition queries keep their cached results, so the accessor can still have the ensembles of a
+    // selection that is no longer valid (e.g. after one of them was removed from the session)
+    if (
+        !selectedEnsembleIdents.isValidInContext ||
+        !tableDefinitionsAccessor.hasEnsembleIdents(selectedEnsembleIdents.value)
+    ) {
         return false;
     }
 
@@ -75,6 +81,12 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
 
     // Likewise for the color-by column, which the plot data builder requires to exist in the table
     if (!get(selectedColorByAtom).isValidInContext) {
+        return false;
+    }
+
+    // The selector column is only used (and its control only shown) for bar plots, and the bar plot builder
+    // produces no traces when it is absent from the table
+    if (get(selectedPlotTypeAtom) === PlotType.BAR && !get(selectedSelectorColumnAtom).isValidInContext) {
         return false;
     }
 

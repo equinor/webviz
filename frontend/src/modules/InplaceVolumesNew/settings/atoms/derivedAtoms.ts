@@ -36,7 +36,12 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
         return false;
     }
 
-    if (!tableDefinitionsAccessor.hasEnsembleIdents(selectedEnsembleIdents.value)) {
+    // Disabled definition queries keep their cached results, so the accessor can still have the ensembles of a
+    // selection that is no longer valid (e.g. after one of them was removed from the session)
+    if (
+        !selectedEnsembleIdents.isValidInContext ||
+        !tableDefinitionsAccessor.hasEnsembleIdents(selectedEnsembleIdents.value)
+    ) {
         return false;
     }
 
