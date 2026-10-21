@@ -89,6 +89,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
         new UnsubscribeFunctionsManagerDelegate();
     private _activeToasts: Map<string, string> = new Map(); // Map of operation name -> toast ID
+    private _isDestroyed = false;
 
     constructor(workbench: Workbench, queryClient: QueryClient, guiMessageBroker: GuiMessageBroker) {
         this._workbench = workbench;
@@ -150,9 +151,13 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     }
 
     beforeDestroy(): void {
-        this._persistenceOrchestrator?.stop();
+        this._isDestroyed = true;
+
+        // Only the page goes away, not the session - its local backup must survive for recovery after a reload
+        if (this._activeSession) {
+            this.unloadSession({ keepLocalBackup: true });
+        }
         this._ensembleUpdateMonitor.stopPolling();
-        this.unloadSession();
         this.dismissAllToasts();
     }
 
@@ -405,6 +410,12 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         } catch (error) {
             console.error("Failed to load workbench session from local storage:", error);
 
+            // Torn down after a logout - the prompt would show over the login screen, and discarding would delete the
+            // backup that recovers the session after signing in again
+            if (this._isDestroyed) {
+                return false;
+            }
+
             let errorExplanation = "";
             if (error instanceof SessionValidationError) {
                 errorExplanation = "The session data is invalid, corrupted or outdated.";
@@ -577,6 +588,13 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     // ========== Internal Session Management ==========
 
     private async setActiveSession(session: PrivateWorkbenchSession): Promise<void> {
+        // A session that finished loading after the teardown would never be
+        // unloaded again - leaving it running in the background
+        if (this._isDestroyed) {
+            session.beforeDestroy();
+            return;
+        }
+
         try {
             // Update GUI state based on session content
             if (session.getEnsembleSet().getEnsembleArray().length === 0) {
@@ -632,20 +650,21 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         }
     }
 
-    private unloadSession(): void {
+    private unloadSession(options?: { keepLocalBackup?: boolean }): void {
         if (!this._activeSession) {
             console.warn("No active workbench session to unload.");
             return;
         }
 
+        // Stopped first - it may flush a pending refresh to the local backup, which needs the session still intact
+        if (this._persistenceOrchestrator) {
+            this._persistenceOrchestrator.stop(options);
+            this._persistenceOrchestrator = null;
+        }
+
         this._activeSession.beforeDestroy();
         // Global, so only cleared along with the active session - not when destroying e.g. a save-as copy
         EnsembleFingerprintStore.clear();
-
-        if (this._persistenceOrchestrator) {
-            this._persistenceOrchestrator.stop();
-            this._persistenceOrchestrator = null;
-        }
 
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("activeDashboardUrl");
 
@@ -994,6 +1013,12 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
         } catch (error) {
             console.error("Failed to load workbench session from local storage:", error);
+
+            // Torn down after a logout - the prompt would show over the login screen, and discarding would delete the
+            // backup that recovers the session after signing in again
+            if (this._isDestroyed) {
+                return;
+            }
 
             const result = await ConfirmationService.confirm({
                 variant: "error",

@@ -1,4 +1,5 @@
-import { objectToJsonString } from "@framework/internal/WorkbenchSession/utils/hash";
+import { AuthStateStore, AuthStateStoreTopic } from "@framework/internal/auth/AuthStateStore";
+import { hashSessionContentString, objectToJsonString } from "@framework/internal/WorkbenchSession/utils/hash";
 import type { Workbench } from "@framework/Workbench";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
@@ -11,7 +12,12 @@ import { AUTO_SAVE_DEBOUNCE_MS, BACKEND_POLLING_INTERVAL_MS } from "../constants
 
 import { BackendSyncManager } from "./BackendSyncManager";
 import { LocalBackupManager } from "./LocalBackupManager";
-import { PersistFailureReason, persistSessionToBackend, type PersistResult } from "./persistSessionToBackend";
+import {
+    makeSessionSavePayload,
+    PersistFailureReason,
+    persistSessionToBackend,
+    type PersistResult,
+} from "./persistSessionToBackend";
 import { SessionStateTracker, type WorkbenchSessionPersistenceInfo } from "./SessionStateTracker";
 
 export enum PersistenceOrchestratorTopic {
@@ -44,9 +50,11 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
     private readonly _session: PrivateWorkbenchSession;
 
     private _refreshStateDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
+    private _runningRefreshCount = 0;
     private _pollingInterval: ReturnType<typeof setInterval> | null = null;
     private _saveInProgress: boolean = false;
     private _destroyed: boolean = false;
+    private _isStarted: boolean = false;
     private _isInitializing: boolean = false;
 
     constructor(workbench: Workbench, session: PrivateWorkbenchSession) {
@@ -77,8 +85,9 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
 
     async start() {
         if (this._destroyed) return;
-        if (this._pollingInterval) return; // already started
+        if (this._isStarted) return;
         if (this._session.isSnapshot()) return;
+        this._isStarted = true;
 
         // Mark as initializing to prevent premature backups
         this._isInitializing = true;
@@ -105,7 +114,14 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         }, AUTO_SAVE_DEBOUNCE_MS + 50);
     }
 
-    stop() {
+    /**
+     * @param options.keepLocalBackup Keep the recovery backup - e.g. when the page goes away, but not the session
+     */
+    stop(options?: { keepLocalBackup?: boolean }) {
+        // A pending or running refresh would have updated the backup - so the latest changes are written right
+        // away instead
+        const hasPendingRefresh = this._refreshStateDebounceTimeout !== null || this._runningRefreshCount > 0;
+
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
         this.stopBackendPolling();
 
@@ -115,7 +131,11 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         }
 
         this._tracker.reset();
-        this._localBackup.remove();
+        if (!options?.keepLocalBackup) {
+            this._localBackup.remove();
+        } else if (hasPendingRefresh) {
+            this._localBackup.persist();
+        }
         this._destroyed = true;
     }
 
@@ -134,7 +154,10 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         this._saveInProgress = true;
 
         try {
-            await this._tracker.refresh();
+            // Captured up front, so only what's sent is marked as saved below - not edits made while saving
+            const payload = makeSessionSavePayload(this._session);
+
+            await this.refreshState();
 
             if (!this._tracker.hasChanges()) {
                 return {
@@ -143,18 +166,23 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
                 };
             }
 
+            const savedContentHash = await hashSessionContentString(payload.content);
+
             // The backup is stored under the id from before the save - none, if the save creates the session
             const sessionIdBeforeSave = this._session.getId();
 
-            const result = await persistSessionToBackend(this._workbench, this._session);
-            if (!result.success) {
+            const result = await persistSessionToBackend(this._workbench, this._session, payload);
+            // Stopped while saving - a backup kept on teardown may hold edits made after this save was submitted
+            if (!result.success || this._destroyed) {
                 return result;
             }
 
-            // Remove recovery backup after successful save
+            this._tracker.markPersisted(savedContentHash, payload);
             this._localBackup.remove(sessionIdBeforeSave);
-
-            this._tracker.markPersisted();
+            // Edits made while saving are still unsaved - backed up again, under the id the save may have assigned
+            if (this._tracker.hasChanges()) {
+                this._localBackup.persist();
+            }
             this.notifyPersistenceInfoChanged();
 
             return result;
@@ -182,7 +210,7 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         }
 
         try {
-            await this._tracker.refresh();
+            await this.refreshState();
 
             const content = contentOverride ?? this._session.serializeContentState();
             const snapshotId = await this._backendSync.createSnapshot({
@@ -233,17 +261,43 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
             if (this._destroyed) return;
 
             this._refreshStateDebounceTimeout = null;
+            await this.refreshState();
+        }, delay);
+    }
+
+    // Every refresh goes through here - one that picks up a change without backing it up would keep the next
+    // refresh from seeing that change, and so from backing it up too
+    private async refreshState(): Promise<void> {
+        this._runningRefreshCount++;
+        try {
             const changed = await this._tracker.refresh();
 
-            if (changed) {
-                this._localBackup.persist();
-                this.notifyPersistenceInfoChanged();
-            }
-        }, delay);
+            // Stopped meanwhile - stop() wrote the backup instead, as the session may already be torn down
+            if (this._destroyed || !changed) return;
+
+            this._localBackup.persist();
+            this.notifyPersistenceInfoChanged();
+        } finally {
+            this._runningRefreshCount--;
+        }
     }
 
     private startBackendPolling() {
         this.stopBackendPolling();
+
+        // Every request would fail - and since signing in again reloads the page, polling never needs to resume.
+        // Checked here rather than in start(), as start() awaits initialization before calling this.
+        const authStateStore = AuthStateStore.getInstance();
+        if (!authStateStore.isLoggedIn()) return;
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "auth-state",
+            authStateStore.getPublishSubscribeDelegate().makeSubscriberFunction(AuthStateStoreTopic.AUTH_STATE)(() => {
+                if (!authStateStore.isLoggedIn()) {
+                    this.stopBackendPolling();
+                }
+            }),
+        );
 
         const windowActivityObserver = WindowActivityObserver.getInstance();
 
@@ -301,5 +355,7 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
             clearInterval(this._pollingInterval);
             this._pollingInterval = null;
         }
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("window-activity");
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("auth-state");
     }
 }
