@@ -68,7 +68,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     // Write synced values explicitly - the selected atoms no longer fix up to them on their own
     if (!isEqual(syncedValueEnsembles, prevSyncedEnsembleIdents)) {
         setPrevSyncedEnsembleIdents(syncedValueEnsembles);
-        if (syncedValueEnsembles && syncedValueEnsembles.length > 0) {
+        // Only switch when the current ensemble isn't synced - switching unnecessarily could leave the retained vector
+        // or sensitivity selections invalid
+        const currentEnsembleIdent = selectedRegularEnsembleIdent.value;
+        const isCurrentEnsembleSynced =
+            currentEnsembleIdent !== null && syncedValueEnsembles?.some((ident) => ident.equals(currentEnsembleIdent));
+        if (syncedValueEnsembles && syncedValueEnsembles.length > 0 && !isCurrentEnsembleSynced) {
             setSelectedRegularEnsembleIdent(syncedValueEnsembles[0]);
         }
     }
