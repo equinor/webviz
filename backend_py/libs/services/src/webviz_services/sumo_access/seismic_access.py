@@ -28,11 +28,11 @@ class SeismicAccess:
         cube_meta_arr: list[SeismicCubeMeta] = []
         sumo_cube_object: Cube
         ensemble_context = self._case_context.filter(ensemble=self._ensemble_name)
-        realizations = await ensemble_context.realizationids_async
+        realizations = await ensemble_context.cubes.filter(realization=True).realizationids_async
 
         if realizations:
             seismic_real_context = ensemble_context.cubes.filter(
-                realization=realizations[0],
+                realization=min(realizations),
             )
 
             async for sumo_cube_object in seismic_real_context:

@@ -323,13 +323,15 @@ export class SharedSettingsDelegate<
             resolverSpec: ResolverSpec<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey, TReads>,
         ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey, TReads> => {
             const debugName = `SettingAttributesUpdater_${settingKey}`;
+            const markAttributesResolved = this._wrappedSettings[settingKey].registerAttributesBinding();
             const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribe((attributes: Partial<SettingAttributes> | null) => {
-                if (attributes === null) {
-                    return;
+                // A failed resolver leaves the default attributes, rather than keeping the setting from ever being shown
+                if (attributes !== null) {
+                    this._wrappedSettings[settingKey].updateAttributes(attributes);
                 }
-                this._wrappedSettings[settingKey].updateAttributes(attributes);
+                markAttributesResolved();
             });
 
             dependency.subscribeLoading(() => {

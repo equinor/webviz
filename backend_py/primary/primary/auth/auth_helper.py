@@ -1,8 +1,7 @@
-import base64
 import logging
 import os
 import time
-from typing import Callable, Literal, Optional, TypeAlias, Union, get_args
+from typing import Callable, Literal, Optional, TypeAlias, get_args
 from pathlib import Path
 
 import jwt
@@ -11,11 +10,14 @@ import starsessions
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from pydantic import BaseModel, ValidationError
+
 from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary import config
+
+from .redirect_validation import is_safe_redirect_target
 
 LOGGER = logging.getLogger(__name__)
 
@@ -64,7 +66,12 @@ class AuthHelper:
         self.router.add_api_route(path="/auth-callback", endpoint=self._authorized_callback_route, methods=["GET"])
 
     # pylint: disable-next=async-suffix
-    async def _login_route(self, request: Request, redirect_url_after_login: Optional[str] = None) -> RedirectResponse:
+    async def _login_route(self, request: Request, redirect_target_after_login: Optional[str] = None) -> Response:
+        if redirect_target_after_login is not None:
+            if not is_safe_redirect_target(redirect_target_after_login):
+                LOGGER.warning("Rejected unsafe post-login redirect path")
+                return PlainTextResponse("Invalid post-login redirect specified.", 400)
+
         await starsessions.load_session(request)
         request.session.clear()
 
@@ -78,18 +85,16 @@ class AuthHelper:
             redirect_uri = str(request.url_for("_authorized_callback_route"))
 
         cca = _create_msal_confidential_client_app(token_cache=None)
-        auth_code_flow_dict = cca.initiate_auth_code_flow(scopes=all_scopes_list, redirect_uri=redirect_uri)
+        flow_dict = cca.initiate_auth_code_flow(scopes=all_scopes_list, redirect_uri=redirect_uri)
 
         # Store the auth code flow dict in the session for later use during the auth callback
-        request.session["flow"] = auth_code_flow_dict
+        request.session["flow"] = flow_dict
 
         # If a final redirect url was specified, store it in the session so we can redirect from the auth callback.
-        # Note that the redirect_url_after_login query parameter is base64 encoded
-        if redirect_url_after_login is not None:
-            target_url_str_after_auth = base64.urlsafe_b64decode(redirect_url_after_login.encode()).decode()
-            request.session["target_url_str_after_auth"] = target_url_str_after_auth
+        if redirect_target_after_login is not None:
+            request.session["redirect_target_after_login"] = redirect_target_after_login
 
-        return RedirectResponse(auth_code_flow_dict["auth_uri"])
+        return RedirectResponse(flow_dict["auth_uri"])
 
     # pylint: disable-next=async-suffix
     async def _authorized_callback_route(self, request: Request) -> Response:
@@ -99,16 +104,16 @@ class AuthHelper:
         auth_response_dict = dict(request.query_params)
 
         # Retrieve the auth code flow dict from the session so we can use it to redeem the authorization code
-        auth_code_flow_dict = request.session.get("flow")
-        if not isinstance(auth_code_flow_dict, dict):
+        flow_dict = request.session.get("flow")
+        if not isinstance(flow_dict, dict):
             LOGGER.error("Login flow not found in session")
             return PlainTextResponse("No login in progress. Please log in again.", 400)
 
         # If the state parameter in the auth response does not match the one in the auth code flow dict, it could
         # indicate a CSRF attack or a simultaneous login attempt. Note that the test here is mainly to notify the user
         # and is not critical since the token acquisition below will fail if the state does not match.
-        if auth_response_dict.get("state") != auth_code_flow_dict.get("state"):
-            LOGGER.error("Login response state value did not match the login flow state value")
+        if auth_response_dict.get("state") != flow_dict.get("state"):
+            LOGGER.error("Login response state value did not match the stored flow state value")
             return PlainTextResponse("Login could not be verified. Close other login tabs and try again.", 400)
 
         try:
@@ -119,7 +124,7 @@ class AuthHelper:
             # for ONE resource when redeeming the authorization code. Therefore, we simply get an access token for the
             # graph resource here, and leave the retrieval of access tokens for the other resources (and scopes) for later.
             token_dict = cca.acquire_token_by_auth_code_flow(
-                auth_code_flow=auth_code_flow_dict,
+                auth_code_flow=flow_dict,
                 auth_response=auth_response_dict,
                 scopes=config.GRAPH_SCOPES,
             )
@@ -147,9 +152,10 @@ class AuthHelper:
 
         # Clear (by popping) the auth flow and target URL from the session after handling login
         request.session.pop("flow", None)
-        target_url_str_after_auth = request.session.pop("target_url_str_after_auth", None)
-        if target_url_str_after_auth is not None:
-            return RedirectResponse(target_url_str_after_auth)
+
+        redirect_target_after_login = request.session.pop("redirect_target_after_login", None)
+        if redirect_target_after_login is not None:
+            return RedirectResponse(redirect_target_after_login)
 
         return PlainTextResponse("Login OK")
 
@@ -292,7 +298,9 @@ def _acquire_refreshed_identity_and_tokens(
         user_name = curr_auth_info.user_name
         id_token_expiry_time = curr_auth_info.user_identity_expires_at
     else:
-        token_dict = cca.acquire_token_silent_with_error(scopes=config.GRAPH_SCOPES, account=account, force_refresh=True)
+        token_dict = cca.acquire_token_silent_with_error(
+            scopes=config.GRAPH_SCOPES, account=account, force_refresh=True
+        )
         if token_dict is None:
             LOGGER.error("No token found in cache when acquiring token silently for graph scopes")
             return None

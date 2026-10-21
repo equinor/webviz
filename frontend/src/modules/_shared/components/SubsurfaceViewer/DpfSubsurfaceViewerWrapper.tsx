@@ -12,12 +12,19 @@ import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
 import { WebvizWellsLayer } from "@modules/_shared/customDeckGlLayers/WebvizWellsLayer";
+import {
+    type DataProviderManager,
+    DataProviderManagerTopic,
+} from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type {
     AssemblerProduct,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import {
+    isVisualizationLoading,
+    VisualizationItemType,
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { ViewLayout } from "@modules/_shared/enums/viewLayout";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 
@@ -65,6 +72,7 @@ export type DpfSubsurfaceViewerWrapperProps = {
     onViewStateChange?: (viewState: ViewStateType) => void;
     onVerticalScaleChange?: (verticalScale: number) => void;
     fieldId: string;
+    dataProviderManager: DataProviderManager;
     visualizationAssemblerProduct: AssemblerProduct<VisualizationTarget.DECK_GL, any, any>;
     viewContext: ViewContext<any>;
     workbenchSession: WorkbenchSession;
@@ -83,7 +91,21 @@ const HOVER_TRANSFORMATIONS = makeHoverTransformationLookup(
 );
 
 export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProps): React.ReactNode {
-    const { onViewStateChange } = props;
+    const { onViewStateChange, dataProviderManager } = props;
+
+    // The field the providers have actually been switched to. The fieldId prop changes in the same render as the
+    // settings, while the manager only receives it afterwards (in the settings' effect) - until then, the product
+    // still shows the previous field's data and isn't loading.
+    const subscribeToGlobalSettings = React.useMemo(
+        () =>
+            dataProviderManager
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS),
+        [dataProviderManager],
+    );
+    const appliedFieldId = React.useSyncExternalStore(subscribeToGlobalSettings, () =>
+        dataProviderManager.getGlobalSetting("fieldId"),
+    );
 
     const [changingFields, setChangingFields] = React.useState<boolean>(false);
     const [prevFieldId, setPrevFieldId] = React.useState<string | null>(props.fieldId);
@@ -159,7 +181,7 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         }
     }
 
-    statusWriter.setLoading(props.visualizationAssemblerProduct.numLoadingDataProviders > 0);
+    statusWriter.setLoading(isVisualizationLoading(props.visualizationAssemblerProduct));
 
     for (const message of props.visualizationAssemblerProduct.aggregatedErrorMessages) {
         statusWriter.addError(message);
@@ -214,12 +236,21 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     }
 
     const finalLayers: Layer<any>[] = [];
-    if (changingFields && props.visualizationAssemblerProduct.numLoadingDataProviders === 0) {
+    // Only done once the providers have been switched to the new field and have loaded for it - otherwise the
+    // previous field's layers would be shown in the new viewer while the new field loads
+    if (
+        changingFields &&
+        appliedFieldId === props.fieldId &&
+        !isVisualizationLoading(props.visualizationAssemblerProduct)
+    ) {
         setChangingFields(false);
     }
 
     if (!changingFields) {
-        finalLayers.push(...deckGlLayers);
+        // Cloned, as the layer instances come from the assembler's cache and may already have been used, and
+        // finalized, by the viewer that was replaced on the last field change - deck.gl needs a fresh instance per
+        // viewer. Cloning is shallow, and deck.gl matches layers by id, so nothing is recomputed.
+        finalLayers.push(...deckGlLayers.map((layer) => layer.clone({})));
     }
 
     const handleViewStateChange = React.useCallback(

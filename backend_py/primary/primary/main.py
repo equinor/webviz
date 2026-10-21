@@ -22,7 +22,7 @@ from webviz_services.platform.message_bus import MessageBusSingleton
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
-from primary.middleware.cache_control_middleware import CacheControlMiddleware, add_result_versions_to_openapi
+from primary.middleware.cache_control_middleware import CacheControlMiddleware, add_cache_info_to_openapi
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanClientAddressEnrichmentMiddleware
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanEndUserEnrichmentMiddleware
 from primary.middleware.encrypted_redis_session_store import EncryptedRedisSessionStore
@@ -193,7 +193,7 @@ app.include_router(auth_helper.router)
 app.include_router(general_router)
 
 # Must run after all routers are included
-add_result_versions_to_openapi(app)
+add_cache_info_to_openapi(app)
 
 configure_service_level_exception_handlers(app)
 override_default_fastapi_exception_handlers(app)
@@ -212,14 +212,8 @@ if config.PSEUDONYM_HMAC_KEY is not None:
     app.add_middleware(OtelSpanEndUserEnrichmentMiddleware, hmac_secret_key=config.PSEUDONYM_HMAC_KEY)
 
 # Add our custom middleware to enforce that user is logged in
-# Also redirects to /login endpoint for some select paths
 unprotected_paths = ["/logout", "/alive", "/openapi.json"]
-paths_redirected_to_login = ["/", "/alive_protected"]
-app.add_middleware(
-    EnforceLoggedInMiddleware,
-    unprotected_paths=unprotected_paths,
-    paths_redirected_to_login=paths_redirected_to_login,
-)
+app.add_middleware(EnforceLoggedInMiddleware, unprotected_paths=unprotected_paths)
 
 # With the default lifetime=0 (browser-session cookie), starsessions uses gc_ttl as the Redis key TTL and resets it on
 # every save. This effectively gives a 1-day server-side idle timeout and ensures abandoned sessions are cleaned up.
@@ -228,7 +222,6 @@ encrypted_session_store = EncryptedRedisSessionStore(
     redis_url=config.REDIS_AUTH_STORE_URL,
     prefix=config.AUTH_SESSION_STORE_PREFIX,
     gc_ttl= 24 * 3600,
-
 )
 app.add_middleware(SessionMiddleware, store=encrypted_session_store)
 

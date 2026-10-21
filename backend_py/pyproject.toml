@@ -5,7 +5,7 @@ version = "0.0.0"
 description = "Shared config/tooling for the webviz monorepo"
 
 [tool.poetry]
-requires-poetry = ">=2.4"
+requires-poetry = ">=2.5"
 package-mode = false
 
 [build-system]
@@ -38,14 +38,14 @@ module = [
     "sumo.wrapper.*",
     "requests_toolbelt.*",
     "msal",
-    "diskcache" # Used by user_grid3d_ri
+    "diskcache",           # Used by user_grid3d_ri
 ]
 follow_untyped_imports = true
 
 [[tool.mypy.overrides]]
 module = [
     "xtgeo.*",
-    "rips.generated" # Used by user_grid3d_ri
+    "rips.generated", # Used by user_grid3d_ri
 ]
 ignore_missing_imports = true
 
@@ -70,7 +70,7 @@ disable = [
 extension-pkg-allow-list = ["pydantic"]
 ignored-modules = [
     "pyarrow.compute",
-    "rips.generated" # Used by user_grid3d_ri
+    "rips.generated",  # Used by user_grid3d_ri
 ]
 
 [tool.pylint.design]
