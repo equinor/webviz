@@ -6,6 +6,15 @@ class SurfaceDefinitionMismatchError(Exception):
     pass
 
 
+# Absolute tolerances only: np.isclose's default rtol is ~65 m at UTM northings, which would let a whole cell shift pass.
+_COORD_ABS_TOL = 1e-3  # metres
+_ANGLE_ABS_TOL = 1e-6  # degrees
+
+
+def _is_close(a: float, b: float, abs_tol: float) -> bool:
+    return bool(np.isclose(a, b, rtol=0.0, atol=abs_tol))
+
+
 def assert_same_surface_definition(a: xtgeo.RegularSurface, b: xtgeo.RegularSurface) -> None:
     """
     Raise SurfaceDefinitionMismatchError if the two surfaces do not share the same grid definition.
@@ -16,15 +25,15 @@ def assert_same_surface_definition(a: xtgeo.RegularSurface, b: xtgeo.RegularSurf
         mismatching_fields.append(f"ncol ({a.ncol} vs {b.ncol})")
     if a.nrow != b.nrow:
         mismatching_fields.append(f"nrow ({a.nrow} vs {b.nrow})")
-    if not np.isclose(a.xinc, b.xinc):
+    if not _is_close(a.xinc, b.xinc, _COORD_ABS_TOL):
         mismatching_fields.append(f"xinc ({a.xinc} vs {b.xinc})")
-    if not np.isclose(a.yinc, b.yinc):
+    if not _is_close(a.yinc, b.yinc, _COORD_ABS_TOL):
         mismatching_fields.append(f"yinc ({a.yinc} vs {b.yinc})")
-    if not np.isclose(a.xori, b.xori):
+    if not _is_close(a.xori, b.xori, _COORD_ABS_TOL):
         mismatching_fields.append(f"xori ({a.xori} vs {b.xori})")
-    if not np.isclose(a.yori, b.yori):
+    if not _is_close(a.yori, b.yori, _COORD_ABS_TOL):
         mismatching_fields.append(f"yori ({a.yori} vs {b.yori})")
-    if not np.isclose(a.rotation, b.rotation):
+    if not _is_close(a.rotation, b.rotation, _ANGLE_ABS_TOL):
         mismatching_fields.append(f"rotation ({a.rotation} vs {b.rotation})")
     if a.yflip != b.yflip:
         mismatching_fields.append(f"yflip ({a.yflip} vs {b.yflip})")
@@ -45,6 +54,13 @@ def subtract_surfaces(minuend: xtgeo.RegularSurface, subtrahend: xtgeo.RegularSu
     result.values = minuend.values - subtrahend.values
 
     return result
+
+
+def is_entirely_undefined(surf: xtgeo.RegularSurface) -> bool:
+    """
+    True when every cell is masked, e.g. because the inputs had disjoint defined regions.
+    """
+    return bool(np.ma.getmaskarray(surf.values).all())
 
 
 def compute_delta_surface(

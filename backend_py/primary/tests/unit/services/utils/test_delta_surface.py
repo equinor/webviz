@@ -6,6 +6,7 @@ from webviz_services.utils.delta_surface import (
     SurfaceDefinitionMismatchError,
     assert_same_surface_definition,
     compute_delta_surface,
+    is_entirely_undefined,
     subtract_surfaces,
 )
 
@@ -136,6 +137,32 @@ def test_assert_same_surface_definition_raises_for_differing_xori() -> None:
 
     with pytest.raises(SurfaceDefinitionMismatchError, match="xori"):
         assert_same_surface_definition(a, b)
+
+
+def test_assert_same_surface_definition_raises_for_whole_cell_shift_at_utm_scale() -> None:
+    # With np.isclose's default relative tolerance these would compare equal (~65 m at this magnitude)
+    a = create_surface([[1, 2], [3, 4], [5, 6]], xori=456_000.0, yori=6_500_000.0)
+    b = create_surface([[1, 2], [3, 4], [5, 6]], xori=456_000.0, yori=6_500_010.0)
+
+    with pytest.raises(SurfaceDefinitionMismatchError, match="yori"):
+        assert_same_surface_definition(a, b)
+
+
+def test_assert_same_surface_definition_tolerates_float_noise_at_utm_scale() -> None:
+    a = create_surface([[1, 2], [3, 4], [5, 6]], xori=456_000.0, yori=6_500_000.0)
+    b = create_surface([[1, 2], [3, 4], [5, 6]], xori=456_000.0 + 1e-6, yori=6_500_000.0 - 1e-6)
+
+    assert_same_surface_definition(a, b)
+
+
+def test_is_entirely_undefined_for_disjoint_masks() -> None:
+    minuend = create_surface([[10, 20], [30, 40], [50, 60]], masked_cells=[(0, 0), (0, 1), (1, 0)])
+    subtrahend = create_surface([[1, 2], [3, 4], [5, 6]], masked_cells=[(1, 1), (2, 0), (2, 1)])
+
+    result = subtract_surfaces(minuend, subtrahend)
+
+    assert is_entirely_undefined(result)
+    assert not is_entirely_undefined(minuend)
 
 
 def test_subtract_surfaces_raises_for_mismatching_definitions() -> None:

@@ -13,7 +13,11 @@ from webviz_services.sumo_access.surface_access import ExpectedError, InProgress
 from webviz_services.smda_access import SmdaAccess, StratigraphicUnit
 from webviz_services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 from webviz_services.smda_access.drogon import DrogonSmdaAccess
-from webviz_services.utils.delta_surface import SurfaceDefinitionMismatchError, compute_delta_surface
+from webviz_services.utils.delta_surface import (
+    SurfaceDefinitionMismatchError,
+    compute_delta_surface,
+    is_entirely_undefined,
+)
 from webviz_services.utils.statistic_function import StatisticFunction
 from webviz_services.utils.surface_intersect_with_polyline import intersect_surface_with_polyline
 from webviz_services.utils.authenticated_user import AuthenticatedUser
@@ -560,6 +564,12 @@ async def get_delta_surface_data(
         LOGGER.warning(f"Delta surface calculation failed for address {surf_addr_str}: {exc}")
         return LroFailureResp(error_message=str(exc))
     perf_metrics.record_lap("get-and-compute")
+
+    if is_entirely_undefined(delta_surf):
+        LOGGER.warning(f"Delta surface is entirely undefined for address {surf_addr_str}")
+        return LroFailureResp(
+            error_message="The delta surface has no defined values; the input surfaces have no overlapping defined cells"
+        )
 
     api_surf_data = _resample_and_convert_to_surface_data_response(
         xtgeo_surf=delta_surf, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
