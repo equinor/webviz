@@ -4,7 +4,7 @@ const APPROX_CHAR_WIDTH_PX = 7;
 const BADGE_HORIZONTAL_PADDING_PX = 8;
 const BADGE_HEIGHT_PX = 22;
 const BADGE_CORNER_RADIUS_PX = 5;
-// Badges anchored within this fraction of the x-extent from an edge are aligned inwards
+// Badges anchored within this fraction of the x-extent from an edge are shifted inwards, fully aligned at the edge
 const EDGE_ZONE_FRACTION = 0.06;
 
 export type BadgeColors = {
@@ -39,7 +39,7 @@ export function getNumericXExtent(traces: Partial<Data>[]): [number, number] | n
  * The width is estimated from the text length. Pass the returned objects to the figure/layout.
  *
  * Badges overflowing the plot area make Plotly autorange pad the axis, squashing the data. If `xExtent` is given,
- * badges near its edges are therefore aligned inwards (right edge at x near the max, left edge at x near the min).
+ * badges near its edges are therefore shifted inwards, gradually reaching right-aligned at the max and left-aligned at the min.
  */
 export function makeRoundedBadge(
     text: string,
@@ -56,8 +56,11 @@ export function makeRoundedBadge(
     let dx = 0;
     if (xExtent && xExtent[1] > xExtent[0]) {
         const fraction = (x - xExtent[0]) / (xExtent[1] - xExtent[0]);
-        if (fraction >= 1 - EDGE_ZONE_FRACTION) dx = -halfW;
-        else if (fraction <= EDGE_ZONE_FRACTION) dx = halfW;
+        // Ramp the inward shift linearly across the edge zone, to avoid the badge jumping sideways
+        const rightEdgeWeight = (fraction - (1 - EDGE_ZONE_FRACTION)) / EDGE_ZONE_FRACTION;
+        const leftEdgeWeight = (EDGE_ZONE_FRACTION - fraction) / EDGE_ZONE_FRACTION;
+        if (rightEdgeWeight > 0) dx = -halfW * Math.min(rightEdgeWeight, 1);
+        else if (leftEdgeWeight > 0) dx = halfW * Math.min(leftEdgeWeight, 1);
     }
 
     // Pixel offsets from the anchor (positive y is up). Corners are drawn with quadratic curves.
