@@ -57,22 +57,28 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
     const parameterColorScale = useContinuousColorScale(workbenchSettings, {
         gradientType: ColorScaleGradientType.Diverging,
     });
-    const vectorHexColorMap: VectorHexColorMap = {};
-    vectorSpecifications.forEach((vectorSpec, index) => {
-        if (vectorSpec.vectorName in vectorHexColorMap) {
-            return;
-        }
-        // If the vector name is not already in map, assign a color
-        const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
-        vectorHexColorMap[vectorSpec.vectorName] = color;
-    });
+    const vectorHexColorMap = React.useMemo(() => {
+        const colorMap: VectorHexColorMap = {};
+        vectorSpecifications.forEach((vectorSpec, index) => {
+            if (vectorSpec.vectorName in colorMap) {
+                return;
+            }
+            // If the vector name is not already in map, assign a color
+            const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
+            colorMap[vectorSpec.vectorName] = color;
+        });
+        return colorMap;
+    }, [vectorSpecifications, colorSet]);
     const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
 
     // Create parameter color scale helper
-    const ensemblesParameterColoring =
-        colorByParameter && parameterIdent
-            ? new EnsemblesParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
-            : null;
+    const ensemblesParameterColoring = React.useMemo(
+        () =>
+            colorByParameter && parameterIdent
+                ? new EnsemblesParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
+                : null,
+        [colorByParameter, parameterIdent, selectedEnsembles, parameterColorScale],
+    );
 
     const ensemblesWithoutParameter: (RegularEnsemble | DeltaEnsemble)[] = [];
     let parameterDisplayName: string | null = null;
@@ -139,8 +145,19 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
         vectorHexColorMap,
         subplotOwner,
         ensemblesParameterColoring,
-        hoveredTimestampUtcMs,
-        isHoverExternal,
+    );
+
+    // Traces are kept separate from the time markers, so hovering does not rebuild or re-compare trace data
+    const plotData = React.useMemo(() => plotBuilder?.makePlotData(), [plotBuilder]);
+    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
+    const plotLayout = React.useMemo(
+        () =>
+            plotBuilder?.makePlotLayout({
+                activeTimestampUtcMs: showTimestampMarker ? activeTimestampUtcMs : null,
+                hoveredTimestampUtcMs,
+                isHoverExternal,
+            }),
+        [plotBuilder, showTimestampMarker, activeTimestampUtcMs, hoveredTimestampUtcMs, isHoverExternal],
     );
 
     const hasQueryErrors = hasRealizationsQueryError || hasStatisticsQueryError;
@@ -168,13 +185,15 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
                     onHover={handleHoverInChart}
                     onUnhover={handleUnhoverInChart}
                     onDownloadClick={assembleCsvAndDownload}
-                    data={plotBuilder.makePlotData()}
-                    layout={plotBuilder.makePlotLayout()}
+                    data={plotData}
+                    layout={plotLayout}
                 />
             );
         },
         [
             plotBuilder,
+            plotData,
+            plotLayout,
             hasQueryErrors,
             isAnyQueryLoading,
             resampleFrequencyWarningMessage,
