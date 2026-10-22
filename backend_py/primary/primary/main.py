@@ -11,10 +11,12 @@ from starsessions import SessionMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from azure.identity.aio import WorkloadIdentityCredential, ClientSecretCredential
 
+from webviz_core_utils.radix_utils import is_running_on_radix_platform
 from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.sumo_access.sumo_fingerprinter import SumoFingerprinterFactory
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
+from webviz_services.utils.sumo_blob_cache import SumoBlobCacheFactory
 from webviz_services.utils.user_cache import UserCacheFactory
 from webviz_services.platform.azure_credentials import create_azure_credential
 from webviz_services.platform.azure_credentials import log_azure_credential_env_var_status
@@ -134,7 +136,14 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
 
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
+
+    if is_running_on_radix_platform():
+        SumoBlobCacheFactory.initialize_from_radix_env()
+    else:
+        SumoBlobCacheFactory.initialize_for_local_dev()
+
     UserCacheFactory.initialize(use_shared_client=True, redis_url=config.REDIS_CACHE_URL)
+
     if azure_credential is not None:
         TutorialMediaSignerSingleton.initialize(credential=azure_credential)
 

@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import json
 import logging
+import os
 import uuid
 from enum import StrEnum
 from typing import TypeVar
@@ -12,6 +13,7 @@ from azure.storage.blob.aio import BlobClient, StorageStreamDownloader
 from azure.core.exceptions import ResourceNotFoundError
 from fmu.sumo.explorer.explorer import SumoClient
 
+from webviz_core_utils.radix_utils import get_radix_environment_name
 from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
 
 # pylint: disable-next=invalid-name
@@ -31,8 +33,7 @@ LOGGER = logging.getLogger(__name__)
 # (global_)runtime_generation  Generation for all entries in the cache
 # runtime_generation, enten per operation, eller per operation,code_version
 #
-# Utvid app begrepet til: webviz-prod, webviz-review, webviz-local(-sipet)
-#
+
 
 class SumoBlobCache:
     # Well-known cache namespaces used to partition the SumoBlobCache key space.
@@ -41,18 +42,10 @@ class SumoBlobCache:
         DERIVED_VEC_TABLE = "derivedVecTable_v1"
         QC_CHECKS = "qcChecks_v1"
 
-    def __init__(self, sumo_client: SumoClient, namespace: Namespace) -> None:
+    def __init__(self, sumo_client: SumoClient, application_name: str, namespace: Namespace) -> None:
         self._sumo_client = sumo_client
+        self._application_name = application_name
         self._namespace = namespace
-
-    @classmethod
-    def from_access_token(cls, sumo_access_token: str, namespace: Namespace) -> "SumoBlobCache":
-        new_sumo_client = create_sumo_client(sumo_access_token)
-        return cls(sumo_client=new_sumo_client, namespace=namespace)
-
-    @classmethod
-    def from_sumo_client(cls, sumo_client: SumoClient, namespace: Namespace) -> "SumoBlobCache":
-        return cls(sumo_client=sumo_client, namespace=namespace)
 
     def compute_cache_key(self, cache_key_data: JsonValue) -> str:
         """
@@ -90,7 +83,7 @@ class SumoBlobCache:
 
         try:
             # Creates a cache entry in Sumo and returns a SAS URL to Azure blob storage for writing actual data
-            resp = await self._sumo_client.post_async(f"/cache/webviz/{cache_key}", json=cache_metadata)
+            resp = await self._sumo_client.post_async(f"/cache/{self._application_name}/{cache_key}", json=cache_metadata)
             resp_dict = resp.json()
             sas_url_for_blob_write = resp_dict["authuri"]
             return sas_url_for_blob_write
@@ -112,9 +105,10 @@ class SumoBlobCache:
         Resolves a cache key to a SAS URL for reading the cached blob from Azure blob storage.
         """
         try:
-            resp = await self._sumo_client.get_async(f"/cache/webviz/{cache_key}/blob/authuri")
+            resp = await self._sumo_client.get_async(f"/cache/{self._application_name}/{cache_key}/blob/authuri")
             sas_url_for_blob_read = resp.text
 
+            # !!!!!!!!!!!!!!!!
             if await self._FAKE_CHECK_is_resolved_blob_stale_async(sas_url_for_blob_read):
                 LOGGER.warning("resolve_cache_entry_async() -- FAKE_CHECK says that the blob is stale")
                 return None
@@ -157,6 +151,7 @@ class SumoBlobCache:
         if not blob_sas_url:
             raise ValueError("Cannot download blob from cache, empty SAS URL provided")
 
+        # !!!!!!!!!!!!!!!!
         if await self._FAKE_CHECK_is_resolved_blob_stale_async(blob_sas_url):
             LOGGER.warning("download_resolved_blob_async() -- FAKE_CHECK says that the blob is stale")
             return None
@@ -176,6 +171,7 @@ class SumoBlobCache:
         if not blob_sas_url:
             raise ValueError("Cannot check blob access, empty SAS URL provided")
 
+        # !!!!!!!!!!!!!!!!
         if await self._FAKE_CHECK_is_resolved_blob_stale_async(blob_sas_url):
             LOGGER.warning("is_resolved_blob_accessible_async() -- FAKE_CHECK says that the blob is stale")
             return False
@@ -254,3 +250,62 @@ class SumoBlobCache:
         #         return False
         #     except ResourceNotFoundError:
         #         return True
+
+
+class SumoBlobCacheFactory:
+    _instance = None
+
+    def __init__(self, application_name: str):
+        self._application_name: str = application_name
+
+    @classmethod
+    def initialize_from_radix_env(cls) -> None:
+        if cls._instance is not None:
+            raise RuntimeError("SumoBlobCacheFactory is already initialized")
+
+        radix_env_name = get_radix_environment_name()
+        if radix_env_name is None:
+            raise RuntimeError("Could not determine Radix environment name, must be running on Radix platform.")
+
+        application_name = f"webviz-{radix_env_name}"
+        cls._instance = cls(application_name=application_name)
+
+        LOGGER.info(f"SumoBlobCacheFactory initialized from Radix environment: {application_name=}")
+
+    @classmethod
+    def initialize_for_local_dev(cls) -> None:
+        if cls._instance is not None:
+            raise RuntimeError("SumoBlobCacheFactory is already initialized")
+
+        developer_qualifier = os.environ.get("WEBVIZ_LOCAL_DEVELOPER_QUALIFIER", "").strip()
+        if not developer_qualifier:
+            raise RuntimeError(
+                "Environment variable WEBVIZ_LOCAL_DEVELOPER_QUALIFIER must be set for local development."
+            )
+
+        application_name = f"webviz-local-{developer_qualifier}"
+        cls._instance = cls(application_name=application_name)
+
+        LOGGER.info(f"SumoBlobCacheFactory initialized for local development: {application_name=}")
+
+
+    @classmethod
+    def get_instance(cls) -> "SumoBlobCacheFactory":
+        if cls._instance is None:
+            raise RuntimeError("SumoBlobCacheFactory is not initialized, call initialize() first")
+        return cls._instance
+
+    def get_from_access_token(self, sumo_access_token: str, namespace: SumoBlobCache.Namespace) -> "SumoBlobCache":
+        if not sumo_access_token:
+            raise ValueError("A sumo_access_token must be specified")
+
+        new_sumo_client = create_sumo_client(sumo_access_token)
+        return SumoBlobCache(new_sumo_client, application_name=self._application_name, namespace=namespace)
+
+    def get_from_sumo_client(self, sumo_client: SumoClient, namespace: SumoBlobCache.Namespace) -> "SumoBlobCache":
+        if not sumo_client:
+            raise ValueError("A sumo_client must be specified")
+
+        return SumoBlobCache(sumo_client, application_name=self._application_name, namespace=namespace)
+
+
