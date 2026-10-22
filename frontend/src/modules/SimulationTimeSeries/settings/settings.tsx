@@ -430,7 +430,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                     </Hidden>
                 </Setting.Section>
                 <Setting.Section title="Data channel">
-                    <Setting.Field>
+                    <Setting.Field
+                        infoAnnotation={
+                            !showTimestampMarker ? "Enable the marker to select a new timestamp in plot." : undefined
+                        }
+                    >
                         <SwitchCompositions.WithLabel
                             label="Show timestamp marker in plot"
                             checked={showTimestampMarker}
