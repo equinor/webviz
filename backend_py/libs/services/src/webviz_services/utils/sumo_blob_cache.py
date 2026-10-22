@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import datetime
 import hashlib
 import json
@@ -34,29 +35,38 @@ LOGGER = logging.getLogger(__name__)
 # runtime_generation, enten per operation, eller per operation,code_version
 #
 
+@dataclass(frozen=True)
+class VersionedOperation:
+    name: str # Name of the operation
+    code_version: int # Version of the operation's code, including both computation and storage format
+
+
+# Well-known operations are defined here for now to provide consistency across the codebase.
+# Long-term, this is not the correct location for these. They should eventually live closer 
+# to the code that defines and uses them to make it easier and less error-prone to maintain, 
+# especially when the operation definitions evolve over time.
+OP_GENERAL = VersionedOperation("general", 1)
+OP_DERIVED_VEC_TABLE = VersionedOperation("derivedVecTable", 1)
+OP_QC_CHECKS = VersionedOperation("qcChecks", 1)
+
 
 class SumoBlobCache:
-    # Well-known cache namespaces used to partition the SumoBlobCache key space.
-    class Namespace(StrEnum):
-        GENERAL = "general_v1"
-        DERIVED_VEC_TABLE = "derivedVecTable_v1"
-        QC_CHECKS = "qcChecks_v1"
-
-    def __init__(self, sumo_client: SumoClient, application_name: str, namespace: Namespace) -> None:
+    def __init__(self, sumo_client: SumoClient, app_name: str, versioned_op: VersionedOperation) -> None:
         self._sumo_client = sumo_client
-        self._application_name = application_name
-        self._namespace = namespace
+        self._app_name = app_name
+        self._versioned_op_str = f"{versioned_op.name}_{versioned_op.code_version}"
 
     def compute_cache_key(self, cache_key_data: JsonValue) -> str:
         """
         Creates a cache key by hashing the provided data using shake128 to produce a UUID string.
-        The namespace is also embedded in the cache key data to ensure uniqueness across different namespaces.
+
+        The app name and versioned operation is also embedded in the cache key data to ensure uniqueness.
         """
         # Deterministically serialize the cache key data to get consistent hashing
         serialized_data = json.dumps(cache_key_data, sort_keys=True, separators=(',', ':'), allow_nan=False)
 
-        # Also embed the namespace in the cache key to ensure that cache keys are unique across different namespaces
-        string_to_hash = f"{self._namespace}@{serialized_data}"
+        # Also embed the app name and operation in the cache key
+        string_to_hash = f"{self._app_name}@{self._versioned_op_str}@{serialized_data}"
 
         digest: bytes = hashlib.shake_128(string_to_hash.encode()).digest(16)
         hash_uuid = uuid.UUID(bytes=digest)
@@ -74,29 +84,33 @@ class SumoBlobCache:
     ) -> str | None:
         """
         Reserves a cache entry in Sumo and returns a SAS URL for writing the actual data to Azure blob storage.
+
+        Important note!!
+        It is important that the list of source object UUIDs in source_obj_uuids is accurate and that they correctly 
+        represent the input objects that were used to generate the data that is being stored in the cache.
         """
         cache_metadata = {
-            "operation": self._namespace,
+            "operation": self._versioned_op_str,
             "inputids": source_obj_uuids,
             "objectsize": blob_size,
         }
 
         try:
             # Creates a cache entry in Sumo and returns a SAS URL to Azure blob storage for writing actual data
-            resp = await self._sumo_client.post_async(f"/cache/{self._application_name}/{cache_key}", json=cache_metadata)
+            resp = await self._sumo_client.post_async(f"/cache/{self._app_name}/{cache_key}", json=cache_metadata)
             resp_dict = resp.json()
             sas_url_for_blob_write = resp_dict["authuri"]
             return sas_url_for_blob_write
         except httpx.RequestError as exc:
             LOGGER.error(
-                f"Failed to reserve cache entry with request error. (namespace={self._namespace}, POST url={exc.request.url})",
+                f"Failed to reserve cache entry with request error. (operation={self._versioned_op_str}, POST url={exc.request.url})",
                 exc_info=exc,
             )
             return None
         except httpx.HTTPStatusError as exc:
             status = exc.response.status_code
             LOGGER.error(
-                f"Failed to reserve cache entry, HTTP status: {status} (namespace={self._namespace}, POST url={exc.request.url})"
+                f"Failed to reserve cache entry, HTTP status: {status} (operation={self._versioned_op_str}, POST url={exc.request.url})",
             )
             return None
 
@@ -105,7 +119,7 @@ class SumoBlobCache:
         Resolves a cache key to a SAS URL for reading the cached blob from Azure blob storage.
         """
         try:
-            resp = await self._sumo_client.get_async(f"/cache/{self._application_name}/{cache_key}/blob/authuri")
+            resp = await self._sumo_client.get_async(f"/cache/{self._app_name}/{cache_key}/blob/authuri")
             sas_url_for_blob_read = resp.text
 
             # !!!!!!!!!!!!!!!!
@@ -120,7 +134,7 @@ class SumoBlobCache:
             # Assuming that caching is a best effort optimization we should probably just log the error and return None
             # which will lead to a cache miss and normal processing of the request.
             LOGGER.error(
-                f"Failed to resolve cache entry with request error. (namespace={self._namespace}, GET url={exc.request.url})",
+                f"Failed to resolve cache entry with request error. (operation={self._versioned_op_str}, GET url={exc.request.url})",
                 exc_info=exc,
             )
             return None
@@ -131,11 +145,11 @@ class SumoBlobCache:
             status = exc.response.status_code
             if status == 404:
                 LOGGER.debug(
-                    f"Cache miss for: {cache_key=} (namespace={self._namespace}, {status=}, GET url={exc.request.url})"
+                    f"Cache miss for: {cache_key=} (operation={self._versioned_op_str}, {status=}, GET url={exc.request.url})"
                 )
             else:
                 LOGGER.warning(
-                    f"Failed to resolve cache entry, unexpected status: {status} (namespace={self._namespace}, GET url={exc.request.url})"
+                    f"Failed to resolve cache entry, unexpected status: {status} (operation={self._versioned_op_str}, GET url={exc.request.url})"
                 )
             return None
 
@@ -288,24 +302,23 @@ class SumoBlobCacheFactory:
 
         LOGGER.info(f"SumoBlobCacheFactory initialized for local development: {application_name=}")
 
-
     @classmethod
     def get_instance(cls) -> "SumoBlobCacheFactory":
         if cls._instance is None:
             raise RuntimeError("SumoBlobCacheFactory is not initialized, call initialize() first")
         return cls._instance
 
-    def get_from_access_token(self, sumo_access_token: str, namespace: SumoBlobCache.Namespace) -> "SumoBlobCache":
+    def get_from_access_token(self, sumo_access_token: str, versioned_op: VersionedOperation) -> "SumoBlobCache":
         if not sumo_access_token:
             raise ValueError("A sumo_access_token must be specified")
 
         new_sumo_client = create_sumo_client(sumo_access_token)
-        return SumoBlobCache(new_sumo_client, application_name=self._application_name, namespace=namespace)
+        return SumoBlobCache(new_sumo_client, app_name=self._application_name, versioned_op=versioned_op)
 
-    def get_from_sumo_client(self, sumo_client: SumoClient, namespace: SumoBlobCache.Namespace) -> "SumoBlobCache":
+    def get_from_sumo_client(self, sumo_client: SumoClient, versioned_op: VersionedOperation) -> "SumoBlobCache":
         if not sumo_client:
             raise ValueError("A sumo_client must be specified")
 
-        return SumoBlobCache(sumo_client, application_name=self._application_name, namespace=namespace)
+        return SumoBlobCache(sumo_client, app_name=self._application_name, versioned_op=versioned_op)
 
 
