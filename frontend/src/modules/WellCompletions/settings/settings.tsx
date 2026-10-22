@@ -9,6 +9,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
+import { useStableAtomGetter } from "@framework/utils/atomUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
@@ -88,12 +89,21 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
         setPrevSyncedEnsembleIdents(syncedEnsembleIdents);
     }
 
-    // Write the synced ensemble explicitly - the selected-ensemble atom no longer fixes up to it on its own
+    // Read on sync changes only - the effect must not re-run (and override the user) when the ensemble changes
+    const getSelectedEnsembleIdent = useStableAtomGetter(selectedEnsembleIdentAtom);
+
+    // Write the synced ensemble explicitly - the selected-ensemble atom no longer fixes up to it on its own. The current
+    // ensemble is kept if it is one of the synced ones.
     React.useEffect(() => {
-        if (prevSyncedEnsembleIdents && prevSyncedEnsembleIdents.length > 0) {
-            setSelectedEnsembleIdent(prevSyncedEnsembleIdents[0]);
+        if (!prevSyncedEnsembleIdents || prevSyncedEnsembleIdents.length === 0) {
+            return;
         }
-    }, [prevSyncedEnsembleIdents, setSelectedEnsembleIdent]);
+        const currentEnsembleIdent = getSelectedEnsembleIdent().value;
+        if (currentEnsembleIdent && prevSyncedEnsembleIdents.some((ident) => ident.equals(currentEnsembleIdent))) {
+            return;
+        }
+        setSelectedEnsembleIdent(prevSyncedEnsembleIdents[0]);
+    }, [prevSyncedEnsembleIdents, getSelectedEnsembleIdent, setSelectedEnsembleIdent]);
     React.useEffect(() => {
         if (prevStratigraphyColorSet) {
             setSelectedStratigraphyColorSet(stratigraphyColorSet);
@@ -178,7 +188,22 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                             onValueChange={handleEnsembleSelectionChange}
                         />
                     </Setting.Field>
-                    <Setting.Field label="Realization" stacked annotations={selectedRealizationAnnotations}>
+                    <Setting.Field
+                        label="Realization"
+                        stacked
+                        annotations={
+                            // Without realizations (e.g. all excluded by the realization filter), nothing is loaded in
+                            // either mode and the time steps are blocked - so point at the cause
+                            selectedEnsembleIdent.isValidInContext && availableRealizations.length === 0
+                                ? [
+                                      {
+                                          type: "warning",
+                                          message: "No realizations available. Check the realization filter.",
+                                      },
+                                  ]
+                                : undefined
+                        }
+                    >
                         <SwitchCompositions.WithLabel
                             label="Aggregate over all realizations"
                             checked={realizationMode === RealizationMode.AGGREGATED}
@@ -188,9 +213,10 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                         />
                         <Setting.Field
                             annotations={
-                                !isSingleRealizationMode
-                                    ? [{ type: "info", message: "Only available in single realization mode." }]
-                                    : []
+                                // The selected realization is only used (and validated) in single realization mode
+                                isSingleRealizationMode
+                                    ? selectedRealizationAnnotations
+                                    : [{ type: "info", message: "Only available in single realization mode." }]
                             }
                         >
                             <Combobox
@@ -206,7 +232,7 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                     </Setting.Field>
                 </Setting.Section>
                 <Setting.Section title="Plot settings" defaultOpen>
-                    <Setting.Field label="Time Aggregation" stacked annotations={selectedEnsembleIdentAnnotations}>
+                    <Setting.Field label="Time Aggregation" stacked>
                         <RadioCompositions.GroupWithLabels
                             value={timeAggregationMode}
                             options={Object.values(TimeAggregationMode).map((elm: TimeAggregationMode) => {

@@ -79,10 +79,7 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
             return {
                 ...options,
                 enabled: Boolean(
-                    selectedWellName &&
-                        selectedResponseName &&
-                        selectedTimestampUtcMs !== null &&
-                        areSelectionsValid,
+                    selectedWellName && selectedResponseName && selectedTimestampUtcMs !== null && areSelectionsValid,
                 ),
             };
         };

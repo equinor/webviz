@@ -15,6 +15,11 @@ type ParametersSelectorProps = {
     allParameterIdents: ParameterIdent[];
     selectedParameterIdents: ParameterIdent[];
     onChange: (selected: ParameterIdent[]) => void;
+    /**
+     * Select all parameters - also whenever they change - until the user interacts with the selector. Turn it off for a
+     * selection that is persisted or kept when invalid, which this would overwrite. @default true
+     */
+    selectAllUntilUserInteracts?: boolean;
 };
 
 enum GroupType {
@@ -29,6 +34,7 @@ export function ParametersSelector({
     allParameterIdents,
     selectedParameterIdents,
     onChange,
+    selectAllUntilUserInteracts = true,
 }: ParametersSelectorProps): React.ReactNode {
     const [prevAllParameterIdents, setPrevAllParameterIdents] = React.useState(allParameterIdents);
     const [autoSelectAllOnGroupChange, setAutoSelectAllOnGroupChange] = React.useState<boolean>(true);
@@ -55,11 +61,11 @@ export function ParametersSelector({
 
     React.useEffect(
         function selectAllParametersUntilUserInteracts() {
-            if (!userHasInteracted && allParameterIdents.length > 0) {
+            if (selectAllUntilUserInteracts && !userHasInteracted && allParameterIdents.length > 0) {
                 onChange(allParameterIdents);
             }
         },
-        [allParameterIdents, userHasInteracted, onChange],
+        [selectAllUntilUserInteracts, allParameterIdents, userHasInteracted, onChange],
     );
     const handleInteractiveOnChange = React.useCallback(
         function handleInteractiveOnChange(newParameters: ParameterIdent[]) {

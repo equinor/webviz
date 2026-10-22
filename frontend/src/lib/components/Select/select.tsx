@@ -87,6 +87,12 @@ function ensureKeyboardSelectionInView(
     return prevViewStartIndex;
 }
 
+// A value can be retained although it is no longer an option (e.g. kept as invalid). It is not shown, so toggling another
+// value must drop it rather than carry it along unseen. Options hidden by the filter text are still options.
+function withoutUnavailableValues<TValue>(values: TValue[], options: SelectOption<TValue>[]): TValue[] {
+    return values.filter((value) => options.some((option) => option.value === value));
+}
+
 function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React.ForwardedRef<HTMLDivElement>) {
     const defaultedProps = withDefaults(props, DEFAULT_PROPS as Partial<SelectProps<TValue>>);
     const { onValueChange: onChange } = defaultedProps;
@@ -213,10 +219,13 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                 setSelectionAnchor(index);
 
                 let newSelectedOptions: TValue[];
-                if (selectedOptionValues.includes(filteredOptions[index].value)) {
-                    newSelectedOptions = selectedOptionValues.filter((value) => value !== filteredOptions[index].value);
+                const selectedAvailableValues = withoutUnavailableValues(selectedOptionValues, options);
+                if (selectedAvailableValues.includes(filteredOptions[index].value)) {
+                    newSelectedOptions = selectedAvailableValues.filter(
+                        (value) => value !== filteredOptions[index].value,
+                    );
                 } else {
-                    newSelectedOptions = [...selectedOptionValues, filteredOptions[index].value];
+                    newSelectedOptions = [...selectedAvailableValues, filteredOptions[index].value];
                 }
                 setSelectedOptionValues(newSelectedOptions);
                 handleOnChange(newSelectedOptions);
@@ -337,6 +346,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
         [
             currentFocusIndex,
             filteredOptions,
+            options,
             defaultedProps.size,
             defaultedProps.multiple,
             handleOnChange,
@@ -366,9 +376,10 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
             const end = Math.max(index, selectionAnchor);
             newSelectedOptions = filteredOptions.slice(start, end + 1).map((option) => option.value);
         } else if (e.ctrlKey) {
-            newSelectedOptions = selectedOptionValues.includes(option.value)
-                ? selectedOptionValues.filter((value) => value !== option.value)
-                : [...selectedOptionValues, option.value];
+            const selectedAvailableValues = withoutUnavailableValues(selectedOptionValues, options);
+            newSelectedOptions = selectedAvailableValues.includes(option.value)
+                ? selectedAvailableValues.filter((value) => value !== option.value)
+                : [...selectedAvailableValues, option.value];
         } else {
             newSelectedOptions = [option.value];
         }

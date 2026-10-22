@@ -102,9 +102,21 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
             }
             const userSelectedVectorName = selection.selectedNodes[0] ?? null;
             const userSelectedVectorTag = selection.selectedTags[0]?.text ?? null;
+
+            // When the available vectors change (e.g. for another ensemble), the selector reports the same tag without
+            // a vector once it no longer resolves. That is no user change - keep the retained value (with its name and
+            // source) instead of replacing it, so it is reported as invalid rather than lost.
+            if (
+                userSelectedVectorName === null &&
+                userSelectedVectorTag !== null &&
+                userSelectedVectorTag === selectedVectorNameAndTag.value?.tag
+            ) {
+                return;
+            }
+
             setSelectedVectorNameAndTag({ name: userSelectedVectorName, tag: userSelectedVectorTag });
         },
-        [vectorSelectorData, setSelectedVectorNameAndTag],
+        [vectorSelectorData, selectedVectorNameAndTag.value?.tag, setSelectedVectorNameAndTag],
     );
 
     const selectedRegularEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(

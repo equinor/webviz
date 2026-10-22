@@ -33,7 +33,8 @@ export type InplaceVolumesFilterComponentProps = {
     selectedIndicesWithValues: InplaceVolumesIndexWithValues_api[];
     selectedAllowIndicesValuesIntersection: boolean;
 
-    dataAnnotations?: SettingAnnotation[];
+    ensembleAnnotations?: SettingAnnotation[];
+    tableNamesAnnotations?: SettingAnnotation[];
     selectionAnnotations?: SettingAnnotation[];
     debounceMs?: number;
     allowDeltaEnsembles?: boolean;
@@ -243,7 +244,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     return (
         <>
             <Setting.Section title="Data" defaultOpen>
-                <Setting.Field label="Ensembles" stacked>
+                <Setting.Field label="Ensembles" annotations={props.ensembleAnnotations} stacked>
                     {props.allowDeltaEnsembles ? (
                         <EnsemblePicker
                             ensembles={props.ensembleSet.getEnsembleArray()}
@@ -267,6 +268,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                     stacked
                     loadingOverlay={props.isPending ?? false}
                     label="Table sources"
+                    annotations={props.tableNamesAnnotations}
                     errorOverlay={
                         !props.isPending && tableSourceOptions.length === 0
                             ? "No table names. See logs for details."

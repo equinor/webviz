@@ -107,6 +107,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectedSelectorColumnAnnotations = useMakePersistableFixableAtomAnnotations(selectedSelectorColumnAtom);
     const selectedSubplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
+    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
+    const selectedTableNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedTableNamesAtom);
+    const selectedIndicesWithValuesAnnotations =
+        useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
 
     const plotSettings = (
         <Setting.Section title="Plot settings" defaultOpen>
@@ -182,6 +186,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
                     }
                     additionalSettings={plotSettings}
+                    ensembleAnnotations={selectedEnsembleIdentsAnnotations}
+                    tableNamesAnnotations={selectedTableNamesAnnotations}
+                    selectionAnnotations={selectedIndicesWithValuesAnnotations}
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
                     onChange={handleFilterChange}
                 />

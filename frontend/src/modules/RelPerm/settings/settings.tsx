@@ -174,7 +174,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     }
 
     function handleCurveNamesChange(curveNames: string[]) {
-        setSelectedCurveNames(curveNames);
+        // Curves kept from another curve type or saturation axis are still shown as chips. When the user changes the
+        // selection, they are dropped rather than carried along with the new curves.
+        setSelectedCurveNames(curveNames.filter((curveName) => availableCurveNames.includes(curveName)));
     }
 
     function handleSatnumsChange(satnums: number[]) {

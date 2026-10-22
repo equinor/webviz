@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 
+import { getSelectionForOfferedIndexColumns } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
 import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
 import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
@@ -24,12 +25,19 @@ export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get)
     );
 });
 
+// The index-value selection without entries for columns that are not offered - what is validated against and queried
+export const offeredSelectedIndicesWithValuesAtom = atom((get) => {
+    return getSelectionForOfferedIndexColumns(
+        get(selectedIndicesWithValuesAtom).value,
+        get(tableDefinitionsAccessorAtom).getCommonIndicesWithValues(),
+    );
+});
+
 export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const selectedTableNames = get(selectedTableNamesAtom);
     const selectedResultNames = get(selectedResultNamesAtom);
-    const selectedIndicesWithValues = get(selectedIndicesWithValuesAtom);
 
     const tableDefinitionsQuery = get(tableDefinitionsQueryAtom);
 
@@ -65,7 +73,8 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
         return false;
     }
 
-    if (!tableDefinitionsAccessor.hasIndicesWithValues(selectedIndicesWithValues.value)) {
+    // The atom's own validity - entries for columns that are not offered are ignored, as nothing could repair them
+    if (!get(selectedIndicesWithValuesAtom).isValidInContext) {
         return false;
     }
 

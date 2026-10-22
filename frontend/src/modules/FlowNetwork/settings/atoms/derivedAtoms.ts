@@ -5,7 +5,14 @@ import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 
 import { QueryStatus } from "../../types";
 
-import { selectedEnsembleIdentAtom, selectedRealizationAtom, selectedTreeTypeAtom } from "./persistableFixableAtoms";
+import {
+    selectedDateTimeAtom,
+    selectedEdgeKeyAtom,
+    selectedEnsembleIdentAtom,
+    selectedNodeKeyAtom,
+    selectedRealizationAtom,
+    selectedTreeTypeAtom,
+} from "./persistableFixableAtoms";
 import { realizationFlowNetworkQueryAtom } from "./queryAtoms";
 
 export const availableRealizationsAtom = atom<number[]>((get) => {
@@ -22,6 +29,17 @@ export const availableRealizationsAtom = atom<number[]>((get) => {
 // valid (e.g. a realization excluded by the realization filter), so neither is exposed while this is false
 export const areQuerySelectionsValidAtom = atom<boolean>((get) => {
     return get(selectedEnsembleIdentAtom).isValidInContext && get(selectedRealizationAtom).isValidInContext;
+});
+
+// Invalid selections are retained rather than fixed up. The plot can't show them - an unknown time step makes it show
+// an error, unknown edge/node keys draw the tree without values - so the view withholds plotting while this is false.
+export const areNetworkSelectionsValidAtom = atom<boolean>((get) => {
+    return (
+        get(selectedTreeTypeAtom).isValidInContext &&
+        get(selectedDateTimeAtom).isValidInContext &&
+        get(selectedEdgeKeyAtom).isValidInContext &&
+        get(selectedNodeKeyAtom).isValidInContext
+    );
 });
 
 export const queryStatusAtom = atom<QueryStatus>((get) => {

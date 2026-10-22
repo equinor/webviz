@@ -5,6 +5,14 @@ import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./que
 
 export const selectedFieldIdentAtom = persistableFixableAtom<string | null>({
     initialValue: null,
+    // Without ensembles, the field is checked against the fetched fields - so it waits for them, rather than settling
+    // on null before they are loaded. With ensembles, their field identifiers are available right away.
+    computeDependenciesState: ({ get }) => {
+        if (get(EnsembleSetAtom).getEnsembleArray().length) {
+            return "loaded";
+        }
+        return computeQueryDependenciesState(get(availableFieldsQueryAtom));
+    },
     isValidFunction: ({ get, value }) => {
         const allFields = get(availableFieldsQueryAtom)?.data ?? [];
         const ensembleSet = get(EnsembleSetAtom);

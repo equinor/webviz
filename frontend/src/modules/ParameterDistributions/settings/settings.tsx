@@ -252,6 +252,8 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             allParameterIdents={intersectedParameterIdents}
                             selectedParameterIdents={selectedParameterIdents.value ?? []}
                             onChange={setSelectedParameterIdents}
+                            // The atom defaults to all parameters itself, and keeps a persisted or invalid selection
+                            selectAllUntilUserInteracts={false}
                         />
                     </Setting.Field>
                 </Setting.Section>

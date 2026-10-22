@@ -115,7 +115,7 @@ export const selectedThpIndicesAtom = persistableFixableAtom<number[] | null, nu
 
 export const selectedWfrIndicesAtom = persistableFixableAtom<number[] | null, number[]>({
     initialValue: null,
-    computeDependenciesState: computeVfpTableQueryDependenciesState,
+    computeDependenciesState: computeProdTableParamDependenciesState,
     precomputeFunction: ({ get }) => {
         const vfpTable = get(vfpTableQueryAtom).data;
         if (!vfpTable || !isProdTable(vfpTable)) {
@@ -141,7 +141,7 @@ export const selectedWfrIndicesAtom = persistableFixableAtom<number[] | null, nu
 
 export const selectedGfrIndicesAtom = persistableFixableAtom<number[] | null, number[]>({
     initialValue: null,
-    computeDependenciesState: computeVfpTableQueryDependenciesState,
+    computeDependenciesState: computeProdTableParamDependenciesState,
     precomputeFunction: ({ get }) => {
         const vfpTable = get(vfpTableQueryAtom).data;
         if (!vfpTable || !isProdTable(vfpTable)) {
@@ -167,7 +167,7 @@ export const selectedGfrIndicesAtom = persistableFixableAtom<number[] | null, nu
 
 export const selectedAlqIndicesAtom = persistableFixableAtom<number[] | null, number[]>({
     initialValue: null,
-    computeDependenciesState: computeVfpTableQueryDependenciesState,
+    computeDependenciesState: computeProdTableParamDependenciesState,
     precomputeFunction: ({ get }) => {
         const vfpTable = get(vfpTableQueryAtom).data;
         if (!vfpTable || !isProdTable(vfpTable)) {
@@ -219,4 +219,19 @@ export const selectedColorByAtom = persistableFixableAtom<VfpParam>({
 // Utility function to compute dependencies state from vfpTableQueryAtom
 function computeVfpTableQueryDependenciesState({ get }: { get: (atom: any) => any }): PersistableAtomDependenciesState {
     return computeQueryDependenciesState(get(vfpTableQueryAtom));
+}
+
+// WFR, GFR and ALQ are only part of production tables. While another table is loaded, the data to check them against is
+// not available - so they wait (and don't settle on an empty selection) until a production table is loaded.
+function computeProdTableParamDependenciesState({
+    get,
+}: {
+    get: (atom: any) => any;
+}): PersistableAtomDependenciesState {
+    const vfpTableQueryDependenciesState = computeVfpTableQueryDependenciesState({ get });
+    if (vfpTableQueryDependenciesState !== "loaded") {
+        return vfpTableQueryDependenciesState;
+    }
+    const vfpTable = get(vfpTableQueryAtom).data;
+    return vfpTable && isProdTable(vfpTable) ? "loaded" : "blocked";
 }

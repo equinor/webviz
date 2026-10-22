@@ -27,7 +27,8 @@ type SettingsToViewInterface = {
     selectedEnsembleIdents: RegularEnsembleIdent[];
     selectedParameterIdents: ParameterIdent[];
     ensembleMode: EnsembleMode;
-    parameterSortingMethod: ParameterSortMethod;
+    // Null while the sort method is invalid, so that the view doesn't sort by it
+    parameterSortingMethod: ParameterSortMethod | null;
     priorEnsembleIdent: RegularEnsembleIdent | null;
     posteriorEnsembleIdent: RegularEnsembleIdent | null;
 };
@@ -74,6 +75,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return get(selectedEnsembleModeAtom);
     },
     parameterSortingMethod: (get) => {
-        return get(selectedParameterSortingMethodAtom).value;
+        // E.g. a prior/posterior method kept after switching to independent mode
+        const selection = get(selectedParameterSortingMethodAtom);
+        return selection.isValidInContext ? selection.value : null;
     },
 };

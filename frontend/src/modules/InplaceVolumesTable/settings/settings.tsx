@@ -156,6 +156,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const selectedIndicesWithValuesAnnotations =
         useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
+    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
+    const selectedTableNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedTableNamesAtom);
 
     const tableSettings = (
         <Setting.Section title="Responses and grouping" defaultOpen>
@@ -235,6 +237,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     additionalSettings={tableSettings}
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
                     selectionAnnotations={selectedIndicesWithValuesAnnotations}
+                    ensembleAnnotations={selectedEnsembleIdentsAnnotations}
+                    tableNamesAnnotations={selectedTableNamesAnnotations}
                     allowDeltaEnsembles
                     onChange={handleFilterChange}
                 />

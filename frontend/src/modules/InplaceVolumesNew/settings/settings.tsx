@@ -134,6 +134,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectedSelectorColumnAnnotations = useMakePersistableFixableAtomAnnotations(selectedSelectorColumnAtom);
     const selectedSubplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
+    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
+    const selectedTableNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedTableNamesAtom);
+    const selectedIndicesWithValuesAnnotations =
+        useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
 
     function handleOptionChange<K extends keyof InplaceVolumesPlotOptions>(key: K) {
         return (value: InplaceVolumesPlotOptions[K]) => setPlotOptions({ ...plotOptions, [key]: value });
@@ -329,6 +333,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
                     }
                     additionalSettings={plotSettings}
+                    ensembleAnnotations={selectedEnsembleIdentsAnnotations}
+                    tableNamesAnnotations={selectedTableNamesAnnotations}
+                    selectionAnnotations={selectedIndicesWithValuesAnnotations}
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
                     allowDeltaEnsembles
                     onChange={handleFilterChange}

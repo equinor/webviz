@@ -20,6 +20,11 @@ import { vfpTablesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
 
 export const availableVfpTablesAtom = atom<VfpTableInfo_api[]>((get) => {
     const vfpTablesQuery = get(vfpTablesQueryAtom);
+    // A disabled query (e.g. while the ensemble or realization is invalid) keeps its cached tables, which must not
+    // provide the options - or validate the selections - for that invalid selection
+    if (!vfpTablesQuery.isEnabled) {
+        return [];
+    }
     return vfpTablesQuery.data ?? [];
 });
 
@@ -55,16 +60,17 @@ export const tableDataAccessorWithStatusFlagsAtom = atom<TableDataAccessorWithSt
     const vfpTableDataQuery = get(vfpTableQueryAtom);
     const vfpTablesQuery = get(vfpTablesQueryAtom);
 
-    const vfpTableData = vfpTableDataQuery.data ?? null;
+    // Disabled queries keep their cached data and errors, which belong to a selection that may no longer be valid
+    const vfpTableData = vfpTableDataQuery.isEnabled ? (vfpTableDataQuery.data ?? null) : null;
 
     return {
         tableDataAccessor: vfpTableData ? new VfpApiTableDataAccessor(vfpTableData) : null,
         tableDataStatus: {
             isFetching: vfpTableDataQuery.isFetching,
-            isError: vfpTableDataQuery.isError,
+            isError: vfpTableDataQuery.isEnabled && vfpTableDataQuery.isError,
         },
         tablesStatus: {
-            isError: vfpTablesQuery.isError,
+            isError: vfpTablesQuery.isEnabled && vfpTablesQuery.isError,
             isFetching: vfpTablesQuery.isFetching,
         },
     };

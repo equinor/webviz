@@ -174,7 +174,26 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             size="small"
                         />
                     </Setting.Field>
-                    <Setting.Field label="Realizations" annotations={selectedRealizationsAnnotations} stacked>
+                    <Setting.Field
+                        label="Realizations"
+                        annotations={
+                            // Without realizations common to the ensembles (e.g. all excluded by the realization
+                            // filter), no PVT data is loaded and the PVT numbers are blocked - so point at the cause
+                            selectedEnsembleIdents.isValidInContext &&
+                            selectedEnsembleIdents.value.length > 0 &&
+                            availableRealizationNumbers.length === 0
+                                ? [
+                                      ...selectedRealizationsAnnotations,
+                                      {
+                                          type: "warning",
+                                          message:
+                                              "No realizations available for the selected ensembles. Check the realization filter.",
+                                      },
+                                  ]
+                                : selectedRealizationsAnnotations
+                        }
+                        stacked
+                    >
                         <Select
                             options={makeRealizationOptions(availableRealizationNumbers)}
                             value={selectedRealizations.value.map((el) => el.toString())}

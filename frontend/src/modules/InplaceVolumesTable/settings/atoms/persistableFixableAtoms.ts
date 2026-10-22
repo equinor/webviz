@@ -9,6 +9,7 @@ import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import {
     fixupUserSelectedIndexValues,
+    getSelectionForOfferedIndexColumns,
     isSelectedIndicesWithValuesValidSubset,
 } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
 import { makeUniqueTableNamesIntersection } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
@@ -117,7 +118,16 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
         return tableDefinitionsAccessor.getCommonIndicesWithValues();
     },
     isValidFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
-        return value.length > 0 && isSelectedIndicesWithValuesValidSubset(value, availableIndicesWithValues);
+        // Only the offered columns are judged - see getSelectionForOfferedIndexColumns(). With none offered, there is
+        // nothing to select, so any selection is valid.
+        if (availableIndicesWithValues.length === 0) {
+            return true;
+        }
+        const offeredSelection = getSelectionForOfferedIndexColumns(value, availableIndicesWithValues);
+        return (
+            offeredSelection.length > 0 &&
+            isSelectedIndicesWithValuesValidSubset(offeredSelection, availableIndicesWithValues)
+        );
     },
     fixupFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
         return fixupUserSelectedIndexValues(value ?? [], availableIndicesWithValues, FixupSelection.SELECT_ALL);

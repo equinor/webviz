@@ -2,7 +2,7 @@ import { isEqual } from "lodash-es";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { persistableFixableAtom } from "@framework/utils/atomUtils";
+import { computeQueryDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 
 import { fixupVectorName } from "../utils/fixupVectorName";
@@ -36,23 +36,20 @@ export const selectedRegularEnsembleIdentAtom = persistableFixableAtom<RegularEn
 export const selectedVectorNameAndTagAtom = persistableFixableAtom<{ name: string | null; tag: string | null } | null>({
     initialValue: null,
     areEqualFunction: isEqual,
-    computeDependenciesState: ({ get }) => {
-        const vectorListQuery = get(vectorListQueryAtom);
-        if (vectorListQuery.isError) {
-            return "error";
-        }
-        if (vectorListQuery.isFetching) {
-            return "loading";
-        }
-        return "loaded";
-    },
+    // A disabled query (e.g. while the ensemble is invalid) is "blocked", whatever it has cached
+    computeDependenciesState: ({ get }) => computeQueryDependenciesState(get(vectorListQueryAtom)),
     isValidFunction: ({ get, value }) => {
         const availableVectorNames = get(availableVectorNamesAtom);
 
-        if (!value || (value.name && !availableVectorNames.includes(value.name))) {
+        if (!value) {
             return false;
         }
-        return true;
+        // A tag that resolves to no available vector (e.g. typed, or kept from another ensemble) is no valid selection -
+        // unless there are no vectors to select at all
+        if (value.name === null) {
+            return availableVectorNames.length === 0;
+        }
+        return availableVectorNames.includes(value.name);
     },
     fixupFunction: ({ get, value }) => {
         const availableVectorNames = get(availableVectorNamesAtom);

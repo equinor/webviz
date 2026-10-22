@@ -7,6 +7,20 @@ export function filterAndOrderSelectedIndexValues(selectedValues: string[], avai
     return availableValues.filter((value) => selectedValueSet.has(value));
 }
 
+/*
+ * The entries of a selection for index columns that are offered. A retained selection can hold entries for columns that
+ * are no longer offered (e.g. after switching to a table without FACIES). Nothing shows them, so they can't be repaired -
+ * they are kept, but must neither make the selection invalid nor be used for filtering.
+ */
+export function getSelectionForOfferedIndexColumns(
+    selectedIndicesWithValues: InplaceVolumesIndexWithValues_api[],
+    availableIndicesWithValues: InplaceVolumesIndexWithValues_api[],
+): InplaceVolumesIndexWithValues_api[] {
+    return selectedIndicesWithValues.filter((selected) =>
+        availableIndicesWithValues.some((available) => available.indexColumn === selected.indexColumn),
+    );
+}
+
 // Utility function to check if a selection is a valid subset of available options
 export function isSelectedIndicesWithValuesValidSubset(
     selectedIndicesWithValues: InplaceVolumesIndexWithValues_api[],

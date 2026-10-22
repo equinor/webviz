@@ -54,7 +54,7 @@ export const selectedWellNameAtom = persistableFixableAtom<string | null, string
 
 export const selectedTimestampUtcMsAtom = persistableFixableAtom<number | null, number[]>({
     initialValue: null,
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: computeWellDatesDependenciesState,
     precomputeFunction: ({ get }) => get(availableTimestampsUtcMsAtom),
     isValidFunction: ({ value, precomputedValue: availableTimestamps }) => {
         return value !== null && availableTimestamps.includes(value);
@@ -67,5 +67,15 @@ export const selectedTimestampUtcMsAtom = persistableFixableAtom<number | null, 
 
 function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
     return computeQueriesDependenciesState(get(rftTableDefinitionQueriesAtom));
+}
+
+// The dates belong to the selected well. While it is invalid, there is no data to check the date against - so it waits
+// (and doesn't settle on the empty list) until a valid well is selected.
+function computeWellDatesDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
+    const tableDefinitionsQueryDependenciesState = computeTableDefinitionsQueryDependenciesState({ get });
+    if (tableDefinitionsQueryDependenciesState !== "loaded") {
+        return tableDefinitionsQueryDependenciesState;
+    }
+    return get(selectedWellNameAtom).isValidInContext ? "loaded" : "blocked";
 }
 

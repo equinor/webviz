@@ -63,8 +63,13 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const availableVfpTypes = useAtomValue(availableVfpTypesAtom);
     const availableVfpTableNumbers = useAtomValue(availableVfpTableNumbersAtom);
 
-    propagateQueryErrorToStatusWriter(vfpTableQuery, statusWriter);
-    propagateQueryErrorToStatusWriter(vfpTablesQuery, statusWriter);
+    // A disabled query keeps its cached error, which must not be reported for an invalid selection
+    if (vfpTableQuery.isEnabled) {
+        propagateQueryErrorToStatusWriter(vfpTableQuery, statusWriter);
+    }
+    if (vfpTablesQuery.isEnabled) {
+        propagateQueryErrorToStatusWriter(vfpTablesQuery, statusWriter);
+    }
 
     function handleThpIndicesSelectionChange(thpIndices: string[]) {
         const thpIndicesNumbers = thpIndices.map((value) => parseInt(value));
@@ -127,7 +132,22 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             onValueChange={setSelectedEnsembleIdent}
                         />
                     </Setting.Field>
-                    <Setting.Field label="Realization" annotations={selectedRealizationNumberAnnotations}>
+                    <Setting.Field
+                        label="Realization"
+                        annotations={
+                            // Without a realization to choose (e.g. all excluded by the realization filter), the
+                            // settings below are blocked - so point at the cause
+                            selectedEnsembleIdent.isValidInContext && availableRealizationNumbers.length === 0
+                                ? [
+                                      ...selectedRealizationNumberAnnotations,
+                                      {
+                                          type: "warning",
+                                          message: "No realizations available. Check the realization filter.",
+                                      },
+                                  ]
+                                : selectedRealizationNumberAnnotations
+                        }
+                    >
                         <Combobox<number>
                             items={availableRealizationNumbers.map((real) => {
                                 return { value: real, label: real.toString() };
