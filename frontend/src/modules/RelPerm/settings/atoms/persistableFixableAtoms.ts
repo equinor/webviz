@@ -3,7 +3,8 @@ import { isEqual } from "lodash-es";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { persistableFixableAtom } from "@framework/utils/atomUtils";
+import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
+import { computeQueriesDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
@@ -84,28 +85,12 @@ export const selectedSatnumsAtom = persistableFixableAtom<number[], number[]>({
     },
 });
 
-function computeTableNamesQueryDependenciesState({ get }: { get: Getter }): "error" | "loading" | "loaded" {
-    const tableNameQueries = get(relPermTableNamesQueriesAtom);
-
-    if (tableNameQueries.some((query: { isFetching: boolean }) => query.isFetching)) {
-        return "loading";
-    }
-    if (tableNameQueries.some((query: { isError: boolean }) => query.isError)) {
-        return "error";
-    }
-
-    return "loaded";
+// A disabled or not yet resolved query is "blocked", not "loaded" - otherwise an atom settles before its options exist
+// (e.g. while the table definitions wait for a table name on first load) and keeps an empty value afterwards
+function computeTableNamesQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
+    return computeQueriesDependenciesState(get(relPermTableNamesQueriesAtom));
 }
 
-function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): "error" | "loading" | "loaded" {
-    const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
-
-    if (tableDefinitionQueries.some((query: { isFetching: boolean }) => query.isFetching)) {
-        return "loading";
-    }
-    if (tableDefinitionQueries.some((query: { isError: boolean }) => query.isError)) {
-        return "error";
-    }
-
-    return "loaded";
+function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
+    return computeQueriesDependenciesState(get(relPermTableDefinitionQueriesAtom));
 }

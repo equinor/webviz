@@ -22,14 +22,10 @@ import {
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
 function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
-    const tableDefinitions = get(tableDefinitionsQueryAtom);
-    if (tableDefinitions.isLoading) {
-        return "loading";
-    }
-    if (tableDefinitions.errors.length > 0) {
-        return "error";
-    }
-    return "loaded";
+    // Not derived from isLoading: that is false while a query is disabled or has no result yet, which reported "loaded"
+    // and let the atoms settle on the empty definitions of that moment - depending on timing, e.g. with an empty
+    // index-value selection that is invalid once the definitions arrive
+    return get(tableDefinitionsQueryAtom).dependenciesState;
 }
 
 export const selectedReferenceEnsembleIdentAtom = persistableFixableAtom<RegularEnsembleIdent | null>({
@@ -103,18 +99,23 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => get(availableIndicesWithValuesAtom),
     isValidFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
-        // An empty selection is only invalid when there are columns available to select from. When
-        // the two sources share no filterable index column, [] is itself the valid selection.
-        if (availableIndicesWithValues.length === 0) {
-            return value.length === 0;
-        }
+        // Only the offered columns are judged. Entries for other columns (e.g. kept from previously selected tables) have
+        // no field to repair them in, and are not used by the query (see indicesWithValuesForQueryAtom) - they are kept,
+        // but ignored, so they apply again once their columns are offered again. When no column is offered, there is
+        // nothing to select, so any selection is valid.
+        const offeredSelection = value.filter((selected) =>
+            availableIndicesWithValues.some((available) => available.indexColumn === selected.indexColumn),
+        );
 
         // A selection that omits a newly available index column must count as invalid, so the
         // SELECT_ALL fixup runs and the column is not left as an empty (everything-filtered) filter.
         const coversAllAvailableColumns = availableIndicesWithValues.every((available) =>
-            value.some((selected) => selected.indexColumn === available.indexColumn),
+            offeredSelection.some((selected) => selected.indexColumn === available.indexColumn),
         );
-        return coversAllAvailableColumns && isSelectedIndicesWithValuesValidSubset(value, availableIndicesWithValues);
+        return (
+            coversAllAvailableColumns &&
+            isSelectedIndicesWithValuesValidSubset(offeredSelection, availableIndicesWithValues)
+        );
     },
     fixupFunction: ({ value, precomputedValue: availableIndicesWithValues }) =>
         fixupUserSelectedIndexValues(value ?? [], availableIndicesWithValues, FixupSelection.SELECT_ALL),
