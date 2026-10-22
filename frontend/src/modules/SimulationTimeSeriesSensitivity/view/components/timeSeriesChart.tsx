@@ -151,7 +151,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
             props.hoveredTimestampUtcMs,
             -0.02,
             props.isHoverExternal
-                ? { bgColor: "white", textColor: "black", borderColor: hoverColor }
+                ? { bgColor: "white", textColor: hoverColor, borderColor: hoverColor }
                 : { bgColor: hoverColor, textColor: "white", borderColor: hoverColor },
             xExtent,
         );

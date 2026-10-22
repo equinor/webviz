@@ -672,7 +672,7 @@ export class PlotBuilder {
     private getHoverBadgeColors(): BadgeColors {
         const color = this.getHoverColor();
         return this._hoveredTimestampIsExternal
-            ? { bgColor: "white", textColor: "black", borderColor: color }
+            ? { bgColor: "white", textColor: color, borderColor: color }
             : { bgColor: color, textColor: "white", borderColor: color };
     }
 
