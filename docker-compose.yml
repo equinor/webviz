@@ -127,7 +127,7 @@ services:
     volumes:
       - ./backend_py/pyworker/src:/home/appuser/backend_py/pyworker/src
       - ./backend_py/libs:/home/appuser/backend_py/libs
-    command: ["watchfiles", "python -m pyworker.worker_main", "/home/appuser/backend_py/pyworker/src"]
+    command: ["watchfiles", "python -m pyworker.worker_main", "/home/appuser/backend_py/pyworker/src", "/home/appuser/backend_py/libs"]
     #command: ["python", "-m", "pyworker.worker_main"]
     #restart: on-failure
     restart: always
