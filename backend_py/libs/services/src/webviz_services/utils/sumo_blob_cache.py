@@ -11,7 +11,7 @@ from typing import TypeVar
 import httpx
 from pydantic import BaseModel, JsonValue
 from azure.storage.blob.aio import BlobClient, StorageStreamDownloader
-from azure.core.exceptions import ResourceNotFoundError
+from azure.core.exceptions import AzureError, ResourceNotFoundError
 from fmu.sumo.explorer.explorer import SumoClient
 
 from webviz_core_utils.radix_utils import get_radix_environment_name
@@ -50,7 +50,24 @@ OP_DERIVED_VEC_TABLE = VersionedOperation("derivedVecTable", 1)
 OP_QC_CHECKS = VersionedOperation("qcChecks", 1)
 
 
+class SumoBlobCacheError(Exception):
+    """
+    A cache operation failed or returned an invalid service response.
+    """
+
+
 class SumoBlobCache:
+    """
+    Implements interface to Sumo's blob caching service
+
+    Cache keys are computed based on the following:
+        * input data
+        * the application name
+        * the versioned operation
+
+    Cached blobs or cache misses are returned normally while SumoBlobCacheError is raised on unexpected failures.
+    """
+
     def __init__(self, sumo_client: SumoClient, app_name: str, versioned_op: VersionedOperation) -> None:
         self._sumo_client = sumo_client
         self._app_name = app_name
@@ -79,9 +96,7 @@ class SumoBlobCache:
 
         return await self.is_resolved_blob_accessible_async(sas_url)
 
-    async def reserve_cache_entry_async(
-        self, cache_key: str, source_obj_uuids: list[str], blob_size: int
-    ) -> str | None:
+    async def reserve_cache_entry_async(self, cache_key: str, source_obj_uuids: list[str], blob_size: int) -> str:
         """
         Reserves a cache entry in Sumo and returns a SAS URL for writing the actual data to Azure blob storage.
 
@@ -99,20 +114,15 @@ class SumoBlobCache:
             # Creates a cache entry in Sumo and returns a SAS URL to Azure blob storage for writing actual data
             resp = await self._sumo_client.post_async(f"/cache/{self._app_name}/{cache_key}", json=cache_metadata)
             resp_dict = resp.json()
-            sas_url_for_blob_write = resp_dict["authuri"]
+            sas_url_for_blob_write = resp_dict["authuri"].strip()
             return sas_url_for_blob_write
+
         except httpx.RequestError as exc:
-            LOGGER.error(
-                f"Failed to reserve cache entry with request error. (operation={self._versioned_op_str}, POST url={exc.request.url})",
-                exc_info=exc,
-            )
-            return None
+            raise SumoBlobCacheError(f"Failed to reserve cache entry due to request error. (operation={self._versioned_op_str}, POST url={exc.request.url})") from exc
         except httpx.HTTPStatusError as exc:
             status = exc.response.status_code
-            LOGGER.error(
-                f"Failed to reserve cache entry, HTTP status: {status} (operation={self._versioned_op_str}, POST url={exc.request.url})",
-            )
-            return None
+            raise SumoBlobCacheError(f"Failed to reserve cache entry, HTTP status: {status} (operation={self._versioned_op_str}, POST url={exc.request.url})") from exc
+
 
     async def resolve_cache_entry_async(self, cache_key: str) -> str | None:
         """
@@ -130,36 +140,32 @@ class SumoBlobCache:
             return sas_url_for_blob_read
 
         except httpx.RequestError as exc:
-            # Should we raise a service exception or just log an error here?
-            # Assuming that caching is a best effort optimization we should probably just log the error and return None
-            # which will lead to a cache miss and normal processing of the request.
-            LOGGER.error(
-                f"Failed to resolve cache entry with request error. (operation={self._versioned_op_str}, GET url={exc.request.url})",
-                exc_info=exc,
-            )
-            return None
+            # Should we raise an exception or swallow it and just log an error here?
+            # For now we raise since classifying a request error as a cache miss is a bit risky, as it
+            # will mask underlying connectivity issues or misconfigurations.
+            raise SumoBlobCacheError(f"Failed to resolve cache entry due to request error. (operation={self._versioned_op_str}, GET url={exc.request.url})") from exc
         except httpx.HTTPStatusError as exc:
-            # SumoClient calls raise_for_status() on the response, so non-success status codes end up here
-            # As of now we don't know how to distinguish between these, so we treat them all as normal cache misses
-            # but log a warning if it's an unexpected status code
+            # SumoClient calls raise_for_status() on the response, so non-success status codes end up here.
+            # As of now we don't know how to distinguish between these, so for now treat 404 as normal cache misse
+            # and raise for other status codes.
             status = exc.response.status_code
             if status == 404:
-                LOGGER.debug(
-                    f"Cache miss for: {cache_key=} (operation={self._versioned_op_str}, {status=}, GET url={exc.request.url})"
-                )
+                LOGGER.debug(f"Cache miss for: {cache_key=} (operation={self._versioned_op_str}, {status=}, GET url={exc.request.url})")
+                return None
             else:
-                LOGGER.warning(
-                    f"Failed to resolve cache entry, unexpected status: {status} (operation={self._versioned_op_str}, GET url={exc.request.url})"
-                )
-            return None
+                raise SumoBlobCacheError(f"Failed to resolve cache entry, unexpected status: {status} (operation={self._versioned_op_str}, GET url={exc.request.url})") from exc
 
     async def upload_reserved_blob_async(self, blob_sas_url: str, blob_payload: bytes) -> None:
         if not blob_sas_url:
             raise ValueError("Cannot upload blob to cache, empty SAS URL provided")
 
         blob_size = len(blob_payload)
-        async with BlobClient.from_blob_url(blob_sas_url) as blob_client:
-            await blob_client.upload_blob(data=blob_payload, blob_type="BlockBlob", length=blob_size, overwrite=True)
+        try:
+            async with BlobClient.from_blob_url(blob_sas_url) as bclient:
+                await bclient.upload_blob(data=blob_payload, blob_type="BlockBlob", length=blob_size, overwrite=True)
+
+        except AzureError as exc:
+            raise SumoBlobCacheError(f"Failed to upload blob (operation={self._versioned_op_str})") from exc
 
     async def download_resolved_blob_async(self, blob_sas_url: str) -> bytes | None:
         if not blob_sas_url:
@@ -170,16 +176,19 @@ class SumoBlobCache:
             LOGGER.warning("download_resolved_blob_async() -- FAKE_CHECK says that the blob is stale")
             return None
 
-        async with BlobClient.from_blob_url(blob_sas_url) as blob_client:
-            try:
-                stream_downloader: StorageStreamDownloader[bytes] = await blob_client.download_blob()
+        try:
+            async with BlobClient.from_blob_url(blob_sas_url) as bclient:
+                stream_downloader: StorageStreamDownloader[bytes] = await bclient.download_blob()
                 payload: bytes = await stream_downloader.readall()
-            except ResourceNotFoundError:
-                # The cache entry resolved to a SAS URL, but the underlying blob is not there
-                LOGGER.debug("Could not download resolved blob: blob not found, treating as cache miss")
-                return None
+                return payload
 
-        return payload
+        except ResourceNotFoundError:
+            # The cache entry resolved, but the underlying blob is no longer there.
+            LOGGER.debug("Could not download resolved blob: blob not found, treating as cache miss")
+            return None
+        except AzureError as exc:
+            raise SumoBlobCacheError(f"Failed to download blob (operation={self._versioned_op_str})") from exc
+
 
     async def is_resolved_blob_accessible_async(self, blob_sas_url: str) -> bool:
         if not blob_sas_url:
@@ -190,19 +199,19 @@ class SumoBlobCache:
             LOGGER.warning("is_resolved_blob_accessible_async() -- FAKE_CHECK says that the blob is stale")
             return False
 
-        async with BlobClient.from_blob_url(blob_sas_url) as blob_client:
-            try:
-                await blob_client.get_blob_properties()
+        try:
+            async with BlobClient.from_blob_url(blob_sas_url) as bclient:
+                await bclient.get_blob_properties()
                 return True
-            except ResourceNotFoundError:
-                return False
+
+        except ResourceNotFoundError:
+            return False
+        except AzureError as exc:
+            raise SumoBlobCacheError(f"Failed to check blob access (operation={self._versioned_op_str})") from exc
 
     async def put_bytes_async(self, cache_key: str, source_obj_uuids: list[str], blob_payload: bytes) -> None:
         blob_size = len(blob_payload)
         blob_sas_url = await self.reserve_cache_entry_async(cache_key, source_obj_uuids, blob_size)
-        if blob_sas_url is None:
-            raise ValueError("Failed to reserve cache entry, cannot proceed with blob upload")
-
         await self.upload_reserved_blob_async(blob_sas_url, blob_payload)
 
     async def get_bytes_async(self, cache_key: str) -> bytes | None:
@@ -217,9 +226,6 @@ class SumoBlobCache:
         blob_bytes = model.model_dump_json().encode()
         blob_size = len(blob_bytes)
         blob_sas_url = await self.reserve_cache_entry_async(cache_key, source_obj_uuids, blob_size)
-        if blob_sas_url is None:
-            raise ValueError("Failed to reserve cache entry, cannot proceed with blob upload")
-
         await self.upload_reserved_blob_async(blob_sas_url, blob_bytes)
 
     async def get_pydantic_model_async(self, cache_key: str, model_class: type[ModelT]) -> ModelT | None:
@@ -231,8 +237,7 @@ class SumoBlobCache:
         if blob_bytes is None:
             return None
 
-        model = model_class.model_validate_json(blob_bytes.decode("utf-8"))
-        return model
+        return model_class.model_validate_json(blob_bytes)
 
 
     # !!!!!!!!!!!!!!!!!!!!!
@@ -308,6 +313,12 @@ class SumoBlobCacheFactory:
             raise RuntimeError("SumoBlobCacheFactory is not initialized, call initialize() first")
         return cls._instance
 
+    def get_from_sumo_client(self, sumo_client: SumoClient, versioned_op: VersionedOperation) -> "SumoBlobCache":
+        if not sumo_client:
+            raise ValueError("A sumo_client must be specified")
+
+        return SumoBlobCache(sumo_client, app_name=self._application_name, versioned_op=versioned_op)
+
     def get_from_access_token(self, sumo_access_token: str, versioned_op: VersionedOperation) -> "SumoBlobCache":
         if not sumo_access_token:
             raise ValueError("A sumo_access_token must be specified")
@@ -315,10 +326,13 @@ class SumoBlobCacheFactory:
         new_sumo_client = create_sumo_client(sumo_access_token)
         return SumoBlobCache(new_sumo_client, app_name=self._application_name, versioned_op=versioned_op)
 
-    def get_from_sumo_client(self, sumo_client: SumoClient, versioned_op: VersionedOperation) -> "SumoBlobCache":
-        if not sumo_client:
-            raise ValueError("A sumo_client must be specified")
-
-        return SumoBlobCache(sumo_client, app_name=self._application_name, versioned_op=versioned_op)
 
 
+def get_sumo_blob_cache_from_sumo_client(sumo_client: SumoClient, versioned_op: VersionedOperation) -> SumoBlobCache:
+    factory = SumoBlobCacheFactory.get_instance()
+    return factory.get_from_sumo_client(sumo_client=sumo_client, versioned_op=versioned_op)
+
+
+def get_sumo_blob_cache_from_access_token(sumo_access_token: str, versioned_op: VersionedOperation) -> SumoBlobCache:
+    factory = SumoBlobCacheFactory.get_instance()
+    return factory.get_from_access_token(sumo_access_token=sumo_access_token, versioned_op=versioned_op)

@@ -9,7 +9,8 @@ from webviz_services.derived_smry_table.batch_aggregate import ensure_vectors_ag
 from webviz_services.derived_smry_table.create_derived_table import create_derived_smry_table_async
 from webviz_services.service_exceptions import ServiceLayerException
 from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
-from webviz_services.utils.sumo_blob_cache import OP_DERIVED_VEC_TABLE, SumoBlobCache, SumoBlobCacheFactory
+from webviz_services.utils.sumo_blob_cache import OP_DERIVED_VEC_TABLE
+from webviz_services.utils.sumo_blob_cache import get_sumo_blob_cache_from_sumo_client, SumoBlobCache
 from webviz_services.utils.task_meta_tracker import TaskMetaTracker
 from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg
 
@@ -87,12 +88,9 @@ async def create_derived_smry_table_task_async(
     pq.write_table(derived_table_pa, byte_stream, compression="zstd")
     byte_stream.seek(0)
 
-    blob_cache = SumoBlobCacheFactory.get_instance().get_from_sumo_client(sumo_client, OP_DERIVED_VEC_TABLE)
+    blob_cache: SumoBlobCache = get_sumo_blob_cache_from_sumo_client(sumo_client, OP_DERIVED_VEC_TABLE)
     blob_size = byte_stream.getbuffer().nbytes
     blob_sas_url = await blob_cache.reserve_cache_entry_async(cache_key, source_obj_uuids=derived_table_info.source_obj_uuids, blob_size=blob_size)
-    if not blob_sas_url:
-        raise TaskInternalError("Failed to reserve cache entry for derived table blob")
-
     await blob_cache.upload_reserved_blob_async(blob_sas_url, byte_stream.getvalue())
     perf_metrics.record_lap("write_cache")
 
