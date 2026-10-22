@@ -14,7 +14,7 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { Setting, type SettingAnnotation } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import {
     propagateAllApiErrorsToStatusWriter,
@@ -118,7 +118,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         setDataChannelDepth(value !== null && Number.isFinite(value) ? value : null);
     }
 
-    const debouncedHandleDataChannelDepthChange = useDebouncedFunction(handleDataChannelDepthChange, 500);
+    const [immediateDataChannelDepth, setImmediateDataChannelDepth] = useDebouncedOnChange(
+        dataChannelDepth,
+        handleDataChannelDepthChange,
+        500,
+    );
 
     const tableDefinitionsArePending = tableDefinitionQueries.some((query) => query.isFetching);
     const tableDefinitionsErrorMessage =
@@ -293,8 +297,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         stacked
                     >
                         <NumberInput
-                            value={dataChannelDepth}
-                            onValueChange={debouncedHandleDataChannelDepthChange}
+                            value={immediateDataChannelDepth}
+                            onValueChange={setImmediateDataChannelDepth}
                             placeholder="No depth selected"
                         />
                     </Setting.Field>
