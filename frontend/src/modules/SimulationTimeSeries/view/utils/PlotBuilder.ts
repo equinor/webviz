@@ -312,17 +312,19 @@ export class PlotBuilder {
     prepareAnnotations(): void {
         // Add time annotations and shapes
         const xExtent = getNumericXExtent(this._figure.makeData());
+        const timeShapes = this.createTimeShapes();
+        const badges = this.createTimeBadges(xExtent);
         for (let index = 0; index < this._numberOfSubplots; index++) {
             const { row, col } = this.getSubplotRowAndColFromIndex(index);
-            const badges = this.createTimeBadges(xExtent);
+            // Lines are added before badges, so the badges are drawn on top of the lines
+            for (const timeShape of timeShapes) {
+                this._figure.addShape(timeShape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
+            }
             for (const badgeShape of badges.shapes) {
                 this._figure.addShape(badgeShape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
             }
             for (const badgeAnnotation of badges.annotations) {
                 this._figure.addAnnotation(badgeAnnotation, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
-            }
-            for (const timeShape of this.createTimeShapes()) {
-                this._figure.addShape(timeShape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
             }
         }
     }

@@ -102,6 +102,9 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
 
     const xExtent = getNumericXExtent(props.traceDataArr);
 
+    const hoverColor = props.isHoverExternal ? "rgba(220, 38, 38, 0.9)" : "rgba(107, 114, 128, 0.8)";
+
+    // Lines are added before badges, so the badges are drawn on top of the lines
     if (props.activeTimestampUtcMs !== undefined) {
         layout.shapes?.push({
             type: "line",
@@ -113,18 +116,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
             y1: 0.99,
             line: { color: "black", width: 2, dash: "dot" },
         });
-        const badge = makeRoundedBadge(
-            timestampUtcMsToCompactIsoString(props.activeTimestampUtcMs),
-            props.activeTimestampUtcMs,
-            -0.02,
-            { bgColor: "black", textColor: "white", borderColor: "black" },
-            xExtent,
-        );
-        layout.shapes?.push({ ...badge.shape, xref: "x", yref: "y domain" });
-        layout.annotations?.push({ ...badge.annotation, xref: "x", yref: "y domain" });
     }
-
-    const hoverColor = props.isHoverExternal ? "rgba(220, 38, 38, 0.9)" : "rgba(107, 114, 128, 0.8)";
     if (props.hoveredTimestampUtcMs !== undefined) {
         layout.shapes?.push({
             type: "line",
@@ -140,19 +132,31 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
                 dash: "dot",
             },
         });
-        if (props.hoveredTimestampUtcMs !== props.activeTimestampUtcMs) {
-            const hoverBadge = makeRoundedBadge(
-                timestampUtcMsToCompactIsoString(props.hoveredTimestampUtcMs),
-                props.hoveredTimestampUtcMs,
-                -0.02,
-                props.isHoverExternal
-                    ? { bgColor: "white", textColor: "black", borderColor: hoverColor }
-                    : { bgColor: hoverColor, textColor: "white", borderColor: hoverColor },
-                xExtent,
-            );
-            layout.shapes?.push({ ...hoverBadge.shape, xref: "x", yref: "y domain" });
-            layout.annotations?.push({ ...hoverBadge.annotation, xref: "x", yref: "y domain" });
-        }
+    }
+
+    if (props.activeTimestampUtcMs !== undefined) {
+        const badge = makeRoundedBadge(
+            timestampUtcMsToCompactIsoString(props.activeTimestampUtcMs),
+            props.activeTimestampUtcMs,
+            -0.02,
+            { bgColor: "black", textColor: "white", borderColor: "black" },
+            xExtent,
+        );
+        layout.shapes?.push({ ...badge.shape, xref: "x", yref: "y domain" });
+        layout.annotations?.push({ ...badge.annotation, xref: "x", yref: "y domain" });
+    }
+    if (props.hoveredTimestampUtcMs !== undefined && props.hoveredTimestampUtcMs !== props.activeTimestampUtcMs) {
+        const hoverBadge = makeRoundedBadge(
+            timestampUtcMsToCompactIsoString(props.hoveredTimestampUtcMs),
+            props.hoveredTimestampUtcMs,
+            -0.02,
+            props.isHoverExternal
+                ? { bgColor: "white", textColor: "black", borderColor: hoverColor }
+                : { bgColor: hoverColor, textColor: "white", borderColor: hoverColor },
+            xExtent,
+        );
+        layout.shapes?.push({ ...hoverBadge.shape, xref: "x", yref: "y domain" });
+        layout.annotations?.push({ ...hoverBadge.annotation, xref: "x", yref: "y domain" });
     }
 
     return (
