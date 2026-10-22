@@ -18,6 +18,9 @@ def _is_close(a: float, b: float, abs_tol: float) -> bool:
 def assert_same_surface_definition(a: xtgeo.RegularSurface, b: xtgeo.RegularSurface) -> None:
     """
     Raise SurfaceDefinitionMismatchError if the two surfaces do not share the same grid definition.
+
+    Not using xtgeo's RegularSurface.compare_topology(): it compares exactly (no tolerance for float noise in
+    origin/rotation) and only returns a bool, whereas the mismatching fields are needed for the user-facing message.
     """
     mismatching_fields: list[str] = []
 
