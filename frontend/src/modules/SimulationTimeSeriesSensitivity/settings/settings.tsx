@@ -30,8 +30,6 @@ import {
     showRealizationsAtom,
     showStatisticsAtom,
     showTimestampMarkerAtom,
-    syncedRegularEnsembleIdentsAtom,
-    syncedVectorNameAtom,
 } from "./atoms/baseAtoms";
 import { availableSensitivityNamesAtom, vectorSelectorDataAtom } from "./atoms/derivedAtoms";
 import {
