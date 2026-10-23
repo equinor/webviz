@@ -393,10 +393,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                     value,
                                     label: value.toString(),
                                 }))}
+                                // A column without an entry has never been filtered - all its values count as selected
                                 value={
                                     selectedIndicesWithValues.value.find(
                                         (index) => index.indexColumn === indexWithValues.indexColumn,
-                                    )?.values ?? []
+                                    )?.values ?? indexWithValues.values
                                 }
                                 multiple
                                 size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}

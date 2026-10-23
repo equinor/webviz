@@ -9,6 +9,7 @@ import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import {
     fixupUserSelectedIndexValues,
+    getSelectionForOfferedIndexColumns,
     isSelectedIndicesWithValuesValidSubset,
 } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
 
@@ -99,23 +100,13 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => get(availableIndicesWithValuesAtom),
     isValidFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
-        // Only the offered columns are judged. Entries for other columns (e.g. kept from previously selected tables) have
-        // no field to repair them in, and are not used by the query (see indicesWithValuesForQueryAtom) - they are kept,
-        // but ignored, so they apply again once their columns are offered again. When no column is offered, there is
-        // nothing to select, so any selection is valid.
-        const offeredSelection = value.filter((selected) =>
-            availableIndicesWithValues.some((available) => available.indexColumn === selected.indexColumn),
-        );
-
-        // A selection that omits a newly available index column must count as invalid, so the
-        // SELECT_ALL fixup runs and the column is not left as an empty (everything-filtered) filter.
-        const coversAllAvailableColumns = availableIndicesWithValues.every((available) =>
-            offeredSelection.some((selected) => selected.indexColumn === available.indexColumn),
-        );
-        return (
-            coversAllAvailableColumns &&
-            isSelectedIndicesWithValuesValidSubset(offeredSelection, availableIndicesWithValues)
-        );
+        // Only the offered columns are judged, and one without an entry counts as unfiltered - see
+        // getSelectionForOfferedIndexColumns(). Entries for other columns (e.g. kept from previously selected tables) are
+        // not used by the query either (see indicesWithValuesForQueryAtom) - they are kept, but ignored, so they apply
+        // again once their columns are offered again. When no column is offered, there is nothing to select, so any
+        // selection is valid.
+        const offeredSelection = getSelectionForOfferedIndexColumns(value, availableIndicesWithValues);
+        return isSelectedIndicesWithValuesValidSubset(offeredSelection, availableIndicesWithValues);
     },
     fixupFunction: ({ value, precomputedValue: availableIndicesWithValues }) =>
         fixupUserSelectedIndexValues(value ?? [], availableIndicesWithValues, FixupSelection.SELECT_ALL),

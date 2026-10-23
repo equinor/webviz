@@ -3,6 +3,7 @@ import { atom } from "jotai";
 
 import type { InplaceVolumesIndexWithValues_api, InplaceVolumesTableDefinition_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { getSelectionForOfferedIndexColumns } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
 import { IndexValueCriteria, TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
 import {
@@ -211,14 +212,12 @@ export const availableIndicesWithValuesAtom = atom((get) => {
 
 /** Filters with no selected value would exclude every row, so the query is not run for them. */
 export const indexColumnsWithNoSelectedValuesAtom = atom<string[]>((get) => {
-    const selectedIndicesWithValues = get(selectedIndicesWithValuesAtom).value;
-    return get(availableIndicesWithValuesAtom)
-        .filter(
-            (available) =>
-                (selectedIndicesWithValues.find((selected) => selected.indexColumn === available.indexColumn)?.values
-                    .length ?? 0) === 0,
-        )
-        .map((available) => available.indexColumn);
+    return getSelectionForOfferedIndexColumns(
+        get(selectedIndicesWithValuesAtom).value,
+        get(availableIndicesWithValuesAtom),
+    )
+        .filter((selected) => selected.values.length === 0)
+        .map((selected) => selected.indexColumn);
 });
 
 /**
@@ -269,12 +268,11 @@ export const waterfallSourcesAtom = atom<{ reference: WaterfallSource; compariso
  * GIIP the gas zone, so the fluid follows from the target rather than being chosen by the user.
  */
 export const indicesWithValuesForQueryAtom = atom<InplaceVolumesIndexWithValues_api[]>((get) => {
-    const availableIndexColumns = get(availableIndicesWithValuesAtom).map(
-        (indexWithValues) => indexWithValues.indexColumn,
-    );
-    // Guards against a stale selection briefly re-filtering a column meant to be left unfiltered.
-    const selectedIndicesWithValues = get(selectedIndicesWithValuesAtom).value.filter((indexWithValues) =>
-        availableIndexColumns.includes(indexWithValues.indexColumn),
+    // Only the offered columns - guards against a stale selection briefly re-filtering a column meant to be left
+    // unfiltered.
+    const selectedIndicesWithValues = getSelectionForOfferedIndexColumns(
+        get(selectedIndicesWithValuesAtom).value,
+        get(availableIndicesWithValuesAtom),
     );
     const selectedResultName = get(selectedResultNameAtom).value;
 

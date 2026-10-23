@@ -75,18 +75,20 @@ export const plotDataAtom = atom<PlotData | null>((get) => {
     const sortWellsBy = get(sortWellsByAtom);
     const wellSortDirection = get(wellSortDirectionAtom);
 
-    const selectedCompletionDateIndex = get(selectedCompletionDateIndexAtom).value;
-    const selectedCompletionDateIndexRange = get(selectedCompletionDateIndexRangeAtom).value;
+    const selectedCompletionDateIndex = get(selectedCompletionDateIndexAtom);
+    const selectedCompletionDateIndexRange = get(selectedCompletionDateIndexRangeAtom);
 
     if (!wellCompletionsDataAccessor) {
         return null;
     }
 
+    // An invalid selection is kept as-is (e.g. an out-of-range index or an inverted persisted range) and must not be
+    // plotted
     const completionDateIndexSelection =
         timeAggregationMode === TimeAggregationMode.NONE
             ? selectedCompletionDateIndex
             : selectedCompletionDateIndexRange;
-    if (completionDateIndexSelection === null) {
+    if (completionDateIndexSelection.value === null || !completionDateIndexSelection.isValidInContext) {
         return null;
     }
 
@@ -96,5 +98,5 @@ export const plotDataAtom = atom<PlotData | null>((get) => {
     wellCompletionsDataAccessor.setSortWellsBy(sortWellsBy);
     wellCompletionsDataAccessor.setSortDirection(wellSortDirection);
 
-    return wellCompletionsDataAccessor.createPlotData(completionDateIndexSelection, timeAggregationMode);
+    return wellCompletionsDataAccessor.createPlotData(completionDateIndexSelection.value, timeAggregationMode);
 });

@@ -61,7 +61,7 @@ export const selectedSaturationAxisNameAtom = persistableFixableAtom<string | nu
 export const selectedCurveNamesAtom = persistableFixableAtom<string[], string[]>({
     initialValue: [],
     areEqualFunction: isEqual,
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: computeSaturationAxisCurvesDependenciesState,
     precomputeFunction: ({ get }) => get(availableCurveNamesAtom),
     isValidFunction: ({ value, precomputedValue: availableCurveNames }) => {
         return value.length > 0 && value.every((curveName) => availableCurveNames.includes(curveName));
@@ -93,6 +93,16 @@ function computeTableNamesQueryDependenciesState({ get }: { get: Getter }): Pers
 
 function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
     return computeQueriesDependenciesStateIgnoringFailedEnsembles(get(relPermTableDefinitionQueriesAtom));
+}
+
+// The curves belong to the selected saturation axis. While it is invalid, there are no curves to check against - so
+// they wait (and don't settle on the empty list) until a valid saturation axis is selected.
+function computeSaturationAxisCurvesDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
+    const tableDefinitionsQueryDependenciesState = computeTableDefinitionsQueryDependenciesState({ get });
+    if (tableDefinitionsQueryDependenciesState !== "loaded") {
+        return tableDefinitionsQueryDependenciesState;
+    }
+    return get(selectedSaturationAxisNameAtom).isValidInContext ? "loaded" : "blocked";
 }
 
 // The options only come from the ensembles whose queries succeeded (e.g. a query fails for an ensemble without relperm

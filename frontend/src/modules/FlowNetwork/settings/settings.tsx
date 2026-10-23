@@ -100,7 +100,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const createValueLabelFormat = React.useCallback(
         function createValueLabelFormat(value: number): string {
-            if (!availableDateTimes || availableDateTimes.length === 0 || value >= availableDateTimes.length) return "";
+            if (!availableDateTimes || value < 0 || value >= availableDateTimes.length) return "";
 
             return availableDateTimes[value];
         },

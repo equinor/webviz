@@ -179,7 +179,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         setSelectedCurveNames(curveNames.filter((curveName) => availableCurveNames.includes(curveName)));
     }
 
-    function handleSatnumsChange(satnums: number[]) {
+    function handleSatnumsChange(newSatnums: number[]) {
+        // As for the curves, retained SATNUMs that are no longer available are dropped when the user changes the selection
+        const satnums = newSatnums.filter((satnum) => availableSatnums.includes(satnum));
         setSelectedSatnums(satnums);
         if (satnums.length > 1 && selectedGroupBy !== GroupBy.SATNUM) {
             setSelectedColorBy(ColorBy.SATNUM);

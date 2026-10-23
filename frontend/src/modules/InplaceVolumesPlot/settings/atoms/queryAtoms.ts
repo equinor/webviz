@@ -3,7 +3,8 @@ import type { QueryObserverResult } from "@tanstack/query-core";
 import type { InplaceVolumesTableDefinition_api } from "@api";
 import { getInplaceTableDefinitionsOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { atomWithQueries } from "@framework/utils/atomUtils";
+import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
+import { atomWithQueries, computeQueriesDependenciesState } from "@framework/utils/atomUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
@@ -15,6 +16,11 @@ export type TableDefinitionsQueryResult = {
     }[];
     isLoading: boolean;
     errors: Error[];
+    /**
+     * For the settings' computeDependenciesState - unlike isLoading, it isn't "loaded" while a query is disabled or
+     * has no result yet, so that nothing settles on the empty definitions of that moment.
+     */
+    dependenciesState: PersistableAtomDependenciesState;
 };
 
 export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
@@ -46,6 +52,7 @@ export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
                 data: tableDefinitionsPerEnsembleIdent,
                 isLoading: results.some((result) => result.isLoading),
                 errors: results.filter((result) => result.isError).map((result) => result.error!),
+                dependenciesState: computeQueriesDependenciesState(results),
             };
         },
     };

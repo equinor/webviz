@@ -2,6 +2,7 @@ import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
+import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import {
@@ -35,7 +36,7 @@ export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsemble
 
 export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>({
     initialValue: [],
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: ({ get }) => get(tableDefinitionsQueryAtom).dependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsQueryResult = get(tableDefinitionsQueryAtom);
         const uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsQueryResult.data);
@@ -52,7 +53,7 @@ export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>
 
 export const selectedFirstResultNameAtom = persistableFixableAtom<string | null>({
     initialValue: null,
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: computeSelectedTableDefinitionsDependenciesState,
     isValidFunction: ({ get, value }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return value !== null && tableDefinitionsAccessor.hasResultName(value);
@@ -66,7 +67,7 @@ export const selectedFirstResultNameAtom = persistableFixableAtom<string | null>
 });
 export const selectedSecondResultNameAtom = persistableFixableAtom<string | null, string[]>({
     initialValue: null,
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: computeSelectedTableDefinitionsDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return tableDefinitionsAccessor.getResultNamesIntersection();
@@ -81,7 +82,7 @@ export const selectedSecondResultNameAtom = persistableFixableAtom<string | null
 });
 export const selectedSelectorColumnAtom = persistableFixableAtom<string | null, string[]>({
     initialValue: null,
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: computeSelectedTableDefinitionsDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return tableDefinitionsAccessor.getCommonSelectorColumns();
@@ -99,22 +100,19 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
     InplaceVolumesIndexWithValues_api[]
 >({
     initialValue: [],
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: computeSelectedTableDefinitionsDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return tableDefinitionsAccessor.getCommonIndicesWithValues();
     },
     isValidFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
-        // Only the offered columns are judged - see getSelectionForOfferedIndexColumns(). With none offered, there is
-        // nothing to select, so any selection is valid.
+        // Only the offered columns are judged, and one without an entry counts as unfiltered - see
+        // getSelectionForOfferedIndexColumns(). With none offered, there is nothing to select, so any selection is valid.
         if (availableIndicesWithValues.length === 0) {
             return true;
         }
         const offeredSelection = getSelectionForOfferedIndexColumns(value, availableIndicesWithValues);
-        return (
-            offeredSelection.length > 0 &&
-            isSelectedIndicesWithValuesValidSubset(offeredSelection, availableIndicesWithValues)
-        );
+        return isSelectedIndicesWithValuesValidSubset(offeredSelection, availableIndicesWithValues);
     },
     fixupFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
         return fixupUserSelectedIndexValues(value ?? [], availableIndicesWithValues, FixupSelection.SELECT_ALL);
@@ -122,7 +120,7 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
 });
 export const selectedSubplotByAtom = persistableFixableAtom<string, string[]>({
     initialValue: TableOriginKey.ENSEMBLE,
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: computeSelectedTableDefinitionsDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         const selectedTableNames = get(selectedTableNamesAtom);
@@ -138,7 +136,7 @@ export const selectedSubplotByAtom = persistableFixableAtom<string, string[]>({
 });
 export const selectedColorByAtom = persistableFixableAtom<string, string[]>({
     initialValue: TableOriginKey.TABLE_NAME,
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: computeSelectedTableDefinitionsDependenciesState,
     precomputeFunction: ({ get }) => {
         const selectedSubplotBy = get(selectedSubplotByAtom);
         const selectedTableNames = get(selectedTableNamesAtom);
@@ -157,18 +155,16 @@ export const selectedColorByAtom = persistableFixableAtom<string, string[]>({
     },
 });
 
-// Utility function to compute dependencies state from tableDefinitionsQueryAtom
-function computeTableDefinitionsQueryDependenciesState({
+// The table definitions are filtered by the selected table names. While they are invalid, there are no options to check
+// against - so the settings wait (and don't settle on the empty options) until valid table names are selected.
+function computeSelectedTableDefinitionsDependenciesState({
     get,
 }: {
     get: (atom: any) => any;
-}): "error" | "loading" | "loaded" {
-    const tableDefinitions = get(tableDefinitionsQueryAtom);
-    if (tableDefinitions.isLoading) {
-        return "loading";
+}): PersistableAtomDependenciesState {
+    const tableDefinitionsQueryDependenciesState = get(tableDefinitionsQueryAtom).dependenciesState;
+    if (tableDefinitionsQueryDependenciesState !== "loaded") {
+        return tableDefinitionsQueryDependenciesState;
     }
-    if (tableDefinitions.errors.length > 0) {
-        return "error";
-    }
-    return "loaded";
+    return get(selectedTableNamesAtom).isValidInContext ? "loaded" : "blocked";
 }

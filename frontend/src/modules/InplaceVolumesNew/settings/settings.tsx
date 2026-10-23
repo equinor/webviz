@@ -31,7 +31,7 @@ import {
     selectedPlotTypeAtom,
     showTableAtom,
 } from "./atoms/baseAtoms";
-import { tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
+import { offeredSelectedIndicesWithValuesAtom, tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
 import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
@@ -61,6 +61,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedSelectorColumn, setSelectedSelectorColumn] = useAtom(selectedSelectorColumnAtom);
 
     const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
+    const offeredSelectedIndicesWithValues = useAtomValue(offeredSelectedIndicesWithValuesAtom);
 
     const [selectedFirstResultName, setSelectedFirstResultName] = useAtom(selectedResultNameAtom);
     const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(selectedSubplotByAtom);
@@ -124,8 +125,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const requiredFluid = selectedFirstResultName.value
         ? FLUID_SPECIFIC_RESULT_NAMES[selectedFirstResultName.value]
         : undefined;
+    // The offered selection - a FLUID column without an entry has never been filtered, so all fluids count as selected
     const selectedFluids =
-        selectedIndicesWithValues.value
+        offeredSelectedIndicesWithValues
             .find((index) => index.indexColumn === TableOriginKey.FLUID)
             ?.values.map((value) => value.toLowerCase()) ?? [];
     const isRequiredFluidSelected = requiredFluid !== undefined && selectedFluids.includes(requiredFluid);

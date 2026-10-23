@@ -419,7 +419,8 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
 
         setCurrentFocusIndex(newCurrentKeyboardFocusIndex);
         setVirtualizationStartIndex(newVirtualizationStartIndex);
-        setSelectionAnchor(newFilteredOptions.findIndex((option) => option.value === selectedOptionValues[0]));
+        const firstValueIndex = newFilteredOptions.findIndex((option) => option.value === selectedOptionValues[0]);
+        setSelectionAnchor(firstValueIndex !== -1 ? firstValueIndex : null);
     }
 
     function handleFilterChange(value: string) {
