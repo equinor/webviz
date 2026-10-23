@@ -170,8 +170,8 @@ export class SliderRangeSetting implements CustomSettingImplementation<
                     if (eventDetails.reason === "range-locked") return;
                     setLocalValue((prev) => {
                         const val = Array.isArray(value) ? value : [value, value];
-                        const keepMin = prev[0] === "min" && (eventDetails.reason === "clamp-value" || val[0] === min);
-                        const keepMax = prev[1] === "max" && (eventDetails.reason === "clamp-value" || val[1] === max);
+                        const keepMin = prev[0] === "min" && val[0] === min;
+                        const keepMax = prev[1] === "max" && val[1] === max;
                         const newValue: [number | "min", number | "max"] = [
                             keepMin ? "min" : val[0],
                             keepMax ? "max" : val[1],

@@ -1,6 +1,7 @@
 import React from "react";
 
 import { Slider as SliderBase, Tooltip as TooltipBase, type BaseUIEvent } from "@base-ui/react";
+import { Error as ErrorIcon } from "@mui/icons-material";
 import { Key } from "ts-key-enum";
 
 import { getNextTextSize, getTextSizeForSelectableSize, type SelectableSize } from "@lib/components/_shared/utils/size";
@@ -33,8 +34,12 @@ export function Thumb(props: {
         throw new Error("Thumb cannot be locked to both min and max");
     }
 
-    const thumbHidden = !isDualSliderValue(props.sliderValue) && props.index === 1;
+    // Base-ui hides the thumb off-screen when limits are equal
+    const thumbHidden = props.min === props.max || (!isDualSliderValue(props.sliderValue) && props.index === 1);
     const thumbValue = isDualSliderValue(props.sliderValue) ? props.sliderValue[props.index] : props.sliderValue;
+
+    const isOutOfBounds = thumbValue < props.min || thumbValue > props.max;
+    const shouldShowThumbLabel = props.showValue || isOutOfBounds;
 
     const anchorRef = React.useRef<HTMLDivElement>(null);
 
@@ -74,11 +79,12 @@ export function Thumb(props: {
     return (
         <>
             <SliderBase.Thumb
+                data-out-of-range={isOutOfBounds ? "" : undefined}
                 // Hiding via style to keep refs stable
                 hidden={thumbHidden}
                 disabled={thumbHidden}
                 // Note that z-index is forced to 2. Internal slider logic will attempt to set it to 1, so we force it to avoid layering issues with Dots
-                className="border-accent-strong data-disabled:border-disabled bg-surface not-data-disabled:hover:outline-focus focus-within:outline-focus z-2! box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent"
+                className="border-accent-strong data-disabled:border-disabled data-out-of-range:border-danger-strong bg-surface not-data-disabled:hover:outline-focus focus-within:outline-focus z-2! box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent"
                 index={props.index}
                 inputRef={props.inputRefs[props.index]}
                 getAriaLabel={props.getAriaLabel}
@@ -103,7 +109,7 @@ export function Thumb(props: {
                     );
                 }}
             />
-            <TooltipBase.Root open={props.showValue && !thumbHidden}>
+            <TooltipBase.Root open={shouldShowThumbLabel && !thumbHidden}>
                 <TooltipBase.Portal className="pointer-events-none">
                     <TooltipBase.Positioner
                         sideOffset={4}
@@ -116,8 +122,9 @@ export function Thumb(props: {
                         }}
                     >
                         <TooltipBase.Popup
+                            data-out-of-range={isOutOfBounds ? "" : undefined}
                             data-slider-disabled={props.disabled ? "" : undefined}
-                            className="bg-accent-strong data-slider-disabled:bg-disabled px-2xs py-4xs text-info-strong-on-emphasis! pointer-events-none rounded"
+                            className="bg-accent-strong data-slider-disabled:bg-disabled data-out-of-range:bg-danger-strong px-2xs py-4xs text-info-strong-on-emphasis! rounded"
                             render={
                                 <Typography
                                     as="div"
@@ -127,6 +134,13 @@ export function Thumb(props: {
                                     {props.valueLabelFormat
                                         ? props.valueLabelFormat(thumbValue, props.index)
                                         : thumbValue}
+
+                                    {isOutOfBounds && (
+                                        <ErrorIcon
+                                            className="ml-2xs pointer-events-auto! inline align-sub"
+                                            titleAccess="The value is out range!"
+                                        />
+                                    )}
                                 </Typography>
                             }
                         />
