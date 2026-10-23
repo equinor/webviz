@@ -18,6 +18,7 @@ import {
     getAvailableEnsembleIdentsForField,
     getAvailableIntersectionOptions,
     getAvailableRealizationsForEnsembleIdent,
+    requireRegularEnsembleIdent,
 } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type {
     CustomDataProviderImplementation,
@@ -169,7 +170,8 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
             read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
+                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -281,7 +283,10 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
         RealizationSurfacesData,
         RealizationSurfacesStoredData
     >): Promise<RealizationSurfacesData> {
-        const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
+        const ensembleIdent = assertNonNull(
+            requireRegularEnsembleIdent(getSetting(Setting.ENSEMBLE)),
+            "No ensemble selected",
+        );
         const realization = assertNonNull(getSetting(Setting.REALIZATION), "No realization number selected");
         const attribute = assertNonNull(getSetting(Setting.DEPTH_ATTRIBUTE), "No attribute selected");
         const surfaceNames = assertNonNull(getSetting(Setting.SURFACE_NAMES), "No surface names selected");

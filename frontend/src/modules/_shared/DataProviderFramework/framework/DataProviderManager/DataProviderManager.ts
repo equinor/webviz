@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { clone, isEqual } from "lodash-es";
 
+import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
@@ -56,6 +57,7 @@ export type GlobalSettings = {
     fieldId: string | null;
     wellboreUuid: string | null;
     ensembles: readonly RegularEnsemble[];
+    deltaEnsembles: readonly DeltaEnsemble[];
     realizationFilterFunction: EnsembleRealizationFilterFunction;
     intersectionPolylines: readonly IntersectionPolyline[];
 };
@@ -377,12 +379,14 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
 
     private initializeGlobalSettings(): Partial<GlobalSettings> {
         const ensembles = clone(this._workbenchSession.getEnsembleSet().getRegularEnsembleArray());
+        const deltaEnsembles = clone(this._workbenchSession.getEnsembleSet().getDeltaEnsembleArray());
         const intersectionPolylines = clone(
             this._workbenchSession.getUserCreatedItems().getIntersectionPolylines().getPolylines(),
         );
 
         return {
             ensembles,
+            deltaEnsembles,
             realizationFilterFunction: createEnsembleRealizationFilterFuncForWorkbenchSession(this._workbenchSession),
             intersectionPolylines,
         };
@@ -398,6 +402,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     private handleEnsembleSetChanged() {
         const ensembles = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
         this.updateGlobalSetting("ensembles", ensembles);
+        this.updateGlobalSetting("deltaEnsembles", this._workbenchSession.getEnsembleSet().getDeltaEnsembleArray());
     }
 
     private handleIntersectionPolylinesChanged() {

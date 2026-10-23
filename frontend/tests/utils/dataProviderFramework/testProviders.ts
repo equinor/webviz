@@ -1,4 +1,9 @@
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
+import {
+    getAvailableEnsembleIdentsForField,
+    getAvailableEnsembleIdentsForFieldIncludingDelta,
+    getAvailableRealizationsForEnsembleIdent,
+} from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type {
     CustomDataProviderImplementation,
     DataProviderAccessors,
@@ -14,6 +19,8 @@ export const SURFACE_PROVIDER_TYPE = "test-surface-provider";
 export const GRID_PROVIDER_TYPE = "test-grid-provider";
 export const LABEL_PROVIDER_TYPE = "test-label-provider";
 export const FILTER_PROVIDER_TYPE = "test-filter-provider";
+export const ENSEMBLE_PROVIDER_TYPE = "test-ensemble-provider";
+export const DELTA_ENSEMBLE_PROVIDER_TYPE = "test-delta-ensemble-provider";
 
 const SURFACE_SETTINGS = [Setting.ATTRIBUTE, Setting.SURFACE_NAME, Setting.REALIZATION, Setting.SHOW_LABELS] as const;
 type SurfaceSettings = typeof SURFACE_SETTINGS;
@@ -286,7 +293,71 @@ export class FilterTestProvider implements CustomDataProviderImplementation<Filt
     }
 }
 
+const ENSEMBLE_SETTINGS = [Setting.ENSEMBLE, Setting.REALIZATION] as const;
+type EnsembleSettings = typeof ENSEMBLE_SETTINGS;
+
+/*
+ * Offers only the regular ensembles of the field (what the providers that don't support delta ensembles do):
+ *   global fieldId + ensembles -> ENSEMBLE allowed values
+ *   ENSEMBLE + global realization filter -> REALIZATION allowed values
+ */
+export class EnsembleTestProvider implements CustomDataProviderImplementation<EnsembleSettings, LabelTestData> {
+    settings = ENSEMBLE_SETTINGS;
+
+    protected _includeDeltaEnsembles = false;
+
+    getDefaultName(): string {
+        return "Test ensemble";
+    }
+
+    setupBindings({ setting }: SetupBindingsContext<EnsembleSettings>) {
+        const includeDeltaEnsembles = this._includeDeltaEnsembles;
+
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read(read) {
+                return {
+                    fieldId: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                    deltaEnsembles: read.globalSetting("deltaEnsembles"),
+                };
+            },
+            resolve({ fieldId, ensembles, deltaEnsembles }) {
+                return includeDeltaEnsembles
+                    ? getAvailableEnsembleIdentsForFieldIncludingDelta(fieldId, ensembles, deltaEnsembles)
+                    : getAvailableEnsembleIdentsForField(fieldId, ensembles);
+            },
+        });
+
+        setting(Setting.REALIZATION).bindValueConstraints({
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
+                };
+            },
+            resolve({ ensembleIdent, realizationFilterFunction }) {
+                return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunction);
+            },
+        });
+    }
+
+    fetchData({ getSetting, fetchQuery }: FetchDataParams<EnsembleSettings, LabelTestData>) {
+        const ensembleIdent = getSetting(Setting.ENSEMBLE)?.toString() ?? "";
+        return fetchQuery({
+            queryKey: ["testEnsembleData", ensembleIdent],
+            queryFn: () => getTestBackend().getLabelData(false),
+        });
+    }
+}
+
+// The same, but also offers the delta ensembles of the field
+export class DeltaEnsembleTestProvider extends EnsembleTestProvider {
+    protected _includeDeltaEnsembles = true;
+}
+
 DataProviderRegistry.registerDataProvider(SURFACE_PROVIDER_TYPE, SurfaceTestProvider);
 DataProviderRegistry.registerDataProvider(GRID_PROVIDER_TYPE, GridTestProvider);
 DataProviderRegistry.registerDataProvider(LABEL_PROVIDER_TYPE, LabelTestProvider);
 DataProviderRegistry.registerDataProvider(FILTER_PROVIDER_TYPE, FilterTestProvider);
+DataProviderRegistry.registerDataProvider(ENSEMBLE_PROVIDER_TYPE, EnsembleTestProvider);
+DataProviderRegistry.registerDataProvider(DELTA_ENSEMBLE_PROVIDER_TYPE, DeltaEnsembleTestProvider);

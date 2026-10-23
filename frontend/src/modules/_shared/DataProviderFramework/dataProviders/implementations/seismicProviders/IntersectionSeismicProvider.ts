@@ -31,6 +31,7 @@ import {
     getAvailableEnsembleIdentsForField,
     getAvailableIntersectionOptions,
     getAvailableRealizationsForEnsembleIdent,
+    requireRegularEnsembleIdent,
 } from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 import { representationToApiRepresentation } from "./representationUtils";
@@ -203,7 +204,8 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
+                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -411,7 +413,10 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
     >): Promise<IntersectionSeismicData> {
         const sourceIntersection = assertNonNull(getSetting(Setting.INTERSECTION), "No intersection selected");
 
-        const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
+        const ensembleIdent = assertNonNull(
+            requireRegularEnsembleIdent(getSetting(Setting.ENSEMBLE)),
+            "No ensemble selected",
+        );
         const realization = assertNonNull(getSetting(Setting.REALIZATION), "No realization number selected");
         const attribute = assertNonNull(getSetting(Setting.ATTRIBUTE), "No attribute selected");
         const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);

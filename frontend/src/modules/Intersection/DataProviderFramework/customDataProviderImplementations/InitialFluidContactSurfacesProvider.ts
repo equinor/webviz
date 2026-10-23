@@ -17,6 +17,7 @@ import {
     getAvailableEnsembleIdentsForField,
     getAvailableIntersectionOptions,
     getAvailableRealizationsForEnsembleIdent,
+    requireRegularEnsembleIdent,
 } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type {
     CustomDataProviderImplementation,
@@ -153,7 +154,8 @@ export class InitialFluidContactSurfacesProvider implements CustomDataProviderIm
             read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
+                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -234,7 +236,10 @@ export class InitialFluidContactSurfacesProvider implements CustomDataProviderIm
         InitialFluidContactSurfacesData,
         InitialFluidContactSurfacesStoredData
     >): Promise<InitialFluidContactSurfacesData> {
-        const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
+        const ensembleIdent = assertNonNull(
+            requireRegularEnsembleIdent(getSetting(Setting.ENSEMBLE)),
+            "No ensemble selected",
+        );
         const contact = assertNonNull(getSetting(Setting.FLUID_CONTACT), "No fluid contact selected");
         const surfaceName = assertNonNull(getSetting(Setting.SURFACE_NAME), "No surface selected");
         const realization = assertNonNull(getSetting(Setting.REALIZATION), "No realization selected");

@@ -1,4 +1,6 @@
 import type { WellboreHeader_api } from "@api";
+import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { IntersectionType } from "@framework/types/intersection";
@@ -31,10 +33,42 @@ export function getAvailableEnsembleIdentsForField(
 }
 
 /**
+ * Regular ensembles of the field plus delta ensembles whose comparison and reference ensembles both belong to it.
+ */
+export function getAvailableEnsembleIdentsForFieldIncludingDelta(
+    fieldIdentifier: string | null,
+    ensembles: readonly RegularEnsemble[],
+    deltaEnsembles: readonly DeltaEnsemble[],
+): (RegularEnsembleIdent | DeltaEnsembleIdent)[] {
+    const regularIdents = getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
+    const isInField = (ident: RegularEnsembleIdent) => regularIdents.some((regularIdent) => regularIdent.equals(ident));
+
+    const deltaIdents = deltaEnsembles
+        .map((deltaEnsemble) => deltaEnsemble.getIdent())
+        .filter(
+            (ident) => isInField(ident.getComparisonEnsembleIdent()) && isInField(ident.getReferenceEnsembleIdent()),
+        );
+
+    return [...regularIdents, ...deltaIdents];
+}
+
+/**
+ * For providers without delta support. Their value constraints never contain delta idents, so this is a type narrowing, not a code path.
+ */
+export function requireRegularEnsembleIdent(
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null,
+): RegularEnsembleIdent | null {
+    if (ensembleIdent instanceof DeltaEnsembleIdent) {
+        throw new Error("Delta ensembles are not supported by this data provider");
+    }
+    return ensembleIdent;
+}
+
+/**
  * Create list of available realizations for the given ensemble identifier.
  */
 export function getAvailableRealizationsForEnsembleIdent(
-    ensembleIdent: RegularEnsembleIdent | null,
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null,
     realizationFilterFunc: EnsembleRealizationFilterFunction,
 ): number[] {
     if (!ensembleIdent) {

@@ -1,3 +1,5 @@
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import {
     type SerializedContextBoundary,
@@ -10,7 +12,13 @@ import {
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-import { FILTER_PROVIDER_TYPE, GRID_PROVIDER_TYPE, SURFACE_PROVIDER_TYPE } from "./testProviders";
+import {
+    DELTA_ENSEMBLE_PROVIDER_TYPE,
+    ENSEMBLE_PROVIDER_TYPE,
+    FILTER_PROVIDER_TYPE,
+    GRID_PROVIDER_TYPE,
+    SURFACE_PROVIDER_TYPE,
+} from "./testProviders";
 
 /*
  * Builders for serialized item trees - restored with DataProviderManager.deserializeState(), the same way a saved
@@ -79,6 +87,43 @@ export function filterProvider(
             [Setting.SURFACE_NAME]: values.surfaceName,
         }),
     };
+}
+
+type EnsembleProviderValues = {
+    ensemble?: RegularEnsembleIdent | DeltaEnsembleIdent | null;
+    realization?: number | null;
+};
+
+// The ensemble setting persists the ident string itself, not JSON
+function makeEnsembleProvider(
+    dataProviderType: string,
+    name: string,
+    values: EnsembleProviderValues,
+    options: ItemOptions,
+): SerializedDataProvider<any> {
+    const settings = serializeSettings({ [Setting.REALIZATION]: values.realization });
+    if (values.ensemble !== undefined) {
+        settings[Setting.ENSEMBLE] = values.ensemble?.toString() ?? "";
+    }
+    return { ...makeItem(SerializedType.DATA_PROVIDER, name, options), dataProviderType, settings };
+}
+
+// Offers regular ensembles only
+export function ensembleProvider(
+    name: string,
+    values: EnsembleProviderValues = {},
+    options: ItemOptions = {},
+): SerializedDataProvider<any> {
+    return makeEnsembleProvider(ENSEMBLE_PROVIDER_TYPE, name, values, options);
+}
+
+// Offers regular and delta ensembles
+export function deltaEnsembleProvider(
+    name: string,
+    values: EnsembleProviderValues = {},
+    options: ItemOptions = {},
+): SerializedDataProvider<any> {
+    return makeEnsembleProvider(DELTA_ENSEMBLE_PROVIDER_TYPE, name, values, options);
 }
 
 export function view(name: string, children: SerializedItem[], options: ItemOptions = {}): SerializedGroup<any> {
