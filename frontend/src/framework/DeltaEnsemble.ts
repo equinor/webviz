@@ -5,7 +5,7 @@ import type { RegularEnsemble } from "./RegularEnsemble";
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 
 export type DeltaEnsembleNonDeltaDataSource = "comparison" | "reference";
-// Not user-selectable yet; the team wants to wait for requests before exposing the choice in the ensemble dialog.
+// Not user-selectable yet. Based on user feedback we can consider making this configurable by the user.
 export const DEFAULT_DELTA_ENSEMBLE_NON_DELTA_DATA_SOURCE: DeltaEnsembleNonDeltaDataSource = "comparison";
 
 /**
