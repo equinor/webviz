@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { isEqual } from "lodash-es";
 
 import { Frequency_api } from "@api";
@@ -30,8 +30,6 @@ import {
     showRealizationsAtom,
     showStatisticsAtom,
     showTimestampMarkerAtom,
-    syncedRegularEnsembleIdentsAtom,
-    syncedVectorNameAtom,
 } from "./atoms/baseAtoms";
 import { availableSensitivityNamesAtom, vectorSelectorDataAtom } from "./atoms/derivedAtoms";
 import {
@@ -46,9 +44,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
 
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
     const selectedTimestampUtcMs = props.settingsContext.useViewToSettingsInterfaceValue("selectedTimestampUtcMs");
-
-    const setSyncedRegularEnsembleIdents = useSetAtom(syncedRegularEnsembleIdentsAtom);
-    const setSyncedVectorName = useSetAtom(syncedVectorNameAtom);
 
     const [selectedRegularEnsembleIdent, setSelectedRegularEnsembleIdent] = useAtom(selectedRegularEnsembleIdentAtom);
     const [selectedSensitivityNames, setSelectedSensitivityNamesAtom] = useAtom(selectedSensitivityNamesAtom);
@@ -75,16 +70,25 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
 
     propagateQueryErrorToStatusWriter(vectorListQuery, statusWriter);
 
+    // Write synced values explicitly - the selected atoms no longer fix up to them on their own
     if (!isEqual(syncedValueEnsembles, prevSyncedEnsembleIdents)) {
         setPrevSyncedEnsembleIdents(syncedValueEnsembles);
-        if (syncedValueEnsembles) {
-            setSyncedRegularEnsembleIdents(syncedValueEnsembles);
+        // Only switch when the current ensemble isn't synced - switching unnecessarily could leave the retained vector
+        // or sensitivity selections invalid
+        const currentEnsembleIdent = selectedRegularEnsembleIdent.value;
+        const isCurrentEnsembleSynced =
+            currentEnsembleIdent !== null && syncedValueEnsembles?.some((ident) => ident.equals(currentEnsembleIdent));
+        if (syncedValueEnsembles && syncedValueEnsembles.length > 0 && !isCurrentEnsembleSynced) {
+            setSelectedRegularEnsembleIdent(syncedValueEnsembles[0]);
         }
     }
     if (!isEqual(syncedValueSummaryVector, prevSyncedSummaryVector)) {
         setPrevSyncedSummaryVector(syncedValueSummaryVector);
         if (syncedValueSummaryVector) {
-            setSyncedVectorName(syncedValueSummaryVector.vectorName);
+            setSelectedVectorNameAndTag({
+                name: syncedValueSummaryVector.vectorName,
+                tag: syncedValueSummaryVector.vectorName,
+            });
         }
     }
 
@@ -103,9 +107,21 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
             }
             const userSelectedVectorName = selection.selectedNodes[0] ?? null;
             const userSelectedVectorTag = selection.selectedTags[0]?.text ?? null;
+
+            // When the available vectors change (e.g. for another ensemble), the selector reports the same tag without
+            // a vector once it no longer resolves. That is no user change - keep the retained value (with its name and
+            // source) instead of replacing it, so it is reported as invalid rather than lost.
+            if (
+                userSelectedVectorName === null &&
+                userSelectedVectorTag !== null &&
+                userSelectedVectorTag === selectedVectorNameAndTag.value?.tag
+            ) {
+                return;
+            }
+
             setSelectedVectorNameAndTag({ name: userSelectedVectorName, tag: userSelectedVectorTag });
         },
-        [vectorSelectorData, setSelectedVectorNameAndTag],
+        [vectorSelectorData, selectedVectorNameAndTag.value?.tag, setSelectedVectorNameAndTag],
     );
 
     const selectedRegularEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(

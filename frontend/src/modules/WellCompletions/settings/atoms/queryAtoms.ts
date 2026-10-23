@@ -10,8 +10,8 @@ import { availableRealizationsAtom } from "./derivedAtoms";
 import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./persistableFixableAtoms";
 
 export const wellCompletionsQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom).value;
-    const selectedRealization = get(selectedRealizationAtom).value;
+    const { value: selectedEnsembleIdent, isValidInContext: ensembleIdentValid } = get(selectedEnsembleIdentAtom);
+    const { value: selectedRealization, isValidInContext: realizationValid } = get(selectedRealizationAtom);
     const realizationMode = get(realizationModeAtom);
     const validRealizationNumbers = get(availableRealizationsAtom);
 
@@ -23,14 +23,15 @@ export const wellCompletionsQueryAtom = atomWithQuery((get) => {
     let hasValidRealizations = false;
     if (realizationMode === RealizationMode.SINGLE && selectedRealization !== null) {
         realizationsEncodedAsUintListStr = encodeAsUintListStr([selectedRealization]);
-        hasValidRealizations = true;
+        // Only the single-realization request uses the selected realization, so only it depends on its validity
+        hasValidRealizations = realizationValid;
     }
     if (realizationMode === RealizationMode.AGGREGATED) {
         realizationsEncodedAsUintListStr = encodeAsUintListStr(validRealizationNumbers);
         hasValidRealizations = validRealizationNumbers.length !== 0;
     }
 
-    // Disable query if realization number is null for single realization request
+    // Disable query if realization number is null or invalid for single realization request
     const query = {
         ...getWellCompletionsDataOptions({
             query: {
@@ -40,7 +41,7 @@ export const wellCompletionsQueryAtom = atomWithQuery((get) => {
                 ...makeCacheBustingQueryParam(selectedEnsembleIdent),
             },
         }),
-        enabled: Boolean(caseUuid && ensembleName && hasValidRealizations),
+        enabled: Boolean(caseUuid && ensembleName && hasValidRealizations) && ensembleIdentValid,
     };
 
     return query;

@@ -5,7 +5,14 @@ import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 
 import { QueryStatus } from "../../types";
 
-import { selectedEnsembleIdentAtom, selectedTreeTypeAtom } from "./persistableFixableAtoms";
+import {
+    selectedDateTimeAtom,
+    selectedEdgeKeyAtom,
+    selectedEnsembleIdentAtom,
+    selectedNodeKeyAtom,
+    selectedRealizationAtom,
+    selectedTreeTypeAtom,
+} from "./persistableFixableAtoms";
 import { realizationFlowNetworkQueryAtom } from "./queryAtoms";
 
 export const availableRealizationsAtom = atom<number[]>((get) => {
@@ -18,36 +25,65 @@ export const availableRealizationsAtom = atom<number[]>((get) => {
     return validRealizationNumbers;
 });
 
+// A disabled query keeps its cached data and error, which belong to a selection that may no longer be
+// valid (e.g. a realization excluded by the realization filter), so neither is exposed while this is false
+export const areQuerySelectionsValidAtom = atom<boolean>((get) => {
+    return get(selectedEnsembleIdentAtom).isValidInContext && get(selectedRealizationAtom).isValidInContext;
+});
+
+// Invalid selections are retained rather than fixed up. The plot can't show them - an unknown time step makes it show
+// an error, unknown edge/node keys draw the tree without values - so the view withholds plotting while this is false.
+export const areNetworkSelectionsValidAtom = atom<boolean>((get) => {
+    return (
+        get(selectedTreeTypeAtom).isValidInContext &&
+        get(selectedDateTimeAtom).isValidInContext &&
+        get(selectedEdgeKeyAtom).isValidInContext &&
+        get(selectedNodeKeyAtom).isValidInContext
+    );
+});
+
 export const queryStatusAtom = atom<QueryStatus>((get) => {
     const flowNetworkQuery = get(realizationFlowNetworkQueryAtom);
 
     if (flowNetworkQuery.isFetching) {
         return QueryStatus.Loading;
     }
-    if (flowNetworkQuery.isError) {
+    if (flowNetworkQuery.isError && get(areQuerySelectionsValidAtom)) {
         return QueryStatus.Error;
     }
     return QueryStatus.Idle;
 });
 
-export const availableTreeTypesAtom = atom<string[]>((get) => {
+const flowNetworkDataAtom = atom((get) => {
     const flowNetworkQuery = get(realizationFlowNetworkQueryAtom);
 
-    if (!flowNetworkQuery.data) return [];
+    if (!get(areQuerySelectionsValidAtom)) {
+        return null;
+    }
+    return flowNetworkQuery.data ?? null;
+});
 
-    return Object.keys(flowNetworkQuery.data.tree_type_flow_network_map);
+export const availableTreeTypesAtom = atom<string[]>((get) => {
+    const flowNetworkData = get(flowNetworkDataAtom);
+
+    if (!flowNetworkData) return [];
+
+    return Object.keys(flowNetworkData.tree_type_flow_network_map);
 });
 
 export const availableDateTimesAtom = atom<string[]>((get) => {
-    const flowNetworkQuery = get(realizationFlowNetworkQueryAtom);
+    const flowNetworkData = get(flowNetworkDataAtom);
     const selectedTreeType = get(selectedTreeTypeAtom).value;
 
-    if (!flowNetworkQuery.data || !selectedTreeType) {
+    const treeTypeFlowNetwork = selectedTreeType
+        ? flowNetworkData?.tree_type_flow_network_map[selectedTreeType]
+        : undefined;
+    if (!treeTypeFlowNetwork) {
         return [];
     }
 
     const dateTimes = new Set<string>();
-    flowNetworkQuery.data.tree_type_flow_network_map[selectedTreeType].datedNetworks.forEach((datedNetwork) => {
+    treeTypeFlowNetwork.datedNetworks.forEach((datedNetwork) => {
         datedNetwork.dates.forEach((date) => {
             dateTimes.add(date);
         });
@@ -57,34 +93,34 @@ export const availableDateTimesAtom = atom<string[]>((get) => {
 });
 
 export const edgeMetadataListAtom = atom<FlowNetworkMetadata_api[]>((get) => {
-    const flowNetworkQuery = get(realizationFlowNetworkQueryAtom);
+    const flowNetworkData = get(flowNetworkDataAtom);
     const selectedTreeType = get(selectedTreeTypeAtom).value;
 
-    if (!flowNetworkQuery.data || !selectedTreeType) {
-        return [];
-    }
+    const treeTypeFlowNetwork = selectedTreeType
+        ? flowNetworkData?.tree_type_flow_network_map[selectedTreeType]
+        : undefined;
 
-    return flowNetworkQuery.data.tree_type_flow_network_map[selectedTreeType].edgeMetadataList;
+    return treeTypeFlowNetwork?.edgeMetadataList ?? [];
 });
 
 export const nodeMetadataListAtom = atom<FlowNetworkMetadata_api[]>((get) => {
-    const flowNetworkQuery = get(realizationFlowNetworkQueryAtom);
+    const flowNetworkData = get(flowNetworkDataAtom);
     const selectedTreeType = get(selectedTreeTypeAtom).value;
 
-    if (!flowNetworkQuery.data || !selectedTreeType) {
-        return [];
-    }
+    const treeTypeFlowNetwork = selectedTreeType
+        ? flowNetworkData?.tree_type_flow_network_map[selectedTreeType]
+        : undefined;
 
-    return flowNetworkQuery.data.tree_type_flow_network_map[selectedTreeType].nodeMetadataList;
+    return treeTypeFlowNetwork?.nodeMetadataList ?? [];
 });
 
 export const datedNetworksAtom = atom<DatedFlowNetwork_api[]>((get) => {
-    const flowNetworkQuery = get(realizationFlowNetworkQueryAtom);
+    const flowNetworkData = get(flowNetworkDataAtom);
     const selectedTreeType = get(selectedTreeTypeAtom).value;
 
-    if (!flowNetworkQuery.data || !selectedTreeType) {
-        return [];
-    }
+    const treeTypeFlowNetwork = selectedTreeType
+        ? flowNetworkData?.tree_type_flow_network_map[selectedTreeType]
+        : undefined;
 
-    return flowNetworkQuery.data.tree_type_flow_network_map[selectedTreeType].datedNetworks;
+    return treeTypeFlowNetwork?.datedNetworks ?? [];
 });

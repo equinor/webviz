@@ -1,9 +1,5 @@
 import { atom } from "jotai";
 
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
-
 import { ColorBy, CurveType, GroupBy, type RelPermEnsembleTableDefinition } from "../../typesAndEnums";
 
 import {
@@ -16,26 +12,12 @@ import {
     showStatisticalFanAtom,
     showStatisticalLinesAtom,
 } from "./baseAtoms";
-import {
-    userSelectedCurveNamesAtom,
-    userSelectedEnsembleIdentsAtom,
-    userSelectedSaturationAxisNameAtom,
-    userSelectedSatnumsAtom,
-    userSelectedTableNameAtom,
-} from "./persistableFixableAtoms";
+import { selectedEnsembleIdentsAtom, selectedSaturationAxisNameAtom, selectedSatnumsAtom } from "./persistableFixableAtoms";
 import {
     relPermRealizationDataQueriesAtom,
     relPermTableDefinitionQueriesAtom,
     relPermTableNamesQueriesAtom,
 } from "./queryAtoms";
-
-function fixupSelectedOrFirstValue<T extends string | number>(selectedValue: T | null, values: T[]): T | null {
-    if (selectedValue !== null && values.includes(selectedValue)) {
-        return selectedValue;
-    }
-
-    return values[0] ?? null;
-}
 
 function intersectArrays<T>(arrays: T[][]): T[] {
     if (arrays.length === 0) {
@@ -47,13 +29,6 @@ function intersectArrays<T>(arrays: T[][]): T[] {
     }, arrays[0]);
 }
 
-export const selectedEnsembleIdentsAtom = atom<RegularEnsembleIdent[]>((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom).value;
-
-    return fixupRegularEnsembleIdents(userSelectedEnsembleIdents, ensembleSet) ?? [];
-});
-
 export const availableTableNamesAtom = atom<string[]>((get) => {
     const tableNameQueries = get(relPermTableNamesQueriesAtom);
     const loadedTableNames = tableNameQueries.flatMap((query) => (query.data ? [query.data] : []));
@@ -61,12 +36,8 @@ export const availableTableNamesAtom = atom<string[]>((get) => {
     return intersectArrays(loadedTableNames);
 });
 
-export const selectedTableNameAtom = atom<string | null>((get) => {
-    return fixupSelectedOrFirstValue(get(userSelectedTableNameAtom).value, get(availableTableNamesAtom));
-});
-
 export const ensembleTableDefinitionsAtom = atom<RelPermEnsembleTableDefinition[]>((get) => {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
     const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
 
     return tableDefinitionQueries.flatMap((queryResult, index) => {
@@ -87,16 +58,9 @@ export const availableSaturationAxisNamesAtom = atom<string[]>((get) => {
     return intersectArrays(axisNamesPerDefinition);
 });
 
-export const selectedSaturationAxisNameAtom = atom<string | null>((get) => {
-    return fixupSelectedOrFirstValue(
-        get(userSelectedSaturationAxisNameAtom).value,
-        get(availableSaturationAxisNamesAtom),
-    );
-});
-
 export const availableCurveNamesAtom = atom<string[]>((get) => {
     const tableDefinitions = get(ensembleTableDefinitionsAtom);
-    const selectedSaturationAxisName = get(selectedSaturationAxisNameAtom);
+    const selectedSaturationAxisName = get(selectedSaturationAxisNameAtom).value;
     const selectedCurveType = get(selectedCurveTypeAtom);
 
     if (!selectedSaturationAxisName) {
@@ -120,14 +84,6 @@ export const availableCurveNamesAtom = atom<string[]>((get) => {
     return intersectArrays(curveNamesPerDefinition);
 });
 
-export const selectedCurveNamesAtom = atom<string[]>((get) => {
-    const availableCurveNames = get(availableCurveNamesAtom);
-    const userSelectedCurveNames = get(userSelectedCurveNamesAtom).value;
-    const selectedCurveNames = userSelectedCurveNames.filter((curveName) => availableCurveNames.includes(curveName));
-
-    return selectedCurveNames.length > 0 ? selectedCurveNames : availableCurveNames;
-});
-
 export const availableSatnumsAtom = atom<number[]>((get) => {
     const tableDefinitions = get(ensembleTableDefinitionsAtom);
     const satnumsPerDefinition = tableDefinitions.map((definition) => definition.tableDefinition.satnums);
@@ -135,19 +91,11 @@ export const availableSatnumsAtom = atom<number[]>((get) => {
     return intersectArrays(satnumsPerDefinition);
 });
 
-export const selectedSatnumsAtom = atom<number[]>((get) => {
-    const availableSatnums = get(availableSatnumsAtom);
-    const userSelectedSatnums = get(userSelectedSatnumsAtom).value;
-    const selectedSatnums = userSelectedSatnums.filter((satnum) => availableSatnums.includes(satnum));
-
-    return selectedSatnums.length > 0 ? selectedSatnums : availableSatnums.slice(0, 1);
-});
-
 export const relPermDataAccessorStatusAtom = atom((get) => get(relPermRealizationDataQueriesAtom));
 
 export const visualizationSettingsAtom = atom((get) => {
     const selectedGroupBy = get(selectedGroupByAtom);
-    const shouldForceSatnumColor = get(selectedSatnumsAtom).length > 1 && selectedGroupBy !== GroupBy.SATNUM;
+    const shouldForceSatnumColor = get(selectedSatnumsAtom).value.length > 1 && selectedGroupBy !== GroupBy.SATNUM;
 
     return {
         showIndividualRealizations: get(showIndividualRealizationsAtom),
