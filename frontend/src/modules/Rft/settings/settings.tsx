@@ -85,7 +85,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const setSelectedResponseName = useSetAtom(selectedResponseNameAtom);
 
     const availableWellNames = useAtomValue(availableWellNamesAtom);
-    const selectedWellName = useAtomValue(selectedWellNameAtom).value;
+    const { value: selectedWellName, isValidInContext: isSelectedWellNameValid } = useAtomValue(selectedWellNameAtom);
     const setSelectedWellName = useSetAtom(selectedWellNameAtom);
 
     const availableTimestampsUtcMs = useAtomValue(availableTimestampsUtcMsAtom);
@@ -164,8 +164,12 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const timestampSetsDiffer =
         timestampSetsPerEnsemble.length > 1 &&
         timestampSetsPerEnsemble.some((timestamps) => !arraysHaveSameValues(timestamps, timestampSetsPerEnsemble[0]));
+    // A kept invalid well has no dates - that is the well's error, not a lack of common dates
     const commonTimestampsAreMissing =
-        allEnsembleTableDefinitionsLoaded && Boolean(selectedWellName) && availableTimestampsUtcMs.length === 0;
+        allEnsembleTableDefinitionsLoaded &&
+        Boolean(selectedWellName) &&
+        isSelectedWellNameValid &&
+        availableTimestampsUtcMs.length === 0;
     const timestampAnnotations: SettingAnnotation[] = [
         ...selectedTimestampAnnotations,
         commonTimestampsAreMissing && {

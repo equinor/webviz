@@ -4,6 +4,7 @@ import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 
 import type { Interfaces } from "../interfaces";
 import { EnsembleMode } from "../typesAndEnums";
@@ -45,20 +46,27 @@ export function View(props: ModuleViewProps<Interfaces>) {
         filterEnsembleRealizationsFunc,
     );
 
-    ensembleSetParameterArray = sortPriorPosteriorParameters(ensembleSetParameterArray, parameterSortingMethod);
+    // Null while the sort method is invalid (e.g. a prior/posterior method in independent mode) - nothing is plotted then
+    if (parameterSortingMethod !== null) {
+        ensembleSetParameterArray = sortPriorPosteriorParameters(ensembleSetParameterArray, parameterSortingMethod);
+    }
 
     return (
         <div className="h-full w-full" ref={wrapperDivRef}>
-            <VirtualizedParameterDistributionPlot
-                key={`param-plots-${ensembleSetParameterArray.length}`}
-                dataArr={ensembleSetParameterArray}
-                plotType={visualizationType}
-                showIndividualRealizationValues={showIndividualRealizationValues}
-                showPercentilesAndMeanLines={showPercentilesAndMeanLines}
-                histogramMode={histogramMode}
-                width={wrapperDivSize.width}
-                height={wrapperDivSize.height}
-            ></VirtualizedParameterDistributionPlot>
+            {parameterSortingMethod === null ? (
+                <ContentInfo>Invalid parameter sort method.</ContentInfo>
+            ) : (
+                <VirtualizedParameterDistributionPlot
+                    key={`param-plots-${ensembleSetParameterArray.length}`}
+                    dataArr={ensembleSetParameterArray}
+                    plotType={visualizationType}
+                    showIndividualRealizationValues={showIndividualRealizationValues}
+                    showPercentilesAndMeanLines={showPercentilesAndMeanLines}
+                    histogramMode={histogramMode}
+                    width={wrapperDivSize.width}
+                    height={wrapperDivSize.height}
+                ></VirtualizedParameterDistributionPlot>
+            )}
         </div>
     );
 }

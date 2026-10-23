@@ -16,6 +16,10 @@ export type Interfaces = {
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     plotType: (get) => get(plotTypeAtom),
-    parameterIdentString: (get) => get(parameterIdentStringAtom).value,
+    // A retained but invalid parameter (e.g. one the received ensembles don't vary) must not be plotted
+    parameterIdentString: (get) => {
+        const parameterIdentString = get(parameterIdentStringAtom);
+        return parameterIdentString.isValidInContext ? parameterIdentString.value : null;
+    },
     showTrendline: (get) => get(showTrendlineAtom),
 };

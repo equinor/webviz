@@ -1,14 +1,21 @@
 import { useAtomValue } from "jotai";
 
-import { Source, type persistableFixableAtom } from "@framework/utils/atomUtils";
+import { Source, type PersistableFixableAtom } from "@framework/utils/atomUtils";
 import type { SettingAnnotation } from "@lib/components/Setting";
 
-type PersistableFixableAtom<T> = ReturnType<typeof persistableFixableAtom<T>>;
-
 export function useMakePersistableFixableAtomAnnotations(atom: PersistableFixableAtom<any>): SettingAnnotation[] {
-    const { isValidInContext, _source, isLoading, depsHaveError } = useAtomValue(atom);
+    const { isValidInContext, _source, isLoading, isBlocked, depsHaveError } = useAtomValue(atom);
 
-    if (!isValidInContext && _source && !isLoading && !depsHaveError) {
+    if (isBlocked) {
+        return [
+            {
+                type: "info",
+                message: "No valid value until another invalid setting is fixed.",
+            },
+        ];
+    }
+
+    if (!isValidInContext && _source && !isLoading && !isBlocked && !depsHaveError) {
         switch (_source) {
             case Source.PERSISTENCE:
                 return [
@@ -22,6 +29,13 @@ export function useMakePersistableFixableAtomAnnotations(atom: PersistableFixabl
                     {
                         type: "error",
                         message: "The template value is invalid. Please choose a valid value.",
+                    },
+                ];
+            case Source.USER:
+                return [
+                    {
+                        type: "error",
+                        message: "The current value is invalid. Please choose a valid value.",
                     },
                 ];
             default:

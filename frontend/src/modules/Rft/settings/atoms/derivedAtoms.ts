@@ -37,8 +37,14 @@ function intersectArrays<T>(arrays: T[][]): T[] {
 }
 
 export const ensembleTableDefinitionsAtom = atom<RftEnsembleTableDefinition[]>((get) => {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const { value: selectedEnsembleIdents, isValidInContext: ensembleIdentsValid } = get(selectedEnsembleIdentsAtom);
     const tableDefinitionQueries = get(rftTableDefinitionQueriesAtom);
+
+    // Disabled queries keep their cached table definitions, which must not provide the well, response and
+    // timestamp options (or validate those selections) for an invalid ensemble selection
+    if (!ensembleIdentsValid) {
+        return [];
+    }
 
     return tableDefinitionQueries.flatMap((queryResult, index) => {
         if (!queryResult.data) {

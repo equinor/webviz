@@ -3,7 +3,7 @@ import React from "react";
 import { Close, Deselect, SelectAll } from "@mui/icons-material";
 import { isEqual } from "lodash-es";
 
-import { useFieldStateDataAttributes } from "@lib/components/Field";
+import { Field, useFieldStateDataAttributes } from "@lib/components/Field";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { withDefaults } from "../_shared/utils/defaultProps";
@@ -85,6 +85,12 @@ function ensureKeyboardSelectionInView(
         return keyboardFocusIndex;
     }
     return prevViewStartIndex;
+}
+
+// A value can be retained although it is no longer an option (e.g. kept as invalid). It is not shown, so toggling another
+// value must drop it rather than carry it along unseen. Options hidden by the filter text are still options.
+function withoutUnavailableValues<TValue>(values: TValue[], options: SelectOption<TValue>[]): TValue[] {
+    return values.filter((value) => options.some((option) => option.value === value));
 }
 
 function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React.ForwardedRef<HTMLDivElement>) {
@@ -213,10 +219,13 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                 setSelectionAnchor(index);
 
                 let newSelectedOptions: TValue[];
-                if (selectedOptionValues.includes(filteredOptions[index].value)) {
-                    newSelectedOptions = selectedOptionValues.filter((value) => value !== filteredOptions[index].value);
+                const selectedAvailableValues = withoutUnavailableValues(selectedOptionValues, options);
+                if (selectedAvailableValues.includes(filteredOptions[index].value)) {
+                    newSelectedOptions = selectedAvailableValues.filter(
+                        (value) => value !== filteredOptions[index].value,
+                    );
                 } else {
-                    newSelectedOptions = [...selectedOptionValues, filteredOptions[index].value];
+                    newSelectedOptions = [...selectedAvailableValues, filteredOptions[index].value];
                 }
                 setSelectedOptionValues(newSelectedOptions);
                 handleOnChange(newSelectedOptions);
@@ -337,6 +346,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
         [
             currentFocusIndex,
             filteredOptions,
+            options,
             defaultedProps.size,
             defaultedProps.multiple,
             handleOnChange,
@@ -366,9 +376,10 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
             const end = Math.max(index, selectionAnchor);
             newSelectedOptions = filteredOptions.slice(start, end + 1).map((option) => option.value);
         } else if (e.ctrlKey) {
-            newSelectedOptions = selectedOptionValues.includes(option.value)
-                ? selectedOptionValues.filter((value) => value !== option.value)
-                : [...selectedOptionValues, option.value];
+            const selectedAvailableValues = withoutUnavailableValues(selectedOptionValues, options);
+            newSelectedOptions = selectedAvailableValues.includes(option.value)
+                ? selectedAvailableValues.filter((value) => value !== option.value)
+                : [...selectedAvailableValues, option.value];
         } else {
             newSelectedOptions = [option.value];
         }
@@ -408,7 +419,8 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
 
         setCurrentFocusIndex(newCurrentKeyboardFocusIndex);
         setVirtualizationStartIndex(newVirtualizationStartIndex);
-        setSelectionAnchor(newFilteredOptions.findIndex((option) => option.value === selectedOptionValues[0]));
+        const firstValueIndex = newFilteredOptions.findIndex((option) => option.value === selectedOptionValues[0]);
+        setSelectionAnchor(firstValueIndex !== -1 ? firstValueIndex : null);
     }
 
     function handleFilterChange(value: string) {
@@ -462,27 +474,30 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                 style={{ width: props.width, minWidth: props.width }}
             >
                 {defaultedProps.filter && (
-                    <TextInput
-                        id={props.id}
-                        type="text"
-                        value={filterString}
-                        onValueChange={handleFilterChange}
-                        placeholder={defaultedProps.filterPlaceholder}
-                        disabled={props.disabled}
-                        endAdornment={
-                            filterString && (
-                                <Button
-                                    variant="ghost"
-                                    size="small"
-                                    iconOnly
-                                    disabled={props.disabled}
-                                    onClick={() => handleFilterChange("")}
-                                >
-                                    <Close style={{ fontSize: 16 }} />
-                                </Button>
-                            )
-                        }
-                    />
+                    // The filter text can't be invalid - opt out of the invalid/warning state of an enclosing field
+                    <Field.Root inline>
+                        <TextInput
+                            id={props.id}
+                            type="text"
+                            value={filterString}
+                            onValueChange={handleFilterChange}
+                            placeholder={defaultedProps.filterPlaceholder}
+                            disabled={props.disabled}
+                            endAdornment={
+                                filterString && (
+                                    <Button
+                                        variant="ghost"
+                                        size="small"
+                                        iconOnly
+                                        disabled={props.disabled}
+                                        onClick={() => handleFilterChange("")}
+                                    >
+                                        <Close style={{ fontSize: 16 }} />
+                                    </Button>
+                                )
+                            }
+                        />
+                    </Field.Root>
                 )}
                 <div
                     className={resolveClassNames("form-element group w-full overflow-y-auto", {

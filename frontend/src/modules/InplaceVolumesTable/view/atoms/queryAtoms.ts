@@ -72,6 +72,19 @@ export const perRealizationTableDataResultsAtom = atom((get) => {
     const regular = get(regularPerRealizationTableDataResultsAtom);
     const delta = get(deltaPerRealizationTableDataResultsAtom);
 
+    // Disabled queries keep their cached results and errors, which must not be shown for an invalid selection
+    // (e.g. one ensemble of several removed from the session)
+    if (!get(areTableDefinitionSelectionsValidAtom)) {
+        return {
+            tablesData: [],
+            isFetching: false,
+            allQueriesFailed: false,
+            errors: [],
+            droppedFluidSelections: [],
+            unmatchedRows: [],
+        };
+    }
+
     const tablesData = [...regular.tablesData, ...delta.tablesData];
 
     return {
@@ -115,6 +128,18 @@ const regularStatisticalTableDataResultsAtom = atomWithQueries((get) => {
 export const statisticalTableDataResultsAtom = atom((get) => {
     const regular = get(regularStatisticalTableDataResultsAtom);
     const delta = get(deltaPerRealizationTableDataResultsAtom);
+
+    // Like the per-realization results, cached results must not be shown for an invalid selection
+    if (!get(areTableDefinitionSelectionsValidAtom)) {
+        return {
+            tablesData: [],
+            isFetching: false,
+            allQueriesFailed: false,
+            errors: [],
+            droppedFluidSelections: [],
+            unmatchedRows: [],
+        };
+    }
 
     const deltaTablesData: InplaceVolumesStatisticalTableData[] = delta.tablesData.map((tableData) => ({
         ensembleIdent: tableData.ensembleIdent,

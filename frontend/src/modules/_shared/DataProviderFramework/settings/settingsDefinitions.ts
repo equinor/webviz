@@ -312,7 +312,7 @@ export type SettingTypeDefinitions = {
         valueConstraints: number[];
     };
     [Setting.WELLBORES]: {
-        internalValue: string[] | null;
+        internalValue: string[] | "all" | null;
         externalValue: WellboreHeader_api[] | null;
         valueConstraints: WellboreHeader_api[];
     };

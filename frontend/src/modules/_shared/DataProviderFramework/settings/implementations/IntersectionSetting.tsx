@@ -4,6 +4,7 @@ import { IntersectionType, isWellboreIntersectionType } from "@framework/types/i
 import { Combobox } from "@lib/components/Combobox";
 import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
+import { Field } from "@lib/components/Field";
 import { NumberInput } from "@lib/components/NumberInput";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 
@@ -273,10 +274,9 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                               type: base.type,
                               name: base.name,
                               uuid: base.uuid,
-                              extensionLength:
-                                  isWellboreIntersectionSettingValue(validCandidate)
-                                      ? validCandidate.extensionLength
-                                      : defaultExtensionLength,
+                              extensionLength: isWellboreIntersectionSettingValue(validCandidate)
+                                  ? validCandidate.extensionLength
+                                  : defaultExtensionLength,
                           }
                         : {
                               type: IntersectionType.CUSTOM_POLYLINE,
@@ -299,15 +299,19 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                     };
                 });
 
+            // Only the source can make the value invalid, so the type and extension inputs opt out of the
+            // invalid state that SettingManagerComponent's Field.Root wrap applies to the whole setting
             return (
                 <div className="gap-x-3xs gap-y-2xs grid grid-cols-[max-content_minmax(0,1fr)] items-center">
                     <span>Type</span>
-                    <Combobox
-                        items={INTERSECTION_TYPE_OPTIONS}
-                        value={type}
-                        onValueChange={handleCategoryChange}
-                        size="small"
-                    />
+                    <Field.Root inline invalid={false}>
+                        <Combobox
+                            items={INTERSECTION_TYPE_OPTIONS}
+                            value={type}
+                            onValueChange={handleCategoryChange}
+                            size="small"
+                        />
+                    </Field.Root>
                     <span>Source</span>
                     <ComboboxCompositions.WithBrowseButtons
                         items={options}
@@ -323,16 +327,18 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                         disabled={props.disabled}
                     />
                     <span>Extension</span>
-                    <NumberInput
-                        disabled={props.disabled || !enableExtensionLength}
-                        value={immediateExtensionLength}
-                        min={extensionLengthConfig?.min}
-                        max={extensionLengthConfig?.max}
-                        onValueChange={setExtensionLength}
-                        scrubAdornment="m"
-                        scrubAreaPosition="end"
-                        allowWheelScrub
-                    />
+                    <Field.Root inline invalid={false}>
+                        <NumberInput
+                            disabled={props.disabled || !enableExtensionLength}
+                            value={immediateExtensionLength}
+                            min={extensionLengthConfig?.min}
+                            max={extensionLengthConfig?.max}
+                            onValueChange={setExtensionLength}
+                            scrubAdornment="m"
+                            scrubAreaPosition="end"
+                            allowWheelScrub
+                        />
+                    </Field.Root>
                 </div>
             );
         };

@@ -16,6 +16,7 @@ import {
     indexColumnsLeftUnfilteredAtom,
     indexColumnsWithNoSelectedValuesAtom,
     isIndexValueIntersectionActiveAtom,
+    isSubplotByValidAtom,
     referenceEnsembleIdentAtom,
     resultNameAtom,
     subplotByAtom,
@@ -225,6 +226,7 @@ export function useBuildWaterfallPlot(
     const areSourcesDistinct = useAtomValue(areSourcesDistinctAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
     const areSelectedIndicesWithValuesValid = useAtomValue(areSelectedIndicesWithValuesValidAtom);
+    const isSubplotByValid = useAtomValue(isSubplotByValidAtom);
     const isComputable = useAtomValue(isWaterfallComputableAtom);
     const statisticalDataQueries = useAtomValue(waterfallStatisticalDataQueriesAtom);
     const subplotByIndex = useAtomValue(subplotByAtom);
@@ -276,6 +278,14 @@ export function useBuildWaterfallPlot(
                     kind: "message",
                     result: makeErrorResult(
                         "The saved index-value filters no longer match the selected tables. Reselect values in the filters section.",
+                    ),
+                };
+            }
+            if (!isSubplotByValid) {
+                return {
+                    kind: "message",
+                    result: makeErrorResult(
+                        `The subplot-by column ${subplotByIndex} is not available in the selected tables. Select another subplot option.`,
                     ),
                 };
             }
@@ -452,6 +462,7 @@ export function useBuildWaterfallPlot(
             areSourcesDistinct,
             areSelectedTablesComparable,
             areSelectedIndicesWithValuesValid,
+            isSubplotByValid,
             isComputable,
             statisticalDataQueries,
             subplotByIndex,

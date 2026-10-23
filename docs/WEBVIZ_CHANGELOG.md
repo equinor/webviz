@@ -14,6 +14,7 @@
 ### Changed
 
 - **Simulation Time Series**: The module now uses the shared hover timestamp, so a timestamp hovered here is highlighted in other modules, and a timestamp hovered in other modules is highlighted here. The hover marker is gray when hovering in the module itself, and red when the hover comes from another module.
+- **Settings**: A selection that is no longer available (e.g. after switching ensemble) is now kept and marked as invalid instead of being silently replaced, and no data is loaded until it is valid again. Settings that depend on an invalid setting wait for it to be fixed.
 
 ### Fixed
 
