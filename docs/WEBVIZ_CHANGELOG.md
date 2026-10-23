@@ -5,6 +5,20 @@
 
 # Changelog
 
+## October 2026
+
+### Added
+
+- **Simulation time series modules**: "Simulation Time Series" and "Simulation Time Series Per Sensitivity" now show a hover marker and a selected-timestamp marker with date badges in the plot. The markers can be turned on/off with the new "Show timestamp marker in plot" setting. Note that the selected timestamp is also the marker for the data channel; the data channel still provides data for the selected timestamp when the markers are hidden.
+
+### Changed
+
+- **Simulation Time Series**: The module now uses the shared hover timestamp, so a timestamp hovered here is highlighted in other modules, and a timestamp hovered in other modules is highlighted here. The hover marker is gray when hovering in the module itself, and red when the hover comes from another module.
+
+### Fixed
+
+- **2D, 3D, Intersection and Well log viewers**: Fixed several issues with loading saved sessions and changing layer settings.
+
 ## September 2026
 
 ### Changed
@@ -30,6 +44,7 @@
 - **3D viewer**: Well trajectory depth/flow filters and completion (screen/perforation) markers are now supported, matching the 2D viewer.
 - **Inplace Volumes Table**: wide tables now scroll horizontally with the grouping columns pinned, and columns with the same value on every row are summarised above the table.
 - **Inplace Volumes Table**: new "Statistics layout" option shows responses as rows, keeping the table narrow when many responses are selected.
+- **Grid layers**: Grid properties in the 2D, 3D, and Intersection views can now show the difference between two time steps. A new "Time Type" setting chooses between static, time step, interval, and computed interval (difference). Grid layers in saved sessions keep their selected date, but a shared "Date" setting added to a group in an older session no longer controls grid layers; replace it with a shared "Time step" or "Time interval". In the 2D viewer, a shared "Time point" now applies to both surface and grid layers.
 
 ## August 2026
 

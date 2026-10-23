@@ -12,6 +12,7 @@ import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import type { FipRegionMapping } from "@framework/EnsembleFipRegionsMapping";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
 import { createDeltaEnsembleDisplayName, createRegularEnsembleDisplayName } from "@framework/utils/ensembleUiHelpers";
 import { calcFnv1aHash } from "@lib/utils/hashUtils";
@@ -36,7 +37,7 @@ type EnsembleIdentStringToEnsembleApiDataMap = {
 };
 
 export type EnsembleLoadingErrorInfoMap = {
-    [ensembleIdentString: string]: { errorMessage: string; displayName: string };
+    [ensembleIdentString: string]: { errorMessage: string; displayName: string; details?: string };
 };
 
 export type EnsembleLoadingWarningInfoMap = {
@@ -278,6 +279,13 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     };
 }
 
+function getBackendErrorMessage(reason: unknown): string | undefined {
+    if (!(reason instanceof Error)) {
+        return undefined;
+    }
+    return ApiErrorHelper.fromError(reason)?.getMessage() ?? undefined;
+}
+
 async function loadEnsembleApiDataMapFromBackend(
     queryClient: QueryClient,
     ensembleIdents: RegularEnsembleIdent[],
@@ -306,7 +314,7 @@ async function loadEnsembleApiDataMapFromBackend(
 
         const ensembleDetailsPromise = queryClient.fetchQuery({
             ...getEnsembleDetailsOptions({
-                query: { zCacheBust: fingerprintHash },
+                query: { _cacheBust: fingerprintHash },
                 path: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
@@ -323,7 +331,7 @@ async function loadEnsembleApiDataMapFromBackend(
                 query: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
-                    zCacheBust: fingerprintHash,
+                    _cacheBust: fingerprintHash,
                 },
                 throwOnError: false, // We will handle errors manually to be able to continue loading other ensembles even if one fails
             }),
@@ -334,8 +342,11 @@ async function loadEnsembleApiDataMapFromBackend(
     }
     console.debug(`Issued ${ensembleDetailsPromiseArray.length} promise(s)`);
 
-    const ensembleDetailsOutcomeArray = await Promise.allSettled(ensembleDetailsPromiseArray);
-    const parametersAndSensitivitiesOutcomeArray = await Promise.allSettled(parametersAndSensitivitiesPromiseArray);
+    // Settle both arrays together, otherwise an early rejection in the second array is unhandled and terminates the app
+    const [ensembleDetailsOutcomeArray, parametersAndSensitivitiesOutcomeArray] = await Promise.all([
+        Promise.allSettled(ensembleDetailsPromiseArray),
+        Promise.allSettled(parametersAndSensitivitiesPromiseArray),
+    ]);
 
     const resMap: EnsembleIdentStringToEnsembleApiDataMap = {};
     for (let i = 0; i < ensembleDetailsOutcomeArray.length; i++) {
@@ -346,10 +357,12 @@ async function loadEnsembleApiDataMapFromBackend(
         console.debug(`ensembleDetailsOutcome[${i}]:`, ensembleDetailsOutcome.status);
         if (ensembleDetailsOutcome.status === "rejected") {
             const errorMessage = "Error fetching ensemble details, dropping ensemble.";
-            console.error(errorMessage, ensembleIdentString);
+            const details = getBackendErrorMessage(ensembleDetailsOutcome.reason);
+            console.error(errorMessage, ensembleIdentString, details);
             ensembleLoadingErrorInfoMap[ensembleIdentString] = {
                 errorMessage: errorMessage,
                 displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
+                details: details,
             };
             continue;
         }
@@ -374,10 +387,12 @@ async function loadEnsembleApiDataMapFromBackend(
         console.debug(`parametersAndSensitivitiesOutcome[${i}]:`, parametersAndSensitivitiesOutcome.status);
         if (parametersAndSensitivitiesOutcome.status === "rejected") {
             const errorMessage = "Error fetching ensemble parameters and sensitivities, dropping ensemble.";
-            console.error(errorMessage, ensembleIdentString);
+            const details = getBackendErrorMessage(parametersAndSensitivitiesOutcome.reason);
+            console.error(errorMessage, ensembleIdentString, details);
             ensembleLoadingErrorInfoMap[ensembleIdentString] = {
                 errorMessage: errorMessage,
                 displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
+                details: details,
             };
             continue;
         }

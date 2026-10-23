@@ -8,11 +8,19 @@ import canonicalize from "canonicalize";
  */
 export const FINGERPRINT_ALGORITHM = "webviz-response-fingerprint/v1";
 
-const FINGERPRINT_LENGTH = 16;
+// 24 bits. Only a collision between versions of the same endpoint matters (the URL path tells endpoints apart),
+// and only with versions still in browser caches, so the chance per response change is ~1 in 16 million
+const FINGERPRINT_LENGTH = 6;
 
 // "200"–"299", OpenAPI's range key "2XX", and "default", which covers every status not declared otherwise,
 // including an undeclared 2xx
 const SUCCESS_STATUS_CODE = /^(2(\d\d|XX)|default)$/i;
+
+/**
+ * Operation field set by the backend's `@cache_time(..., result_version=N)`. It's bumped when an endpoint's returned
+ * values change without its response schema changing.
+ */
+const RESULT_VERSION_FIELD = "x-result-version";
 
 export class SchemaFingerprintError extends Error {
     constructor(message: string) {
@@ -32,18 +40,23 @@ export type FingerprintInput = {
     responses: Record<string, unknown>;
     /** Every `$ref` reachable from those responses, mapped to the value it points to. */
     references: Record<string, unknown>;
+    /**
+     * The operation's `x-result-version`. Only present when the operation has one, so that endpoints without it
+     * keep the fingerprint they had before this field existed.
+     */
+    resultVersion?: number;
 };
 
 /**
  * Fingerprint of an OpenAPI operation's success responses (2xx and `default`): their status codes, media types and
- * schemas, plus everything those schemas reference.
+ * schemas, plus everything those schemas reference, plus the operation's `x-result-version` if it has one.
  *
  * Any change to that input changes the fingerprint, including descriptions and schema renames. Those only cost
  * an extra cache miss; what matters is that no change to the response shape can keep the old fingerprint.
  *
  * @param operation The operation object from the OpenAPI document (`paths[path][method]`).
  * @param document The whole OpenAPI document, used to resolve `$ref`s.
- * @returns 16 lowercase hex characters.
+ * @returns 6 lowercase hex characters.
  */
 export function fingerprintResponse(operation: unknown, document: unknown, options?: FingerprintOptions): string {
     const input = collectFingerprintInput(operation, document, options);
@@ -70,10 +83,30 @@ export function collectFingerprintInput(
     }
     warnAboutResponsesWithoutSchema(successResponses, document, warn);
 
-    return {
+    const input: FingerprintInput = {
         responses: successResponses,
         references: collectReachableReferences(successResponses, document),
     };
+
+    const resultVersion = pickResultVersion(operation);
+    if (resultVersion !== undefined) {
+        input.resultVersion = resultVersion;
+    }
+    return input;
+}
+
+/** Returns the operation's `x-result-version`, or undefined if it has none. */
+function pickResultVersion(operation: unknown): number | undefined {
+    const resultVersion = isPlainObject(operation) ? operation[RESULT_VERSION_FIELD] : undefined;
+    if (resultVersion === undefined) {
+        return undefined;
+    }
+    if (typeof resultVersion !== "number" || !Number.isInteger(resultVersion) || resultVersion <= 0) {
+        throw new SchemaFingerprintError(
+            `expected "${RESULT_VERSION_FIELD}" to be a positive integer, got ${JSON.stringify(resultVersion)}`,
+        );
+    }
+    return resultVersion;
 }
 
 /** Returns the operation's 2xx and `default` responses, keyed by status code. */

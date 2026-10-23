@@ -22,7 +22,7 @@ from webviz_services.platform.message_bus import MessageBusSingleton
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
-from primary.middleware.cache_control_middleware import CacheControlMiddleware
+from primary.middleware.cache_control_middleware import CacheControlMiddleware, add_cache_info_to_openapi
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanClientAddressEnrichmentMiddleware
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanEndUserEnrichmentMiddleware
 from primary.middleware.encrypted_redis_session_store import EncryptedRedisSessionStore
@@ -192,6 +192,9 @@ auth_helper = AuthHelper()
 app.include_router(auth_helper.router)
 app.include_router(general_router)
 
+# Must run after all routers are included
+add_cache_info_to_openapi(app)
+
 configure_service_level_exception_handlers(app)
 override_default_fastapi_exception_handlers(app)
 
@@ -209,14 +212,8 @@ if config.PSEUDONYM_HMAC_KEY is not None:
     app.add_middleware(OtelSpanEndUserEnrichmentMiddleware, hmac_secret_key=config.PSEUDONYM_HMAC_KEY)
 
 # Add our custom middleware to enforce that user is logged in
-# Also redirects to /login endpoint for some select paths
-unprotected_paths = ["/logout", "/logged_in_user", "/alive", "/openapi.json"]
-paths_redirected_to_login = ["/", "/alive_protected"]
-app.add_middleware(
-    EnforceLoggedInMiddleware,
-    unprotected_paths=unprotected_paths,
-    paths_redirected_to_login=paths_redirected_to_login,
-)
+unprotected_paths = ["/logout", "/alive", "/openapi.json"]
+app.add_middleware(EnforceLoggedInMiddleware, unprotected_paths=unprotected_paths)
 
 encrypted_session_store = EncryptedRedisSessionStore(
     fernet_key=config.SESSION_STORE_FERNET_KEY,

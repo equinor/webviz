@@ -24,7 +24,8 @@ export function AuthenticationBoundary(props: AuthenticationBoundaryProps) {
             .then((isLoggedIn) => {
                 // If still not logged in, redirect to the login page
                 if (!isLoggedIn) {
-                    window.location.href = `/api/login?redirect_url_after_login=${btoa(window.location.pathname + window.location.search + window.location.hash)}`;
+        const redirectTargetAfterLogin = window.location.pathname + window.location.search + window.location.hash;
+        window.location.href = `/api/login?${new URLSearchParams({ redirect_target_after_login: redirectTargetAfterLogin })}`;
                     return;
                 }
                 // Otherwise, the user is already logged in, so we reload the page to start fresh but logged in.
