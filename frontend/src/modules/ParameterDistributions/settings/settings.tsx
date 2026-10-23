@@ -247,15 +247,14 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                         </React.Fragment>
                     </Setting.Field>
 
-                    <Setting.Field annotations={selectedParameterIdentsAnnotation} stacked>
-                        <ParametersSelector
-                            allParameterIdents={intersectedParameterIdents}
-                            selectedParameterIdents={selectedParameterIdents.value ?? []}
-                            onChange={setSelectedParameterIdents}
-                            // The atom defaults to all parameters itself, and keeps a persisted or invalid selection
-                            selectAllUntilUserInteracts={false}
-                        />
-                    </Setting.Field>
+                    <ParametersSelector
+                        allParameterIdents={intersectedParameterIdents}
+                        selectedParameterIdents={selectedParameterIdents.value ?? []}
+                        onChange={setSelectedParameterIdents}
+                        // The atom defaults to all parameters itself, and keeps a persisted or invalid selection
+                        selectAllUntilUserInteracts={false}
+                        annotations={selectedParameterIdentsAnnotation}
+                    />
                 </Setting.Section>
                 <Setting.Section title="Plot" defaultOpen>
                     <Setting.Field label="Plot type">

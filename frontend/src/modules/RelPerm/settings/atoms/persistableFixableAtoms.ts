@@ -88,9 +88,19 @@ export const selectedSatnumsAtom = persistableFixableAtom<number[], number[]>({
 // A disabled or not yet resolved query is "blocked", not "loaded" - otherwise an atom settles before its options exist
 // (e.g. while the table definitions wait for a table name on first load) and keeps an empty value afterwards
 function computeTableNamesQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
-    return computeQueriesDependenciesState(get(relPermTableNamesQueriesAtom));
+    return computeQueriesDependenciesStateIgnoringFailedEnsembles(get(relPermTableNamesQueriesAtom));
 }
 
 function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
-    return computeQueriesDependenciesState(get(relPermTableDefinitionQueriesAtom));
+    return computeQueriesDependenciesStateIgnoringFailedEnsembles(get(relPermTableDefinitionQueriesAtom));
+}
+
+// The options only come from the ensembles whose queries succeeded (e.g. a query fails for an ensemble without relperm
+// data), so the dependencies only have an error when all queries failed - otherwise an invalid selection is not shown
+// as invalid as long as one of the selected ensembles has no data
+function computeQueriesDependenciesStateIgnoringFailedEnsembles(
+    queries: Parameters<typeof computeQueriesDependenciesState>[0],
+): PersistableAtomDependenciesState {
+    const queriesWithoutFailures = queries.filter((query) => !(query.isEnabled && query.isError));
+    return computeQueriesDependenciesState(queriesWithoutFailures.length > 0 ? queriesWithoutFailures : queries);
 }

@@ -5,6 +5,7 @@ import { isEqual } from "lodash-es";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
+import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 
@@ -20,6 +21,8 @@ type ParametersSelectorProps = {
      * selection that is persisted or kept when invalid, which this would overwrite. @default true
      */
     selectAllUntilUserInteracts?: boolean;
+    /** Annotations for the parameter selection, shown on the "Parameters" field. */
+    annotations?: SettingAnnotation[];
 };
 
 enum GroupType {
@@ -35,6 +38,7 @@ export function ParametersSelector({
     selectedParameterIdents,
     onChange,
     selectAllUntilUserInteracts = true,
+    annotations,
 }: ParametersSelectorProps): React.ReactNode {
     const [prevAllParameterIdents, setPrevAllParameterIdents] = React.useState(allParameterIdents);
     const [autoSelectAllOnGroupChange, setAutoSelectAllOnGroupChange] = React.useState<boolean>(true);
@@ -145,7 +149,7 @@ export function ParametersSelector({
                     showQuickSelectButtons
                 />
             </Setting.Field>
-            <Setting.Field label="Parameters" stacked>
+            <Setting.Field label="Parameters" stacked annotations={annotations}>
                 <div className="gap-y-xs flex flex-col">
                     <SwitchCompositions.WithLabel
                         label="Auto-select all on group change"

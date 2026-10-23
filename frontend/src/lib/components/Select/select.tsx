@@ -3,7 +3,7 @@ import React from "react";
 import { Close, Deselect, SelectAll } from "@mui/icons-material";
 import { isEqual } from "lodash-es";
 
-import { useFieldStateDataAttributes } from "@lib/components/Field";
+import { Field, useFieldStateDataAttributes } from "@lib/components/Field";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { withDefaults } from "../_shared/utils/defaultProps";
@@ -473,27 +473,30 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                 style={{ width: props.width, minWidth: props.width }}
             >
                 {defaultedProps.filter && (
-                    <TextInput
-                        id={props.id}
-                        type="text"
-                        value={filterString}
-                        onValueChange={handleFilterChange}
-                        placeholder={defaultedProps.filterPlaceholder}
-                        disabled={props.disabled}
-                        endAdornment={
-                            filterString && (
-                                <Button
-                                    variant="ghost"
-                                    size="small"
-                                    iconOnly
-                                    disabled={props.disabled}
-                                    onClick={() => handleFilterChange("")}
-                                >
-                                    <Close style={{ fontSize: 16 }} />
-                                </Button>
-                            )
-                        }
-                    />
+                    // The filter text can't be invalid - opt out of the invalid/warning state of an enclosing field
+                    <Field.Root inline>
+                        <TextInput
+                            id={props.id}
+                            type="text"
+                            value={filterString}
+                            onValueChange={handleFilterChange}
+                            placeholder={defaultedProps.filterPlaceholder}
+                            disabled={props.disabled}
+                            endAdornment={
+                                filterString && (
+                                    <Button
+                                        variant="ghost"
+                                        size="small"
+                                        iconOnly
+                                        disabled={props.disabled}
+                                        onClick={() => handleFilterChange("")}
+                                    >
+                                        <Close style={{ fontSize: 16 }} />
+                                    </Button>
+                                )
+                            }
+                        />
+                    </Field.Root>
                 )}
                 <div
                     className={resolveClassNames("form-element group w-full overflow-y-auto", {
