@@ -26,7 +26,7 @@ export type SerializedSettings = {
     showStatistics: boolean;
     showRealizations: boolean;
     showHistorical: boolean;
-    showTimestampMarker: boolean;
+    showTimestampMarker?: boolean;
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
@@ -39,6 +39,8 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         showStatistics: { type: "boolean" },
         showRealizations: { type: "boolean" },
         showHistorical: { type: "boolean" },
+    },
+    optionalProperties: {
         showTimestampMarker: { type: "boolean" },
     },
 }));

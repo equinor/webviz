@@ -29,7 +29,7 @@ export type SerializedSettings = {
     ensembleIdentStrings: string[] | null;
     showHistorical: boolean;
     showObservations: boolean;
-    showTimestampMarker: boolean;
+    showTimestampMarker?: boolean;
     selectedVectorTags: string[];
     colorRealizationsByParameter: boolean;
     selectedParameterIdentString: string | null;
@@ -47,13 +47,15 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         ensembleIdentStrings: { elements: { type: "string" }, nullable: true },
         showHistorical: { type: "boolean" },
         showObservations: { type: "boolean" },
-        showTimestampMarker: { type: "boolean" },
         selectedVectorTags: { elements: { type: "string" } },
         visualizationMode: { enum: Object.values(VisualizationMode) },
         colorRealizationsByParameter: { type: "boolean" },
         selectedParameterIdentString: { type: "string", nullable: true },
         individualStatisticsSelection: { elements: { enum: Object.values(StatisticFunction_api) } },
         fanchartStatisticsSelection: { elements: { enum: Object.values(FanchartStatisticOption) } },
+    },
+    optionalProperties: {
+        showTimestampMarker: { type: "boolean" },
     },
 }));
 
