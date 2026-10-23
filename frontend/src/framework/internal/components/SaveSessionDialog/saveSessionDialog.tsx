@@ -98,7 +98,8 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                 </Dialog.Header>
                 <Dialog.Body>
                     <Banner tone="warning" layoutClassName="mb-2xs">
-                        Sessions are not guaranteed to persist, as underlying data or module states may change.
+                        Saved sessions are not guaranteed to keep working, as underlying data or module states may
+                        change.
                     </Banner>
                     <form id={formId} className="gap-x-sm flex items-center" onSubmit={handleSave}>
                         <DashboardPreviewCarousel

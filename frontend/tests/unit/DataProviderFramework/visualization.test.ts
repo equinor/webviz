@@ -280,7 +280,7 @@ describe("Visualization assembly", () => {
 
         expect(describeStructure(product.children)).toEqual(["Surface"]);
         expect(product.aggregatedErrorMessages).toEqual([
-            "Outdated surface: Setting with key 'removedSetting' does not exist anymore. Cannot apply persisted value.",
+            "Outdated surface: Setting with key 'removedSetting' does not exist anymore. Cannot apply saved value.",
         ]);
     });
 
