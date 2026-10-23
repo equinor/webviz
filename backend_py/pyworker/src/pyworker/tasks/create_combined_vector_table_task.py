@@ -5,14 +5,14 @@ from azure.servicebus import ServiceBusReceivedMessage
 import pyarrow.parquet as pq
 
 from webviz_core_utils.perf_metrics import PerfMetrics
-from webviz_services.derived_smry_table.batch_aggregate import ensure_vectors_aggregated_async
-from webviz_services.derived_smry_table.create_derived_table import create_derived_smry_table_async
+from webviz_services.operations.combined_vector_table.batch_aggregate import ensure_vectors_aggregated_async
+from webviz_services.operations.combined_vector_table.create_derived_table import create_derived_smry_table_async
 from webviz_services.service_exceptions import ServiceLayerException
 from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
 from webviz_services.utils.sumo_blob_cache import OP_DERIVED_VEC_TABLE
 from webviz_services.utils.sumo_blob_cache import get_sumo_blob_cache_from_sumo_client, SumoBlobCache
 from webviz_services.utils.task_meta_tracker import TaskMetaTracker
-from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg
+from webviz_server_schemas.pyworker.messages import CreateCombinedVectorTableMsg
 
 from ..task_exceptions import MalformedMessageError, TaskFailedError, TaskInternalError, TaskTrackingError
 from ..task_runner import TaskSuccess
@@ -23,10 +23,10 @@ from ..utils import message_decryption
 _logger = logging.getLogger(__name__)
 
 
-def _parse_and_decrypt_sb_message(sb_msg: ServiceBusReceivedMessage) -> tuple[CreateDerivedSmryTableMsg, str]:
+def _parse_and_decrypt_sb_message(sb_msg: ServiceBusReceivedMessage) -> tuple[CreateCombinedVectorTableMsg, str]:
     try:
         body_bytes = b"".join(sb_msg.body)
-        msg = CreateDerivedSmryTableMsg.model_validate_json(body_bytes)
+        msg = CreateCombinedVectorTableMsg.model_validate_json(body_bytes)
     except Exception as exc:
         raise MalformedMessageError(f"Failed to parse message: {repr(exc)}") from exc
 
@@ -38,13 +38,13 @@ def _parse_and_decrypt_sb_message(sb_msg: ServiceBusReceivedMessage) -> tuple[Cr
     return msg, access_token
 
 
-async def create_derived_smry_table_task_async(
+async def create_combined_vector_table_task_async(
     task_tracker: TaskMetaTracker, sb_msg: ServiceBusReceivedMessage, abort_signal: AbortSignal
 ) -> TaskSuccess:
 
     perf_metrics = PerfMetrics()
 
-    _logger.info(f"Handling create-derived-smry-table message: {sb_msg.message_id=}, {sb_msg.sequence_number=}")
+    _logger.info(f"Handling create-combined-vector-table message: {sb_msg.message_id=}, {sb_msg.sequence_number=}")
 
     msg, access_token = _parse_and_decrypt_sb_message(sb_msg)
     task_id = msg.task_id
@@ -64,7 +64,7 @@ async def create_derived_smry_table_task_async(
     sumo_client = create_sumo_client(access_token)
     perf_metrics.record_lap("init")
 
-    await _update_status_msg_async("Creating derived summary table")
+    await _update_status_msg_async("Creating combined vector table")
 
     try:
         await ensure_vectors_aggregated_async(sumo_client, msg.case_uuid, msg.ensemble_name, None, msg.vector_names, progress_cb=_update_status_msg_async)

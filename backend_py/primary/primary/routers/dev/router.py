@@ -10,7 +10,8 @@ from opentelemetry import trace
 from cryptography.fernet import Fernet
 
 from webviz_core_utils.background_tasks import run_in_background_task
-from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg, DevTestMsg, WorkerOperation
+from webviz_server_schemas.pyworker.messages import DevTestMsg, WorkerOperation
+from webviz_server_schemas.pyworker.messages import CreateCombinedVectorTableMsg
 from webviz_services.user_session_manager.user_session_manager import UserSessionManager
 from webviz_services.user_session_manager.user_session_manager import UserComponent
 from webviz_services.user_session_manager.user_session_manager import _USER_SESSION_DEFS
@@ -400,7 +401,7 @@ async def get_send_sb_msg(
     _task_meta = await task_tracker.register_task_async(task_id=task_id, ttl_s=60, actual_start_time_utc_s=None, expected_store_key=None)
 
     with tracer.start_as_current_span("SubmitCreateDerivedSmryTableMsg", kind=trace.SpanKind.PRODUCER):
-        msg = CreateDerivedSmryTableMsg(
+        msg = CreateCombinedVectorTableMsg(
             user_id=user_id,
             task_id=task_id,
             case_uuid="485041ce-ad72-48a3-ac8c-484c0ed95cf8",
@@ -409,7 +410,7 @@ async def get_send_sb_msg(
             encrypted_access_token=encrypted_access_token,
         )
         
-        sb_msg = ServiceBusMessage(subject=WorkerOperation.CREATE_DERIVED_SMRY_TABLE, body=msg.model_dump_json())
+        sb_msg = ServiceBusMessage(subject=WorkerOperation.CREATE_COMBINED_VECTOR_TABLE, body=msg.model_dump_json())
         await message_bus.send_to_queue_async(queue_name=queue_name, message=sb_msg)
         perf_metrics.record_lap("send-msg")
         # LOGGER.info(f"Sent message CreateDerivedSmryTableMsg on service bus {sb_msg.message_id=}")

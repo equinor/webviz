@@ -674,12 +674,12 @@ from cryptography.fernet import Fernet
 from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user_id
 from webviz_services.utils.task_meta_tracker import TaskState
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
-from webviz_services.derived_smry_table.create_and_store_job import bgjob_create_and_store_derived_table_async
+from webviz_services.operations.combined_vector_table.create_and_store_job import bgjob_create_and_store_derived_table_async
 from webviz_services.utils.sumo_blob_cache import OP_DERIVED_VEC_TABLE
 from webviz_services.utils.sumo_blob_cache import get_sumo_blob_cache_from_access_token, SumoBlobCache
 from webviz_services.platform.message_bus import MessageBusSingleton, MessageBus
 from webviz_core_utils.background_tasks import run_in_background_task
-from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg, WorkerOperation
+from webviz_server_schemas.pyworker.messages import CreateCombinedVectorTableMsg, WorkerOperation
 
 from primary import config
 
@@ -764,7 +764,7 @@ async def get_derived_vector_table_hybrid(
 
         task_id = task_tracker.generate_task_id("dvt")
 
-        msg = CreateDerivedSmryTableMsg(
+        msg = CreateCombinedVectorTableMsg(
             user_id=user_id,
             task_id=task_id,
             case_uuid=case_uuid,
@@ -790,7 +790,7 @@ async def get_derived_vector_table_hybrid(
         # run_in_background_task(job_coro)
 
         message_bus: MessageBus = MessageBusSingleton.get_instance()
-        sb_msg = ServiceBusMessage(subject=WorkerOperation.CREATE_DERIVED_SMRY_TABLE, body=msg.model_dump_json())
+        sb_msg = ServiceBusMessage(subject=WorkerOperation.CREATE_COMBINED_VECTOR_TABLE, body=msg.model_dump_json())
         await message_bus.send_to_queue_async(queue_name=config.SERVICE_BUS_DEFAULT_QUEUE, message=sb_msg)
 
         new_task_was_submitted = True

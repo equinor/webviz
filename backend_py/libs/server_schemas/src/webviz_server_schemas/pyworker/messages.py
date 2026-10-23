@@ -16,7 +16,7 @@ NonEmptyList = Annotated[list[T], Len(min_length=1)]
 # These represent the possible values for the "subject" field in ServiceBus messages
 class WorkerOperation(StrEnum):
     DEV_TEST = "dev-test"
-    CREATE_DERIVED_SMRY_TABLE = "create-derived-smry-table"
+    CREATE_COMBINED_VECTOR_TABLE = "create-combined-vector-table"
 
 
 # Base class for tracked user tasks.
@@ -33,7 +33,7 @@ class DevTestMsg(BaseModel):
     sleep_duration_s: float
 
 
-class CreateDerivedSmryTableMsg(UserTaskMsgHeader):
+class CreateCombinedVectorTableMsg(UserTaskMsgHeader):
     case_uuid: NonEmptyStr
     ensemble_name: NonEmptyStr
     vector_names: NonEmptyList[NonEmptyStr]

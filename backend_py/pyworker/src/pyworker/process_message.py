@@ -14,7 +14,7 @@ from .utils.abort_signal import AbortSignal
 from .task_exceptions import TaskFailedError, TaskDeferredError, TaskAbortedError, TaskInternalError
 from .task_runner import run_tracked_user_task_async
 from .tasks.dev_test_task import dev_test_task_async
-from .tasks.create_derived_smry_table_task import create_derived_smry_table_task_async
+from .tasks.create_combined_vector_table_task import create_combined_vector_table_task_async
 
 _logger = logging.getLogger(__name__)
 _tracer = trace.get_tracer(__name__)
@@ -54,8 +54,8 @@ async def process_message_async(
                     case WorkerOperation.DEV_TEST:
                         await dev_test_task_async(msg)
 
-                    case WorkerOperation.CREATE_DERIVED_SMRY_TABLE:
-                        await run_tracked_user_task_async(msg, create_derived_smry_table_task_async, abort_signal, max_delivery_count)
+                    case WorkerOperation.CREATE_COMBINED_VECTOR_TABLE:
+                        await run_tracked_user_task_async(msg, create_combined_vector_table_task_async, abort_signal, max_delivery_count)
 
                     case _:
                         err_msg = f"Unknown worker operation: {worker_op}"
