@@ -16,7 +16,8 @@ from .batch_aggregate import ensure_vectors_aggregated_async
 LOGGER = logging.getLogger(__name__)
 
 
-async def bgjob_create_and_store_derived_table_async(user_id: str, task_id: str, sumo_access_token: str, case_uuid: str, ensemble_name: str, vector_names: list[str]) -> bool:
+# This function can be run as a background job in primary to facilitate development without going through ServiceBus
+async def bgjob_dev_create_combined_table_async(user_id: str, task_id: str, sumo_access_token: str, case_uuid: str, ensemble_name: str, vector_names: list[str]) -> bool:
     perf_metrics = PerfMetrics()
     log_prefix = f"##BGJOB-{task_id}: "
 
@@ -24,7 +25,7 @@ async def bgjob_create_and_store_derived_table_async(user_id: str, task_id: str,
     # Simulate a task pending delay
     await asyncio.sleep(5)
 
-    LOGGER.info(f"{log_prefix}Starting background job for creating derived summary table")
+    LOGGER.info(f"{log_prefix}Starting background job for creating combined table")
 
     task_tracker = get_task_meta_tracker_for_user_id(user_id)
     initial_task_meta = await task_tracker.get_task_meta_async(task_id)
@@ -38,7 +39,7 @@ async def bgjob_create_and_store_derived_table_async(user_id: str, task_id: str,
         await task_tracker.fail_task_async(task_id, status_msg="Internal error: missing expected_store_key in task meta")
         return False
 
-    await task_tracker.set_state_async(task_id, TaskState.RUNNING, status_msg="Creating derived summary table")
+    await task_tracker.set_state_async(task_id, TaskState.RUNNING, status_msg="Creating combined table")
 
     async def _update_status_msg_async(msg: str) -> None:
         LOGGER.info(f"{log_prefix} * {msg}")
@@ -54,7 +55,7 @@ async def bgjob_create_and_store_derived_table_async(user_id: str, task_id: str,
         derived_table_pa, derived_table_info = await create_combined_table_async(sumo_client, case_uuid, ensemble_name, None, vector_names, progress_cb=_update_status_msg_async)
         perf_metrics.record_lap("create-table")
 
-        await task_tracker.set_status_message_async(task_id, status_msg="Storing derived summary table")
+        await task_tracker.set_status_message_async(task_id, status_msg="Storing combined table")
 
         byte_stream = io.BytesIO()
         pq.write_table(derived_table_pa, byte_stream, compression="zstd")
@@ -66,11 +67,11 @@ async def bgjob_create_and_store_derived_table_async(user_id: str, task_id: str,
         await blob_cache.upload_reserved_blob_async(blob_sas_url, byte_stream.getvalue())
         perf_metrics.record_lap("write_cache")
 
-        await task_tracker.set_state_async(task_id, TaskState.SUCCEEDED, status_msg="Derived summary table ready")
-        LOGGER.info(f"{log_prefix}Finished creating and storing derived summary table in cache with key {cache_key}. Perf metrics: {perf_metrics.to_string()}")
+        await task_tracker.set_state_async(task_id, TaskState.SUCCEEDED, status_msg="Combined table ready")
+        LOGGER.info(f"{log_prefix}Finished creating and storing combined table in cache with key {cache_key}. Perf metrics: {perf_metrics.to_string()}")
         return True
 
     except Exception as e:
-        LOGGER.error(f"{log_prefix}Failed to create derived summary table: {e}")
-        await task_tracker.fail_task_async(task_id, status_msg="Failed to create derived summary table", internal_error_msg=repr(e))
+        LOGGER.error(f"{log_prefix}Failed to create combined table: {e}")
+        await task_tracker.fail_task_async(task_id, status_msg="Failed to create combined table", internal_error_msg=repr(e))
         raise

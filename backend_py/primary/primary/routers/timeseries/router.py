@@ -674,7 +674,7 @@ from cryptography.fernet import Fernet
 from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user_id
 from webviz_services.utils.task_meta_tracker import TaskState
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
-from webviz_services.operations.combined_vector_table.create_and_store_job import bgjob_create_and_store_derived_table_async
+from webviz_services.operations.combined_vector_table.bgjob_dev_create_combined_table import bgjob_dev_create_combined_table_async
 from webviz_services.utils.sumo_blob_cache import OP_COMBINED_VECTOR_TABLE
 from webviz_services.utils.sumo_blob_cache import get_sumo_blob_cache_from_access_token, SumoBlobCache
 from webviz_services.platform.message_bus import MessageBusSingleton, MessageBus
@@ -779,7 +779,7 @@ async def get_combined_vector_table_hybrid(
             ttl_s=5 * 60,
             expected_store_key=cache_key)
 
-        # job_coro = bgjob_create_and_store_derived_table_async(
+        # job_coro = bgjob_dev_create_combined_table_async(
         #     user_id=user_id,
         #     task_id=task_id,
         #     sumo_access_token=sumo_access_token,
@@ -929,7 +929,7 @@ async def get_calc_something_on_combined_table(
 
 async def _compute_table_handle_async(authenticated_user: AuthenticatedUser, case_uuid: str, ensemble_name: str, vector_names: list[str]) -> str:
     sorted_vector_names_str = ",".join(sorted(vector_names))
-    task_params_as_str = f"{case_uuid}:{ensemble_name}:{sorted_vector_names_str}_v3"
+    task_params_as_str = f"{case_uuid}:{ensemble_name}:{sorted_vector_names_str}"
 
     sumo_fingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=2 * 60)
     ensemble_fp = await sumo_fingerprinter.get_or_calc_ensemble_fp_async(case_uuid, ensemble_name)
