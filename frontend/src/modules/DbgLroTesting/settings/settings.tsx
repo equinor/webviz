@@ -5,16 +5,16 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useQuery, useQueryClient, FetchStatus } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 
-import type { Options, GetDerivedVectorTableHybridData_api } from "@api";
-import { getDerivedVectorTableHybrid, getDerivedVectorTableHybridQueryKey } from "@api";
+import type { Options, GetCombinedVectorTableHybridData_api } from "@api";
+import { getCombinedVectorTableHybrid, getCombinedVectorTableHybridQueryKey } from "@api";
 
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useLroProgress, wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
-import { getCalcSomethingOnDerivedTableOptions } from "@api";
-import { getDerivedTableInfoOptions } from "@api";
+import { getCalcSomethingOnCombinedTableOptions } from "@api";
+import { getCombinedTableInfoOptions } from "@api";
 
 import { Setting } from "@lib/components/Setting";
 import { Select } from "@lib/components/Select";
@@ -46,27 +46,27 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
     const setViewInputData = useSetAtom(viewInputDataAtom);
     const setViewDisplayableData = useSetAtom(viewDisplayableDataAtom);
 
-
-    const hybrid_apiFunctionArgs: Options<GetDerivedVectorTableHybridData_api, false> = {
+    
+    const hybrid_apiFunctionArgs: Options<GetCombinedVectorTableHybridData_api, false> = {
         query: {
             case_uuid: selectedEnsembleIdent.value?.getCaseUuid() ?? "DUMMY_CASE",
             ensemble_name: selectedEnsembleIdent.value?.getEnsembleName() ?? "DUMMY_ENSEMBLE",
             vector_names: selectedVectors,
         },
     };
-    const hybrid_derivedTableQueryKey = getDerivedVectorTableHybridQueryKey(hybrid_apiFunctionArgs);
-    const hybrid_derivedTableQueryOptions = wrapLongRunningQuery({
-        queryFn: getDerivedVectorTableHybrid,
+    const hybrid_combinedTableQueryKey = getCombinedVectorTableHybridQueryKey(hybrid_apiFunctionArgs);
+    const hybrid_combinedTableQueryOptions = wrapLongRunningQuery({
+        queryFn: getCombinedVectorTableHybrid,
         queryFnArgs: hybrid_apiFunctionArgs,
-        queryKey: hybrid_derivedTableQueryKey,
+        queryKey: hybrid_combinedTableQueryKey,
         delayBetweenPollsSecs: 0.5,
         maxTotalDurationSecs: 120,
     });
-    const hybrid_derivedTableQuery = useQuery({
-        ...hybrid_derivedTableQueryOptions,
+    const hybrid_combinedTableQuery = useQuery({
+        ...hybrid_combinedTableQueryOptions,
         enabled: selectedEnsembleIdent ? true : false,
     });
-    //console.log(`hybrQuery: isEnabled=${hybrid_derivedTableQuery.isEnabled}, isFetching=${hybrid_derivedTableQuery.isFetching}, status=${hybrid_derivedTableQuery.status}, fetchStatus=${hybrid_derivedTableQuery.fetchStatus}, error=${hybrid_derivedTableQuery.error}`);
+    //console.log(`hybrQuery: isEnabled=${hybrid_combinedTableQuery.isEnabled}, isFetching=${hybrid_combinedTableQuery.isFetching}, status=${hybrid_combinedTableQuery.status}, fetchStatus=${hybrid_combinedTableQuery.fetchStatus}, error=${hybrid_combinedTableQuery.error}`);
 
     function handleHybridProgress(progressMessage: string | null) {
         if (progressMessage) {
@@ -74,25 +74,25 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
             setHybridProgressText(progressMessage);
         }
     }
-    useLroProgress(hybrid_derivedTableQueryOptions.queryKey, handleHybridProgress);
+    useLroProgress(hybrid_combinedTableQueryOptions.queryKey, handleHybridProgress);
 
-    const isFetchingDerivedTableHandle = hybrid_derivedTableQuery.isFetching;
-    if (!isFetchingDerivedTableHandle && hybridProgressText) {
+    const isFetchingCombinedTableHandle = hybrid_combinedTableQuery.isFetching;
+    if (!isFetchingCombinedTableHandle && hybridProgressText) {
         setHybridProgressText(null);
     }
 
-    //const derivedTableHandle = hybrid_derivedTableQuery.isFetching ? null : (hybrid_derivedTableQuery.data?.table_handle ?? null);
-    const derivedTableHandle = hybrid_derivedTableQuery.data?.table_handle ?? null;
+    //const combinedTableHandle = hybrid_combinedTableQuery.isFetching ? null : (hybrid_combinedTableQuery.data?.table_handle ?? null);
+    const combinedTableHandle = hybrid_combinedTableQuery.data?.table_handle ?? null;
 
 
-    const infoQueryOptions = getDerivedTableInfoOptions({
+    const infoQueryOptions = getCombinedTableInfoOptions({
         query: {
-            table_handle: derivedTableHandle ?? "DUMMY",
+            table_handle: combinedTableHandle ?? "DUMMY",
         },
     });
     const infoQuery = useQuery({
         ...infoQueryOptions,
-        enabled: Boolean(derivedTableHandle),
+        enabled: Boolean(combinedTableHandle),
     });
     //console.log(`infoQuery: isEnabled=${infoQuery.isEnabled}, isFetching=${infoQuery.isFetching}, status=${infoQuery.status}, fetchStatus=${infoQuery.fetchStatus}, error=${infoQuery.error}`);
 
@@ -107,15 +107,15 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
     const infoDataStr = infoQuery.data ? JSON.stringify(infoQuery.data) : "N/A";
 
 
-    const calcQueryOptions = getCalcSomethingOnDerivedTableOptions({
+    const calcQueryOptions = getCalcSomethingOnCombinedTableOptions({
         query: {
-            table_handle: derivedTableHandle ?? "DUMMY",
+            table_handle: combinedTableHandle ?? "DUMMY",
             calculation_params: calculationParamString ?? "DUMMY",
         },
     });
     const calcQuery = useQuery({
         ...calcQueryOptions,
-        enabled: Boolean(derivedTableHandle && calculationParamString),
+        enabled: Boolean(combinedTableHandle && calculationParamString),
     });
     //console.log(`calcQuery: isEnabled=${calcQuery.isEnabled}, isFetching=${calcQuery.isFetching}, status=${calcQuery.status}, fetchStatus=${calcQuery.fetchStatus}, error=${calcQuery.error}`);
 
@@ -135,14 +135,14 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         console.log("calcQuery - HAS ERROR");
         const statusCode = calcQuery.error.response?.status;
         if (statusCode === 410) {
-            console.log("Calc query returned 410, refetching derived table ----------------------");
+            console.log("Calc query returned 410, refetching combined table ----------------------");
 
             // Notes:
             // * queryClient.invalidateQueries does not work here since it still lets TanStack Query return old/stale data
             // * queryClient.setQueryData with undefined does not work, it is a no-op (could set to null)
 
             // The fetchStatus: "idle" should help avoid race conditions
-            queryClient.resetQueries({ queryKey: hybrid_derivedTableQueryOptions.queryKey, exact: true, fetchStatus: "idle" });
+            queryClient.resetQueries({ queryKey: hybrid_combinedTableQueryOptions.queryKey, exact: true, fetchStatus: "idle" });
 
             // Take a look here:
             // https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientresetqueries
@@ -158,8 +158,8 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         function propagateChangesToDisplayableData() {
             let debugInfoStr = `Selected vectors: ${selectedVectors.length > 0 ? selectedVectors.join(", ") : "none"}`;
             setViewDisplayableData({
-                isFetchingDerivedTableHandle: isFetchingDerivedTableHandle,
-                hybridStatusStr: hybrid_derivedTableQuery.status,
+                isFetchingCombinedTableHandle: isFetchingCombinedTableHandle,
+                hybridStatusStr: hybrid_combinedTableQuery.status,
                 hybridProgressText: hybridProgressText,
                 isFetchingInfo: isFetchingInfo,
                 infoStatusStr: infoStatusStr,
@@ -172,7 +172,7 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         },
         [
             selectedVectors,
-            isFetchingDerivedTableHandle,
+            isFetchingCombinedTableHandle,
             hybridProgressText,
             isFetchingInfo,
             infoStatusStr,
@@ -188,11 +188,11 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         function propagateChangesToViewInputData() {
             setViewInputData({
                 ensembleIdent: selectedEnsembleIdent.value,
-                derivedTableHandle: derivedTableHandle,
+                combinedTableHandle: combinedTableHandle,
                 calculationParams: calculationParamString,
             });
         },
-        [selectedEnsembleIdent, derivedTableHandle, calculationParamString, setViewInputData],
+        [selectedEnsembleIdent, combinedTableHandle, calculationParamString, setViewInputData],
     );
 
     
@@ -208,15 +208,15 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         setSelectedVectors(newVectors);
     }
 
-    function handleRefetchDerivedTableHandle() {
-        console.debug(`handleRefetchDerivedTableHandle`);
-        queryClient.resetQueries({ queryKey: hybrid_derivedTableQueryOptions.queryKey, exact: true, fetchStatus: "idle" });
+    function handleRefetchCombinedTableHandle() {
+        console.debug(`handleRefetchCombinedTableHandle`);
+        queryClient.resetQueries({ queryKey: hybrid_combinedTableQueryOptions.queryKey, exact: true, fetchStatus: "idle" });
     }
 
-    async function handleRetryDerivedTableCreationTask() {
-        console.debug(`handleRetryDerivedTableCreationTask`);
-        await getDerivedVectorTableHybrid({ query: { ... hybrid_apiFunctionArgs.query, retry_creation_task: true } });
-        queryClient.resetQueries({ queryKey: hybrid_derivedTableQueryOptions.queryKey, exact: true, fetchStatus: "idle" });
+    async function handleRetryCombinedTableCreationTask() {
+        console.debug(`handleRetryCombinedTableCreationTask`);
+        await getCombinedVectorTableHybrid({ query: { ... hybrid_apiFunctionArgs.query, retry_creation_task: true } });
+        queryClient.resetQueries({ queryKey: hybrid_combinedTableQueryOptions.queryKey, exact: true, fetchStatus: "idle" });
     }
 
     return (
@@ -239,25 +239,25 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
                 />
             </Setting.Field>
 
-            <Setting.Field label="Derived table:" stacked={true}>
-                {derivedTableHandle ? (
-                    <div>Handle: {derivedTableHandle}</div>
-                ) : !derivedTableHandle && hybridProgressText ? (
+            <Setting.Field label="Combined table:" stacked={true}>
+                {combinedTableHandle ? (
+                    <div>Handle: {combinedTableHandle}</div>
+                ) : !combinedTableHandle && hybridProgressText ? (
                     <div>Progress: {hybridProgressText}</div>
                 ) : (
-                    <div>No derived table handle</div>
+                    <div>No combined table handle</div>
                 )}
             </Setting.Field>
 
             <Setting.Field label="" stacked={true}>
-                <Button size="small" onClick={handleRefetchDerivedTableHandle}>
-                    Refetch derived table handle
+                <Button size="small" onClick={handleRefetchCombinedTableHandle}>
+                    Refetch combined table handle
                 </Button>
             </Setting.Field>
 
             <Setting.Field label="" stacked={true}>
-                <Button size="small" onClick={handleRetryDerivedTableCreationTask}>
-                    Retry derived table creation task
+                <Button size="small" onClick={handleRetryCombinedTableCreationTask}>
+                    Retry combined table creation task
                 </Button>
             </Setting.Field>
 

@@ -235,6 +235,42 @@ export type CaseInfo_api = {
 };
 
 /**
+ * CombinedTableInfo
+ */
+export type CombinedTableInfo_api = {
+    /**
+     * Vector Names
+     */
+    vector_names: Array<string>;
+    /**
+     * Row Count
+     */
+    row_count: number;
+    /**
+     * Byte Size
+     */
+    byte_size: number | null;
+    /**
+     * Dbg Info
+     */
+    dbg_info: string | null;
+};
+
+/**
+ * CombinedTableResponse
+ */
+export type CombinedTableResponse_api = {
+    /**
+     * Table Handle
+     */
+    table_handle: string;
+    /**
+     * Dbg Info
+     */
+    dbg_info: string | null;
+};
+
+/**
  * Completions
  */
 export type Completions_api = {
@@ -273,42 +309,6 @@ export type DatedFlowNetwork_api = {
      */
     dates: Array<string>;
     network: NetworkNode_api;
-};
-
-/**
- * DerivedTableInfo
- */
-export type DerivedTableInfo_api = {
-    /**
-     * Vector Names
-     */
-    vector_names: Array<string>;
-    /**
-     * Row Count
-     */
-    row_count: number;
-    /**
-     * Byte Size
-     */
-    byte_size: number | null;
-    /**
-     * Dbg Info
-     */
-    dbg_info: string | null;
-};
-
-/**
- * DerivedTableResponse
- */
-export type DerivedTableResponse_api = {
-    /**
-     * Table Handle
-     */
-    table_handle: string;
-    /**
-     * Dbg Info
-     */
-    dbg_info: string | null;
 };
 
 /**
@@ -1090,14 +1090,14 @@ export type LroInProgressResp_api = {
 };
 
 /**
- * LroSuccessResp[DerivedTableResponse]
+ * LroSuccessResp[CombinedTableResponse]
  */
-export type LroSuccessRespDerivedTableResponse_api = {
+export type LroSuccessRespCombinedTableResponse_api = {
     /**
      * Response Type
      */
     response_type: "LroSuccessResp";
-    result: DerivedTableResponse_api;
+    result: CombinedTableResponse_api;
 };
 
 /**
@@ -4214,7 +4214,7 @@ export type GetStatisticalVectorDataPerSensitivityResponses_api = {
 export type GetStatisticalVectorDataPerSensitivityResponse_api =
     GetStatisticalVectorDataPerSensitivityResponses_api[keyof GetStatisticalVectorDataPerSensitivityResponses_api];
 
-export type GetDerivedVectorTableHybridData_api = {
+export type GetCombinedVectorTableHybridData_api = {
     body?: never;
     path?: never;
     query: {
@@ -4233,83 +4233,84 @@ export type GetDerivedVectorTableHybridData_api = {
         /**
          * Vector Names
          *
-         * List of vector names to include in the derived table
+         * List of vector names to include in the combined table
          */
         vector_names: Array<string>;
         /**
          * Retry Creation Task
          *
-         * Can be used to retry the derived table creation task
+         * Can be used to retry the table creation task
          */
         retry_creation_task?: boolean | null;
         _cacheBust?: string;
     };
-    url: "/timeseries/derived_vector_table_hybrid";
+    url: "/timeseries/combined_vector_table_hybrid";
 };
 
-export type GetDerivedVectorTableHybridErrors_api = {
+export type GetCombinedVectorTableHybridErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type GetDerivedVectorTableHybridError_api =
-    GetDerivedVectorTableHybridErrors_api[keyof GetDerivedVectorTableHybridErrors_api];
+export type GetCombinedVectorTableHybridError_api =
+    GetCombinedVectorTableHybridErrors_api[keyof GetCombinedVectorTableHybridErrors_api];
 
-export type GetDerivedVectorTableHybridResponses_api = {
+export type GetCombinedVectorTableHybridResponses_api = {
     /**
-     * Response Get Derived Vector Table Hybrid
+     * Response Get Combined Vector Table Hybrid
      *
      * Successful Response
      */
-    200: LroSuccessRespDerivedTableResponse_api | LroInProgressResp_api | LroFailureResp_api | LroCommandResp_api;
+    200: LroSuccessRespCombinedTableResponse_api | LroInProgressResp_api | LroFailureResp_api | LroCommandResp_api;
 };
 
-export type GetDerivedVectorTableHybridResponse_api =
-    GetDerivedVectorTableHybridResponses_api[keyof GetDerivedVectorTableHybridResponses_api];
+export type GetCombinedVectorTableHybridResponse_api =
+    GetCombinedVectorTableHybridResponses_api[keyof GetCombinedVectorTableHybridResponses_api];
 
-export type GetDerivedTableInfoData_api = {
+export type GetCombinedTableInfoData_api = {
     body?: never;
     path?: never;
     query: {
         /**
          * Table Handle
          *
-         * Handle for the derived table
+         * Handle for the combined table
          */
         table_handle: string;
         _cacheBust?: string;
     };
-    url: "/timeseries/derived_table_info";
+    url: "/timeseries/combined_table_info";
 };
 
-export type GetDerivedTableInfoErrors_api = {
+export type GetCombinedTableInfoErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type GetDerivedTableInfoError_api = GetDerivedTableInfoErrors_api[keyof GetDerivedTableInfoErrors_api];
+export type GetCombinedTableInfoError_api = GetCombinedTableInfoErrors_api[keyof GetCombinedTableInfoErrors_api];
 
-export type GetDerivedTableInfoResponses_api = {
+export type GetCombinedTableInfoResponses_api = {
     /**
      * Successful Response
      */
-    200: DerivedTableInfo_api;
+    200: CombinedTableInfo_api;
 };
 
-export type GetDerivedTableInfoResponse_api = GetDerivedTableInfoResponses_api[keyof GetDerivedTableInfoResponses_api];
+export type GetCombinedTableInfoResponse_api =
+    GetCombinedTableInfoResponses_api[keyof GetCombinedTableInfoResponses_api];
 
-export type GetCalcSomethingOnDerivedTableData_api = {
+export type GetCalcSomethingOnCombinedTableData_api = {
     body?: never;
     path?: never;
     query: {
         /**
          * Table Handle
          *
-         * Handle for the derived table to do some calculation on
+         * Handle to the combined table to do some calculation on
          */
         table_handle: string;
         /**
@@ -4320,30 +4321,30 @@ export type GetCalcSomethingOnDerivedTableData_api = {
         calculation_params: string;
         _cacheBust?: string;
     };
-    url: "/timeseries/calc_something_on_derived_table";
+    url: "/timeseries/calc_something_on_combined_table";
 };
 
-export type GetCalcSomethingOnDerivedTableErrors_api = {
+export type GetCalcSomethingOnCombinedTableErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type GetCalcSomethingOnDerivedTableError_api =
-    GetCalcSomethingOnDerivedTableErrors_api[keyof GetCalcSomethingOnDerivedTableErrors_api];
+export type GetCalcSomethingOnCombinedTableError_api =
+    GetCalcSomethingOnCombinedTableErrors_api[keyof GetCalcSomethingOnCombinedTableErrors_api];
 
-export type GetCalcSomethingOnDerivedTableResponses_api = {
+export type GetCalcSomethingOnCombinedTableResponses_api = {
     /**
-     * Response Get Calc Something On Derived Table
+     * Response Get Calc Something On Combined Table
      *
      * Successful Response
      */
     200: string;
 };
 
-export type GetCalcSomethingOnDerivedTableResponse_api =
-    GetCalcSomethingOnDerivedTableResponses_api[keyof GetCalcSomethingOnDerivedTableResponses_api];
+export type GetCalcSomethingOnCombinedTableResponse_api =
+    GetCalcSomethingOnCombinedTableResponses_api[keyof GetCalcSomethingOnCombinedTableResponses_api];
 
 export type GetInplaceTableDefinitionsData_api = {
     body?: never;

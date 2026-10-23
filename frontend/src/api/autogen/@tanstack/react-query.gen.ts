@@ -20,14 +20,14 @@ import {
     getAlive,
     getAliveProtected,
     getAssetInfos,
-    getCalcSomethingOnDerivedTable,
+    getCalcSomethingOnCombinedTable,
     getCases,
+    getCombinedTableInfo,
+    getCombinedVectorTableHybrid,
     getDeltaEnsembleRealizationsVectorData,
     getDeltaEnsembleStatisticalVectorData,
     getDeltaEnsembleVectorList,
     getDeltaSurfaceData,
-    getDerivedTableInfo,
-    getDerivedVectorTableHybrid,
     getDrilledWellboreHeaders,
     getEnsembleDetails,
     getFieldIdentifiers,
@@ -125,12 +125,18 @@ import type {
     GetAliveResponse_api,
     GetAssetInfosData_api,
     GetAssetInfosResponse_api,
-    GetCalcSomethingOnDerivedTableData_api,
-    GetCalcSomethingOnDerivedTableError_api,
-    GetCalcSomethingOnDerivedTableResponse_api,
+    GetCalcSomethingOnCombinedTableData_api,
+    GetCalcSomethingOnCombinedTableError_api,
+    GetCalcSomethingOnCombinedTableResponse_api,
     GetCasesData_api,
     GetCasesError_api,
     GetCasesResponse_api,
+    GetCombinedTableInfoData_api,
+    GetCombinedTableInfoError_api,
+    GetCombinedTableInfoResponse_api,
+    GetCombinedVectorTableHybridData_api,
+    GetCombinedVectorTableHybridError_api,
+    GetCombinedVectorTableHybridResponse_api,
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleRealizationsVectorDataError_api,
     GetDeltaEnsembleRealizationsVectorDataResponse_api,
@@ -143,12 +149,6 @@ import type {
     GetDeltaSurfaceDataData_api,
     GetDeltaSurfaceDataError_api,
     GetDeltaSurfaceDataResponse_api,
-    GetDerivedTableInfoData_api,
-    GetDerivedTableInfoError_api,
-    GetDerivedTableInfoResponse_api,
-    GetDerivedVectorTableHybridData_api,
-    GetDerivedVectorTableHybridError_api,
-    GetDerivedVectorTableHybridResponse_api,
     GetDrilledWellboreHeadersData_api,
     GetDrilledWellboreHeadersError_api,
     GetDrilledWellboreHeadersResponse_api,
@@ -813,21 +813,21 @@ export const getStatisticalVectorDataPerSensitivityOptions = (
         queryKey: getStatisticalVectorDataPerSensitivityQueryKey(options),
     });
 
-export const getDerivedVectorTableHybridQueryKey = (options: Options<GetDerivedVectorTableHybridData_api>) =>
-    createQueryKey("getDerivedVectorTableHybrid", options);
+export const getCombinedVectorTableHybridQueryKey = (options: Options<GetCombinedVectorTableHybridData_api>) =>
+    createQueryKey("getCombinedVectorTableHybrid", options);
 
 /**
- * Get Derived Vector Table Hybrid
+ * Get Combined Vector Table Hybrid
  */
-export const getDerivedVectorTableHybridOptions = (options: Options<GetDerivedVectorTableHybridData_api>) =>
+export const getCombinedVectorTableHybridOptions = (options: Options<GetCombinedVectorTableHybridData_api>) =>
     queryOptions<
-        GetDerivedVectorTableHybridResponse_api,
-        AxiosError<GetDerivedVectorTableHybridError_api>,
-        GetDerivedVectorTableHybridResponse_api,
-        ReturnType<typeof getDerivedVectorTableHybridQueryKey>
+        GetCombinedVectorTableHybridResponse_api,
+        AxiosError<GetCombinedVectorTableHybridError_api>,
+        GetCombinedVectorTableHybridResponse_api,
+        ReturnType<typeof getCombinedVectorTableHybridQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getDerivedVectorTableHybrid({
+            const { data } = await getCombinedVectorTableHybrid({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -835,24 +835,24 @@ export const getDerivedVectorTableHybridOptions = (options: Options<GetDerivedVe
             });
             return data;
         },
-        queryKey: getDerivedVectorTableHybridQueryKey(options),
+        queryKey: getCombinedVectorTableHybridQueryKey(options),
     });
 
-export const getDerivedTableInfoQueryKey = (options: Options<GetDerivedTableInfoData_api>) =>
-    createQueryKey("getDerivedTableInfo", options);
+export const getCombinedTableInfoQueryKey = (options: Options<GetCombinedTableInfoData_api>) =>
+    createQueryKey("getCombinedTableInfo", options);
 
 /**
- * Get Derived Table Info
+ * Get Combined Table Info
  */
-export const getDerivedTableInfoOptions = (options: Options<GetDerivedTableInfoData_api>) =>
+export const getCombinedTableInfoOptions = (options: Options<GetCombinedTableInfoData_api>) =>
     queryOptions<
-        GetDerivedTableInfoResponse_api,
-        AxiosError<GetDerivedTableInfoError_api>,
-        GetDerivedTableInfoResponse_api,
-        ReturnType<typeof getDerivedTableInfoQueryKey>
+        GetCombinedTableInfoResponse_api,
+        AxiosError<GetCombinedTableInfoError_api>,
+        GetCombinedTableInfoResponse_api,
+        ReturnType<typeof getCombinedTableInfoQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getDerivedTableInfo({
+            const { data } = await getCombinedTableInfo({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -860,24 +860,24 @@ export const getDerivedTableInfoOptions = (options: Options<GetDerivedTableInfoD
             });
             return data;
         },
-        queryKey: getDerivedTableInfoQueryKey(options),
+        queryKey: getCombinedTableInfoQueryKey(options),
     });
 
-export const getCalcSomethingOnDerivedTableQueryKey = (options: Options<GetCalcSomethingOnDerivedTableData_api>) =>
-    createQueryKey("getCalcSomethingOnDerivedTable", options);
+export const getCalcSomethingOnCombinedTableQueryKey = (options: Options<GetCalcSomethingOnCombinedTableData_api>) =>
+    createQueryKey("getCalcSomethingOnCombinedTable", options);
 
 /**
- * Get Calc Something On Derived Table
+ * Get Calc Something On Combined Table
  */
-export const getCalcSomethingOnDerivedTableOptions = (options: Options<GetCalcSomethingOnDerivedTableData_api>) =>
+export const getCalcSomethingOnCombinedTableOptions = (options: Options<GetCalcSomethingOnCombinedTableData_api>) =>
     queryOptions<
-        GetCalcSomethingOnDerivedTableResponse_api,
-        AxiosError<GetCalcSomethingOnDerivedTableError_api>,
-        GetCalcSomethingOnDerivedTableResponse_api,
-        ReturnType<typeof getCalcSomethingOnDerivedTableQueryKey>
+        GetCalcSomethingOnCombinedTableResponse_api,
+        AxiosError<GetCalcSomethingOnCombinedTableError_api>,
+        GetCalcSomethingOnCombinedTableResponse_api,
+        ReturnType<typeof getCalcSomethingOnCombinedTableQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getCalcSomethingOnDerivedTable({
+            const { data } = await getCalcSomethingOnCombinedTable({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -885,7 +885,7 @@ export const getCalcSomethingOnDerivedTableOptions = (options: Options<GetCalcSo
             });
             return data;
         },
-        queryKey: getCalcSomethingOnDerivedTableQueryKey(options),
+        queryKey: getCalcSomethingOnCombinedTableQueryKey(options),
     });
 
 export const getInplaceTableDefinitionsQueryKey = (options: Options<GetInplaceTableDefinitionsData_api>) =>

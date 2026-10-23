@@ -675,7 +675,7 @@ from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_us
 from webviz_services.utils.task_meta_tracker import TaskState
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
 from webviz_services.operations.combined_vector_table.create_and_store_job import bgjob_create_and_store_derived_table_async
-from webviz_services.utils.sumo_blob_cache import OP_DERIVED_VEC_TABLE
+from webviz_services.utils.sumo_blob_cache import OP_COMBINED_VECTOR_TABLE
 from webviz_services.utils.sumo_blob_cache import get_sumo_blob_cache_from_access_token, SumoBlobCache
 from webviz_services.platform.message_bus import MessageBusSingleton, MessageBus
 from webviz_core_utils.background_tasks import run_in_background_task
@@ -690,24 +690,24 @@ from .._shared.long_running_operations import LroInProgressResp, LroFailureResp,
 
 
 
-class DerivedTableResponse(BaseModel):
+class CombinedTableResponse(BaseModel):
     table_handle: str
     dbg_info: str | None
 
-@router.get("/derived_vector_table_hybrid")
-async def get_derived_vector_table_hybrid(
+@router.get("/combined_vector_table_hybrid")
+async def get_combined_vector_table_hybrid(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
-    vector_names: Annotated[list[str], Query(description="List of vector names to include in the derived table")],
-    retry_creation_task: Annotated[bool | None, Query(description="Can be used to retry the derived table creation task")] = None,
+    vector_names: Annotated[list[str], Query(description="List of vector names to include in the combined table")],
+    retry_creation_task: Annotated[bool | None, Query(description="Can be used to retry the table creation task")] = None,
     # fmt:on
-) -> LroSuccessResp[DerivedTableResponse] | LroInProgressResp | LroFailureResp | LroCommandResp:
+) -> LroSuccessResp[CombinedTableResponse] | LroInProgressResp | LroFailureResp | LroCommandResp:
     perf_metrics = ResponsePerfMetrics(response)
     dbg_prefix = "!!!!!!!!!! "
-    LOGGER.debug(f"{dbg_prefix}Received request for derived vector table with: {case_uuid=} {ensemble_name=} {retry_creation_task=} {vector_names=}")
+    LOGGER.debug(f"{dbg_prefix}Received request for combined vector table with: {case_uuid=} {ensemble_name=} {retry_creation_task=} {vector_names=}")
 
     # Create the deterministic table handle (also includes ensemble fingerprint)
     table_handle = await _compute_table_handle_async(authenticated_user, case_uuid, ensemble_name, vector_names)
@@ -728,7 +728,7 @@ async def get_derived_vector_table_hybrid(
         return LroCommandResp(command_ok=True)
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
-    blob_cache: SumoBlobCache = get_sumo_blob_cache_from_access_token(sumo_access_token, OP_DERIVED_VEC_TABLE)
+    blob_cache: SumoBlobCache = get_sumo_blob_cache_from_access_token(sumo_access_token, OP_COMBINED_VECTOR_TABLE)
     cache_key = blob_cache.compute_cache_key(table_handle)
 
     perf_metrics.record_lap("init")
@@ -744,8 +744,8 @@ async def get_derived_vector_table_hybrid(
         # If at some point in the future the table is pruned from the cache, we would like to create a new task anyway.
         await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
 
-        LOGGER.info(f"{dbg_prefix}Returning handle to derived table found in cache, timing: {perf_metrics.to_string()} [{table_handle=}, {cache_key=}]")
-        return LroSuccessResp(result=DerivedTableResponse(table_handle=table_handle, dbg_info="Got from cache"))
+        LOGGER.info(f"{dbg_prefix}Returning handle to combined table found in cache, timing: {perf_metrics.to_string()} [{table_handle=}, {cache_key=}]")
+        return LroSuccessResp(result=CombinedTableResponse(table_handle=table_handle, dbg_info="Got from cache"))
 
     task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
     perf_metrics.record_lap("task-meta")
@@ -794,7 +794,7 @@ async def get_derived_vector_table_hybrid(
         await message_bus.send_to_queue_async(queue_name=config.SERVICE_BUS_DEFAULT_QUEUE, message=sb_msg)
 
         new_task_was_submitted = True
-        LOGGER.info(f"{dbg_prefix}Submitted new task to create derived table [{table_handle=}, {task_meta.task_id=}]")
+        LOGGER.info(f"{dbg_prefix}Submitted new task to create combined table [{table_handle=}, {task_meta.task_id=}]")
         perf_metrics.record_lap("start-task")
 
     if task_meta.state == TaskState.SUCCEEDED:
@@ -806,7 +806,7 @@ async def get_derived_vector_table_hybrid(
             return LroFailureResp(error_message="Task succeeded but could not find result in cache")
 
         LOGGER.info(f"{dbg_prefix}Table creation task succeeded, timing {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]")
-        return LroSuccessResp(result=DerivedTableResponse(table_handle=table_handle, dbg_info="Task succeeded"))
+        return LroSuccessResp(result=CombinedTableResponse(table_handle=table_handle, dbg_info="Task succeeded"))
 
     if task_meta.state in [TaskState.FAILED, TaskState.CANCELLED]:
         LOGGER.error(f"{dbg_prefix}Table creation task failed, msg: {task_meta.status_message} [{table_handle=}, {task_meta.task_id=}]")
@@ -830,32 +830,32 @@ async def get_derived_vector_table_hybrid(
 
 
 
-class DerivedTableInfo(BaseModel):
+class CombinedTableInfo(BaseModel):
     vector_names: list[str]
     row_count: int
     byte_size: int | None
     dbg_info: str | None
 
-@router.get("/derived_table_info")
-async def get_derived_table_info(
+@router.get("/combined_table_info")
+async def get_combined_table_info(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    table_handle: Annotated[str, Query(description="Handle for the derived table")],
+    table_handle: Annotated[str, Query(description="Handle for the combined table")],
     # fmt:on
-) -> DerivedTableInfo:
+) -> CombinedTableInfo:
     perf_metrics = ResponsePerfMetrics(response)
     dbg_prefix = "info!!!!!! "
-    LOGGER.debug(f"{dbg_prefix}Received request for derived table info: {table_handle=}")
+    LOGGER.debug(f"{dbg_prefix}Received request for combined table info: {table_handle=}")
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
-    blob_cache: SumoBlobCache = get_sumo_blob_cache_from_access_token(sumo_access_token, OP_DERIVED_VEC_TABLE)
+    blob_cache: SumoBlobCache = get_sumo_blob_cache_from_access_token(sumo_access_token, OP_COMBINED_VECTOR_TABLE)
     cache_key = blob_cache.compute_cache_key(table_handle)
     perf_metrics.record_lap("init")
 
     blob_sas_url = await blob_cache.resolve_cache_entry_async(cache_key)
     if not blob_sas_url:
-        raise HTTPException(status_code=410, detail="Derived table not found in cache")
+        raise HTTPException(status_code=410, detail="Combined table not found in cache")
     perf_metrics.record_lap("resolve-cache")
 
 
@@ -880,7 +880,7 @@ async def get_derived_table_info(
     table_blob_bytes = await blob_cache.download_resolved_blob_async(blob_sas_url)
     perf_metrics.record_lap("download-blob")
     if not table_blob_bytes:
-        raise HTTPException(status_code=410, detail="Could not download derived table from blob storage")
+        raise HTTPException(status_code=410, detail="Could not download combined table from blob storage")
 
     pq_table = pq.read_table(pa.BufferReader(table_blob_bytes))
     # LOGGER.debug(f"{dbg_prefix}Read table from blob cache, got schema:\n{pq_table.schema}")
@@ -893,37 +893,37 @@ async def get_derived_table_info(
     blob_size_bytes = len(table_blob_bytes)
     LOGGER.debug(f"{dbg_prefix}Sizes: {row_count=}, {blob_size_bytes=}")
 
-    LOGGER.info(f"{dbg_prefix}Got info on derived table, timing: {perf_metrics.to_string()} ({table_handle=})")
-    return DerivedTableInfo(vector_names=vector_names, row_count=row_count, byte_size=blob_size_bytes, dbg_info=f"Timing: {perf_metrics.to_string()}")
+    LOGGER.info(f"{dbg_prefix}Got info on combined table, timing: {perf_metrics.to_string()} ({table_handle=})")
+    return CombinedTableInfo(vector_names=vector_names, row_count=row_count, byte_size=blob_size_bytes, dbg_info=f"Timing: {perf_metrics.to_string()}")
 
 
 
-@router.get("/calc_something_on_derived_table")
-async def get_calc_something_on_derived_table(
+@router.get("/calc_something_on_combined_table")
+async def get_calc_something_on_combined_table(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    table_handle: Annotated[str, Query(description="Handle for the derived table to do some calculation on")],
+    table_handle: Annotated[str, Query(description="Handle to the combined table to do some calculation on")],
     calculation_params: Annotated[str, Query(description="Some parameter for the calculation")],
     # fmt:on
 ) -> str:
     perf_metrics = ResponsePerfMetrics(response)
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
-    blob_cache: SumoBlobCache = get_sumo_blob_cache_from_access_token(sumo_access_token, OP_DERIVED_VEC_TABLE)
+    blob_cache: SumoBlobCache = get_sumo_blob_cache_from_access_token(sumo_access_token, OP_COMBINED_VECTOR_TABLE)
     cache_key = blob_cache.compute_cache_key(table_handle)
     perf_metrics.record_lap("init")
 
     table_blob = await blob_cache.get_bytes_async(cache_key)
     perf_metrics.record_lap("get-from-cache")
     if not table_blob:
-        raise HTTPException(status_code=410, detail="Derived table not found in cache")
+        raise HTTPException(status_code=410, detail="Combined table not found in cache")
 
     pq_table = pq.read_table(pa.BufferReader(table_blob))
 
-    LOGGER.info(f"Did calculation on derived table blob from cache, timing: {perf_metrics.to_string()} ({table_handle=}, {calculation_params=})")
+    LOGGER.info(f"Did calculation on combined table blob from cache, timing: {perf_metrics.to_string()} ({table_handle=}, {calculation_params=})")
 
-    return f"Did some calculation on derived table, timing: {perf_metrics.to_string()} ({table_handle=}, {calculation_params=})"
+    return f"Did some calculation on combined table, timing: {perf_metrics.to_string()} ({table_handle=}, {calculation_params=})"
 
 
 

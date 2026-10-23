@@ -16,7 +16,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, kw_only=True)
-class DerivedTableInfo:
+class CombinedTableInfo:
     vector_names: list[str]
     source_obj_uuids: list[str]
 
@@ -30,7 +30,7 @@ class _TableItem:
 
 ProgressMsgCallback = Callable[[str], Awaitable[None]]
 
-async def create_derived_smry_table_async(sumo_client: SumoClient, case_uuid: str, ensemble_name: str, table_name: str | None, vector_names: list[str], progress_cb: ProgressMsgCallback) -> tuple[pa.Table, DerivedTableInfo]:
+async def create_combined_table_async(sumo_client: SumoClient, case_uuid: str, ensemble_name: str, table_name: str | None, vector_names: list[str], progress_cb: ProgressMsgCallback) -> tuple[pa.Table, CombinedTableInfo]:
 
     sc_basis = SearchContext(sumo=sumo_client).tables.filter(
         uuid=case_uuid,
@@ -112,7 +112,7 @@ async def create_derived_smry_table_async(sumo_client: SumoClient, case_uuid: st
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!
     if "FGIP" in vector_names:
         LOGGER.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        LOGGER.error("!!!!!!!!!!Injecting dummy error for vector to test error handling in derived table creation")
+        LOGGER.error("!!!!!!!!!!Injecting dummy error for vector to test error handling in combined table creation")
         LOGGER.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         raise InvalidDataError("DUMMY ERROR", Service.SUMO)
 
@@ -124,7 +124,7 @@ async def create_derived_smry_table_async(sumo_client: SumoClient, case_uuid: st
         src_table = table_arr[i].table
         merged_table = merged_table.append_column(src_table.field(vec_name), src_table.column(vec_name))
 
-    info = DerivedTableInfo(
+    info = CombinedTableInfo(
         vector_names=[holder.vec_name for holder in table_arr],
         source_obj_uuids=[holder.obj_uuid for holder in table_arr],
     )

@@ -400,7 +400,7 @@ async def get_send_sb_msg(
     task_id = task_tracker.generate_task_id("tst")
     _task_meta = await task_tracker.register_task_async(task_id=task_id, ttl_s=60, actual_start_time_utc_s=None, expected_store_key=None)
 
-    with tracer.start_as_current_span("SubmitCreateDerivedSmryTableMsg", kind=trace.SpanKind.PRODUCER):
+    with tracer.start_as_current_span("SubmitCreateCombinedVectorTableMsg", kind=trace.SpanKind.PRODUCER):
         msg = CreateCombinedVectorTableMsg(
             user_id=user_id,
             task_id=task_id,
@@ -413,8 +413,8 @@ async def get_send_sb_msg(
         sb_msg = ServiceBusMessage(subject=WorkerOperation.CREATE_COMBINED_VECTOR_TABLE, body=msg.model_dump_json())
         await message_bus.send_to_queue_async(queue_name=queue_name, message=sb_msg)
         perf_metrics.record_lap("send-msg")
-        # LOGGER.info(f"Sent message CreateDerivedSmryTableMsg on service bus {sb_msg.message_id=}")
-        # return f"Sent message CreateDerivedSmryTableMsg on service bus {sb_msg.message_id=} in {perf_metrics.to_string()}"
+        # LOGGER.info(f"Sent message CreateCombinedVectorTableMsg on service bus {sb_msg.message_id=}")
+        # return f"Sent message CreateCombinedVectorTableMsg on service bus {sb_msg.message_id=} in {perf_metrics.to_string()}"
 
     while True:
         task_meta = await task_tracker.get_task_meta_async(task_id)

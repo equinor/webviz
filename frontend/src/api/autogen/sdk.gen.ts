@@ -26,12 +26,18 @@ import type {
     GetAliveResponses_api,
     GetAssetInfosData_api,
     GetAssetInfosResponses_api,
-    GetCalcSomethingOnDerivedTableData_api,
-    GetCalcSomethingOnDerivedTableErrors_api,
-    GetCalcSomethingOnDerivedTableResponses_api,
+    GetCalcSomethingOnCombinedTableData_api,
+    GetCalcSomethingOnCombinedTableErrors_api,
+    GetCalcSomethingOnCombinedTableResponses_api,
     GetCasesData_api,
     GetCasesErrors_api,
     GetCasesResponses_api,
+    GetCombinedTableInfoData_api,
+    GetCombinedTableInfoErrors_api,
+    GetCombinedTableInfoResponses_api,
+    GetCombinedVectorTableHybridData_api,
+    GetCombinedVectorTableHybridErrors_api,
+    GetCombinedVectorTableHybridResponses_api,
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleRealizationsVectorDataErrors_api,
     GetDeltaEnsembleRealizationsVectorDataResponses_api,
@@ -44,12 +50,6 @@ import type {
     GetDeltaSurfaceDataData_api,
     GetDeltaSurfaceDataErrors_api,
     GetDeltaSurfaceDataResponses_api,
-    GetDerivedTableInfoData_api,
-    GetDerivedTableInfoErrors_api,
-    GetDerivedTableInfoResponses_api,
-    GetDerivedVectorTableHybridData_api,
-    GetDerivedVectorTableHybridErrors_api,
-    GetDerivedVectorTableHybridResponses_api,
     GetDrilledWellboreHeadersData_api,
     GetDrilledWellboreHeadersErrors_api,
     GetDrilledWellboreHeadersResponses_api,
@@ -547,46 +547,50 @@ export const getStatisticalVectorDataPerSensitivity = <ThrowOnError extends bool
     });
 
 /**
- * Get Derived Vector Table Hybrid
+ * Get Combined Vector Table Hybrid
  */
-export const getDerivedVectorTableHybrid = <ThrowOnError extends boolean = false>(
-    options: Options<GetDerivedVectorTableHybridData_api, ThrowOnError>,
-): RequestResult<GetDerivedVectorTableHybridResponses_api, GetDerivedVectorTableHybridErrors_api, ThrowOnError> =>
+export const getCombinedVectorTableHybrid = <ThrowOnError extends boolean = false>(
+    options: Options<GetCombinedVectorTableHybridData_api, ThrowOnError>,
+): RequestResult<GetCombinedVectorTableHybridResponses_api, GetCombinedVectorTableHybridErrors_api, ThrowOnError> =>
     (options.client ?? client).get<
-        GetDerivedVectorTableHybridResponses_api,
-        GetDerivedVectorTableHybridErrors_api,
+        GetCombinedVectorTableHybridResponses_api,
+        GetCombinedVectorTableHybridErrors_api,
         ThrowOnError
     >({
         responseType: "json",
-        url: "/timeseries/derived_vector_table_hybrid",
+        url: "/timeseries/combined_vector_table_hybrid",
         ...options,
     });
 
 /**
- * Get Derived Table Info
+ * Get Combined Table Info
  */
-export const getDerivedTableInfo = <ThrowOnError extends boolean = false>(
-    options: Options<GetDerivedTableInfoData_api, ThrowOnError>,
-): RequestResult<GetDerivedTableInfoResponses_api, GetDerivedTableInfoErrors_api, ThrowOnError> =>
-    (options.client ?? client).get<GetDerivedTableInfoResponses_api, GetDerivedTableInfoErrors_api, ThrowOnError>({
+export const getCombinedTableInfo = <ThrowOnError extends boolean = false>(
+    options: Options<GetCombinedTableInfoData_api, ThrowOnError>,
+): RequestResult<GetCombinedTableInfoResponses_api, GetCombinedTableInfoErrors_api, ThrowOnError> =>
+    (options.client ?? client).get<GetCombinedTableInfoResponses_api, GetCombinedTableInfoErrors_api, ThrowOnError>({
         responseType: "json",
-        url: "/timeseries/derived_table_info",
+        url: "/timeseries/combined_table_info",
         ...options,
     });
 
 /**
- * Get Calc Something On Derived Table
+ * Get Calc Something On Combined Table
  */
-export const getCalcSomethingOnDerivedTable = <ThrowOnError extends boolean = false>(
-    options: Options<GetCalcSomethingOnDerivedTableData_api, ThrowOnError>,
-): RequestResult<GetCalcSomethingOnDerivedTableResponses_api, GetCalcSomethingOnDerivedTableErrors_api, ThrowOnError> =>
+export const getCalcSomethingOnCombinedTable = <ThrowOnError extends boolean = false>(
+    options: Options<GetCalcSomethingOnCombinedTableData_api, ThrowOnError>,
+): RequestResult<
+    GetCalcSomethingOnCombinedTableResponses_api,
+    GetCalcSomethingOnCombinedTableErrors_api,
+    ThrowOnError
+> =>
     (options.client ?? client).get<
-        GetCalcSomethingOnDerivedTableResponses_api,
-        GetCalcSomethingOnDerivedTableErrors_api,
+        GetCalcSomethingOnCombinedTableResponses_api,
+        GetCalcSomethingOnCombinedTableErrors_api,
         ThrowOnError
     >({
         responseType: "json",
-        url: "/timeseries/calc_something_on_derived_table",
+        url: "/timeseries/calc_something_on_combined_table",
         ...options,
     });
 

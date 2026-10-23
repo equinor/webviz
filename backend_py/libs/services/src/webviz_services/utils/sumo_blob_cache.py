@@ -35,7 +35,7 @@ class VersionedOperation:
 # to the code that defines and uses them to make it easier and less error-prone to maintain,
 # especially when the operation definitions evolve over time.
 OP_GENERAL = VersionedOperation("general", 1)
-OP_DERIVED_VEC_TABLE = VersionedOperation("derivedVecTable", 1)
+OP_COMBINED_VECTOR_TABLE = VersionedOperation("combinedVecTable", 1)
 OP_QC_CHECKS = VersionedOperation("qcChecks", 1)
 
 

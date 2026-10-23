@@ -11,11 +11,11 @@ export function DbgLroTestingView(props: ModuleViewProps<Interfaces>): React.Rea
     const viewInputData = props.viewContext.useSettingsToViewInterfaceValue("viewInputData");
 
     const statusWriter = useViewStatusWriter(props.viewContext);
-    statusWriter.setLoading((displayableData?.isFetchingDerivedTableHandle || displayableData?.isFetchingInfo || displayableData?.isFetchingCalc) ?? false);
+    statusWriter.setLoading((displayableData?.isFetchingCombinedTableHandle || displayableData?.isFetchingInfo || displayableData?.isFetchingCalc) ?? false);
 
     const caseUuid = viewInputData?.ensembleIdent ? viewInputData.ensembleIdent.getCaseUuid() : null;
     const ensembleName = viewInputData?.ensembleIdent ? viewInputData.ensembleIdent.getEnsembleName() : null;
-    const derivedTableHandle = viewInputData?.derivedTableHandle ?? null;
+    const combinedTableHandle = viewInputData?.combinedTableHandle ?? null;
     const calculationParams = viewInputData?.calculationParams ?? null;
 
     const debugInfoStr = displayableData ? displayableData.debugInfoStr : "N/A";
@@ -28,14 +28,14 @@ export function DbgLroTestingView(props: ModuleViewProps<Interfaces>): React.Rea
                 <tbody>
                     {makeTableRow("caseUuid", caseUuid ?? "N/A")}
                     {makeTableRow("ensembleName", ensembleName ?? "N/A")}
-                    {makeTableRow("derivedTableHandle", derivedTableHandle ?? "N/A")}
+                    {makeTableRow("combinedTableHandle", combinedTableHandle ?? "N/A")}
                     {makeTableRow("calculationParams", calculationParams ?? "N/A")}
                 </tbody>
             </table>
 
             <br />
             <b>Table handle:</b>
-            IsFetching: {displayableData?.isFetchingDerivedTableHandle ? "yes" : "no"}
+            IsFetching: {displayableData?.isFetchingCombinedTableHandle ? "yes" : "no"}
             <br />
             Status: {displayableData?.hybridStatusStr ?? "--"}
             <br />

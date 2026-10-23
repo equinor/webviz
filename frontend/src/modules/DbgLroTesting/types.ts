@@ -2,7 +2,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 
 export interface ViewDisplayableData {
-    isFetchingDerivedTableHandle: boolean;
+    isFetchingCombinedTableHandle: boolean;
     hybridStatusStr: string | null;
     hybridProgressText: string | null;
 
@@ -19,6 +19,6 @@ export interface ViewDisplayableData {
 
 export interface ViewInputData {
     ensembleIdent: RegularEnsembleIdent | null;
-    derivedTableHandle: string | null;
+    combinedTableHandle: string | null;
     calculationParams: string | null;
 }

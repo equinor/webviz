@@ -7,10 +7,10 @@ import pyarrow.parquet as pq
 from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
 from webviz_services.utils.task_meta_tracker import TaskState, get_task_meta_tracker_for_user_id
-from webviz_services.utils.sumo_blob_cache import OP_DERIVED_VEC_TABLE
+from webviz_services.utils.sumo_blob_cache import OP_COMBINED_VECTOR_TABLE
 from webviz_services.utils.sumo_blob_cache import get_sumo_blob_cache_from_sumo_client, SumoBlobCache
 
-from .create_derived_table import create_derived_smry_table_async
+from .create_combined_table import create_combined_table_async
 from .batch_aggregate import ensure_vectors_aggregated_async
 
 LOGGER = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ async def bgjob_create_and_store_derived_table_async(user_id: str, task_id: str,
         await ensure_vectors_aggregated_async(sumo_client, case_uuid, ensemble_name, None, vector_names, progress_cb=_update_status_msg_async)
         perf_metrics.record_lap("ensure-aggregated")
 
-        derived_table_pa, derived_table_info = await create_derived_smry_table_async(sumo_client, case_uuid, ensemble_name, None, vector_names, progress_cb=_update_status_msg_async)
+        derived_table_pa, derived_table_info = await create_combined_table_async(sumo_client, case_uuid, ensemble_name, None, vector_names, progress_cb=_update_status_msg_async)
         perf_metrics.record_lap("create-table")
 
         await task_tracker.set_status_message_async(task_id, status_msg="Storing derived summary table")
@@ -60,7 +60,7 @@ async def bgjob_create_and_store_derived_table_async(user_id: str, task_id: str,
         pq.write_table(derived_table_pa, byte_stream, compression="zstd")
         byte_stream.seek(0)
 
-        blob_cache: SumoBlobCache = get_sumo_blob_cache_from_sumo_client(sumo_client, OP_DERIVED_VEC_TABLE)
+        blob_cache: SumoBlobCache = get_sumo_blob_cache_from_sumo_client(sumo_client, OP_COMBINED_VECTOR_TABLE)
         blob_size = byte_stream.getbuffer().nbytes
         blob_sas_url = await blob_cache.reserve_cache_entry_async(cache_key, source_obj_uuids=derived_table_info.source_obj_uuids, blob_size=blob_size)
         await blob_cache.upload_reserved_blob_async(blob_sas_url, byte_stream.getvalue())
