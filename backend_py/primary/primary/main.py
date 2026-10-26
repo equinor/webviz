@@ -17,7 +17,6 @@ from webviz_services.sumo_access.sumo_fingerprinter import SumoFingerprinterFact
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
 from webviz_services.utils.sumo_blob_cache import SumoBlobCacheFactory
-from webviz_services.utils.user_cache import UserCacheFactory
 from webviz_services.platform.azure_credentials import create_azure_credential
 from webviz_services.platform.azure_credentials import log_azure_credential_env_var_status
 from webviz_services.platform.message_bus import MessageBusSingleton
@@ -71,7 +70,6 @@ logging.getLogger("webviz_services.ssdl_access").setLevel(logging.DEBUG)
 logging.getLogger("webviz_services.user_grid3d_service").setLevel(logging.DEBUG)
 logging.getLogger("webviz_services.surface_query_service").setLevel(logging.DEBUG)
 logging.getLogger("webviz_services.utils.sumo_blob_cache").setLevel(logging.DEBUG)
-logging.getLogger("webviz_services.derived_smry_table").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
@@ -141,8 +139,6 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
         SumoBlobCacheFactory.initialize_from_radix_env()
     else:
         SumoBlobCacheFactory.initialize_for_local_dev()
-
-    UserCacheFactory.initialize(use_shared_client=True, redis_url=config.REDIS_CACHE_URL)
 
     if azure_credential is not None:
         TutorialMediaSignerSingleton.initialize(credential=azure_credential)
