@@ -20,7 +20,7 @@ import type {
     CustomGroupImplementation,
     CustomGroupImplementationWithSettings,
 } from "../interfacesAndTypes/customGroupImplementation";
-import { instanceofItemGroup, type ItemGroup } from "../interfacesAndTypes/entities";
+import { instanceofItemGroup } from "../interfacesAndTypes/entities";
 import type { StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { Settings } from "../settings/settingsDefinitions";
@@ -211,35 +211,18 @@ export class VisualizationAssembler<
         }
     }
 
-    private makeRecursively(
+    /*
+     * Collects the groups and data providers on the level of the given group delegate. Context boundaries only scope
+     * settings, so their items are collected as if they were on the level of the boundary itself - e.g. a provider in a
+     * boundary is passed down into the views next to it, just like a provider outside of it.
+     */
+    private collectLevelItemsRecursively(
         groupDelegate: GroupDelegate,
-        inheritedDataProviders: DataProvider<any, any, any>[],
-        accumulatedData: TAccumulatedData,
-        isRestoringState: boolean,
-        injectedData?: TInjectedData,
-    ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
-        const children: (
-            | VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>
-            | DataProviderVisualization<TTarget>
-        )[] = [];
-        const annotations: Annotation[] = [];
-        const aggregatedErrorMessages: (StatusMessage | string)[] = [];
-        const allItemIds = new Set<string>();
-        let hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget> = {};
-        let numLoadingDataProviders = 0;
-        let numDataProviders = 0;
-        let combinedBoundingBox: bbox.BBox | null = null;
-
-        const itemGroups: ItemGroup[] = [];
-        const dataProviders: DataProvider<any, any, any>[] = [];
-
-        const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
-            if (boundingBox) {
-                combinedBoundingBox =
-                    combinedBoundingBox === null ? boundingBox : bbox.combine(boundingBox, combinedBoundingBox);
-            }
-        };
-
+        allItemIds: Set<string>,
+        aggregatedErrorMessages: (StatusMessage | string)[],
+        groups: Group<any>[],
+        dataProviders: DataProvider<any, any, any>[],
+    ): void {
         for (const child of groupDelegate.getChildren()) {
             // Register item id
             allItemIds.add(child.getItemDelegate().getId());
@@ -267,18 +250,56 @@ export class VisualizationAssembler<
                 continue;
             }
 
-            if (instanceofItemGroup(child)) {
-                itemGroups.push(child);
-            }
-
-            if (child instanceof DataProvider) {
+            if (child instanceof Group) {
+                groups.push(child);
+            } else if (instanceofItemGroup(child)) {
+                this.collectLevelItemsRecursively(
+                    child.getGroupDelegate(),
+                    allItemIds,
+                    aggregatedErrorMessages,
+                    groups,
+                    dataProviders,
+                );
+            } else if (child instanceof DataProvider) {
                 dataProviders.push(child);
             }
         }
+    }
 
-        for (const itemGroup of itemGroups) {
+    private makeRecursively(
+        groupDelegate: GroupDelegate,
+        inheritedDataProviders: DataProvider<any, any, any>[],
+        accumulatedData: TAccumulatedData,
+        isRestoringState: boolean,
+        injectedData?: TInjectedData,
+    ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
+        const children: (
+            | VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>
+            | DataProviderVisualization<TTarget>
+        )[] = [];
+        const annotations: Annotation[] = [];
+        const aggregatedErrorMessages: (StatusMessage | string)[] = [];
+        const allItemIds = new Set<string>();
+        let hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget> = {};
+        let numLoadingDataProviders = 0;
+        let numDataProviders = 0;
+        let combinedBoundingBox: bbox.BBox | null = null;
+
+        const groups: Group<any>[] = [];
+        const dataProviders: DataProvider<any, any, any>[] = [];
+
+        const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
+            if (boundingBox) {
+                combinedBoundingBox =
+                    combinedBoundingBox === null ? boundingBox : bbox.combine(boundingBox, combinedBoundingBox);
+            }
+        };
+
+        this.collectLevelItemsRecursively(groupDelegate, allItemIds, aggregatedErrorMessages, groups, dataProviders);
+
+        for (const group of groups) {
             const product = this.makeRecursively(
-                itemGroup.getGroupDelegate(),
+                group.getGroupDelegate(),
                 [...inheritedDataProviders, ...dataProviders],
                 accumulatedData,
                 isRestoringState,
@@ -301,23 +322,10 @@ export class VisualizationAssembler<
             numDataProviders += product.numDataProviders;
             maybeApplyBoundingBox(product.combinedBoundingBox);
 
-            if (itemGroup instanceof Group) {
-                const group = this.makeGroup(itemGroup, product);
-
-                children.push(group);
-                continue;
-            } else {
-                annotations.push(...product.annotations);
-            }
-
-            children.push(...product.children);
+            children.push(this.makeGroup(group, product));
         }
 
         for (const child of [...inheritedDataProviders, ...dataProviders]) {
-            if (children.some((el) => el.id === child.getItemDelegate().getId())) {
-                continue;
-            }
-
             numDataProviders++;
 
             // IDLE as well - a provider that hasn't started loading yet has no current data either
