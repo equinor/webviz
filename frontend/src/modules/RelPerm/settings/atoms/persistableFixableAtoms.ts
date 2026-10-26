@@ -3,7 +3,8 @@ import { isEqual } from "lodash-es";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { persistableFixableAtom } from "@framework/utils/atomUtils";
+import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
+import { computeQueriesDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
@@ -16,7 +17,7 @@ import {
 } from "./derivedAtoms";
 import { relPermTableDefinitionQueriesAtom, relPermTableNamesQueriesAtom } from "./queryAtoms";
 
-export const userSelectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[]>({
+export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[]>({
     initialValue: [],
     areEqualFunction: areEnsembleIdentListsEqual,
     isValidFunction: ({ get, value }) => {
@@ -31,7 +32,7 @@ export const userSelectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnse
     },
 });
 
-export const userSelectedTableNameAtom = persistableFixableAtom<string | null, string[]>({
+export const selectedTableNameAtom = persistableFixableAtom<string | null, string[]>({
     initialValue: null,
     computeDependenciesState: computeTableNamesQueryDependenciesState,
     precomputeFunction: ({ get }) => get(availableTableNamesAtom),
@@ -44,7 +45,7 @@ export const userSelectedTableNameAtom = persistableFixableAtom<string | null, s
     },
 });
 
-export const userSelectedSaturationAxisNameAtom = persistableFixableAtom<string | null, string[]>({
+export const selectedSaturationAxisNameAtom = persistableFixableAtom<string | null, string[]>({
     initialValue: null,
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => get(availableSaturationAxisNamesAtom),
@@ -57,10 +58,10 @@ export const userSelectedSaturationAxisNameAtom = persistableFixableAtom<string 
     },
 });
 
-export const userSelectedCurveNamesAtom = persistableFixableAtom<string[], string[]>({
+export const selectedCurveNamesAtom = persistableFixableAtom<string[], string[]>({
     initialValue: [],
     areEqualFunction: isEqual,
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: computeSaturationAxisCurvesDependenciesState,
     precomputeFunction: ({ get }) => get(availableCurveNamesAtom),
     isValidFunction: ({ value, precomputedValue: availableCurveNames }) => {
         return value.length > 0 && value.every((curveName) => availableCurveNames.includes(curveName));
@@ -70,7 +71,7 @@ export const userSelectedCurveNamesAtom = persistableFixableAtom<string[], strin
     },
 });
 
-export const userSelectedSatnumsAtom = persistableFixableAtom<number[], number[]>({
+export const selectedSatnumsAtom = persistableFixableAtom<number[], number[]>({
     initialValue: [],
     areEqualFunction: isEqual,
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
@@ -84,28 +85,32 @@ export const userSelectedSatnumsAtom = persistableFixableAtom<number[], number[]
     },
 });
 
-function computeTableNamesQueryDependenciesState({ get }: { get: Getter }): "error" | "loading" | "loaded" {
-    const tableNameQueries = get(relPermTableNamesQueriesAtom);
-
-    if (tableNameQueries.some((query: { isFetching: boolean }) => query.isFetching)) {
-        return "loading";
-    }
-    if (tableNameQueries.some((query: { isError: boolean }) => query.isError)) {
-        return "error";
-    }
-
-    return "loaded";
+// A disabled or not yet resolved query is "blocked", not "loaded" - otherwise an atom settles before its options exist
+// (e.g. while the table definitions wait for a table name on first load) and keeps an empty value afterwards
+function computeTableNamesQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
+    return computeQueriesDependenciesStateIgnoringFailedEnsembles(get(relPermTableNamesQueriesAtom));
 }
 
-function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): "error" | "loading" | "loaded" {
-    const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
+function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
+    return computeQueriesDependenciesStateIgnoringFailedEnsembles(get(relPermTableDefinitionQueriesAtom));
+}
 
-    if (tableDefinitionQueries.some((query: { isFetching: boolean }) => query.isFetching)) {
-        return "loading";
+// The curves belong to the selected saturation axis. While it is invalid, there are no curves to check against - so
+// they wait (and don't settle on the empty list) until a valid saturation axis is selected.
+function computeSaturationAxisCurvesDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
+    const tableDefinitionsQueryDependenciesState = computeTableDefinitionsQueryDependenciesState({ get });
+    if (tableDefinitionsQueryDependenciesState !== "loaded") {
+        return tableDefinitionsQueryDependenciesState;
     }
-    if (tableDefinitionQueries.some((query: { isError: boolean }) => query.isError)) {
-        return "error";
-    }
+    return get(selectedSaturationAxisNameAtom).isValidInContext ? "loaded" : "blocked";
+}
 
-    return "loaded";
+// The options only come from the ensembles whose queries succeeded (e.g. a query fails for an ensemble without relperm
+// data), so the dependencies only have an error when all queries failed - otherwise an invalid selection is not shown
+// as invalid as long as one of the selected ensembles has no data
+function computeQueriesDependenciesStateIgnoringFailedEnsembles(
+    queries: Parameters<typeof computeQueriesDependenciesState>[0],
+): PersistableAtomDependenciesState {
+    const queriesWithoutFailures = queries.filter((query) => !(query.isEnabled && query.isError));
+    return computeQueriesDependenciesState(queriesWithoutFailures.length > 0 ? queriesWithoutFailures : queries);
 }

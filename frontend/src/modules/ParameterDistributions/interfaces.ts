@@ -27,7 +27,8 @@ type SettingsToViewInterface = {
     selectedEnsembleIdents: RegularEnsembleIdent[];
     selectedParameterIdents: ParameterIdent[];
     ensembleMode: EnsembleMode;
-    parameterSortingMethod: ParameterSortMethod;
+    // Null while the sort method is invalid, so that the view doesn't sort by it
+    parameterSortingMethod: ParameterSortMethod | null;
     priorEnsembleIdent: RegularEnsembleIdent | null;
     posteriorEnsembleIdent: RegularEnsembleIdent | null;
 };
@@ -50,21 +51,32 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return get(histogramModeAtom);
     },
     selectedEnsembleIdents: (get) => {
-        return get(selectedEnsembleIdentsAtom).value;
+        // Like the parameters below: a retained but invalid selection (e.g. a removed ensemble) would otherwise be
+        // plotted as a partial comparison, as the view skips ensembles missing from the ensemble set
+        const selection = get(selectedEnsembleIdentsAtom);
+        return selection.isValidInContext ? selection.value : [];
     },
     selectedParameterIdents: (get) => {
-        return get(selectedParameterIdentsAtom).value ?? [];
+        // An invalid selection is retained for the user to repair, but must not be plotted meanwhile - e.g. a
+        // parameter of a disabled category, or one missing from a newly added ensemble (a partial comparison)
+        const selection = get(selectedParameterIdentsAtom);
+        return selection.isValidInContext ? (selection.value ?? []) : [];
     },
     priorEnsembleIdent: (get) => {
-        return get(selectedPriorEnsembleIdentAtom).value;
+        // The view only compares when both prior and posterior are set, so one invalid side blanks the plot
+        const selection = get(selectedPriorEnsembleIdentAtom);
+        return selection.isValidInContext ? selection.value : null;
     },
     posteriorEnsembleIdent: (get) => {
-        return get(selectedPosteriorEnsembleIdentAtom).value;
+        const selection = get(selectedPosteriorEnsembleIdentAtom);
+        return selection.isValidInContext ? selection.value : null;
     },
     ensembleMode: (get) => {
         return get(selectedEnsembleModeAtom);
     },
     parameterSortingMethod: (get) => {
-        return get(selectedParameterSortingMethodAtom).value;
+        // E.g. a prior/posterior method kept after switching to independent mode
+        const selection = get(selectedParameterSortingMethodAtom);
+        return selection.isValidInContext ? selection.value : null;
     },
 };

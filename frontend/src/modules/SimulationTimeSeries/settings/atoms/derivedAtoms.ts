@@ -170,8 +170,15 @@ export const customVectorDefinitionsAtom = atom<VectorDefinitionsType | null>((g
 export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const ensembleVectorListsHelper = get(ensembleVectorListsHelperAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
+    const selectedEnsembleIdentsRead = get(selectedEnsembleIdentsAtom);
     const selectedVectorNames = get(selectedVectorNamesAtom);
+
+    // The view's data queries are enabled per specification, so withhold them all while the ensemble
+    // selection is invalid - a disabled vector-list query can still expose cached data for a removed ensemble
+    if (!selectedEnsembleIdentsRead.isValidInContext) {
+        return [];
+    }
+    const selectedEnsembleIdents = selectedEnsembleIdentsRead.value ?? [];
 
     const vectorSpecifications: VectorSpec[] = [];
     for (const ensembleIdent of selectedEnsembleIdents) {

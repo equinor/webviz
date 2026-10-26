@@ -46,18 +46,13 @@ import {
     availableSaturationAxisNamesAtom,
     availableSatnumsAtom,
     availableTableNamesAtom,
+} from "./atoms/derivedAtoms";
+import {
     selectedCurveNamesAtom,
     selectedEnsembleIdentsAtom,
     selectedSaturationAxisNameAtom,
     selectedSatnumsAtom,
     selectedTableNameAtom,
-} from "./atoms/derivedAtoms";
-import {
-    userSelectedCurveNamesAtom,
-    userSelectedEnsembleIdentsAtom,
-    userSelectedSaturationAxisNameAtom,
-    userSelectedSatnumsAtom,
-    userSelectedTableNameAtom,
 } from "./atoms/persistableFixableAtoms";
 import { relPermTableDefinitionQueriesAtom, relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
 
@@ -111,8 +106,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const statusWriter = useSettingsStatusWriter(settingsContext);
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
 
-    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
-    const setUserSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value;
+    const setSelectedEnsembleIdents = useSetAtom(selectedEnsembleIdentsAtom);
     const setValidRealizationNumbers = useSetAtom(validRealizationNumbersAtom);
 
     const [selectedCurveType, setSelectedCurveType] = useAtom(selectedCurveTypeAtom);
@@ -124,13 +119,12 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [selectedGroupBy, setSelectedGroupBy] = useAtom(selectedGroupByAtom);
     const [selectedYAxisScale, setSelectedYAxisScale] = useAtom(selectedYAxisScaleAtom);
 
-    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedEnsembleIdentsAtom);
-    const selectedTableNameAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedTableNameAtom);
-    const selectedSaturationAxisNameAnnotations = useMakePersistableFixableAtomAnnotations(
-        userSelectedSaturationAxisNameAtom,
-    );
-    const selectedCurveNamesAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedCurveNamesAtom);
-    const selectedSatnumsAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedSatnumsAtom);
+    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
+    const selectedTableNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedTableNameAtom);
+    const selectedSaturationAxisNameAnnotations =
+        useMakePersistableFixableAtomAnnotations(selectedSaturationAxisNameAtom);
+    const selectedCurveNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedCurveNamesAtom);
+    const selectedSatnumsAnnotations = useMakePersistableFixableAtomAnnotations(selectedSatnumsAtom);
 
     const tableNameQueries = useAtomValue(relPermTableNamesQueriesAtom);
     const tableDefinitionQueries = useAtomValue(relPermTableDefinitionQueriesAtom);
@@ -138,20 +132,20 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     propagateQueryErrorsToStatusWriter(tableDefinitionQueries, statusWriter);
 
     const availableTableNames = useAtomValue(availableTableNamesAtom);
-    const selectedTableName = useAtomValue(selectedTableNameAtom);
-    const setUserSelectedTableName = useSetAtom(userSelectedTableNameAtom);
+    const selectedTableName = useAtomValue(selectedTableNameAtom).value;
+    const setSelectedTableName = useSetAtom(selectedTableNameAtom);
 
     const availableSaturationAxisNames = useAtomValue(availableSaturationAxisNamesAtom);
-    const selectedSaturationAxisName = useAtomValue(selectedSaturationAxisNameAtom);
-    const setUserSelectedSaturationAxisName = useSetAtom(userSelectedSaturationAxisNameAtom);
+    const selectedSaturationAxisName = useAtomValue(selectedSaturationAxisNameAtom).value;
+    const setSelectedSaturationAxisName = useSetAtom(selectedSaturationAxisNameAtom);
 
     const availableCurveNames = useAtomValue(availableCurveNamesAtom);
-    const selectedCurveNames = useAtomValue(selectedCurveNamesAtom);
-    const setUserSelectedCurveNames = useSetAtom(userSelectedCurveNamesAtom);
+    const selectedCurveNames = useAtomValue(selectedCurveNamesAtom).value;
+    const setSelectedCurveNames = useSetAtom(selectedCurveNamesAtom);
 
     const availableSatnums = useAtomValue(availableSatnumsAtom);
-    const selectedSatnums = useAtomValue(selectedSatnumsAtom);
-    const setUserSelectedSatnums = useSetAtom(userSelectedSatnumsAtom);
+    const selectedSatnums = useAtomValue(selectedSatnumsAtom).value;
+    const setSelectedSatnums = useSetAtom(selectedSatnumsAtom);
 
     const validRealizations = React.useMemo(() => {
         const realizationSet = new Set<number>();
@@ -168,23 +162,27 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     }, [setValidRealizationNumbers, validRealizations]);
 
     function handleEnsembleSelectionChange(ensembleIdents: RegularEnsembleIdent[]) {
-        setUserSelectedEnsembleIdents(ensembleIdents);
+        setSelectedEnsembleIdents(ensembleIdents);
     }
 
     function handleTableNameChange(tableNames: string[]) {
-        setUserSelectedTableName(tableNames[0] ?? null);
+        setSelectedTableName(tableNames[0] ?? null);
     }
 
     function handleSaturationAxisChange(saturationAxisName: string) {
-        setUserSelectedSaturationAxisName(saturationAxisName);
+        setSelectedSaturationAxisName(saturationAxisName);
     }
 
     function handleCurveNamesChange(curveNames: string[]) {
-        setUserSelectedCurveNames(curveNames);
+        // Curves kept from another curve type or saturation axis are still shown as chips. When the user changes the
+        // selection, they are dropped rather than carried along with the new curves.
+        setSelectedCurveNames(curveNames.filter((curveName) => availableCurveNames.includes(curveName)));
     }
 
-    function handleSatnumsChange(satnums: number[]) {
-        setUserSelectedSatnums(satnums);
+    function handleSatnumsChange(newSatnums: number[]) {
+        // As for the curves, retained SATNUMs that are no longer available are dropped when the user changes the selection
+        const satnums = newSatnums.filter((satnum) => availableSatnums.includes(satnum));
+        setSelectedSatnums(satnums);
         if (satnums.length > 1 && selectedGroupBy !== GroupBy.SATNUM) {
             setSelectedColorBy(ColorBy.SATNUM);
         }
@@ -224,7 +222,12 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const allTableNameQueriesLoaded =
         selectedEnsembleIdents.length > 0 && loadedTableNameSets.length === selectedEnsembleIdents.length;
     const commonTableNamesAreMissing = allTableNameQueriesLoaded && availableTableNames.length === 0;
-    const showTableSelector = availableTableNames.length > 1 || commonTableNamesAreMissing;
+    // Also show it when a retained table name doesn't match the only available table, so the user can
+    // pick that table - nothing replaces the invalid selection automatically
+    const showTableSelector =
+        availableTableNames.length > 1 ||
+        commonTableNamesAreMissing ||
+        (availableTableNames.length === 1 && selectedTableName !== availableTableNames[0]);
     const showTableSetting = showTableSelector || Boolean(tableNamesErrorMessage);
     const tableNameAnnotations = [
         ...selectedTableNameAnnotations,

@@ -1,11 +1,14 @@
-import type React from "react";
+import React from "react";
 
 import { Collapsible } from "@base-ui/react";
-import { ExpandMore } from "@mui/icons-material";
+import { Error, ExpandMore, Warning } from "@mui/icons-material";
 
 import type { Tone } from "@lib/components/_shared/types/tones";
 import { Typography } from "@lib/components/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import type { FieldAnnotationSummary } from "./SectionAnnotationsContext";
+import { SectionAnnotationsContext } from "./SectionAnnotationsContext";
 
 export type SectionProps = {
     /** The label shown in the collapsible section header. */
@@ -35,6 +38,55 @@ const TONE_TO_CLASSNAMES: Record<NonNullable<SectionProps["tone"] | "disabled">,
 export function Section(props: SectionProps) {
     const { tone = "neutral", disabled = false } = props;
 
+    const [fieldAnnotations, setFieldAnnotations] = React.useState<Map<string, FieldAnnotationSummary>>(
+        () => new Map(),
+    );
+
+    const contextValue = React.useMemo(
+        () => ({
+            reportField: (id: string, summary: FieldAnnotationSummary) => {
+                setFieldAnnotations((prev) => {
+                    const existing = prev.get(id);
+                    if (
+                        existing &&
+                        existing.hasError === summary.hasError &&
+                        existing.hasWarning === summary.hasWarning
+                    ) {
+                        return prev;
+                    }
+                    const next = new Map(prev);
+                    next.set(id, summary);
+                    return next;
+                });
+            },
+            unregisterField: (id: string) => {
+                setFieldAnnotations((prev) => {
+                    if (!prev.has(id)) {
+                        return prev;
+                    }
+                    const next = new Map(prev);
+                    next.delete(id);
+                    return next;
+                });
+            },
+        }),
+        [],
+    );
+
+    let errorCount = 0;
+    let warningCount = 0;
+    for (const summary of fieldAnnotations.values()) {
+        if (summary.hasError) errorCount++;
+        if (summary.hasWarning) warningCount++;
+    }
+
+    let toneOverride: "danger" | "warning" | undefined;
+    if (errorCount > 0) {
+        toneOverride = "danger";
+    } else if (warningCount > 0) {
+        toneOverride = "warning";
+    }
+
     return (
         <Collapsible.Root
             defaultOpen={props.defaultOpen}
@@ -45,7 +97,7 @@ export function Section(props: SectionProps) {
                 className={resolveClassNames(
                     "gap-y-md shadow-elevation-raised col-span-3 flex items-center justify-between border-b",
                     "group-data-collapsible-scroll-area/scrollarea:z-sticky group-data-collapsible-scroll-area/scrollarea:sticky group-data-collapsible-scroll-area/scrollarea:top-0",
-                    TONE_TO_CLASSNAMES[disabled ? "disabled" : tone],
+                    TONE_TO_CLASSNAMES[disabled ? "disabled" : (toneOverride ?? tone)],
                     { "pointer-events-none cursor-not-allowed": disabled },
                 )}
             >
@@ -55,6 +107,28 @@ export function Section(props: SectionProps) {
                         {props.title}
                     </Typography>
                 </Collapsible.Trigger>
+                {(errorCount > 0 || warningCount > 0) && (
+                    <div className="gap-x-2xs px-selectable flex items-center">
+                        {errorCount > 0 && (
+                            <span
+                                className="gap-x-2xs text-body-sm text-danger-subtle flex items-center"
+                                title={`${errorCount} setting${errorCount === 1 ? "" : "s"} with an error`}
+                            >
+                                <Error />
+                                {errorCount}
+                            </span>
+                        )}
+                        {warningCount > 0 && (
+                            <span
+                                className="gap-x-4xs text-body-sm text-warning-subtle flex items-center"
+                                title={`${warningCount} setting${warningCount === 1 ? "" : "s"} with a warning`}
+                            >
+                                <Warning />
+                                {warningCount}
+                            </span>
+                        )}
+                    </div>
+                )}
                 {props.adornment && <span className="px-selectable py-selectable">{props.adornment}</span>}
             </div>
             <Collapsible.Panel
@@ -62,7 +136,9 @@ export function Section(props: SectionProps) {
                 data-in-section
                 className="setting-section-panel [&>.setting-row:nth-child(even_of_.setting-row)]:bg-neutral/20 [&>.contents>.setting-row:nth-child(even_of_.setting-row)]:bg-neutral/20 col-span-3 grid h-(--collapsible-panel-height) grid-cols-subgrid overflow-hidden transition-all duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 [&>[data-hidden]>.setting-row]:invisible [&>[data-hidden]>.setting-row]:h-0 [&>[data-hidden]>.setting-row]:min-h-0 [&>[data-hidden]>.setting-row]:overflow-hidden [&>[data-hidden]>.setting-row]:py-0"
             >
-                {props.children}
+                <SectionAnnotationsContext.Provider value={contextValue}>
+                    {props.children}
+                </SectionAnnotationsContext.Provider>
             </Collapsible.Panel>
         </Collapsible.Root>
     );

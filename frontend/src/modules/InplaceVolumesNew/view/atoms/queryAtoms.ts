@@ -78,6 +78,19 @@ export const aggregatedTableDataQueriesAtom = atom((get) => {
     const regular = get(regularAggregatedTableDataQueriesAtom);
     const delta = get(deltaAggregatedTableDataQueriesAtom);
 
+    // Disabled queries keep their cached results and errors, which must not be shown for an invalid selection
+    // (e.g. one ensemble of several removed from the session)
+    if (!get(areTableDefinitionSelectionsValidAtom)) {
+        return {
+            tablesData: [],
+            isFetching: false,
+            allQueriesFailed: false,
+            errors: [],
+            droppedFluidSelections: [],
+            unmatchedRows: [],
+        };
+    }
+
     const tablesData = [...regular.tablesData, ...delta.tablesData];
 
     return {

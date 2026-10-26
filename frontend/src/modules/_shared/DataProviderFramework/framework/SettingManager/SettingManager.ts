@@ -23,6 +23,8 @@ export enum SettingTopic {
     IS_EXTERNALLY_CONTROLLED = "IS_EXTERNALLY_CONTROLLED",
     EXTERNAL_CONTROLLER_PROVIDER = "EXTERNAL_CONTROLLER_PROVIDER",
     IS_LOADING = "IS_LOADING",
+    IS_BLOCKED = "IS_BLOCKED",
+    BLOCKED_BY = "BLOCKED_BY",
     IS_INITIALIZED = "IS_INITIALIZED",
     IS_PERSISTED = "IS_PERSISTED",
     ATTRIBUTES = "ATTRIBUTES",
@@ -39,6 +41,9 @@ export type SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstrain
     [SettingTopic.IS_EXTERNALLY_CONTROLLED]: boolean;
     [SettingTopic.EXTERNAL_CONTROLLER_PROVIDER]: ExternalControllerProviderType | undefined;
     [SettingTopic.IS_LOADING]: boolean;
+    [SettingTopic.IS_BLOCKED]: boolean;
+    // The labels of the settings it is waiting for - the same reference while unchanged
+    [SettingTopic.BLOCKED_BY]: string[];
     [SettingTopic.IS_INITIALIZED]: boolean;
     [SettingTopic.IS_PERSISTED]: boolean;
     [SettingTopic.ATTRIBUTES]: SettingAttributes;
@@ -103,6 +108,10 @@ export class SettingManager<
     >();
     private _valueConstraints: TValueConstraints | null = null;
     private _loading: boolean = false;
+    // Blocked: the value constraints can't be resolved, as a setting they are read from is invalid (or blocked itself).
+    // The current value and constraints are kept until they can be resolved again.
+    private _blocked: boolean = false;
+    private _blockedBy: string[] = [];
     private _initialized: boolean = false;
     private _currentValueFromPersistence: TInternalValue | null = null;
     private _currentValueFromPersistenceIsValid: boolean = true;
@@ -186,6 +195,24 @@ export class SettingManager<
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingTopic.IS_LOADING)(() => {
                 this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+            }),
+        );
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController
+                .getSetting()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingTopic.IS_BLOCKED)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_BLOCKED);
+            }),
+        );
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController
+                .getSetting()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingTopic.BLOCKED_BY)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.BLOCKED_BY);
             }),
         );
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -460,13 +487,41 @@ export class SettingManager<
     setLoading(loading: boolean): void {
         // An external controller derives the shared setting's loading state from its visible controlled settings
         // via the IS_LOADING topic, so a single (possibly hidden) setting must not set it directly
-        if (this._loading === loading) {
+        if (this._loading !== loading) {
+            this._loading = loading;
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+        }
+
+        // Resolving again ends being blocked - only after the loading state is published, so nothing that reacts to
+        // the setting no longer being blocked resolves against its current, outdated value
+        if (loading) {
+            this.setBlocked(false);
+        }
+    }
+
+    /*
+     * A setting is blocked when its value constraints can't be resolved, as a shown setting they are read from is invalid
+     * or blocked itself - see Dependency. It keeps its value and constraints, and is no longer blocked as soon as it
+     * resolves again: when it starts loading or gets value constraints.
+     */
+    setBlocked(blocked: boolean, blockedBy: string[] = []): void {
+        const newBlockedBy = blocked ? blockedBy : [];
+        const isBlockedByChanged = !isEqual(this._blockedBy, newBlockedBy);
+        if (this._blocked === blocked && !isBlockedByChanged) {
             return;
         }
 
-        this._loading = loading;
+        this._blocked = blocked;
+        // Only replaced when changed, so the BLOCKED_BY snapshot keeps its reference otherwise
+        if (isBlockedByChanged) {
+            this._blockedBy = newBlockedBy;
+        }
 
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+        // Also notified when only the labels change, as ExternalSettingController combines them on this topic
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_BLOCKED);
+        if (isBlockedByChanged) {
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.BLOCKED_BY);
+        }
     }
 
     initialize(): void {
@@ -491,6 +546,21 @@ export class SettingManager<
             return this._externalController.getSetting().isLoading();
         }
         return this._loading;
+    }
+
+    isBlocked(itself: boolean = false): boolean {
+        if (this._externalController && !itself) {
+            return this._externalController.getSetting().isBlocked();
+        }
+        return this._blocked;
+    }
+
+    // The labels of the settings it is waiting for
+    getBlockedBy(itself: boolean = false): string[] {
+        if (this._externalController && !itself) {
+            return this._externalController.getSetting().getBlockedBy();
+        }
+        return this._blockedBy;
     }
 
     valueToRepresentation(
@@ -578,6 +648,10 @@ export class SettingManager<
                     return undefined;
                 case SettingTopic.IS_LOADING:
                     return this.isLoading();
+                case SettingTopic.IS_BLOCKED:
+                    return this.isBlocked();
+                case SettingTopic.BLOCKED_BY:
+                    return this.getBlockedBy();
                 case SettingTopic.IS_PERSISTED:
                     return this.isPersistedValue();
                 case SettingTopic.IS_PERSISTED_VALUE_VALID:
@@ -641,7 +715,11 @@ export class SettingManager<
 
     private applyValueConstraints(): boolean {
         let valueChanged = false;
-        const isValueFixedUp = !this.checkIfValueIsValid(this.getInternalValue()) && this.maybeFixupValue();
+        // Once initialized, an invalid value is kept for the user to resolve - only an empty one is still filled
+        const isValueFixedUp =
+            (!this._initialized || this.getInternalValue() === null) &&
+            !this.checkIfValueIsValid(this.getInternalValue()) &&
+            this.maybeFixupValue();
         const isPersistedValueReset = this.maybeResetPersistedValue();
         if (isValueFixedUp || isPersistedValueReset) {
             valueChanged = true;
@@ -655,6 +733,11 @@ export class SettingManager<
         return shouldNotifyValueChanged;
     }
 
+    /*
+     * Getting value constraints ends being blocked. Usually it isn't blocked anymore already, as it started loading before
+     * they were resolved - otherwise, it ends once the validity is up to date, so that nothing reacting to it no longer
+     * being blocked judges it by the outdated constraints.
+     */
     setValueConstraints(valueConstraints: TValueConstraints | null): void {
         if (this._externalController) {
             this.setValueConstraintsAndInvalidateCache(valueConstraints);
@@ -662,17 +745,25 @@ export class SettingManager<
             this._loading = false;
             this.initialize();
             this._externalController.setValueConstraints(this.getId(), valueConstraints);
+            // Only now - the controller would otherwise make the intersection from the outdated constraints first
+            this.setBlocked(false);
             return;
         }
 
         if (isEqual(this._valueConstraints, valueConstraints) && this._initialized) {
             this.setLoading(false);
+            this.setBlocked(false);
             return;
         }
 
+        // The external value may depend on the constraints alone (e.g. "all" mapping to every available item),
+        // so it can change even though the internal value and its validity stay the same
+        const prevExternalValue = this.getValue();
         this.setValueConstraintsAndInvalidateCache(valueConstraints);
 
-        const shouldNotifyValueChanged = this.applyValueConstraints();
+        const shouldNotifyValueChanged =
+            this.applyValueConstraints() || !isEqual(prevExternalValue, this.getValue());
+        this.setBlocked(false);
         this.initialize();
         if (shouldNotifyValueChanged) {
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
@@ -741,6 +832,8 @@ export class SettingManager<
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INTERNAL_VALUE);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_VALID);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_BLOCKED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.BLOCKED_BY);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_INITIALIZED);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CONSTRAINTS);

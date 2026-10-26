@@ -42,12 +42,18 @@ export const groupByIndicesAtom = atom((get) => {
     if (validIndexColumns.includes(subplotBy as any)) {
         groupByIndices.push(subplotBy);
     }
-    if (validIndexColumns.includes(colorBy as any)) {
+    // Coloring and subplotting by the same column is allowed, but it must only be grouped by once
+    if (validIndexColumns.includes(colorBy as any) && !groupByIndices.includes(colorBy)) {
         groupByIndices.push(colorBy);
     }
 
-    // Only request selectorColumns when plotting bar plots
-    if (selectorColumn !== null && plotType === PlotType.BAR && validIndexColumns.includes(selectorColumn)) {
+    // Only request selectorColumns when plotting bar plots - and only once, as it may also be the subplot or color column
+    if (
+        selectorColumn !== null &&
+        plotType === PlotType.BAR &&
+        validIndexColumns.includes(selectorColumn) &&
+        !groupByIndices.includes(selectorColumn)
+    ) {
         groupByIndices.push(selectorColumn);
     }
 
