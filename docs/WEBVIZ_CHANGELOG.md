@@ -7,6 +7,15 @@
 
 ## October 2026
 
+### Added
+
+- **Simulation time series modules**: "Simulation Time Series" and "Simulation Time Series Per Sensitivity" now show a hover marker and a selected-timestamp marker with date badges in the plot. The markers can be turned on/off with the new "Show timestamp marker in plot" setting. Note that the selected timestamp is also the marker for the data channel; the data channel still provides data for the selected timestamp when the markers are hidden.
+
+### Changed
+
+- **Simulation Time Series**: The module now uses the shared hover timestamp, so a timestamp hovered here is highlighted in other modules, and a timestamp hovered in other modules is highlighted here. The hover marker is gray when hovering in the module itself, and red when the hover comes from another module.
+- **Settings**: A selection that is no longer available (e.g. after switching ensemble) is now kept and marked as invalid instead of being silently replaced, and no data is loaded until it is valid again. Settings that depend on an invalid setting wait for it to be fixed.
+
 ### Fixed
 
 - **2D, 3D, Intersection and Well log viewers**: Fixed several issues with loading saved sessions and changing layer settings.

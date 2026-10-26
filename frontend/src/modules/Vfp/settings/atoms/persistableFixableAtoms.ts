@@ -1,7 +1,8 @@
 import type { VfpType_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { persistableFixableAtom } from "@framework/utils/atomUtils";
+import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
+import { computeQueryDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 import { areEnsembleIdentsEqual } from "@framework/utils/ensembleIdentUtils";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { VfpParam } from "@modules/Vfp/types";
@@ -48,15 +49,8 @@ function computeVfpTablesQueryDependenciesState({
     get,
 }: {
     get: (atom: any) => any;
-}): "error" | "loading" | "loaded" {
-    const vfpTablesQuery = get(vfpTablesQueryAtom);
-    if (vfpTablesQuery.isError) {
-        return "error";
-    }
-    if (vfpTablesQuery.isFetching) {
-        return "loading";
-    }
-    return "loaded";
+}): PersistableAtomDependenciesState {
+    return computeQueryDependenciesState(get(vfpTablesQueryAtom));
 }
 
 export const selectedVfpTypeAtom = persistableFixableAtom<VfpType_api | null>({
@@ -121,7 +115,7 @@ export const selectedThpIndicesAtom = persistableFixableAtom<number[] | null, nu
 
 export const selectedWfrIndicesAtom = persistableFixableAtom<number[] | null, number[]>({
     initialValue: null,
-    computeDependenciesState: computeVfpTableQueryDependenciesState,
+    computeDependenciesState: computeProdTableParamDependenciesState,
     precomputeFunction: ({ get }) => {
         const vfpTable = get(vfpTableQueryAtom).data;
         if (!vfpTable || !isProdTable(vfpTable)) {
@@ -147,7 +141,7 @@ export const selectedWfrIndicesAtom = persistableFixableAtom<number[] | null, nu
 
 export const selectedGfrIndicesAtom = persistableFixableAtom<number[] | null, number[]>({
     initialValue: null,
-    computeDependenciesState: computeVfpTableQueryDependenciesState,
+    computeDependenciesState: computeProdTableParamDependenciesState,
     precomputeFunction: ({ get }) => {
         const vfpTable = get(vfpTableQueryAtom).data;
         if (!vfpTable || !isProdTable(vfpTable)) {
@@ -173,7 +167,7 @@ export const selectedGfrIndicesAtom = persistableFixableAtom<number[] | null, nu
 
 export const selectedAlqIndicesAtom = persistableFixableAtom<number[] | null, number[]>({
     initialValue: null,
-    computeDependenciesState: computeVfpTableQueryDependenciesState,
+    computeDependenciesState: computeProdTableParamDependenciesState,
     precomputeFunction: ({ get }) => {
         const vfpTable = get(vfpTableQueryAtom).data;
         if (!vfpTable || !isProdTable(vfpTable)) {
@@ -223,14 +217,21 @@ export const selectedColorByAtom = persistableFixableAtom<VfpParam>({
 });
 
 // Utility function to compute dependencies state from vfpTableQueryAtom
-function computeVfpTableQueryDependenciesState({ get }: { get: (atom: any) => any }): "error" | "loading" | "loaded" {
-    const vfpTableQuery = get(vfpTableQueryAtom);
+function computeVfpTableQueryDependenciesState({ get }: { get: (atom: any) => any }): PersistableAtomDependenciesState {
+    return computeQueryDependenciesState(get(vfpTableQueryAtom));
+}
 
-    if (vfpTableQuery.isError) {
-        return "error";
+// WFR, GFR and ALQ are only part of production tables. While another table is loaded, the data to check them against is
+// not available - so they wait (and don't settle on an empty selection) until a production table is loaded.
+function computeProdTableParamDependenciesState({
+    get,
+}: {
+    get: (atom: any) => any;
+}): PersistableAtomDependenciesState {
+    const vfpTableQueryDependenciesState = computeVfpTableQueryDependenciesState({ get });
+    if (vfpTableQueryDependenciesState !== "loaded") {
+        return vfpTableQueryDependenciesState;
     }
-    if (vfpTableQuery.isFetching) {
-        return "loading";
-    }
-    return "loaded";
+    const vfpTable = get(vfpTableQueryAtom).data;
+    return vfpTable && isProdTable(vfpTable) ? "loaded" : "blocked";
 }

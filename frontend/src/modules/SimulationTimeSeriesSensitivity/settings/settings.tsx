@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { isEqual } from "lodash-es";
 
 import { Frequency_api } from "@api";
@@ -9,12 +9,14 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Combobox } from "@lib/components/Combobox/combobox";
 import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
@@ -27,8 +29,7 @@ import {
     showHistoricalAtom,
     showRealizationsAtom,
     showStatisticsAtom,
-    syncedRegularEnsembleIdentsAtom,
-    syncedVectorNameAtom,
+    showTimestampMarkerAtom,
 } from "./atoms/baseAtoms";
 import { availableSensitivityNamesAtom, vectorSelectorDataAtom } from "./atoms/derivedAtoms";
 import {
@@ -42,9 +43,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
-
-    const setSyncedRegularEnsembleIdents = useSetAtom(syncedRegularEnsembleIdentsAtom);
-    const setSyncedVectorName = useSetAtom(syncedVectorNameAtom);
+    const selectedTimestampUtcMs = props.settingsContext.useViewToSettingsInterfaceValue("selectedTimestampUtcMs");
 
     const [selectedRegularEnsembleIdent, setSelectedRegularEnsembleIdent] = useAtom(selectedRegularEnsembleIdentAtom);
     const [selectedSensitivityNames, setSelectedSensitivityNamesAtom] = useAtom(selectedSensitivityNamesAtom);
@@ -58,6 +57,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const [showStatistics, setShowStatistics] = useAtom(showStatisticsAtom);
     const [showRealizations, setShowRealizations] = useAtom(showRealizationsAtom);
     const [showHistorical, setShowHistorical] = useAtom(showHistoricalAtom);
+    const [showTimestampMarker, setShowTimestampMarker] = useAtom(showTimestampMarkerAtom);
 
     const syncHelper = useRefStableSyncSettingsHelper({
         syncSettingsService: props.syncSettingsService,
@@ -70,16 +70,25 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
 
     propagateQueryErrorToStatusWriter(vectorListQuery, statusWriter);
 
+    // Write synced values explicitly - the selected atoms no longer fix up to them on their own
     if (!isEqual(syncedValueEnsembles, prevSyncedEnsembleIdents)) {
         setPrevSyncedEnsembleIdents(syncedValueEnsembles);
-        if (syncedValueEnsembles) {
-            setSyncedRegularEnsembleIdents(syncedValueEnsembles);
+        // Only switch when the current ensemble isn't synced - switching unnecessarily could leave the retained vector
+        // or sensitivity selections invalid
+        const currentEnsembleIdent = selectedRegularEnsembleIdent.value;
+        const isCurrentEnsembleSynced =
+            currentEnsembleIdent !== null && syncedValueEnsembles?.some((ident) => ident.equals(currentEnsembleIdent));
+        if (syncedValueEnsembles && syncedValueEnsembles.length > 0 && !isCurrentEnsembleSynced) {
+            setSelectedRegularEnsembleIdent(syncedValueEnsembles[0]);
         }
     }
     if (!isEqual(syncedValueSummaryVector, prevSyncedSummaryVector)) {
         setPrevSyncedSummaryVector(syncedValueSummaryVector);
         if (syncedValueSummaryVector) {
-            setSyncedVectorName(syncedValueSummaryVector.vectorName);
+            setSelectedVectorNameAndTag({
+                name: syncedValueSummaryVector.vectorName,
+                tag: syncedValueSummaryVector.vectorName,
+            });
         }
     }
 
@@ -98,9 +107,21 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
             }
             const userSelectedVectorName = selection.selectedNodes[0] ?? null;
             const userSelectedVectorTag = selection.selectedTags[0]?.text ?? null;
+
+            // When the available vectors change (e.g. for another ensemble), the selector reports the same tag without
+            // a vector once it no longer resolves. That is no user change - keep the retained value (with its name and
+            // source) instead of replacing it, so it is reported as invalid rather than lost.
+            if (
+                userSelectedVectorName === null &&
+                userSelectedVectorTag !== null &&
+                userSelectedVectorTag === selectedVectorNameAndTag.value?.tag
+            ) {
+                return;
+            }
+
             setSelectedVectorNameAndTag({ name: userSelectedVectorName, tag: userSelectedVectorTag });
         },
-        [vectorSelectorData, setSelectedVectorNameAndTag],
+        [vectorSelectorData, selectedVectorNameAndTag.value?.tag, setSelectedVectorNameAndTag],
     );
 
     const selectedRegularEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(
@@ -185,6 +206,34 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             multiple
                             showQuickSelectButtons
                         />
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Data channel">
+                    <Setting.Field
+                        infoAnnotation={
+                            !showTimestampMarker ? "Enable the marker to select a new timestamp in plot." : undefined
+                        }
+                    >
+                        <SwitchCompositions.WithLabel
+                            label="Show timestamp marker in plot"
+                            checked={showTimestampMarker}
+                            onCheckedChange={setShowTimestampMarker}
+                            size="small"
+                        />
+                    </Setting.Field>
+                    <Setting.Field
+                        label="Selected timestamp"
+                        contentClassName="flex"
+                        help={{
+                            content:
+                                "The timestamp currently selected in the view (read-only). Enable the marker and click in the plot to select a new one.",
+                        }}
+                    >
+                        <span className="text-sm">
+                            {selectedTimestampUtcMs === null
+                                ? "None"
+                                : timestampUtcMsToCompactIsoString(selectedTimestampUtcMs)}
+                        </span>
                     </Setting.Field>
                 </Setting.Section>
             </Setting.Panel>

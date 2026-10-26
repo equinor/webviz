@@ -49,6 +49,7 @@ const categorizedEnsembleIdentsAtom = atom((get) => {
 
 const regularEnsembleVectorListQueriesAtom = atomWithQueries((get) => {
     const { regularEnsembleIdents } = get(categorizedEnsembleIdentsAtom);
+    const { isValidInContext: ensembleIdentsValid } = get(selectedEnsembleIdentsAtom);
 
     const queries = regularEnsembleIdents.map(({ item }) => {
         const options = getVectorListOptions({
@@ -59,7 +60,7 @@ const regularEnsembleVectorListQueriesAtom = atomWithQueries((get) => {
                 ...makeCacheBustingQueryParam(item),
             },
         });
-        return () => options;
+        return () => ({ ...options, enabled: ensembleIdentsValid });
     });
 
     return {
@@ -69,6 +70,7 @@ const regularEnsembleVectorListQueriesAtom = atomWithQueries((get) => {
 
 const deltaEnsembleVectorListQueriesAtom = atomWithQueries((get) => {
     const { deltaEnsembleIdents } = get(categorizedEnsembleIdentsAtom);
+    const { isValidInContext: ensembleIdentsValid } = get(selectedEnsembleIdentsAtom);
 
     const queries = deltaEnsembleIdents.map(({ item }) => {
         const comparisonEnsembleIdent = item.getComparisonEnsembleIdent();
@@ -85,7 +87,7 @@ const deltaEnsembleVectorListQueriesAtom = atomWithQueries((get) => {
             },
         });
 
-        return () => options;
+        return () => ({ ...options, enabled: ensembleIdentsValid });
     });
 
     return {

@@ -12,6 +12,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey } from "@framework/SyncSettings";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Combobox } from "@lib/components/Combobox";
@@ -50,6 +51,7 @@ import {
     selectedVectorTagsAtom,
     showHistoricalAtom,
     showObservationsAtom,
+    showTimestampMarkerAtom,
     statisticsSelectionAtom,
     subplotLimitDirectionAtom,
     subplotMaxDirectionElementsAtom,
@@ -76,6 +78,7 @@ import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStat
 export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
+    const selectedTimestampUtcMs = props.settingsContext.useViewToSettingsInterfaceValue("selectedTimestampUtcMs");
 
     const [resampleFrequency, setResamplingFrequency] = useAtom(resampleFrequencyAtom);
     const [groupBy, setGroupBy] = useAtom(groupByAtom);
@@ -85,6 +88,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const [visualizationMode, setVisualizationMode] = useAtom(visualizationModeAtom);
     const [showHistorical, setShowHistorical] = useAtom(showHistoricalAtom);
     const [showObservations, setShowObservations] = useAtom(showObservationsAtom);
+    const [showTimestampMarker, setShowTimestampMarker] = useAtom(showTimestampMarkerAtom);
     const [statisticsSelection, setStatisticsSelection] = useAtom(statisticsSelectionAtom);
     const [selectedVectorTags, setSelectedVectorTags] = useAtom(selectedVectorTagsAtom);
     const [selectedVectorNames, setSelectedVectorNames] = useAtom(selectedVectorNamesAtom);
@@ -424,6 +428,34 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             </div>
                         </Setting.Field>
                     </Hidden>
+                </Setting.Section>
+                <Setting.Section title="Data channel">
+                    <Setting.Field
+                        infoAnnotation={
+                            !showTimestampMarker ? "Enable the marker to select a new timestamp in plot." : undefined
+                        }
+                    >
+                        <SwitchCompositions.WithLabel
+                            label="Show timestamp marker in plot"
+                            checked={showTimestampMarker}
+                            onCheckedChange={setShowTimestampMarker}
+                            size="small"
+                        />
+                    </Setting.Field>
+                    <Setting.Field
+                        label="Selected timestamp"
+                        contentClassName="flex"
+                        help={{
+                            content:
+                                "The timestamp currently selected in the view (read-only). Enable the marker and click in the plot to select a new one.",
+                        }}
+                    >
+                        <span className="text-sm">
+                            {selectedTimestampUtcMs === null
+                                ? "None"
+                                : timestampUtcMsToCompactIsoString(selectedTimestampUtcMs)}
+                        </span>
+                    </Setting.Field>
                 </Setting.Section>
             </Setting.Panel>
         </Setting.ScrollArea>

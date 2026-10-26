@@ -16,11 +16,11 @@ import {
     showStatisticalLinesAtom,
 } from "./atoms/baseAtoms";
 import {
-    userSelectedCurveNamesAtom,
-    userSelectedEnsembleIdentsAtom,
-    userSelectedSaturationAxisNameAtom,
-    userSelectedSatnumsAtom,
-    userSelectedTableNameAtom,
+    selectedCurveNamesAtom,
+    selectedEnsembleIdentsAtom,
+    selectedSaturationAxisNameAtom,
+    selectedSatnumsAtom,
+    selectedTableNameAtom,
 } from "./atoms/persistableFixableAtoms";
 
 export type SerializedSettings = {
@@ -60,13 +60,13 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => ({
-    selectedEnsembleIdentStrings: get(userSelectedEnsembleIdentsAtom).value.map((ensembleIdent) =>
+    selectedEnsembleIdentStrings: get(selectedEnsembleIdentsAtom).value.map((ensembleIdent) =>
         ensembleIdent.toString(),
     ),
-    selectedTableName: get(userSelectedTableNameAtom).value,
-    selectedSaturationAxisName: get(userSelectedSaturationAxisNameAtom).value,
-    selectedCurveNames: get(userSelectedCurveNamesAtom).value,
-    selectedSatnums: get(userSelectedSatnumsAtom).value,
+    selectedTableName: get(selectedTableNameAtom).value,
+    selectedSaturationAxisName: get(selectedSaturationAxisNameAtom).value,
+    selectedCurveNames: get(selectedCurveNamesAtom).value,
+    selectedSatnums: get(selectedSatnumsAtom).value,
     selectedCurveType: get(selectedCurveTypeAtom),
     showIndividualRealizations: get(showIndividualRealizationsAtom),
     showStatisticalLines: get(showStatisticalLinesAtom),
@@ -80,15 +80,15 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
     setIfDefined(
         set,
-        userSelectedEnsembleIdentsAtom,
+        selectedEnsembleIdentsAtom,
         raw.selectedEnsembleIdentStrings?.map((ensembleIdentString) =>
             RegularEnsembleIdent.fromString(ensembleIdentString),
         ),
     );
-    setIfDefined(set, userSelectedTableNameAtom, raw.selectedTableName);
-    setIfDefined(set, userSelectedSaturationAxisNameAtom, raw.selectedSaturationAxisName);
-    setIfDefined(set, userSelectedCurveNamesAtom, raw.selectedCurveNames);
-    setIfDefined(set, userSelectedSatnumsAtom, raw.selectedSatnums);
+    setIfDefined(set, selectedTableNameAtom, raw.selectedTableName);
+    setIfDefined(set, selectedSaturationAxisNameAtom, raw.selectedSaturationAxisName);
+    setIfDefined(set, selectedCurveNamesAtom, raw.selectedCurveNames);
+    setIfDefined(set, selectedSatnumsAtom, raw.selectedSatnums);
     setIfDefined(set, selectedCurveTypeAtom, raw.selectedCurveType);
     setIfDefined(set, showIndividualRealizationsAtom, raw.showIndividualRealizations);
     setIfDefined(set, showStatisticalLinesAtom, raw.showStatisticalLines);
