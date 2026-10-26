@@ -86,6 +86,27 @@ describe("EnsembleQcSet tests", () => {
         ]);
     });
 
+    test("should give retained QCs and their check runtimes the rebuilt ensemble instance", async () => {
+        const qcSet = new EnsembleQcSet();
+        qcSet.synchronizeWithEnsembleSet(new EnsembleSet([ENSEMBLE_A]), queryClient);
+        const ensembleQcA = qcSet.getEnsembleQcsArray()[0];
+        const checkRuntimeA = getCheckRuntime(qcSet, ENSEMBLE_A, BLOCKING_CHECK_ID);
+        const run = checkRuntimeA.run([0, 1, 2]);
+
+        // Same ident, as rebuilt by the ensemble set loader whenever the ensemble selection is applied
+        const rebuiltEnsembleA = makeEnsemble("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1");
+        qcSet.synchronizeWithEnsembleSet(new EnsembleSet([rebuiltEnsembleA]), queryClient);
+
+        expect(qcSet.getEnsembleQcsArray()[0]).toBe(ensembleQcA);
+        expect(ensembleQcA.getEnsemble()).toBe(rebuiltEnsembleA);
+        expect(checkRuntimeA.getEnsemble()).toBe(rebuiltEnsembleA);
+        // The check is kept running rather than being replaced
+        expect(checkRuntimeA.isRunning()).toBe(true);
+
+        checkRuntimeA.cancel();
+        await run;
+    });
+
     test("should cancel running checks of removed ensembles and drop their QCs", async () => {
         const qcSet = new EnsembleQcSet();
         qcSet.synchronizeWithEnsembleSet(new EnsembleSet([ENSEMBLE_A, ENSEMBLE_B]), queryClient);

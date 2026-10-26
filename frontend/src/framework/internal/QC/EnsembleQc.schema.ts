@@ -1,4 +1,4 @@
-import type { JTDSchemaType } from "ajv/dist/core";
+import type { JTDSchemaType } from "ajv/dist/jtd";
 
 export type SerializedEnsembleQcState = {
     ensembleIdentString: string;

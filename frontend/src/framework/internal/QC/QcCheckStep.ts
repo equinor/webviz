@@ -1,7 +1,11 @@
+import { CancelledError } from "@tanstack/react-query";
+
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { Template } from "@framework/TemplateRegistry";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import type { ScopedQueryController } from "@lib/utils/ScopedQueryController";
+
+import type { QcCheckCleanupScope } from "./QcCheckCleanupScope";
 
 export type QcCheckRealizationResult<TMetrics> =
     | {
@@ -45,6 +49,13 @@ export type QcCheckMatrixCoordinate = {
     label: string;
 };
 
+// One coordinate's results of a step - `coordinate` is `null` for a non-matrixed step's one shared
+// result set (see `QcCheckStepRunContext.previousStepResults`).
+export type QcCheckCoordinateResults<TMetrics> = {
+    coordinate: QcCheckMatrixCoordinate | null;
+    results: ReadonlyMap<number, QcCheckRealizationResult<TMetrics>>;
+};
+
 export type QcCheckStepRunContext<TMetrics, TParams, TPreviousMetrics = unknown> = {
     ensemble: RegularEnsemble;
     realizations: number[];
@@ -53,16 +64,20 @@ export type QcCheckStepRunContext<TMetrics, TParams, TPreviousMetrics = unknown>
     // provides `matrixCoordinates` (one invocation per returned coordinate), `null` otherwise.
     matrixCoordinate: QcCheckMatrixCoordinate | null;
     fetchQuery: ScopedQueryController["fetchQuery"];
+    // Registers cleanup for resources this invocation holds - called once when it finishes (successfully
+    // or not) or when the check is cancelled, whichever comes first. Called right away if registered later.
     onFetchCancelOrFinish: (callback: () => void) => void;
     setProgressMessage: (message: string, realization?: number) => void;
     reportRealizationResult: (realization: number, result: QcCheckRealizationResult<TMetrics>) => void;
-    // The preceding step's per-realization results, for this same matrix coordinate (or the
-    // predecessor's one shared result set if it wasn't itself matrixed) - `null` for a check's
-    // first step. Only ever contains the realizations this step was itself asked to run:
-    // `QcCheckStepRuntime.run` carries a realization forward into the next step only once the
-    // current step reported it as a success, so a step never has to re-check whether a given
-    // realization's predecessor result succeeded.
-    previousStepResults: ReadonlyMap<number, QcCheckRealizationResult<TPreviousMetrics>> | null;
+    // The preceding step's results this invocation builds on - `null` for a check's first step.
+    // Normally a single entry: the predecessor's results for this same matrix coordinate, or its one
+    // shared result set if it wasn't itself matrixed. A non-matrixed step whose predecessor ran for
+    // several coordinates gets one entry per coordinate instead, and is asked to run only the
+    // realizations that succeeded for all of them. Only ever contains the realizations this step was
+    // itself asked to run: `QcCheckStepRuntime.run` carries a realization forward into the next step
+    // only once the current step reported it as a success, so a step never has to re-check whether a
+    // given realization's predecessor result succeeded.
+    previousStepResults: readonly QcCheckCoordinateResults<TPreviousMetrics>[] | null;
 };
 
 export type QcCheckStepDefinition<TMetrics = unknown, TParams = void, TPreviousMetrics = unknown> = {
@@ -116,8 +131,12 @@ export type QcCheckStepMatrixRunOptions<TParams, TPreviousMetrics> = {
     params: TParams;
     ensemble: RegularEnsemble;
     fetchQuery: ScopedQueryController["fetchQuery"];
-    onFetchCancelOrFinish: (callback: () => void) => void;
-    previousStepResults: ReadonlyMap<number, QcCheckRealizationResult<TPreviousMetrics>> | null;
+    // Called once per invocation, so each invocation's cleanup is its own (see `QcCheckRuntime.run`)
+    createCleanupScope: () => QcCheckCleanupScope;
+    // Whether the check run this invocation belongs to is still the current one - false once it's been cancelled
+    // or superseded by a new run (which also resets this matrix), after which the invocation may no longer touch it.
+    isCurrent: () => boolean;
+    previousStepResults: readonly QcCheckCoordinateResults<TPreviousMetrics>[] | null;
     matrixCoordinate: QcCheckMatrixCoordinate | null;
 };
 
@@ -234,13 +253,26 @@ export class QcCheckStepMatrixRuntime<
         this.notifyStatus();
     }
 
+    /**
+     * Marks this matrix as no longer running because its check run was cancelled - the invocation itself may still
+     * be winding down, but is no longer current, so it won't do this itself (see `run`).
+     */
+    markStopped(): void {
+        if (!this._isRunning) {
+            return;
+        }
+        this._isRunning = false;
+        this.notifyStatus();
+    }
+
     async run(options: QcCheckStepMatrixRunOptions<TParams, TPreviousMetrics>): Promise<void> {
         const {
             realizations,
             params,
             ensemble,
             fetchQuery,
-            onFetchCancelOrFinish,
+            createCleanupScope,
+            isCurrent,
             previousStepResults,
             matrixCoordinate,
         } = options;
@@ -251,14 +283,19 @@ export class QcCheckStepMatrixRuntime<
         this._isRunning = true;
         this.notifyStatus();
 
+        const cleanupScope = createCleanupScope();
+
         const context: QcCheckStepRunContext<TMetrics, TParams, TPreviousMetrics> = {
             ensemble,
             realizations: realizations as number[],
             params,
             matrixCoordinate,
             fetchQuery,
-            onFetchCancelOrFinish,
+            onFetchCancelOrFinish: (callback: () => void) => cleanupScope.add(callback),
             setProgressMessage: (message: string, realization?: number) => {
+                if (!isCurrent()) {
+                    return;
+                }
                 if (realization !== undefined) {
                     this._progressMessages.set(realization, message);
                     return;
@@ -268,6 +305,9 @@ export class QcCheckStepMatrixRuntime<
                 });
             },
             reportRealizationResult: (realization: number, result: QcCheckRealizationResult<TMetrics>) => {
+                if (!isCurrent()) {
+                    return;
+                }
                 this._results.set(realization, result);
                 this._resultsSnapshot = null;
                 this._publishSubscribeDelegate.notifySubscribers(QcCheckStepTopic.RESULTS);
@@ -277,9 +317,29 @@ export class QcCheckStepMatrixRuntime<
 
         try {
             await this._stepDefinition.run(context);
+        } catch (error) {
+            // A cancelled or superseded invocation may fail with anything once its work is cut off
+            if (error instanceof CancelledError || !isCurrent()) {
+                return;
+            }
+
+            // Steps are meant to report errors per realization - one that throws instead still mustn't
+            // leave realizations without a result, nor fail the remaining coordinates and steps
+            console.error(`QC check step "${this._stepDefinition.name}" failed:`, error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            for (const realization of realizations) {
+                if (!this._results.has(realization)) {
+                    context.reportRealizationResult(realization, { kind: "exception", errorMessage });
+                }
+            }
         } finally {
-            this._isRunning = false;
-            this.notifyStatus();
+            // A no-op if the run was cancelled or superseded in the meantime - this only ever cleans up its own scope
+            cleanupScope.run();
+            // Otherwise this matrix was already stopped by `markStopped`, or reset and possibly restarted by a new run
+            if (isCurrent()) {
+                this._isRunning = false;
+                this.notifyStatus();
+            }
         }
     }
 }
@@ -310,6 +370,38 @@ const SINGLE_ENTRY_KEY = "__single__";
 
 function entryKey(coordinate: QcCheckMatrixCoordinate | null): string {
     return coordinate?.key ?? SINGLE_ENTRY_KEY;
+}
+
+// What a step's entry carries over from its predecessor - see `QcCheckStepRuntime.getCarriedInput`.
+type QcCheckCarriedInput<TPreviousMetrics> = Pick<
+    QcCheckStepMatrixRunOptions<unknown, TPreviousMetrics>,
+    "realizations" | "previousStepResults"
+>;
+
+function getSuccessfulRealizations(results: ReadonlyMap<number, QcCheckRealizationResult<unknown>>): number[] {
+    const realizations: number[] = [];
+    for (const [realization, result] of results) {
+        if (result.kind === "success") {
+            realizations.push(realization);
+        }
+    }
+    return realizations;
+}
+
+// Only the given realizations' results - all a successor's invocation gets to see of its
+// predecessor's results (see `QcCheckStepRunContext.previousStepResults`).
+function pickResults<TMetrics>(
+    results: ReadonlyMap<number, QcCheckRealizationResult<TMetrics>>,
+    realizations: readonly number[],
+): ReadonlyMap<number, QcCheckRealizationResult<TMetrics>> {
+    const picked = new Map<number, QcCheckRealizationResult<TMetrics>>();
+    for (const realization of realizations) {
+        const result = results.get(realization);
+        if (result) {
+            picked.set(realization, result);
+        }
+    }
+    return picked;
 }
 
 // Orchestrates one check step: either a single realization matrix (the common case) or one per
@@ -406,41 +498,55 @@ export class QcCheckStepRuntime<
     ): QcCheckStepMatrixEntry<TMetrics, TParams, TPreviousMetrics> | undefined {
         // A non-matrixed step (or one currently reduced to a single coordinate) shares its one
         // entry with any coordinate key a neighboring step asks for - lets a matrixed step read a
-        // non-matrixed predecessor's one shared result set, and vice versa.
+        // non-matrixed predecessor's one shared result set, and a non-matrixed step read a
+        // predecessor that ran for a single coordinate (several are fanned in by `getCarriedInput`).
         if (this._entries.length === 1) {
             return this._entries[0];
         }
         return this._entries.find((entry) => entryKey(entry.coordinate) === key);
     }
 
-    /** This step's own successful realizations for a given coordinate key - `[]` if unknown. */
-    getSuccessfulRealizationsForCoordinateKey(key: string): readonly number[] {
-        const entry = this.getEntryForCoordinateKey(key);
-        if (!entry) {
-            return [];
-        }
-        const realizations: number[] = [];
-        for (const [realization, result] of entry.runtime.getResults()) {
-            if (result.kind === "success") {
-                realizations.push(realization);
-            }
-        }
-        return realizations;
+    /**
+     * What a successor step's entry for `coordinate` carries over from this step: the realizations
+     * this step succeeded for with the same coordinate key (none if there's no such entry), and
+     * only those realizations' results. A non-matrixed successor of several coordinates fans them
+     * in instead: it gets the realizations that succeeded for every coordinate, with each
+     * coordinate's results for them.
+     */
+    getCarriedInput(coordinate: QcCheckMatrixCoordinate | null): QcCheckCarriedInput<TMetrics> {
+        const sourceEntries =
+            coordinate === null && this._entries.length > 1
+                ? this._entries
+                : [this.getEntryForCoordinateKey(entryKey(coordinate))].filter((entry) => entry !== undefined);
+
+        const successfulSets = sourceEntries.map(
+            (entry) => new Set(getSuccessfulRealizations(entry.runtime.getResults())),
+        );
+        const realizations = Array.from(successfulSets[0] ?? []).filter((realization) =>
+            successfulSets.every((successful) => successful.has(realization)),
+        );
+
+        return {
+            realizations,
+            previousStepResults: sourceEntries.map((entry) => ({
+                coordinate: entry.coordinate,
+                results: pickResults(entry.runtime.getResults(), realizations),
+            })),
+        };
     }
 
-    /** This step's own results for a given coordinate key - `null` if unknown. */
-    getResultsForCoordinateKey(key: string): ReadonlyMap<number, QcCheckRealizationResult<TMetrics>> | null {
-        return this.getEntryForCoordinateKey(key)?.runtime.getResults() ?? null;
+    /** Marks every entry still running as stopped, once the check run was cancelled - see `QcCheckStepMatrixRuntime.markStopped`. */
+    markStopped(): void {
+        this._entries.forEach((entry) => entry.runtime.markStopped());
     }
 
     /**
      * Runs every current entry in sequence (never in parallel - keeps a single in-flight fetch at a
-     * time, matching `QcCheckRuntime`'s own single cancel-tracking slot). For the check's first step
-     * (`previousStepRuntime === null`) every entry starts from `checkRealizations`; otherwise each
-     * entry's carried realizations/previous results come from `previousStepRuntime`'s *same*
-     * coordinate key - this is what gives each matrix coordinate its own independent realization
-     * matrix end to end: one grid's realization failing never affects a different grid's same
-     * realization.
+     * time). For the check's first step (`previousStepRuntime === null`) every entry starts from
+     * `checkRealizations`; otherwise each entry's carried realizations/previous results come from
+     * `previousStepRuntime`'s *same* coordinate key (see `getCarriedInput`) - this is what gives
+     * each matrix coordinate its own independent realization matrix end to end: one grid's
+     * realization failing never affects a different grid's same realization.
      */
     async run(options: {
         checkRealizations: readonly number[];
@@ -448,31 +554,36 @@ export class QcCheckStepRuntime<
         params: TParams;
         ensemble: RegularEnsemble;
         fetchQuery: ScopedQueryController["fetchQuery"];
-        onFetchCancelOrFinish: (callback: () => void) => void;
+        createCleanupScope: () => QcCheckCleanupScope;
+        isCurrent: () => boolean;
     }): Promise<void> {
-        const { checkRealizations, previousStepRuntime, params, ensemble, fetchQuery, onFetchCancelOrFinish } = options;
+        const { checkRealizations, previousStepRuntime, params, ensemble, fetchQuery, createCleanupScope, isCurrent } =
+            options;
 
         for (const entry of this._entries) {
-            const key = entryKey(entry.coordinate);
-            const carriedRealizations = previousStepRuntime
-                ? previousStepRuntime.getSuccessfulRealizationsForCoordinateKey(key)
-                : checkRealizations;
+            // A cancelled entry may still finish normally (e.g. when its step catches the cancellation) - the
+            // remaining entries must not start running for a run that is no longer current
+            if (!isCurrent()) {
+                return;
+            }
 
-            if (carriedRealizations.length === 0) {
+            const carriedInput = (previousStepRuntime?.getCarriedInput(entry.coordinate) ?? {
+                realizations: checkRealizations,
+                previousStepResults: null,
+            }) as QcCheckCarriedInput<TPreviousMetrics>;
+
+            if (carriedInput.realizations.length === 0) {
                 entry.runtime.markSkipped();
                 continue;
             }
 
             await entry.runtime.run({
-                realizations: carriedRealizations,
+                ...carriedInput,
                 params,
                 ensemble,
                 fetchQuery,
-                onFetchCancelOrFinish,
-                previousStepResults: (previousStepRuntime?.getResultsForCoordinateKey(key) ?? null) as ReadonlyMap<
-                    number,
-                    QcCheckRealizationResult<TPreviousMetrics>
-                > | null,
+                createCleanupScope,
+                isCurrent,
                 matrixCoordinate: entry.coordinate,
             });
         }

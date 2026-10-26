@@ -22,6 +22,14 @@ export class EnsembleQc {
         return this._ensemble;
     }
 
+    /** Swaps in a rebuilt instance of the same ensemble, keeping every check's results - see `QcCheckRuntime.setEnsemble`. */
+    setEnsemble(ensemble: RegularEnsemble): void {
+        this._ensemble = ensemble;
+        for (const checkRuntime of this._checks.values()) {
+            checkRuntime.setEnsemble(ensemble);
+        }
+    }
+
     getCheckRuntimes(): Map<string, QcCheckRuntime> {
         return this._checks;
     }
