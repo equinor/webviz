@@ -146,6 +146,18 @@ export type VisualizationAssemblerMakeOptions<
     initialAccumulatedData?: TAccumulatedData;
 };
 
+// The providers of the levels above a group, split by whether they come before or after the group in the tree, so that
+// they keep their place among the group's own providers
+type InheritedDataProviders = {
+    before: DataProvider<any, any, any>[];
+    after: DataProvider<any, any, any>[];
+};
+
+type CollectedGroup = {
+    group: Group<any>;
+    numDataProvidersBefore: number;
+};
+
 export class VisualizationAssembler<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
@@ -195,7 +207,7 @@ export class VisualizationAssembler<
     ): AssemblerProduct<TTarget, TCustomGroupProps, TAccumulatedData> {
         return this.makeRecursively(
             dataProviderManager.getGroupDelegate(),
-            [],
+            { before: [], after: [] },
             options?.initialAccumulatedData ?? ({} as TAccumulatedData),
             dataProviderManager.isDeserializing(),
             options?.injectedData,
@@ -220,7 +232,7 @@ export class VisualizationAssembler<
         groupDelegate: GroupDelegate,
         allItemIds: Set<string>,
         aggregatedErrorMessages: (StatusMessage | string)[],
-        groups: Group<any>[],
+        groups: CollectedGroup[],
         dataProviders: DataProvider<any, any, any>[],
     ): void {
         for (const child of groupDelegate.getChildren()) {
@@ -251,7 +263,7 @@ export class VisualizationAssembler<
             }
 
             if (child instanceof Group) {
-                groups.push(child);
+                groups.push({ group: child, numDataProvidersBefore: dataProviders.length });
             } else if (instanceofItemGroup(child)) {
                 this.collectLevelItemsRecursively(
                     child.getGroupDelegate(),
@@ -268,7 +280,7 @@ export class VisualizationAssembler<
 
     private makeRecursively(
         groupDelegate: GroupDelegate,
-        inheritedDataProviders: DataProvider<any, any, any>[],
+        inheritedDataProviders: InheritedDataProviders,
         accumulatedData: TAccumulatedData,
         isRestoringState: boolean,
         injectedData?: TInjectedData,
@@ -285,7 +297,7 @@ export class VisualizationAssembler<
         let numDataProviders = 0;
         let combinedBoundingBox: bbox.BBox | null = null;
 
-        const groups: Group<any>[] = [];
+        const groups: CollectedGroup[] = [];
         const dataProviders: DataProvider<any, any, any>[] = [];
 
         const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
@@ -297,10 +309,13 @@ export class VisualizationAssembler<
 
         this.collectLevelItemsRecursively(groupDelegate, allItemIds, aggregatedErrorMessages, groups, dataProviders);
 
-        for (const group of groups) {
+        for (const { group, numDataProvidersBefore } of groups) {
             const product = this.makeRecursively(
                 group.getGroupDelegate(),
-                [...inheritedDataProviders, ...dataProviders],
+                {
+                    before: [...inheritedDataProviders.before, ...dataProviders.slice(0, numDataProvidersBefore)],
+                    after: [...dataProviders.slice(numDataProvidersBefore), ...inheritedDataProviders.after],
+                },
                 accumulatedData,
                 isRestoringState,
                 injectedData,
@@ -325,7 +340,7 @@ export class VisualizationAssembler<
             children.push(this.makeGroup(group, product));
         }
 
-        for (const child of [...inheritedDataProviders, ...dataProviders]) {
+        for (const child of [...inheritedDataProviders.before, ...dataProviders, ...inheritedDataProviders.after]) {
             numDataProviders++;
 
             // IDLE as well - a provider that hasn't started loading yet has no current data either

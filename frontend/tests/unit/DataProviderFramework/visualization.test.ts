@@ -218,7 +218,7 @@ describe("Visualization assembly", () => {
         const product = assemble(makeAssembler(), manager);
 
         expect(describeStructure(product.children)).toEqual([
-            { View: ["Inside", "Outside", "Grid"] },
+            { View: ["Inside", "Grid", "Outside"] },
             "Inside",
             "Outside",
         ]);
@@ -238,6 +238,26 @@ describe("Visualization assembly", () => {
             { "View 2": ["Inside", "Deep", "Surface 2"] },
             "Inside",
             "Deep",
+        ]);
+    });
+
+    test("keeps the order of the tree for providers passed down into views, also for the ones below a view", async () => {
+        const manager = await restore(
+            surfaceProvider("Top"),
+            view("View 1", [gridProvider("Grid")]),
+            boundary("Boundary", [surfaceProvider("Middle")]),
+            view("View 2", [surfaceProvider("Surface 2")]),
+            surfaceProvider("Bottom"),
+        );
+
+        const product = assemble(makeAssembler(), manager);
+
+        expect(describeStructure(product.children)).toEqual([
+            { "View 1": ["Top", "Grid", "Middle", "Bottom"] },
+            { "View 2": ["Top", "Middle", "Surface 2", "Bottom"] },
+            "Top",
+            "Middle",
+            "Bottom",
         ]);
     });
 

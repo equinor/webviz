@@ -56,7 +56,7 @@ function getProvidedPlots(
             // ! Workaround: the VisualizationAssembler passes a group's sibling providers down into its child groups
             // ! (intended for views in the 2D/3D viewers, where providers outside a view are shown in every view). A
             // ! line or area plot next to this group in the track therefore also ends up among the group's children,
-            // ! ahead of its own two curves, and would be paired up as one of them. Only the DIFF_PLOT children are
+            // ! next to its own two curves, and would be paired up as one of them. Only the DIFF_PLOT children are
             // ! the group's own curves - DIFF_PLOT providers are only allowed inside a differential plot group, so they
             // ! are never inherited. The inherited plots are drawn from their own place in the track.
             // !
