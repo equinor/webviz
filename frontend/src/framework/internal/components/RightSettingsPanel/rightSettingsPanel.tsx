@@ -17,8 +17,8 @@ import { ModulesList } from "../ModulesList";
 
 import { ColorPaletteSettings } from "./private-components/colorPaletteSettings";
 import { ModuleInstanceLog } from "./private-components/moduleInstanceLog";
-import { RealizationFilterSettings } from "./private-components/realizationFilterSettings";
 import { QcChecksPanel } from "./private-components/qcChecksPanel";
+import { RealizationFilterSettings } from "./private-components/realizationFilterSettings";
 
 type RightSettingsPanelProps = { workbench: Workbench };
 

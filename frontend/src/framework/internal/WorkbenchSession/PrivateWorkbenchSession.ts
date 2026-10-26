@@ -20,6 +20,7 @@ import {
     type EnsembleLoadingWarningInfoMap,
 } from "../EnsembleSetLoader";
 import { PrivateWorkbenchSettings, PrivateWorkbenchSettingsTopic } from "../PrivateWorkbenchSettings";
+import { EnsembleQcSet } from "../QC/EnsembleQcSet";
 
 import { DashboardHotCache } from "./DashboardHotCache";
 import type { SerializedWorkbenchSessionContentState } from "./PrivateWorkbenchSession.schema";
@@ -28,7 +29,6 @@ import {
     WorkbenchSessionSource,
     type WorkbenchSessionDataContainer,
 } from "./utils/WorkbenchSessionDataContainer";
-import { EnsembleQcSet } from "../QC/EnsembleQcSet";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -236,7 +236,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
                 ),
             },
             ensembleRealizationFilterSet: this._realizationFilterSet.serializeState(),
-            ensembleQcSet: this._ensembleQcSet.serializeState(),
+            // TODO: Serialize `ensembleQcSet` once it holds state worth restoring (e.g. check params)
         };
     }
 
@@ -288,8 +288,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._realizationFilterSet.deserializeState(contentState.ensembleRealizationFilterSet);
         this.notifyAboutEnsembleRealizationFilterChange();
 
-        this._ensembleQcSet.deserializeState(contentState.ensembleQcSet);
-        this.notifyAboutEnsembleQcSetChange();
+        if (contentState.ensembleQcSet) {
+            this._ensembleQcSet.deserializeState(contentState.ensembleQcSet);
+            this.notifyAboutEnsembleQcSetChange();
+        }
 
         // --- Now that the ensemble set is loaded, we can deserialize dashboards and modules ---
 

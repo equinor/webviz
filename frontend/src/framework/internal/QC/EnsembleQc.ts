@@ -2,9 +2,9 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 
+import type { SerializedEnsembleQcState } from "./EnsembleQc.schema";
 import { QcCheckRuntime } from "./QcCheck";
 import { QcCheckRegistry } from "./QcCheckRegistry";
-import { SerializedEnsembleQcState } from "./EnsembleQc.schema";
 
 export class EnsembleQc {
     private _checks: Map<string, QcCheckRuntime> = new Map<string, QcCheckRuntime>();
