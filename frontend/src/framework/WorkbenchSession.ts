@@ -8,14 +8,18 @@ import type { WorkbenchSessionTopicPayloads } from "./internal/WorkbenchSession/
 import type { RealizationFilterSet } from "./RealizationFilterSet";
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import type { UserCreatedItems } from "./UserCreatedItems";
+import { EnsembleQcSet } from "./internal/QC/EnsembleQcSet";
+import { EnsembleQc } from "./internal/QC/EnsembleQc";
 
 export enum WorkbenchSessionTopic {
     ENSEMBLE_SET = "EnsembleSet",
+    ENSEMBLE_QC_SET = "EnsembleQcSet",
     REALIZATION_FILTER_SET = "RealizationFilterSet",
 }
 
 export interface WorkbenchSession extends PublishSubscribe<WorkbenchSessionTopicPayloads> {
     getEnsembleSet: () => EnsembleSet;
+    getEnsembleQcSet: () => EnsembleQcSet;
     getRealizationFilterSet: () => RealizationFilterSet;
     getUserCreatedItems: () => UserCreatedItems;
 }
@@ -23,6 +27,11 @@ export interface WorkbenchSession extends PublishSubscribe<WorkbenchSessionTopic
 // Keeping the old function for convenience and backwards compatibility - it has to be decided later if it should be removed.
 export function useEnsembleSet(workbenchSession: WorkbenchSession): EnsembleSet {
     return usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
+}
+
+export function useEnsembleQcSet(workbenchSession: WorkbenchSession): EnsembleQc[] {
+    const { qcSet } = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_QC_SET);
+    return qcSet.getEnsembleQcsArray();
 }
 
 export function createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession: WorkbenchSession) {

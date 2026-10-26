@@ -14,6 +14,7 @@ export enum RightDrawerContent {
     ModulesList = "ModulesList",
     TemplatesList = "TemplatesList",
     ColorPaletteSettings = "ColorPaletteSettings",
+    QCChecks = "QCChecks",
 }
 
 export enum GuiState {

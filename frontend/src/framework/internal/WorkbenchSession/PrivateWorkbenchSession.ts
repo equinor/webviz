@@ -28,6 +28,7 @@ import {
     WorkbenchSessionSource,
     type WorkbenchSessionDataContainer,
 } from "./utils/WorkbenchSessionDataContainer";
+import { EnsembleQcSet } from "../QC/EnsembleQcSet";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -70,6 +71,7 @@ export enum PrivateWorkbenchSessionTopic {
 
 export type WorkbenchSessionTopicPayloads = {
     [WorkbenchSessionTopic.ENSEMBLE_SET]: EnsembleSet;
+    [WorkbenchSessionTopic.ENSEMBLE_QC_SET]: { qcSet: EnsembleQcSet };
     [WorkbenchSessionTopic.REALIZATION_FILTER_SET]: { filterSet: RealizationFilterSet };
     [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard | null;
     [PrivateWorkbenchSessionTopic.DASHBOARDS]: Dashboard[];
@@ -92,9 +94,13 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     private _activeDashboardId: string | null = null;
     private _dashboardHotCache = new DashboardHotCache();
     private _ensembleSet: EnsembleSet = new EnsembleSet([]);
+    private _ensembleQcSet: EnsembleQcSet = new EnsembleQcSet();
     private _realizationFilterSet = new RealizationFilterSet();
     private _wrappedRealizationFilterSet = {
         filterSet: this._realizationFilterSet,
+    };
+    private _wrappedEnsembleQcSet = {
+        qcSet: this._ensembleQcSet,
     };
     private _userCreatedItems: UserCreatedItems;
     private _metadata: WorkbenchSessionMetadata = {
@@ -230,6 +236,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
                 ),
             },
             ensembleRealizationFilterSet: this._realizationFilterSet.serializeState(),
+            ensembleQcSet: this._ensembleQcSet.serializeState(),
         };
     }
 
@@ -281,6 +288,9 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._realizationFilterSet.deserializeState(contentState.ensembleRealizationFilterSet);
         this.notifyAboutEnsembleRealizationFilterChange();
 
+        this._ensembleQcSet.deserializeState(contentState.ensembleQcSet);
+        this.notifyAboutEnsembleQcSetChange();
+
         // --- Now that the ensemble set is loaded, we can deserialize dashboards and modules ---
 
         for (const dashboard of contentState.dashboards) {
@@ -330,11 +340,17 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     setEnsembleSet(set: EnsembleSet) {
         this._realizationFilterSet.synchronizeWithEnsembleSet(set);
+        this._ensembleQcSet.synchronizeWithEnsembleSet(set, this._queryClient);
+        // New wrapper so `useEnsembleQcSet` gets a new snapshot and re-renders
+        this._wrappedEnsembleQcSet = {
+            qcSet: this._ensembleQcSet,
+        };
         this._ensembleSet = set;
         // Await the update of the EnsembleTimestampsStore with the latest timestamps before notifying any subscribers
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, set);
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.ENSEMBLE_SET);
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.ENSEMBLE_QC_SET);
         this.handleStateChange();
     }
 
@@ -353,6 +369,8 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             switch (topic) {
                 case WorkbenchSessionTopic.ENSEMBLE_SET:
                     return this._ensembleSet;
+                case WorkbenchSessionTopic.ENSEMBLE_QC_SET:
+                    return this._wrappedEnsembleQcSet;
                 case WorkbenchSessionTopic.REALIZATION_FILTER_SET:
                     return this._wrappedRealizationFilterSet;
                 case PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD:
@@ -654,6 +672,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return this._ensembleSet;
     }
 
+    getEnsembleQcSet(): EnsembleQcSet {
+        return this._ensembleQcSet;
+    }
+
     getRealizationFilterSet(): RealizationFilterSet {
         return this._realizationFilterSet;
     }
@@ -671,6 +693,15 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             filterSet: this._realizationFilterSet,
         };
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
+        this.handleStateChange();
+    }
+
+    notifyAboutEnsembleQcSetChange(): void {
+        console.debug("Notifying about ensemble QC set change");
+        this._wrappedEnsembleQcSet = {
+            qcSet: this._ensembleQcSet,
+        };
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.ENSEMBLE_QC_SET);
         this.handleStateChange();
     }
 
@@ -706,6 +737,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._dashboards = [];
         this._activeDashboardId = null;
         this._ensembleSet = new EnsembleSet([]);
+        this._ensembleQcSet.clear();
     }
 
     beforeDestroy(): void {
