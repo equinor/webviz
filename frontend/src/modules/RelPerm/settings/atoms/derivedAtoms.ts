@@ -12,7 +12,11 @@ import {
     showStatisticalFanAtom,
     showStatisticalLinesAtom,
 } from "./baseAtoms";
-import { selectedEnsembleIdentsAtom, selectedSaturationAxisNameAtom, selectedSatnumsAtom } from "./persistableFixableAtoms";
+import {
+    selectedEnsembleIdentsAtom,
+    selectedSaturationAxisNameAtom,
+    selectedSatnumsAtom,
+} from "./persistableFixableAtoms";
 import {
     relPermRealizationDataQueriesAtom,
     relPermTableDefinitionQueriesAtom,
@@ -34,6 +38,36 @@ export const availableTableNamesAtom = atom<string[]>((get) => {
     const loadedTableNames = tableNameQueries.flatMap((query) => (query.data ? [query.data] : []));
 
     return intersectArrays(loadedTableNames);
+});
+
+function arraysHaveSameValues(left: string[], right: string[]): boolean {
+    if (left.length !== right.length) {
+        return false;
+    }
+
+    const sortedLeft = [...left].sort();
+    const sortedRight = [...right].sort();
+    return sortedLeft.every((value, index) => value === sortedRight[index]);
+}
+
+export const tableNameSetsDifferAtom = atom<boolean>((get) => {
+    const loadedTableNameSets = get(relPermTableNamesQueriesAtom).flatMap((query) => (query.data ? [query.data] : []));
+
+    return (
+        loadedTableNameSets.length > 1 &&
+        loadedTableNameSets.some((tableNames) => !arraysHaveSameValues(tableNames, loadedTableNameSets[0]))
+    );
+});
+
+export const commonTableNamesAreMissingAtom = atom<boolean>((get) => {
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const tableNameQueries = get(relPermTableNamesQueriesAtom);
+    const loadedTableNameSets = tableNameQueries.filter((query) => query.data);
+    const allTableNameQueriesLoaded =
+        selectedEnsembleIdents.length > 0 &&
+        tableNameQueries.every((query) => query.data !== undefined || query.isError);
+
+    return allTableNameQueriesLoaded && loadedTableNameSets.length > 1 && get(availableTableNamesAtom).length === 0;
 });
 
 export const ensembleTableDefinitionsAtom = atom<RelPermEnsembleTableDefinition[]>((get) => {

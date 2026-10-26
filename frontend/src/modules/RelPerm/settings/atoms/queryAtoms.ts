@@ -107,9 +107,8 @@ function makeRelPermTableDefinitionQueryOptions(get: Getter) {
 function makeRelPermRealizationDataQueryOptions(get: Getter) {
     const { value: selectedEnsembleIdents, isValidInContext: ensembleIdentsValid } = get(selectedEnsembleIdentsAtom);
     const { value: selectedTableName, isValidInContext: tableNameValid } = get(selectedTableNameAtom);
-    const { value: selectedSaturationAxisName, isValidInContext: saturationAxisNameValid } = get(
-        selectedSaturationAxisNameAtom,
-    );
+    const { value: selectedSaturationAxisName, isValidInContext: saturationAxisNameValid } =
+        get(selectedSaturationAxisNameAtom);
     const { value: selectedCurveNames, isValidInContext: curveNamesValid } = get(selectedCurveNamesAtom);
     const { value: selectedSatnums, isValidInContext: satnumsValid } = get(selectedSatnumsAtom);
     const validRealizationNumbers = get(validRealizationNumbersAtom);
@@ -173,7 +172,12 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
             // A disabled query keeps its cached data and error, which may not match the current selections
             // (e.g. relative-permeability curves after switching to capillary pressure)
             if (!areSelectionsValid) {
-                return { dataAccessor: null, isFetching: false, isError: false, errors: [] };
+                return {
+                    dataAccessor: null,
+                    isFetching: false,
+                    isError: false,
+                    errors: [],
+                };
             }
 
             const ensembleData: RelPermEnsembleRealizationData[] = [];
