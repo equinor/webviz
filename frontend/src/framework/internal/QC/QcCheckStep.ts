@@ -67,8 +67,8 @@ export type QcCheckStepDefinition<TMetrics = unknown, TParams = void, TPreviousM
     resultComponent?: React.ComponentType<{ metrics: TMetrics }>;
     // Templates offered to investigate the results of a run
     templates?: (context: QcCheckTemplateContext<TMetrics>) => Template[];
-    // Makes the step run once per returned coordinate (e.g. once per grid). Method shorthand, so
-    // steps with different `TParams` can be assigned to `QcCheckDefinition.steps`.
+    // Makes the step run once per returned coordinate (e.g. once per grid) - not at all if none are
+    // returned. Method shorthand, so steps with different `TParams` can be assigned to `QcCheckDefinition.steps`.
     matrixCoordinates?(params: TParams): QcCheckMatrixCoordinate[];
 };
 
@@ -240,12 +240,17 @@ export class QcCheckStepMatrixRuntime<
 
         const cleanupScope = createCleanupScope();
 
+        // An outdated invocation must not start requests - the shared controller would cancel a newer
+        // run's request for the same key
+        const guardedFetchQuery: ScopedQueryController["fetchQuery"] = (fetchOptions) =>
+            isCurrent() ? fetchQuery(fetchOptions) : Promise.reject(new CancelledError());
+
         const context: QcCheckStepRunContext<TMetrics, TParams, TPreviousMetrics> = {
             ensemble,
             realizations: realizations as number[],
             params,
             matrixCoordinate,
-            fetchQuery,
+            fetchQuery: guardedFetchQuery,
             onFetchCancelOrFinish: (callback: () => void) => cleanupScope.add(callback),
             setProgressMessage: (message: string, realization?: number) => {
                 if (!isCurrent()) {
@@ -365,7 +370,10 @@ export class QcCheckStepRuntime<
 
     constructor(stepDefinition: QcCheckStepDefinition<TMetrics, TParams, TPreviousMetrics>) {
         this._stepDefinition = stepDefinition;
-        this._entries = [{ coordinate: null, runtime: new QcCheckStepMatrixRuntime(stepDefinition) }];
+        // A matrixed step gets its entries once its coordinates are known, at the start of a run
+        this._entries = stepDefinition.matrixCoordinates
+            ? []
+            : [{ coordinate: null, runtime: new QcCheckStepMatrixRuntime(stepDefinition) }];
     }
 
     getStepDefinition(): QcCheckStepDefinition<TMetrics, TParams, TPreviousMetrics> {
@@ -392,23 +400,31 @@ export class QcCheckStepRuntime<
         };
     }
 
-    /** The step's matrix entries - always at least one. */
+    /** The step's matrix entries - one for a step without a matrix, one per coordinate otherwise. */
     getEntries(): QcCheckStepMatrixEntry<TMetrics, TParams, TPreviousMetrics>[] {
         return this._entries;
     }
 
-    /** Rebuilds the entries from the params for a new run, reusing entries whose coordinate key is unchanged. */
-    reset(params: TParams): void {
-        const coordinates = this._stepDefinition.matrixCoordinates?.(params) ?? null;
-        const nextCoordinates: (QcCheckMatrixCoordinate | null)[] =
-            coordinates && coordinates.length > 0 ? coordinates : [null];
+    /** Clears the results of every entry. */
+    clearResults(): void {
+        this._entries.forEach((entry) => entry.runtime.reset());
+    }
+
+    /**
+     * Rebuilds the entries from the params, reusing entries whose coordinate key is unchanged. Kept apart from
+     * `clearResults`, since the step's `matrixCoordinates` may throw.
+     */
+    updateCoordinates(params: TParams): void {
+        // Only a step without a matrix gets the implicit `null` coordinate - an empty matrix runs nothing
+        const nextCoordinates: (QcCheckMatrixCoordinate | null)[] = this._stepDefinition.matrixCoordinates
+            ? this._stepDefinition.matrixCoordinates(params)
+            : [null];
         const nextKeys = nextCoordinates.map(entryKey);
         const prevKeys = this._entries.map((entry) => entryKey(entry.coordinate));
 
         const keysChanged = nextKeys.length !== prevKeys.length || nextKeys.some((key, i) => key !== prevKeys[i]);
 
         if (!keysChanged) {
-            this._entries.forEach((entry) => entry.runtime.reset());
             return;
         }
 
@@ -416,7 +432,6 @@ export class QcCheckStepRuntime<
         this._entries = nextCoordinates.map((coordinate) => {
             const existing = existingByKey.get(entryKey(coordinate));
             if (existing) {
-                existing.runtime.reset();
                 return existing;
             }
             return {
@@ -428,26 +443,16 @@ export class QcCheckStepRuntime<
         this._publishSubscribeDelegate.notifySubscribers(QcCheckStepGroupTopic.COORDINATES);
     }
 
-    private getEntryForCoordinateKey(
-        key: string,
-    ): QcCheckStepMatrixEntry<TMetrics, TParams, TPreviousMetrics> | undefined {
-        // A single entry matches any key
-        if (this._entries.length === 1) {
-            return this._entries[0];
-        }
-        return this._entries.find((entry) => entryKey(entry.coordinate) === key);
-    }
-
     /**
-     * What the next step's entry for `coordinate` gets: the realizations that succeeded here for the same
-     * coordinate, with their results. A non-matrixed next step after several coordinates gets the realizations
-     * that succeeded for every coordinate, with each coordinate's results.
+     * What the next step's entry for `coordinate` gets: the realizations that succeeded here, with their results.
+     * - A non-matrixed next step takes all entries here - with several, the realizations that succeeded for all.
+     * - A matrixed next step takes the entry with the same key, or the single entry of a non-matrixed step here.
      */
     getCarriedInput(coordinate: QcCheckMatrixCoordinate | null): QcCheckCarriedInput<TMetrics> {
         const sourceEntries =
-            coordinate === null && this._entries.length > 1
+            coordinate === null
                 ? this._entries
-                : [this.getEntryForCoordinateKey(entryKey(coordinate))].filter((entry) => entry !== undefined);
+                : this._entries.filter((entry) => entry.coordinate === null || entry.coordinate.key === coordinate.key);
 
         const successfulSets = sourceEntries.map(
             (entry) => new Set(getSuccessfulRealizations(entry.runtime.getResults())),

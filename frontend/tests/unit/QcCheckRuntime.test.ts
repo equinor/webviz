@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { CancelledError, QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import type { QcCheckDefinition } from "@framework/internal/QC/QcCheck";
@@ -387,5 +387,133 @@ describe("QcCheckRuntime tests", () => {
         expect(consoleErrorSpy).toHaveBeenCalled();
         expect(checkRuntime.isRunning()).toBe(false);
         consoleErrorSpy.mockRestore();
+    });
+
+    test("should clear every step's previous results when a re-run fails to get its coordinates", async () => {
+        const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        let failCoordinates = false;
+        const succeedingRun: QcCheckStepDefinition<void, void>["run"] = async (context) => {
+            for (const realization of context.realizations) {
+                context.reportRealizationResult(realization, { kind: "success", metrics: undefined });
+            }
+        };
+        const checkRuntime = makeCheckRuntime([
+            { name: "Step 1", run: succeedingRun },
+            {
+                name: "Step 2",
+                matrixCoordinates: () => {
+                    if (failCoordinates) {
+                        throw new Error("No coordinates");
+                    }
+                    return [{ key: "a", label: "A" }];
+                },
+                run: succeedingRun,
+            },
+        ]);
+
+        await checkRuntime.run([0, 1]);
+        failCoordinates = true;
+        await checkRuntime.run([0, 1]);
+
+        for (const stepRuntime of checkRuntime.getStepRuntimes()) {
+            for (const entry of stepRuntime.getEntries()) {
+                expect(entry.runtime.hasRun()).toBe(false);
+                expect(entry.runtime.getResults().size).toBe(0);
+            }
+        }
+        consoleErrorSpy.mockRestore();
+    });
+
+    test("should not let a superseded invocation start a request that cancels the newer run's", async () => {
+        const outcomes: string[] = [];
+        let invocationCount = 0;
+        let resumeSuperseded = () => {};
+        let resolveFetch: (value: number) => void = () => {};
+        const checkRuntime = makeCheckRuntime([
+            {
+                name: "Fetching step",
+                async run(context) {
+                    const invocation = ++invocationCount;
+                    if (invocation === 1) {
+                        await new Promise<void>((resolve) => (resumeSuperseded = resolve));
+                    }
+                    try {
+                        await context.fetchQuery({
+                            queryKey: ["shared-key"],
+                            queryFn: () => new Promise<number>((resolve) => (resolveFetch = resolve)),
+                        });
+                        outcomes.push(`${invocation}: fetched`);
+                    } catch (error) {
+                        outcomes.push(`${invocation}: ${error instanceof CancelledError ? "cancelled" : "failed"}`);
+                    }
+                },
+            },
+        ]);
+
+        const firstRun = checkRuntime.run([0]);
+        const secondRun = checkRuntime.run([0]);
+        // The superseded invocation resumes while the newer one is fetching the same key
+        resumeSuperseded();
+        await firstRun;
+        resolveFetch(1);
+        await secondRun;
+
+        expect(outcomes).toEqual(["1: cancelled", "2: fetched"]);
+    });
+
+    test("should only carry a single matrixed entry over to the same coordinate", async () => {
+        const received: ReceivedInput[] = [];
+        const checkRuntime = makeCheckRuntime([
+            {
+                name: "Grid A step",
+                matrixCoordinates: () => [{ key: "a", label: "A" }],
+                async run(context) {
+                    for (const realization of context.realizations) {
+                        context.reportRealizationResult(realization, { kind: "success", metrics: "a" });
+                    }
+                },
+            },
+            {
+                ...makeRecordingStep(received),
+                matrixCoordinates: () => [
+                    { key: "a", label: "A" },
+                    { key: "b", label: "B" },
+                ],
+            },
+        ]);
+
+        await checkRuntime.run([0, 1]);
+
+        // Grid B has no matching entry in the previous step, so it's skipped rather than given grid A's results
+        expect(received).toEqual([
+            {
+                realizations: [0, 1],
+                previousStepResults: [
+                    {
+                        coordinate: "a",
+                        results: [
+                            [0, "a"],
+                            [1, "a"],
+                        ],
+                    },
+                ],
+            },
+        ]);
+        const [, entryB] = checkRuntime.getStepRuntimes()[1].getEntries();
+        expect(entryB.runtime.isSkipped()).toBe(true);
+    });
+
+    test("should not run a matrixed step without coordinates, nor the steps after it", async () => {
+        const received: ReceivedInput[] = [];
+        const checkRuntime = makeCheckRuntime([
+            { ...makeRecordingStep(received), matrixCoordinates: () => [] },
+            makeRecordingStep(received),
+        ]);
+
+        await checkRuntime.run([0, 1]);
+
+        expect(received).toEqual([]);
+        expect(checkRuntime.getStepRuntimes()[0].getEntries()).toEqual([]);
+        expect(checkRuntime.getStepRuntimes()[1].getEntries()[0].runtime.isSkipped()).toBe(true);
     });
 });

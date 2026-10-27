@@ -969,8 +969,10 @@ function RealizationSquares(props: RealizationSquaresProps) {
                                     ? `${(realization % LOADING_ANIMATION_STAGGER_COUNT) * LOADING_ANIMATION_STAGGER_STEP_SECS}s`
                                     : undefined;
 
+                                const isInspectable = tone !== "loading" && tone !== "filteredAway";
+
                                 function localHandleSquareClick(realization: number) {
-                                    if (tone === "loading" || tone === "filteredAway") {
+                                    if (!isInspectable) {
                                         return;
                                     }
                                     handleSquareClick(realization);
@@ -978,11 +980,15 @@ function RealizationSquares(props: RealizationSquaresProps) {
 
                                 return (
                                     <Tooltip key={realization} content={tooltipContent}>
-                                        <div
+                                        {/* `aria-disabled` rather than `disabled`, which would also stop the tooltip */}
+                                        <button
+                                            type="button"
+                                            aria-label={tooltipContent}
+                                            aria-disabled={!isInspectable}
                                             onClick={() => localHandleSquareClick(realization)}
                                             style={{ width: SQUARE_SIZE_PX, height: SQUARE_SIZE_PX, animationDelay }}
                                             className={resolveClassNames(
-                                                "flex items-center justify-center rounded-xs p-0",
+                                                "focusable flex items-center justify-center rounded-xs p-0",
                                                 {
                                                     "outline-accent outline-3 outline-double":
                                                         realization === props.selectedRealization,
@@ -993,7 +999,7 @@ function RealizationSquares(props: RealizationSquaresProps) {
                                             )}
                                         >
                                             {REALIZATION_STATUS_TO_CONTENT[tone] ?? null}
-                                        </div>
+                                        </button>
                                     </Tooltip>
                                 );
                             })}

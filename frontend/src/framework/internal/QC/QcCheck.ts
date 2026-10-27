@@ -188,9 +188,13 @@ export class QcCheckRuntime<TParams = unknown> implements PublishSubscribe<QcChe
         this.setIsRunning(true);
 
         try {
-            // Reset every step, so no step shows results from a previous run
+            // Clear every step first, so no step keeps results from a previous run - even if updating a
+            // step's coordinates below throws
             for (const stepRuntime of this._stepRuntimes) {
-                stepRuntime.reset(this._params);
+                stepRuntime.clearResults();
+            }
+            for (const stepRuntime of this._stepRuntimes) {
+                stepRuntime.updateCoordinates(this._params);
             }
 
             let previousStepRuntime: QcCheckStepRuntime | null = null;
