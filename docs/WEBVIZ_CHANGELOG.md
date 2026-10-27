@@ -19,6 +19,7 @@
 ### Fixed
 
 - **2D, 3D, Intersection and Well log viewers**: Fixed several issues with loading saved sessions and changing layer settings.
+- **2D, 3D and Intersection viewers**: Layers in a context boundary outside the views are now shown in every view, like other layers outside the views. Previously they were not shown at all. Layers outside the views and in context boundaries are now also stacked in the order of the layer list. Previously, layers outside a view were always drawn on top of the view's own layers, and layers in a context boundary always below the layers next to it.
 
 ## September 2026
 

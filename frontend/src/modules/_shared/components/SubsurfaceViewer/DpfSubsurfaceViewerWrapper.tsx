@@ -38,6 +38,7 @@ import {
 } from "../../utils/subsurfaceViewer/hoverTransformations";
 
 import { InteractionWrapper } from "./_components/InteractionWrapper";
+import { mergeLayersOfViews } from "./_utils/mergeLayersOfViews";
 
 export type DpfSubsurfaceViewerContextType = {
     visualizationMode: "2D" | "3D";
@@ -124,23 +125,22 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     const usedPolylineIds = props.visualizationAssemblerProduct.accumulatedData.polylineIds;
 
     const viewports: ViewportTypeExtended[] = [];
-    const deckGlLayers: Layer<any>[] = [];
+    const layersPerView: Layer<any>[][] = [];
     const globalLayerIds: string[] = ["placeholder", "axes"];
 
     for (const item of props.visualizationAssemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
             const colorScales = item.annotations.filter((el) => "colorScale" in el);
             const layerIds: string[] = [...globalLayerIds];
+            const viewLayers: Layer<any>[] = [];
 
             for (const child of item.children) {
                 if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
-                    const layer = child.visualization;
-
-                    layerIds.push(layer.id);
-                    // Shared layers (aka, root group layers) might already have been added
-                    if (!deckGlLayers.some((l) => l.id === layer.id)) deckGlLayers.push(layer);
+                    layerIds.push(child.visualization.id);
+                    viewLayers.push(child.visualization);
                 }
             }
+            layersPerView.push(viewLayers);
             viewports.push({
                 id: item.id,
                 name: item.name,
@@ -152,6 +152,9 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
             });
         }
     }
+
+    // Shared layers (aka, root group layers) are in several views, so they are merged into one list
+    const deckGlLayers = mergeLayersOfViews(layersPerView);
 
     const views: ViewsTypeExtended = {
         layout: [0, 0],
