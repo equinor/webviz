@@ -419,25 +419,28 @@ export class QcCheckStepRuntime<
         const nextCoordinates: (QcCheckMatrixCoordinate | null)[] = this._stepDefinition.matrixCoordinates
             ? this._stepDefinition.matrixCoordinates(params)
             : [null];
-        const nextKeys = nextCoordinates.map(entryKey);
-        const prevKeys = this._entries.map((entry) => entryKey(entry.coordinate));
+        const previousCoordinates = this._entries.map((entry) => entry.coordinate);
 
-        const keysChanged = nextKeys.length !== prevKeys.length || nextKeys.some((key, i) => key !== prevKeys[i]);
+        const countChanged = nextCoordinates.length !== previousCoordinates.length;
+        const keysChanged = nextCoordinates.some(
+            (coordinate, i) => entryKey(coordinate) !== entryKey(previousCoordinates[i]),
+        );
+        const labelsChanged = nextCoordinates.some(
+            (coordinate, i) => coordinate?.label !== previousCoordinates[i]?.label,
+        );
 
-        if (!keysChanged) {
+        if (!countChanged && !keysChanged && !labelsChanged) {
             return;
         }
 
-        const existingByKey = new Map(this._entries.map((entry) => [entryKey(entry.coordinate), entry]));
+        // Runtimes are reused by key, but every entry takes the new coordinate, since its label may have changed
+        const runtimesByKey = new Map(this._entries.map((entry) => [entryKey(entry.coordinate), entry.runtime]));
         this._entries = nextCoordinates.map((coordinate) => {
-            const existing = existingByKey.get(entryKey(coordinate));
-            if (existing) {
-                return existing;
-            }
-            return {
-                coordinate,
-                runtime: new QcCheckStepMatrixRuntime<TMetrics, TParams, TPreviousMetrics>(this._stepDefinition),
-            };
+            const existingRuntime = runtimesByKey.get(entryKey(coordinate));
+            const runtime =
+                existingRuntime ??
+                new QcCheckStepMatrixRuntime<TMetrics, TParams, TPreviousMetrics>(this._stepDefinition);
+            return { coordinate, runtime };
         });
         this._entriesSnapshot = null;
         this._publishSubscribeDelegate.notifySubscribers(QcCheckStepGroupTopic.COORDINATES);

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { QcCheckDefinition } from "@framework/internal/QC/QcCheck";
 import { QcCheckRuntime } from "@framework/internal/QC/QcCheck";
 import type { QcCheckStepDefinition, QcCheckStepRunContext } from "@framework/internal/QC/QcCheckStep";
+import { QcCheckStepGroupTopic } from "@framework/internal/QC/QcCheckStep";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 
 const ENSEMBLE = new RegularEnsemble(
@@ -515,5 +516,33 @@ describe("QcCheckRuntime tests", () => {
         expect(received).toEqual([]);
         expect(checkRuntime.getStepRuntimes()[0].getEntries()).toEqual([]);
         expect(checkRuntime.getStepRuntimes()[1].getEntries()[0].runtime.isSkipped()).toBe(true);
+    });
+
+    test("should refresh a coordinate's label on re-run while keeping its runtime", async () => {
+        let label = "Grid A";
+        const receivedLabels: (string | undefined)[] = [];
+        const checkRuntime = makeCheckRuntime([
+            {
+                name: "Per-grid step",
+                matrixCoordinates: () => [{ key: "a", label }],
+                async run(context) {
+                    receivedLabels.push(context.matrixCoordinate?.label);
+                },
+            },
+        ]);
+        const stepRuntime = checkRuntime.getStepRuntimes()[0];
+
+        await checkRuntime.run([0]);
+        const runtimeBefore = stepRuntime.getEntries()[0].runtime;
+        const onCoordinatesChange = vi.fn();
+        stepRuntime.getPublishSubscribeDelegate().subscribe(QcCheckStepGroupTopic.COORDINATES, onCoordinatesChange);
+
+        label = "Grid A (renamed)";
+        await checkRuntime.run([0]);
+
+        expect(receivedLabels).toEqual(["Grid A", "Grid A (renamed)"]);
+        expect(stepRuntime.getEntries()[0].coordinate?.label).toBe("Grid A (renamed)");
+        expect(stepRuntime.getEntries()[0].runtime).toBe(runtimeBefore);
+        expect(onCoordinatesChange).toHaveBeenCalled();
     });
 });
