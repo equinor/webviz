@@ -10,7 +10,6 @@ import {
     FactCheck,
     FilterAlt,
     PlayArrow,
-    PlaylistPlay,
     PriorityHigh,
     RadioButtonUnchecked,
     Replay,
@@ -152,18 +151,23 @@ function useCheckOutcomeTone(checkRuntime: QcCheckRuntime, stepRuntimes: QcCheck
     );
 }
 
-// Flat tally across a set of results (e.g. every cell of every matrix coordinate of one step):
-// green only if every result succeeded, red if none did, yellow for a mix. Unlike
-// `useCheckOutcomeTone` (which requires a realization to succeed in *every* coordinate), this is
-// purely informational - "how much of this step's matrix failed" - so each cell counts on its own.
-function outcomeToneFromResults(results: Iterable<QcCheckRealizationResult<unknown>>): OutcomeTone {
+// Flat tally across every cell of one step's matrix (each realization each matrix coordinate was
+// asked to run): green only if every cell succeeded, red if none did, yellow for a mix. A cell
+// without a result - the step was cancelled or returned before reporting it - counts as not
+// succeeded, so an incomplete step never looks successful. Unlike `useCheckOutcomeTone` (which
+// requires a realization to succeed in *every* coordinate), this is purely informational - "how
+// much of this step's matrix failed" - so each cell counts on its own.
+function outcomeToneFromEntries(entries: QcCheckStepMatrixEntry[]): OutcomeTone {
     let successCount = 0;
     let failureCount = 0;
-    for (const result of results) {
-        if (result.kind === "success") {
-            successCount++;
-        } else {
-            failureCount++;
+    for (const entry of entries) {
+        const results = entry.runtime.getResults();
+        for (const realization of entry.runtime.getRequestedRealizations()) {
+            if (results.get(realization)?.kind === "success") {
+                successCount++;
+            } else {
+                failureCount++;
+            }
         }
     }
     if (failureCount === 0) {
@@ -202,27 +206,28 @@ export function EnsembleQcContainer(props: EnsembleQcContainerProps) {
 
     return (
         <div className={resolveClassNames("group outline-neutral-subtle outline")}>
-            <div
-                className="bg-neutral border-b-neutral-subtle gap-xs p-2xs flex cursor-pointer items-center justify-center border-b"
-                onClick={() => setExpanded((prev) => !prev)}
-            >
-                {expanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
-                <div className="relative flex h-5 w-5 items-center justify-center">
-                    <EnsembleColorTile wrapperClassName="w-5 h-5" ensemble={ensemble} />
-                    {isAnyCheckRunning && (
-                        <CircularProgress
-                            size={16}
-                            tone="on-emphasis"
-                            layoutClassName="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-                        />
-                    )}
-                </div>
-                <div className="font-bolder px-2xs text-body-sm flex h-full min-w-0 grow cursor-pointer items-center">
-                    <span className="truncate">{readableEnsembleName}</span>
-                </div>
-                <Button tone="accent" size="small" variant="ghost" iconOnly>
-                    <PlaylistPlay style={{ fontSize: 16 }} />
-                </Button>
+            <div className="bg-neutral border-b-neutral-subtle gap-xs p-2xs flex items-center justify-center border-b">
+                <button
+                    type="button"
+                    aria-expanded={expanded}
+                    className="focusable gap-xs flex min-w-0 grow cursor-pointer items-center text-left"
+                    onClick={() => setExpanded((prev) => !prev)}
+                >
+                    {expanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
+                    <div className="relative flex h-5 w-5 items-center justify-center">
+                        <EnsembleColorTile wrapperClassName="w-5 h-5" ensemble={ensemble} />
+                        {isAnyCheckRunning && (
+                            <CircularProgress
+                                size={16}
+                                tone="on-emphasis"
+                                layoutClassName="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                            />
+                        )}
+                    </div>
+                    <div className="font-bolder px-2xs text-body-sm flex h-full min-w-0 grow items-center">
+                        <span className="truncate">{readableEnsembleName}</span>
+                    </div>
+                </button>
             </div>
             {expanded && (
                 <div className="flex flex-col">
@@ -268,7 +273,12 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
     // Re-renders whenever the check's running state changes - see the `notifySubscribers` calls in
     // `QcCheckRuntime.run()`/`cancel()`. Each step's own results/status are subscribed to
     // individually by `StepBlock` below.
-    usePublishSubscribeTopicValue(checkRuntime, QcCheckRuntimeTopic.STATUS);
+    // Results are shown against the realizations the run was started with - `activeRealizations`
+    // follows the live realization filter, and is only what the next run starts with.
+    const { requestedRealizations: runRealizations } = usePublishSubscribeTopicValue(
+        checkRuntime,
+        QcCheckRuntimeTopic.STATUS,
+    );
 
     const checkDefinition = checkRuntime.getCheckDefinition();
     const stepRuntimes = checkRuntime.getStepRuntimes();
@@ -359,7 +369,7 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
                                 {index > 0 && <Separator orientation="horizontal" />}
                                 <StepBlock
                                     stepRuntime={stepRuntime}
-                                    activeRealizations={activeRealizations}
+                                    runRealizations={runRealizations}
                                     allRealizations={allRealizations}
                                     selectedRealization={selectedRealization}
                                     onRealizationClick={handleRealizationClick}
@@ -390,8 +400,10 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
     return (
         <div className="flex flex-col">
             <div className="gap-xs bg-neutral/50 border-b-neutral-subtle hover:bg-neutral/80 flex items-center border-b">
-                <div
-                    className="font-bolder p-2xs text-body-sm gap-xs flex grow cursor-pointer"
+                <button
+                    type="button"
+                    aria-expanded={expanded}
+                    className="focusable font-bolder p-2xs text-body-sm gap-xs flex min-w-0 grow cursor-pointer text-left"
                     onClick={() => setExpanded((prev) => !prev)}
                 >
                     {expanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
@@ -403,10 +415,17 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
                         <FactCheck style={{ fontSize: 16 }} />
                     )}
                     <span className="grow truncate">{checkDefinition.name}</span>
-                </div>
+                </button>
                 {isRunning && (
                     <div className="p-2xs">
-                        <Button tone="danger" size="small" variant="ghost" iconOnly onClick={handleCancelRunClick}>
+                        <Button
+                            tone="danger"
+                            size="small"
+                            variant="ghost"
+                            iconOnly
+                            onClick={handleCancelRunClick}
+                            aria-label="Cancel running QC check"
+                        >
                             <Stop style={{ fontSize: 16 }} />
                         </Button>
                     </div>
@@ -466,10 +485,7 @@ function computeMatrixEntriesStatus(
         notRunCount += Math.max(allRealizations.length - results.size, 0);
     }
 
-    const outcomeTone =
-        hasRun && !isRunning && !skipped
-            ? outcomeToneFromResults(entries.flatMap((entry) => Array.from(entry.runtime.getResults().values())))
-            : null;
+    const outcomeTone = hasRun && !isRunning && !skipped ? outcomeToneFromEntries(entries) : null;
     return { isRunning, hasRun, skipped, outcomeTone, successCount, failureCount, exceptionCount, notRunCount };
 }
 
@@ -524,7 +540,8 @@ function useMatrixEntriesStatus(
 type StepBlockProps = {
     stepRuntime: QcCheckStepRuntime;
     allRealizations: readonly number[];
-    activeRealizations: readonly number[];
+    // The realizations the check's run was started with (see `QcCheckRuntime.getRequestedRealizations`)
+    runRealizations: readonly number[];
     selectedRealization: number | null;
     onRealizationClick: (realization: number) => void;
     onApplyTemplateClick: (template: Template) => void;
@@ -541,7 +558,7 @@ type StepBlockProps = {
 function StepBlock(props: StepBlockProps) {
     const {
         stepRuntime,
-        activeRealizations,
+        runRealizations,
         allRealizations,
         selectedRealization,
         onRealizationClick,
@@ -582,13 +599,18 @@ function StepBlock(props: StepBlockProps) {
 
     return (
         <div className="gap-2xs flex flex-col">
-            <div
-                className="gap-xs text-body-sm font-bolder hover:bg-neutral/30 p-2xs flex cursor-pointer items-center"
-                onClick={() => setExpanded((prev) => !prev)}
-            >
-                {expanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
-                {statusIcon()}
-                <span className="grow">{stepDefinition.name}</span>
+            <div className="gap-xs text-body-sm font-bolder hover:bg-neutral/30 p-2xs flex items-center">
+                <button
+                    type="button"
+                    aria-expanded={expanded}
+                    className="focusable gap-xs flex min-w-0 grow cursor-pointer items-center text-left"
+                    onClick={() => setExpanded((prev) => !prev)}
+                >
+                    {expanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
+                    {statusIcon()}
+                    <span className="grow">{stepDefinition.name}</span>
+                </button>
+                {/* Outside the button - its tooltips are interactive elements of their own */}
                 {hasRun && !skipped && (
                     <StepResultCountsSummary
                         successCount={successCount}
@@ -612,7 +634,7 @@ function StepBlock(props: StepBlockProps) {
                                     : stepDefinition.name
                             }
                             stepDefinition={stepDefinition}
-                            activeRealizations={activeRealizations}
+                            runRealizations={runRealizations}
                             allRealizations={allRealizations}
                             selectedRealization={selectedRealization}
                             onRealizationClick={onRealizationClick}
@@ -685,7 +707,7 @@ type MatrixEntryBlockProps = {
     checkName: string;
     stepDefinition: QcCheckStepDefinition;
     allRealizations: readonly number[];
-    activeRealizations: readonly number[];
+    runRealizations: readonly number[];
     selectedRealization: number | null;
     onRealizationClick: (realization: number) => void;
     onApplyTemplateClick: (template: Template) => void;
@@ -701,7 +723,7 @@ function MatrixEntryBlock(props: MatrixEntryBlockProps) {
         checkName,
         stepDefinition,
         allRealizations,
-        activeRealizations,
+        runRealizations,
         selectedRealization,
         onRealizationClick,
         onApplyTemplateClick,
@@ -737,7 +759,7 @@ function MatrixEntryBlock(props: MatrixEntryBlockProps) {
                     <RealizationSquares
                         matrixRuntime={matrixRuntime}
                         checkName={checkName}
-                        activeRealizations={activeRealizations}
+                        runRealizations={runRealizations}
                         allRealizations={allRealizations}
                         results={results}
                         isRunning={isRunning}
@@ -877,11 +899,13 @@ type RealizationSquaresProps = {
     matrixRuntime: QcCheckStepMatrixRuntime;
     checkName: string;
     allRealizations: readonly number[];
-    activeRealizations: readonly number[];
+    // The realizations the check's run was started with - captured at run time, so changing the
+    // realization filter afterwards doesn't relabel this run's results.
+    runRealizations: readonly number[];
     results: ReadonlyMap<number, QcCheckRealizationResult<unknown>>;
     isRunning: boolean;
     // This step's own carried-forward realizations for this matrix coordinate (see
-    // `QcCheckStepMatrixRuntime.getRequestedRealizations`) - an active realization missing from this
+    // `QcCheckStepMatrixRuntime.getRequestedRealizations`) - a run realization missing from this
     // set didn't fail *here*, it never made it past an earlier step, so it renders as "excluded"
     // rather than "idle".
     requestedRealizations: readonly number[];
@@ -903,6 +927,12 @@ const LABEL_HEIGHT_PX = 16;
 const LOADING_ANIMATION_STAGGER_COUNT = 5;
 const LOADING_ANIMATION_STAGGER_STEP_SECS = 0.15;
 
+// Pads a partial last group to a full group's width, so its row lines up with the others - one
+// square and one gap per missing realization, minus the gap the flex layout puts before the filler.
+function makeGroupFillerWidthPx(missingCount: number): number {
+    return missingCount * SQUARE_SIZE_PX + (missingCount - 1) * GAP_PX;
+}
+
 // One small square per realization, colored by outcome. Realizations that are part of the
 // currently running matrix coordinate but have not reported a result yet show a pulsing skeleton
 // square instead of a static one.
@@ -911,7 +941,7 @@ function RealizationSquares(props: RealizationSquaresProps) {
         matrixRuntime,
         checkName,
         allRealizations,
-        activeRealizations,
+        runRealizations,
         results,
         isRunning,
         requestedRealizations,
@@ -929,7 +959,7 @@ function RealizationSquares(props: RealizationSquaresProps) {
         return null;
     }
 
-    const activeRealizationsSet = new Set(activeRealizations);
+    const runRealizationsSet = new Set(runRealizations);
     const requestedRealizationsSet = new Set(requestedRealizations);
     const sortedRealizations = [...allRealizations].sort((a, b) => a - b);
     const numGroups = Math.ceil(sortedRealizations.length / REALIZATION_GROUP_SIZE);
@@ -945,14 +975,14 @@ function RealizationSquares(props: RealizationSquaresProps) {
         onRealizationClick(realization);
     }
 
-    // A realization not in `activeRealizations` was excluded by the realization filter before this
-    // check ever ran, so it never has a result. A realization that *is* active but missing from
+    // A realization not in `runRealizations` was excluded by the realization filter when this check
+    // run started, so it never has a result. A realization that *is* in the run but missing from
     // `requestedRealizations` (this step's own carried-forward set, see
     // `QcCheckStepMatrixRuntime.getRequestedRealizations`) wasn't filtered - it simply didn't survive
     // an earlier step - so the two get visually distinct tones ("filteredAway" vs "excluded") even
     // though neither has a result to show here.
     function makeSquareColor(realization: number): RealizationStatusTone {
-        if (!activeRealizationsSet.has(realization)) {
+        if (!runRealizationsSet.has(realization)) {
             return "filteredAway";
         }
         const result = results.get(realization);
@@ -1049,12 +1079,14 @@ function RealizationSquares(props: RealizationSquaresProps) {
                                     </Tooltip>
                                 );
                             })}
-                            {Array.from({ length: REALIZATION_GROUP_SIZE - group.length }).map((_, i) => (
+                            {group.length < REALIZATION_GROUP_SIZE && (
                                 <div
-                                    key={`placeholder-${i}`}
-                                    style={{ width: SQUARE_SIZE_PX, height: SQUARE_SIZE_PX }}
+                                    style={{
+                                        width: makeGroupFillerWidthPx(REALIZATION_GROUP_SIZE - group.length),
+                                        height: SQUARE_SIZE_PX,
+                                    }}
                                 />
-                            ))}
+                            )}
                         </div>
                     </div>
                 ))}

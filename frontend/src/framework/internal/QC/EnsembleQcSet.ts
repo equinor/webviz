@@ -65,5 +65,6 @@ export class EnsembleQcSet {
 
     deserializeState(input: SerializedEnsembleQcSetState) {
         // no-op for now
+        void input; // currently a no-op, just to acknowledge the parameter
     }
 }
