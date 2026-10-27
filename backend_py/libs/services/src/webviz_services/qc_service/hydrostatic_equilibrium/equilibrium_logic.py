@@ -10,11 +10,14 @@ from typing import List, Sequence
 import numpy as np
 from numpy.typing import NDArray
 
-from . import hydrostatic_equilibrium_types as types
+from . import hydrostatic_equilibrium_types as he_types
 
 # A value is treated as effectively zero if its magnitude is below this. Cumulative production /
 # injection vectors are reported in large units, so an absolute tolerance is appropriate here.
 ZERO_VECTOR_TOLERANCE = 1e-6
+
+# Floor against division by near-zero t0 values when computing relative change.
+RELATIVE_CHANGE_DENOMINATOR_FLOOR = 1e-6
 
 # Minimum gap between t0 and t1 for t1 to be considered "sufficiently far" from start of simulation.
 MIN_TIME_GAP_DAYS = 100.0
@@ -32,13 +35,13 @@ HYDROSTATIC_GRID_PROPERTIES = ["PRESSURE", "SWAT", "SGAS", "SOIL"]
 SATURATION_GRID_PROPERTIES = ["SWAT", "SGAS", "SOIL"]
 
 
-def make_time_step_pair(t0_iso: str, t1_iso: str) -> types.TimeStepPair:
+def make_time_step_pair(t0_iso: str, t1_iso: str) -> he_types.TimeStepPair:
     """Build a TimeStepPair, computing the gap in days and whether it is sufficiently large."""
 
     t0 = datetime.fromisoformat(t0_iso)
     t1 = datetime.fromisoformat(t1_iso)
     time_gap_days = (t1 - t0).total_seconds() / 86400.0
-    return types.TimeStepPair(
+    return he_types.TimeStepPair(
         t0_iso=t0_iso,
         t1_iso=t1_iso,
         time_gap_days=time_gap_days,
@@ -46,7 +49,7 @@ def make_time_step_pair(t0_iso: str, t1_iso: str) -> types.TimeStepPair:
     )
 
 
-def resolve_initial_time_steps(available_iso_timestamps: Sequence[str]) -> types.TimeStepPair:
+def resolve_initial_time_steps(available_iso_timestamps: Sequence[str]) -> he_types.TimeStepPair:
     """Pick the first two distinct, chronologically sorted time steps as t0 and t1.
 
     Raises ValueError if fewer than two distinct time steps are available.
@@ -59,18 +62,20 @@ def resolve_initial_time_steps(available_iso_timestamps: Sequence[str]) -> types
     return make_time_step_pair(unique_sorted[0], unique_sorted[1])
 
 
-def evaluate_vector_value(vector_name: str, value_at_t1: float | None) -> types.VectorCheckValue:
+def evaluate_vector_value(vector_name: str, value_at_t1: float | None) -> he_types.VectorCheckValue:
     """Decide whether a single cumulative vector value qualifies as zero at t1."""
 
     is_zero = value_at_t1 is not None and abs(value_at_t1) <= ZERO_VECTOR_TOLERANCE
-    return types.VectorCheckValue(vector_name=vector_name, value_at_t1=value_at_t1, is_zero=is_zero)
+    return he_types.VectorCheckValue(vector_name=vector_name, value_at_t1=value_at_t1, is_zero=is_zero)
 
 
 def compute_grid_property_change(
     property_name: str,
     values_t0: NDArray[np.floating],
     values_t1: NDArray[np.floating],
-) -> types.GridPropertyCheckValue:
+    active_mask_t0: NDArray[np.bool_],
+    active_mask_t1: NDArray[np.bool_],
+) -> he_types.GridPropertyCheckValue:
     """Compute the largest absolute and relative change of a property between t0 and t1.
 
     The two arrays are assumed to share grid geometry (identical ordering and length).
@@ -84,6 +89,9 @@ def compute_grid_property_change(
     by the client so the (expensive) computation does not need to rerun when the threshold changes.
     """
 
+    if not np.array_equal(active_mask_t0, active_mask_t1):
+        raise ValueError(f"Active-cell masks differ for property '{property_name}' between t0 and t1")
+
     if values_t0.shape != values_t1.shape:
         raise ValueError(f"Mismatched cell counts for property '{property_name}' between t0 and t1")
 
@@ -94,11 +102,11 @@ def compute_grid_property_change(
         # The saturation scale is 1 (full [0, 1] range), so the relative change is the absolute change.
         rel_change = abs_change
     else:
-        denom = np.maximum(np.abs(values_t0), ZERO_VECTOR_TOLERANCE)
+        denom = np.maximum(np.abs(values_t0), RELATIVE_CHANGE_DENOMINATOR_FLOOR)
         rel_change = abs_change / denom
     max_rel_change = float(np.max(rel_change)) if rel_change.size > 0 else 0.0
 
-    return types.GridPropertyCheckValue(
+    return he_types.GridPropertyCheckValue(
         property_name=property_name,
         max_abs_change=max_abs_change,
         max_rel_change=max_rel_change,
@@ -110,3 +118,19 @@ def select_available_property_names(candidate_names: Sequence[str], available_na
 
     available_set = set(available_names)
     return [name for name in candidate_names if name in available_set]
+
+
+def select_properties_available_at_both_time_steps(
+    candidate_names: Sequence[str],
+    property_infos: Sequence[tuple[str, str | None]],
+    t0_iso: str,
+    t1_iso: str,
+) -> List[str]:
+    """Return the candidate properties that have a value at both t0 and t1, preserving candidate order.
+
+    `property_infos` holds (property_name, iso_date_or_interval) entries; static properties have None.
+    """
+
+    names_at_t0 = {name for name, iso in property_infos if iso == t0_iso}
+    names_at_t1 = {name for name, iso in property_infos if iso == t1_iso}
+    return [name for name in candidate_names if name in names_at_t0 and name in names_at_t1]

@@ -68,6 +68,8 @@ class Grid3dPropertyValues(NamedTuple):
     source objects)."""
 
     values: NDArray[np.floating]
+    # Flattened mask of active cells, aligned with the full grid; values[i] belongs to the i-th True entry.
+    active_mask: NDArray[np.bool_]
     source_object_uuid: str
 
 
@@ -130,19 +132,27 @@ class Grid3dAccess:
 
         sumo_property = await property_context.getitem_async(0)
         byte_stream: io.BytesIO = await sumo_property.blob_async
-        xtg_grid_property: xtgeo.GridProperty = xtgeo.gridproperty_from_file(byte_stream, fformat="roff")
+        xtg_grid_property: xtgeo.GridProperty = await asyncio.to_thread(
+            xtgeo.gridproperty_from_file, byte_stream, fformat="roff"
+        )
 
         # The values array is masked (inactive cells masked out). compressed() returns the active
-        # cells in a stable order that is shared by all properties on the same grid geometry, so the
-        # arrays for two time steps line up cell-for-cell.
-        values = np.ascontiguousarray(xtg_grid_property.values.compressed(), dtype=np.float64)
-        return Grid3dPropertyValues(values=values, source_object_uuid=sumo_property.uuid)
+        # cells in a stable order; active_mask lets callers verify that two arrays line up cell-for-cell.
+        masked_values = xtg_grid_property.values
+        values = np.ascontiguousarray(masked_values.compressed(), dtype=np.float64)
+        active_mask = np.ascontiguousarray(~np.ma.getmaskarray(masked_values)).ravel()
+        return Grid3dPropertyValues(values=values, active_mask=active_mask, source_object_uuid=sumo_property.uuid)
 
     async def _get_cpgrid_object_async(self, grid_name: str, realization: int) -> CPGrid:
         grid_search_context = self._ensemble_context.grids.filter(realization=realization, name=grid_name)
         grid_uuids: list[str] = await grid_search_context.uuids_async
         if not grid_uuids:
             raise NoDataError(f"Grid model '{grid_name}' not found for realization {realization}", Service.SUMO)
+        if len(grid_uuids) > 1:
+            raise MultipleDataMatchesError(
+                f"Multiple ({len(grid_uuids)}) grid models found for '{grid_name}', realization {realization}",
+                Service.SUMO,
+            )
 
         sumo_grid_object = await grid_search_context.get_object_async(grid_uuids[0])
         if not isinstance(sumo_grid_object, CPGrid):
