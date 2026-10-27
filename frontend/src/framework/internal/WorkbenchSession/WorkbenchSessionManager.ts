@@ -388,6 +388,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 this._activeSession.setMetadata(localStorageSessionData.metadata);
                 await this._activeSession.deserializeContentState(localStorageSessionData.content);
 
+                // Unloaded while deserializing
+                if (this._activeSession !== session) {
+                    return false;
+                }
+
                 // Update GUI states based on possible loading errors
                 this.applyActiveSessionEnsembleLoadErrorsToGuiState();
 
@@ -993,7 +998,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             );
         }
 
-        const sessionId = this._activeSession.getId() ?? null;
+        const session = this._activeSession;
+        const sessionId = session.getId() ?? null;
 
         try {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
@@ -1005,8 +1011,13 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 );
             }
 
-            this._activeSession.setMetadata(sessionData.metadata);
-            await this._activeSession.deserializeContentState(sessionData.content);
+            session.setMetadata(sessionData.metadata);
+            await session.deserializeContentState(sessionData.content);
+
+            // Unloaded while deserializing
+            if (this._activeSession !== session) {
+                return;
+            }
 
             // Update GUI states based on possible loading errors
             this.applyActiveSessionEnsembleLoadErrorsToGuiState();

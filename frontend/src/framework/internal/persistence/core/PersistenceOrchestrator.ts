@@ -96,6 +96,7 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         this.subscribeToSessionChanges();
 
         await this._tracker.initialize();
+        if (this._destroyed) return;
         this.notifyPersistenceInfoChanged();
 
         // For new unpersisted sessions, do an initial save to localStorage
