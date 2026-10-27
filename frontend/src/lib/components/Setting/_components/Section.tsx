@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Collapsible } from "@base-ui/react";
-import { Block, Error, ExpandMore, Warning } from "@mui/icons-material";
+import { Block, Error, ExpandMore, InfoOutlined, Warning } from "@mui/icons-material";
 
 import type { Tone } from "@lib/components/_shared/types/tones";
 import { Button } from "@lib/components/Button";
@@ -52,7 +52,8 @@ export function Section(props: SectionProps) {
                         existing &&
                         existing.hasInvalidValue === summary.hasInvalidValue &&
                         existing.hasErrorOverlay === summary.hasErrorOverlay &&
-                        existing.hasAnyWarning === summary.hasAnyWarning
+                        existing.hasAnyWarning === summary.hasAnyWarning &&
+                        existing.hasAnyInfo === summary.hasAnyInfo
                     ) {
                         return prev;
                     }
@@ -78,17 +79,21 @@ export function Section(props: SectionProps) {
     let blockCount = 0;
     let errorOverlayCount = 0;
     let warningCount = 0;
+    let infoCount = 0;
     for (const summary of fieldAnnotations.values()) {
         if (summary.hasInvalidValue) blockCount++;
         if (summary.hasErrorOverlay) errorOverlayCount++;
         if (summary.hasAnyWarning) warningCount++;
+        if (summary.hasAnyInfo) infoCount++;
     }
 
-    let toneOverride: "danger" | "warning" | undefined;
+    let toneOverride: "danger" | "warning" | "info" | undefined;
     if (blockCount > 0 || errorOverlayCount > 0) {
         toneOverride = "danger";
     } else if (warningCount > 0) {
         toneOverride = "warning";
+    } else if (infoCount > 0) {
+        toneOverride = "info";
     }
 
     return (
@@ -116,6 +121,7 @@ export function Section(props: SectionProps) {
                     numInvalid={blockCount}
                     numErrors={errorOverlayCount}
                     numWarnings={warningCount}
+                    numInfos={infoCount}
                     onShowSection={() => setIsOpen(true)}
                 />
                 {props.adornment && <span className="px-selectable py-selectable">{props.adornment}</span>}
@@ -135,18 +141,35 @@ type EndActionsProps = {
     numInvalid: number;
     numErrors: number;
     numWarnings: number;
+    numInfos: number;
     onShowSection: () => void;
 };
 
 function EndActions(props: EndActionsProps) {
-    const { numInvalid, numErrors, numWarnings, onShowSection } = props;
+    const { numInvalid, numErrors, numWarnings, numInfos, onShowSection } = props;
 
-    if (numInvalid === 0 && numErrors === 0 && numWarnings === 0) {
+    if (numInvalid === 0 && numErrors === 0 && numWarnings === 0 && numInfos === 0) {
         return null;
     }
 
     return (
         <div className="gap-x-2xs px-selectable flex items-center">
+            {numInfos > 0 && (
+                <Tooltip
+                    content={`${numInfos} setting${numInfos === 1 ? "" : "s"} waiting for another setting - click to show`}
+                    side="bottom"
+                >
+                    <Button
+                        onClick={onShowSection}
+                        variant="ghost"
+                        tone="accent"
+                        size="small"
+                        iconOnly
+                        icon={<InfoOutlined style={{ fontSize: 16 }} />}
+                        aria-label="Settings waiting for another setting - show the section"
+                    />
+                </Tooltip>
+            )}
             {numWarnings > 0 && (
                 <Tooltip
                     content={`${numWarnings} setting${numWarnings === 1 ? "" : "s"} with a warning - click to show`}

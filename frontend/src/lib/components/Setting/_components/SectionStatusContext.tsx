@@ -7,6 +7,8 @@ export type FieldStatusSummary = {
     hasErrorOverlay: boolean;
     /** A warning annotation, warning overlay, or warningMessage. Shown with a Warning icon. */
     hasAnyWarning: boolean;
+    /** An info annotation or info overlay, e.g. the field is blocked until another invalid setting is fixed. Shown with an Info icon. */
+    hasAnyInfo: boolean;
 };
 
 export type SectionStatusContextValue = {

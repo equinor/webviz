@@ -135,6 +135,7 @@ export function Field(props: SettingFieldProps) {
     const hasInvalidValueAnnotation = annotations.some((a) => a.type === "error");
     const hasWarningAnnotation = annotations.some((a) => a.type === "warning");
     const hasErrorOverlay = overlay?.type === "error";
+    const hasAnyInfo = annotations.some((a) => a.type === "info") || overlay?.type === "info";
     const hasAnyWarning = hasWarningAnnotation || Boolean(props.warningMessage) || overlay?.type === "warning";
 
     const sectionStatusContext = React.useContext(SectionStatusContext);
@@ -146,11 +147,12 @@ export function Field(props: SettingFieldProps) {
             hasInvalidValue: hasInvalidValueAnnotation,
             hasErrorOverlay,
             hasAnyWarning,
+            hasAnyInfo,
         });
         return () => {
             sectionStatusContext.unregisterField(generatedInputId);
         };
-    }, [sectionStatusContext, generatedInputId, hasInvalidValueAnnotation, hasErrorOverlay, hasAnyWarning]);
+    }, [sectionStatusContext, generatedInputId, hasInvalidValueAnnotation, hasErrorOverlay, hasAnyWarning, hasAnyInfo]);
 
     useReportFieldAnnotations(annotations);
     useReportFieldOverlay(overlay ?? null);
