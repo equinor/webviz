@@ -80,6 +80,21 @@ export const selectedPosteriorEnsembleIdentAtom = persistableFixableAtom<Regular
 
 export const selectedParameterIdentsAtom = persistableFixableAtom<ParameterIdent[] | null>({
     initialValue: null,
+    // The parameters come from the ensembles of the current mode. While they are invalid (or not selected yet), there
+    // are no parameters to check the selection against - so it waits, rather than settling on an empty selection.
+    computeDependenciesState: ({ get }) => {
+        if (get(selectedEnsembleModeAtom) === EnsembleMode.PRIOR_POSTERIOR) {
+            const prior = get(selectedPriorEnsembleIdentAtom);
+            const posterior = get(selectedPosteriorEnsembleIdentAtom);
+            const areBothValid =
+                prior.value !== null &&
+                posterior.value !== null &&
+                prior.isValidInContext &&
+                posterior.isValidInContext;
+            return areBothValid ? "loaded" : "blocked";
+        }
+        return get(selectedEnsembleIdentsAtom).isValidInContext ? "loaded" : "blocked";
+    },
     isValidFunction: ({ get, value }) => {
         const intersectedParameterIdents = get(intersectedParameterIdentsAtom);
         if (!value) {

@@ -47,8 +47,9 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
             const identArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
             for (const identStr of selectedEnsembleIdentStringArray) {
                 const foundEnsemble = ensembles.find((ens) => ens.getIdent().toString() === identStr);
+                // A retained selection can hold an ensemble that is no longer available - editing the selection drops it
                 if (!foundEnsemble) {
-                    throw new Error(`Ensemble not found: ${identStr}`);
+                    continue;
                 }
                 if (!allowDeltaEnsembles && foundEnsemble instanceof DeltaEnsemble) {
                     throw new Error(`Invalid ensemble selection: ${identStr}. Got delta ensemble when not allowed.`);

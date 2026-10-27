@@ -3,8 +3,8 @@ import React from "react";
 import { orderBy } from "lodash";
 
 import type { CaseInfo_api } from "@api";
+import { useUserInfo } from "@framework/internal/auth/hooks";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
-import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { HasChangesIndicator } from "@lib/components/HasChangesIndicator";
 import { Table } from "@lib/components/Table";
 import { TableCompositions } from "@lib/components/Table/compositions";
@@ -51,7 +51,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
     const { onDataCollated, showOnlyMyCases, showOnlyOfficialCases } = props;
     const tableOverflowWrapperRef = React.useRef<HTMLDivElement>(null);
 
-    const { userInfo } = useAuthProvider();
+    const userInfo = useUserInfo();
     const userName = React.useMemo(() => {
         return userInfo?.username.replace("@equinor.com", "").toLowerCase() ?? "";
     }, [userInfo]);

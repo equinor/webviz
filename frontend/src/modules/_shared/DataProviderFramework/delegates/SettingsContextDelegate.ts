@@ -22,6 +22,7 @@ import type { NullableStoredData, StoredData } from "../interfacesAndTypes/share
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
+import { assertNoCircularValueConstraints } from "./_utils/assertNoCircularValueConstraints";
 import { Dependency, type Read } from "./_utils/Dependency";
 
 export enum SettingsContextStatus {
@@ -116,6 +117,14 @@ export class SettingsContextDelegate<
                     },
                 ),
             );
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "settings",
+                this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_BLOCKED)(
+                    () => {
+                        this.handleSettingChanged();
+                    },
+                ),
+            );
             // Whether a setting is shown decides whether its validity counts
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "settings",
@@ -188,9 +197,13 @@ export class SettingsContextDelegate<
         return !this._settings[key].isValueValid() || this._settings[key].isPersistedValue();
     }
 
+    // A blocked setting can't be checked against up-to-date value constraints, so it does not count as valid either
     areCurrentSettingsValid(): boolean {
         for (const key in this._settings) {
-            if (this.isSettingApplicable(key) && !this._settings[key].isValueValid()) {
+            if (
+                this.isSettingApplicable(key) &&
+                (!this._settings[key].isValueValid() || this._settings[key].isBlocked())
+            ) {
                 return false;
             }
         }
@@ -228,9 +241,10 @@ export class SettingsContextDelegate<
         return true;
     }
 
+    // A blocked setting may never have been initialized - it is settled nonetheless, as it waits for another one
     areAllSettingsInitialized(): boolean {
         for (const key in this._settings) {
-            if (!this._settings[key].isInitialized()) {
+            if (!this._settings[key].isInitialized() && !this._settings[key].isBlocked()) {
                 return false;
             }
         }
@@ -349,6 +363,7 @@ export class SettingsContextDelegate<
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("dependencies");
 
         this._dependencies = [];
+        const valueConstraintsDependencies = new Map<string, Dependency<any, TSettings, any, any, any>[]>();
 
         const makeLocalSettingGetter = <K extends TSettingKey>(key: K, handler: (value: TSettingTypes[K]) => void) => {
             const handleChange = (): void => {
@@ -419,6 +434,10 @@ export class SettingsContextDelegate<
             return this.getDataProviderManager.bind(this)().getGlobalSetting(key);
         };
 
+        const globalSettingValidityGetter = (key: keyof GlobalSettings): boolean => {
+            return this.getDataProviderManager.bind(this)().isGlobalSettingValid(key);
+        };
+
         const createDependency = <T, TReads extends Record<string, Read<any>> = Record<string, never>>(
             debugName: string,
             resolverSpec: ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads>,
@@ -431,6 +450,7 @@ export class SettingsContextDelegate<
                 loadingStateGetter,
                 makeGlobalSettingGetter,
                 debugName,
+                globalSettingValidityGetter,
             );
             this._dependencies.push(dependency);
             dependency.initialize();
@@ -452,6 +472,10 @@ export class SettingsContextDelegate<
         ): Dependency<SettingTypeDefinitions[K]["valueConstraints"], TSettings, TSettingTypes, TSettingKey, TReads> => {
             const debugName = `ValueConstraintsUpdater_${settingKey}`;
             const dependency = createDependency(debugName, resolverSpec);
+            valueConstraintsDependencies.set(settingKey, [
+                ...(valueConstraintsDependencies.get(settingKey) ?? []),
+                dependency,
+            ]);
 
             dependency.subscribe((valueConstraints) => {
                 if (valueConstraints === null) {
@@ -466,6 +490,14 @@ export class SettingsContextDelegate<
                 if (loading) {
                     this._settings[settingKey].setLoading(loading);
                 }
+                this.handleSettingChanged();
+            });
+
+            // The setting keeps its value and constraints while it waits - blocked before it stops loading, so whatever
+            // reacts to it no longer loading sees it blocked already
+            dependency.subscribeBlocked((blockedBy) => {
+                this._settings[settingKey].setBlocked(true, blockedBy);
+                this._settings[settingKey].setLoading(false);
                 this.handleSettingChanged();
             });
 
@@ -506,6 +538,12 @@ export class SettingsContextDelegate<
                 }
             });
 
+            // The current attributes stay - while it waits, the setting must neither disappear nor hold up a restore
+            dependency.subscribeBlocked(() => {
+                markAttributesResolved();
+                this.handleSettingChanged();
+            });
+
             this.subscribeToDependencyStatusMessages(dependency);
 
             return dependency;
@@ -539,6 +577,12 @@ export class SettingsContextDelegate<
                 }
             });
 
+            // Stays empty, as it was cleared when it started loading
+            dependency.subscribeBlocked(() => {
+                this._storedDataLoadingStatus[key] = false;
+                this.handleSettingChanged();
+            });
+
             this.subscribeToDependencyStatusMessages(dependency);
 
             return dependency;
@@ -551,6 +595,9 @@ export class SettingsContextDelegate<
             const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribeLoading(() => {
+                this.handleSettingChanged();
+            });
+            dependency.subscribeBlocked(() => {
                 this.handleSettingChanged();
             });
 
@@ -602,6 +649,11 @@ export class SettingsContextDelegate<
         if (this._customSettingsHandler.setupBindings) {
             this._customSettingsHandler.setupBindings(context);
         }
+
+        // Settings blocking each other would wait for each other for good - see Dependency
+        assertNoCircularValueConstraints(valueConstraintsDependencies, (settingKey) =>
+            this._settings[settingKey as TSettingKey].getLabel(),
+        );
     }
 
     beforeDestroy(): void {

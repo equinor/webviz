@@ -8,5 +8,8 @@ import { wellCompletionsQueryAtom } from "../atoms/queryAtoms";
 export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatusWriter) {
     const wellCompletionsQuery = useAtomValue(wellCompletionsQueryAtom);
 
-    propagateQueryErrorToStatusWriter(wellCompletionsQuery, statusWriter);
+    // A disabled query keeps its cached error, which must not be reported for an invalid selection
+    if (wellCompletionsQuery.isEnabled) {
+        propagateQueryErrorToStatusWriter(wellCompletionsQuery, statusWriter);
+    }
 }

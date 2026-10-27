@@ -4,6 +4,13 @@ import { loadedVectorSpecificationsAndRealizationDataAtom, queryIsFetchingAtom }
 
 export const activeTimestampUtcMsAtom = persistableFixableAtom<number | null>({
     initialValue: null,
+    // Without data, there is no timestamp to pick yet - settling then would keep null once the data arrives
+    computeDependenciesState: ({ get }) => {
+        if (get(queryIsFetchingAtom)) {
+            return "loading";
+        }
+        return get(loadedVectorSpecificationsAndRealizationDataAtom).length > 0 ? "loaded" : "blocked";
+    },
     isValidFunction: ({ get, value }) => {
         const loadedVectorSpecificationsAndRealizationData = get(loadedVectorSpecificationsAndRealizationDataAtom);
         const isQueryFetching = get(queryIsFetchingAtom);

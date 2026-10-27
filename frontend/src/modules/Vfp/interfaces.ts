@@ -1,7 +1,7 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import { selectedPressureOptionAtom } from "./settings/atoms/baseAtoms";
-import { tableDataAccessorWithStatusFlagsAtom } from "./settings/atoms/derivedAtoms";
+import { isParameterSelectionValidAtom, tableDataAccessorWithStatusFlagsAtom } from "./settings/atoms/derivedAtoms";
 import {
     selectedAlqIndicesAtom,
     selectedColorByAtom,
@@ -17,6 +17,7 @@ type SettingsToViewInterface = {
     selectedWfrIndices: number[] | null;
     selectedGfrIndices: number[] | null;
     selectedAlqIndices: number[] | null;
+    isParameterSelectionValid: boolean;
     selectedColorBy: VfpParam;
     selectedPressureOption: PressureOption;
 };
@@ -40,6 +41,9 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     selectedAlqIndices: (get) => {
         return get(selectedAlqIndicesAtom).value;
+    },
+    isParameterSelectionValid: (get) => {
+        return get(isParameterSelectionValidAtom);
     },
     selectedColorBy: (get) => {
         return get(selectedColorByAtom).value;

@@ -92,7 +92,69 @@ function isInternalState<T>(value: T | PersistableAtomState<T>): value is Persis
     );
 }
 
-export type PersistableAtomDependenciesState = "loading" | "error" | "loaded";
+/**
+ * - "loading": dependencies are actively being resolved (e.g. a query is genuinely fetching).
+ * - "blocked": dependencies are not yet resolved, but nothing is actively happening either - e.g. a
+ *   query that's currently disabled because it's gated on another, invalid upstream
+ *   persistableFixableAtom (see the query-gating convention used across modules). Behaves exactly
+ *   like "loading" for settle/promotion purposes (see below), but is exposed separately so a
+ *   consumer can tell "actually fetching, show a spinner" apart from "blocked on something else,
+ *   don't show a spinner that won't resolve on its own" - without every call site having to work
+ *   that distinction out itself.
+ * - "error": one or more dependencies have an error.
+ * - "loaded": all dependencies are ready.
+ */
+export type PersistableAtomDependenciesState = "loading" | "blocked" | "error" | "loaded";
+
+type QueryLikeResult = {
+    isEnabled: boolean;
+    isFetching: boolean;
+    isError: boolean;
+    isPending: boolean;
+};
+
+/**
+ * Standard way to derive a persistableFixableAtom's `computeDependenciesState` from a single
+ * TanStack Query result - including a currently-disabled query (e.g. one gated on an invalid
+ * upstream persistableFixableAtom's validity, per the query-gating convention used across modules).
+ *
+ * A disabled query must NOT be reported as "loaded". `dependenciesState` gates `dependenciesResolved`
+ * in persistableFixableAtom's lifecycle effect, which in turn gates BOTH the one-time settle-fixup
+ * and the PERSISTENCE/TEMPLATE -> USER promotion. Reporting "loaded" while disabled would let either
+ * of those fire against options that have nothing to do with the setting's real availability -
+ * corrupting or discarding a perfectly good persisted value, or settling a fresh atom on a default
+ * that is then kept instead of being initialized from the query once it's enabled again.
+ *
+ * The result status alone can't tell "disabled" apart from "done": a disabled query never fetches,
+ * and its status reflects whatever is cached for its key - `isPending` while nothing is, but plain
+ * success (or a stale error) if an earlier enabled run left a result behind. So a disabled query is
+ * always reported as "blocked", whatever is cached. An enabled query that has no result yet without
+ * fetching (e.g. paused while offline) is "blocked" as well. Both are reported as "blocked" rather
+ * than "loading" so consumers don't need to separately work out whether to show a loading spinner.
+ */
+export function computeQueryDependenciesState(query: QueryLikeResult): PersistableAtomDependenciesState {
+    return computeQueriesDependenciesState([query]);
+}
+
+/**
+ * Same as {@link computeQueryDependenciesState}, for the `atomWithQueries` (one-query-per-item) case.
+ * Only enabled queries can make the state "error" or "loading"; any disabled query makes it at least
+ * "blocked".
+ */
+export function computeQueriesDependenciesState(queries: QueryLikeResult[]): PersistableAtomDependenciesState {
+    const enabledQueries = queries.filter((query) => query.isEnabled);
+
+    if (enabledQueries.some((query) => query.isError)) {
+        return "error";
+    }
+    if (enabledQueries.some((query) => query.isFetching)) {
+        return "loading";
+    }
+    if (enabledQueries.length < queries.length || enabledQueries.some((query) => query.isPending)) {
+        return "blocked";
+    }
+    return "loaded";
+}
 
 type PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue> = {
     /**
@@ -240,29 +302,57 @@ export type PersistableFixableAtomOptions<TValue, TPrecomputedValue = unknown> =
 
 const PERSISTABLE_ATOM = Symbol("persistableAtom");
 
+/**
+ * Write-only sentinel used to imperatively trigger a fixup of a persistableFixableAtom's *current*
+ * value, regardless of its source (`set(atom, FIXUP)` / `useSetAtom(atom)(FIXUP)`).
+ *
+ * This is added as a third accepted variant of the atom's existing write-argument union rather than
+ * as a second atom / tuple return, so that existing `useAtomValue`/`useSetAtom`/`get`/`set` call sites
+ * - which only ever pass or expect a bare TValue or a PersistableAtomState<TValue> - keep compiling
+ * and behaving unchanged.
+ */
+export const FIXUP = Symbol("persistableFixableAtom.FIXUP");
+type FixupCommand = typeof FIXUP;
+
 export type PersistableFixableRead<TValue> = {
     value: TValue;
     isValidInContext: boolean;
     isLoading: boolean;
+    isBlocked: boolean;
     depsHaveError: boolean;
     _source: Source;
 };
 
+/** Alias for the atom type returned by `persistableFixableAtom`. */
+export type PersistableFixableAtom<TValue = any> = WritableAtom<
+    PersistableFixableRead<TValue>,
+    [TValue | PersistableAtomState<TValue> | FixupCommand],
+    void
+>;
+
 export function persistableFixableAtom<TValue, TPrecomputedValue>(
     options: PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue>,
-): WritableAtom<PersistableFixableRead<TValue>, [TValue | PersistableAtomState<TValue>], void>;
+): PersistableFixableAtom<TValue>;
 
 export function persistableFixableAtom<TValue>(
     options: PersistableFixableAtomOptionsWithoutPrecompute<TValue>,
-): WritableAtom<PersistableFixableRead<TValue>, [TValue | PersistableAtomState<TValue>], void>;
+): PersistableFixableAtom<TValue>;
 
 export function persistableFixableAtom<TValue, TPrecomputedValue>(
     options: PersistableFixableAtomOptions<TValue, TPrecomputedValue>,
-): WritableAtom<PersistableFixableRead<TValue>, [TValue | PersistableAtomState<TValue>], void> {
+): PersistableFixableAtom<TValue> {
     const internalStateAtom = atom<PersistableAtomState<TValue | undefined>>({
         value: options.initialValue,
         _source: Source.USER,
     });
+
+    // One-way latch: becomes true the first time this atom's dependencies have resolved at least once
+    // (computeDependenciesState reports "loaded", or immediately if that callback wasn't given). While false, a USER-sourced value is masked on every read exactly as before this
+    // change, so a freshly-mounted atom still lands on a sensible default instead of flashing
+    // "invalid" while its dependencies are still loading for the first time. Once true, masking stops
+    // for good for USER-sourced values: an invalid value is kept as-is and reported as invalid via
+    // isValidInContext, instead of being silently replaced on every read.
+    const settledAtom = atom<boolean>(false);
 
     const hasPrecompute = (
         opts: PersistableFixableAtomOptions<TValue, TPrecomputedValue>,
@@ -270,86 +360,103 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
         (opts as PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue>).precomputeFunction !==
         undefined;
 
-    const fixableAtom = atom<PersistableFixableRead<TValue>, [TValue | PersistableAtomState<TValue>], void>(
+    // Computes dependenciesState + isValid + a lazy fixup thunk in one pass, calling
+    // precomputeFunction at most once. Shared by the read function, the FIXUP write branch, and the
+    // lifecycle effect below.
+    function deriveState(
+        get: Getter,
+        value: TValue | undefined,
+    ): { dependenciesState: PersistableAtomDependenciesState; isValid: boolean; computeFixup: () => TValue } {
+        if (hasPrecompute(options)) {
+            const precomputedValue = options.precomputeFunction({ value, get });
+            const dependenciesState = options.computeDependenciesState
+                ? options.computeDependenciesState({ value, get, precomputedValue })
+                : "loaded";
+            const isValid = value !== undefined && options.isValidFunction({ value, get, precomputedValue });
+            return {
+                dependenciesState,
+                isValid,
+                computeFixup: () => options.fixupFunction({ value, get, precomputedValue }),
+            };
+        }
+
+        const dependenciesState = options.computeDependenciesState
+            ? options.computeDependenciesState({ value, get })
+            : "loaded";
+        const isValid = value !== undefined && options.isValidFunction({ value, get });
+        return {
+            dependenciesState,
+            isValid,
+            computeFixup: () => options.fixupFunction({ value, get }),
+        };
+    }
+
+    const fixableAtom = atom<
+        PersistableFixableRead<TValue>,
+        [TValue | PersistableAtomState<TValue> | FixupCommand],
+        void
+    >(
         (get) => {
             const internalState = get(internalStateAtom);
-
-            if (hasPrecompute(options)) {
-                const precomputed = options.precomputeFunction({ value: internalState.value, get });
-
-                const dependenciesState = options.computeDependenciesState
-                    ? options.computeDependenciesState({
-                          value: internalState.value,
-                          get,
-                          precomputedValue: precomputed,
-                      })
-                    : "loaded";
-
-                const isValid =
-                    internalState.value !== undefined &&
-                    options.isValidFunction({
-                        value: internalState.value,
-                        get,
-                        precomputedValue: precomputed,
-                    });
-
-                if (internalState._source === Source.PERSISTENCE || internalState._source === Source.TEMPLATE) {
-                    if (internalState.value === undefined) {
-                        throw new Error("Persisted or template value cannot be undefined.");
-                    }
-                    return {
-                        value: internalState.value as TValue,
-                        isValidInContext: isValid,
-                        isLoading: dependenciesState === "loading",
-                        depsHaveError: dependenciesState === "error",
-                        _source: internalState._source,
-                    };
-                }
-
-                return {
-                    value: isValid
-                        ? (internalState.value as TValue)
-                        : options.fixupFunction({ value: internalState.value, get, precomputedValue: precomputed }),
-                    isValidInContext: true,
-                    isLoading: dependenciesState === "loading",
-                    depsHaveError: dependenciesState === "error",
-                    _source: internalState._source,
-                };
-            }
-
-            const dependenciesState = options.computeDependenciesState
-                ? options.computeDependenciesState({ value: internalState.value, get })
-                : "loaded";
-
-            const isValid =
-                internalState.value !== undefined && options.isValidFunction({ value: internalState.value, get });
+            const settled = get(settledAtom);
+            const { dependenciesState, isValid, computeFixup } = deriveState(get, internalState.value);
+            const isLoading = dependenciesState === "loading";
+            const isBlocked = dependenciesState === "blocked";
+            const depsHaveError = dependenciesState === "error";
 
             if (internalState._source === Source.PERSISTENCE || internalState._source === Source.TEMPLATE) {
                 if (internalState.value === undefined) {
-                    throw new Error(
-                        "Persisted or template value cannot be undefined when a precompute function is used and no initial value is provided.",
-                    );
+                    throw new Error("Persisted or template value cannot be undefined.");
                 }
                 return {
-                    value: internalState.value as TValue,
+                    value: internalState.value,
                     isValidInContext: isValid,
-                    isLoading: dependenciesState === "loading",
-                    depsHaveError: dependenciesState === "error",
+                    isLoading,
+                    isBlocked,
+                    depsHaveError,
                     _source: internalState._source,
                 };
             }
 
+            // Source.USER
+            if (!settled) {
+                return {
+                    value: isValid ? (internalState.value as TValue) : computeFixup(),
+                    isValidInContext: true,
+                    isLoading,
+                    isBlocked,
+                    depsHaveError,
+                    _source: internalState._source,
+                };
+            }
+
+            // Settled: masking stops for good - keep an invalid value as-is and report its real
+            // validity instead of silently replacing it.
             return {
-                value: isValid
-                    ? (internalState.value as TValue)
-                    : options.fixupFunction({ value: internalState.value, get }),
-                isValidInContext: true,
-                isLoading: dependenciesState === "loading",
-                depsHaveError: dependenciesState === "error",
+                value: internalState.value as TValue,
+                isValidInContext: isValid,
+                isLoading,
+                isBlocked,
+                depsHaveError,
                 _source: internalState._source,
             };
         },
-        (get, set, update: TValue | PersistableAtomState<TValue>) => {
+        (get, set, update) => {
+            if (update === FIXUP) {
+                // Manual-repair path: not gated on `settled`. Works for USER-, PERSISTENCE- and
+                // TEMPLATE-sourced values alike; a repaired value is always written back as USER, since
+                // it's no longer really "the persisted/template value."
+                const internalState = get(internalStateAtom);
+                const { dependenciesState, isValid, computeFixup } = deriveState(get, internalState.value);
+                if (dependenciesState !== "loaded" || isValid) {
+                    // Nothing meaningful to fix up against yet, or already valid.
+                    return;
+                }
+                set(internalStateAtom, { value: computeFixup(), _source: Source.USER });
+                set(settledAtom, true);
+                return;
+            }
+
             const areEqualFunc = options.areEqualFunction;
             const currentState = get(internalStateAtom);
 
@@ -378,39 +485,59 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
         },
     );
 
-    // Create an effect that auto-transitions PERSISTENCE/TEMPLATE → USER when valid
-    const transitionEffect = atomEffect((get, set) => {
+    // Single lifecycle effect handling both: (a) the one-way "settled" latch (new), and (b) the
+    // pre-existing PERSISTENCE/TEMPLATE -> USER promotion once valid. Kept as one effect since both
+    // branches read the same get(fixableAtom)/get(internalStateAtom) snapshot and both defer their
+    // `set` calls to the same microtask, so a consumer can never observe settledAtom === true without
+    // the corresponding fixed-up internal value already in place.
+    const lifecycleEffect = atomEffect((get, set) => {
         const currentRead = get(fixableAtom);
-        const internalState = get(internalStateAtom);
+        const dependenciesResolved = !currentRead.isLoading && !currentRead.isBlocked && !currentRead.depsHaveError;
 
-        // Only transition if:
-        // 1. Source is PERSISTENCE or TEMPLATE
-        // 2. Atom is valid in context
-        // 3. Not loading
-        // 4. Dependencies don't have errors
-        if (
-            (internalState._source === Source.PERSISTENCE || internalState._source === Source.TEMPLATE) &&
-            currentRead.isValidInContext &&
-            !currentRead.isLoading &&
-            !currentRead.depsHaveError
-        ) {
-            // Schedule the transition asynchronously to avoid synchronous state updates during read
-            queueMicrotask(() => {
-                set(internalStateAtom, {
-                    value: internalState.value,
-                    _source: Source.USER,
-                });
-            });
+        if (!dependenciesResolved) {
+            return;
         }
+
+        // Defer to a microtask (to avoid synchronous state updates while this effect is itself being
+        // (re-)triggered as part of a get(fixableAtom) read chain), and - critically - re-derive
+        // everything from a FRESH read at that point rather than trusting this synchronous pass's
+        // snapshot. Another write (e.g. a deserialize write racing with this atom's first
+        // mount/subscribe, which can happen in either order depending on the caller) can land in the
+        // gap between this effect running and the microtask firing; using a stale snapshot there would
+        // silently overwrite whatever landed in that gap with outdated data.
+        queueMicrotask(() => {
+            const settled = get(settledAtom);
+            const internalState = get(internalStateAtom);
+            const { dependenciesState, isValid, computeFixup } = deriveState(get, internalState.value);
+            if (dependenciesState !== "loaded") {
+                // Dependencies regressed (or failed) since this was queued - nothing to do now, a
+                // future successful resolution of the (now-changed) dependency will re-trigger this
+                // effect.
+                return;
+            }
+
+            if (!settled && internalState._source === Source.USER && !isValid) {
+                set(internalStateAtom, { value: computeFixup(), _source: Source.USER });
+            } else if (
+                (internalState._source === Source.PERSISTENCE || internalState._source === Source.TEMPLATE) &&
+                isValid
+            ) {
+                set(internalStateAtom, { value: internalState.value, _source: Source.USER });
+            }
+
+            if (!settled) {
+                set(settledAtom, true);
+            }
+        });
     });
 
     // Wrap the atom to automatically mount the effect
     const atomWithEffect = atom(
         (get) => {
-            get(transitionEffect); // Subscribe to effect
+            get(lifecycleEffect); // Subscribe to effect
             return get(fixableAtom);
         },
-        (_get, set, update: TValue | PersistableAtomState<TValue>) => {
+        (_get, set, update: TValue | PersistableAtomState<TValue> | FixupCommand) => {
             set(fixableAtom, update);
         },
     );
