@@ -16,6 +16,7 @@ import {
     selectedEnsembleIdentsAtom,
     selectedSaturationAxisNameAtom,
     selectedSatnumsAtom,
+    selectedTableNameAtom,
 } from "./persistableFixableAtoms";
 import {
     relPermRealizationDataQueriesAtom,
@@ -33,7 +34,13 @@ function intersectArrays<T>(arrays: T[][]): T[] {
     }, arrays[0]);
 }
 
+// Disabled queries keep their cached data, so options must not be derived from them while the selections they
+// depend on are invalid - otherwise stale options are listed next to "No valid value until another invalid setting is fixed."
 export const availableTableNamesAtom = atom<string[]>((get) => {
+    if (!get(selectedEnsembleIdentsAtom).isValidInContext) {
+        return [];
+    }
+
     const tableNameQueries = get(relPermTableNamesQueriesAtom);
     const loadedTableNames = tableNameQueries.flatMap((query) => (query.data ? [query.data] : []));
 
@@ -73,6 +80,10 @@ export const commonTableNamesAreMissingAtom = atom<boolean>((get) => {
 export const ensembleTableDefinitionsAtom = atom<RelPermEnsembleTableDefinition[]>((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
     const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
+
+    if (!get(selectedEnsembleIdentsAtom).isValidInContext || !get(selectedTableNameAtom).isValidInContext) {
+        return [];
+    }
 
     return tableDefinitionQueries.flatMap((queryResult, index) => {
         if (!queryResult.data) {

@@ -49,7 +49,7 @@ import {
     selectedSatnumsAtom,
     selectedTableNameAtom,
 } from "./atoms/persistableFixableAtoms";
-import { relPermTableDefinitionQueriesAtom, relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
+import { relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
 import {
     useSelectedCurveNamesAnnotations,
     useSelectedEnsembleIdentsAnnotations,
@@ -125,7 +125,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     );
 
     const tableNameQueries = useAtomValue(relPermTableNamesQueriesAtom);
-    const tableDefinitionQueries = useAtomValue(relPermTableDefinitionQueriesAtom);
 
     const ensemblesWarningMessage = useEnsemblesWarningMessage(ensembleSet);
 
@@ -217,10 +216,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const tableNamesErrorMessage = tableNameQueries.every((query) => query.isError)
         ? "Could not load tables"
         : undefined;
-    const tableDefinitionsArePending = tableDefinitionQueries.some((query) => query.isFetching);
-    const tableDefinitionsErrorMessage = tableDefinitionQueries.every((query) => query.isError)
-        ? "Could not load table definitions"
-        : undefined;
 
     return (
         <Setting.ScrollArea>
@@ -246,7 +241,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         overlay={
                             tableNamesArePending
                                 ? { type: "loading", message: "Loading tables..." }
-                                : tableNamesErrorMessage
+                                : tableNameQueries.length > 0 && tableNamesErrorMessage
                                   ? { type: "error", message: tableNamesErrorMessage }
                                   : undefined
                         }
@@ -260,15 +255,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     </Setting.Field>
                 </Setting.Section>
                 <Setting.Section title="Selection">
-                    {(tableDefinitionsArePending || tableDefinitionsErrorMessage) && (
-                        // TODO - Waiting for section overlay. Temp workaround
-                        <Setting.Field
-                            loadingOverlay={tableDefinitionsArePending}
-                            errorOverlay={tableDefinitionsErrorMessage}
-                        >
-                            <div className="h-20" />
-                        </Setting.Field>
-                    )}
                     <Setting.Field label="Curve type">
                         <RadioCompositions.GroupWithLabels
                             options={makeEnumOptions(CURVE_TYPE_LABELS)}

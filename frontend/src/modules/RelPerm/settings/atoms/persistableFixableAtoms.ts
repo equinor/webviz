@@ -111,6 +111,11 @@ function computeSaturationAxisCurvesDependenciesState({ get }: { get: Getter }):
 function computeQueriesDependenciesStateIgnoringFailedEnsembles(
     queries: Parameters<typeof computeQueriesDependenciesState>[0],
 ): PersistableAtomDependenciesState {
+    // No queries means no ensembles are selected - there are no options to check against yet
+    if (queries.length === 0) {
+        return "blocked";
+    }
+
     const queriesWithoutFailures = queries.filter((query) => !(query.isEnabled && query.isError));
     return computeQueriesDependenciesState(queriesWithoutFailures.length > 0 ? queriesWithoutFailures : queries);
 }
