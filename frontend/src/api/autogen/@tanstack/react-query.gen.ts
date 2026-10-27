@@ -813,81 +813,6 @@ export const getStatisticalVectorDataPerSensitivityOptions = (
         queryKey: getStatisticalVectorDataPerSensitivityQueryKey(options),
     });
 
-export const getCombinedVectorTableHybridQueryKey = (options: Options<GetCombinedVectorTableHybridData_api>) =>
-    createQueryKey("getCombinedVectorTableHybrid", options);
-
-/**
- * Get Combined Vector Table Hybrid
- */
-export const getCombinedVectorTableHybridOptions = (options: Options<GetCombinedVectorTableHybridData_api>) =>
-    queryOptions<
-        GetCombinedVectorTableHybridResponse_api,
-        AxiosError<GetCombinedVectorTableHybridError_api>,
-        GetCombinedVectorTableHybridResponse_api,
-        ReturnType<typeof getCombinedVectorTableHybridQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getCombinedVectorTableHybrid({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getCombinedVectorTableHybridQueryKey(options),
-    });
-
-export const getCombinedTableInfoQueryKey = (options: Options<GetCombinedTableInfoData_api>) =>
-    createQueryKey("getCombinedTableInfo", options);
-
-/**
- * Get Combined Table Info
- */
-export const getCombinedTableInfoOptions = (options: Options<GetCombinedTableInfoData_api>) =>
-    queryOptions<
-        GetCombinedTableInfoResponse_api,
-        AxiosError<GetCombinedTableInfoError_api>,
-        GetCombinedTableInfoResponse_api,
-        ReturnType<typeof getCombinedTableInfoQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getCombinedTableInfo({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getCombinedTableInfoQueryKey(options),
-    });
-
-export const getCalcSomethingOnCombinedTableQueryKey = (options: Options<GetCalcSomethingOnCombinedTableData_api>) =>
-    createQueryKey("getCalcSomethingOnCombinedTable", options);
-
-/**
- * Get Calc Something On Combined Table
- */
-export const getCalcSomethingOnCombinedTableOptions = (options: Options<GetCalcSomethingOnCombinedTableData_api>) =>
-    queryOptions<
-        GetCalcSomethingOnCombinedTableResponse_api,
-        AxiosError<GetCalcSomethingOnCombinedTableError_api>,
-        GetCalcSomethingOnCombinedTableResponse_api,
-        ReturnType<typeof getCalcSomethingOnCombinedTableQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getCalcSomethingOnCombinedTable({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getCalcSomethingOnCombinedTableQueryKey(options),
-    });
-
 export const getInplaceTableDefinitionsQueryKey = (options: Options<GetInplaceTableDefinitionsData_api>) =>
     createQueryKey("getInplaceTableDefinitions", options);
 
@@ -3535,6 +3460,81 @@ export const getMediaSasTokenOptions = (options?: Options<GetMediaSasTokenData_a
             return data;
         },
         queryKey: getMediaSasTokenQueryKey(options),
+    });
+
+export const getCombinedVectorTableHybridQueryKey = (options: Options<GetCombinedVectorTableHybridData_api>) =>
+    createQueryKey("getCombinedVectorTableHybrid", options);
+
+/**
+ * Get Combined Vector Table Hybrid
+ */
+export const getCombinedVectorTableHybridOptions = (options: Options<GetCombinedVectorTableHybridData_api>) =>
+    queryOptions<
+        GetCombinedVectorTableHybridResponse_api,
+        AxiosError<GetCombinedVectorTableHybridError_api>,
+        GetCombinedVectorTableHybridResponse_api,
+        ReturnType<typeof getCombinedVectorTableHybridQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getCombinedVectorTableHybrid({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getCombinedVectorTableHybridQueryKey(options),
+    });
+
+export const getCombinedTableInfoQueryKey = (options: Options<GetCombinedTableInfoData_api>) =>
+    createQueryKey("getCombinedTableInfo", options);
+
+/**
+ * Get Combined Table Info
+ */
+export const getCombinedTableInfoOptions = (options: Options<GetCombinedTableInfoData_api>) =>
+    queryOptions<
+        GetCombinedTableInfoResponse_api,
+        AxiosError<GetCombinedTableInfoError_api>,
+        GetCombinedTableInfoResponse_api,
+        ReturnType<typeof getCombinedTableInfoQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getCombinedTableInfo({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getCombinedTableInfoQueryKey(options),
+    });
+
+export const getCalcSomethingOnCombinedTableQueryKey = (options: Options<GetCalcSomethingOnCombinedTableData_api>) =>
+    createQueryKey("getCalcSomethingOnCombinedTable", options);
+
+/**
+ * Get Calc Something On Combined Table
+ */
+export const getCalcSomethingOnCombinedTableOptions = (options: Options<GetCalcSomethingOnCombinedTableData_api>) =>
+    queryOptions<
+        GetCalcSomethingOnCombinedTableResponse_api,
+        AxiosError<GetCalcSomethingOnCombinedTableError_api>,
+        GetCalcSomethingOnCombinedTableResponse_api,
+        ReturnType<typeof getCalcSomethingOnCombinedTableQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getCalcSomethingOnCombinedTable({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getCalcSomethingOnCombinedTableQueryKey(options),
     });
 
 export const loginRouteQueryKey = (options?: Options<LoginRouteData_api>) => createQueryKey("loginRoute", options);

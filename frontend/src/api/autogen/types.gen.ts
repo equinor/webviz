@@ -4214,138 +4214,6 @@ export type GetStatisticalVectorDataPerSensitivityResponses_api = {
 export type GetStatisticalVectorDataPerSensitivityResponse_api =
     GetStatisticalVectorDataPerSensitivityResponses_api[keyof GetStatisticalVectorDataPerSensitivityResponses_api];
 
-export type GetCombinedVectorTableHybridData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Vector Names
-         *
-         * List of vector names to include in the combined table
-         */
-        vector_names: Array<string>;
-        /**
-         * Retry Creation Task
-         *
-         * Can be used to retry the table creation task
-         */
-        retry_creation_task?: boolean | null;
-        _cacheBust?: string;
-    };
-    url: "/timeseries/combined_vector_table_hybrid";
-};
-
-export type GetCombinedVectorTableHybridErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetCombinedVectorTableHybridError_api =
-    GetCombinedVectorTableHybridErrors_api[keyof GetCombinedVectorTableHybridErrors_api];
-
-export type GetCombinedVectorTableHybridResponses_api = {
-    /**
-     * Response Get Combined Vector Table Hybrid
-     *
-     * Successful Response
-     */
-    200: LroSuccessRespCombinedTableResponse_api | LroInProgressResp_api | LroFailureResp_api | LroCommandResp_api;
-};
-
-export type GetCombinedVectorTableHybridResponse_api =
-    GetCombinedVectorTableHybridResponses_api[keyof GetCombinedVectorTableHybridResponses_api];
-
-export type GetCombinedTableInfoData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Table Handle
-         *
-         * Handle for the combined table
-         */
-        table_handle: string;
-        _cacheBust?: string;
-    };
-    url: "/timeseries/combined_table_info";
-};
-
-export type GetCombinedTableInfoErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetCombinedTableInfoError_api = GetCombinedTableInfoErrors_api[keyof GetCombinedTableInfoErrors_api];
-
-export type GetCombinedTableInfoResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: CombinedTableInfo_api;
-};
-
-export type GetCombinedTableInfoResponse_api =
-    GetCombinedTableInfoResponses_api[keyof GetCombinedTableInfoResponses_api];
-
-export type GetCalcSomethingOnCombinedTableData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Table Handle
-         *
-         * Handle to the combined table to do some calculation on
-         */
-        table_handle: string;
-        /**
-         * Calculation Params
-         *
-         * Some parameter for the calculation
-         */
-        calculation_params: string;
-        _cacheBust?: string;
-    };
-    url: "/timeseries/calc_something_on_combined_table";
-};
-
-export type GetCalcSomethingOnCombinedTableErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type GetCalcSomethingOnCombinedTableError_api =
-    GetCalcSomethingOnCombinedTableErrors_api[keyof GetCalcSomethingOnCombinedTableErrors_api];
-
-export type GetCalcSomethingOnCombinedTableResponses_api = {
-    /**
-     * Response Get Calc Something On Combined Table
-     *
-     * Successful Response
-     */
-    200: string;
-};
-
-export type GetCalcSomethingOnCombinedTableResponse_api =
-    GetCalcSomethingOnCombinedTableResponses_api[keyof GetCalcSomethingOnCombinedTableResponses_api];
-
 export type GetInplaceTableDefinitionsData_api = {
     body?: never;
     path?: never;
@@ -7698,6 +7566,138 @@ export type GetMediaSasTokenResponses_api = {
 };
 
 export type GetMediaSasTokenResponse_api = GetMediaSasTokenResponses_api[keyof GetMediaSasTokenResponses_api];
+
+export type GetCombinedVectorTableHybridData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Vector Names
+         *
+         * List of vector names to include in the combined table
+         */
+        vector_names: Array<string>;
+        /**
+         * Retry Creation Task
+         *
+         * Can be used to retry the table creation task
+         */
+        retry_creation_task?: boolean | null;
+        _cacheBust?: string;
+    };
+    url: "/timeseries/combined_vector_table_hybrid";
+};
+
+export type GetCombinedVectorTableHybridErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetCombinedVectorTableHybridError_api =
+    GetCombinedVectorTableHybridErrors_api[keyof GetCombinedVectorTableHybridErrors_api];
+
+export type GetCombinedVectorTableHybridResponses_api = {
+    /**
+     * Response Get Combined Vector Table Hybrid
+     *
+     * Successful Response
+     */
+    200: LroSuccessRespCombinedTableResponse_api | LroInProgressResp_api | LroFailureResp_api | LroCommandResp_api;
+};
+
+export type GetCombinedVectorTableHybridResponse_api =
+    GetCombinedVectorTableHybridResponses_api[keyof GetCombinedVectorTableHybridResponses_api];
+
+export type GetCombinedTableInfoData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Table Handle
+         *
+         * Handle for the combined table
+         */
+        table_handle: string;
+        _cacheBust?: string;
+    };
+    url: "/timeseries/combined_table_info";
+};
+
+export type GetCombinedTableInfoErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetCombinedTableInfoError_api = GetCombinedTableInfoErrors_api[keyof GetCombinedTableInfoErrors_api];
+
+export type GetCombinedTableInfoResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: CombinedTableInfo_api;
+};
+
+export type GetCombinedTableInfoResponse_api =
+    GetCombinedTableInfoResponses_api[keyof GetCombinedTableInfoResponses_api];
+
+export type GetCalcSomethingOnCombinedTableData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Table Handle
+         *
+         * Handle to the combined table to do some calculation on
+         */
+        table_handle: string;
+        /**
+         * Calculation Params
+         *
+         * Some parameter for the calculation
+         */
+        calculation_params: string;
+        _cacheBust?: string;
+    };
+    url: "/timeseries/calc_something_on_combined_table";
+};
+
+export type GetCalcSomethingOnCombinedTableErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetCalcSomethingOnCombinedTableError_api =
+    GetCalcSomethingOnCombinedTableErrors_api[keyof GetCalcSomethingOnCombinedTableErrors_api];
+
+export type GetCalcSomethingOnCombinedTableResponses_api = {
+    /**
+     * Response Get Calc Something On Combined Table
+     *
+     * Successful Response
+     */
+    200: string;
+};
+
+export type GetCalcSomethingOnCombinedTableResponse_api =
+    GetCalcSomethingOnCombinedTableResponses_api[keyof GetCalcSomethingOnCombinedTableResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;

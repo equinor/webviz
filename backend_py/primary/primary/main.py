@@ -46,6 +46,7 @@ from primary.routers.rft.router import router as rft_router
 from primary.routers.seismic.router import router as seismic_router
 from primary.routers.surface.router import router as surface_router
 from primary.routers.timeseries.router import router as timeseries_router
+from primary.routers.timeseries.router_experimental import router as timeseries_experimental_router
 from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
@@ -73,7 +74,7 @@ logging.getLogger("webviz_services.utils.sumo_blob_cache").setLevel(logging.DEBU
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
-logging.getLogger("primary.routers.timeseries").setLevel(logging.DEBUG)
+logging.getLogger("primary.routers.timeseries.router_experimental").setLevel(logging.DEBUG)
 logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
 # logging.getLogger("primary.middleware").setLevel(logging.DEBUG)
 # logging.getLogger("primary.auth").setLevel(logging.DEBUG)
@@ -197,6 +198,9 @@ app.include_router(vfp_router, prefix="/vfp", tags=["vfp"])
 app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
 app.include_router(persistence_router, prefix="/persistence", tags=["persistence"])
 app.include_router(tutorials_router, prefix="/tutorials", tags=["tutorials"])
+
+# Experimental router for combined vector tables
+app.include_router(timeseries_experimental_router, prefix="/timeseries", tags=["timeseries_experimental"])
 
 auth_helper = AuthHelper()
 app.include_router(auth_helper.router)
