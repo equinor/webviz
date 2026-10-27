@@ -1,11 +1,14 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import { selectedPlotTypeAtom } from "./settings/atoms/baseAtoms";
-import { areSelectedTablesComparableAtom, areTableDefinitionSelectionsValidAtom } from "./settings/atoms/derivedAtoms";
+import {
+    areSelectedTablesComparableAtom,
+    areTableDefinitionSelectionsValidAtom,
+    offeredSelectedIndicesWithValuesAtom,
+} from "./settings/atoms/derivedAtoms";
 import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
-    selectedIndicesWithValuesAtom,
     selectedSecondResultNameAtom,
     selectedFirstResultNameAtom,
     selectedSelectorColumnAtom,
@@ -34,7 +37,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return {
             ensembleIdents: get(selectedEnsembleIdentsAtom).value,
             tableNames: get(selectedTableNamesAtom).value,
-            indicesWithValues: get(selectedIndicesWithValuesAtom).value,
+            // Entries for columns that are not offered must not be queried for
+            indicesWithValues: get(offeredSelectedIndicesWithValuesAtom),
             areSelectedTablesComparable: get(areSelectedTablesComparableAtom),
         };
     },

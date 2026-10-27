@@ -6,7 +6,9 @@ import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { selectedRegularEnsembleIdentAtom } from "./persistableFixableAtoms";
 
 export const vectorListQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedRegularEnsembleIdentAtom).value;
+    const { value: selectedEnsembleIdent, isValidInContext: ensembleIdentValid } = get(
+        selectedRegularEnsembleIdentAtom,
+    );
 
     const query = {
         ...getVectorListOptions({
@@ -16,7 +18,8 @@ export const vectorListQueryAtom = atomWithQuery((get) => {
                 ...makeCacheBustingQueryParam(selectedEnsembleIdent),
             },
         }),
-        enabled: !!(selectedEnsembleIdent?.getCaseUuid() && selectedEnsembleIdent?.getEnsembleName()),
+        enabled:
+            !!(selectedEnsembleIdent?.getCaseUuid() && selectedEnsembleIdent?.getEnsembleName()) && ensembleIdentValid,
     };
 
     return query;

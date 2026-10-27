@@ -36,8 +36,8 @@ const initialFluidContactSurfacesSettings = [
     Setting.INTERSECTION,
     Setting.ENSEMBLE,
     Setting.REALIZATION,
-    Setting.SURFACE_NAME,
     Setting.FLUID_CONTACT,
+    Setting.SURFACE_NAME,
     Setting.COLOR_SET,
 ] as const;
 

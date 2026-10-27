@@ -14,7 +14,7 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { Setting, type SettingAnnotation } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import {
     propagateAllApiErrorsToStatusWriter,
@@ -85,7 +85,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const setSelectedResponseName = useSetAtom(selectedResponseNameAtom);
 
     const availableWellNames = useAtomValue(availableWellNamesAtom);
-    const selectedWellName = useAtomValue(selectedWellNameAtom).value;
+    const { value: selectedWellName, isValidInContext: isSelectedWellNameValid } = useAtomValue(selectedWellNameAtom);
     const setSelectedWellName = useSetAtom(selectedWellNameAtom);
 
     const availableTimestampsUtcMs = useAtomValue(availableTimestampsUtcMsAtom);
@@ -118,7 +118,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         setDataChannelDepth(value !== null && Number.isFinite(value) ? value : null);
     }
 
-    const debouncedHandleDataChannelDepthChange = useDebouncedFunction(handleDataChannelDepthChange, 500);
+    const [immediateDataChannelDepth, setImmediateDataChannelDepth] = useDebouncedOnChange(
+        dataChannelDepth,
+        handleDataChannelDepthChange,
+        500,
+    );
 
     const tableDefinitionsArePending = tableDefinitionQueries.some((query) => query.isFetching);
     const tableDefinitionsErrorMessage =
@@ -160,8 +164,12 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const timestampSetsDiffer =
         timestampSetsPerEnsemble.length > 1 &&
         timestampSetsPerEnsemble.some((timestamps) => !arraysHaveSameValues(timestamps, timestampSetsPerEnsemble[0]));
+    // A kept invalid well has no dates - that is the well's error, not a lack of common dates
     const commonTimestampsAreMissing =
-        allEnsembleTableDefinitionsLoaded && Boolean(selectedWellName) && availableTimestampsUtcMs.length === 0;
+        allEnsembleTableDefinitionsLoaded &&
+        Boolean(selectedWellName) &&
+        isSelectedWellNameValid &&
+        availableTimestampsUtcMs.length === 0;
     const timestampAnnotations: SettingAnnotation[] = [
         ...selectedTimestampAnnotations,
         commonTimestampsAreMissing && {
@@ -293,8 +301,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         stacked
                     >
                         <NumberInput
-                            value={dataChannelDepth}
-                            onValueChange={debouncedHandleDataChannelDepthChange}
+                            value={immediateDataChannelDepth}
+                            onValueChange={setImmediateDataChannelDepth}
                             placeholder="No depth selected"
                         />
                     </Setting.Field>
