@@ -1,8 +1,4 @@
-/**
- * The cleanup callbacks one step invocation (one step, for one matrix coordinate, in one check run) registers via
- * `QcCheckStepRunContext.onFetchCancelOrFinish`. They are run exactly once - when the invocation finishes, or when its
- * run is cancelled or superseded, whichever comes first.
- */
+/** The cleanup callbacks of one step invocation, run once when it finishes or is cancelled. */
 export class QcCheckCleanupScope {
     private _callbacks: (() => void)[] = [];
     private _hasRun = false;
@@ -14,7 +10,7 @@ export class QcCheckCleanupScope {
 
     add(callback: () => void): void {
         if (this._hasRun) {
-            // Registered too late to be called by the cleanup - clean up right away instead
+            // Registered after the cleanup has run - clean up right away
             runCallback(callback);
             return;
         }
@@ -33,7 +29,7 @@ export class QcCheckCleanupScope {
     }
 }
 
-// A throwing callback must neither keep the others from running nor escape into the step runtime's `finally`
+// A throwing callback must not stop the others
 function runCallback(callback: () => void): void {
     try {
         callback();

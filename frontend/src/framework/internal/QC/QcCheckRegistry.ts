@@ -1,9 +1,7 @@
 import type { QcCheckDefinition } from "./QcCheck";
 
 export class QcCheckRegistry {
-    // Checks are registered with their own concrete `TParams`; the registry itself aggregates
-    // heterogeneous checks and so cannot know that type, hence `any` here (consumers -
-    // `EnsembleQc`/`QcCheckRuntime` - are generic over `unknown` and receive these structurally).
+    // `any` since each check has its own params type
     private static _registeredChecks: Map<string, QcCheckDefinition<any>> = new Map();
 
     static getRegisteredCheck(id: string): QcCheckDefinition<any> | undefined {

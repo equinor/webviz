@@ -18,9 +18,7 @@ export type QcChecksPanelProps = {
 export const QcChecksPanel = React.memo(function QcChecksPanel(props: QcChecksPanelProps) {
     const workbenchSession = useActiveSession();
 
-    // Subscribes to `WorkbenchSessionTopic.ENSEMBLE_QC_SET` (rather than reading
-    // `getEnsembleQcSet()` directly) so this panel re-renders when an ensemble is added to or
-    // removed from the session while it's open.
+    // Re-renders when ensembles are added or removed
     const ensembleQcs = useEnsembleQcSet(workbenchSession);
 
     return (

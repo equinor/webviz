@@ -12,45 +12,32 @@ export type QcCheckRealizationResult<TMetrics> =
           kind: "success";
           metrics: TMetrics;
       }
-    // The check ran to completion and determined this realization fails QC (e.g. a value fell
-    // outside its allowed threshold) - as opposed to "exception", where the check itself couldn't
-    // be completed. Still carries `metrics`, same as "success", so the result popover/table can
-    // show exactly what was measured alongside why it failed.
+    // The check ran, but the realization didn't pass
     | {
           kind: "failure";
           metrics: TMetrics;
           reason: string;
       }
-    // The check itself couldn't be completed for this realization - a network/backend error, a
-    // programming bug, missing prerequisite data, etc. - as opposed to "failure", which is a
-    // completed check's own verdict.
+    // The check couldn't be completed for the realization (e.g. a backend error)
     | {
           kind: "exception";
           errorMessage: string;
       };
 
-// Used by `templates` - a step's realizations/results, as needed to tailor a template (e.g. seed a
-// data provider's initial settings, or pre-constrain an elevated setting one of its modules
-// consumes via `Template.applyElevatedSettings`) to this specific run rather than the step in the
-// abstract.
+// A step's realizations and results, for tailoring templates to a specific run
 export type QcCheckTemplateContext<TMetrics> = {
     realizations: readonly number[];
     results: ReadonlyMap<number, QcCheckRealizationResult<TMetrics>>;
 };
 
-// One point in a step's parameter matrix (e.g. one selected grid) - a step that declares
-// `matrixCoordinates` runs once per coordinate, each with its own independent realization matrix
-// (see `QcCheckStepRuntime`).
+// One item a matrixed step runs for (e.g. one grid)
 export type QcCheckMatrixCoordinate = {
-    // Stable identity, used to correlate a coordinate's matrix runtime across re-runs, and to match
-    // it up with the same coordinate in the previous step (see `QcCheckStepRuntime.run`).
+    // Matches coordinates across runs and between consecutive steps
     key: string;
-    // Display label for this coordinate's own realization-matrix block in the UI.
     label: string;
 };
 
-// One coordinate's results of a step - `coordinate` is `null` for a non-matrixed step's one shared
-// result set (see `QcCheckStepRunContext.previousStepResults`).
+// A step's results for one coordinate - `coordinate` is `null` for a non-matrixed step
 export type QcCheckCoordinateResults<TMetrics> = {
     coordinate: QcCheckMatrixCoordinate | null;
     results: ReadonlyMap<number, QcCheckRealizationResult<TMetrics>>;
@@ -60,23 +47,15 @@ export type QcCheckStepRunContext<TMetrics, TParams, TPreviousMetrics = unknown>
     ensemble: RegularEnsemble;
     realizations: number[];
     params: TParams;
-    // The coordinate this invocation is running for - non-null exactly when the step definition
-    // provides `matrixCoordinates` (one invocation per returned coordinate), `null` otherwise.
+    // The coordinate being run, or `null` if the step isn't matrixed
     matrixCoordinate: QcCheckMatrixCoordinate | null;
     fetchQuery: ScopedQueryController["fetchQuery"];
-    // Registers cleanup for resources this invocation holds - called once when it finishes (successfully
-    // or not) or when the check is cancelled, whichever comes first. Called right away if registered later.
+    // Called once when this invocation finishes or is cancelled
     onFetchCancelOrFinish: (callback: () => void) => void;
     setProgressMessage: (message: string, realization?: number) => void;
     reportRealizationResult: (realization: number, result: QcCheckRealizationResult<TMetrics>) => void;
-    // The preceding step's results this invocation builds on - `null` for a check's first step.
-    // Normally a single entry: the predecessor's results for this same matrix coordinate, or its one
-    // shared result set if it wasn't itself matrixed. A non-matrixed step whose predecessor ran for
-    // several coordinates gets one entry per coordinate instead, and is asked to run only the
-    // realizations that succeeded for all of them. Only ever contains the realizations this step was
-    // itself asked to run: `QcCheckStepRuntime.run` carries a realization forward into the next step
-    // only once the current step reported it as a success, so a step never has to re-check whether a
-    // given realization's predecessor result succeeded.
+    // The previous step's results for `realizations` - `null` for the first step. One entry, or one per
+    // coordinate when a non-matrixed step follows a step with several coordinates.
     previousStepResults: readonly QcCheckCoordinateResults<TPreviousMetrics>[] | null;
 };
 
@@ -84,24 +63,12 @@ export type QcCheckStepDefinition<TMetrics = unknown, TParams = void, TPreviousM
     run(context: QcCheckStepRunContext<TMetrics, TParams, TPreviousMetrics>): Promise<void>;
 
     name: string;
-    // Renders a single realization's successful result (e.g. as a table) in the realization-result
-    // popover. Falls back to a generic JSON dump when a step doesn't provide one.
+    // Shows a realization's metrics in the result popover (falls back to JSON)
     resultComponent?: React.ComponentType<{ metrics: TMetrics }>;
-    // A function (not a static array) since a template's initial module state can depend on the
-    // specific run - e.g. seeding a 3D view's grid provider with the same t0/t1 timestep this step
-    // itself compared. Each returned `Template` is responsible for its own elevated settings (see
-    // `Template.applyElevatedSettings`) - e.g. restricting a picker to only the values this specific
-    // run actually checked.
+    // Templates offered to investigate the results of a run
     templates?: (context: QcCheckTemplateContext<TMetrics>) => Template[];
-    // When provided, this step runs once per returned coordinate (e.g. once per selected grid)
-    // instead of once overall - each coordinate gets its own independent realization matrix, run in
-    // sequence (never in parallel - see `QcCheckStepRuntime.run`). Steps in the same check that need
-    // matching coordinates should derive them from the same params via a shared helper, so their
-    // coordinate keys always line up.
-    //
-    // Declared with method shorthand (not as an arrow-typed property) so `TParams` is checked
-    // bivariantly here, same as `run`'s own `context.params` - otherwise `QcCheckDefinition.steps`
-    // (an array of differently-`TParams`-typed steps, see `QcCheck.ts`) couldn't assign into it.
+    // Makes the step run once per returned coordinate (e.g. once per grid). Method shorthand, so
+    // steps with different `TParams` can be assigned to `QcCheckDefinition.steps`.
     matrixCoordinates?(params: TParams): QcCheckMatrixCoordinate[];
 };
 
@@ -112,11 +79,8 @@ export enum QcCheckStepTopic {
 
 export type QcCheckStepStatus = {
     isRunning: boolean;
-    // `false` until this coordinate's parent check has kicked off a run that reached it at least
-    // once - lets the UI tell "never run" apart from "ran and produced zero results".
     hasRun: boolean;
-    // `true` when this coordinate didn't run because none of the realizations carried forward from
-    // its predecessor succeeded (see `QcCheckStepRuntime.run`).
+    // No realizations were carried over from the previous step
     skipped: boolean;
     requestedRealizations: readonly number[];
 };
@@ -131,20 +95,15 @@ export type QcCheckStepMatrixRunOptions<TParams, TPreviousMetrics> = {
     params: TParams;
     ensemble: RegularEnsemble;
     fetchQuery: ScopedQueryController["fetchQuery"];
-    // Called once per invocation, so each invocation's cleanup is its own (see `QcCheckRuntime.run`)
     createCleanupScope: () => QcCheckCleanupScope;
-    // Whether the check run this invocation belongs to is still the current one - false once it's been cancelled
-    // or superseded by a new run (which also resets this matrix), after which the invocation may no longer touch it.
+    // False once the check run is cancelled or superseded - the invocation may then no longer change this matrix
     isCurrent: () => boolean;
     previousStepResults: readonly QcCheckCoordinateResults<TPreviousMetrics>[] | null;
     matrixCoordinate: QcCheckMatrixCoordinate | null;
 };
 
-// Owns exactly one realization matrix - either a whole (non-matrixed) step, or one coordinate of a
-// matrixed step's parameter matrix. A check's steps run one after the other (never in parallel -
-// see `QcCheckRuntime.run`), and so does each matrixed step's own coordinates (see
-// `QcCheckStepRuntime.run`) - this class itself doesn't know or care which of those two cases it's
-// in, it just publishes its own results/status to any subscribed UI.
+// Runs a step for one matrix coordinate (e.g. one grid) and holds its result for each realization.
+// A step that isn't matrixed has exactly one of these.
 export class QcCheckStepMatrixRuntime<
     TMetrics = unknown,
     TParams = unknown,
@@ -159,8 +118,7 @@ export class QcCheckStepMatrixRuntime<
     private _skipped: boolean = false;
     private _requestedRealizations: readonly number[] = [];
     private _matrixCoordinate: QcCheckMatrixCoordinate | null = null;
-    // See the equivalent caches on `QcCheckRuntime` - `useSyncExternalStore` requires
-    // `makeSnapshotGetter` to return a referentially stable value when nothing has changed.
+    // Cached so the snapshots stay referentially stable for `useSyncExternalStore`
     private _resultsSnapshot: QcCheckStepTopicPayloads<TMetrics>[QcCheckStepTopic.RESULTS] | null = null;
     private _statusSnapshot: QcCheckStepStatus | null = null;
 
@@ -233,7 +191,7 @@ export class QcCheckStepMatrixRuntime<
         this._publishSubscribeDelegate.notifySubscribers(QcCheckStepTopic.STATUS);
     }
 
-    /** Clears this matrix's results/progress and marks it as not-yet-run, for a fresh check run. */
+    /** Clears the results and marks the matrix as not run. */
     reset(): void {
         this._results.clear();
         this._resultsSnapshot = null;
@@ -246,17 +204,14 @@ export class QcCheckStepMatrixRuntime<
         this.notifyStatus();
     }
 
-    /** Marks this matrix as skipped because none of its predecessor's realizations succeeded. */
+    /** Marks the matrix as skipped, since no realizations were carried over from the previous step. */
     markSkipped(): void {
         this._skipped = true;
         this._hasRun = true;
         this.notifyStatus();
     }
 
-    /**
-     * Marks this matrix as no longer running because its check run was cancelled - the invocation itself may still
-     * be winding down, but is no longer current, so it won't do this itself (see `run`).
-     */
+    /** Marks the matrix as no longer running after the check run was cancelled. */
     markStopped(): void {
         if (!this._isRunning) {
             return;
@@ -318,13 +273,11 @@ export class QcCheckStepMatrixRuntime<
         try {
             await this._stepDefinition.run(context);
         } catch (error) {
-            // A cancelled or superseded invocation may fail with anything once its work is cut off
             if (error instanceof CancelledError || !isCurrent()) {
                 return;
             }
 
-            // Steps are meant to report errors per realization - one that throws instead still mustn't
-            // leave realizations without a result, nor fail the remaining coordinates and steps
+            // Report the realizations the step didn't get to as exceptions, so none is left without a result
             console.error(`QC check step "${this._stepDefinition.name}" failed:`, error);
             const errorMessage = error instanceof Error ? error.message : String(error);
             for (const realization of realizations) {
@@ -333,9 +286,8 @@ export class QcCheckStepMatrixRuntime<
                 }
             }
         } finally {
-            // A no-op if the run was cancelled or superseded in the meantime - this only ever cleans up its own scope
             cleanupScope.run();
-            // Otherwise this matrix was already stopped by `markStopped`, or reset and possibly restarted by a new run
+            // An outdated invocation must not stop a newer run
             if (isCurrent()) {
                 this._isRunning = false;
                 this.notifyStatus();
@@ -345,17 +297,13 @@ export class QcCheckStepMatrixRuntime<
 }
 
 export type QcCheckStepMatrixEntry<TMetrics = unknown, TParams = unknown, TPreviousMetrics = unknown> = {
-    // `null` for a non-matrixed step's one implicit entry.
+    // `null` for a non-matrixed step
     coordinate: QcCheckMatrixCoordinate | null;
     runtime: QcCheckStepMatrixRuntime<TMetrics, TParams, TPreviousMetrics>;
 };
 
 export enum QcCheckStepGroupTopic {
-    // Fires only when the step's set of matrix-coordinate entries actually changes (a coordinate
-    // added or removed between runs) - not on every run. The common case (re-running with the same
-    // coordinates, or a non-matrixed step) reuses the same `QcCheckStepMatrixRuntime` instances
-    // across runs and never fires this; each entry's own RESULTS/STATUS topics (on
-    // `QcCheckStepMatrixRuntime`) cover everything else.
+    // Fires only when the set of coordinates changes between runs
     COORDINATES = "coordinates",
 }
 
@@ -363,16 +311,14 @@ export type QcCheckStepGroupTopicPayloads<TMetrics, TParams, TPreviousMetrics> =
     [QcCheckStepGroupTopic.COORDINATES]: QcCheckStepMatrixEntry<TMetrics, TParams, TPreviousMetrics>[];
 };
 
-// A single well-known key for a non-matrixed step's one implicit coordinate - never exposed outside
-// this file, just used internally to key `_entries` uniformly regardless of whether the step is
-// matrixed.
+// Internal key for a non-matrixed step's single entry
 const SINGLE_ENTRY_KEY = "__single__";
 
 function entryKey(coordinate: QcCheckMatrixCoordinate | null): string {
     return coordinate?.key ?? SINGLE_ENTRY_KEY;
 }
 
-// What a step's entry carries over from its predecessor - see `QcCheckStepRuntime.getCarriedInput`.
+// What a step's entry gets from the previous step
 type QcCheckCarriedInput<TPreviousMetrics> = Pick<
     QcCheckStepMatrixRunOptions<unknown, TPreviousMetrics>,
     "realizations" | "previousStepResults"
@@ -388,8 +334,7 @@ function getSuccessfulRealizations(results: ReadonlyMap<number, QcCheckRealizati
     return realizations;
 }
 
-// Only the given realizations' results - all a successor's invocation gets to see of its
-// predecessor's results (see `QcCheckStepRunContext.previousStepResults`).
+// Only the given realizations' results
 function pickResults<TMetrics>(
     results: ReadonlyMap<number, QcCheckRealizationResult<TMetrics>>,
     realizations: readonly number[],
@@ -404,12 +349,8 @@ function pickResults<TMetrics>(
     return picked;
 }
 
-// Orchestrates one check step: either a single realization matrix (the common case) or one per
-// matrix coordinate (see `QcCheckStepDefinition.matrixCoordinates`) - uniformly represented as a
-// list of `QcCheckStepMatrixEntry`, always with at least one entry. Runs its entries in sequence,
-// never in parallel (see `run`), and reconciles entries across runs by coordinate key so a
-// component already subscribed to an unchanged coordinate's matrix runtime doesn't need to
-// re-subscribe when the check is simply re-run with the same selection.
+// One step of a check, with one entry per matrix coordinate (a single entry if the step isn't matrixed).
+// Entries are reused across runs while their coordinate keys stay the same.
 export class QcCheckStepRuntime<
     TMetrics = unknown,
     TParams = unknown,
@@ -451,18 +392,12 @@ export class QcCheckStepRuntime<
         };
     }
 
-    /** The step's current matrix entries, in order - always at least one. */
+    /** The step's matrix entries - always at least one. */
     getEntries(): QcCheckStepMatrixEntry<TMetrics, TParams, TPreviousMetrics>[] {
         return this._entries;
     }
 
-    /**
-     * Rebuilds this step's matrix entries from `matrixCoordinates?.(params)` for a fresh check run.
-     * Coordinates that already have an entry keep their *same* `QcCheckStepMatrixRuntime` instance
-     * (just `.reset()`), so already-subscribed UI doesn't need to re-subscribe for the common
-     * "re-run with the same selection" case - only reassigns `_entries` and notifies COORDINATES
-     * when the coordinate key set actually changed.
-     */
+    /** Rebuilds the entries from the params for a new run, reusing entries whose coordinate key is unchanged. */
     reset(params: TParams): void {
         const coordinates = this._stepDefinition.matrixCoordinates?.(params) ?? null;
         const nextCoordinates: (QcCheckMatrixCoordinate | null)[] =
@@ -496,10 +431,7 @@ export class QcCheckStepRuntime<
     private getEntryForCoordinateKey(
         key: string,
     ): QcCheckStepMatrixEntry<TMetrics, TParams, TPreviousMetrics> | undefined {
-        // A non-matrixed step (or one currently reduced to a single coordinate) shares its one
-        // entry with any coordinate key a neighboring step asks for - lets a matrixed step read a
-        // non-matrixed predecessor's one shared result set, and a non-matrixed step read a
-        // predecessor that ran for a single coordinate (several are fanned in by `getCarriedInput`).
+        // A single entry matches any key
         if (this._entries.length === 1) {
             return this._entries[0];
         }
@@ -507,11 +439,9 @@ export class QcCheckStepRuntime<
     }
 
     /**
-     * What a successor step's entry for `coordinate` carries over from this step: the realizations
-     * this step succeeded for with the same coordinate key (none if there's no such entry), and
-     * only those realizations' results. A non-matrixed successor of several coordinates fans them
-     * in instead: it gets the realizations that succeeded for every coordinate, with each
-     * coordinate's results for them.
+     * What the next step's entry for `coordinate` gets: the realizations that succeeded here for the same
+     * coordinate, with their results. A non-matrixed next step after several coordinates gets the realizations
+     * that succeeded for every coordinate, with each coordinate's results.
      */
     getCarriedInput(coordinate: QcCheckMatrixCoordinate | null): QcCheckCarriedInput<TMetrics> {
         const sourceEntries =
@@ -535,18 +465,14 @@ export class QcCheckStepRuntime<
         };
     }
 
-    /** Marks every entry still running as stopped, once the check run was cancelled - see `QcCheckStepMatrixRuntime.markStopped`. */
+    /** Marks every running entry as stopped after the check run was cancelled. */
     markStopped(): void {
         this._entries.forEach((entry) => entry.runtime.markStopped());
     }
 
     /**
-     * Runs every current entry in sequence (never in parallel - keeps a single in-flight fetch at a
-     * time). For the check's first step (`previousStepRuntime === null`) every entry starts from
-     * `checkRealizations`; otherwise each entry's carried realizations/previous results come from
-     * `previousStepRuntime`'s *same* coordinate key (see `getCarriedInput`) - this is what gives
-     * each matrix coordinate its own independent realization matrix end to end: one grid's
-     * realization failing never affects a different grid's same realization.
+     * Runs the entries one after another. The first step runs `checkRealizations`; later steps get their
+     * realizations from the previous step.
      */
     async run(options: {
         checkRealizations: readonly number[];
@@ -561,8 +487,7 @@ export class QcCheckStepRuntime<
             options;
 
         for (const entry of this._entries) {
-            // A cancelled entry may still finish normally (e.g. when its step catches the cancellation) - the
-            // remaining entries must not start running for a run that is no longer current
+            // A cancelled entry can still return normally, so check before starting the next one
             if (!isCurrent()) {
                 return;
             }

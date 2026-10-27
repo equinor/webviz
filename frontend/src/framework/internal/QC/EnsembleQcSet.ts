@@ -27,8 +27,7 @@ export class EnsembleQcSet {
             }
         }
 
-        // Add QCs for ensembles that are new to the ensemble set. The ensemble set is rebuilt with new
-        // instances whenever the ensemble selection is applied, so retained QCs get the new instance too
+        // Add QCs for new ensembles, and give retained ones the rebuilt ensemble instance
         for (const ensemble of ensembleSet.getRegularEnsembleArray()) {
             const ensembleIdentString = ensemble.getIdent().toString();
             const existingQc = this._ensembleIdentStringQcMap.get(ensembleIdentString);

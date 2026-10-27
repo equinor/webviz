@@ -9,8 +9,7 @@ export type QcRealizationSelection = {
     matrixRuntime: QcCheckStepMatrixRuntime;
     checkName: string;
     realization: number;
-    // The clicked realization's own check row - the popover anchors here (rather than to the
-    // individual square) so it never covers the realization grid it's describing.
+    // The popover anchors to this rather than the square, so it doesn't cover the grid
     anchorElement: HTMLElement;
 };
 
@@ -20,8 +19,7 @@ type QcRealizationPopoverContextValue = {
 
 const QcRealizationPopoverContext = React.createContext<QcRealizationPopoverContextValue | null>(null);
 
-// Lets a `RealizationSquares` instance anywhere in the QC checks drawer open the single, shared
-// realization-result popover owned by `QcRealizationPopoverProvider`.
+// Opens the shared realization result popover
 export function useQcRealizationPopover(): QcRealizationPopoverContextValue {
     const context = React.useContext(QcRealizationPopoverContext);
     if (!context) {
@@ -64,10 +62,7 @@ export function QcRealizationPopoverProvider(props: QcRealizationPopoverProvider
     );
 }
 
-// A dedicated component (rather than inlined) so its topic subscriptions only exist while a
-// realization is actually selected - it re-subscribes to the *selected* matrix coordinate's own
-// runtime, so the popover's content keeps updating live if that coordinate is still running when
-// opened.
+// Separate component, so it only subscribes to results while a realization is selected
 function QcRealizationResultDetails(props: { selection: QcRealizationSelection }): React.ReactNode {
     const { matrixRuntime, realization } = props.selection;
 
@@ -97,8 +92,7 @@ function QcRealizationResultDetails(props: { selection: QcRealizationSelection }
         </pre>
     );
 
-    // A "failure" still carries `metrics` (same as "success") - show why it failed alongside them,
-    // rather than in place of them.
+    // A failure shows its reason along with the metrics
     if (result.kind === "failure") {
         return (
             <div className="gap-3xs flex flex-col">

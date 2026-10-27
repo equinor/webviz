@@ -1,8 +1,7 @@
 import type { QcCheckDefinition } from "../QcCheck";
 import type { QcCheckStepDefinition } from "../QcCheckStep";
 
-// TEMPORARY - for exercising the QC panel's realization-status rendering (success/failure/
-// exception/excluded) end to end. Not a real check - remove once no longer needed.
+// TEMPORARY - a check with random outcomes, for trying out the QC panel
 
 type DummyCheckMetrics = {
     note: string;
@@ -14,9 +13,6 @@ function randomOutcome(): (typeof RANDOM_OUTCOMES)[number] {
     return RANDOM_OUTCOMES[Math.floor(Math.random() * RANDOM_OUTCOMES.length)];
 }
 
-// Both steps share this factory - step 2 never has to special-case "excluded" itself, since the
-// runtime only carries a realization into step 2 once step 1 has reported it a "success" (any
-// realization step 1 reported "failure"/"exception" for renders as "excluded" in step 2 for free).
 function makeRandomStep(name: string): QcCheckStepDefinition<DummyCheckMetrics, void> {
     return {
         name,

@@ -1,6 +1,5 @@
 import { DummyRandomCheck } from "./checks/DummyRandomCheck";
 import { QcCheckRegistry } from "./QcCheckRegistry";
 
-// TEMPORARY - see DummyRandomCheck.ts. Remove this registration together with that file once no
-// longer needed for testing.
+// TEMPORARY - remove together with DummyRandomCheck.ts
 QcCheckRegistry.registerCheck("dummy-random-check", DummyRandomCheck);

@@ -22,7 +22,7 @@ export class EnsembleQc {
         return this._ensemble;
     }
 
-    /** Swaps in a rebuilt instance of the same ensemble, keeping every check's results - see `QcCheckRuntime.setEnsemble`. */
+    /** Swaps in a rebuilt instance of the same ensemble, keeping every check's results. */
     setEnsemble(ensemble: RegularEnsemble): void {
         this._ensemble = ensemble;
         for (const checkRuntime of this._checks.values()) {
@@ -35,7 +35,6 @@ export class EnsembleQc {
     }
 
     beforeDestroy(): void {
-        // Stops any in-flight fetches and keeps a running check from advancing to further steps
         for (const checkRuntime of this._checks.values()) {
             checkRuntime.cancel();
         }

@@ -53,9 +53,7 @@ type EnsembleQcContainerProps = {
     workbench: Workbench;
 };
 
-// True while at least one of the ensemble's check runtimes is running - subscribes directly to
-// each runtime's own STATUS topic rather than relying on a child re-render, since this needs to
-// know the aggregate state up here at the (possibly collapsed) ensemble header.
+// True while any of the ensemble's checks is running
 function useIsAnyCheckRuntimeRunning(checkRuntimes: QcCheckRuntime[]): boolean {
     return React.useSyncExternalStore(
         (onStoreChange) => {
@@ -70,14 +68,7 @@ function useIsAnyCheckRuntimeRunning(checkRuntimes: QcCheckRuntime[]): boolean {
     );
 }
 
-// Subscribes to every step's COORDINATES topic (fires when a step's matrix-coordinate entries are
-// added/removed) plus every *currently known* entry's own STATUS/RESULTS - shared by
-// `useHasAnyStepRun`/`useCheckOutcomeTone` below. An entry added *after* this subscribes won't have
-// its own later updates individually watched by this particular subscription, but that's fine for
-// both of those hooks: `CheckRuntimeContainer` already unconditionally subscribes to the check's own
-// STATUS topic, which is guaranteed to fire again once the check finishes running - by then every
-// entry has settled, and the next `getSnapshot()` call reads it fresh regardless of exactly which
-// topic fired.
+// Subscribes to the steps' entries and to each entry's status and results
 function subscribeToAllStepEntries(stepRuntimes: QcCheckStepRuntime[], onStoreChange: () => void): () => void {
     const unsubscribeFuncs: (() => void)[] = [];
     for (const stepRuntime of stepRuntimes) {
@@ -95,8 +86,7 @@ function subscribeToAllStepEntries(stepRuntimes: QcCheckStepRuntime[], onStoreCh
     };
 }
 
-// True once at least one of the check's steps has any matrix entry that has been run at least once
-// - a check's own results now live on its steps' entries rather than on the check runtime itself.
+// True once any of the check's steps has run
 function useHasAnyStepRun(stepRuntimes: QcCheckStepRuntime[]): boolean {
     return React.useSyncExternalStore(
         (onStoreChange) => subscribeToAllStepEntries(stepRuntimes, onStoreChange),
@@ -106,14 +96,8 @@ function useHasAnyStepRun(stepRuntimes: QcCheckStepRuntime[]): boolean {
 
 type OutcomeTone = "success" | "warning" | "danger";
 
-// A check's overall outcome, once it's done running: green only if every requested realization
-// made it all the way through the last step as a success, red if none did, yellow for a mix. When
-// the last step is matrixed (e.g. one entry per selected grid), a realization only counts as a
-// check-level success if it succeeded in *every* one of the last step's entries - a realization
-// that failed anywhere along the way (an earlier step, or any one matrix coordinate of the last
-// step) never reappears as a success in all of the last step's entries, so this single check
-// already accounts for failures anywhere in the sequence. `null` while the check hasn't finished a
-// run yet (its last step hasn't run, e.g. cancelled partway through an earlier step).
+// A check's overall outcome: green if every realization succeeded in all of the last step's
+// entries, red if none did, yellow for a mix. `null` until the last step has run.
 function useCheckOutcomeTone(checkRuntime: QcCheckRuntime, stepRuntimes: QcCheckStepRuntime[]): OutcomeTone | null {
     return React.useSyncExternalStore(
         (onStoreChange) => subscribeToAllStepEntries(stepRuntimes, onStoreChange),
@@ -151,12 +135,8 @@ function useCheckOutcomeTone(checkRuntime: QcCheckRuntime, stepRuntimes: QcCheck
     );
 }
 
-// Flat tally across every cell of one step's matrix (each realization each matrix coordinate was
-// asked to run): green only if every cell succeeded, red if none did, yellow for a mix. A cell
-// without a result - the step was cancelled or returned before reporting it - counts as not
-// succeeded, so an incomplete step never looks successful. Unlike `useCheckOutcomeTone` (which
-// requires a realization to succeed in *every* coordinate), this is purely informational - "how
-// much of this step's matrix failed" - so each cell counts on its own.
+// A step's outcome over all its entries: green if every requested realization succeeded, red if
+// none did, yellow for a mix. A missing result counts as not succeeded.
 function outcomeToneFromEntries(entries: QcCheckStepMatrixEntry[]): OutcomeTone {
     let successCount = 0;
     let failureCount = 0;
@@ -179,8 +159,7 @@ function outcomeToneFromEntries(entries: QcCheckStepMatrixEntry[]): OutcomeTone 
     return "warning";
 }
 
-// Icon + color for a resolved (non-running, non-skipped, non-idle) outcome - shared by the check's
-// own header icon and each step's status icon so the two use the same traffic-light language.
+// Icon for a finished check or step
 function OutcomeIcon(props: { tone: OutcomeTone }) {
     if (props.tone === "danger") {
         return <Cancel style={{ fontSize: 16 }} className="text-danger-subtle" />;
@@ -258,23 +237,17 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
 
     const [showSettings, setShowSettings] = React.useState(false);
 
-    // Params are staged locally while the settings view is open, and only committed into the
-    // runtime (via `setParams`) when the user clicks Run - there's no separate Apply step. Shared
-    // across every step of this check.
+    // Edited params are only committed to the runtime when Run is clicked
     const appliedParams = usePublishSubscribeTopicValue(checkRuntime, QcCheckRuntimeTopic.PARAMS);
     const [stagedParams, setStagedParams] = React.useState(appliedParams);
 
-    // TODO: Read the selected realization from the active dashboard's "realization" elevated setting
-    // once the elevated settings framework is in place. Until then, nothing is ever selected.
+    // TODO: Read from the dashboard's "realization" elevated setting once that framework is in place
     const selectedRealization: number | null = null;
 
     const [expanded, setExpanded] = React.useState(false);
 
-    // Re-renders whenever the check's running state changes - see the `notifySubscribers` calls in
-    // `QcCheckRuntime.run()`/`cancel()`. Each step's own results/status are subscribed to
-    // individually by `StepBlock` below.
-    // Results are shown against the realizations the run was started with - `activeRealizations`
-    // follows the live realization filter, and is only what the next run starts with.
+    // Results are shown against the realizations the run started with - the live filter
+    // (`activeRealizations`) only applies to the next run
     const { requestedRealizations: runRealizations } = usePublishSubscribeTopicValue(
         checkRuntime,
         QcCheckRuntimeTopic.STATUS,
@@ -288,9 +261,7 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
 
     function handleRunClick() {
         checkRuntime.setParams(stagedParams);
-        // Once `run()` flips `isRunning`, the settings view hides itself regardless of
-        // `showSettings` - reset it now so a run started from the "no results yet" view doesn't
-        // leave the re-run settings view showing once this run completes.
+        // So the settings view doesn't reappear once this run completes
         setShowSettings(false);
         checkRuntime.run(activeRealizations);
     }
@@ -304,27 +275,22 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
     }
 
     function handleBackToResultsClick() {
-        // Discard whatever was staged in the settings view - only Run commits it.
+        // Discard the edited params
         setStagedParams(appliedParams);
         setShowSettings(false);
     }
 
     function handleApplyTemplateClick(template: Template) {
-        // TODO: Apply the elevated settings the template's modules need once the elevated settings
-        // framework is in place (expected to be handled by `Dashboard.fromTemplate` itself).
+        // TODO: Apply the template's elevated settings once that framework is in place
         workbench.getSessionManager().applyTemplate(template);
     }
 
     function handleRealizationClick() {
-        // TODO: Set the active dashboard's "realization" elevated setting (adding it first if the
-        // dashboard doesn't have it yet) once the elevated settings framework is in place.
+        // TODO: Set the dashboard's "realization" elevated setting once that framework is in place
     }
 
     function makeResultsContent() {
-        // Not-yet-run and re-run both land here: settings + a Play button, plus (only when there
-        // are existing results to fall back to) a Cancel button to back out without running again.
-        // `!isRunning` takes priority so this auto-hides the moment a run is kicked off, in favor of
-        // the step-by-step progress view below.
+        // Settings and Run, before the first run or when re-running
         const showSettingsView = !isRunning && (showSettings || !hasResults);
 
         if (showSettingsView) {
@@ -443,19 +409,14 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
 type MatrixEntriesAggregateStatus = {
     isRunning: boolean;
     hasRun: boolean;
-    // `true` only once every entry is skipped - a step with a mix of skipped/ran entries still has
-    // something to show, so it isn't treated as skipped overall.
+    // Only when every entry is skipped
     skipped: boolean;
     outcomeTone: OutcomeTone | null;
-    // Flat tally across every matrix entry's results, by `QcCheckRealizationResult.kind` - powers
-    // the summary (see `StepResultCountsSummary`) as well as `outcomeTone` below.
+    // Counted over all entries
     successCount: number;
     failureCount: number;
     exceptionCount: number;
-    // Every one of `allRealizations` that has no result on a given entry, summed across entries -
-    // either filtered away before this step ever ran, or excluded because it didn't survive an
-    // earlier step (see `RealizationSquares.makeSquareColor`'s "filteredAway"/"excluded" tones,
-    // which distinguish the same two cases per-square).
+    // Realizations without a result, counted over all entries
     notRunCount: number;
 };
 
@@ -489,10 +450,7 @@ function computeMatrixEntriesStatus(
     return { isRunning, hasRun, skipped, outcomeTone, successCount, failureCount, exceptionCount, notRunCount };
 }
 
-// Aggregates a step's current matrix entries into one status for the step's own header icon -
-// re-renders whenever any entry's own STATUS/RESULTS changes. Caches the computed aggregate
-// (invalidated only when a subscribed topic actually fires) since `useSyncExternalStore` requires
-// `getSnapshot` to return a referentially stable value when nothing has changed.
+// Combines a step's entries into one status. Cached so the snapshot stays referentially stable.
 function useMatrixEntriesStatus(
     entries: QcCheckStepMatrixEntry[],
     allRealizations: readonly number[],
@@ -540,21 +498,16 @@ function useMatrixEntriesStatus(
 type StepBlockProps = {
     stepRuntime: QcCheckStepRuntime;
     allRealizations: readonly number[];
-    // The realizations the check's run was started with (see `QcCheckRuntime.getRequestedRealizations`)
+    // The realizations the check's run was started with
     runRealizations: readonly number[];
     selectedRealization: number | null;
     onRealizationClick: (realization: number) => void;
     onApplyTemplateClick: (template: Template) => void;
-    // Only the last step's details are shown by default - earlier steps are collapsed to just
-    // their status, since the last step's outcome is what a passing/failing check ultimately comes
-    // down to. Any step can still be expanded on demand as soon as it has something to show (see
-    // `showBody` below) - not just once the whole check has finished running.
+    // Only the last step is expanded by default
     isLastStep: boolean;
 };
 
-// One step of a check's sequence, mirroring a GitHub Actions job's step list: its own status
-// (pending/running/skipped/done), and one `MatrixEntryBlock` per matrix-coordinate entry (just one,
-// unlabeled, for a plain non-matrixed step - see `QcCheckStepRuntime`).
+// One step: its status, and a realization grid per matrix coordinate
 function StepBlock(props: StepBlockProps) {
     const {
         stepRuntime,
@@ -568,20 +521,14 @@ function StepBlock(props: StepBlockProps) {
 
     const [expanded, setExpanded] = React.useState(isLastStep);
 
-    // Re-renders whenever this step's set of matrix-coordinate entries changes (rare - only on
-    // add/remove, see `QcCheckStepRuntime.reset`).
     const entries = usePublishSubscribeTopicValue(stepRuntime, QcCheckStepGroupTopic.COORDINATES);
     const { isRunning, hasRun, skipped, outcomeTone, successCount, failureCount, exceptionCount, notRunCount } =
         useMatrixEntriesStatus(entries, allRealizations);
-    // A step becomes expandable as soon as it's running or has something to show (`hasRun` is set
-    // the moment a step starts, before `isRunning` - see `QcCheckStepMatrixRuntime.run`) - not
-    // gated on the whole check having finished, so an earlier step's progress can be watched live
-    // while a later step is still running.
+    // Expandable as soon as the step has started, so its progress can be followed
     const showBody = expanded && hasRun;
 
     const stepDefinition = stepRuntime.getStepDefinition();
-    // Only label each entry with its coordinate once there's more than one to tell apart - a
-    // single-grid matrixed step (or a plain non-matrixed one) renders exactly like today.
+    // Only label the entries when there is more than one
     const showCoordinateLabels = entries.length > 1;
 
     function statusIcon() {
@@ -610,7 +557,7 @@ function StepBlock(props: StepBlockProps) {
                     {statusIcon()}
                     <span className="grow">{stepDefinition.name}</span>
                 </button>
-                {/* Outside the button - its tooltips are interactive elements of their own */}
+                {/* Outside the button, since its tooltips are interactive */}
                 {hasRun && !skipped && (
                     <StepResultCountsSummary
                         successCount={successCount}
@@ -652,14 +599,11 @@ type StepResultCountsSummaryProps = {
     failureCount: number;
     exceptionCount: number;
     notRunCount: number;
-    // The not-run count includes realizations this step just hasn't reached yet while still
-    // running (e.g. later entries in a matrixed step) - only meaningful, so only shown, once the
-    // step is done.
+    // The not-run count is only shown once the step is done
     isRunning: boolean;
 };
 
-// A quick success/failure/error/not-run tally shown next to a step's name, so its outcome
-// breakdown is visible without expanding into the full realization matrix below.
+// Result counts shown next to a step's name
 function StepResultCountsSummary(props: StepResultCountsSummaryProps) {
     const { successCount, failureCount, exceptionCount, notRunCount, isRunning } = props;
 
@@ -701,8 +645,7 @@ function StepResultCountsSummary(props: StepResultCountsSummaryProps) {
 
 type MatrixEntryBlockProps = {
     matrixRuntime: QcCheckStepMatrixRuntime;
-    // Non-`null` only when this entry's coordinate should be labeled (see `StepBlock`'s
-    // `showCoordinateLabels`).
+    // `null` when the entry shouldn't be labeled
     coordinate: QcCheckMatrixCoordinate | null;
     checkName: string;
     stepDefinition: QcCheckStepDefinition;
@@ -713,9 +656,7 @@ type MatrixEntryBlockProps = {
     onApplyTemplateClick: (template: Template) => void;
 };
 
-// One matrix coordinate's own realization matrix - its own results, its own skipped/loading state,
-// its own "Investigate" menu - since a step's `TMetrics` (and thus its `resultComponent`/
-// `templates`) is its own, and each coordinate independently produces one full set of it.
+// One matrix coordinate's realization grid and "Investigate" menu
 function MatrixEntryBlock(props: MatrixEntryBlockProps) {
     const {
         matrixRuntime,
@@ -737,8 +678,6 @@ function MatrixEntryBlock(props: MatrixEntryBlockProps) {
     const skipped = matrixRuntime.isSkipped();
     const results = matrixRuntime.getResults();
     const requestedRealizations = matrixRuntime.getRequestedRealizations();
-    // Shared by template resolution and `onApplyTemplateClick` - both need this coordinate's own
-    // realizations and results, not the step in the abstract.
     const templateContext = { realizations: requestedRealizations, results };
     const templates = !isRunning && hasRun && !skipped ? (stepDefinition.templates?.(templateContext) ?? []) : [];
 
@@ -802,8 +741,7 @@ type CheckParamsListProps = {
     params: unknown;
 };
 
-// Checks don't provide per-param display labels, so this renders whatever object shape a check's
-// `TParams` happens to be as a generic key/value list, humanizing the object keys.
+// Lists the params as key/value pairs
 function CheckParamsList(props: CheckParamsListProps) {
     const { params } = props;
 
@@ -835,8 +773,6 @@ function formatParamValue(value: unknown): string {
         return value;
     }
     if (Array.isArray(value)) {
-        // E.g. a multi-select param like the hydrostatic equilibrium check's `gridNames` - a
-        // comma-separated list reads far better than `JSON.stringify`'s `["A","B"]`.
         return value.length === 0 ? "Not set" : value.map(formatParamValue).join(", ");
     }
     if (typeof value === "object") {
@@ -851,8 +787,7 @@ type CheckSettingsProps = {
     onParamsChange: (params: unknown) => void;
 };
 
-// Renders a check's own `settingsComponent` against params staged by the parent - there's no
-// Apply step here, the parent commits them into the runtime (via `setParams`) when Run is clicked.
+// Renders the check's own settings component
 function CheckSettings(props: CheckSettingsProps) {
     const { checkRuntime, params, onParamsChange } = props;
 
@@ -899,43 +834,33 @@ type RealizationSquaresProps = {
     matrixRuntime: QcCheckStepMatrixRuntime;
     checkName: string;
     allRealizations: readonly number[];
-    // The realizations the check's run was started with - captured at run time, so changing the
-    // realization filter afterwards doesn't relabel this run's results.
+    // The realizations the check's run was started with
     runRealizations: readonly number[];
     results: ReadonlyMap<number, QcCheckRealizationResult<unknown>>;
     isRunning: boolean;
-    // This step's own carried-forward realizations for this matrix coordinate (see
-    // `QcCheckStepMatrixRuntime.getRequestedRealizations`) - a run realization missing from this
-    // set didn't fail *here*, it never made it past an earlier step, so it renders as "excluded"
-    // rather than "idle".
+    // The realizations this entry was asked to run
     requestedRealizations: readonly number[];
     hasRun: boolean;
     onRealizationClick: (realization: number) => void;
     selectedRealization: number | null;
 };
 
-// Realizations are grouped into rows of 5 with a row-start label, same layout as
-// `EnsembleRealizationFilter`'s `RealizationNumberDisplay` - only the shape (square, colored by QC
-// outcome) and the cell content (a pulsing skeleton while a result is pending) differ.
+// Realizations are shown in groups of 5, each with a label
 const REALIZATION_GROUP_SIZE = 5;
 const SQUARE_SIZE_PX = 12;
 const GAP_PX = 4;
 const LABEL_WIDTH_PX = 28;
 const LABEL_HEIGHT_PX = 16;
-// Stagger the pulse animation per square (like `Table`'s `PendingRows`) so a running batch reads as
-// a shimmer rather than every square pulsing in lockstep.
+// Staggers the loading animation between squares
 const LOADING_ANIMATION_STAGGER_COUNT = 5;
 const LOADING_ANIMATION_STAGGER_STEP_SECS = 0.15;
 
-// Pads a partial last group to a full group's width, so its row lines up with the others - one
-// square and one gap per missing realization, minus the gap the flex layout puts before the filler.
+// Width that pads a partial group to the width of a full one
 function makeGroupFillerWidthPx(missingCount: number): number {
     return missingCount * SQUARE_SIZE_PX + (missingCount - 1) * GAP_PX;
 }
 
-// One small square per realization, colored by outcome. Realizations that are part of the
-// currently running matrix coordinate but have not reported a result yet show a pulsing skeleton
-// square instead of a static one.
+// One square per realization, colored by outcome (pulsing while its result is pending)
 function RealizationSquares(props: RealizationSquaresProps) {
     const {
         matrixRuntime,
@@ -950,9 +875,7 @@ function RealizationSquares(props: RealizationSquaresProps) {
     } = props;
 
     const qcRealizationPopover = useQcRealizationPopover();
-    // Anchors the popover to the whole realization-squares grid for this matrix coordinate, rather
-    // than to an individual square or row - anchoring to a single row overlapped neighboring rows
-    // since they sit so close together.
+    // The popover is anchored to the whole grid, so it doesn't cover neighboring rows
     const containerRef = React.useRef<HTMLDivElement>(null);
 
     if (allRealizations.length === 0) {
@@ -975,12 +898,7 @@ function RealizationSquares(props: RealizationSquaresProps) {
         onRealizationClick(realization);
     }
 
-    // A realization not in `runRealizations` was excluded by the realization filter when this check
-    // run started, so it never has a result. A realization that *is* in the run but missing from
-    // `requestedRealizations` (this step's own carried-forward set, see
-    // `QcCheckStepMatrixRuntime.getRequestedRealizations`) wasn't filtered - it simply didn't survive
-    // an earlier step - so the two get visually distinct tones ("filteredAway" vs "excluded") even
-    // though neither has a result to show here.
+    // "filteredAway": not part of the run. "excluded": part of the run, but failed an earlier step.
     function makeSquareColor(realization: number): RealizationStatusTone {
         if (!runRealizationsSet.has(realization)) {
             return "filteredAway";

@@ -18,12 +18,8 @@ export type QcCheckDefinition<TParams = void> = {
         params: TParams;
         onParamsChange: (newParams: TParams) => void;
     }>;
-    // Run in sequence, never in parallel (see `QcCheckRuntime.run`) - each step sees its
-    // predecessor's per-realization results via `QcCheckStepRunContext.previousStepResults`, and
-    // only realizations the predecessor reported as successful are carried into the next step.
-    //
-    // Steps are registered with their own concrete `TMetrics`, hence `any` here - each step
-    // definition itself stays fully typed (see e.g. `HydrostaticEquilibriumGridPropertyCheckStep`).
+    // Run in sequence; only realizations that succeeded in a step are carried into the next.
+    // `any` since each step has its own metrics type.
     steps: QcCheckStepDefinition<any, TParams, any>[];
 };
 
@@ -49,23 +45,15 @@ export class QcCheckRuntime<TParams = unknown> implements PublishSubscribe<QcChe
     private _checkDefinition: QcCheckDefinition<TParams>;
     private _scopedQueryController: ScopedQueryController;
     private _stepRuntimes: QcCheckStepRuntime[];
-    // Cleanup scopes of the current run's step invocations that haven't finished yet - each removes
-    // itself once run, so `cancel()`/a superseding `run()` cleans up exactly what is still pending.
+    // Cleanup scopes of step invocations that haven't finished yet
     private _activeCleanupScopes: Set<QcCheckCleanupScope> = new Set();
     private _isRunning: boolean = false;
     private _requestedRealizations: readonly number[] = [];
-    // The last-applied params for this check, seeded from its default and only ever replaced
-    // wholesale via `setParams` - what a run without an explicit override uses. Shared by every
-    // step, since a check's steps are all facets of the same underlying check.
+    // Shared by every step
     private _params: TParams;
-    // `useSyncExternalStore` (via `usePublishSubscribeTopicValue`) requires `makeSnapshotGetter` to
-    // return a referentially stable value when nothing has changed - invalidated (set to `null`)
-    // only when the underlying state it represents actually changes.
+    // Cached so the snapshot stays referentially stable for `useSyncExternalStore`
     private _statusSnapshot: QcCheckRuntimeStatus | null = null;
-    // Incremented on every `run()`/`cancel()` call - a run that's since been superseded by a newer
-    // `run()`, or stopped by `cancel()`, is no longer current (see `isCurrent` in `run`): it stops
-    // advancing to further steps and coordinates, and its step invocations can no longer write into
-    // the matrix runtimes that a newer run reuses.
+    // Bumped on every run/cancel - a run whose generation is outdated stops and may no longer write results
     private _runGeneration: number = 0;
 
     constructor(
@@ -90,11 +78,7 @@ export class QcCheckRuntime<TParams = unknown> implements PublishSubscribe<QcChe
         return this._ensemble;
     }
 
-    /**
-     * Swaps in a rebuilt instance of the same ensemble (e.g. after the ensemble selection is applied), so
-     * names, colors and realizations stay current without discarding results. A running check picks it up
-     * from its next step on.
-     */
+    /** Swaps in a rebuilt instance of the same ensemble, keeping the results. */
     setEnsemble(ensemble: RegularEnsemble): void {
         this._ensemble = ensemble;
     }
@@ -151,16 +135,13 @@ export class QcCheckRuntime<TParams = unknown> implements PublishSubscribe<QcChe
     }
 
     private tidyUpFetchRelatedResources(): void {
-        // Cancel the ongoing fetch and clean up after every step invocation still pending
         this._scopedQueryController.cancelActiveFetch();
         for (const cleanupScope of Array.from(this._activeCleanupScopes)) {
             cleanupScope.run();
         }
     }
 
-    // Bound to the run that creates it. An invocation of a run that has since been cancelled or
-    // superseded gets a scope that has already run, so what it registers is cleaned up right away -
-    // it is never left for a newer run's cleanup, nor tracked alongside that run's own scopes.
+    // A scope for an outdated run is returned already run, so its callbacks are called right away
     private makeCleanupScope(generation: number): QcCheckCleanupScope {
         const cleanupScope = new QcCheckCleanupScope(() => this._activeCleanupScopes.delete(cleanupScope));
         if (generation !== this._runGeneration) {
@@ -177,51 +158,41 @@ export class QcCheckRuntime<TParams = unknown> implements PublishSubscribe<QcChe
         this._publishSubscribeDelegate.notifySubscribers(QcCheckRuntimeTopic.STATUS);
     }
 
-    /** Cancels the currently running check, if any - including any steps still to come. */
+    /** Cancels the currently running check, if any. */
     cancel(): void {
-        // Regardless of running, so nothing a step registered is left behind - e.g. when the session is destroyed
+        // Also when not running, so no cleanup is left behind (e.g. when the session is destroyed)
         this.tidyUpFetchRelatedResources();
         if (!this._isRunning) {
             return;
         }
         this._runGeneration++;
-        // The cancelled invocation is no longer current, so it won't mark its own matrix as stopped
         for (const stepRuntime of this._stepRuntimes) {
             stepRuntime.markStopped();
         }
         this.setIsRunning(false);
     }
 
+    /** Never rejects, so it can be started without awaiting it. */
     async run(realizations: readonly number[]): Promise<void> {
-        // Cancel a previous in-flight run (if any) before starting a new one.
+        // Cancel a previous run, if any
         this.tidyUpFetchRelatedResources();
 
         this._runGeneration++;
         const generation = this._runGeneration;
 
         const createCleanupScope = () => this.makeCleanupScope(generation);
-        // False once this run is cancelled or superseded by a newer `run()`
+        // False once this run is cancelled or superseded
         const isCurrent = () => generation === this._runGeneration;
 
         this._requestedRealizations = realizations;
         this.setIsRunning(true);
 
         try {
-            // Clear results/progress left over from a previous run for every step (not just the ones
-            // this run will reach), so a step further down the sequence doesn't keep showing stale
-            // results from a previous run that got further than this one does. Also reconciles each
-            // step's matrix-coordinate entries against the current params (see
-            // `QcCheckStepRuntime.reset`).
+            // Reset every step, so no step shows results from a previous run
             for (const stepRuntime of this._stepRuntimes) {
                 stepRuntime.reset(this._params);
             }
 
-            // Only a realization a step reported as a success (for a given matrix coordinate) is
-            // carried into the next step for that same coordinate - a realization that errored out
-            // (or was never reached because every realization ahead of it already failed) doesn't
-            // get a further chance to succeed downstream. All of that bookkeeping - including
-            // per-matrix-coordinate carry-forward - lives on `QcCheckStepRuntime` itself; this loop
-            // just hands each step its predecessor and lets it figure out the rest.
             let previousStepRuntime: QcCheckStepRuntime | null = null;
 
             for (const stepRuntime of this._stepRuntimes) {
@@ -246,13 +217,10 @@ export class QcCheckRuntime<TParams = unknown> implements PublishSubscribe<QcChe
                 previousStepRuntime = stepRuntime;
             }
         } catch (error) {
-            // Errors thrown by a step become exception results (see `QcCheckStepMatrixRuntime.run`) -
-            // this only catches anything else, e.g. a step's `matrixCoordinates` throwing. Logged
-            // rather than rethrown, since runs are started without being awaited.
+            // Errors thrown inside steps are already reported as exception results
             console.error(`QC check "${this._checkDefinition.name}" failed:`, error);
         } finally {
-            // A stale/cancelled run's `cancel()` (or the newer `run()` that superseded it) has
-            // already flipped `isRunning` off - don't flip a newer run's own state back off here.
+            // An outdated run must not change the state of the newer one
             if (isCurrent()) {
                 this.setIsRunning(false);
             }
