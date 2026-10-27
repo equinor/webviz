@@ -153,9 +153,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     return (
         <ErrorBoundary moduleInstance={props.moduleInstance}>
             <div className="relative h-full w-full">
-                <div className="absolute top-0 right-0 left-0 z-10">
-                    <ActionRequiredOverlayBar workbench={props.workbench} moduleInstance={props.moduleInstance} />
-                </div>
+                <ActionRequiredOverlayBar workbench={props.workbench} moduleInstance={props.moduleInstance} />
                 <div className="px-2xs py-2xs h-full w-full">
                     <DebugProfiler
                         id={`${props.moduleInstance.getId()}-view`}

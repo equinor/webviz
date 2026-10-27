@@ -278,9 +278,10 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     if (showActionRequiredFallback) {
         return (
             <ContentActionRequired>
-                {props.visualizationAssemblerProduct.aggregatedActionRequiredMessages
-                    .map((message) => (typeof message === "string" ? message : message.message))
-                    .join(", ")}
+                {makeInvalidSettingsSummary(
+                    props.visualizationAssemblerProduct.aggregatedActionRequiredMessages.length,
+                    props.visualizationAssemblerProduct.numDataProviders,
+                )}
             </ContentActionRequired>
         );
     }
@@ -306,4 +307,15 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
             />
         </DpfSubsurfaceViewerContext.Provider>
     );
+}
+
+// The details per layer are reported to the status writer - the content only summarizes them to stay short
+function makeInvalidSettingsSummary(numInvalid: number, numTotal: number): string {
+    if (numTotal <= 1) {
+        return "The layer has invalid settings.";
+    }
+    if (numInvalid >= numTotal) {
+        return "All layers have invalid settings.";
+    }
+    return `${numInvalid} of ${numTotal} layers have invalid settings.`;
 }

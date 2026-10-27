@@ -45,7 +45,7 @@ export function ActionRequiredOverlayBar(props: ActionRequiredOverlayBarProps): 
     }
 
     return (
-        <div className="px-xs gap-4xs bg-danger-surface border-danger-strong shadow-elevation-raised py-4xs text-body-lg flex items-center justify-between border-t border-b select-none">
+        <div className="px-xs gap-4xs bg-danger/60 shadow-elevation-raised border-b-danger-subtle z-overlay py-4xs text-body-lg absolute flex w-full items-center justify-between border-b backdrop-blur-xs select-none">
             <div className="gap-x-2xs flex items-center">
                 <Block fontSize="inherit" color="error" />
                 <Typography as="span" size="sm" weight="bolder">
