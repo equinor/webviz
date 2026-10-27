@@ -73,8 +73,11 @@ export class ScopedQueryController {
 
             // Refetch, and settle with the outcome of that fetch
             const refetchAndSettle = () => {
-                observer
-                    .refetch(refetchArgs)
+                const refetchPromise = observer.refetch(refetchArgs);
+                // Subscribed while the refetch is pending, so cleanup can cancel the request. Subscribing after
+                // starting the refetch joins it instead of starting another one.
+                entry.unsubscribe = observer.subscribe(() => {});
+                refetchPromise
                     .then((result) => {
                         if (result.isError && result.error) {
                             finish(() => reject(result.error as TError));

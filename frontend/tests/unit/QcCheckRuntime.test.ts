@@ -656,4 +656,43 @@ describe("QcCheckRuntime tests", () => {
         expect(outcomes).toEqual(["Backend unavailable", "ok"]);
         expect(attempts).toBe(2);
     });
+
+    test("should cancel the retried request when a re-run after a failed request is cancelled", async () => {
+        const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        let attempts = 0;
+        let retryAborted = false;
+        const checkRuntime = makeCheckRuntime([
+            {
+                name: "Fetching step",
+                async run(context) {
+                    await context.fetchQuery({
+                        queryKey: ["flaky-key"],
+                        queryFn: ({ signal }) => {
+                            attempts++;
+                            if (attempts === 1) {
+                                return Promise.reject(new Error("Backend unavailable"));
+                            }
+                            // Never settles on its own - only an abort ends it
+                            return new Promise<string>((_, reject) => {
+                                signal.addEventListener("abort", () => {
+                                    retryAborted = true;
+                                    reject(new Error("Aborted"));
+                                });
+                            });
+                        },
+                        retry: false,
+                    });
+                },
+            },
+        ]);
+
+        await checkRuntime.run([0]);
+        const retryRun = checkRuntime.run([0]);
+        await vi.waitFor(() => expect(attempts).toBe(2));
+        checkRuntime.cancel();
+        await retryRun;
+
+        expect(retryAborted).toBe(true);
+        consoleErrorSpy.mockRestore();
+    });
 });

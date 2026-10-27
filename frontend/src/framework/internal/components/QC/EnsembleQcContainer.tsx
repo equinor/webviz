@@ -17,7 +17,7 @@ import {
     Troubleshoot,
     Warning,
 } from "@mui/icons-material";
-import { startCase } from "lodash-es";
+import { isEqual, startCase } from "lodash-es";
 
 import { EnsembleColorTile } from "@framework/components/EnsembleColorTile";
 import type { EnsembleQc } from "@framework/internal/QC/EnsembleQc";
@@ -97,7 +97,7 @@ function useHasAnyStepRun(stepRuntimes: QcCheckStepRuntime[]): boolean {
 type OutcomeTone = "success" | "warning" | "danger";
 
 // A check's overall outcome: green if every realization succeeded in all of the last step's
-// entries, red if none did, yellow for a mix. `null` until the last step has run.
+// entries, red if none did, yellow for a mix. `null` until every entry of the last step has run.
 function useCheckOutcomeTone(checkRuntime: QcCheckRuntime, stepRuntimes: QcCheckStepRuntime[]): OutcomeTone | null {
     return React.useSyncExternalStore(
         (onStoreChange) => subscribeToAllStepEntries(stepRuntimes, onStoreChange),
@@ -108,7 +108,8 @@ function useCheckOutcomeTone(checkRuntime: QcCheckRuntime, stepRuntimes: QcCheck
                 return null;
             }
             const entries = lastStepRuntime.getEntries();
-            if (!entries.some((entry) => entry.runtime.hasRun())) {
+            const allEntriesRan = entries.length > 0 && entries.every((entry) => entry.runtime.hasRun());
+            if (!allEntriesRan) {
                 return null;
             }
 
@@ -426,6 +427,8 @@ function computeMatrixEntriesStatus(
 ): MatrixEntriesAggregateStatus {
     const isRunning = entries.some((entry) => entry.runtime.isRunning());
     const hasRun = entries.some((entry) => entry.runtime.hasRun());
+    // A run cancelled before reaching every coordinate must not look complete
+    const allEntriesRan = entries.length > 0 && entries.every((entry) => entry.runtime.hasRun());
     const skipped = entries.length > 0 && entries.every((entry) => entry.runtime.isSkipped());
 
     let successCount = 0;
@@ -446,53 +449,43 @@ function computeMatrixEntriesStatus(
         notRunCount += Math.max(allRealizations.length - results.size, 0);
     }
 
-    const outcomeTone = hasRun && !isRunning && !skipped ? outcomeToneFromEntries(entries) : null;
+    const outcomeTone = allEntriesRan && !isRunning && !skipped ? outcomeToneFromEntries(entries) : null;
     return { isRunning, hasRun, skipped, outcomeTone, successCount, failureCount, exceptionCount, notRunCount };
 }
 
-// Combines a step's entries into one status. Cached so the snapshot stays referentially stable.
+// Combines a step's entries into one status. Computed on every read, so a change between render and
+// subscribing isn't missed - the previous object is reused while its values are unchanged, to keep
+// the snapshot referentially stable.
 function useMatrixEntriesStatus(
     entries: QcCheckStepMatrixEntry[],
     allRealizations: readonly number[],
 ): MatrixEntriesAggregateStatus {
-    const cacheRef = React.useRef<{
-        entries: QcCheckStepMatrixEntry[];
-        allRealizations: readonly number[];
-        status: MatrixEntriesAggregateStatus;
-    } | null>(null);
+    const lastStatusRef = React.useRef<MatrixEntriesAggregateStatus | null>(null);
 
-    return React.useSyncExternalStore(
-        (onStoreChange) => {
-            const unsubscribeFuncs = entries.flatMap((entry) => {
-                const delegate = entry.runtime.getPublishSubscribeDelegate();
-                const invalidateAndNotify = () => {
-                    cacheRef.current = null;
-                    onStoreChange();
-                };
-                return [
-                    delegate.subscribe(QcCheckStepTopic.STATUS, invalidateAndNotify),
-                    delegate.subscribe(QcCheckStepTopic.RESULTS, invalidateAndNotify),
-                ];
-            });
-            return () => {
-                unsubscribeFuncs.forEach((unsubscribe) => unsubscribe());
-            };
-        },
-        () => {
-            if (
-                !cacheRef.current ||
-                cacheRef.current.entries !== entries ||
-                cacheRef.current.allRealizations !== allRealizations
-            ) {
-                cacheRef.current = {
-                    entries,
-                    allRealizations,
-                    status: computeMatrixEntriesStatus(entries, allRealizations),
-                };
-            }
-            return cacheRef.current.status;
-        },
-    );
+    function subscribe(onStoreChange: () => void): () => void {
+        const unsubscribeFuncs = entries.flatMap((entry) => {
+            const delegate = entry.runtime.getPublishSubscribeDelegate();
+            return [
+                delegate.subscribe(QcCheckStepTopic.STATUS, onStoreChange),
+                delegate.subscribe(QcCheckStepTopic.RESULTS, onStoreChange),
+            ];
+        });
+        return () => {
+            unsubscribeFuncs.forEach((unsubscribe) => unsubscribe());
+        };
+    }
+
+    function getSnapshot(): MatrixEntriesAggregateStatus {
+        const status = computeMatrixEntriesStatus(entries, allRealizations);
+        const lastStatus = lastStatusRef.current;
+        if (lastStatus && isEqual(lastStatus, status)) {
+            return lastStatus;
+        }
+        lastStatusRef.current = status;
+        return status;
+    }
+
+    return React.useSyncExternalStore(subscribe, getSnapshot);
 }
 
 type StepBlockProps = {
