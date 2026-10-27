@@ -80,6 +80,12 @@ class HydrostaticEquilibriumCheck:
         checked_vector_names = logic.select_available_property_names(
             logic.HYDROSTATIC_CUMULATIVE_VECTORS, available_vector_names
         )
+        if not checked_vector_names:
+            raise NoDataError(
+                f"None of the hydrostatic cumulative vectors {logic.HYDROSTATIC_CUMULATIVE_VECTORS} "
+                f"are available in ensemble '{self._ensemble_name}'",
+                Service.SUMO,
+            )
 
         t1_timestamp_utc_ms = await self._find_summary_timestamp_for_iso_async(time_steps.t1_iso)
 

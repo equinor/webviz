@@ -4,6 +4,7 @@ This module deliberately contains no I/O code so the numerical and decision logi
 tested in isolation. Data fetching/orchestration lives in HydrostaticEquilibriumCheck.
 """
 
+import math
 from datetime import datetime
 from typing import List, Sequence
 
@@ -65,6 +66,9 @@ def resolve_initial_time_steps(available_iso_timestamps: Sequence[str]) -> he_ty
 def evaluate_vector_value(vector_name: str, value_at_t1: float | None) -> he_types.VectorCheckValue:
     """Decide whether a single cumulative vector value qualifies as zero at t1."""
 
+    if value_at_t1 is not None and not math.isfinite(value_at_t1):
+        value_at_t1 = None
+
     is_zero = value_at_t1 is not None and abs(value_at_t1) <= ZERO_VECTOR_TOLERANCE
     return he_types.VectorCheckValue(vector_name=vector_name, value_at_t1=value_at_t1, is_zero=is_zero)
 
@@ -95,8 +99,15 @@ def compute_grid_property_change(
     if values_t0.shape != values_t1.shape:
         raise ValueError(f"Mismatched cell counts for property '{property_name}' between t0 and t1")
 
+    if values_t0.size == 0:
+        raise ValueError(f"No active cells for property '{property_name}'")
+
+    # NaN/Inf would otherwise propagate into max_*_change and fail JSON serialization.
+    if not (np.isfinite(values_t0).all() and np.isfinite(values_t1).all()):
+        raise ValueError(f"Non-finite values in property '{property_name}'")
+
     abs_change = np.abs(values_t1 - values_t0)
-    max_abs_change = float(np.max(abs_change)) if abs_change.size > 0 else 0.0
+    max_abs_change = float(np.max(abs_change))
 
     if property_name in SATURATION_GRID_PROPERTIES:
         # The saturation scale is 1 (full [0, 1] range), so the relative change is the absolute change.
@@ -104,7 +115,7 @@ def compute_grid_property_change(
     else:
         denom = np.maximum(np.abs(values_t0), RELATIVE_CHANGE_DENOMINATOR_FLOOR)
         rel_change = abs_change / denom
-    max_rel_change = float(np.max(rel_change)) if rel_change.size > 0 else 0.0
+    max_rel_change = float(np.max(rel_change))
 
     return he_types.GridPropertyCheckValue(
         property_name=property_name,

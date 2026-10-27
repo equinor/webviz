@@ -43,6 +43,12 @@ def test_evaluate_vector_value_missing() -> None:
     assert value.value_at_t1 is None
 
 
+def test_evaluate_vector_value_non_finite_treated_as_missing() -> None:
+    value = he.evaluate_vector_value("FOPT", float("nan"))
+    assert value.value_at_t1 is None
+    assert value.is_zero is False
+
+
 def _ones(values: np.ndarray) -> np.ndarray:
     return np.ones(values.size, dtype=bool)
 
@@ -68,6 +74,19 @@ def test_compute_grid_property_change_mismatched_shapes() -> None:
         he.compute_grid_property_change(
             "PRESSURE", np.array([1.0, 2.0]), np.array([1.0]), np.ones(2, dtype=bool), np.ones(2, dtype=bool)
         )
+
+
+def test_compute_grid_property_change_empty_arrays_raise() -> None:
+    empty = np.array([], dtype=float)
+    with pytest.raises(ValueError, match="No active cells"):
+        he.compute_grid_property_change("PRESSURE", empty, empty, np.ones(0, dtype=bool), np.ones(0, dtype=bool))
+
+
+def test_compute_grid_property_change_non_finite_raises() -> None:
+    values_t0 = np.array([100.0, 200.0])
+    values_t1 = np.array([100.0, np.nan])
+    with pytest.raises(ValueError, match="Non-finite values"):
+        he.compute_grid_property_change("PRESSURE", values_t0, values_t1, _ones(values_t0), _ones(values_t1))
 
 
 def test_compute_grid_property_change_mismatched_active_masks() -> None:

@@ -108,6 +108,12 @@ async def test_vector_check_reports_realization_missing_at_t1() -> None:
     assert result.realization_results[2].vector_values[1].is_zero is True
 
 
+async def test_vector_check_raises_when_no_hydrostatic_vector_available() -> None:
+    summary_access = _FakeSummaryAccess(vector_names=["WOPT", "YEARS"], values_at_t1={})
+    with pytest.raises(NoDataError):
+        await _make_check(summary_access).compute_vector_check_async(T0_ISO, T1_ISO)
+
+
 async def test_vector_check_explicit_realizations_includes_realization_without_data() -> None:
     summary_access = _FakeSummaryAccess(
         vector_names=["FOPT", "FGPT"],
