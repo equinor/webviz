@@ -545,4 +545,81 @@ describe("QcCheckRuntime tests", () => {
         expect(stepRuntime.getEntries()[0].runtime).toBe(runtimeBefore);
         expect(onCoordinatesChange).toHaveBeenCalled();
     });
+
+    test("should give each invocation its own copy of the realizations", async () => {
+        const received: number[][] = [];
+        const checkRuntime = makeCheckRuntime([
+            {
+                name: "Mutating step",
+                matrixCoordinates: () => [
+                    { key: "a", label: "A" },
+                    { key: "b", label: "B" },
+                ],
+                async run(context) {
+                    received.push([...context.realizations]);
+                    context.realizations.splice(0);
+                },
+            },
+        ]);
+        const realizations = [0, 1, 2];
+
+        await checkRuntime.run(realizations);
+
+        expect(received).toEqual([
+            [0, 1, 2],
+            [0, 1, 2],
+        ]);
+        expect(realizations).toEqual([0, 1, 2]);
+        expect(checkRuntime.getRequestedRealizations()).toEqual([0, 1, 2]);
+    });
+
+    test("should keep the params and ensemble a run was started with", async () => {
+        let finishFirstStep = () => {};
+        const received: { params: { threshold: number }; ensemble: RegularEnsemble }[] = [];
+        const checkDefinition: QcCheckDefinition<{ threshold: number }> = {
+            name: "Test check",
+            defaultParams: { threshold: 1 },
+            steps: [
+                {
+                    name: "Step 1",
+                    async run(context) {
+                        await new Promise<void>((resolve) => (finishFirstStep = resolve));
+                        for (const realization of context.realizations) {
+                            context.reportRealizationResult(realization, { kind: "success", metrics: undefined });
+                        }
+                    },
+                },
+                {
+                    name: "Step 2",
+                    async run(context) {
+                        received.push({ params: context.params, ensemble: context.ensemble });
+                    },
+                },
+            ],
+        };
+        const checkRuntime = new QcCheckRuntime("test-check", checkDefinition, ENSEMBLE, queryClient);
+        const rebuiltEnsemble = new RegularEnsemble(
+            "DROGON",
+            ["DROGON"],
+            "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
+            "case",
+            "ens1",
+            "sc",
+            [0, 1, 2],
+            [],
+            null,
+            null,
+            "",
+        );
+
+        const run = checkRuntime.run([0, 1]);
+        checkRuntime.setParams({ threshold: 2 });
+        checkRuntime.setEnsemble(rebuiltEnsemble);
+        finishFirstStep();
+        await run;
+
+        expect(received).toHaveLength(1);
+        expect(received[0].params).toEqual({ threshold: 1 });
+        expect(received[0].ensemble).toBe(ENSEMBLE);
+    });
 });

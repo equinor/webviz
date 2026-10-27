@@ -184,6 +184,10 @@ export class QcCheckRuntime<TParams = unknown> implements PublishSubscribe<QcChe
         // False once this run is cancelled or superseded
         const isCurrent = () => generation === this._runGeneration;
 
+        // Captured once, so changing params or reapplying ensembles mid-run doesn't change later steps' inputs
+        const params = this._params;
+        const ensemble = this._ensemble;
+
         this._requestedRealizations = realizations;
         this.setIsRunning(true);
 
@@ -194,7 +198,7 @@ export class QcCheckRuntime<TParams = unknown> implements PublishSubscribe<QcChe
                 stepRuntime.clearResults();
             }
             for (const stepRuntime of this._stepRuntimes) {
-                stepRuntime.updateCoordinates(this._params);
+                stepRuntime.updateCoordinates(params);
             }
 
             let previousStepRuntime: QcCheckStepRuntime | null = null;
@@ -207,8 +211,8 @@ export class QcCheckRuntime<TParams = unknown> implements PublishSubscribe<QcChe
                 await stepRuntime.run({
                     checkRealizations: realizations,
                     previousStepRuntime,
-                    params: this._params,
-                    ensemble: this._ensemble,
+                    params,
+                    ensemble,
                     fetchQuery: this._scopedQueryController.fetchQuery.bind(this._scopedQueryController),
                     createCleanupScope,
                     isCurrent,

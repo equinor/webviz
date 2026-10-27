@@ -247,7 +247,8 @@ export class QcCheckStepMatrixRuntime<
 
         const context: QcCheckStepRunContext<TMetrics, TParams, TPreviousMetrics> = {
             ensemble,
-            realizations: realizations as number[],
+            // Its own copy, so a step changing it doesn't affect the ensemble or other invocations
+            realizations: [...realizations],
             params,
             matrixCoordinate,
             fetchQuery: guardedFetchQuery,
