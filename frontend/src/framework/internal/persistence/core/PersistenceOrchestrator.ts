@@ -51,11 +51,13 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
 
     private _refreshStateDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private _runningRefreshCount = 0;
+    private _refreshQueue: Promise<void> = Promise.resolve();
     private _pollingInterval: ReturnType<typeof setInterval> | null = null;
     private _saveInProgress: boolean = false;
     private _destroyed: boolean = false;
     private _isStarted: boolean = false;
     private _isInitializing: boolean = false;
+    private _isLocalBackupSuspended: boolean = false;
 
     constructor(workbench: Workbench, session: PrivateWorkbenchSession) {
         this._workbench = workbench;
@@ -134,7 +136,7 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         this._tracker.reset();
         if (!options?.keepLocalBackup) {
             this._localBackup.remove();
-        } else if (hasPendingRefresh) {
+        } else if (hasPendingRefresh && !this._isLocalBackupSuspended) {
             this._localBackup.persist();
         }
         this._destroyed = true;
@@ -180,6 +182,11 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
 
             this._tracker.markPersisted(savedContentHash, payload);
             this._localBackup.remove(sessionIdBeforeSave);
+            // Edits made while saving may not have been refreshed yet
+            await this.refreshState();
+            if (this._destroyed) {
+                return result;
+            }
             // Edits made while saving are still unsaved - backed up again, under the id the save may have assigned
             if (this._tracker.hasChanges()) {
                 this._localBackup.persist();
@@ -237,6 +244,23 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
         return this._tracker.hasChanges();
     }
 
+    /**
+     * Runs `apply` without writing the local backup, as the session holds only part of its new state until
+     * `apply` completes. The backup is not refreshed if `apply` fails, so the original is kept.
+     */
+    async withLocalBackupSuspended(apply: () => Promise<void>): Promise<void> {
+        this._isLocalBackupSuspended = true;
+        try {
+            await apply();
+        } finally {
+            this._isLocalBackupSuspended = false;
+        }
+
+        if (!this._destroyed) {
+            await this.refreshState();
+        }
+    }
+
     private subscribeToSessionChanges() {
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "session-change",
@@ -268,19 +292,29 @@ export class PersistenceOrchestrator implements PublishSubscribe<PersistenceOrch
 
     // Every refresh goes through here - one that picks up a change without backing it up would keep the next
     // refresh from seeing that change, and so from backing it up too
-    private async refreshState(): Promise<void> {
+    // Queued, so a refresh of an older state can't finish last and overwrite a newer state's hash
+    private refreshState(): Promise<void> {
         this._runningRefreshCount++;
-        try {
-            const changed = await this._tracker.refresh();
+        const refresh = this._refreshQueue
+            .then(() => this.runRefresh())
+            .finally(() => {
+                this._runningRefreshCount--;
+            });
+        this._refreshQueue = refresh.catch(() => {});
+        return refresh;
+    }
 
-            // Stopped meanwhile - stop() wrote the backup instead, as the session may already be torn down
-            if (this._destroyed || !changed) return;
+    private async runRefresh(): Promise<void> {
+        // Picked up once the suspension ends instead
+        if (this._destroyed || this._isLocalBackupSuspended) return;
 
-            this._localBackup.persist();
-            this.notifyPersistenceInfoChanged();
-        } finally {
-            this._runningRefreshCount--;
-        }
+        const changed = await this._tracker.refresh();
+
+        // Stopped meanwhile - stop() wrote the backup instead, as the session may already be torn down
+        if (this._destroyed || this._isLocalBackupSuspended || !changed) return;
+
+        this._localBackup.persist();
+        this.notifyPersistenceInfoChanged();
     }
 
     private startBackendPolling() {

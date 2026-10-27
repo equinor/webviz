@@ -104,6 +104,8 @@ describe("WorkbenchSessionManager", () => {
 
         session.addDashboard();
         vi.advanceTimersByTime(AUTO_SAVE_DEBOUNCE_MS);
+        // Refreshes are queued - started on the next microtask
+        await Promise.resolve();
         expect(stateRefreshes.refresh).toHaveBeenCalledOnce();
         manager.beforeDestroy();
         await stateRefreshes.settled();
@@ -158,6 +160,20 @@ describe("WorkbenchSessionManager", () => {
         expect(persistence.hasChanges()).toBe(true);
         // Now stored under the id the save assigned, so the backup is recovered along with the saved session
         expect(loadWorkbenchSessionFromLocalStorage(null)).toBeNull();
+        expect(loadWorkbenchSessionFromLocalStorage(SAVED_SESSION_ID)?.content.dashboards).toHaveLength(2);
+    });
+
+    test("keeps edits made while saving as unsaved before their backup refresh ran", async () => {
+        const { session, persistence } = await startNewSession();
+        const backendSave = holdBackendSave();
+
+        const saving = persistence.persistNow();
+        await backendSave.sent;
+        session.addDashboard();
+        backendSave.finish();
+        await saving;
+
+        expect(persistence.hasChanges()).toBe(true);
         expect(loadWorkbenchSessionFromLocalStorage(SAVED_SESSION_ID)?.content.dashboards).toHaveLength(2);
     });
 

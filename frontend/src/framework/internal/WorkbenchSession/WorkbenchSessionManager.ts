@@ -385,8 +385,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 }
 
                 // Apply local storage changes on top
-                this._activeSession.setMetadata(localStorageSessionData.metadata);
-                await this._activeSession.deserializeContentState(localStorageSessionData.content);
+                await this.applyLocalBackup(session, localStorageSessionData);
 
                 // Unloaded while deserializing
                 if (this._activeSession !== session) {
@@ -754,6 +753,22 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         return session.isSnapshot() === (location.kind === "snapshot") && session.getId() === locationId;
     }
 
+    private async applyLocalBackup(
+        session: PrivateWorkbenchSession,
+        localStorageSessionData: WorkbenchSessionDataContainer,
+    ): Promise<void> {
+        const apply = async () => {
+            session.setMetadata(localStorageSessionData.metadata);
+            await session.deserializeContentState(localStorageSessionData.content);
+        };
+
+        if (!this._persistenceOrchestrator) {
+            await apply();
+            return;
+        }
+        await this._persistenceOrchestrator.withLocalBackupSuspended(apply);
+    }
+
     private resetGuiStates(): void {
         this._guiMessageBroker.setState(GuiState.NumberOfEffectiveRealizationFilters, 0);
         this._guiMessageBroker.setState(GuiState.NumberOfUnsavedRealizationFilters, 0);
@@ -1011,8 +1026,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 );
             }
 
-            session.setMetadata(sessionData.metadata);
-            await session.deserializeContentState(sessionData.content);
+            await this.applyLocalBackup(session, sessionData);
 
             // Unloaded while deserializing
             if (this._activeSession !== session) {
