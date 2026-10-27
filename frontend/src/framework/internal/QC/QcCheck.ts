@@ -188,6 +188,10 @@ export class QcCheckRuntime<TParams = unknown> implements PublishSubscribe<QcChe
         const params = this._params;
         const ensemble = this._ensemble;
 
+        // A run asks for fresh results, so an error cached from an earlier run is refetched
+        const fetchQuery: ScopedQueryController["fetchQuery"] = (fetchOptions) =>
+            this._scopedQueryController.fetchQuery({ ...fetchOptions, refetchOnError: true });
+
         this._requestedRealizations = realizations;
         this.setIsRunning(true);
 
@@ -213,7 +217,7 @@ export class QcCheckRuntime<TParams = unknown> implements PublishSubscribe<QcChe
                     previousStepRuntime,
                     params,
                     ensemble,
-                    fetchQuery: this._scopedQueryController.fetchQuery.bind(this._scopedQueryController),
+                    fetchQuery,
                     createCleanupScope,
                     isCurrent,
                 });

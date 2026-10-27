@@ -37,14 +37,16 @@ export class ScopedQueryController {
     /**
      * One-at-a-time per key. Fresh-by-default.
      * If you want stale-while-revalidate, pass { staleWhileRevalidate: true }.
+     * To refetch instead of rejecting with an error cached from an earlier fetch, pass { refetchOnError: true }.
      */
     async fetchQuery<TQueryFnData, TError = unknown, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
         options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey> & {
             staleWhileRevalidate?: boolean;
+            refetchOnError?: boolean;
             refetchArgs?: RefetchArgs;
         },
     ): Promise<TData> {
-        const { staleWhileRevalidate = false, refetchArgs, ...observerOpts } = options;
+        const { staleWhileRevalidate = false, refetchOnError = false, refetchArgs, ...observerOpts } = options;
         const keyHash = hashKey(observerOpts.queryKey as QueryKey);
 
         this.cleanupEntry(keyHash, true);
@@ -69,10 +71,28 @@ export class ScopedQueryController {
                 }
             };
 
+            // Refetch, and settle with the outcome of that fetch
+            const refetchAndSettle = () => {
+                observer
+                    .refetch(refetchArgs)
+                    .then((result) => {
+                        if (result.isError && result.error) {
+                            finish(() => reject(result.error as TError));
+                        } else {
+                            finish(() => resolve(result.data as TData));
+                        }
+                    })
+                    .catch((err) => finish(() => reject(err as TError)));
+            };
+
             const initial = observer.getCurrentResult();
 
-            // Immediate error from cache
+            // Error from cache
             if (initial.isError && initial.error) {
+                if (refetchOnError) {
+                    refetchAndSettle();
+                    return;
+                }
                 finish(() => reject(initial.error as TError));
                 return;
             }
@@ -95,16 +115,7 @@ export class ScopedQueryController {
                 }
 
                 // Stale and we want fresh -> wait for refetch
-                observer
-                    .refetch(refetchArgs)
-                    .then((result) => {
-                        if (result.isError && result.error) {
-                            finish(() => reject(result.error as TError));
-                        } else {
-                            finish(() => resolve(result.data as TData));
-                        }
-                    })
-                    .catch((err) => finish(() => reject(err as TError)));
+                refetchAndSettle();
                 return;
             }
 

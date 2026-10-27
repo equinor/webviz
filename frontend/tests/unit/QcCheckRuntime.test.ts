@@ -622,4 +622,38 @@ describe("QcCheckRuntime tests", () => {
         expect(received[0].params).toEqual({ threshold: 1 });
         expect(received[0].ensemble).toBe(ENSEMBLE);
     });
+
+    test("should retry a failed request on re-run instead of reusing its cached error", async () => {
+        let attempts = 0;
+        const outcomes: string[] = [];
+        const checkRuntime = makeCheckRuntime([
+            {
+                name: "Fetching step",
+                async run(context) {
+                    try {
+                        const value = await context.fetchQuery({
+                            queryKey: ["flaky-key"],
+                            queryFn: async () => {
+                                attempts++;
+                                if (attempts === 1) {
+                                    throw new Error("Backend unavailable");
+                                }
+                                return "ok";
+                            },
+                            retry: false,
+                        });
+                        outcomes.push(value);
+                    } catch (error) {
+                        outcomes.push(error instanceof Error ? error.message : String(error));
+                    }
+                },
+            },
+        ]);
+
+        await checkRuntime.run([0]);
+        await checkRuntime.run([0]);
+
+        expect(outcomes).toEqual(["Backend unavailable", "ok"]);
+        expect(attempts).toBe(2);
+    });
 });
