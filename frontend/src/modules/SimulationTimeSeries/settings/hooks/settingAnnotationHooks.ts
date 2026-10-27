@@ -7,7 +7,7 @@ import { makeResampleFrequencyWarningString } from "@modules/SimulationTimeSerie
 import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 
 import { resampleFrequencyAtom, visualizationModeAtom } from "../atoms/baseAtoms";
-import { ensembleVectorListsHelperAtom, isVectorListQueriesFetchingAtom } from "../atoms/derivedAtoms";
+import { isVectorListQueriesFetchingAtom } from "../atoms/derivedAtoms";
 import { selectedEnsembleIdentsAtom, selectedParameterIdentStringAtom } from "../atoms/persistableFixableAtoms";
 import { vectorListQueriesAtom } from "../atoms/queryAtoms";
 
@@ -86,27 +86,24 @@ export function useVectorListQueriesFieldStatus(ensembleSet: EnsembleSet): {
 }
 
 /**
- * Hook to get an annotation for vectors not available in any of the selected ensembles
+ * Hook to get an annotation for vector tags that match nothing in the VectorSelector's data
+ *
+ * Does not validate the tags itself: `invalidVectorTags` must already be the tags the VectorSelector reports as
+ * invalid (`isValid === false` in its selection). Wildcard tags (e.g. WOPR:*) are thereby judged by what they expand
+ * to rather than by literal vector names. The hook only maps them to an annotation, which is skipped when no
+ * ensembles are selected.
  */
-export function useInvalidVectorsAnnotation(selectedVectorTags: string[]): SettingAnnotation[] {
+export function useInvalidVectorsAnnotation(invalidVectorTags: string[]): SettingAnnotation[] {
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value ?? [];
-    const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
 
-    const isValidVector = (vector: string): boolean =>
-        selectedEnsembleIdents.length === 0 ||
-        selectedEnsembleIdents.some((ensembleIdent) =>
-            ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector),
-        );
-
-    const invalidVectors = selectedVectorTags.filter((vector) => !isValidVector(vector));
-    if (invalidVectors.length === 0) {
+    if (selectedEnsembleIdents.length === 0 || invalidVectorTags.length === 0) {
         return [];
     }
 
     return [
         {
             type: "error",
-            message: `Invalid vector${invalidVectors.length > 1 ? "s" : ""}`,
+            message: `Invalid vector${invalidVectorTags.length > 1 ? "s" : ""}`,
         },
     ];
 }

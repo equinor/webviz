@@ -92,6 +92,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const [statisticsSelection, setStatisticsSelection] = useAtom(statisticsSelectionAtom);
     const [selectedVectorTags, setSelectedVectorTags] = useAtom(selectedVectorTagsAtom);
     const [selectedVectorNames, setSelectedVectorNames] = useAtom(selectedVectorNamesAtom);
+    const [invalidVectorTags, setInvalidVectorTags] = React.useState<string[]>([]);
     const vectorSelectorData = useAtomValue(vectorSelectorDataAtom);
     const customVectorDefinitions = useAtomValue(customVectorDefinitionsAtom);
     const statisticsType = useAtomValue(statisticsTypeAtom);
@@ -152,6 +153,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     }
 
     function handleVectorSelectionChange(selection: SmartNodeSelectorSelection) {
+        setInvalidVectorTags(selection.selectedTags.filter((tag) => !tag.isValid).map((tag) => tag.text));
         setSelectedVectorNames(selection.selectedNodes);
         setSelectedVectorTags(selection.selectedTags.map((tag) => tag.text));
     }
@@ -267,9 +269,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
 
     const selectedEnsembleIdentsAnnotations = useSelectedEnsembleIdentsAnnotations();
     const selectedParameterIdentStringAnnotations = useSelectedParameterIdentStringAnnotations();
+    const parameterIdentStringAnnotations = colorRealizationsByParameter ? selectedParameterIdentStringAnnotations : [];
     const resampleFrequencyWarningAnnotation = useResampleFrequencyWarningAnnotation();
     const vectorListQueriesFieldStatus = useVectorListQueriesFieldStatus(ensembleSet);
-    const invalidVectorsAnnotation = useInvalidVectorsAnnotation(selectedVectorTags);
+    const invalidVectorsAnnotation = useInvalidVectorsAnnotation(invalidVectorTags);
 
     return (
         <Setting.ScrollArea>
@@ -399,7 +402,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                         <Setting.Field
                             label="Color realizations by parameter"
                             stacked
-                            annotations={selectedParameterIdentStringAnnotations}
+                            annotations={parameterIdentStringAnnotations}
                         >
                             <div className="gap-y-xs flex flex-col">
                                 <SwitchCompositions.WithLabel
