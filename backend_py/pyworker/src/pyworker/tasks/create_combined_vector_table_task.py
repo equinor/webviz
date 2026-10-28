@@ -66,11 +66,14 @@ async def create_combined_vector_table_task_async(
     await _update_status_msg_async("Creating combined vector table")
 
     try:
-        await ensure_vectors_aggregated_async(
+        aggregation_ok = await ensure_vectors_aggregated_async(
             sumo_client, msg.case_uuid, msg.ensemble_name, None, msg.vector_names, progress_cb=_update_status_msg_async
         )
     except ServiceLayerException as exc:
         raise TaskFailedError(f"Error aggregating vectors: {str(exc)}", internal_error_msg=repr(exc)) from exc
+
+    if not aggregation_ok:
+        raise TaskFailedError("Aggregation of vectors failed")
 
     perf_metrics.record_lap("ensure-aggregated")
     abort_signal.raise_if_aborted()

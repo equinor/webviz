@@ -83,9 +83,10 @@ async def create_combined_table_async(
     #             raise InvalidDataError("Did not get expected object type of Table for table aggregation", Service.SUMO)
     #         vec_table_pa = await vec_table_obj.to_arrow_async()
     #     completed_count += 1
-    #     await progress_cb(f"Fetched {completed_count}/{num_vecs} vectors from Sumo")
+    #     await progress_cb(f"Fetched {completed_count}/{num_vecs} vectors")
     #     return _TableItem(vec_name=vector_name, table=vec_table_pa, obj_uuid=vec_table_obj.uuid)
 
+    # await progress_cb(f"Starting fetch of {num_vecs} vectors")
     # fetch_tasks: dict[str, asyncio.Task[_TableItem]] = {}
     # async with asyncio.TaskGroup() as tg:
     #     for vector_name in vector_names:

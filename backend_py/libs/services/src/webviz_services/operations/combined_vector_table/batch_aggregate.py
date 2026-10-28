@@ -57,7 +57,7 @@ async def ensure_vectors_aggregated_async(
 
             await asyncio.sleep(0.2)
 
-        # Must still await the task to get the result or re-raise any exception from doWork()
+        # Must still await the task to get the result
         agg_ok = await agg_task
         return agg_ok
     finally:
