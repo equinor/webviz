@@ -22,7 +22,7 @@ _tracer = trace.get_tracer(__name__)
 
 # pylint: disable-next=too-many-statements
 async def process_message_async(
-    receiver: ServiceBusReceiver, msg: ServiceBusReceivedMessage, abort_signal: AbortSignal
+    receiver: ServiceBusReceiver, msg: ServiceBusReceivedMessage, max_delivery_count: int, abort_signal: AbortSignal
 ) -> None:
     """
     Processes a single Service Bus message, dispatching to the appropriate handler based on the
@@ -31,11 +31,6 @@ async def process_message_async(
     queue_name = receiver.entity_path
     worker_op = msg.subject or "UNKNOWN"
     message_id = msg.message_id or "UNKNOWN"
-
-    # !!!!!!!!!!
-    # !!!!!!!!!!
-    # !!!!!!!!!!
-    max_delivery_count = 10
 
     parent_ctx: Context = _extract_trace_context_from_message(msg)
     with _tracer.start_as_current_span(f"process_message: {worker_op}", parent_ctx, trace.SpanKind.CONSUMER) as span:
@@ -55,7 +50,9 @@ async def process_message_async(
                         await dev_test_task_async(msg)
 
                     case WorkerOperation.CREATE_COMBINED_VECTOR_TABLE:
-                        await run_tracked_user_task_async(msg, create_combined_vector_table_task_async, abort_signal, max_delivery_count)
+                        await run_tracked_user_task_async(
+                            msg, create_combined_vector_table_task_async, abort_signal, max_delivery_count
+                        )
 
                     case _:
                         err_msg = f"Unknown worker operation: {worker_op}"
