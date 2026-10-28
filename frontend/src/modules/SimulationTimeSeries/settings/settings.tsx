@@ -278,12 +278,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         <Setting.ScrollArea>
             <Setting.Panel onAnnotationsChange={handlePanelAnnotationsChange}>
                 <Setting.Section title="Data" defaultOpen>
-                    <Setting.Field
-                        label="Ensembles"
-                        annotations={selectedEnsembleIdentsAnnotations}
-                        warningMessage={vectorListQueriesFieldStatus.warningMessage}
-                        stacked
-                    >
+                    <Setting.Field label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
                         <EnsemblePicker
                             ensembles={ensembleSet.getEnsembleArray()}
                             value={selectedEnsembleIdents.value ?? []}
@@ -292,6 +287,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             onValueChange={handleEnsembleSelectChange}
                         />
                     </Setting.Field>
+                    {vectorListQueriesFieldStatus.warningMessage && (
+                        <Setting.Banner type="warning" title={vectorListQueriesFieldStatus.warningMessage} report />
+                    )}
                     <Setting.Field
                         label={
                             <span className="gap-x-2xs flex items-center">

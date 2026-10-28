@@ -51,9 +51,9 @@ export function Section(props: SectionProps) {
                     if (
                         existing &&
                         existing.hasInvalidValue === summary.hasInvalidValue &&
-                        existing.hasErrorOverlay === summary.hasErrorOverlay &&
-                        existing.hasAnyWarning === summary.hasAnyWarning &&
-                        existing.hasAnyInfo === summary.hasAnyInfo
+                        existing.hasError === summary.hasError &&
+                        existing.hasWarning === summary.hasWarning &&
+                        existing.hasInfo === summary.hasInfo
                     ) {
                         return prev;
                     }
@@ -77,24 +77,18 @@ export function Section(props: SectionProps) {
     );
 
     let blockCount = 0;
-    let errorOverlayCount = 0;
+    let errorCount = 0;
     let warningCount = 0;
     let infoCount = 0;
     for (const summary of fieldAnnotations.values()) {
         if (summary.hasInvalidValue) blockCount++;
-        if (summary.hasErrorOverlay) errorOverlayCount++;
-        if (summary.hasAnyWarning) warningCount++;
-        if (summary.hasAnyInfo) infoCount++;
+        if (summary.hasError) errorCount++;
+        if (summary.hasWarning) warningCount++;
+        if (summary.hasInfo) infoCount++;
     }
 
-    let toneOverride: "danger" | "warning" | "info" | undefined;
-    if (blockCount > 0 || errorOverlayCount > 0) {
-        toneOverride = "danger";
-    } else if (warningCount > 0) {
-        toneOverride = "warning";
-    } else if (infoCount > 0) {
-        toneOverride = "info";
-    }
+    // Only errors recolor the header; warning/info are conveyed by the header icons and counts
+    const toneOverride: "danger" | undefined = blockCount > 0 || errorCount > 0 ? "danger" : undefined;
 
     return (
         <Collapsible.Root
@@ -119,7 +113,7 @@ export function Section(props: SectionProps) {
                 </Collapsible.Trigger>
                 <EndActions
                     numInvalid={blockCount}
-                    numErrors={errorOverlayCount}
+                    numErrors={errorCount}
                     numWarnings={warningCount}
                     numInfos={infoCount}
                     onShowSection={() => setIsOpen(true)}
@@ -129,7 +123,7 @@ export function Section(props: SectionProps) {
             <Collapsible.Panel
                 keepMounted
                 data-in-section
-                className="setting-section-panel [&>.setting-row:nth-child(even_of_.setting-row)]:bg-neutral/20 [&>.contents>.setting-row:nth-child(even_of_.setting-row)]:bg-neutral/20 col-span-3 grid h-(--collapsible-panel-height) grid-cols-subgrid overflow-hidden transition-all duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 [&>[data-hidden]>.setting-row]:invisible [&>[data-hidden]>.setting-row]:h-0 [&>[data-hidden]>.setting-row]:min-h-0 [&>[data-hidden]>.setting-row]:overflow-hidden [&>[data-hidden]>.setting-row]:py-0"
+                className="setting-section-panel [&>.setting-row:nth-child(even_of_.setting-row)]:bg-neutral/20 [&>.contents>.setting-row:nth-child(even_of_.setting-row)]:bg-neutral/20 [&>.setting-row:nth-child(even_of_.setting-row)+.setting-banner]:bg-neutral/20 col-span-3 grid h-(--collapsible-panel-height) grid-cols-subgrid overflow-hidden transition-all duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 [&>[data-hidden]>.setting-row]:invisible [&>[data-hidden]>.setting-row]:h-0 [&>[data-hidden]>.setting-row]:min-h-0 [&>[data-hidden]>.setting-row]:overflow-hidden [&>[data-hidden]>.setting-row]:py-0"
             >
                 <SectionStatusContext.Provider value={contextValue}>{props.children}</SectionStatusContext.Provider>
             </Collapsible.Panel>
@@ -172,7 +166,7 @@ function EndActions(props: EndActionsProps) {
             )}
             {numWarnings > 0 && (
                 <Tooltip
-                    content={`${numWarnings} setting${numWarnings === 1 ? "" : "s"} with a warning - click to show`}
+                    content={`${numWarnings} warning${numWarnings === 1 ? "" : "s"} - click to show`}
                     side="bottom"
                 >
                     <Button

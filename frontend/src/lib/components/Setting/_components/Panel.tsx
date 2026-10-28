@@ -6,8 +6,9 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import type { SettingAnnotation, Overlay } from "./Field";
 import { PanelAnnotationsContext } from "./PanelAnnotationsContext";
+import type { BannerMessage } from "./PanelBannerMessagesContext";
+import { PanelBannerMessagesContext } from "./PanelBannerMessagesContext";
 import { PanelOverlaysContext } from "./PanelOverlaysContext";
-import { PanelWarningMessagesContext } from "./PanelWarningMessagesContext";
 
 export type PanelProps = {
     /** The Setting.Field items to render inside the panel. */
@@ -16,8 +17,8 @@ export type PanelProps = {
     onAnnotationsChange?: (annotations: SettingAnnotation[]) => void;
     /** Flattened `Overlay[]` from every field; filter by `type`. An overlay blocks interaction with its field. */
     onOverlaysChange?: (overlays: Overlay[]) => void;
-    /** Flattened `warningMessage` list from every field. */
-    onWarningMessagesChange?: (messages: string[]) => void;
+    /** Flattened messages reported by `Setting.Banner`s (opt-in via `report`); filter by `type`. */
+    onBannerMessagesChange?: (messages: BannerMessage[]) => void;
 };
 
 export type Layout = "inline" | "stacked";
@@ -27,7 +28,7 @@ const LAYOUT_BREAKPOINT = 350;
 export const LayoutContext = React.createContext<Layout>("inline");
 
 export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(function Panel(props, ref) {
-    const { onAnnotationsChange, onOverlaysChange, onWarningMessagesChange } = props;
+    const { onAnnotationsChange, onOverlaysChange, onBannerMessagesChange } = props;
 
     const [layout, setLayout] = React.useState<Layout>("stacked");
     const localRef = React.useRef<HTMLDivElement>(null);
@@ -94,36 +95,36 @@ export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(function Panel
         [allOverlays],
     );
 
-    const [fieldWarningMessages, setFieldWarningMessages] = React.useState<Record<string, string>>({});
+    const [bannerMessages, setBannerMessages] = React.useState<Record<string, BannerMessage>>({});
 
-    const reportFieldWarningMessage = React.useCallback(function reportFieldWarningMessage(
-        fieldId: string,
-        message: string | null,
+    const reportBannerMessage = React.useCallback(function reportBannerMessage(
+        bannerId: string,
+        message: BannerMessage | null,
     ) {
-        setFieldWarningMessages((prev) => {
+        setBannerMessages((prev) => {
             if (message === null) {
-                if (!(fieldId in prev)) {
+                if (!(bannerId in prev)) {
                     return prev;
                 }
                 const next = { ...prev };
-                delete next[fieldId];
+                delete next[bannerId];
                 return next;
             }
-            if (prev[fieldId] === message) {
+            if (isEqual(prev[bannerId], message)) {
                 return prev;
             }
-            return { ...prev, [fieldId]: message };
+            return { ...prev, [bannerId]: message };
         });
     }, []);
 
-    const warningMessages = React.useMemo(() => Object.values(fieldWarningMessages), [fieldWarningMessages]);
+    const allBannerMessages = React.useMemo(() => Object.values(bannerMessages), [bannerMessages]);
 
     React.useEffect(
-        function notifyWarningMessagesChange() {
-            onWarningMessagesChange?.(warningMessages);
+        function notifyBannerMessagesChange() {
+            onBannerMessagesChange?.(allBannerMessages);
         },
         // eslint-disable-next-line @eslint-react/exhaustive-deps -- Only re-notify when the messages themselves change
-        [warningMessages],
+        [allBannerMessages],
     );
 
     React.useImperativeHandle(ref, () => localRef.current as HTMLDivElement, []);
@@ -143,11 +144,11 @@ export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(function Panel
         <LayoutContext.Provider value={layout}>
             <PanelAnnotationsContext.Provider value={reportFieldAnnotations}>
                 <PanelOverlaysContext.Provider value={reportFieldOverlay}>
-                    <PanelWarningMessagesContext.Provider value={reportFieldWarningMessage}>
+                    <PanelBannerMessagesContext.Provider value={reportBannerMessage}>
                         <div ref={localRef} data-in-group className="gap-x-md grid grid-cols-[auto_1fr_auto]">
                             {props.children}
                         </div>
-                    </PanelWarningMessagesContext.Provider>
+                    </PanelBannerMessagesContext.Provider>
                 </PanelOverlaysContext.Provider>
             </PanelAnnotationsContext.Provider>
         </LayoutContext.Provider>

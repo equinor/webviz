@@ -10,8 +10,6 @@ import { LayoutContext } from "./Panel";
 import { SectionStatusContext } from "./SectionStatusContext";
 import { useReportFieldAnnotations } from "./useReportFieldAnnotations";
 import { useReportFieldOverlay } from "./useReportFieldOverlay";
-import { useReportFieldWarningMessage } from "./useReportFieldWarningMessage";
-import { WarningMessage } from "./WarningMessage";
 
 export type SettingAnnotation = {
     /** The severity level that determines the icon and color of the annotation. */
@@ -61,8 +59,6 @@ export type SettingFieldProps = {
     };
     /** Additional CSS class applied to the content wrapper element. */
     contentClassName?: string;
-    /** Non-blocking warning banner shown below the field's input (via `WarningMessage`). */
-    warningMessage?: string;
 } & (
     | {
           /** Annotations rendered below the input. Mutually exclusive with the individual annotation string props. */
@@ -132,11 +128,11 @@ export function Field(props: SettingFieldProps) {
               (props.infoOverlay && { type: "info", message: props.infoOverlay }) ||
               undefined;
 
-    const hasInvalidValueAnnotation = annotations.some((a) => a.type === "error");
+    const hasErrorAnnotation = annotations.some((a) => a.type === "error");
     const hasWarningAnnotation = annotations.some((a) => a.type === "warning");
     const hasErrorOverlay = overlay?.type === "error";
-    const hasAnyInfo = annotations.some((a) => a.type === "info") || overlay?.type === "info";
-    const hasAnyWarning = hasWarningAnnotation || Boolean(props.warningMessage) || overlay?.type === "warning";
+    const hasInfo = annotations.some((a) => a.type === "info") || overlay?.type === "info";
+    const hasWarning = hasWarningAnnotation || overlay?.type === "warning";
 
     const sectionStatusContext = React.useContext(SectionStatusContext);
     React.useEffect(() => {
@@ -144,26 +140,25 @@ export function Field(props: SettingFieldProps) {
             return;
         }
         sectionStatusContext.reportField(generatedInputId, {
-            hasInvalidValue: hasInvalidValueAnnotation,
-            hasErrorOverlay,
-            hasAnyWarning,
-            hasAnyInfo,
+            hasInvalidValue: hasErrorAnnotation,
+            hasError: hasErrorOverlay,
+            hasWarning,
+            hasInfo,
         });
         return () => {
             sectionStatusContext.unregisterField(generatedInputId);
         };
-    }, [sectionStatusContext, generatedInputId, hasInvalidValueAnnotation, hasErrorOverlay, hasAnyWarning, hasAnyInfo]);
+    }, [sectionStatusContext, generatedInputId, hasErrorAnnotation, hasErrorOverlay, hasWarning, hasInfo]);
 
     useReportFieldAnnotations(annotations);
     useReportFieldOverlay(overlay ?? null);
-    useReportFieldWarningMessage(props.warningMessage ?? null);
 
     const isStacked = props.stacked || groupContext === "stacked";
 
     if (!props.label && !isStacked) {
         return (
             <div className="setting-row in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-group:px-xs in-data-in-group:py-2xs in-data-in-group:col-span-3 in-data-in-group:grid in-data-in-group:grid-cols-subgrid in-data-in-section:col-span-3 in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
-                <FieldPrimitive.Root inline invalid={hasInvalidValueAnnotation} warning={hasWarningAnnotation}>
+                <FieldPrimitive.Root inline invalid={hasErrorAnnotation} warning={hasWarningAnnotation}>
                     <div
                         className={resolveClassNames(props.contentClassName, "relative w-full items-center", {
                             "col-span-2": !!props.help,
@@ -198,16 +193,6 @@ export function Field(props: SettingFieldProps) {
                             <Annotations annotations={annotations} />
                         </div>
                     )}
-                    {props.warningMessage && (
-                        <div
-                            className={resolveClassNames("flex flex-col", {
-                                "col-span-2": !!props.help,
-                                "col-span-3": !props.help,
-                            })}
-                        >
-                            <WarningMessage message={props.warningMessage} />
-                        </div>
-                    )}
                 </FieldPrimitive.Root>
             </div>
         );
@@ -218,7 +203,7 @@ export function Field(props: SettingFieldProps) {
             <div className="setting-row in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-group:px-xs in-data-in-group:py-2xs in-data-in-group:col-span-3 in-data-in-group:grid in-data-in-group:grid-cols-subgrid in-data-in-section:col-span-3 in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
                 <FieldPrimitive.Root
                     layoutClassName="w-full col-span-3"
-                    invalid={hasInvalidValueAnnotation}
+                    invalid={hasErrorAnnotation}
                     warning={hasWarningAnnotation}
                 >
                     <div className="gap-x-2xs flex w-full items-center justify-between">
@@ -245,7 +230,6 @@ export function Field(props: SettingFieldProps) {
                         {overlay && <Overlay type={overlay.type} message={overlay.message} />}
                     </div>
                     <Annotations annotations={annotations} />
-                    {props.warningMessage && <WarningMessage message={props.warningMessage} />}
                 </FieldPrimitive.Root>
             </div>
         );
@@ -253,7 +237,7 @@ export function Field(props: SettingFieldProps) {
 
     return (
         <div className="setting-row in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-group:px-xs in-data-in-group:py-2xs in-data-in-group:col-span-3 in-data-in-group:grid in-data-in-group:grid-cols-subgrid in-data-in-section:col-span-3 in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
-            <FieldPrimitive.Root inline invalid={hasInvalidValueAnnotation} warning={hasWarningAnnotation}>
+            <FieldPrimitive.Root inline invalid={hasErrorAnnotation} warning={hasWarningAnnotation}>
                 <div className="gap-y-4xs flex flex-col justify-center">
                     <div className="gap-x-2xs flex items-center">
                         {props.label && (
@@ -288,11 +272,6 @@ export function Field(props: SettingFieldProps) {
                 {annotations.length > 0 && (
                     <div className={resolveClassNames("col-start-2 flex flex-col", { "col-span-2": !props.help })}>
                         <Annotations annotations={annotations} />
-                    </div>
-                )}
-                {props.warningMessage && (
-                    <div className={resolveClassNames("col-start-2 flex flex-col", { "col-span-2": !props.help })}>
-                        <WarningMessage message={props.warningMessage} />
                     </div>
                 )}
             </FieldPrimitive.Root>

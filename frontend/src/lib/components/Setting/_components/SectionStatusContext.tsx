@@ -1,14 +1,14 @@
 import React from "react";
 
 export type FieldStatusSummary = {
-    /** A `type: "error"` annotation - the field's value is invalid. Shown with a Block icon. */
+    /** The reporter's value is invalid. Shown with a Block icon. */
     hasInvalidValue: boolean;
-    /** A complete overlay failure (`overlay.type === "error"`). Shown with an Error icon. */
-    hasErrorOverlay: boolean;
-    /** A warning annotation, warning overlay, or warningMessage. Shown with a Warning icon. */
-    hasAnyWarning: boolean;
-    /** An info annotation or info overlay, e.g. the field is blocked until another invalid setting is fixed. Shown with an Info icon. */
-    hasAnyInfo: boolean;
+    /** The reporter has an error. Shown with an Error icon. */
+    hasError: boolean;
+    /** The reporter has a warning. Shown with a Warning icon. */
+    hasWarning: boolean;
+    /** The reporter has an info. Shown with an Info icon. */
+    hasInfo: boolean;
 };
 
 export type SectionStatusContextValue = {

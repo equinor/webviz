@@ -221,12 +221,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         <Setting.ScrollArea>
             <Setting.Panel onAnnotationsChange={handlePanelAnnotationsChange}>
                 <Setting.Section title="Data" defaultOpen>
-                    <Setting.Field
-                        label="Ensembles"
-                        annotations={selectedEnsembleIdentsAnnotations}
-                        warningMessage={ensemblesWarningMessage}
-                        stacked
-                    >
+                    <Setting.Field label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
                         <EnsemblePicker
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedEnsembleIdents}
@@ -235,6 +230,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             onValueChange={handleEnsembleSelectionChange}
                         />
                     </Setting.Field>
+                    {ensemblesWarningMessage && (
+                        <Setting.Banner type="warning" title={ensemblesWarningMessage} report />
+                    )}
                     <Setting.Field
                         label="Table"
                         annotations={selectedTableNameAnnotations}
