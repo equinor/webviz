@@ -5,7 +5,7 @@ from webviz_core_utils.perf_timer import PerfTimer
 
 from webviz_services.services_config import get_services_config
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
-from webviz_services.service_exceptions import ServiceRequestError, NoDataError, Service
+from webviz_services.service_exceptions import AuthorizationError, ServiceRequestError, NoDataError, Service
 
 LOGGER = logging.getLogger(__name__)
 
@@ -57,6 +57,10 @@ async def smda_get_request_async(access_token: str, endpoint: str, params: dict)
                 f"[{str(response.status_code)}] '{endpoint}' either does not exists or can not be found",
                 Service.SMDA,
             )
+        elif response.status_code in (401, 403):
+            raise AuthorizationError(
+                f"[{str(response.status_code)}] Not authorized to fetch data from endpoint: '{endpoint}'", Service.SMDA
+            )
         else:
             raise ServiceRequestError(
                 f"[{str(response.status_code)}] Cannot fetch data from endpoint: '{endpoint}'", Service.SMDA
@@ -97,6 +101,11 @@ async def smda_get_aggregation_request_async(access_token: str, endpoint: str, p
     elif response.status_code == 404:
         raise ServiceRequestError(
             f"[{str(response.status_code)}] '{endpoint}' either does not exists or can not be found", Service.SMDA
+        )
+
+    elif response.status_code in (401, 403):
+        raise AuthorizationError(
+            f"[{str(response.status_code)}] Not authorized to aggregate data from endpoint: '{endpoint}'", Service.SMDA
         )
 
     else:
