@@ -6,13 +6,13 @@ import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Banner } from "@lib/components/Banner";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
 import { Select } from "@lib/components/Select";
 import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
+import { useAddErrorAnnotationsAsActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
@@ -61,6 +61,7 @@ function formatIndexValueList(values: string[]): string {
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
+    const handlePanelAnnotationsChange = useAddErrorAnnotationsAsActionRequiredToStatusWriter(statusWriter);
     const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(props.workbenchSession);
 
     const tableDefinitionsQuery = useAtomValue(tableDefinitionsQueryAtom);
@@ -155,9 +156,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIndicesWithValues(newIndicesWithValues);
     }
 
+    const isResultNotDecomposable = selectedResultName.value !== null && waterfallFactorSpec === null;
+
     return (
         <Setting.ScrollArea>
-            <Setting.Panel>
+            <Setting.Panel onAnnotationsChange={handlePanelAnnotationsChange}>
                 <Setting.Section title="Sources" defaultOpen>
                     <Setting.Field
                         label="Reference ensemble"
@@ -206,7 +209,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             onValueChange={(v) => setSelectedReferenceTableName(v)}
                         />
                     </Setting.Field>
-
                     <Setting.Field label="Comparison ensemble" annotations={comparisonEnsembleAnnotations}>
                         <EnsembleDropdown
                             aria-label="Comparison ensemble"
@@ -235,17 +237,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             onValueChange={(v) => setSelectedComparisonTableName(v)}
                         />
                     </Setting.Field>
-
                     {isCrossTableComparison && (
-                        <Banner tone="warning" layoutClassName="col-span-3">
-                            <strong>Comparing different table sources.</strong> Differences in BULK and PORO between
-                            table sources reflect gridding and upscaling as well as any reservoir change, so the factor
-                            contributions are not a like-for-like comparison.
+                        <Setting.Banner type="warning" title="Comparing different table sources" report>
+                            Differences in BULK and PORO between table sources reflect gridding and upscaling as well as
+                            any reservoir change, so the factor contributions are not a like-for-like comparison.
                             {isSingleEnsembleComparison && " Both sides use the same ensemble."}
-                        </Banner>
+                        </Setting.Banner>
                     )}
                 </Setting.Section>
-
                 <Setting.Section title="Data" defaultOpen>
                     <Setting.Field
                         label="Response"
@@ -271,11 +270,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         />
                     </Setting.Field>
 
-                    {selectedResultName.value !== null && waterfallFactorSpec === null && (
-                        <Banner tone="warning" layoutClassName="col-span-3">
-                            <strong>Note:</strong> {selectedResultName.value} cannot be decomposed for the selected
-                            table. The volume columns it is built from (BULK, PORV, HCPV) must all be available.
-                        </Banner>
+                    {isResultNotDecomposable && (
+                        <Setting.Banner
+                            type="warning"
+                            title={`${selectedResultName.value} cannot be decomposed for the selected table`}
+                            report
+                        >
+                            The volume columns it is built from (BULK, PORV, HCPV) must all be available.
+                        </Setting.Banner>
                     )}
 
                     <Setting.Field stacked>
@@ -290,9 +292,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
                 <Setting.Section title="Filters" defaultOpen>
                     {indexColumnDifferences.length > 0 && (
-                        <Banner tone="warning" layoutClassName="col-span-3">
-                            <strong>The two sources do not have the same indices.</strong>
-                            <ul className="mt-xs ml-md list-disc">
+                        <Setting.Banner type="warning" title="The two sources do not have the same indices" report>
+                            <ul className="ml-md list-disc">
                                 {indexColumnDifferences.map((difference) => (
                                     <li key={difference.indexColumn}>
                                         <strong>{difference.indexColumn}</strong>
@@ -329,7 +330,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                     ? "Only values present in both are compared, so the totals below are for that shared subset and will not match the full-field volumes."
                                     : "These indices are left unfiltered, so the full volume of both sources is compared and the difference in coverage shows up in the BULK contribution."}
                             </div>
-                        </Banner>
+                        </Setting.Banner>
                     )}
 
                     {commonIndicesWithValues.length > 0 && (
