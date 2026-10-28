@@ -31,7 +31,7 @@ export function ErrorOverlay(props: ErrorOverlayProps) {
     return (
         <>
             <AlertDialog
-                title={`${props.itemDelegate.getName()} - Persisted values could not be applied`}
+                title={`${props.itemDelegate.getName()} - Saved values could not be applied`}
                 open={dialogOpen}
                 primaryAction={{
                     label: "Acknowledge and clear errors",

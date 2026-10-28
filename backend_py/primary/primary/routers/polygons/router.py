@@ -41,8 +41,14 @@ async def get_polygons_directory(
 
     if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
         smda_access = DrogonSmdaAccess()
-    else:
+    elif authenticated_user.has_smda_access_token():
         smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
+    else:
+        # Stratigraphy is only used for ordering polygon names, so users without SMDA access still get the polygons
+        LOGGER.info("User has no SMDA access, skipping stratigraphic ordering of polygons")
+        polygons_metas = converters.to_api_polygons_directory(polygons_dir, [])
+        return sorted(polygons_metas, key=lambda meta: meta.name)
+
     strat_units = await smda_access.get_stratigraphic_units_async(strat_column_identifier)
     sorted_stratigraphic_surfaces = sort_stratigraphic_names_by_hierarchy(strat_units)
 
