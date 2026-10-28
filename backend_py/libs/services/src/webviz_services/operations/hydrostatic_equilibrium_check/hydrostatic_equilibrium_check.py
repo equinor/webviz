@@ -89,7 +89,7 @@ class HydrostaticEquilibriumCheck:
 
         t1_timestamp_utc_ms = await self._find_summary_timestamp_for_iso_async(time_steps.t1_iso)
 
-        realization_results = await self._build_vector_realization_results_async(
+        realization_results, source_object_uuids = await self._build_vector_realization_results_async(
             checked_vector_names=checked_vector_names,
             t1_timestamp_utc_ms=t1_timestamp_utc_ms,
             realizations=realizations,
@@ -99,6 +99,7 @@ class HydrostaticEquilibriumCheck:
             time_steps=time_steps,
             checked_vector_names=checked_vector_names,
             realization_results=realization_results,
+            source_object_uuids=source_object_uuids,
         )
 
     async def compute_grid_property_check_async(
@@ -190,14 +191,14 @@ class HydrostaticEquilibriumCheck:
         checked_vector_names: List[str],
         t1_timestamp_utc_ms: int,
         realizations: Sequence[int] | None,
-    ) -> List[he_types.RealizationVectorCheckResult]:
+    ) -> tuple[List[he_types.RealizationVectorCheckResult], List[str]]:
         summary_access = self._require_summary_access()
 
         # Fetch each checked vector's value-at-t1 concurrently rather than one at a time, since each
         # fetch is an independent, potentially high-latency Sumo access.
-        scalar_resps = await asyncio.gather(
+        scalar_resps_and_uuids = await asyncio.gather(
             *(
-                summary_access.get_vector_values_at_timestamp_async(
+                summary_access.get_vector_values_at_timestamp_with_source_uuid_async(
                     vector_name=vector_name, timestamp_utc_ms=t1_timestamp_utc_ms, realizations=realizations
                 )
                 for vector_name in checked_vector_names
@@ -206,8 +207,11 @@ class HydrostaticEquilibriumCheck:
 
         # Only rows that exist at t1 are returned, so index by realization and fill the gaps below.
         values_by_vector: dict[str, dict[int, float]] = {}
-        for vector_name, scalar_resp in zip(checked_vector_names, scalar_resps):
+        for vector_name, (scalar_resp, _) in zip(checked_vector_names, scalar_resps_and_uuids):
             values_by_vector[vector_name] = dict(zip(scalar_resp.realizations, scalar_resp.values))
+
+        # De-duplicated, preserving the order of the checked vectors.
+        source_object_uuids = list(dict.fromkeys(source_uuid for _, source_uuid in scalar_resps_and_uuids))
 
         if realizations is not None:
             expected_realizations = sorted(set(realizations))
@@ -223,7 +227,7 @@ class HydrostaticEquilibriumCheck:
             realization_results.append(
                 he_types.RealizationVectorCheckResult(realization=realization, vector_values=vector_values)
             )
-        return realization_results
+        return realization_results, source_object_uuids
 
     async def _evaluate_grid_properties_for_realization_async(
         self,

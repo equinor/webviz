@@ -44,13 +44,14 @@ class _FakeSummaryAccess:
     async def get_timestamps_async(self) -> list[int]:
         return [T0_MS, T1_MS]
 
-    async def get_vector_values_at_timestamp_async(
+    async def get_vector_values_at_timestamp_with_source_uuid_async(
         self, vector_name: str, timestamp_utc_ms: int, realizations: Sequence[int] | None = None
-    ) -> EnsembleScalarResponse:
+    ) -> tuple[EnsembleScalarResponse, str]:
         assert timestamp_utc_ms == T1_MS
         rows = self._values_at_t1.get(vector_name, {})
         selected = {real: val for real, val in rows.items() if realizations is None or real in realizations}
-        return EnsembleScalarResponse(realizations=list(selected.keys()), values=list(selected.values()))
+        response = EnsembleScalarResponse(realizations=list(selected.keys()), values=list(selected.values()))
+        return response, f"summary-{vector_name}"
 
 
 class _FakeGridAccess:
@@ -97,6 +98,7 @@ async def test_vector_check_reports_realization_missing_at_t1() -> None:
     result = await _make_check(summary_access).compute_vector_check_async(T0_ISO, T1_ISO)
 
     assert result.checked_vector_names == ["FOPT", "FGPT"]
+    assert result.source_object_uuids == ["summary-FOPT", "summary-FGPT"]
     assert [r.realization for r in result.realization_results] == [0, 1, 2]
     for realization_result in result.realization_results:
         assert len(realization_result.vector_values) == len(result.checked_vector_names)

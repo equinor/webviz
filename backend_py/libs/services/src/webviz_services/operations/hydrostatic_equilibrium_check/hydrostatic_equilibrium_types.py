@@ -42,6 +42,11 @@ class HydrostaticVectorCheckResult(BaseModel):
     # Names of the cumulative vectors that were required to be zero.
     checked_vector_names: List[str]
     realization_results: List[RealizationVectorCheckResult]
+    # Sumo object uuids of the summary tables (one per checked vector) that the result was computed
+    # from. Needed so a cached/derived result can be written back to Sumo identified by (partly) the
+    # source objects it was derived from. Service-internal only - intentionally not part of the API
+    # schema, so it is not sent to the client.
+    source_object_uuids: List[str]
 
 
 class GridPropertyCheckValue(BaseModel):
