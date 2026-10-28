@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from webviz_services.qc_service.hydrostatic_equilibrium import equilibrium_logic as he
+from webviz_services.operations.hydrostatic_equilibrium_check import equilibrium_logic as he
 
 
 def test_resolve_initial_time_steps_picks_first_two_sorted() -> None:

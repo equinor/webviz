@@ -6,7 +6,7 @@ from typing import Sequence, cast
 import numpy as np
 import pytest
 
-from webviz_services.qc_service.hydrostatic_equilibrium.hydrostatic_equilibrium_check import (
+from webviz_services.operations.hydrostatic_equilibrium_check.hydrostatic_equilibrium_check import (
     HydrostaticEquilibriumCheck,
 )
 from webviz_services.service_exceptions import NoDataError
