@@ -5,7 +5,6 @@ import json
 import logging
 import os
 import uuid
-from enum import StrEnum
 from typing import TypeVar
 
 import httpx
@@ -81,7 +80,9 @@ class SumoBlobCache:
         self._sumo_client = sumo_client
         self._app_name = app_name
         self._op_name = versioned_op.name
-        self._op_identity = f"{versioned_op.name}_v{versioned_op.code_version}_gg{global_runtime_generation}_og{op_runtime_generation}"
+        self._op_identity = (
+            f"{versioned_op.name}_v{versioned_op.code_version}_gg{global_runtime_generation}_og{op_runtime_generation}"
+        )
 
     def compute_cache_key(self, cache_key_data: JsonValue) -> str:
         """
@@ -168,26 +169,20 @@ class SumoBlobCache:
                     f"Cache miss for: {cache_key=} (op_identity={self._op_identity}, GET url={exc.request.url})"
                 )
                 return None
-            else:
-                raise SumoBlobCacheError(
-                    f"Failed to resolve cache entry, unexpected status: {status} (op_identity={self._op_identity}, GET url={exc.request.url})"
-                ) from exc
+
+            raise SumoBlobCacheError(
+                f"Failed to resolve cache entry, unexpected status: {status} (op_identity={self._op_identity}, GET url={exc.request.url})"
+            ) from exc
 
         sas_url_for_blob_read = resp.text
 
-        # !!!!!!!!!!!!!!!!
-        if await self._FAKE_CHECK_is_resolved_blob_stale_async(sas_url_for_blob_read):
-            LOGGER.warning("resolve_cache_entry_async() -- FAKE_CHECK says that the blob is stale")
-            return None
+        # if await _FAKE_CHECK_is_resolved_blob_stale_async(sas_url_for_blob_read):
+        #     LOGGER.warning("resolve_cache_entry_async() -- FAKE_CHECK says that the blob is stale")
+        #     return None
 
         LOGGER.debug(f"resolve_cache_entry_async() took: {perf_metrics.to_string()} (op_identity={self._op_identity})")
-    
+
         return sas_url_for_blob_read
-
-
-
-
-
 
     async def upload_reserved_blob_async(self, blob_sas_url: str, blob_payload: bytes) -> None:
         if not blob_sas_url:
@@ -205,10 +200,9 @@ class SumoBlobCache:
         if not blob_sas_url:
             raise ValueError("Cannot download blob from cache, empty SAS URL provided")
 
-        # !!!!!!!!!!!!!!!!
-        if await self._FAKE_CHECK_is_resolved_blob_stale_async(blob_sas_url):
-            LOGGER.warning("download_resolved_blob_async() -- FAKE_CHECK says that the blob is stale")
-            return None
+        # if await _FAKE_CHECK_is_resolved_blob_stale_async(blob_sas_url):
+        #     LOGGER.warning("download_resolved_blob_async() -- FAKE_CHECK says that the blob is stale")
+        #     return None
 
         try:
             async with BlobClient.from_blob_url(blob_sas_url) as bclient:
@@ -227,10 +221,9 @@ class SumoBlobCache:
         if not blob_sas_url:
             raise ValueError("Cannot check blob access, empty SAS URL provided")
 
-        # !!!!!!!!!!!!!!!!
-        if await self._FAKE_CHECK_is_resolved_blob_stale_async(blob_sas_url):
-            LOGGER.warning("is_resolved_blob_accessible_async() -- FAKE_CHECK says that the blob is stale")
-            return False
+        # if await _FAKE_CHECK_is_resolved_blob_stale_async(blob_sas_url):
+        #     LOGGER.warning("is_resolved_blob_accessible_async() -- FAKE_CHECK says that the blob is stale")
+        #     return False
 
         try:
             async with BlobClient.from_blob_url(blob_sas_url) as bclient:
@@ -271,36 +264,6 @@ class SumoBlobCache:
             return None
 
         return model_class.model_validate_json(blob_bytes)
-
-    # !!!!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!
-    # Temporary hack to allow us to simulate the removal of cache entries
-    async def _FAKE_CHECK_is_resolved_blob_stale_async(self, blob_sas_url: str) -> bool:
-
-        # !!!!!!
-        return False
-
-        # LOGGER.debug("FAKE_CHECK_is_resolved_blob_stale_async() STARTING")
-        # if not blob_sas_url:
-        #     raise ValueError("_FAKE_CHECK_is_resolved_blob_stale_async() - Cannot check cache blob, empty SAS URL provided")
-
-        # async with BlobClient.from_blob_url(blob_sas_url) as blob_client:
-        #     try:
-        #         blob_properties = await blob_client.get_blob_properties()
-        #         LOGGER.debug("FAKE_CHECK_is_resolved_blob_stale_async() GOT BLOB PROPERTIES:")
-        #         LOGGER.debug(f"  creation_time:    {blob_properties.creation_time}")
-        #         LOGGER.debug(f"  last_modified:    {blob_properties.last_modified}")
-        #         LOGGER.debug(f"  last_accessed_on: {blob_properties.last_accessed_on}")
-        #         LOGGER.debug(f"  {blob_properties.metadata=}")
-
-        #         time_diff = datetime.datetime.now(tz=datetime.timezone.utc) - blob_properties.last_modified
-        #         time_diff_seconds = time_diff.total_seconds()
-        #         if time_diff_seconds > 20:
-        #             LOGGER.warning(f"Cache blob has not been accessed for {time_diff_seconds:.2f} seconds, FAKING STALE")
-        #             return True
-        #         return False
-        #     except ResourceNotFoundError:
-        #         return True
 
 
 class SumoBlobCacheFactory:
@@ -428,3 +391,29 @@ def _operation_runtime_generations_from_env() -> dict[str, int]:
             raise ValueError(f"{env_name} must be a JSON object of non-negative integers")
 
     return generations_dict
+
+
+# !!!!!!!!!!!!!!!!!!!!!
+# Temporary hack to allow us to simulate the removal of cache entries
+async def _FAKE_CHECK_is_resolved_blob_stale_async(blob_sas_url: str) -> bool:
+    LOGGER.debug("FAKE_CHECK_is_resolved_blob_stale_async() STARTING")
+    if not blob_sas_url:
+        raise ValueError("_FAKE_CHECK_is_resolved_blob_stale_async() - Cannot check cache blob, empty SAS URL provided")
+
+    async with BlobClient.from_blob_url(blob_sas_url) as blob_client:
+        try:
+            blob_properties = await blob_client.get_blob_properties()
+            LOGGER.debug("FAKE_CHECK_is_resolved_blob_stale_async() GOT BLOB PROPERTIES:")
+            LOGGER.debug(f"  creation_time:    {blob_properties.creation_time}")
+            LOGGER.debug(f"  last_modified:    {blob_properties.last_modified}")
+            LOGGER.debug(f"  last_accessed_on: {blob_properties.last_accessed_on}")
+            LOGGER.debug(f"  {blob_properties.metadata=}")
+
+            time_diff = datetime.datetime.now(tz=datetime.timezone.utc) - blob_properties.last_modified
+            time_diff_seconds = time_diff.total_seconds()
+            if time_diff_seconds > 20:
+                LOGGER.warning(f"Cache blob has not been accessed for {time_diff_seconds:.2f} seconds, FAKING STALE")
+                return True
+            return False
+        except ResourceNotFoundError:
+            return True

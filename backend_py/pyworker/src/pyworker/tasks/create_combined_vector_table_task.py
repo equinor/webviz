@@ -14,7 +14,7 @@ from webviz_services.utils.sumo_blob_cache import get_sumo_blob_cache_from_sumo_
 from webviz_services.utils.task_meta_tracker import TaskMetaTracker
 from webviz_server_schemas.pyworker.messages import CreateCombinedVectorTableMsg
 
-from ..task_exceptions import MalformedMessageError, TaskFailedError, TaskInternalError, TaskTrackingError
+from ..task_exceptions import MalformedMessageError, TaskFailedError, TaskTrackingError
 from ..task_runner import TaskSuccess
 from ..utils.abort_signal import AbortSignal
 from ..utils import message_decryption

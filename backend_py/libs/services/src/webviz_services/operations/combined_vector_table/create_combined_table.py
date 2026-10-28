@@ -106,17 +106,6 @@ async def create_combined_table_async(sumo_client: SumoClient, case_uuid: str, e
             raise InvalidDataError(
                 f"The REAL columns are not equal: REAL values in aggregated table for {first_vec_name} differ from aggregated table for {vec_name}.", Service.SUMO)
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if "FGIP" in vector_names:
-        LOGGER.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        LOGGER.error("!!!!!!!!!!Injecting dummy error for vector to test error handling in combined table creation")
-        LOGGER.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        raise InvalidDataError("DUMMY ERROR", Service.SUMO)
-
-
     # Now we can merge the tables by appending the "value" columns
     merged_table = first_table
     for i in range(1, len(table_arr)):
