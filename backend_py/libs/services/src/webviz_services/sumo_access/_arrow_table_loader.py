@@ -46,6 +46,15 @@ class ArrowTableLoader:
     ) -> pa.Table:
         """Filters for a single table and column, aggregates the column (if it does not already exist),
         and returns the result as an Arrow table"""
+        arrow_table, _ = await self.get_aggregated_single_column_with_uuid_async(column_name)
+        return arrow_table
+
+    async def get_aggregated_single_column_with_uuid_async(
+        self,
+        column_name: str,
+    ) -> tuple[pa.Table, str]:
+        """Same as get_aggregated_single_column_async(), but also returns the uuid of the Sumo table object
+        that the Arrow table was read from"""
 
         perf_metrics = PerfMetrics()
 
@@ -125,7 +134,7 @@ class ArrowTableLoader:
             f"ArrowTableLoader.get_aggregated_single_column() took: {perf_metrics.to_string()}, {column_name=}, {self._make_req_info_str()}"
         )
 
-        return arrow_table
+        return arrow_table, sumo_table_obj.uuid
 
     async def get_aggregated_multiple_columns_async(
         self,

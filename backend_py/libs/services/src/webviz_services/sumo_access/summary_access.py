@@ -106,12 +106,24 @@ class SummaryAccess:
         The vector column will be of type float32.
         If `resampling_frequency` is None, the data will be returned with full/raw resolution.
         """
+        table, vector_metadata, _ = await self._get_vector_table_and_uuid_async(
+            vector_name, resampling_frequency, realizations
+        )
+        return table, vector_metadata
+
+    async def _get_vector_table_and_uuid_async(
+        self,
+        vector_name: str,
+        resampling_frequency: Optional[Frequency],
+        realizations: Optional[Sequence[int]],
+    ) -> Tuple[pa.Table, VectorMetadata, str]:
+        """Same as get_vector_table_async(), but also returns the uuid of the source Sumo table object"""
         timer = PerfTimer()
 
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         # New metadata uses simulationtimeseries, but most existing cases use timeseries
         table_loader.require_content_type(["timeseries", "simulationtimeseries"])
-        table = await table_loader.get_aggregated_single_column_async(vector_name)
+        table, source_obj_uuid = await table_loader.get_aggregated_single_column_with_uuid_async(vector_name)
         _validate_single_vector_table(table, vector_name)
         et_loading_ms = timer.lap_ms()
 
@@ -153,7 +165,7 @@ class SummaryAccess:
             f"({vector_name=} {resampling_frequency=} {table.shape=})"
         )
 
-        return table, vector_metadata
+        return table, vector_metadata, source_obj_uuid
 
     @otel_span_decorator()
     async def get_vector_async(
@@ -319,7 +331,21 @@ class SummaryAccess:
         timestamp_utc_ms: int,
         realizations: Optional[Sequence[int]] = None,
     ) -> EnsembleScalarResponse:
-        table, _ = await self.get_vector_table_async(vector_name, resampling_frequency=None, realizations=realizations)
+        response, _ = await self.get_vector_values_at_timestamp_with_source_uuid_async(
+            vector_name, timestamp_utc_ms, realizations
+        )
+        return response
+
+    async def get_vector_values_at_timestamp_with_source_uuid_async(
+        self,
+        vector_name: str,
+        timestamp_utc_ms: int,
+        realizations: Optional[Sequence[int]] = None,
+    ) -> tuple[EnsembleScalarResponse, str]:
+        """Same as get_vector_values_at_timestamp_async(), but also returns the uuid of the source Sumo table object"""
+        table, _, source_obj_uuid = await self._get_vector_table_and_uuid_async(
+            vector_name, resampling_frequency=None, realizations=realizations
+        )
 
         if realizations is not None:
             mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
@@ -327,10 +353,11 @@ class SummaryAccess:
         mask = pc.is_in(table["DATE"], value_set=pa.array([timestamp_utc_ms]))
         table = table.filter(mask)
 
-        return EnsembleScalarResponse(
+        response = EnsembleScalarResponse(
             realizations=table["REAL"].to_numpy().astype(int).tolist(),
             values=table[vector_name].to_numpy().tolist(),
         )
+        return response, source_obj_uuid
 
     async def get_timestamps_async(
         self,
