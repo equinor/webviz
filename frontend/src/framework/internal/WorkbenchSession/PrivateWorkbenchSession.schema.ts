@@ -14,6 +14,8 @@ import {
     WORKBENCH_SETTINGS_STATE_SCHEMA,
     type SerializedWorkbenchSettingsState,
 } from "../PrivateWorkbenchSettings.schema";
+import type { SerializedEnsembleQcSetState } from "../QC/EnsembleQcSet.schema";
+import { ENSEMBLE_QC_SET_STATE_SCHEMA } from "../QC/EnsembleQcSet.schema";
 
 import type {
     SerializedDeltaEnsemble,
@@ -32,6 +34,8 @@ export type SerializedWorkbenchSessionContentState = {
     dashboards: SerializedDashboardState[];
     ensembleSet: SerializedEnsembleSet;
     ensembleRealizationFilterSet: SerializedRealizationFilterSetState;
+    // Optional for backward compat – awaiting schema versioning (#1807)
+    ensembleQcSet?: SerializedEnsembleQcSetState;
     settings: SerializedWorkbenchSettingsState;
     userCreatedItems: SerializedUserCreatedItemsState;
 };
@@ -94,6 +98,10 @@ export const WORKBENCH_SESSION_CONTENT_STATE_SCHEMA: JTDSchemaType<SerializedWor
         ensembleSet: ENSEMBLE_SET_STATE_SCHEMA,
         ensembleRealizationFilterSet: REALIZATION_FILTER_SET_STATE_SCHEMA,
         userCreatedItems: USER_CREATED_ITEMS_JTD_SCHEMA,
+    },
+    optionalProperties: {
+        // Optional for backward compat – awaiting schema versioning (#1807)
+        ensembleQcSet: ENSEMBLE_QC_SET_STATE_SCHEMA,
     },
 } as const;
 

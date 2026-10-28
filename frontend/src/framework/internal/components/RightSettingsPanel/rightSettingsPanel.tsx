@@ -17,6 +17,7 @@ import { ModulesList } from "../ModulesList";
 
 import { ColorPaletteSettings } from "./private-components/colorPaletteSettings";
 import { ModuleInstanceLog } from "./private-components/moduleInstanceLog";
+import { QcChecksPanel } from "./private-components/qcChecksPanel";
 import { RealizationFilterSettings } from "./private-components/realizationFilterSettings";
 
 type RightSettingsPanelProps = { workbench: Workbench };
@@ -79,6 +80,9 @@ export const RightSettingsPanel = React.memo(function RightSettingsPanel(props: 
             </ContentHidden>
             <ContentHidden hidden={drawerContent !== RightDrawerContent.RealizationFilterSettings}>
                 <RealizationFilterSettings workbench={props.workbench} onClose={handleOnClose} />
+            </ContentHidden>
+            <ContentHidden hidden={drawerContent !== RightDrawerContent.QCChecks}>
+                <QcChecksPanel workbench={props.workbench} onClose={handleOnClose} />
             </ContentHidden>
             <ContentHidden hidden={drawerContent !== RightDrawerContent.ModuleInstanceLog}>
                 <ModuleInstanceLog workbench={props.workbench} onClose={handleOnClose} />
