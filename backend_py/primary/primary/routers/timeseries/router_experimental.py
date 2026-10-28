@@ -12,7 +12,6 @@ from pydantic import BaseModel
 from azure.servicebus import ServiceBusMessage
 from cryptography.fernet import Fernet
 
-from webviz_core_utils.background_tasks import run_in_background_task
 from webviz_server_schemas.pyworker.messages import WorkerOperation
 from webviz_server_schemas.pyworker.messages import CreateCombinedVectorTableMsg
 from webviz_services.platform.message_bus import MessageBusSingleton, MessageBus
@@ -21,8 +20,9 @@ from webviz_services.utils.task_meta_tracker import TaskState
 from webviz_services.utils.sumo_blob_cache import OP_COMBINED_VECTOR_TABLE
 from webviz_services.utils.sumo_blob_cache import get_sumo_blob_cache_from_access_token, SumoBlobCache
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
-from webviz_services.operations.combined_vector_table.bgjob_dev_create_combined_table import bgjob_dev_create_combined_table_async
-from webviz_services.platform.message_bus import MessageBusSingleton, MessageBus
+
+# from webviz_core_utils.background_tasks import run_in_background_task
+# from webviz_services.operations.combined_vector_table.bgjob_dev_create_combined_table import bgjob_dev_create_combined_table_async
 
 from primary import config
 from primary.auth.auth_helper import AuthHelper
@@ -35,10 +35,13 @@ LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
 
+# pylint: disable=too-many-statements, too-many-locals
+
 
 class CombinedTableResponse(BaseModel):
     table_handle: str
     dbg_info: str | None
+
 
 @router.get("/combined_vector_table_hybrid", include_in_schema=True)
 async def get_combined_vector_table_hybrid(
@@ -53,7 +56,9 @@ async def get_combined_vector_table_hybrid(
 ) -> LroSuccessResp[CombinedTableResponse] | LroInProgressResp | LroFailureResp | LroCommandResp:
     perf_metrics = ResponsePerfMetrics(response)
     dbg_prefix = "!!!!!!!!!! "
-    LOGGER.debug(f"{dbg_prefix}Received request for combined vector table with: {case_uuid=} {ensemble_name=} {retry_creation_task=} {vector_names=}")
+    LOGGER.debug(
+        f"{dbg_prefix}Received request for combined vector table with: {case_uuid=} {ensemble_name=} {retry_creation_task=} {vector_names=}"
+    )
 
     # Create the deterministic table handle (also includes ensemble fingerprint)
     table_handle = await _compute_table_handle_async(authenticated_user, case_uuid, ensemble_name, vector_names)
@@ -65,7 +70,9 @@ async def get_combined_vector_table_hybrid(
     task_fp = f"taskFP__{table_handle}"
 
     if retry_creation_task:
-        LOGGER.info(f"{dbg_prefix}Retry creation task flag is set to true, trying to delete existing task with {task_fp=}")
+        LOGGER.info(
+            f"{dbg_prefix}Retry creation task flag is set to true, trying to delete existing task with {task_fp=}"
+        )
         if await task_tracker.delete_task_by_fingerprint_async(task_fp):
             LOGGER.info(f"{dbg_prefix}Existing task was deleted {task_fp=}")
         else:
@@ -90,7 +97,9 @@ async def get_combined_vector_table_hybrid(
         # If at some point in the future the table is pruned from the cache, we would like to create a new task anyway.
         await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
 
-        LOGGER.info(f"{dbg_prefix}Returning handle to combined table found in cache, timing: {perf_metrics.to_string()} [{table_handle=}, {cache_key=}]")
+        LOGGER.info(
+            f"{dbg_prefix}Returning handle to combined table found in cache, timing: {perf_metrics.to_string()} [{table_handle=}, {cache_key=}]"
+        )
         return LroSuccessResp(result=CombinedTableResponse(table_handle=table_handle, dbg_info="Got from cache"))
 
     task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
@@ -118,10 +127,8 @@ async def get_combined_vector_table_hybrid(
         )
 
         task_meta = await task_tracker.register_task_with_fingerprint_async(
-            task_id=task_id,
-            fingerprint=task_fp,
-            ttl_s=5 * 60,
-            expected_store_key=cache_key)
+            task_id=task_id, fingerprint=task_fp, ttl_s=5 * 60, expected_store_key=cache_key
+        )
 
         # job_coro = bgjob_dev_create_combined_table_async(
         #     user_id=user_id,
@@ -145,19 +152,27 @@ async def get_combined_vector_table_hybrid(
         if not await blob_cache.has_cache_entry_async(cache_key):
             # This should not happen, if the task succeeded the blob should be in cache. But just in case, we can return an error here.
             await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
-            LOGGER.error(f"{dbg_prefix}Table creation task succeeded but could not find result in cache [{table_handle=}, {task_meta.task_id=}, {cache_key=}]")
+            LOGGER.error(
+                f"{dbg_prefix}Table creation task succeeded but could not find result in cache [{table_handle=}, {task_meta.task_id=}, {cache_key=}]"
+            )
             response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
             return LroFailureResp(error_message="Task succeeded but could not find result in cache")
 
-        LOGGER.info(f"{dbg_prefix}Table creation task succeeded, timing {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]")
+        LOGGER.info(
+            f"{dbg_prefix}Table creation task succeeded, timing {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]"
+        )
         return LroSuccessResp(result=CombinedTableResponse(table_handle=table_handle, dbg_info="Task succeeded"))
 
     if task_meta.state in [TaskState.FAILED, TaskState.CANCELLED]:
-        LOGGER.error(f"{dbg_prefix}Table creation task failed, msg: {task_meta.status_message} [{table_handle=}, {task_meta.task_id=}]")
+        LOGGER.error(
+            f"{dbg_prefix}Table creation task failed, msg: {task_meta.status_message} [{table_handle=}, {task_meta.task_id=}]"
+        )
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return LroFailureResp(error_message=f"Task {task_meta.state}, msg: {task_meta.status_message}")
 
-    LOGGER.info(f"{dbg_prefix}Returning in-progress for table handle, timing: {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]")
+    LOGGER.info(
+        f"{dbg_prefix}Returning in-progress for table handle, timing: {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]"
+    )
 
     if new_task_was_submitted:
         prog_msg = f"New task submitted: {task_meta.state}"
@@ -168,10 +183,11 @@ async def get_combined_vector_table_hybrid(
 
     response.status_code = status.HTTP_202_ACCEPTED
 
-    LOGGER.info(f"{dbg_prefix}Actual returning: {new_task_was_submitted=}, {retry_creation_task=}, timing: {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]")
+    LOGGER.info(
+        f"{dbg_prefix}Actual returning: {new_task_was_submitted=}, {retry_creation_task=}, timing: {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]"
+    )
 
     return LroInProgressResp(status_str=task_meta.state, task_id=task_meta.task_id, progress_message=prog_msg)
-
 
 
 class CombinedTableInfo(BaseModel):
@@ -179,6 +195,7 @@ class CombinedTableInfo(BaseModel):
     row_count: int
     byte_size: int | None
     dbg_info: str | None
+
 
 @router.get("/combined_table_info")
 async def get_combined_table_info(
@@ -233,7 +250,12 @@ async def get_combined_table_info(
     LOGGER.debug(f"{dbg_prefix}Sizes: {row_count=}, {blob_size_bytes=}")
 
     LOGGER.info(f"{dbg_prefix}Got info on combined table, timing: {perf_metrics.to_string()} ({table_handle=})")
-    return CombinedTableInfo(vector_names=vector_names, row_count=row_count, byte_size=blob_size_bytes, dbg_info=f"Timing: {perf_metrics.to_string()}")
+    return CombinedTableInfo(
+        vector_names=vector_names,
+        row_count=row_count,
+        byte_size=blob_size_bytes,
+        dbg_info=f"Timing: {perf_metrics.to_string()}",
+    )
 
 
 @router.get("/calc_something_on_combined_table")
@@ -257,13 +279,17 @@ async def get_calc_something_on_combined_table(
     if not table_blob:
         raise HTTPException(status_code=410, detail="Combined table not found in cache")
 
-    pq_table = pq.read_table(pa.BufferReader(table_blob))
+    _pq_table = pq.read_table(pa.BufferReader(table_blob))
 
-    LOGGER.info(f"Did calculation on combined table blob from cache, timing: {perf_metrics.to_string()} ({table_handle=}, {calculation_params=})")
+    LOGGER.info(
+        f"Did calculation on combined table blob from cache, timing: {perf_metrics.to_string()} ({table_handle=}, {calculation_params=})"
+    )
     return f"Did some calculation on combined table, timing: {perf_metrics.to_string()} ({table_handle=}, {calculation_params=})"
 
 
-async def _compute_table_handle_async(authenticated_user: AuthenticatedUser, case_uuid: str, ensemble_name: str, vector_names: list[str]) -> str:
+async def _compute_table_handle_async(
+    authenticated_user: AuthenticatedUser, case_uuid: str, ensemble_name: str, vector_names: list[str]
+) -> str:
     sorted_vector_names_str = ",".join(sorted(vector_names))
     task_params_as_str = f"{case_uuid}:{ensemble_name}:{sorted_vector_names_str}"
 
@@ -273,5 +299,3 @@ async def _compute_table_handle_async(authenticated_user: AuthenticatedUser, cas
     # 8 bytes = 16 hex chars = 64 bits should be enough to avoid collisions for our use case
     task_fp = hashlib.shake_128((ensemble_fp + task_params_as_str).encode()).hexdigest(8)
     return f"TH__{task_fp}"
-
-

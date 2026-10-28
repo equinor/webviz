@@ -19,7 +19,6 @@ from ..task_runner import TaskSuccess
 from ..utils.abort_signal import AbortSignal
 from ..utils import message_decryption
 
-
 _logger = logging.getLogger(__name__)
 
 
@@ -67,7 +66,9 @@ async def create_combined_vector_table_task_async(
     await _update_status_msg_async("Creating combined vector table")
 
     try:
-        await ensure_vectors_aggregated_async(sumo_client, msg.case_uuid, msg.ensemble_name, None, msg.vector_names, progress_cb=_update_status_msg_async)
+        await ensure_vectors_aggregated_async(
+            sumo_client, msg.case_uuid, msg.ensemble_name, None, msg.vector_names, progress_cb=_update_status_msg_async
+        )
     except ServiceLayerException as exc:
         raise TaskFailedError(f"Error aggregating vectors: {str(exc)}", internal_error_msg=repr(exc)) from exc
 
@@ -75,7 +76,9 @@ async def create_combined_vector_table_task_async(
     abort_signal.raise_if_aborted()
 
     try:
-        combined_table_pa, combined_table_info = await create_combined_table_async(sumo_client, msg.case_uuid, msg.ensemble_name, None, msg.vector_names, progress_cb=_update_status_msg_async)
+        combined_table_pa, combined_table_info = await create_combined_table_async(
+            sumo_client, msg.case_uuid, msg.ensemble_name, None, msg.vector_names, progress_cb=_update_status_msg_async
+        )
     except ServiceLayerException as exc:
         raise TaskFailedError(f"Failed to create combined table: {str(exc)}", internal_error_msg=repr(exc)) from exc
 
@@ -90,9 +93,13 @@ async def create_combined_vector_table_task_async(
 
     blob_cache: SumoBlobCache = get_sumo_blob_cache_from_sumo_client(sumo_client, OP_COMBINED_VECTOR_TABLE)
     blob_size = byte_stream.getbuffer().nbytes
-    blob_sas_url = await blob_cache.reserve_cache_entry_async(cache_key, source_obj_uuids=combined_table_info.source_obj_uuids, blob_size=blob_size)
+    blob_sas_url = await blob_cache.reserve_cache_entry_async(
+        cache_key, source_obj_uuids=combined_table_info.source_obj_uuids, blob_size=blob_size
+    )
     await blob_cache.upload_reserved_blob_async(blob_sas_url, byte_stream.getvalue())
     perf_metrics.record_lap("write_cache")
 
-    _logger.info(f"Finished creating and storing combined table in cache with key {cache_key}. Perf metrics: {perf_metrics.to_string()}")
+    _logger.info(
+        f"Finished creating and storing combined table in cache with key {cache_key}. Perf metrics: {perf_metrics.to_string()}"
+    )
     return TaskSuccess("Combined vector table ready")

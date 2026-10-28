@@ -12,18 +12,27 @@ from fmu.sumo.explorer.objects import Table
 from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_services.service_exceptions import Service, ServiceRequestError, ServiceTimeoutError
 
-
 LOGGER = logging.getLogger(__name__)
 
 
 ProgressMsgCallback = Callable[[str], Awaitable[None]]
 
-async def ensure_vectors_aggregated_async(sumo_client: SumoClient, case_uuid: str, ensemble_name: str, table_name: str | None, vector_names: list[str], progress_cb: ProgressMsgCallback) -> bool:
 
-    #vectors_to_aggregate = vector_names
+async def ensure_vectors_aggregated_async(
+    sumo_client: SumoClient,
+    case_uuid: str,
+    ensemble_name: str,
+    table_name: str | None,
+    vector_names: list[str],
+    progress_cb: ProgressMsgCallback,
+) -> bool:
+
+    # vectors_to_aggregate = vector_names
 
     await progress_cb("Checking if any vectors need aggregation")
-    vectors_to_aggregate = await _find_columns_needing_aggregation_async(sumo_client, case_uuid, ensemble_name, vector_names)
+    vectors_to_aggregate = await _find_columns_needing_aggregation_async(
+        sumo_client, case_uuid, ensemble_name, vector_names
+    )
     if not vectors_to_aggregate:
         LOGGER.debug("ensure_vectors_aggregated_async() - No vectors needed aggregation")
         return True
@@ -34,7 +43,9 @@ async def ensure_vectors_aggregated_async(sumo_client: SumoClient, case_uuid: st
     await progress_cb(f"Found {vec_count} vectors needing aggregation")
 
     sumo_status_holder = _SumoTaskStatusHolder(status="not started")
-    agg_task = asyncio.create_task(_batch_aggregate_vectors_async(sumo_client, case_uuid, ensemble_name, vectors_to_aggregate, sumo_status_holder))
+    agg_task = asyncio.create_task(
+        _batch_aggregate_vectors_async(sumo_client, case_uuid, ensemble_name, vectors_to_aggregate, sumo_status_holder)
+    )
 
     try:
         last_reported_status_msg = None
@@ -54,14 +65,16 @@ async def ensure_vectors_aggregated_async(sumo_client: SumoClient, case_uuid: st
             agg_task.cancel()
 
 
-async def _find_columns_needing_aggregation_async(sumo_client: SumoClient, case_uuid: str, ensemble_name: str, column_names: list[str]) -> list[str]:
+async def _find_columns_needing_aggregation_async(
+    sumo_client: SumoClient, case_uuid: str, ensemble_name: str, column_names: list[str]
+) -> list[str]:
     if not column_names:
         return []
 
     sc_base = SearchContext(sumo=sumo_client).tables.filter(
         uuid=case_uuid,
         ensemble=ensemble_name,
-        content=["timeseries", "simulationtimeseries"]
+        content=["timeseries", "simulationtimeseries"],
     )
 
     unique_column_names = list(dict.fromkeys(column_names))
@@ -128,17 +141,24 @@ async def _is_column_agg_valid_async(column_name: str, sc_base: SearchContext) -
 class _SumoTaskStatusHolder:
     status: str
 
-async def _batch_aggregate_vectors_async(sumo_client: SumoClient, case_uuid: str, ensemble_name: str, vector_names: list[str], task_status_holder: _SumoTaskStatusHolder) -> bool:
+
+async def _batch_aggregate_vectors_async(
+    sumo_client: SumoClient,
+    case_uuid: str,
+    ensemble_name: str,
+    vector_names: list[str],
+    task_status_holder: _SumoTaskStatusHolder,
+) -> bool:
     perf_metrics = PerfMetrics()
 
     vec_count = len(vector_names)
     LOGGER.debug(f"_batch_aggregate_vectors_async() - Starting batch aggregate of {vec_count} vectors")
 
     sc_base = SearchContext(sumo=sumo_client).tables.filter(
-            uuid=case_uuid,
-            ensemble=ensemble_name,
-            content=["timeseries", "simulationtimeseries"],
-        )
+        uuid=case_uuid,
+        ensemble=ensemble_name,
+        content=["timeseries", "simulationtimeseries"],
+    )
     sc_real = sc_base.filter(realization=True, aggregation=False)
 
     try:
@@ -154,7 +174,7 @@ async def _batch_aggregate_vectors_async(sumo_client: SumoClient, case_uuid: str
     # When we call aggregate_async() with no_wait=True, we expect the raw httpx.Response object
     # from the underlying POST request to be returned.
     if not isinstance(httpx_resp, httpx.Response):
-        raise TypeError("Unexpected response type from Sumo when submitting statistical surface job")
+        raise TypeError("Unexpected response type from Sumo when submitting aggregation task")
 
     # The full pull location typically looks something like this:
     #   https://main-sumo-prod.radix.equinor.com/api/v1/tasks('3de7a932-14de-4873-8389-fe3a83213638')/result
@@ -175,10 +195,12 @@ async def _batch_aggregate_vectors_async(sumo_client: SumoClient, case_uuid: str
         poll_count += 1
 
         poll_resp_dict = poll_resp.json()
-        #LOGGER.debug(f"_batch_aggregate_vectors_async() - !!!!!!!!!!POLL RESULT({poll_count}) {poll_resp_dict=}")
+        # LOGGER.debug(f"_batch_aggregate_vectors_async() - !!!!!!!!!!POLL RESULT({poll_count}) {poll_resp_dict=}")
 
         status_str = poll_resp_dict["_source"]["status"]
-        LOGGER.debug(f"_batch_aggregate_vectors_async() - Polling result for task on: {poll_path}, status: {status_str}")
+        LOGGER.debug(
+            f"_batch_aggregate_vectors_async() - Polling result for task on: {poll_path}, status: {status_str}"
+        )
         task_status_holder.status = status_str
 
         if status_str in ["succeeded", "failed"]:
@@ -188,7 +210,9 @@ async def _batch_aggregate_vectors_async(sumo_client: SumoClient, case_uuid: str
 
     perf_metrics.record_lap("polling")
 
-    LOGGER.debug(f"_batch_aggregate_vectors_async() - Finished batch aggregate with {status_str=} in: {perf_metrics.to_string_s()}")
+    LOGGER.debug(
+        f"_batch_aggregate_vectors_async() - Finished batch aggregate with {status_str=} in: {perf_metrics.to_string_s()}"
+    )
 
     if status_str == "succeeded":
         return True

@@ -9,8 +9,7 @@ import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Table
 
-from webviz_services.service_exceptions import InvalidDataError, Service
-
+from webviz_services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +29,15 @@ class _TableItem:
 
 ProgressMsgCallback = Callable[[str], Awaitable[None]]
 
-async def create_combined_table_async(sumo_client: SumoClient, case_uuid: str, ensemble_name: str, table_name: str | None, vector_names: list[str], progress_cb: ProgressMsgCallback) -> tuple[pa.Table, CombinedTableInfo]:
+
+async def create_combined_table_async(
+    sumo_client: SumoClient,
+    case_uuid: str,
+    ensemble_name: str,
+    table_name: str | None,
+    vector_names: list[str],
+    progress_cb: ProgressMsgCallback,
+) -> tuple[pa.Table, CombinedTableInfo]:
 
     sc_basis = SearchContext(sumo=sumo_client).tables.filter(
         uuid=case_uuid,
@@ -39,10 +46,13 @@ async def create_combined_table_async(sumo_client: SumoClient, case_uuid: str, e
         content=["timeseries", "simulationtimeseries"],
     )
 
-    # !!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!
-    await asyncio.sleep(2)
+    table_names = await sc_basis.names_async
+    if len(table_names) == 0:
+        raise NoDataError(f"No summary tables found in case={case_uuid}, ensemble={ensemble_name}", Service.SUMO)
+    if len(table_names) > 1:
+        raise MultipleDataMatchesError(
+            f"Multiple summary tables found in case={case_uuid}, ensemble={ensemble_name}: {table_names=}", Service.SUMO
+        )
 
     num_vecs = len(vector_names)
 
@@ -58,8 +68,6 @@ async def create_combined_table_async(sumo_client: SumoClient, case_uuid: str, e
 
         vec_table_pa = await vec_table_obj.to_arrow_async()
         table_arr.append(_TableItem(vec_name=vector_name, table=vec_table_pa, obj_uuid=vec_table_obj.uuid))
-
-
 
     # Concurrent implementation
     # ------------------------------------------------------
@@ -78,7 +86,6 @@ async def create_combined_table_async(sumo_client: SumoClient, case_uuid: str, e
     #     await progress_cb(f"Fetched {completed_count}/{num_vecs} vectors from Sumo")
     #     return _TableItem(vec_name=vector_name, table=vec_table_pa, obj_uuid=vec_table_obj.uuid)
 
-
     # fetch_tasks: dict[str, asyncio.Task[_TableItem]] = {}
     # async with asyncio.TaskGroup() as tg:
     #     for vector_name in vector_names:
@@ -86,8 +93,6 @@ async def create_combined_table_async(sumo_client: SumoClient, case_uuid: str, e
 
     # # Preserve original ordering
     # table_arr: list[_TableItem] = [fetch_tasks[vec_name].result() for vec_name in vector_names]
-
-
 
     await progress_cb(f"Combining summary vector tables for {num_vecs} vectors")
     first_vec_name = table_arr[0].vec_name
@@ -101,10 +106,14 @@ async def create_combined_table_async(sumo_client: SumoClient, case_uuid: str, e
         date_column = src_table.column("DATE")
         if not first_date_column.equals(date_column):
             raise InvalidDataError(
-                f"The DATE columns are not equal: DATE values in aggregated table for {first_vec_name} differ from aggregated table for {vec_name}.", Service.SUMO)
+                f"The DATE columns are not equal: DATE values in aggregated table for {first_vec_name} differ from aggregated table for {vec_name}.",
+                Service.SUMO,
+            )
         if not first_real_column.equals(real_column):
             raise InvalidDataError(
-                f"The REAL columns are not equal: REAL values in aggregated table for {first_vec_name} differ from aggregated table for {vec_name}.", Service.SUMO)
+                f"The REAL columns are not equal: REAL values in aggregated table for {first_vec_name} differ from aggregated table for {vec_name}.",
+                Service.SUMO,
+            )
 
     # Now we can merge the tables by appending the "value" columns
     merged_table = first_table
