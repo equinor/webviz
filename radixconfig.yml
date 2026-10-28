@@ -74,6 +74,8 @@ spec:
       variables:
         UVICORN_PORT: "5000"
         WEBVIZ_VDS_HOST_ADDRESS: "https://server-oneseismic-prod.radix.equinor.com"
+        WEBVIZ_SUMO_CACHE_GLOBAL_RUNTIME_GENERATION: "0"
+        WEBVIZ_SUMO_CACHE_OPERATION_RUNTIME_GENERATIONS: '{"general": 0 }'
 
       # Set non-prod resources and scaling as default, prod overrides below
       resources:
@@ -145,6 +147,8 @@ spec:
       variables:
         WEBVIZ_PYWORKER_SERVICE_BUS_QUEUE_ROLE: "default"
         WEBVIZ_PYWORKER_MAX_CONCURRENT_TASKS: "1"
+        WEBVIZ_SUMO_CACHE_GLOBAL_RUNTIME_GENERATION: "0"
+        WEBVIZ_SUMO_CACHE_OPERATION_RUNTIME_GENERATIONS: '{"general": 0 }'
       resources:
         requests:
           memory: 4Gi
@@ -154,24 +158,15 @@ spec:
         - environment: prod
           # Override with prod clientId
           identity: *identityProdAppId
-          horizontalScaling:
-            minReplicas: 0
-            maxReplicas: 20
-            triggers:
-              - name: azuresb
-                azureServiceBus:
-                  namespace: sbns-webviz-prod
-                  queueName: default
-                  messageCount: 2
-                  authentication: { identity: *identityProdKedaScaler }
+          horizontalScaling: { minReplicas: 0, maxReplicas: 20, triggers: [ { name: azuresb, azureServiceBus: { namespace: sbns-webviz-prod,    queueName: default,         messageCount: 2, authentication: { identity: *identityProdKedaScaler } } } ] }
         - environment: preprod
-          horizontalScaling: { minReplicas: 0, maxReplicas: 5, triggers: [ { name: azuresb, azureServiceBus: { namespace: sbns-webviz-nonprod, queueName: preprod-default, authentication: { identity: *identityNonProdKedaScaler } } } ] }
+          horizontalScaling: { minReplicas: 0, maxReplicas: 5, triggers:  [ { name: azuresb, azureServiceBus: { namespace: sbns-webviz-nonprod, queueName: preprod-default, messageCount: 5, authentication: { identity: *identityNonProdKedaScaler } } } ] }
         - environment: review
-          horizontalScaling: { minReplicas: 0, maxReplicas: 5, triggers: [ { name: azuresb, azureServiceBus: { namespace: sbns-webviz-nonprod, queueName: review-default, authentication: { identity: *identityNonProdKedaScaler } } } ] }
+          horizontalScaling: { minReplicas: 0, maxReplicas: 5, triggers:  [ { name: azuresb, azureServiceBus: { namespace: sbns-webviz-nonprod, queueName: review-default,  messageCount: 5, authentication: { identity: *identityNonProdKedaScaler } } } ] }
         - environment: review2
-          horizontalScaling: { minReplicas: 0, maxReplicas: 5, triggers: [ { name: azuresb, azureServiceBus: { namespace: sbns-webviz-nonprod, queueName: review2-default, authentication: { identity: *identityNonProdKedaScaler } } } ] }
+          horizontalScaling: { minReplicas: 0, maxReplicas: 5, triggers:  [ { name: azuresb, azureServiceBus: { namespace: sbns-webviz-nonprod, queueName: review2-default, messageCount: 5, authentication: { identity: *identityNonProdKedaScaler } } } ] }
         - environment: review3
-          horizontalScaling: { minReplicas: 0, maxReplicas: 5, triggers: [ { name: azuresb, azureServiceBus: { namespace: sbns-webviz-nonprod, queueName: review3-default, authentication: { identity: *identityNonProdKedaScaler } } } ] }
+          horizontalScaling: { minReplicas: 0, maxReplicas: 5, triggers:  [ { name: azuresb, azureServiceBus: { namespace: sbns-webviz-nonprod, queueName: review3-default, messageCount: 5, authentication: { identity: *identityNonProdKedaScaler } } } ] }
 
 
     # -----------------------------------------------------------------

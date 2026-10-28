@@ -33,5 +33,6 @@ import "./WellLogViewer/registerModule";
         await import("./DbgPerformanceTest/registerModule");
         await import("./MyModule/registerModule");
         await import("./DbgWorkbenchSpy/registerModule");
+        await import("./DbgLroTesting/registerModule");
     }
 })();

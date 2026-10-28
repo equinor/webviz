@@ -2,7 +2,6 @@ import type {
     FetchQueryOptions,
     QueryClient,
     QueryKey,
-    QueryObserverResult,
     RefetchOptions,
     RefetchQueryFilters,
 } from "@tanstack/react-query";
@@ -71,27 +70,30 @@ export class ScopedQueryController {
                 }
             };
 
-            // Refetch, and settle with the outcome of that fetch
-            const refetchAndSettle = () => {
-                const refetchPromise = observer.refetch(refetchArgs);
-                // Subscribed while the refetch is pending, so cleanup can cancel the request. Subscribing after
-                // starting the refetch joins it instead of starting another one.
+            // Subscribed while a refetch is pending, so cleanup can cancel the request. Subscribing after starting the
+            // refetch joins it instead of starting another one.
+            const refetchAndKeepCancellable = (args?: RefetchArgs) => {
+                const refetchPromise = observer.refetch(args);
                 entry.unsubscribe = observer.subscribe(() => {});
-                refetchPromise
-                    .then((result) => {
-                        if (result.isError && result.error) {
-                            finish(() => reject(result.error as TError));
-                        } else {
-                            finish(() => resolve(result.data as TData));
-                        }
-                    })
-                    .catch((err) => finish(() => reject(err as TError)));
+                return refetchPromise;
+            };
+
+            // Refetch, and settle with the outcome of that fetch. Throwing on error also rejects when the fetch is
+            // cancelled outside of this controller (e.g. by clearing the query cache), which would otherwise never settle.
+            const refetchAndSettle = () => {
+                try {
+                    refetchAndKeepCancellable({ ...refetchArgs, throwOnError: true })
+                        .then((result) => finish(() => resolve(result.data as TData)))
+                        .catch((err) => finish(() => reject(err as TError)));
+                } catch (err) {
+                    finish(() => reject(err as TError));
+                }
             };
 
             const initial = observer.getCurrentResult();
 
             // Error from cache
-            if (initial.isError && initial.error) {
+            if (initial.isError) {
                 if (refetchOnError) {
                     refetchAndSettle();
                     return;
@@ -101,46 +103,22 @@ export class ScopedQueryController {
             }
 
             // Cache hit
-            if (initial.isSuccess) {
-                if (!initial.isStale || staleWhileRevalidate) {
-                    // Return now; optionally refresh in background
-                    if (initial.isStale && staleWhileRevalidate) {
-                        // resolve now, but don't cleanup until refetch ends
-                        observer.refetch(refetchArgs).finally(() => {
-                            const current = this._entries.get(keyHash);
-                            if (current && current.observer === observer) this.cleanupEntry(keyHash);
-                        });
-                        resolve(initial.data as TData);
-                        return;
-                    }
-                    finish(() => resolve(initial.data as TData));
+            if (initial.isSuccess && (!initial.isStale || staleWhileRevalidate)) {
+                if (initial.isStale) {
+                    // Return now and refresh in the background, but don't cleanup until the refetch ends
+                    refetchAndKeepCancellable(refetchArgs).finally(() => {
+                        const current = this._entries.get(keyHash);
+                        if (current && current.observer === observer) this.cleanupEntry(keyHash);
+                    });
+                    resolve(initial.data as TData);
                     return;
                 }
-
-                // Stale and we want fresh -> wait for refetch
-                refetchAndSettle();
+                finish(() => resolve(initial.data as TData));
                 return;
             }
 
-            // Pending/idle: subscribe and kick refetch
-            entry.unsubscribe = observer.subscribe((result: QueryObserverResult<TData, TError>) => {
-                const current = this._entries.get(keyHash);
-                if (!current || current.observer !== observer) return; // older call, ignore
-
-                if (result.isError && result.error) {
-                    finish(() => reject(result.error));
-                } else if (result.isSuccess) {
-                    finish(() => resolve(result.data));
-                }
-            });
-
-            try {
-                observer.refetch(refetchArgs).catch((err) => {
-                    finish(() => reject(err as TError));
-                });
-            } catch (err) {
-                finish(() => reject(err as TError));
-            }
+            // Nothing cached yet, or stale and we want fresh -> wait for refetch
+            refetchAndSettle();
         });
     }
 

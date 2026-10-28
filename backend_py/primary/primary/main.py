@@ -11,10 +11,12 @@ from starsessions import SessionMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from azure.identity.aio import WorkloadIdentityCredential, ClientSecretCredential
 
+from webviz_core_utils.radix_utils import is_running_on_radix_platform
 from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.sumo_access.sumo_fingerprinter import SumoFingerprinterFactory
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
+from webviz_services.utils.sumo_blob_cache import SumoBlobCacheFactory
 from webviz_services.platform.azure_credentials import create_azure_credential
 from webviz_services.platform.azure_credentials import log_azure_credential_env_var_status
 from webviz_services.platform.message_bus import MessageBusSingleton
@@ -44,6 +46,7 @@ from primary.routers.rft.router import router as rft_router
 from primary.routers.seismic.router import router as seismic_router
 from primary.routers.surface.router import router as surface_router
 from primary.routers.timeseries.router import router as timeseries_router
+from primary.routers.timeseries.router_experimental import router as timeseries_experimental_router
 from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
@@ -67,9 +70,11 @@ logging.getLogger("webviz_services.smda_access").setLevel(logging.DEBUG)
 logging.getLogger("webviz_services.ssdl_access").setLevel(logging.DEBUG)
 logging.getLogger("webviz_services.user_grid3d_service").setLevel(logging.DEBUG)
 logging.getLogger("webviz_services.surface_query_service").setLevel(logging.DEBUG)
+logging.getLogger("webviz_services.utils.sumo_blob_cache").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
+logging.getLogger("primary.routers.timeseries.router_experimental").setLevel(logging.DEBUG)
 logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
 # logging.getLogger("primary.middleware").setLevel(logging.DEBUG)
 # logging.getLogger("primary.auth").setLevel(logging.DEBUG)
@@ -130,6 +135,12 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
 
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
+
+    if is_running_on_radix_platform():
+        SumoBlobCacheFactory.initialize_from_radix_env()
+    else:
+        SumoBlobCacheFactory.initialize_for_local_dev()
+
     if azure_credential is not None:
         TutorialMediaSignerSingleton.initialize(credential=azure_credential)
 
@@ -187,6 +198,9 @@ app.include_router(vfp_router, prefix="/vfp", tags=["vfp"])
 app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
 app.include_router(persistence_router, prefix="/persistence", tags=["persistence"])
 app.include_router(tutorials_router, prefix="/tutorials", tags=["tutorials"])
+
+# Experimental router for combined vector tables
+app.include_router(timeseries_experimental_router, prefix="/timeseries", tags=["timeseries_experimental"])
 
 auth_helper = AuthHelper()
 app.include_router(auth_helper.router)

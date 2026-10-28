@@ -1,0 +1,91 @@
+import asyncio
+import io
+import logging
+
+import pyarrow.parquet as pq
+
+from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
+from webviz_services.utils.task_meta_tracker import TaskState, get_task_meta_tracker_for_user_id
+from webviz_services.utils.sumo_blob_cache import OP_COMBINED_VECTOR_TABLE
+from webviz_services.utils.sumo_blob_cache import get_sumo_blob_cache_from_sumo_client, SumoBlobCache
+
+from .create_combined_table import create_combined_table_async
+from .batch_aggregate import ensure_vectors_aggregated_async
+
+LOGGER = logging.getLogger(__name__)
+
+
+# This function can be run as a background job in primary to facilitate development without going through ServiceBus
+async def bgjob_dev_create_combined_table_async(
+    user_id: str, task_id: str, sumo_access_token: str, case_uuid: str, ensemble_name: str, vector_names: list[str]
+) -> bool:
+    perf_metrics = PerfMetrics()
+    log_prefix = f"##BGJOB-{task_id}: "
+
+    # !!!!!!!!!!!!!!
+    # Simulate a task pending delay
+    await asyncio.sleep(5)
+
+    LOGGER.info(f"{log_prefix}Starting background job for creating combined table")
+
+    task_tracker = get_task_meta_tracker_for_user_id(user_id)
+    initial_task_meta = await task_tracker.get_task_meta_async(task_id)
+    if initial_task_meta is None:
+        LOGGER.error(f"{log_prefix}Task not found in tracker, aborting")
+        return False
+
+    cache_key = initial_task_meta.expected_store_key
+    if not cache_key:
+        LOGGER.error(f"{log_prefix}No cache_key (expected_store_key) found in task meta, cannot proceed")
+        await task_tracker.fail_task_async(
+            task_id, status_msg="Internal error: missing expected_store_key in task meta"
+        )
+        return False
+
+    await task_tracker.set_state_async(task_id, TaskState.RUNNING, status_msg="Creating combined table")
+
+    async def _update_status_msg_async(msg: str) -> None:
+        LOGGER.info(f"{log_prefix} * {msg}")
+        await task_tracker.set_status_message_async(task_id, status_msg=msg)
+
+    try:
+        sumo_client = create_sumo_client(sumo_access_token)
+        perf_metrics.record_lap("init")
+
+        await ensure_vectors_aggregated_async(
+            sumo_client, case_uuid, ensemble_name, None, vector_names, progress_cb=_update_status_msg_async
+        )
+        perf_metrics.record_lap("ensure-aggregated")
+
+        derived_table_pa, derived_table_info = await create_combined_table_async(
+            sumo_client, case_uuid, ensemble_name, None, vector_names, progress_cb=_update_status_msg_async
+        )
+        perf_metrics.record_lap("create-table")
+
+        await task_tracker.set_status_message_async(task_id, status_msg="Storing combined table")
+
+        byte_stream = io.BytesIO()
+        pq.write_table(derived_table_pa, byte_stream, compression="zstd")
+        byte_stream.seek(0)
+
+        blob_cache: SumoBlobCache = get_sumo_blob_cache_from_sumo_client(sumo_client, OP_COMBINED_VECTOR_TABLE)
+        blob_size = byte_stream.getbuffer().nbytes
+        blob_sas_url = await blob_cache.reserve_cache_entry_async(
+            cache_key, source_obj_uuids=derived_table_info.source_obj_uuids, blob_size=blob_size
+        )
+        await blob_cache.upload_reserved_blob_async(blob_sas_url, byte_stream.getvalue())
+        perf_metrics.record_lap("write_cache")
+
+        await task_tracker.set_state_async(task_id, TaskState.SUCCEEDED, status_msg="Combined table ready")
+        LOGGER.info(
+            f"{log_prefix}Finished creating and storing combined table in cache with key {cache_key}. Perf metrics: {perf_metrics.to_string()}"
+        )
+        return True
+
+    except Exception as e:
+        LOGGER.error(f"{log_prefix}Failed to create combined table: {e}")
+        await task_tracker.fail_task_async(
+            task_id, status_msg="Failed to create combined table", internal_error_msg=repr(e)
+        )
+        raise

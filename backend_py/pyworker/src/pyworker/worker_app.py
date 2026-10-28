@@ -17,6 +17,7 @@ from webviz_services.platform.azure_credentials import log_azure_credential_env_
 from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
+from webviz_services.utils.sumo_blob_cache import SumoBlobCacheFactory
 
 from .process_message import process_message_async
 from .worker_config import WorkerConfig, load_worker_config_from_env
@@ -123,8 +124,13 @@ async def _authenticated_sb_client_async(config: WorkerConfig) -> AsyncGenerator
 async def _run_worker_loop_async(config: WorkerConfig, shutdown_event: asyncio.Event) -> None:
     max_concurrency = max(1, config.max_concurrent_tasks)
 
+    # Maximum number of times a message can be delivered before it is dead-lettered.
+    # The value should match the maximum delivery count configured for the Service Bus queue (default is 10).
+    max_message_delivery_count = 10
+
     _logger.info(f"Worker will receive messages from: queue={config.sb_queue_name}, namespace={config.sb_namespace}")
     _logger.info(f"Max concurrent tasks: {max_concurrency}")
+    _logger.info(f"Max message delivery count: {max_message_delivery_count}")
 
     # Use AutoLockRenewer to automatically renew the lock on messages while they are being processed.
     # Without this, if processing takes longer than the configured lock duration (default 1 min),
@@ -177,7 +183,9 @@ async def _run_worker_loop_async(config: WorkerConfig, shutdown_event: asyncio.E
 
                     # Spawn each message as its own task so they are processed concurrently.
                     for msg in messages:
-                        task = asyncio.create_task(process_message_async(sb_receiver, msg, abort_signal))
+                        task = asyncio.create_task(
+                            process_message_async(sb_receiver, msg, max_message_delivery_count, abort_signal)
+                        )
                         in_flight_tasks.add(task)
 
                         # The discard callback is used to remove the task from the in_flight_tasks set when it is done
@@ -227,6 +235,12 @@ async def run_app_async() -> None:
     init_services_config(services_config)
 
     TaskMetaTrackerFactory.initialize(redis_url=worker_config.redis_cache_url)
+
+    if is_running_on_radix_platform():
+        SumoBlobCacheFactory.initialize_from_radix_env()
+    else:
+        SumoBlobCacheFactory.initialize_for_local_dev()
+
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
     message_decryption.initialize(worker_config.sb_payload_fernet_key)
 

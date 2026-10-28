@@ -267,6 +267,28 @@ isodate = ">=0.6.0"
 typing-extensions = ">=4.6.0"
 
 [[package]]
+name = "azure-storage-blob"
+version = "12.31.0"
+description = "Microsoft Azure Blob Storage Client Library for Python"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "azure_storage_blob-12.31.0-py3-none-any.whl", hash = "sha256:0c0cb601d3462491d09ea96023cd791bb9dd4b173bf950daf3cff34ff47ba5b5"},
+    {file = "azure_storage_blob-12.31.0.tar.gz", hash = "sha256:997b393cfcbdc4b186d5911790d91f80387f7edc12c4d73eab963a2d26e5b2a9"},
+]
+
+[package.dependencies]
+azure-core = ">=1.37.0"
+cryptography = ">=2.1.4"
+isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
+
+[package.extras]
+aio = ["azure-core[aio] (>=1.37.0)"]
+ext-checksums = ["azure-storage-extensions (>=0.1.0,<1.0.0)"]
+
+[[package]]
 name = "certifi"
 version = "2026.4.22"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -3583,4 +3605,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "8196f5c30cbb7e479b1fe30e36d7788d5578e3fb66ffa43c62f4f53578a804fe"
+content-hash = "380aa59997a2388ad576baa89c194f963bf17b7611ff8dbf9104a8052c4b1c13"
