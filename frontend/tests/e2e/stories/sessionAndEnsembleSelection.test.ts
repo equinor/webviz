@@ -65,14 +65,14 @@ test.describe("Session and ensemble selection", () => {
 
         markStep("Organize work across dashboards");
         const dashboardsIntroNarration = narrate(
-            "A session isn't limited to a single dashboard. The bar along the bottom lets you organize several — add new ones, duplicate them, rename them, and reorder them.",
+            "A session isn't limited to a single dashboard. The bar along the bottom lets you add new ones, duplicate them, rename them, and reorder them.",
         );
         await smoothMoveToLocator(page, page.getByRole("tablist", { name: "Dashboards" }));
         await dashboardsIntroNarration;
         await pace(page);
 
         const renameNarration = narrate(
-            "Each dashboard has an actions menu. Edit metadata lets us give this first one a meaningful title.",
+            "Each dashboard has an actions menu. Clicking on Edit lets us give the dashboards a title and optionally also a description.",
         );
         await smoothClick(page, page.getByRole("button", { name: "Open actions for Dashboard 1", exact: true }));
         await smoothClick(page, page.getByRole("menuitem", { name: "Edit metadata" }));
@@ -85,7 +85,7 @@ test.describe("Session and ensemble selection", () => {
         await pace(page);
 
         const addDashboardNarration = narrate(
-            "The plus button adds a fresh, empty dashboard, which becomes active so we can build it out separately. We'll give it a title too.",
+            "The plus button adds a fresh, empty dashboard. We'll give it a title too.",
         );
         await smoothClick(page, page.getByRole("button", { name: "Add new dashboard" }));
         await expect(page.getByRole("tab", { name: "Dashboard 2", exact: true })).toBeVisible();
@@ -100,7 +100,7 @@ test.describe("Session and ensemble selection", () => {
         await pace(page);
 
         const copyNarration = narrate(
-            "Create a copy duplicates a dashboard with all of its modules, so you can branch off an existing layout instead of starting from scratch.",
+            "Create a copy duplicates a dashboard with all of its modules and chosen settings, so you can branch off an existing dashboard instead of starting from scratch.",
         );
         await smoothClick(
             page,
@@ -114,7 +114,7 @@ test.describe("Session and ensemble selection", () => {
         await pace(page);
 
         const reorderNarration = narrate(
-            "And the Move left and Move right actions reorder the dashboards until the sequence tells the story you want.",
+            "The Move left and Move right actions reorder the dashboards until the sequence tells the story you want.",
         );
         const copyActionsLabel = `Open actions for ${DASHBOARD_OVERVIEW_TITLE} (Copy)`;
         await smoothClick(page, page.getByRole("button", { name: copyActionsLabel, exact: true }));
@@ -156,7 +156,7 @@ test.describe("Session and ensemble selection", () => {
 
         markStep("Create and share a snapshot");
         const snapshotNarration = narrate(
-            "A snapshot captures the current dashboard as a read-only, shareable link — perfect for handing a specific view to a colleague.",
+            "A snapshot creates a read-only link to this dashboard. Anyone with the link who can access the underlying Sumo data will see the dashboards exactly as they appeared when the snapshot was created.",
         );
         await smoothClick(page, page.getByRole("button", { name: "Make a snapshot of the current session" }));
         await expect(page.getByRole("heading", { name: "Create Snapshot", exact: true })).toBeVisible();

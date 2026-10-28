@@ -59,18 +59,22 @@ test.describe("Data channels", () => {
         await introNarration;
 
         markStep("Two module categories");
-        const categoriesNarration = narrate(
-            "Notice the module list is split into two categories: main modules, which produce and publish data, and sub-modules, which subscribe to a channel to visualize what they receive.",
-        );
         await smoothMoveToLocator(page, page.getByRole("button", { name: "Main modules", exact: true }));
-        await pace(page, "short");
+        const mainModulesNarration = narrate(
+            "The module list is split into two categories. Main modules produce and publish data.",
+        );
+        await mainModulesNarration;
+
         await smoothMoveToLocator(page, page.getByRole("button", { name: "Sub modules", exact: true }));
-        await categoriesNarration;
+        const subModulesNarration = narrate(
+            "Sub-modules subscribe to a channel to visualize the data they receive.",
+        );
+        await subModulesNarration;
         await pace(page, "long");
 
         markStep("Add a Simulation Time Series module");
         const timeSeriesNarration = narrate(
-            "We start with a Simulation Time Series, plotting well A1's bottom hole pressure as individual realizations.",
+            "We start with a Simulation Time Series, plotting well A1's bottom-hole pressure as individual realizations.",
         );
         // Keep the modules list open across both drags (the layout's edge drop zones work with it
         // open); it's closed once both modules are placed.
@@ -89,7 +93,7 @@ test.describe("Data channels", () => {
 
         markStep("Add a Distribution Plot sub-module");
         const distributionNarration = narrate(
-            "Below it we add a Distribution Plot, a sub-module that visualizes whatever data it receives through a channel. On its own it has nothing to show yet.",
+            "Below it we add a Distribution Plot, a sub-module that visualizes whatever data it receives through a channel. On its own it has nothing to show.",
         );
         await dragModuleOntoLayout(page, DISTRIBUTION_PLOT, "bottom");
         // Both modules are placed; close the list to give them more room.
@@ -101,7 +105,7 @@ test.describe("Data channels", () => {
 
         markStep("Connect a data channel");
         const connectNarration = narrate(
-            "To feed it data, we grab the time series module's data channel output and drag it onto the Distribution Plot's X-axis receiver.",
+            "To feed it data, we grab the time series module's data channel output and drag it onto the Distribution plot X-axis receiver.",
         );
         await connectDataChannel(page, "channelX");
         await connectNarration;
@@ -109,7 +113,7 @@ test.describe("Data channels", () => {
         // Once connected, the Distribution Plot renders its own plot, so there are now two plots.
         await expect(moduleLayout.locator(".js-plotly-plot")).toHaveCount(2, { timeout: 30_000 });
         await narrate(
-            "Now the Distribution Plot shows a histogram of well A1's bottom hole pressure across all realizations, at the time step selected in the time series.",
+            "Now the Distribution plot shows a histogram of well A1's bottom-hole pressure across all realizations, at the time step selected in the time series.",
         );
         await pace(page, "long");
 
@@ -125,7 +129,7 @@ test.describe("Data channels", () => {
         await pace(page, "long");
 
         const crossPlotNarration = narrate(
-            "We point the X-axis channel at the bottom hole pressure, then drag a second connection to the Y-axis receiver for the tubing head pressure.",
+            "We point the X-axis channel at the bottom-hole pressure, then drag a second connection to the Y-axis receiver for the tubing head pressure.",
         );
         // Re-point channel X to just the bottom hole pressure, then connect channel Y to the tubing head
         // pressure. The content selector lists contents by vector name (e.g. "WBHP:A1 (iter-0)").
@@ -159,7 +163,7 @@ test.describe("Data channels", () => {
         // plot never sits in the invalid state of a colour scatter without a colour channel.
         await smoothClick(page, moduleLayout.getByText(DISTRIBUTION_PLOT).first());
         const colorScatterNarration = narrate(
-            "We feed the gas-oil ratio into the plot's colour channel and switch to a colour-mapped scatter: each point keeps its pressure coordinates, but its colour now encodes that realization's gas-oil ratio.",
+            "We feed the gas-oil ratio into the colour channel and switch to a colour-mapped scatter. The colour now encodes each realization's gas-oil ratio.",
         );
         await connectDataChannel(page, "channelColorMapping", { contentLabel: "WGOR:A1" });
         await smoothClick(page, plotTypeRow.getByRole("combobox"));
@@ -170,7 +174,7 @@ test.describe("Data channels", () => {
 
         markStep("Move the time slice");
         const sliceNarration = narrate(
-            "Because the channels publish the per-realization values at the selected time step, clicking different points along the time series updates the scatter for that moment in time. Let's step through time and watch the cloud of points shift and recolour.",
+            "Because the channels publish per-realization values at the selected time step, clicking different points along the time series updates the scatter for that moment in time.",
         );
         // Clicking a point in the time series chart sets the active time step the channels publish.
         // Step through several evenly spaced times so the scatter visibly updates for each.
@@ -189,7 +193,7 @@ test.describe("Data channels", () => {
 
         markStep("Cross-plot across modules");
         const crossModuleNarration = narrate(
-            "Channels also connect different modules. Let's add an Inplace Volumes Plot and cross-plot a dynamic response against a static volume.",
+            "Data channels also can connect different modules. Let's add an Inplace Volumes Plot and cross-plot a dynamic volume against a static volume.",
         );
         // Swap the three well vectors for the field gas in place, then add the volumes module to the
         // right of the layout.
@@ -225,9 +229,8 @@ test.describe("Data channels", () => {
         await smoothClick(page, page.getByRole("option", { name: /^GIIP_TOTAL/ }), { timeout: 20_000 });
         await pace(page, "long");
 
-        markStep("Connect FGIP against GIIP");
         const connectCrossNarration = narrate(
-            "We point the X axis at the field gas in place from the dynamic model, and the Y axis at the static gas initially in place from the volumes module, a connection that spans two different modules.",
+            "We point the X axis at the gas in place from the dynamic model, and the Y axis at the gas initially in place from the volumes module. This creates data channel connections that span two different modules.",
         );
         // The scatter is still a colour-mapped scatter whose colour vector we just removed; drop back to
         // a plain Scatter 2D so the cross-module plot renders without a colour channel.
@@ -248,9 +251,8 @@ test.describe("Data channels", () => {
         await connectCrossNarration;
         await pace(page, "long");
 
-        markStep("Watch the correlation evolve over time");
         const correlationNarration = narrate(
-            "At the first time step the two match perfectly: the field gas in place equals the gas initially in place, so the points lie on a straight diagonal. Stepping forward in time, gas is produced from the dynamic model, the field gas in place drops, and the correlation breaks down.",
+            "At the first time step the two match perfectly: the field gas in place equals the gas initially in place, so the points lie on a straight diagonal. Stepping forward in time, gas is produced from the dynamic model and the correlation becomes poorer as expected.",
         );
         // Step from the earliest time (perfect correlation) forward (correlation degrades).
         const crossDragArea = timeSeriesPlot.locator(".nsewdrag").first();
@@ -269,7 +271,7 @@ test.describe("Data channels", () => {
         await captureThumbnail(page);
 
         await narrate(
-            "That's the essence of data channels: compose a dashboard by piping one module's output into another module's input.",
+            "That's the essence of data channels: piping one or more module output into another module's input, in order to correlate and visualize different data sets.", 
         );
     });
 });

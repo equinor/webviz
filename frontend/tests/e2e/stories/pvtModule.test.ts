@@ -40,7 +40,7 @@ test.describe("PVT module", () => {
         await pace(page);
 
         const introNarration = narrate(
-            "The PVT module plots the pressure-dependent fluid properties that describe how the reservoir's oil, gas and water behave, read straight from the simulator's PVT tables.",
+            "The PVT module plots the fluid properties given to the reservoir simulator.",
         );
         // Open the module's info popover so its description is on screen during the introduction.
         await smoothClick(page, moduleListItem.getByRole("button").last());
@@ -70,42 +70,28 @@ test.describe("PVT module", () => {
         await expect(plot.locator(".scatterlayer .js-line").first()).toBeVisible({ timeout: 90_000 });
 
         await narrate(
-            "By default it shows the oil phase, PVTO. The four subplots are the oil formation volume factor Bo, the density, the viscosity, and the fluid ratio, which for oil is the solution gas-oil ratio Rs, each as a function of pressure.",
+            "By default it shows the oil phase. The four subplots initially shown are the formation volume factor, density, viscosity, and maximum fluid ratio which for oil is the solution gas-oil ratio Rs. Each are plotted with pressure along the x-axis. Note that only the last one is a single function, while the others represent a family of curves or functions, each line segment representing different Rs values.",
         );
-
-        markStep("Compare across realizations");
-        const realizationsRow = page.locator(".setting-row").filter({ hasText: "Realizations" });
-        const realizationsNarration = narrate(
-            "Each curve is a single realization. Selecting several realizations shows how much the fluid description varies across the ensemble.",
-        );
-        // Click the first realization to anchor the selection, then shift-click a later one to select
-        // a contiguous range (the list is multi-select while grouping by ensemble).
-        await smoothClick(page, realizationsRow.getByText("0", { exact: true }));
-        await smoothClick(page, realizationsRow.getByText("2", { exact: true }), { modifiers: ["Shift"] });
-        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
-        await realizationsNarration;
 
         markStep("Switch the fluid phase");
         const phaseRow = page.locator(".setting-row").filter({ hasText: "Phase" });
         const phaseNarration = narrate(
-            "We can switch the fluid phase. The gas phase, PVTG, shows the same properties for gas; here the fluid ratio is Rv, the vaporized oil-gas ratio.",
+            "We can switch the fluid phase. The gas phase shows the same properties for gas. Here the fluid ratio is Rv, the vaporized oil-gas ratio.",
         );
         await smoothClick(page, phaseRow.getByRole("combobox"));
         await smoothClick(page, page.getByRole("option", { name: "Gas (PVTG)", exact: true }));
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
         await phaseNarration;
 
-        markStep("Choose which properties to plot");
-        const showPlotForRow = page.locator(".setting-row").filter({ hasText: "Show plot for" });
-        const plotsNarration = narrate(
-            "We can also choose which properties to plot. Let's focus on just the formation volume factor and the viscosity.",
-        );
-        await smoothClick(page, showPlotForRow.getByText("Density", { exact: true }));
-        await smoothClick(page, showPlotForRow.getByText("Fluid Ratio", { exact: true }));
-        await plotsNarration;
-        await pace(page, "long");
-
         markStep("Compare across PVT regions");
+        const oilPhaseNarration = narrate(
+            "Let's switch back to the oil phase.",
+        );
+        await smoothClick(page, phaseRow.getByRole("combobox"));
+        await smoothClick(page, page.getByRole("option", { name: "Oil (PVTO)", exact: true }));
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await oilPhaseNarration;
+
         const groupByRow = page.locator(".setting-row").filter({ hasText: "Group by" });
         const pvtNumRow = page.locator(".setting-row").filter({ hasText: "PVT Num" });
         const pvtNumNarration = narrate(

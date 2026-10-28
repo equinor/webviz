@@ -77,6 +77,8 @@ test.describe("Relative Permeability module", () => {
         await expect(plot).toBeVisible({ timeout: 90_000 });
         await expect(plot.locator(".scatterlayer .js-line").first()).toBeVisible({ timeout: 90_000 });
 
+        await expandSettingSection("Selection");
+        await expandSettingSection("Plot");
         await narrate(
             "By default the module shows the water relative permeability curves, KRW and KROW, plotted against water saturation for the first saturation region. The darker inner band spans the P90 to P10 range, covering most realizations, while the lighter outer band stretches out to the minimum and maximum. The solid line is the mean, and the dotted line the P50.",
         );
