@@ -195,8 +195,6 @@ async def _batch_aggregate_vectors_async(
         poll_count += 1
 
         poll_resp_dict = poll_resp.json()
-        # LOGGER.debug(f"_batch_aggregate_vectors_async() - !!!!!!!!!!POLL RESULT({poll_count}) {poll_resp_dict=}")
-
         status_str = poll_resp_dict["_source"]["status"]
         LOGGER.debug(
             f"_batch_aggregate_vectors_async() - Polling result for task on: {poll_path}, status: {status_str}"
