@@ -26,9 +26,18 @@ import type {
     GetAliveResponses_api,
     GetAssetInfosData_api,
     GetAssetInfosResponses_api,
+    GetCalcSomethingOnCombinedTableData_api,
+    GetCalcSomethingOnCombinedTableErrors_api,
+    GetCalcSomethingOnCombinedTableResponses_api,
     GetCasesData_api,
     GetCasesErrors_api,
     GetCasesResponses_api,
+    GetCombinedTableInfoData_api,
+    GetCombinedTableInfoErrors_api,
+    GetCombinedTableInfoResponses_api,
+    GetCombinedVectorTableHybridData_api,
+    GetCombinedVectorTableHybridErrors_api,
+    GetCombinedVectorTableHybridResponses_api,
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleRealizationsVectorDataErrors_api,
     GetDeltaEnsembleRealizationsVectorDataResponses_api,
@@ -1935,6 +1944,54 @@ export const getMediaSasToken = <ThrowOnError extends boolean = false>(
     (options?.client ?? client).get<GetMediaSasTokenResponses_api, unknown, ThrowOnError>({
         responseType: "json",
         url: "/tutorials/media_sas_token",
+        ...options,
+    });
+
+/**
+ * Get Combined Vector Table Hybrid
+ */
+export const getCombinedVectorTableHybrid = <ThrowOnError extends boolean = false>(
+    options: Options<GetCombinedVectorTableHybridData_api, ThrowOnError>,
+): RequestResult<GetCombinedVectorTableHybridResponses_api, GetCombinedVectorTableHybridErrors_api, ThrowOnError> =>
+    (options.client ?? client).get<
+        GetCombinedVectorTableHybridResponses_api,
+        GetCombinedVectorTableHybridErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/timeseries/combined_vector_table_hybrid",
+        ...options,
+    });
+
+/**
+ * Get Combined Table Info
+ */
+export const getCombinedTableInfo = <ThrowOnError extends boolean = false>(
+    options: Options<GetCombinedTableInfoData_api, ThrowOnError>,
+): RequestResult<GetCombinedTableInfoResponses_api, GetCombinedTableInfoErrors_api, ThrowOnError> =>
+    (options.client ?? client).get<GetCombinedTableInfoResponses_api, GetCombinedTableInfoErrors_api, ThrowOnError>({
+        responseType: "json",
+        url: "/timeseries/combined_table_info",
+        ...options,
+    });
+
+/**
+ * Get Calc Something On Combined Table
+ */
+export const getCalcSomethingOnCombinedTable = <ThrowOnError extends boolean = false>(
+    options: Options<GetCalcSomethingOnCombinedTableData_api, ThrowOnError>,
+): RequestResult<
+    GetCalcSomethingOnCombinedTableResponses_api,
+    GetCalcSomethingOnCombinedTableErrors_api,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        GetCalcSomethingOnCombinedTableResponses_api,
+        GetCalcSomethingOnCombinedTableErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/timeseries/calc_something_on_combined_table",
         ...options,
     });
 

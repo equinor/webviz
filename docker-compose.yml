@@ -39,6 +39,8 @@ services:
       - WEBVIZ_REDIS_AUTH_STORE_PASSWORD
       - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
       - WEBVIZ_REDIS_CACHE_PASSWORD
+      - WEBVIZ_SUMO_CACHE_GLOBAL_RUNTIME_GENERATION
+      - WEBVIZ_SUMO_CACHE_OPERATION_RUNTIME_GENERATIONS
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
     volumes:
@@ -123,11 +125,13 @@ services:
       - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
       - WEBVIZ_PYWORKER_SERVICE_BUS_QUEUE_ROLE=default
       - WEBVIZ_PYWORKER_MAX_CONCURRENT_TASKS=1
+      - WEBVIZ_SUMO_CACHE_GLOBAL_RUNTIME_GENERATION
+      - WEBVIZ_SUMO_CACHE_OPERATION_RUNTIME_GENERATIONS
       - APPLICATIONINSIGHTS_CONNECTION_STRING
     volumes:
       - ./backend_py/pyworker/src:/home/appuser/backend_py/pyworker/src
       - ./backend_py/libs:/home/appuser/backend_py/libs
-    command: ["watchfiles", "python -m pyworker.worker_main", "/home/appuser/backend_py/pyworker/src"]
+    command: ["watchfiles", "python -m pyworker.worker_main", "/home/appuser/backend_py/pyworker/src", "/home/appuser/backend_py/libs"]
     #command: ["python", "-m", "pyworker.worker_main"]
     #restart: on-failure
     restart: always

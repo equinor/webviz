@@ -12,7 +12,9 @@ from webviz_server_schemas.pyworker.messages import WorkerOperation
 from .utils.worker_logging import LogScope
 from .utils.abort_signal import AbortSignal
 from .task_exceptions import TaskFailedError, TaskDeferredError, TaskAbortedError, TaskInternalError
+from .task_runner import run_tracked_user_task_async
 from .tasks.dev_test_task import dev_test_task_async
+from .tasks.create_combined_vector_table_task import create_combined_vector_table_task_async
 
 _logger = logging.getLogger(__name__)
 _tracer = trace.get_tracer(__name__)
@@ -20,7 +22,7 @@ _tracer = trace.get_tracer(__name__)
 
 # pylint: disable-next=too-many-statements
 async def process_message_async(
-    receiver: ServiceBusReceiver, msg: ServiceBusReceivedMessage, _abort_signal: AbortSignal
+    receiver: ServiceBusReceiver, msg: ServiceBusReceivedMessage, max_delivery_count: int, abort_signal: AbortSignal
 ) -> None:
     """
     Processes a single Service Bus message, dispatching to the appropriate handler based on the
@@ -46,6 +48,11 @@ async def process_message_async(
                 match worker_op:
                     case WorkerOperation.DEV_TEST:
                         await dev_test_task_async(msg)
+
+                    case WorkerOperation.CREATE_COMBINED_VECTOR_TABLE:
+                        await run_tracked_user_task_async(
+                            msg, create_combined_vector_table_task_async, abort_signal, max_delivery_count
+                        )
 
                     case _:
                         err_msg = f"Unknown worker operation: {worker_op}"

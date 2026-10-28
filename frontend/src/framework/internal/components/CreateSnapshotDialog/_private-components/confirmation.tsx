@@ -28,7 +28,9 @@ export function Confirmation(props: ConfirmationProps): React.ReactNode {
             <TextInputCompositions.WithCopyButton ref={inputRef} value={props.snapshotUrl} className="w-full" />
             <Banner tone="warning">
                 <ul className="pl-sm list-outside list-disc">
-                    <li>Snapshots are not guaranteed to persist, as underlying data or module states may change.</li>
+                    <li>
+                        Snapshots are not guaranteed to keep working, as underlying data or module states may change.
+                    </li>
                     <li>
                         All Equinor-onboarded users with the link can access the snapshot settings; access to the data
                         itself requires appropriate permissions (Sumo, SMDA, SSDL etc.).

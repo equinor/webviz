@@ -497,8 +497,12 @@ async def _get_stratigraphic_units_for_strat_column_async(
     smda_access: SmdaAccess | DrogonSmdaAccess
     if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
         smda_access = DrogonSmdaAccess()
-    else:
+    elif authenticated_user.has_smda_access_token():
         smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
+    else:
+        # Stratigraphy is only used for ordering surface names, so users without SMDA access still get the surfaces
+        LOGGER.info("User has no SMDA access, skipping stratigraphic ordering of surfaces")
+        return []
 
     strat_units = await smda_access.get_stratigraphic_units_async(strat_column_identifier)
     perf_metrics.record_lap("get-strat-units")

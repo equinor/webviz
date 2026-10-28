@@ -16,6 +16,7 @@ NonEmptyList = Annotated[list[T], Len(min_length=1)]
 # These represent the possible values for the "subject" field in ServiceBus messages
 class WorkerOperation(StrEnum):
     DEV_TEST = "dev-test"
+    CREATE_COMBINED_VECTOR_TABLE = "create-combined-vector-table"
 
 
 # Base class for tracked user tasks.
@@ -30,3 +31,10 @@ class DevTestMsg(BaseModel):
     text: NonEmptyStr
     encrypted_text: NonEmptyBytes
     sleep_duration_s: float
+
+
+class CreateCombinedVectorTableMsg(UserTaskMsgHeader):
+    case_uuid: NonEmptyStr
+    ensemble_name: NonEmptyStr
+    vector_names: NonEmptyList[NonEmptyStr]
+    encrypted_access_token: NonEmptyBytes
