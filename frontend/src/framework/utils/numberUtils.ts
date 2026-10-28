@@ -96,3 +96,7 @@ export function getNumbersAndRanges(sortedNumbers: number[], skippedNumbers?: Se
 
     return numbersOrRanges;
 }
+
+export function randomInteger(min: number, max: number) {
+    return Math.floor(Math.random() * (max - min) + min);
+}
