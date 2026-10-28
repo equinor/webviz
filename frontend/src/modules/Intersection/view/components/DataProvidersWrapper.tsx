@@ -175,7 +175,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
 
     // Retrieve action-required messages from assembler (e.g. invalid layer settings)
     for (const message of assemblerProduct.aggregatedActionRequiredMessages) {
-        statusWriter.addActionRequired(message);
+        statusWriter.flagActionRequired(message);
     }
 
     // Set loading status

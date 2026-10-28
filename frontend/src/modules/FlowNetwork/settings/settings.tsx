@@ -14,7 +14,7 @@ import { Setting } from "@lib/components/Setting";
 import type { SettingAnnotation } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
 import { TextInput } from "@lib/components/TextInput";
-import { useAddActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
+import { useFlagActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
@@ -43,7 +43,7 @@ import { realizationFlowNetworkQueryAtom } from "./atoms/queryAtoms";
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
-    const addActionRequiredToStatusWriter = useAddActionRequiredToStatusWriter(statusWriter);
+    const flagActionRequiredToStatusWriter = useFlagActionRequiredToStatusWriter(statusWriter);
 
     const availableRealizations = useAtomValue(availableRealizationsAtom);
     const availableTreeTypes = useAtomValue(availableTreeTypesAtom);
@@ -122,9 +122,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const handleSettingsAnnotationsChange = React.useCallback(
         function handleSettingsAnnotationsChange(annotations: SettingAnnotation[]) {
             const invalidFieldValueMessages = annotations.filter((a) => a.type === "error").map((a) => a.message);
-            addActionRequiredToStatusWriter(invalidFieldValueMessages);
+            flagActionRequiredToStatusWriter(invalidFieldValueMessages);
         },
-        [addActionRequiredToStatusWriter],
+        [flagActionRequiredToStatusWriter],
     );
 
     return (

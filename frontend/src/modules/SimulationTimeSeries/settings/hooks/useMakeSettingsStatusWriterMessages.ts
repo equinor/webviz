@@ -7,7 +7,7 @@ import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import type { SettingAnnotation } from "@lib/components/Setting";
-import { useAddActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
+import { useFlagActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
 import { propagateQueryErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 
@@ -34,16 +34,16 @@ export function useMakeSettingsStatusWriterMessages(
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value ?? [];
     const selectedVectorNames = useAtomValue(selectedVectorNamesAtom);
-    const addActionRequiredToStatusWriter = useAddActionRequiredToStatusWriter(statusWriter);
+    const flagActionRequiredToStatusWriter = useFlagActionRequiredToStatusWriter(statusWriter);
 
     propagateQueryErrorsToStatusWriter(vectorListQueries, statusWriter);
 
     const handlePanelAnnotationsChange = React.useCallback(
         function handlePanelAnnotationsChange(annotations: SettingAnnotation[]) {
             const invalidFieldValueMessages = annotations.filter((a) => a.type === "error").map((a) => a.message);
-            addActionRequiredToStatusWriter(invalidFieldValueMessages);
+            flagActionRequiredToStatusWriter(invalidFieldValueMessages);
         },
-        [addActionRequiredToStatusWriter],
+        [flagActionRequiredToStatusWriter],
     );
 
     function warnIfVectorsMissingInEnsemble(

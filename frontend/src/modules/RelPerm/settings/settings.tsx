@@ -14,6 +14,7 @@ import { RadioCompositions } from "@lib/components/Radio/compositions";
 import type { SelectOption } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -50,13 +51,7 @@ import {
     selectedTableNameAtom,
 } from "./atoms/persistableFixableAtoms";
 import { relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
-import {
-    useSelectedCurveNamesAnnotations,
-    useSelectedEnsembleIdentsAnnotations,
-    useSelectedSaturationAxisNameAnnotations,
-    useSelectedSatnumsAnnotations,
-    useSelectedTableNameAnnotations,
-} from "./hooks/settingAnnotationHooks";
+import { useSelectedTableNameAnnotations } from "./hooks/settingAnnotationHooks";
 import { useEnsemblesWarningMessage } from "./hooks/useEnsemblesWarningMessage";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
@@ -113,11 +108,12 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [selectedGroupBy, setSelectedGroupBy] = useAtom(selectedGroupByAtom);
     const [selectedYAxisScale, setSelectedYAxisScale] = useAtom(selectedYAxisScaleAtom);
 
-    const selectedEnsembleIdentsAnnotations = useSelectedEnsembleIdentsAnnotations();
+    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
     const selectedTableNameAnnotations = useSelectedTableNameAnnotations();
-    const selectedSaturationAxisNameAnnotations = useSelectedSaturationAxisNameAnnotations();
-    const selectedCurveNamesAnnotations = useSelectedCurveNamesAnnotations();
-    const selectedSatnumsAnnotations = useSelectedSatnumsAnnotations();
+    const selectedSaturationAxisNameAnnotations =
+        useMakePersistableFixableAtomAnnotations(selectedSaturationAxisNameAtom);
+    const selectedCurveNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedCurveNamesAtom);
+    const selectedSatnumsAnnotations = useMakePersistableFixableAtomAnnotations(selectedSatnumsAtom);
     const { handlePanelAnnotationsChange } = useMakeSettingsStatusWriterMessages(
         statusWriter,
         ensembleSet,

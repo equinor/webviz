@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { Overlay } from "./Field";
+import type { Overlay } from "../_components/Field";
 
 /**
  * Reports a Setting.Field's current overlay to an ancestor, keyed by field id. `null` retracts the

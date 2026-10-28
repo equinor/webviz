@@ -9,8 +9,8 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { Typography } from "@lib/components/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { FieldStatusSummary } from "./SectionStatusContext";
-import { SectionStatusContext } from "./SectionStatusContext";
+import type { FieldStatusSummary } from "../_contexts/SectionStatusContext";
+import { SectionStatusContext } from "../_contexts/SectionStatusContext";
 
 export type SectionProps = {
     /** The label shown in the collapsible section header. */
@@ -76,19 +76,19 @@ export function Section(props: SectionProps) {
         [],
     );
 
-    let blockCount = 0;
+    let invalidCount = 0;
     let errorCount = 0;
     let warningCount = 0;
     let infoCount = 0;
     for (const summary of fieldAnnotations.values()) {
-        if (summary.hasInvalidValue) blockCount++;
+        if (summary.hasInvalidValue) invalidCount++;
         if (summary.hasError) errorCount++;
         if (summary.hasWarning) warningCount++;
         if (summary.hasInfo) infoCount++;
     }
 
     // Only errors recolor the header; warning/info are conveyed by the header icons and counts
-    const toneOverride: "danger" | undefined = blockCount > 0 || errorCount > 0 ? "danger" : undefined;
+    const toneOverride: "danger" | undefined = invalidCount > 0 || errorCount > 0 ? "danger" : undefined;
 
     return (
         <Collapsible.Root
@@ -112,7 +112,7 @@ export function Section(props: SectionProps) {
                     </Typography>
                 </Collapsible.Trigger>
                 <EndActions
-                    numInvalid={blockCount}
+                    numInvalid={invalidCount}
                     numErrors={errorCount}
                     numWarnings={warningCount}
                     numInfos={infoCount}

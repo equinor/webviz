@@ -4,11 +4,12 @@ import { isEqual } from "lodash-es";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 
+import { PanelAnnotationsContext } from "../_contexts/PanelAnnotationsContext";
+import type { BannerMessage } from "../_contexts/PanelBannerMessagesContext";
+import { PanelBannerMessagesContext } from "../_contexts/PanelBannerMessagesContext";
+import { PanelOverlaysContext } from "../_contexts/PanelOverlaysContext";
+
 import type { SettingAnnotation, Overlay } from "./Field";
-import { PanelAnnotationsContext } from "./PanelAnnotationsContext";
-import type { BannerMessage } from "./PanelBannerMessagesContext";
-import { PanelBannerMessagesContext } from "./PanelBannerMessagesContext";
-import { PanelOverlaysContext } from "./PanelOverlaysContext";
 
 export type PanelProps = {
     /** The Setting.Field items to render inside the panel. */
@@ -27,6 +28,25 @@ const LAYOUT_BREAKPOINT = 350;
 
 export const LayoutContext = React.createContext<Layout>("inline");
 
+/**
+ * Returns a record with the entry for `key` set to `value`, or removed when `value` is null.
+ * Returns the same record reference when nothing changes, so state updates can bail out.
+ */
+function setOrRemoveEntry<T>(record: Record<string, T>, key: string, value: T | null): Record<string, T> {
+    if (value === null) {
+        if (!(key in record)) {
+            return record;
+        }
+        const next = { ...record };
+        delete next[key];
+        return next;
+    }
+    if (isEqual(record[key], value)) {
+        return record;
+    }
+    return { ...record, [key]: value };
+}
+
 export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(function Panel(props, ref) {
     const { onAnnotationsChange, onOverlaysChange, onBannerMessagesChange } = props;
 
@@ -40,20 +60,7 @@ export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(function Panel
         fieldId: string,
         annotations: SettingAnnotation[],
     ) {
-        setFieldAnnotations((prev) => {
-            if (annotations.length === 0) {
-                if (!(fieldId in prev)) {
-                    return prev;
-                }
-                const next = { ...prev };
-                delete next[fieldId];
-                return next;
-            }
-            if (isEqual(prev[fieldId], annotations)) {
-                return prev;
-            }
-            return { ...prev, [fieldId]: annotations };
-        });
+        setFieldAnnotations((prev) => setOrRemoveEntry(prev, fieldId, annotations.length === 0 ? null : annotations));
     }, []);
 
     const allAnnotations = React.useMemo(() => Object.values(fieldAnnotations).flat(), [fieldAnnotations]);
@@ -62,27 +69,13 @@ export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(function Panel
         function notifyAnnotationsChange() {
             onAnnotationsChange?.(allAnnotations);
         },
-        // eslint-disable-next-line @eslint-react/exhaustive-deps -- Only re-notify when the annotations themselves change
-        [allAnnotations],
+        [allAnnotations, onAnnotationsChange],
     );
 
     const [fieldOverlays, setFieldOverlays] = React.useState<Record<string, Overlay>>({});
 
     const reportFieldOverlay = React.useCallback(function reportFieldOverlay(fieldId: string, overlay: Overlay | null) {
-        setFieldOverlays((prev) => {
-            if (overlay === null) {
-                if (!(fieldId in prev)) {
-                    return prev;
-                }
-                const next = { ...prev };
-                delete next[fieldId];
-                return next;
-            }
-            if (isEqual(prev[fieldId], overlay)) {
-                return prev;
-            }
-            return { ...prev, [fieldId]: overlay };
-        });
+        setFieldOverlays((prev) => setOrRemoveEntry(prev, fieldId, overlay));
     }, []);
 
     const allOverlays = React.useMemo(() => Object.values(fieldOverlays), [fieldOverlays]);
@@ -91,8 +84,7 @@ export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(function Panel
         function notifyOverlaysChange() {
             onOverlaysChange?.(allOverlays);
         },
-        // eslint-disable-next-line @eslint-react/exhaustive-deps -- Only re-notify when the overlays themselves change
-        [allOverlays],
+        [allOverlays, onOverlaysChange],
     );
 
     const [bannerMessages, setBannerMessages] = React.useState<Record<string, BannerMessage>>({});
@@ -101,20 +93,7 @@ export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(function Panel
         bannerId: string,
         message: BannerMessage | null,
     ) {
-        setBannerMessages((prev) => {
-            if (message === null) {
-                if (!(bannerId in prev)) {
-                    return prev;
-                }
-                const next = { ...prev };
-                delete next[bannerId];
-                return next;
-            }
-            if (isEqual(prev[bannerId], message)) {
-                return prev;
-            }
-            return { ...prev, [bannerId]: message };
-        });
+        setBannerMessages((prev) => setOrRemoveEntry(prev, bannerId, message));
     }, []);
 
     const allBannerMessages = React.useMemo(() => Object.values(bannerMessages), [bannerMessages]);
@@ -123,8 +102,7 @@ export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(function Panel
         function notifyBannerMessagesChange() {
             onBannerMessagesChange?.(allBannerMessages);
         },
-        // eslint-disable-next-line @eslint-react/exhaustive-deps -- Only re-notify when the messages themselves change
-        [allBannerMessages],
+        [allBannerMessages, onBannerMessagesChange],
     );
 
     React.useImperativeHandle(ref, () => localRef.current as HTMLDivElement, []);

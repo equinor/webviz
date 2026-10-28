@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { SettingAnnotation } from "./Field";
+import type { SettingAnnotation } from "../_components/Field";
 
 /**
  * Reports a Setting.Field's current annotation list to an ancestor, keyed by field id. An empty

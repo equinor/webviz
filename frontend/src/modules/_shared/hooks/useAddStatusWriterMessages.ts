@@ -5,7 +5,7 @@ import { isEqual } from "lodash-es";
 import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import type { SettingAnnotation } from "@lib/components/Setting";
 
-type StatusWriterMethod = "addActionRequired" | "addError" | "addWarning";
+type StatusWriterMethod = "flagActionRequired" | "addError" | "addWarning";
 
 function useAddMessagesToStatusWriter(
     statusWriter: SettingsStatusWriter,
@@ -26,8 +26,8 @@ function useAddMessagesToStatusWriter(
  * Returns a stable callback that writes the given list of messages to `statusWriter` as
  * `ActionRequired`.
  */
-export function useAddActionRequiredToStatusWriter(statusWriter: SettingsStatusWriter): (messages: string[]) => void {
-    return useAddMessagesToStatusWriter(statusWriter, "addActionRequired");
+export function useFlagActionRequiredToStatusWriter(statusWriter: SettingsStatusWriter): (messages: string[]) => void {
+    return useAddMessagesToStatusWriter(statusWriter, "flagActionRequired");
 }
 
 /**
@@ -52,15 +52,15 @@ export function useAddWarningToStatusWriter(statusWriter: SettingsStatusWriter):
 export function useAddErrorAnnotationsAsActionRequiredToStatusWriter(
     statusWriter: SettingsStatusWriter,
 ): (annotations: SettingAnnotation[]) => void {
-    const addActionRequiredToStatusWriter = useAddActionRequiredToStatusWriter(statusWriter);
+    const flagActionRequiredToStatusWriter = useFlagActionRequiredToStatusWriter(statusWriter);
 
     return React.useCallback(
         function handlePanelAnnotationsChange(annotations: SettingAnnotation[]) {
             const errorAnnotationMessages = annotations
                 .filter((annotation) => annotation.type === "error")
                 .map((annotation) => annotation.message);
-            addActionRequiredToStatusWriter(errorAnnotationMessages);
+            flagActionRequiredToStatusWriter(errorAnnotationMessages);
         },
-        [addActionRequiredToStatusWriter],
+        [flagActionRequiredToStatusWriter],
     );
 }

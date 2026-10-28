@@ -1,8 +1,8 @@
 import React from "react";
 
-import type { SettingAnnotation } from "./Field";
-import type { FieldAnnotationsReporter } from "./PanelAnnotationsContext";
-import { PanelAnnotationsContext } from "./PanelAnnotationsContext";
+import type { SettingAnnotation } from "../_components/Field";
+import { PanelAnnotationsContext } from "../_contexts/PanelAnnotationsContext";
+
 
 /**
  * Forwards a Setting.Field's current annotation list to the nearest enclosing `Setting.Panel`
@@ -14,20 +14,12 @@ export function useReportFieldAnnotations(annotations: SettingAnnotation[]): voi
 
     React.useEffect(
         function reportAnnotations() {
-            report(panelReporter, fieldId, annotations);
+            panelReporter?.(fieldId, annotations);
 
             return function retractAnnotations() {
-                report(panelReporter, fieldId, []);
+                panelReporter?.(fieldId, []);
             };
         },
         [fieldId, annotations, panelReporter],
     );
-}
-
-function report(
-    reporter: FieldAnnotationsReporter | undefined,
-    fieldId: string,
-    annotations: SettingAnnotation[],
-): void {
-    reporter?.(fieldId, annotations);
 }

@@ -6,7 +6,7 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import type { SettingAnnotation } from "@lib/components/Setting";
-import { useAddActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
+import { useFlagActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
 import { propagateQueryErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import { selectedEnsembleIdentsAtom, selectedTableNameAtom } from "../atoms/persistableFixableAtoms";
@@ -30,7 +30,7 @@ export function useMakeSettingsStatusWriterMessages(
     const selectedTableName = useAtomValue(selectedTableNameAtom).value;
     const tableNameQueries = useAtomValue(relPermTableNamesQueriesAtom);
     const tableDefinitionQueries = useAtomValue(relPermTableDefinitionQueriesAtom);
-    const addActionRequiredToStatusWriter = useAddActionRequiredToStatusWriter(statusWriter);
+    const addActionRequiredToStatusWriter = useFlagActionRequiredToStatusWriter(statusWriter);
 
     propagateQueryErrorsToStatusWriter(tableNameQueries, statusWriter);
     propagateQueryErrorsToStatusWriter(tableDefinitionQueries, statusWriter);

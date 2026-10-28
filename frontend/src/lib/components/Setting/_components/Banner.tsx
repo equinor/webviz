@@ -6,8 +6,8 @@ import { ExpandMore } from "@mui/icons-material";
 import { Banner as BaseBanner } from "@lib/components/Banner";
 import { Typography } from "@lib/components/Typography";
 
-import { SectionStatusContext, type FieldStatusSummary } from "./SectionStatusContext";
-import { useReportBannerMessage } from "./useReportBannerMessage";
+import { SectionStatusContext, type FieldStatusSummary } from "../_contexts/SectionStatusContext";
+import { useReportBannerMessage } from "../_hooks/useReportBannerMessage";
 
 export type BannerType = "info" | "warning" | "error";
 

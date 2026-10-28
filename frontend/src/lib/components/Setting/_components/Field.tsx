@@ -4,12 +4,13 @@ import { Field as FieldPrimitive } from "@lib/components/Field";
 import { Heading } from "@lib/components/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { SectionStatusContext } from "../_contexts/SectionStatusContext";
+import { useReportFieldAnnotations } from "../_hooks/useReportFieldAnnotations";
+import { useReportFieldOverlay } from "../_hooks/useReportFieldOverlay";
+
 import { Annotations } from "./Annotations";
 import { Overlay, type OverlayProps } from "./Overlay";
 import { LayoutContext } from "./Panel";
-import { SectionStatusContext } from "./SectionStatusContext";
-import { useReportFieldAnnotations } from "./useReportFieldAnnotations";
-import { useReportFieldOverlay } from "./useReportFieldOverlay";
 
 export type SettingAnnotation = {
     /** The severity level that determines the icon and color of the annotation. */
@@ -135,20 +136,23 @@ export function Field(props: SettingFieldProps) {
     const hasWarning = hasWarningAnnotation || overlay?.type === "warning";
 
     const sectionStatusContext = React.useContext(SectionStatusContext);
-    React.useEffect(() => {
-        if (!sectionStatusContext) {
-            return;
-        }
-        sectionStatusContext.reportField(generatedInputId, {
-            hasInvalidValue: hasErrorAnnotation,
-            hasError: hasErrorOverlay,
-            hasWarning,
-            hasInfo,
-        });
-        return () => {
-            sectionStatusContext.unregisterField(generatedInputId);
-        };
-    }, [sectionStatusContext, generatedInputId, hasErrorAnnotation, hasErrorOverlay, hasWarning, hasInfo]);
+    React.useEffect(
+        function reportFieldStatus() {
+            if (!sectionStatusContext) {
+                return;
+            }
+            sectionStatusContext.reportField(generatedInputId, {
+                hasInvalidValue: hasErrorAnnotation,
+                hasError: hasErrorOverlay,
+                hasWarning,
+                hasInfo,
+            });
+            return () => {
+                sectionStatusContext.unregisterField(generatedInputId);
+            };
+        },
+        [sectionStatusContext, generatedInputId, hasErrorAnnotation, hasErrorOverlay, hasWarning, hasInfo],
+    );
 
     useReportFieldAnnotations(annotations);
     useReportFieldOverlay(overlay ?? null);

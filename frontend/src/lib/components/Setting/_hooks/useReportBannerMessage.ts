@@ -1,7 +1,7 @@
 import React from "react";
 
-import type { BannerMessage, BannerMessageReporter } from "./PanelBannerMessagesContext";
-import { PanelBannerMessagesContext } from "./PanelBannerMessagesContext";
+import type { BannerMessage } from "../_contexts/PanelBannerMessagesContext";
+import { PanelBannerMessagesContext } from "../_contexts/PanelBannerMessagesContext";
 
 /**
  * Forwards a Setting.Banner's current message to the nearest enclosing `Setting.Panel`. `null` reports
@@ -20,16 +20,12 @@ export function useReportBannerMessage(message: BannerMessage | null): void {
             if (type === undefined || text === undefined) {
                 return;
             }
-            report(panelReporter, bannerId, { type, message: text });
+            panelReporter?.(bannerId, { type, message: text });
 
             return function retractBannerMessage() {
-                report(panelReporter, bannerId, null);
+                panelReporter?.(bannerId, null);
             };
         },
         [bannerId, type, text, panelReporter],
     );
-}
-
-function report(reporter: BannerMessageReporter | undefined, bannerId: string, message: BannerMessage | null): void {
-    reporter?.(bannerId, message);
 }

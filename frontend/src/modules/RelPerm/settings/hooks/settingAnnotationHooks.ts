@@ -4,17 +4,7 @@ import type { SettingAnnotation } from "@lib/components/Setting";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import { commonTableNamesAreMissingAtom, tableNameSetsDifferAtom } from "../atoms/derivedAtoms";
-import {
-    selectedCurveNamesAtom,
-    selectedEnsembleIdentsAtom,
-    selectedSaturationAxisNameAtom,
-    selectedSatnumsAtom,
-    selectedTableNameAtom,
-} from "../atoms/persistableFixableAtoms";
-
-export function useSelectedEnsembleIdentsAnnotations(): SettingAnnotation[] {
-    return useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
-}
+import { selectedTableNameAtom } from "../atoms/persistableFixableAtoms";
 
 /**
  * Persistable/fixable annotations for the table name, and a warning when the selected ensembles' table names differ
@@ -33,16 +23,4 @@ export function useSelectedTableNameAnnotations(): SettingAnnotation[] {
     }
 
     return annotations;
-}
-
-export function useSelectedSaturationAxisNameAnnotations(): SettingAnnotation[] {
-    return useMakePersistableFixableAtomAnnotations(selectedSaturationAxisNameAtom);
-}
-
-export function useSelectedCurveNamesAnnotations(): SettingAnnotation[] {
-    return useMakePersistableFixableAtomAnnotations(selectedCurveNamesAtom);
-}
-
-export function useSelectedSatnumsAnnotations(): SettingAnnotation[] {
-    return useMakePersistableFixableAtomAnnotations(selectedSatnumsAtom);
 }

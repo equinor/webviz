@@ -1,8 +1,8 @@
 import React from "react";
 
-import type { Overlay } from "./Field";
-import type { FieldOverlayReporter } from "./PanelOverlaysContext";
-import { PanelOverlaysContext } from "./PanelOverlaysContext";
+import type { Overlay } from "../_components/Field";
+import { PanelOverlaysContext } from "../_contexts/PanelOverlaysContext";
+
 
 /**
  * Forwards a Setting.Field's current overlay to the nearest enclosing `Setting.Panel`. No-ops
@@ -14,16 +14,12 @@ export function useReportFieldOverlay(overlay: Overlay | null): void {
 
     React.useEffect(
         function reportOverlay() {
-            report(panelReporter, fieldId, overlay);
+            panelReporter?.(fieldId, overlay);
 
             return function retractOverlay() {
-                report(panelReporter, fieldId, null);
+                panelReporter?.(fieldId, null);
             };
         },
         [fieldId, overlay, panelReporter],
     );
-}
-
-function report(reporter: FieldOverlayReporter | undefined, fieldId: string, overlay: Overlay | null): void {
-    reporter?.(fieldId, overlay);
 }

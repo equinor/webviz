@@ -348,6 +348,53 @@ function MenuBadge(props: MenuBadgeProps): React.ReactNode {
     return props.children;
 }
 
+function makeStatusIcon(numErrors: number, numWarnings: number, numActionRequired: number): React.ReactNode {
+    if (numActionRequired > 0) {
+        return (
+            <span className="relative flex size-[1em] items-center justify-center">
+                <Block fontSize="inherit" color="error" />
+            </span>
+        );
+    }
+
+    if (numErrors > 0) {
+        return (
+            <span className="relative flex size-[1em] items-center justify-center">
+                <Error fontSize="inherit" color="error" />
+                {numWarnings > 0 && (
+                    <Warning
+                        fontSize="inherit"
+                        color="warning"
+                        className="absolute -right-1 -bottom-1 text-[0.65em]!"
+                    />
+                )}
+            </span>
+        );
+    }
+
+    return (
+        <span className="relative flex size-[1em] items-center justify-center">
+            <Warning fontSize="inherit" color="warning" />
+        </span>
+    );
+}
+
+function makeStatusText(numErrors: number, numWarnings: number, numActionRequired: number): string {
+    const parts: string[] = [];
+
+    if (numActionRequired > 0) {
+        parts.push(`${numActionRequired} action${numActionRequired > 1 ? "s" : ""} required`);
+    }
+    if (numErrors > 0) {
+        parts.push(`${numErrors} error${numErrors > 1 ? "s" : ""}`);
+    }
+    if (numWarnings > 0) {
+        parts.push(`${numWarnings} warning${numWarnings > 1 ? "s" : ""}`);
+    }
+
+    return parts.join(", ");
+}
+
 type CompactHeaderActionsProps = HeaderActionsProps & {
     isLoading: boolean;
     numErrors: number;
@@ -406,37 +453,8 @@ function CompactHeaderActions(props: CompactHeaderActionsProps): React.ReactNode
                     )}
                     {props.numErrors > 0 || props.numWarnings > 0 || props.numActionRequired > 0 ? (
                         <Menu.Item
-                            icon={
-                                <span className="relative flex size-[1em] items-center justify-center">
-                                    {props.numActionRequired > 0 ? (
-                                        <Block fontSize="inherit" color="error" />
-                                    ) : props.numErrors > 0 ? (
-                                        <>
-                                            <Error fontSize="inherit" color="error" />
-                                            {props.numWarnings > 0 && (
-                                                <Warning
-                                                    fontSize="inherit"
-                                                    color="warning"
-                                                    className="absolute -right-1 -bottom-1 text-[0.65em]!"
-                                                />
-                                            )}
-                                        </>
-                                    ) : (
-                                        <Warning fontSize="inherit" color="warning" />
-                                    )}
-                                </span>
-                            }
-                            text={[
-                                props.numActionRequired > 0
-                                    ? `${props.numActionRequired} action${props.numActionRequired > 1 ? "s" : ""} required`
-                                    : "",
-                                props.numErrors > 0 ? `${props.numErrors} error${props.numErrors > 1 ? "s" : ""}` : "",
-                                props.numWarnings > 0
-                                    ? `${props.numWarnings} warning${props.numWarnings > 1 ? "s" : ""}`
-                                    : "",
-                            ]
-                                .filter(Boolean)
-                                .join(", ")}
+                            icon={makeStatusIcon(props.numErrors, props.numWarnings, props.numActionRequired)}
+                            text={makeStatusText(props.numErrors, props.numWarnings, props.numActionRequired)}
                             onClick={props.onShowLog}
                         />
                     ) : (

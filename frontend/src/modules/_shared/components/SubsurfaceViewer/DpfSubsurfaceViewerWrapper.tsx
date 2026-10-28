@@ -189,7 +189,7 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     }
 
     for (const message of props.visualizationAssemblerProduct.aggregatedActionRequiredMessages) {
-        statusWriter.addActionRequired(message);
+        statusWriter.flagActionRequired(message);
     }
 
     const hasRenderableLayers = deckGlLayers.length > 0;

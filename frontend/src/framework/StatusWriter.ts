@@ -29,7 +29,7 @@ export class ViewStatusWriter {
         this._statusController.addMessage(StatusSource.View, { type: StatusMessageType.Warning, ...warning });
     }
 
-    addActionRequired(actionRequired: StatusMessage | string): void {
+    flagActionRequired(actionRequired: StatusMessage | string): void {
         if (typeof actionRequired === "string") {
             actionRequired = { message: actionRequired, origin: Origin.MODULE };
         }
@@ -65,7 +65,7 @@ export class SettingsStatusWriter {
         this._statusController.addMessage(StatusSource.Settings, { type: StatusMessageType.Warning, ...warning });
     }
 
-    addActionRequired(actionRequired: StatusMessage | string): void {
+    flagActionRequired(actionRequired: StatusMessage | string): void {
         if (typeof actionRequired === "string") {
             actionRequired = { message: actionRequired, origin: Origin.MODULE };
         }
