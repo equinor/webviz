@@ -42,7 +42,7 @@ test.describe("Parameter Distributions module", () => {
         await pace(page);
 
         const introNarration = narrate(
-            "The Parameter Distributions module shows the distributions of a model's uncertain input parameters across an ensemble. It's especially powerful for assisted history matching, where we compare the prior ensemble with the posterior ensemble produced after conditioning the model to observations.",
+            "The Parameter Distributions module shows the distributions of an ensemble's uncertain input parameters. It's especially useful in assisted history matching, where we compare the prior and posterior ensembles.",
         );
         // Open the module's info popover so its description is on screen during the introduction.
         await smoothClick(page, moduleListItem.getByRole("button").last());
@@ -83,7 +83,7 @@ test.describe("Parameter Distributions module", () => {
 
         markStep("Pick the prior and posterior ensembles");
         const priorNarration = narrate(
-            "We set the prior to iter-0, the starting ensemble, and the posterior to iter-1, the ensemble after one assisted history matching update.",
+            "We set the prior to iter-0, the starting ensemble, and the posterior to iter-1, the ensemble after one assisted history matching update, as we here lack ensembles from a later iteration.",
         );
         const priorRow = page.locator(".setting-row").filter({ hasText: "Prior ensemble" });
         await smoothClick(page, priorRow.getByRole("combobox"));
@@ -96,19 +96,27 @@ test.describe("Parameter Distributions module", () => {
         await expect(plot).toBeVisible({ timeout: 90_000 });
 
         await narrate(
-            "Now each parameter is drawn twice, prior and posterior. Where the observations were informative, the posterior is clearly narrower than the prior: history matching has reduced the uncertainty by conditioning to data. Parameters the data couldn't constrain stay close to their prior.",
+            "Now each parameter subplot has two distributions plotted: the prior and the posterior. Where the observations were informative, the posterior is narrower than the prior: history matching has reduced the uncertainty by conditioning to observations. Parameters the observations couldn't constrain stay close to their prior.",
         );
         await pace(page, "long");
 
         markStep("Rank the most updated parameters");
         const sortRow = page.locator(".setting-row").filter({ hasText: "Parameter sort method" });
         const sortNarration = narrate(
-            "We can rank the parameters by how much the update changed them. Sorting by the prior-to-posterior KL divergence brings the most strongly updated parameters to the top.",
+            "We can rank parameters by how much the update reduced their uncertainty. Let's sort by prior-to-posterior entropy reduction.",
         );
         await smoothClick(page, sortRow.getByRole("combobox"));
-        await smoothClick(page, page.getByRole("option", { name: "Prior-Posterior KL Divergence", exact: true }));
+        await smoothClick(page, page.getByRole("option", { name: "Prior-Posterior Entropy Reduction", exact: true }));
         await sortNarration;
         await expect(plot).toBeVisible({ timeout: 90_000 });
+
+        const sortInfoNarration = narrate(
+            "Entropy reduction measures the overall drop in uncertainty. KL divergence also responds to redistribution: if the spread stays about the same but probability mass shifts, entropy can stay similar while KL divergence changes.",
+        );
+        await smoothClick(page, sortRow.getByRole("button"));
+        await expect(page.getByText("Parameter Sorting Methods", { exact: true })).toBeVisible();
+        await sortInfoNarration;
+        await page.keyboard.press("Escape");
         await pace(page, "long");
 
         markStep("Switch to a distribution plot");

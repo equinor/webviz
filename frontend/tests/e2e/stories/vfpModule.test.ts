@@ -40,7 +40,7 @@ test.describe("VFP module", () => {
         await pace(page);
 
         const introNarration = narrate(
-            "The VFP module visualizes Vertical Flow Performance tables from the reservoir simulator. These describe the bottom-hole pressure a well needs for a given flow rate, tabulated against the tubing-head pressure and the water, gas and artificial-lift conditions.",
+            "The VFP module visualizes Vertical Flow Performance tables from the reservoir simulator. They are also called lift curves, and describe the bottom-hole pressure a well needs for a given flow rate, tabulated against the tubing-head pressure and the water, gas and artificial-lift conditions.",
         );
         // Open the module's info popover so its description is on screen during the introduction.
         await smoothClick(page, moduleListItem.getByRole("button").last());
@@ -79,7 +79,7 @@ test.describe("VFP module", () => {
 
         markStep("Plot a family of curves");
         const familyNarration = narrate(
-            "Selecting all the tubing-head pressure values fans the plot out into a family of curves, one per THP, coloured by THP. This is the classic VFP lift curve plot.",
+            "Selecting all the tubing-head pressure values gives a family of curves, one per THP value.",
         );
         await smoothClick(page, selectAllButtons.nth(0));
         await familyNarration;
@@ -87,11 +87,20 @@ test.describe("VFP module", () => {
 
         markStep("Vary a second parameter");
         const secondParamNarration = narrate(
-            "We can expand the family further by also varying a second parameter, here the water fraction, giving a curve for every combination.",
+            "We can expand the family further by also varying a second parameter, for example the water fraction, giving a curve for every combination.",
         );
         await smoothClick(page, selectAllButtons.nth(1));
         await secondParamNarration;
         await pace(page, "long");
+
+        const singleWaterFractionNarration = narrate(
+            "Let's return to a single water-fraction value to keep the plot easier to read.",
+        );
+        const waterFractionRow = page.locator(".setting-row").filter({ has: selectAllButtons.nth(1) });
+        await smoothClick(page, waterFractionRow.locator("span[title]").first());
+        await expect(waterFractionRow.locator(".bg-accent-strong")).toHaveCount(1);
+        await singleWaterFractionNarration;
+        await pace(page);
 
         markStep("Colour by a different parameter");
         const colorByRow = page.locator(".setting-row").filter({ hasText: "Color By" });

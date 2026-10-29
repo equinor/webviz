@@ -62,7 +62,7 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
 
 1. Start the full docker development stack:
    ```bash
-   docker compose -f docker-compose.yml -f docker-compose-cosmos-db.yml up
+   docker compose -f docker-compose.yml -f docker-compose-cosmos-db.yml -f docker-compose-service-bus.yml up
    ```
 2. Make sure the environment variable `SHARED_KEY_DROGON_READ_PROD` is set (e.g. as a Codespace
    secret) to give the backend access to Drogon Sumo data using the test user. The key is installed

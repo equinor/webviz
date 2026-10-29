@@ -33,6 +33,15 @@ test.describe("Relative Permeability module", () => {
             }
         }
 
+        async function selectCurves(curveNames: string[]): Promise<void> {
+            const curvesRow = page.locator(".setting-row").filter({ hasText: "Curves" });
+            await smoothClick(page, curvesRow.getByRole("combobox"));
+            for (const curveName of curveNames) {
+                await smoothClick(page, page.getByRole("option", { name: curveName, exact: true }));
+            }
+            await page.keyboard.press("Escape");
+        }
+
         await installFakeCursor(page);
         await installKeyOverlay(page);
         await installCaseRowRedaction(page, [DROGON_AHM.caseUuid]);
@@ -80,7 +89,7 @@ test.describe("Relative Permeability module", () => {
         await expandSettingSection("Selection");
         await expandSettingSection("Plot");
         await narrate(
-            "By default the module shows the water relative permeability curves, KRW and KROW, plotted against water saturation for the first saturation region. The darker inner band spans the P90 to P10 range, covering most realizations, while the lighter outer band stretches out to the minimum and maximum. The solid line is the mean, and the dotted line the P50.",
+            "And there's our chart. By default, it plots the water relative permeability curves, KRW and KROW, against water saturation for the first saturation region. Each curve has a statistical fanchart, computed across all realizations. The solid line is the mean, while the two shaded areas around it are the bands between P10 and P90 and between the minimum and maximum values. The dotted line is the P50, or median.",
         );
 
         markStep("Choose the curves");
@@ -97,17 +106,25 @@ test.describe("Relative Permeability module", () => {
 
         markStep("Switch the saturation axis");
         const saturationAxisRow = page.locator(".setting-row").filter({ hasText: "Saturation axis" });
-        const gasAxisNarration = narrate(
-            "We can also switch the saturation axis. Selecting the gas saturation axis plots the gas and oil curves, KRG and KROG, against gas saturation instead.",
-        );
+        const gasAxisNarration = narrate("We can also switch the saturation axis to gas saturation.");
         await smoothClick(page, saturationAxisRow.getByText("SG", { exact: true }));
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
         await gasAxisNarration;
+
+        await selectCurves(["KRG", "KROG"]);
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await expect(curvesRow).toContainText("KRG");
+        await expect(curvesRow).toContainText("KROG");
 
         const waterAxisNarration = narrate("Let's switch back to the water saturation axis.");
         await smoothClick(page, saturationAxisRow.getByText("SW", { exact: true }));
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
         await waterAxisNarration;
+
+        await selectCurves(["KRW", "KROW"]);
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await expect(curvesRow).toContainText("KRW");
+        await expect(curvesRow).toContainText("KROW");
 
         markStep("Compare across saturation regions");
         const satnumRow = page.locator(".setting-row").filter({ hasText: "SatNum" });

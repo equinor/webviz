@@ -128,11 +128,12 @@ test.describe("Simulation Time Series module", () => {
 
         markStep("Resample the time axis");
         const resamplingRow = page.locator(".setting-row").filter({ hasText: "Resampling frequency" });
+        await smoothClick(page, resamplingRow.getByRole("combobox"));
+        await expect(page.getByRole("option", { name: "Weekly", exact: true })).toBeVisible();
         const resamplingNarration = narrate(
             "The resampling frequency controls the time axis. Raw shows the time steps exactly as written by the simulator, while every other option resamples the data onto a uniform grid \u2014 daily, weekly, monthly and so on. How the values are interpolated depends on the type of vector: rate vectors are backfilled, whereas cumulative vectors are linearly interpolated. Let's resample to weekly.",
         );
         await resamplingNarration;
-        await smoothClick(page, resamplingRow.getByRole("combobox"));
         await smoothClick(page, page.getByRole("option", { name: "Weekly" }));
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
 
@@ -157,7 +158,7 @@ test.describe("Simulation Time Series module", () => {
 
         markStep("Observations");
         const observationsNarration = narrate(
-            "Observations are shown by default when available. They're the ones used in the assisted history matching that produced this ensemble, each error band showing the uncertainty assigned to that observation. Toggle them with the Observations switch.",
+            "Observations are shown by default when available. They're the ones used in the assisted history matching when creating the ensemble. Each error band shows the uncertainty assigned to that observation.",
         );
         const observationsToggle = page.getByText("Observations", { exact: true });
         await smoothClick(page, observationsToggle);
@@ -168,7 +169,7 @@ test.describe("Simulation Time Series module", () => {
 
         markStep("Compare multiple ensembles");
         const compareNarration = narrate(
-            "Finally, we can select multiple of the ensembles loaded into the session. By selecting both, each vector's curves are drawn for both iterations, so we can compare them side by side.",
+            "We can select multiple of the ensembles loaded into the session. By selecting both, we can easily compare the ensembles across the different vectors.",
         );
         const ensemblesRow = page.locator(".setting-row").filter({ hasText: "Ensembles" });
         await smoothClick(page, ensemblesRow.getByRole("combobox"));
@@ -192,4 +193,3 @@ test.describe("Simulation Time Series module", () => {
         await narrate("And that concludes our walkthrough of the Simulation Time Series module.");
     });
 });
-
