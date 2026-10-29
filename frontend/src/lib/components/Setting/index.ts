@@ -14,7 +14,4 @@ export type { BannerProps as SettingBannerProps, BannerType as SettingBannerType
 export { LayoutContext as SettingLayoutContext } from "./_components/Panel";
 export type { FieldAnnotationsReporter } from "./_contexts/PanelAnnotationsContext";
 export type { FieldOverlayReporter } from "./_contexts/PanelOverlaysContext";
-export type {
-    BannerMessage as SettingBannerMessage,
-    BannerMessageReporter,
-} from "./_contexts/PanelBannerMessagesContext";
+export type { BannerMessage as SettingBannerMessage } from "./_contexts/PanelBannerMessagesContext";
