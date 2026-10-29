@@ -78,7 +78,11 @@ export function Banner(props: BannerProps) {
                     <Collapsible.Root defaultOpen={defaultOpen} className="group/settingBanner">
                         <Collapsible.Trigger className="focusable gap-x-xs flex w-full cursor-pointer items-center justify-between text-left">
                             {titleElement}
-                            <ExpandMore className="transition-transform! group-data-closed/settingBanner:-rotate-90" />
+                            <span className="gap-4xs text-body-xs flex items-center font-bold whitespace-nowrap">
+                                <span className="group-data-open/settingBanner:hidden">Show more</span>
+                                <span className="group-data-closed/settingBanner:hidden">Show less</span>
+                                <ExpandMore className="transition-transform! group-data-closed/settingBanner:-rotate-90" />
+                            </span>
                         </Collapsible.Trigger>
                         <Collapsible.Panel className="mt-xs">{children}</Collapsible.Panel>
                     </Collapsible.Root>
