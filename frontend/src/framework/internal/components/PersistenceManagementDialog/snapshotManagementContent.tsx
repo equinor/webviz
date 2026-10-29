@@ -6,9 +6,9 @@ import { omit } from "lodash-es";
 
 import type { GetSnapshotAccessLogsData_api, GraphUser_api, SnapshotAccessLog_api, Options } from "@api";
 import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAccessLogSortBy_api } from "@api";
+import { useUserInfo } from "@framework/internal/auth/hooks";
 import type { UseRefreshQueryResult } from "@framework/internal/hooks/useRefreshQuery";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
-import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
 import { buildWorkbenchUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import { edsDateRangeToIsoStringRange } from "@framework/utils/edsDateUtils";
@@ -83,7 +83,7 @@ export type SnapshotOverviewContentProps = {
 export function SnapshotManagementContent(props: SnapshotOverviewContentProps): React.ReactNode {
     const queryRefreshActionRef = React.useRef<UseRefreshQueryResult>(null);
 
-    const userId = useAuthProvider().userInfo?.user_id;
+    const userId = useUserInfo()?.user_id;
 
     const [selectedSnapshot, setSelectedSnapshot] = React.useState<SnapshotAccessLog_api | null>(null);
     const [deletePending, setDeletePending] = React.useState<boolean>(false);
@@ -258,7 +258,7 @@ function SnapshotTable(props: SnapshotTableProps) {
 
     const wrapperRef = React.useRef<HTMLDivElement>(null);
 
-    const userId = useAuthProvider().userInfo?.user_id;
+    const userId = useUserInfo()?.user_id;
 
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
     const [tableSortState, setTableSortState] = React.useState<TableSortState | null>(null);

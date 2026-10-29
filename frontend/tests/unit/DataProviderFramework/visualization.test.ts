@@ -218,10 +218,63 @@ describe("Visualization assembly", () => {
         const product = assemble(makeAssembler(), manager);
 
         expect(describeStructure(product.children)).toEqual([
-            { View: ["Outside", "Inside", "Grid"] },
-            "Outside",
+            { View: ["Inside", "Grid", "Outside"] },
             "Inside",
+            "Outside",
         ]);
+    });
+
+    test("passes providers in context boundaries outside views down into every view, however deep", async () => {
+        const manager = await restore(
+            boundary("Boundary", [surfaceProvider("Inside"), boundary("Inner boundary", [gridProvider("Deep")])]),
+            view("View 1", [gridProvider("Grid")]),
+            view("View 2", [surfaceProvider("Surface 2")]),
+        );
+
+        const product = assemble(makeAssembler(), manager);
+
+        expect(describeStructure(product.children)).toEqual([
+            { "View 1": ["Inside", "Deep", "Grid"] },
+            { "View 2": ["Inside", "Deep", "Surface 2"] },
+            "Inside",
+            "Deep",
+        ]);
+    });
+
+    test("keeps the order of the tree for providers passed down into views, also for the ones below a view", async () => {
+        const manager = await restore(
+            surfaceProvider("Top"),
+            view("View 1", [gridProvider("Grid")]),
+            boundary("Boundary", [surfaceProvider("Middle")]),
+            view("View 2", [surfaceProvider("Surface 2")]),
+            surfaceProvider("Bottom"),
+        );
+
+        const product = assemble(makeAssembler(), manager);
+
+        expect(describeStructure(product.children)).toEqual([
+            { "View 1": ["Top", "Grid", "Middle", "Bottom"] },
+            { "View 2": ["Top", "Middle", "Surface 2", "Bottom"] },
+            "Top",
+            "Middle",
+            "Bottom",
+        ]);
+    });
+
+    test("adds the providers next to context boundaries only once", async () => {
+        const manager = await restore(
+            view("View", [
+                surfaceProvider("Surface"),
+                boundary("Boundary 1", [gridProvider("Grid 1")]),
+                boundary("Boundary 2", [gridProvider("Grid 2")]),
+            ]),
+        );
+
+        const product = assemble(makeAssembler(), manager);
+
+        expect(describeStructure(product.children)).toEqual([{ View: ["Surface", "Grid 1", "Grid 2"] }]);
+        expect(product.numDataProviders).toBe(3);
+        expect(product.accumulatedData).toEqual({ numValues: 2 });
     });
 
     test("leaves out hidden items, but keeps their ids", async () => {
@@ -280,7 +333,7 @@ describe("Visualization assembly", () => {
 
         expect(describeStructure(product.children)).toEqual(["Surface"]);
         expect(product.aggregatedErrorMessages).toEqual([
-            "Outdated surface: Setting with key 'removedSetting' does not exist anymore. Cannot apply persisted value.",
+            "Outdated surface: Setting with key 'removedSetting' does not exist anymore. Cannot apply saved value.",
         ]);
     });
 

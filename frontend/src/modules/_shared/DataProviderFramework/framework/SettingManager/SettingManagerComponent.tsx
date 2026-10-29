@@ -161,22 +161,22 @@ export function SettingManagerComponent<
                             !isBlocked && (
                                 <span
                                     className="gap-x-3xs text-body-xs text-warning-subtle flex items-center"
-                                    title="The persisted value for this setting is not valid in the current context. It could also be that the data source has changed."
+                                    title="The saved value for this setting is not valid in the current context. It could also be that the data source has changed."
                                 >
                                     <Error fontSize="inherit" />
                                     <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
-                                        Persisted value not valid.
+                                        Saved value not valid.
                                     </span>
                                 </span>
                             )}
                         {isPersisted && !isValidPersistedValue && (
                             <span
                                 className="gap-x-3xs text-body-xs text-danger-strong flex items-center"
-                                title="The persisted value for this setting has an invalid structure and could not be loaded."
+                                title="The saved value for this setting has an invalid structure and could not be loaded."
                             >
                                 <Error fontSize="inherit" />
                                 <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
-                                    Persisted value has invalid structure.
+                                    Saved value has invalid structure.
                                 </span>
                             </span>
                         )}
