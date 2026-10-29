@@ -1,51 +1,69 @@
-import type React from "react";
-
 import { Error, Info, Warning } from "@mui/icons-material";
 
 import type { StatusMessage } from "@framework/types/statusWriter";
 import { StatusMessageType } from "@framework/types/statusWriter";
 import { Popover } from "@lib/components/Popover";
+import { Typography } from "@lib/components/Typography";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type StatusMessagesProps = { statusMessages: readonly StatusMessage[] };
 
 export function StatusMessages(props: StatusMessagesProps) {
-    const categorizedMessages = {
-        warning: props.statusMessages.filter((m) => m.type === StatusMessageType.Warning),
-        error: props.statusMessages.filter((m) => m.type === StatusMessageType.Error),
-        info: props.statusMessages.filter((m) => m.type === StatusMessageType.Info),
-    };
+    const numInfo = props.statusMessages.filter((m) => m.type === StatusMessageType.Info).length;
+    const numWarnings = props.statusMessages.filter((m) => m.type === StatusMessageType.Warning).length;
+    const numErrors = props.statusMessages.filter((m) => m.type === StatusMessageType.Error).length;
 
-    return (
-        <>
-            <StatusMessage messages={categorizedMessages.info}>
-                <Info className="text-info-subtle" style={{ fontSize: 16 }} />
-            </StatusMessage>
-
-            <StatusMessage messages={categorizedMessages.warning}>
-                <Warning className="text-warning-subtle" style={{ fontSize: 16 }} />
-            </StatusMessage>
-
-            <StatusMessage messages={categorizedMessages.error}>
-                <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
-            </StatusMessage>
-        </>
-    );
-}
-
-function StatusMessage(props: { messages: StatusMessage[]; children: React.ReactElement }) {
-    if (!props.messages.length) return null;
+    if (numInfo === 0 && numWarnings === 0 && numErrors === 0) {
+        return null;
+    }
 
     return (
         <Popover.Root>
             <Popover.Trigger tone="neutral" size="small" variant="ghost" iconOnly>
-                {props.children}
+                <div className="flex items-center whitespace-nowrap">
+                    <Info
+                        style={{ fontSize: 16, display: numInfo === 0 ? "none" : "block" }}
+                        className="text-info-subtle"
+                    />
+                    <Warning
+                        style={{ fontSize: 16, display: numWarnings === 0 ? "none" : "block" }}
+                        className={resolveClassNames("text-warning-subtle", { "-ml-xs": numInfo > 0 })}
+                    />
+                    <Error
+                        style={{ fontSize: 16, display: numErrors === 0 ? "none" : "block" }}
+                        className={resolveClassNames("text-danger-subtle", {
+                            "-ml-xs": numInfo > 0 || numWarnings > 0,
+                        })}
+                    />
+                </div>
             </Popover.Trigger>
             <Popover.Popup>
                 <Popover.Content>
-                    <ul>
-                        {props.messages.map((m, i) => (
-                            // eslint-disable-next-line @eslint-react/no-array-index-key -- trivial
-                            <li key={i}>{m.message}</li>
+                    <ul className="gap-y-2xs flex flex-col">
+                        {props.statusMessages.map((entry) => (
+                            <li
+                                key={`${entry.type}-${entry.message}-${entry.source}`}
+                                className="gap-x-2xs flex items-center"
+                            >
+                                <Typography
+                                    as="span"
+                                    size="xs"
+                                    title={entry.message}
+                                    tone="neutral"
+                                    layoutClassName="gap-x-2xs flex items-center"
+                                >
+                                    {entry.type === StatusMessageType.Info && (
+                                        <Info fontSize="inherit" className="text-info-subtle" />
+                                    )}
+                                    {entry.type === StatusMessageType.Warning && (
+                                        <Warning fontSize="inherit" className="text-warning-subtle" />
+                                    )}
+                                    {entry.type === StatusMessageType.Error && (
+                                        <Error fontSize="inherit" className="text-danger-subtle" />
+                                    )}
+                                    {entry.message}
+                                </Typography>
+                            </li>
                         ))}
                     </ul>
                 </Popover.Content>
