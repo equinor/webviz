@@ -96,7 +96,10 @@ test.describe("VFP module", () => {
         const singleWaterFractionNarration = narrate(
             "Let's return to a single water-fraction value to keep the plot easier to read.",
         );
-        const waterFractionRow = page.locator(".setting-row").filter({ has: selectAllButtons.nth(1) });
+        const waterFractionRow = page
+            .locator(".setting-row")
+            .filter({ has: page.getByRole("button", { name: "Select all", exact: true }) })
+            .nth(1);
         await smoothClick(page, waterFractionRow.locator("span[title]").first());
         await expect(waterFractionRow.locator(".bg-accent-strong")).toHaveCount(1);
         await singleWaterFractionNarration;

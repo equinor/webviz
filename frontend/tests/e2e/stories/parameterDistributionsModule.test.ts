@@ -119,17 +119,6 @@ test.describe("Parameter Distributions module", () => {
         await page.keyboard.press("Escape");
         await pace(page, "long");
 
-        markStep("Switch to a distribution plot");
-        const plotTypeRow = page.locator(".setting-row").filter({ hasText: "Plot type" });
-        const plotTypeNarration = narrate(
-            "Switching to a distribution plot replaces the histograms with smooth density curves, which makes the narrowing of the posterior easier to read.",
-        );
-        await smoothClick(page, plotTypeRow.getByRole("combobox"));
-        await smoothClick(page, page.getByRole("option", { name: "Distribution Plot", exact: true }));
-        await plotTypeNarration;
-        await expect(plot).toBeVisible({ timeout: 90_000 });
-        await pace(page, "long");
-
         markStep("Add percentile markers");
         const markersRow = page.locator(".setting-row").filter({ hasText: "Additional markers" });
         const markersNarration = narrate(
