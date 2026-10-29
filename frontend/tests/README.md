@@ -82,6 +82,15 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
    npm run test:e2e:record --prefix ./frontend
    ```
 
+#### Diagnosing recording crashes
+
+CI uses the `line` reporter alongside the GitHub and HTML reporters to show live test progress.
+Narration writes synchronous `[narration]` stderr breadcrumbs around model loading, warmup,
+synthesis, audio saving and worker termination. These include timestamps and process IDs;
+worker messages also include thread IDs, process RSS and synthesis request IDs where applicable.
+Each synthesis request logs its narration text as a JSON-escaped string on one line.
+The last breadcrumb before a native abort helps identify the operation that was in progress.
+
 #### Running a single story
 
 While working on one story you usually don't want to run the whole suite. Pass a filter through to

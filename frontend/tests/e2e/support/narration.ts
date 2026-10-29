@@ -9,6 +9,7 @@ import {
     statSync,
     utimesSync,
     writeFileSync,
+    writeSync,
 } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -171,7 +172,15 @@ export function preloadNarrationModel(): Promise<void> {
 /** Shut the TTS worker down so it doesn't keep the Playwright worker process alive after the run. */
 export async function terminateNarrationWorker(): Promise<void> {
     if (worker) {
-        await worker.terminate();
+        writeSync(
+            2,
+            `[narration] ${new Date().toISOString()} pid=${process.pid} thread=${worker.threadId} termination starting\n`,
+        );
+        const exitCode = await worker.terminate();
+        writeSync(
+            2,
+            `[narration] ${new Date().toISOString()} pid=${process.pid} termination finished code=${exitCode}\n`,
+        );
         worker = null;
     }
 }

@@ -39,7 +39,7 @@ export default defineConfig({
      * On CI we additionally enable the "github" reporter, which annotates the failing file/line
      * and error message directly on the run summary (no need to download the HTML report).
      */
-    reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "html",
+    reporter: process.env.CI ? [["line"], ["github"], ["html", { open: "never" }]] : "html",
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */
