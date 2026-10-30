@@ -62,7 +62,7 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
 
 1. Start the full docker development stack:
    ```bash
-   docker compose -f docker-compose.yml -f docker-compose-cosmos-db.yml up
+   docker compose -f docker-compose.yml -f docker-compose-cosmos-db.yml -f docker-compose-service-bus.yml up
    ```
 2. Make sure the environment variable `SHARED_KEY_DROGON_READ_PROD` is set (e.g. as a Codespace
    secret) to give the backend access to Drogon Sumo data using the test user. The key is installed
@@ -81,6 +81,12 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
    ```bash
    npm run test:e2e:record --prefix ./frontend
    ```
+
+#### Diagnosing recording crashes
+
+CI uses the `line` reporter alongside the GitHub and HTML reporters to show live test progress.
+Teardown waits for active synthesis requests before terminating the worker thread, because
+interrupting native ONNX inference can abort the Playwright process and hide the original test error.
 
 #### Running a single story
 
