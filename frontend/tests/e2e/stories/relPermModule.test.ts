@@ -166,7 +166,9 @@ test.describe("Relative Permeability module", () => {
             "Switching the curve type plots capillary pressure for the selected saturation axis, in this case PCOW: the pressure difference over the oil-water interface in the pore space at a given saturation. It influences flow through capillary forces such as imbibition and trapping, and at initialization it similarly defines the transition zone.",
         );
         await smoothClick(page, curveTypeRow.getByText("Capillary pressure", { exact: true }));
+        await selectCurves(["PCOW"]);
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await expect(plot.locator(".scatterlayer .js-line").first()).toBeVisible({ timeout: 90_000 });
         await capillaryNarration;
 
         await captureThumbnail(page);
