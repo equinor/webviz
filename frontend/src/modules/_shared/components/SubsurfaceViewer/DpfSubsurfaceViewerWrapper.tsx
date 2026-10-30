@@ -10,6 +10,7 @@ import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ContentActionRequired } from "@modules/_shared/components/ContentMessage";
 import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
 import { WebvizWellsLayer } from "@modules/_shared/customDeckGlLayers/WebvizWellsLayer";
 import {
@@ -190,6 +191,16 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         statusWriter.addError(message);
     }
 
+    for (const message of props.visualizationAssemblerProduct.aggregatedActionRequiredMessages) {
+        statusWriter.flagActionRequired(message);
+    }
+
+    const hasRenderableLayers = deckGlLayers.length > 0;
+    const showActionRequiredFallback =
+        !hasRenderableLayers &&
+        props.visualizationAssemblerProduct.numLoadingDataProviders === 0 &&
+        props.visualizationAssemblerProduct.aggregatedActionRequiredMessages.length > 0;
+
     let bounds3D: BoundingBox3D | undefined = undefined;
     let bounds2D: BoundingBox2D | undefined = undefined;
     if (props.visualizationAssemblerProduct.combinedBoundingBox) {
@@ -267,6 +278,17 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
 
     // -----------------------------------------------------------------------------
 
+    if (showActionRequiredFallback) {
+        return (
+            <ContentActionRequired>
+                {makeInvalidSettingsSummary(
+                    props.visualizationAssemblerProduct.aggregatedActionRequiredMessages.length,
+                    props.visualizationAssemblerProduct.numDataProviders,
+                )}
+            </ContentActionRequired>
+        );
+    }
+
     return (
         <DpfSubsurfaceViewerContext.Provider
             value={{
@@ -288,4 +310,15 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
             />
         </DpfSubsurfaceViewerContext.Provider>
     );
+}
+
+// The details per layer are reported to the status writer - the content only summarizes them to stay short
+function makeInvalidSettingsSummary(numInvalid: number, numTotal: number): string {
+    if (numTotal <= 1) {
+        return "The layer has invalid settings.";
+    }
+    if (numInvalid >= numTotal) {
+        return "All layers have invalid settings.";
+    }
+    return `${numInvalid} of ${numTotal} layers have invalid settings.`;
 }

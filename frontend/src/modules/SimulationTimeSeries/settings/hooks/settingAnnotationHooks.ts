@@ -1,11 +1,13 @@
-import type { QueryObserverResult } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 
-import type { SettingAnnotation } from "@lib/components/Setting";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { SettingAnnotation, SettingOverlay } from "@lib/components/Setting";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { makeResampleFrequencyWarningString } from "@modules/SimulationTimeSeries/utils/resamplingFrequencyUtils";
+import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 
 import { resampleFrequencyAtom, visualizationModeAtom } from "../atoms/baseAtoms";
+import { isVectorListQueriesFetchingAtom } from "../atoms/derivedAtoms";
 import { selectedEnsembleIdentsAtom, selectedParameterIdentStringAtom } from "../atoms/persistableFixableAtoms";
 import { vectorListQueriesAtom } from "../atoms/queryAtoms";
 
@@ -39,14 +41,69 @@ export function useResampleFrequencyWarningAnnotation(): string | undefined {
 }
 
 /**
- * Hook to get error annotation for vector list queries
- *
- * Returns an error annotation if all vector list queries have failed
+ * Vector list queries' load status for the Vectors field: a blocking `overlay` (loading, or error
+ * if *all* selected ensembles' queries failed) and/or a non-blocking `warningMessage` naming the
+ * failing ensemble(s) if only *some* failed.
  */
-export function useVectorListQueriesErrorAnnotation(): string | undefined {
+export function useVectorListQueriesFieldStatus(ensembleSet: EnsembleSet): {
+    overlay?: SettingOverlay;
+    warningMessage?: string;
+} {
+    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value ?? [];
     const vectorListQueries = useAtomValue(vectorListQueriesAtom);
+    const isFetching = useAtomValue(isVectorListQueriesFetchingAtom);
 
-    return vectorListQueries.length > 0 && vectorListQueries.every((q: QueryObserverResult<unknown>) => q.isError)
-        ? "Could not load vectors for selected ensembles"
-        : undefined;
+    const queriesWithIdent = vectorListQueries
+        .map((query, index) => ({ query, ensembleIdent: selectedEnsembleIdents[index] }))
+        .filter((item): item is typeof item & { ensembleIdent: NonNullable<(typeof item)["ensembleIdent"]> } =>
+            Boolean(item.ensembleIdent),
+        );
+
+    const failingEnsembleNames = queriesWithIdent
+        .filter((item) => item.query.isError)
+        .map(
+            ({ ensembleIdent }) =>
+                ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString(),
+        );
+
+    if (failingEnsembleNames.length === 0) {
+        return isFetching ? { overlay: { type: "loading", message: "Loading vectors..." } } : {};
+    }
+
+    const message = `Could not load vectors for ensemble${failingEnsembleNames.length > 1 ? "s" : ""}: ${joinStringArrayToHumanReadableString(failingEnsembleNames)}`;
+
+    const hasAnySuccessfulQuery = queriesWithIdent.some((item) => !item.query.isError);
+    if (hasAnySuccessfulQuery) {
+        return {
+            warningMessage: message,
+            overlay: isFetching ? { type: "loading", message: "Loading vectors..." } : undefined,
+        };
+    }
+
+    return { overlay: { type: "error", message } };
+}
+
+/**
+ * Hook to get an annotation for vector tags that match nothing in the VectorSelector's data
+ *
+ * Does not validate the tags itself: `invalidVectorTags` must already be the tags the VectorSelector reports as
+ * invalid (`isValid === false` in its selection). Wildcard tags (e.g. WOPR:*) are thereby judged by what they expand
+ * to rather than by literal vector names. The hook only maps them to an annotation, which is skipped when no
+ * ensembles are selected or while the vector lists are being fetched (the selector's data is incomplete then).
+ */
+export function useInvalidVectorsAnnotation(invalidVectorTags: string[]): SettingAnnotation[] {
+    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value ?? [];
+    const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
+
+    // While vector lists are being fetched the selector's data is incomplete, so tags are only temporarily invalid
+    if (isVectorListQueriesFetching || selectedEnsembleIdents.length === 0 || invalidVectorTags.length === 0) {
+        return [];
+    }
+
+    return [
+        {
+            type: "error",
+            message: `Invalid vector${invalidVectorTags.length > 1 ? "s" : ""}`,
+        },
+    ];
 }
