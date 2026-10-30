@@ -18,7 +18,6 @@ export class Workbench {
     private readonly _queryClient: QueryClient;
     private readonly _sessionManager: WorkbenchSessionManager;
     private readonly _navigationManager: NavigationManager;
-    private _isInitialized: boolean = false;
 
     constructor(queryClient: QueryClient) {
         this._queryClient = queryClient;
@@ -65,14 +64,6 @@ export class Workbench {
     }
 
     async initialize() {
-        if (this._isInitialized) {
-            console.info(
-                "Workbench is already initialized. This might happen in strict mode due to useEffects being called multiple times.",
-            );
-            return;
-        }
-        this._isInitialized = true;
-
         this._navigationManager.start();
         await this._sessionManager.maybeOpenFromUrl();
     }
