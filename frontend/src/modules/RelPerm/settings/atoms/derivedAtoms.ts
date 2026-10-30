@@ -12,7 +12,6 @@ import {
     showStatisticalFanAtom,
     showStatisticalLinesAtom,
 } from "./baseAtoms";
-import { selectedEnsembleIdentsAtom, selectedSaturationAxisNameAtom, selectedSatnumsAtom } from "./persistableFixableAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedSaturationAxisNameAtom,

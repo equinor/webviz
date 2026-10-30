@@ -129,6 +129,18 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedEdgeKeyAnnotations = useMakePersistableFixableAtomAnnotations(selectedEdgeKeyAtom);
     const selectedNodeKeyAnnotations = useMakePersistableFixableAtomAnnotations(selectedNodeKeyAtom);
     const selectedDateTimeAnnotations = useMakePersistableFixableAtomAnnotations(selectedDateTimeAtom);
+    // Keep annotations for the local selection hidden while the field follows an elevated realization.
+    const realizationAnnotations = isRealizationElevated
+        ? []
+        : selectedEnsembleIdent.isValidInContext && availableRealizations.length === 0
+          ? [
+                ...selectedRealizationAnnotations,
+                {
+                    type: "warning" as const,
+                    message: "No realizations available. Check the realization filter.",
+                },
+            ]
+          : selectedRealizationAnnotations;
 
     const handleSettingsAnnotationsChange = React.useCallback(
         function handleSettingsAnnotationsChange(annotations: SettingAnnotation[]) {
@@ -162,19 +174,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 )}
                             </span>
                         }
-                        annotations={
-                            // Without a realization to choose (e.g. all excluded by the realization filter), the
-                            // network settings are blocked - so point at the cause
-                            selectedEnsembleIdent.isValidInContext && availableRealizations.length === 0
-                                ? [
-                                      ...selectedRealizationAnnotations,
-                                      {
-                                          type: "warning",
-                                          message: "No realizations available. Check the realization filter.",
-                                      },
-                                  ]
-                                : selectedRealizationAnnotations
-                        }
+                        annotations={realizationAnnotations}
                     >
                         <Combobox
                             items={availableRealizations.map((real) => {

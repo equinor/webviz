@@ -205,7 +205,7 @@ export function SettingManagerComponent<
                                     </span>
                                 </span>
                             )}
-                        {isPersisted && isValidPersistedValue && !isLoading && isInitialized && !isValid && (
+                        {isPersisted && !isValidPersistedValue && (
                             <span
                                 className="gap-x-3xs text-body-xs text-danger-strong flex items-center"
                                 title="The saved value for this setting has an invalid structure and could not be loaded."

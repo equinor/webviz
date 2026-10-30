@@ -579,6 +579,8 @@ export class SettingManager<
         if (this._loading !== loading) {
             this._loading = loading;
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+            // Pending while loading, settled (with the current constraints) again once done.
+            this.contributeElevatedSettingConstraints();
         }
 
         // Resolving again ends being blocked - only after the loading state is published, so nothing that reacts to
@@ -606,10 +608,6 @@ export class SettingManager<
             this._blockedBy = newBlockedBy;
         }
 
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
-
-        // Pending while loading, settled (with the current constraints) again once done.
-        this.contributeElevatedSettingConstraints();
         // Also notified when only the labels change, as ExternalSettingController combines them on this topic
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_BLOCKED);
         if (isBlockedByChanged) {
@@ -810,13 +808,11 @@ export class SettingManager<
 
     private applyValueConstraints(): boolean {
         let valueChanged = false;
-        // The local value is still fixed up while elevated, so it is sensible once no longer elevated.
+        const localInternalValue = this.getLocalInternalValue();
+        // Preserve initialized, non-empty local values for the user to resolve, but still fix up the local value while elevated.
         const isValueFixedUp =
-            !this._initialized && !this.checkIfValueIsValid(this.getLocalInternalValue()) && this.maybeFixupValue();
-        // Once initialized, an invalid value is kept for the user to resolve - only an empty one is still filled
-        const isValueFixedUp =
-            (!this._initialized || this.getInternalValue() === null) &&
-            !this.checkIfValueIsValid(this.getInternalValue()) &&
+            (!this._initialized || localInternalValue === null) &&
+            !this.checkIfValueIsValid(localInternalValue) &&
             this.maybeFixupValue();
         const isPersistedValueReset = this.maybeResetPersistedValue();
         if (isValueFixedUp || isPersistedValueReset) {

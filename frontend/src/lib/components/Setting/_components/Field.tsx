@@ -11,7 +11,6 @@ import { useReportFieldOverlay } from "../_hooks/useReportFieldOverlay";
 import { Annotations } from "./Annotations";
 import { Overlay, type OverlayProps } from "./Overlay";
 import { LayoutContext } from "./Panel";
-import { SectionAnnotationsContext } from "./SectionAnnotationsContext";
 
 export type SettingAnnotation = {
     /** The severity level that determines the icon and color of the annotation. */

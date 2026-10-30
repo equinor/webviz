@@ -50,7 +50,8 @@ export function usePlotBuilder(
     );
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
-    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
+    const activeTimestampUtcMs = useAtomValue(effectiveActiveTimestampUtcMsAtom).value;
+    const highlightedRealization = useAtomValue(highlightedRealizationAtom);
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 
