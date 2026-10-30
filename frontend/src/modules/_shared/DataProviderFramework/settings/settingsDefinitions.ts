@@ -11,11 +11,13 @@ import type { ColorScaleSpecification } from "@framework/components/ColorScaleSe
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ProductionPhase, InjectionPhase } from "@framework/types/wellbore";
 import type { ColorSet } from "@lib/utils/ColorSet";
+import type { SurfaceAttribute } from "@modules/_shared/Surface";
 
 import type { IntersectionSettingOption, IntersectionSettingValue } from "./implementations/IntersectionSetting";
 import type { PolygonVisualizationSpec } from "./implementations/PolygonVisualizationSetting";
 import type { Representation } from "./implementations/RepresentationSetting";
 import type { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
+import type { TimeType } from "./implementations/TimeTypeSetting";
 
 export enum Setting {
     // Assorted styling visual settings
@@ -30,6 +32,7 @@ export enum Setting {
     DEPTH_ATTRIBUTE = "depthAttribute",
     SEISMIC_ATTRIBUTE = "seismicAttribute",
     ATTRIBUTE = "attribute",
+    SURFACE_ATTRIBUTE = "surfaceAttribute",
     WELLBORE_DEPTH_FILTER_ATTRIBUTE = "wellboreDepthFilterAttribute",
     ENSEMBLE = "ensemble",
     COLOR_SCALE = "colorScale",
@@ -61,9 +64,11 @@ export enum Setting {
     SURFACE_NAME = "surfaceName",
     FORMATION_NAME = "formationName",
     SURFACE_NAMES = "surfaceNames",
+    TIME_TYPE = "timeType",
     TIME_OR_INTERVAL = "timeOrInterval",
     TIME_POINT = "timePoint",
     TIME_INTERVAL = "timeInterval",
+    TIME_POINT_PAIR = "timePointPair",
     TIME_RANGE_WITH_POINTS = "timeRangeWithPoints",
     TVD_RANGE = "tvdRange",
     WELLBORE_DEPTH_FORMATION_FILTER = "wellboreDepthFormationFilter",
@@ -150,20 +155,25 @@ export type SettingTypeDefinitions = {
         externalValue: string | null;
         valueConstraints: string[];
     };
+    [Setting.SURFACE_ATTRIBUTE]: {
+        internalValue: SurfaceAttribute | null;
+        externalValue: SurfaceAttribute | null;
+        valueConstraints: SurfaceAttribute[];
+    };
     [Setting.DEPTH_ATTRIBUTE]: {
-        internalValue: string | null;
-        externalValue: string | null;
-        valueConstraints: string[];
+        internalValue: SurfaceAttribute | null;
+        externalValue: SurfaceAttribute | null;
+        valueConstraints: SurfaceAttribute[];
     };
     [Setting.SEISMIC_ATTRIBUTE]: {
-        internalValue: string | null;
-        externalValue: string | null;
-        valueConstraints: string[];
+        internalValue: SurfaceAttribute | null;
+        externalValue: SurfaceAttribute | null;
+        valueConstraints: SurfaceAttribute[];
     };
     [Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE]: {
-        internalValue: string | null;
-        externalValue: string | null;
-        valueConstraints: string[];
+        internalValue: SurfaceAttribute | null;
+        externalValue: SurfaceAttribute | null;
+        valueConstraints: SurfaceAttribute[];
     };
     [Setting.GRID_NAME]: {
         internalValue: string | null;
@@ -219,6 +229,16 @@ export type SettingTypeDefinitions = {
         internalValue: string | null;
         externalValue: string | null;
         valueConstraints: string[];
+    };
+    [Setting.TIME_POINT_PAIR]: {
+        internalValue: [string, string] | null;
+        externalValue: [string, string] | null;
+        valueConstraints: string[];
+    };
+    [Setting.TIME_TYPE]: {
+        internalValue: TimeType | null;
+        externalValue: TimeType | null;
+        valueConstraints: TimeType[];
     };
     [Setting.TIME_RANGE_WITH_POINTS]: {
         internalValue: string[] | null;

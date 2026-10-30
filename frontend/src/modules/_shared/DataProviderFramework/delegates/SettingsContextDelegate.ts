@@ -22,6 +22,7 @@ import type { NullableStoredData, StoredData } from "../interfacesAndTypes/share
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
+import { assertNoCircularValueConstraints } from "./_utils/assertNoCircularValueConstraints";
 import { Dependency, type Read } from "./_utils/Dependency";
 
 export enum SettingsContextStatus {
@@ -100,15 +101,7 @@ export class SettingsContextDelegate<
 
         this._settings = settings;
 
-        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-            "dependencies",
-            this.getDataProviderManager()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(() => {
-                this.handleSettingChanged();
-            }),
-        );
-
+        // Global settings are not subscribed to here - changes reach the settings through the dependencies that read them
         for (const key in this._settings) {
             this._settings[key].connectElevatedSettingsService(dataProviderManager.getElevatedSettingsService());
 
@@ -122,7 +115,24 @@ export class SettingsContextDelegate<
                 "settings",
                 this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(
                     () => {
-                        this.handleSettingsLoadingStateChanged();
+                        this.handleSettingChanged();
+                    },
+                ),
+            );
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "settings",
+                this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_BLOCKED)(
+                    () => {
+                        this.handleSettingChanged();
+                    },
+                ),
+            );
+            // Whether a setting is shown decides whether its validity counts
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "settings",
+                this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.ATTRIBUTES)(
+                    () => {
+                        this.handleSettingChanged();
                     },
                 ),
             );
@@ -135,6 +145,16 @@ export class SettingsContextDelegate<
         return this._dataProviderManager;
     }
 
+    /*
+     * The settings are evaluated whenever a setting or dependency changes - without any dependencies, that may never
+     * happen, which would leave the owner waiting forever. The owner calls this once it has subscribed.
+     */
+    evaluateIfWithoutDependencies(): void {
+        if (this._dependencies.length === 0) {
+            this.handleSettingChanged();
+        }
+    }
+
     getStatus(): SettingsContextStatus {
         return this._status;
     }
@@ -143,12 +163,17 @@ export class SettingsContextDelegate<
         return this._dependencyStatusMessages;
     }
 
+    /*
+     * The values that decide whether the provider's data is outdated. A persisted value that is still held has not been
+     * adopted yet, and a hidden setting does not apply to the current configuration (e.g. a shared setting may still
+     * change it) - both are left undefined, so that changing them never makes the provider refetch.
+     */
     getValues(): { [K in TSettingKey]?: TSettingTypes[K] } {
         const settings: { [K in TSettingKey]?: TSettingTypes[K] } = {} as {
             [K in TSettingKey]?: TSettingTypes[K];
         };
         for (const key in this._settings) {
-            if (this._settings[key].isPersistedValue()) {
+            if (this._settings[key].isPersistedValue() || !this.isSettingApplicable(key)) {
                 settings[key] = undefined;
                 continue;
             }
@@ -158,9 +183,29 @@ export class SettingsContextDelegate<
         return settings;
     }
 
+    /*
+     * A hidden setting does not apply to the current configuration (e.g. a filter that is switched off) - the user can
+     * neither see nor fix it, so it must not make the settings invalid.
+     * A disabled setting that is shown still counts, as it explains itself (e.g. "No surfaces available").
+     */
+    private isSettingApplicable(key: TSettingKey): boolean {
+        return this._settings[key].getAttributes().visible;
+    }
+
+    private isSettingInvalid(key: TSettingKey): boolean {
+        if (!this.isSettingApplicable(key)) {
+            return false;
+        }
+        return !this._settings[key].isValueValid() || this._settings[key].isPersistedValue();
+    }
+
+    // A blocked setting can't be checked against up-to-date value constraints, so it does not count as valid either
     areCurrentSettingsValid(): boolean {
         for (const key in this._settings) {
-            if (!this._settings[key].isValueValid()) {
+            if (
+                this.isSettingApplicable(key) &&
+                (!this._settings[key].isValueValid() || this._settings[key].isBlocked())
+            ) {
                 return false;
             }
         }
@@ -198,9 +243,10 @@ export class SettingsContextDelegate<
         return true;
     }
 
+    // A blocked setting may never have been initialized - it is settled nonetheless, as it waits for another one
     areAllSettingsInitialized(): boolean {
         for (const key in this._settings) {
-            if (!this._settings[key].isInitialized() || this._settings[key].isPersistedValue()) {
+            if (!this._settings[key].isInitialized() && !this._settings[key].isBlocked()) {
                 return false;
             }
         }
@@ -208,14 +254,14 @@ export class SettingsContextDelegate<
         return true;
     }
 
-    isSomePersistedSettingNotValid(): boolean {
+    /*
+     * A persisted value is adopted as soon as value constraints that accept it arrive. One that is still held once the
+     * settings are initialized has either been rejected by the constraints or failed to deserialize, and stays until the
+     * user changes the setting.
+     */
+    isSomePersistedValueUnresolved(): boolean {
         for (const key in this._settings) {
-            if (
-                !this._settings[key].isLoading() &&
-                this._settings[key].isPersistedValue() &&
-                !this._settings[key].isValueValid() &&
-                this._settings[key].isInitialized()
-            ) {
+            if (this.isSettingApplicable(key) && this._settings[key].isPersistedValue()) {
                 return true;
             }
         }
@@ -223,10 +269,11 @@ export class SettingsContextDelegate<
         return false;
     }
 
+    // The labels of the shown settings that make the settings invalid, including those still holding a rejected persisted value
     getInvalidSettings(): string[] {
         const invalidSettings: string[] = [];
         for (const key in this._settings) {
-            if (!this._settings[key].isValueValid()) {
+            if (this.isSettingInvalid(key)) {
                 invalidSettings.push(this._settings[key].getLabel());
             }
         }
@@ -302,7 +349,7 @@ export class SettingsContextDelegate<
             // Temporary skip undefined settingsDelegate (await persistence versioning)
             // - Setting might have been removed since creation of the serialized state (e.g. session).
             if (settingDelegate === undefined) {
-                reportError(`Setting with key '${key}' does not exist anymore. Cannot apply persisted value.`);
+                reportError(`Setting with key '${key}' does not exist anymore. Cannot apply saved value.`);
                 continue;
             }
 
@@ -318,6 +365,7 @@ export class SettingsContextDelegate<
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("dependencies");
 
         this._dependencies = [];
+        const valueConstraintsDependencies = new Map<string, Dependency<any, TSettings, any, any, any>[]>();
 
         const makeLocalSettingGetter = <K extends TSettingKey>(key: K, handler: (value: TSettingTypes[K]) => void) => {
             const handleChange = (): void => {
@@ -388,6 +436,10 @@ export class SettingsContextDelegate<
             return this.getDataProviderManager.bind(this)().getGlobalSetting(key);
         };
 
+        const globalSettingValidityGetter = (key: keyof GlobalSettings): boolean => {
+            return this.getDataProviderManager.bind(this)().isGlobalSettingValid(key);
+        };
+
         const createDependency = <T, TReads extends Record<string, Read<any>> = Record<string, never>>(
             debugName: string,
             resolverSpec: ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads>,
@@ -400,6 +452,7 @@ export class SettingsContextDelegate<
                 loadingStateGetter,
                 makeGlobalSettingGetter,
                 debugName,
+                globalSettingValidityGetter,
             );
             this._dependencies.push(dependency);
             dependency.initialize();
@@ -421,6 +474,10 @@ export class SettingsContextDelegate<
         ): Dependency<SettingTypeDefinitions[K]["valueConstraints"], TSettings, TSettingTypes, TSettingKey, TReads> => {
             const debugName = `ValueConstraintsUpdater_${settingKey}`;
             const dependency = createDependency(debugName, resolverSpec);
+            valueConstraintsDependencies.set(settingKey, [
+                ...(valueConstraintsDependencies.get(settingKey) ?? []),
+                dependency,
+            ]);
 
             dependency.subscribe((valueConstraints) => {
                 if (valueConstraints === null) {
@@ -438,6 +495,14 @@ export class SettingsContextDelegate<
                 this.handleSettingChanged();
             });
 
+            // The setting keeps its value and constraints while it waits - blocked before it stops loading, so whatever
+            // reacts to it no longer loading sees it blocked already
+            dependency.subscribeBlocked((blockedBy) => {
+                this._settings[settingKey].setBlocked(true, blockedBy);
+                this._settings[settingKey].setLoading(false);
+                this.handleSettingChanged();
+            });
+
             this.subscribeToDependencyStatusMessages(dependency);
 
             return dependency;
@@ -451,16 +516,33 @@ export class SettingsContextDelegate<
             resolverSpec: ResolverSpec<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey, TReads>,
         ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey, TReads> => {
             const debugName = `SettingAttributesUpdater_${settingKey}`;
+            const markAttributesResolved = this._settings[settingKey].registerAttributesBinding();
             const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribe((attributes: Partial<SettingAttributes> | null) => {
-                if (attributes === null) {
-                    return;
+                // A failed resolver leaves the default attributes, rather than keeping the setting from ever being shown
+                const attributesChanged =
+                    attributes !== null && this._settings[settingKey].updateAttributes(attributes);
+                markAttributesResolved();
+                // Changed attributes are re-evaluated through the ATTRIBUTES subscription already
+                if (!attributesChanged) {
+                    this.handleSettingChanged();
                 }
-                this._settings[settingKey].updateAttributes(attributes);
             });
 
-            dependency.subscribeLoading(() => {
+            // Only the start of loading is handled here. The end is published before the resolved attributes are
+            // applied, so evaluating then would judge the settings by the old attributes - e.g. find them invalid
+            // because of a setting that is about to be hidden, which would end a restore before the provider loads.
+            // The value subscriber above evaluates once the attributes are applied instead.
+            dependency.subscribeLoading((loading) => {
+                if (loading) {
+                    this.handleSettingChanged();
+                }
+            });
+
+            // The current attributes stay - while it waits, the setting must neither disappear nor hold up a restore
+            dependency.subscribeBlocked(() => {
+                markAttributesResolved();
                 this.handleSettingChanged();
             });
 
@@ -497,6 +579,12 @@ export class SettingsContextDelegate<
                 }
             });
 
+            // Stays empty, as it was cleared when it started loading
+            dependency.subscribeBlocked(() => {
+                this._storedDataLoadingStatus[key] = false;
+                this.handleSettingChanged();
+            });
+
             this.subscribeToDependencyStatusMessages(dependency);
 
             return dependency;
@@ -509,6 +597,9 @@ export class SettingsContextDelegate<
             const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribeLoading(() => {
+                this.handleSettingChanged();
+            });
+            dependency.subscribeBlocked(() => {
                 this.handleSettingChanged();
             });
 
@@ -560,6 +651,11 @@ export class SettingsContextDelegate<
         if (this._customSettingsHandler.setupBindings) {
             this._customSettingsHandler.setupBindings(context);
         }
+
+        // Settings blocking each other would wait for each other for good - see Dependency
+        assertNoCircularValueConstraints(valueConstraintsDependencies, (settingKey) =>
+            this._settings[settingKey as TSettingKey].getLabel(),
+        );
     }
 
     beforeDestroy(): void {
@@ -586,31 +682,23 @@ export class SettingsContextDelegate<
     }
 
     private handleSettingChanged() {
-        if (!this.areAllSettingsLoaded() || !this.areAllDependenciesLoaded() || !this.isAllStoredDataLoaded()) {
+        if (
+            !this.areAllSettingsLoaded() ||
+            !this.areAllDependenciesLoaded() ||
+            !this.isAllStoredDataLoaded() ||
+            !this.areAllSettingsInitialized()
+        ) {
             this.setStatus(SettingsContextStatus.LOADING);
             return;
         }
 
-        if (
-            this.isSomePersistedSettingNotValid() ||
-            !this.areCurrentSettingsValid() ||
-            !this.areAllSettingsInitialized()
-        ) {
+        if (!this.areCurrentSettingsValid() || this.isSomePersistedValueUnresolved()) {
             this.setStatus(SettingsContextStatus.INVALID_SETTINGS);
             return;
         }
 
         this.setStatus(SettingsContextStatus.VALID_SETTINGS);
         this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_AND_STORED_DATA_CHANGED);
-    }
-
-    private handleSettingsLoadingStateChanged() {
-        if (!this.areAllSettingsLoaded() || !this.areAllDependenciesLoaded() || !this.areAllSettingsInitialized()) {
-            this.setStatus(SettingsContextStatus.LOADING);
-            return;
-        }
-
-        this.handleSettingChanged();
     }
 
     private subscribeToDependencyStatusMessages(dependency: Dependency<any, any, any, any, any>): void {

@@ -107,9 +107,8 @@ function makeRelPermTableDefinitionQueryOptions(get: Getter) {
 function makeRelPermRealizationDataQueryOptions(get: Getter) {
     const { value: selectedEnsembleIdents, isValidInContext: ensembleIdentsValid } = get(selectedEnsembleIdentsAtom);
     const { value: selectedTableName, isValidInContext: tableNameValid } = get(selectedTableNameAtom);
-    const { value: selectedSaturationAxisName, isValidInContext: saturationAxisNameValid } = get(
-        selectedSaturationAxisNameAtom,
-    );
+    const { value: selectedSaturationAxisName, isValidInContext: saturationAxisNameValid } =
+        get(selectedSaturationAxisNameAtom);
     const { value: selectedCurveNames, isValidInContext: curveNamesValid } = get(selectedCurveNamesAtom);
     const { value: selectedSatnums, isValidInContext: satnumsValid } = get(selectedSatnumsAtom);
     const validRealizationNumbers = get(validRealizationNumbersAtom);
@@ -127,6 +126,8 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
     }
 
     const queryContexts = selectedEnsembleIdents.map(makeQueryContext);
+    const areSelectionsValid =
+        ensembleIdentsValid && tableNameValid && saturationAxisNameValid && curveNamesValid && satnumsValid;
 
     return {
         queries: queryContexts.map(function makeRelPermRealizationDataQuery({
@@ -160,11 +161,7 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
                         selectedSatnums.length > 0 &&
                         tableDefinitionIsLoaded &&
                         (filteredRealizations === null || filteredRealizations.length > 0) &&
-                        ensembleIdentsValid &&
-                        tableNameValid &&
-                        saturationAxisNameValid &&
-                        curveNamesValid &&
-                        satnumsValid,
+                        areSelectionsValid,
                     ),
                 };
             };
@@ -172,6 +169,17 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
         combine: function combineRelPermRealizationDataQueryResults(
             results: UseQueryResult<RelpermRealizationDataResponse_api, RelPermApiError>[],
         ): RelPermDataAccessorStatus {
+            // A disabled query keeps its cached data and error, which may not match the current selections
+            // (e.g. relative-permeability curves after switching to capillary pressure)
+            if (!areSelectionsValid) {
+                return {
+                    dataAccessor: null,
+                    isFetching: false,
+                    isError: false,
+                    errors: [],
+                };
+            }
+
             const ensembleData: RelPermEnsembleRealizationData[] = [];
 
             results.forEach(function collectEnsembleData(result, index) {

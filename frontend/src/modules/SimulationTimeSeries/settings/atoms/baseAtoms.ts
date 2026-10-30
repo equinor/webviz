@@ -16,6 +16,8 @@ export const subplotLimitDirectionAtom = atom<SubplotLimitDirection>(SubplotLimi
 
 export const subplotMaxDirectionElementsAtom = atom<number>(3);
 
+export const showTimestampMarkerAtom = atom<boolean>(true);
+
 export const colorRealizationsByParameterAtom = atom<boolean>(false);
 
 export const visualizationModeAtom = atom<VisualizationMode>(VisualizationMode.STATISTICAL_FANCHART);

@@ -1,7 +1,6 @@
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 
-import type { HoverData, HoverTopic } from "@framework/HoverService";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import * as bbox from "@lib/utils/bbox";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
@@ -16,18 +15,40 @@ import type { DataProviderManager } from "../framework/DataProviderManager/DataP
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
 import { Group } from "../framework/Group/Group";
 import type { GroupType } from "../groups/groupTypes";
-import type {
-    CustomDataProviderImplementation,
-    DataProviderAccessors,
-} from "../interfacesAndTypes/customDataProviderImplementation";
+import type { CustomDataProviderImplementation } from "../interfacesAndTypes/customDataProviderImplementation";
 import type {
     CustomGroupImplementation,
     CustomGroupImplementationWithSettings,
 } from "../interfacesAndTypes/customGroupImplementation";
-import { instanceofItemGroup, type ItemGroup } from "../interfacesAndTypes/entities";
+import { instanceofItemGroup } from "../interfacesAndTypes/entities";
 import type { StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
-import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
+import type { Settings } from "../settings/settingsDefinitions";
+
+import { makeTransformerArgs } from "./makeTransformerArgs";
+import { type HoverVisualizationFunctions, mergeHoverVisualizationFunctions } from "./mergeHoverVisualizationFunctions";
+import { ProviderMemoStore } from "./ProviderMemoStore";
+import { type DataProviderObjects, ProviderObjectsCache } from "./ProviderObjectsCache";
+import {
+    type DataProviderTransformers,
+    type GroupCustomPropsCollector,
+    type TransformerArgs,
+    TransformerRegistry,
+} from "./TransformerRegistry";
+
+// Re-exported, as modules import everything for assembling visualizations from here
+export type { HoverVisualizationFunction, HoverVisualizationFunctions } from "./mergeHoverVisualizationFunctions";
+export type {
+    AnnotationsTransformer,
+    BoundingBoxTransformer,
+    DataProviderTransformers,
+    GroupCustomPropsCollector,
+    GroupPropsCollectorArgs,
+    HoverVisualizationTransformer,
+    ReduceAccumulatedDataFunction,
+    TransformerArgs,
+    VisualizationTransformer,
+} from "./TransformerRegistry";
 
 export enum VisualizationItemType {
     DATA_PROVIDER_VISUALIZATION = "data-provider-visualization",
@@ -68,19 +89,6 @@ export type DataProviderVisualization<
     visualization: TVisualization;
 };
 
-export type TransformerArgs<
-    TSettings extends Settings,
-    TData,
-    TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = Record<string, never>,
-> = DataProviderAccessors<TSettings, TData, TStoredData> & {
-    id: string;
-    name: string;
-    isLoading: boolean;
-    getInjectedData: () => TInjectedData;
-    getDataValueRange: () => Readonly<[number, number]> | null;
-};
-
 export type VisualizationGroupMetadata<TGroupType extends GroupType> = {
     itemType: VisualizationItemType.GROUP;
     id: string;
@@ -98,113 +106,30 @@ export type VisualizationGroup<
     children: (VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
     annotations: Annotation[];
     aggregatedErrorMessages: (StatusMessage | string)[];
+    aggregatedActionRequiredMessages: (StatusMessage | string)[];
     allItemIds: Set<string>;
     combinedBoundingBox: bbox.BBox | null;
     numLoadingDataProviders: number;
     numDataProviders: number;
+    // While a state is being restored, the product may not reflect it yet - e.g. it can still be the one made from the
+    // empty tree before, as products are only made anew once restoring has finished
+    isRestoringState: boolean;
     accumulatedData: TAccumulatedData;
     hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget>;
     customProps: TCustomGroupProps[TGroupType];
 };
 
-export type GroupPropsCollectorArgs<
-    TSettings extends Settings,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-> = {
-    id: string;
-    name: string;
-    getSetting: <TKey extends TSettingKey>(setting: TKey) => SettingTypeDefinitions[TKey]["externalValue"];
-};
-
-export interface GroupCustomPropsCollector<
-    TSettings extends Settings,
-    TGroupKey extends keyof TCustomGroupProps,
-    TCustomGroupProps extends CustomGroupPropsMap = Record<string, never>,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-> {
-    (args: GroupPropsCollectorArgs<TSettings, TSettingKey>): TCustomGroupProps[TGroupKey];
+/*
+ * Whether the data of a product (or a group in it) is still on its way - use this rather than numLoadingDataProviders
+ * alone, which is 0 for a product made before a state started to be restored.
+ */
+export function isVisualizationLoading(
+    group: Pick<VisualizationGroup<any>, "numLoadingDataProviders" | "isRestoringState">,
+): boolean {
+    return group.isRestoringState || group.numLoadingDataProviders > 0;
 }
 
 export type Annotation = ColorScaleWithId; // Add more possible annotation types here, e.g. ColorSets etc.
-
-export type DataProviderTransformers<
-    TSettings extends Settings,
-    TData,
-    TTarget extends VisualizationTarget,
-    TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = Record<string, never>,
-    TAccumulatedData extends Record<string, any> = Record<string, never>,
-> = {
-    transformToVisualization: VisualizationTransformer<TSettings, TData, TTarget, TStoredData, TInjectedData>;
-    transformToBoundingBox?: BoundingBoxTransformer<TSettings, TData, TStoredData, TInjectedData>;
-    transformToAnnotations?: AnnotationsTransformer<TSettings, TData, TStoredData, TInjectedData>;
-    transformToHoverVisualization?: HoverVisualizationTransformer<
-        TSettings,
-        TData,
-        TTarget,
-        TStoredData,
-        TInjectedData
-    >;
-    reduceAccumulatedData?: ReduceAccumulatedDataFunction<
-        TSettings,
-        TData,
-        TAccumulatedData,
-        TStoredData,
-        TInjectedData
-    >;
-};
-
-export type HoverVisualizationFunctions<TTarget extends VisualizationTarget> = {
-    [K in HoverTopic]?: HoverVisualizationFunction<TTarget, K>;
-};
-
-export type HoverVisualizationFunction<TTarget extends VisualizationTarget, TTopic extends HoverTopic> = (
-    hoverInfo: HoverData[TTopic],
-) => DataProviderHoverVisualizationTargetTypes[TTarget][];
-
-export type VisualizationTransformer<
-    TSettings extends Settings,
-    TData,
-    TTarget extends VisualizationTarget,
-    TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = Record<string, never>,
-> = (
-    args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>,
-) => DataProviderVisualizationTargetTypes[TTarget] | null;
-
-// This does likely require a refactor as soon as we have tested against a use case
-export type HoverVisualizationTransformer<
-    TSettings extends Settings,
-    TData,
-    TTarget extends VisualizationTarget,
-    TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = Record<string, never>,
-> = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => HoverVisualizationFunctions<TTarget>;
-
-export type BoundingBoxTransformer<
-    TSettings extends Settings,
-    TData,
-    TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = Record<string, never>,
-> = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => bbox.BBox | null;
-
-export type AnnotationsTransformer<
-    TSettings extends Settings,
-    TData,
-    TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = Record<string, never>,
-> = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => Annotation[];
-
-export type ReduceAccumulatedDataFunction<
-    TSettings extends Settings,
-    TData,
-    TAccumulatedData,
-    TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = Record<string, never>,
-> = (
-    accumulatedData: TAccumulatedData,
-    args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>,
-) => TAccumulatedData;
 
 export type AssemblerProduct<
     TTarget extends VisualizationTarget,
@@ -214,24 +139,24 @@ export type AssemblerProduct<
 
 export type CustomGroupPropsMap = Partial<Record<GroupType, Record<string, any>>>;
 
-type DataProviderObjects<TTarget extends VisualizationTarget, TAccumulatedData extends Record<string, any>> = {
-    visualization: DataProviderVisualization<TTarget> | null;
-    hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget>;
-    annotations: Annotation[];
-    boundingBox: bbox.BBox | null;
-    accumulatedData: TAccumulatedData | null;
-};
-
 export type VisualizationAssemblerMakeOptions<
     TInjectedData extends Record<string, any>,
     TAccumulatedData extends Record<string, any>,
 > = {
     injectedData?: TInjectedData;
     initialAccumulatedData?: TAccumulatedData;
-    /**
-     * @deprecated - Exposed for a hotfix, avoid usage. See issue #1272
-     */
-    disableCache?: boolean;
+};
+
+// The providers of the levels above a group, split by whether they come before or after the group in the tree, so that
+// they keep their place among the group's own providers
+type InheritedDataProviders = {
+    before: DataProvider<any, any, any>[];
+    after: DataProvider<any, any, any>[];
+};
+
+type CollectedGroup = {
+    group: Group<any>;
+    numDataProvidersBefore: number;
 };
 
 export class VisualizationAssembler<
@@ -240,26 +165,15 @@ export class VisualizationAssembler<
     TInjectedData extends Record<string, any> = Record<string, never>,
     TAccumulatedData extends Record<string, any> = Record<string, never>,
 > {
-    private _dataProviderTransformers: Map<
-        string,
-        DataProviderTransformers<any, any, TTarget, any, TInjectedData, TAccumulatedData>
-    > = new Map();
-
-    private _groupCustomPropsCollectors: Map<
-        keyof TCustomGroupProps,
-        GroupCustomPropsCollector<any, any, TCustomGroupProps>
-    > = new Map();
-
-    // Keyed by the DataProvider instance itself (not its ID string) so that entries for destroyed data
-    // providers are reclaimed by ordinary GC once nothing else references the provider, instead of
-    // living forever in this assembler (which is a long-lived, module-scope singleton).
-    private _cachedDataProviderVisualizationsMap: WeakMap<
-        DataProvider<any, any, any>,
-        {
-            revisionNumber: number;
-            objects: DataProviderObjects<TTarget, TAccumulatedData>;
-        }
-    > = new WeakMap();
+    private _transformerRegistry = new TransformerRegistry<
+        TTarget,
+        TCustomGroupProps,
+        TInjectedData,
+        TAccumulatedData
+    >();
+    private _providerObjectsCache = new ProviderObjectsCache<TTarget, TInjectedData>();
+    // Kept apart from the cache, as memoized values are meant to outlive changes to the provider
+    private _providerMemoStore = new ProviderMemoStore();
 
     registerDataProviderTransformers<
         TSettings extends Settings,
@@ -267,28 +181,25 @@ export class VisualizationAssembler<
         TStoredData extends StoredData = Record<string, never>,
     >(
         dataProviderName: string,
+        // Not used at runtime - only passed so that the provider's settings, data and stored data types are inferred
+        // for the transformers
         dataProviderCtor: {
             new (...params: any[]): CustomDataProviderImplementation<TSettings, TData, TStoredData>;
         },
         transformers: DataProviderTransformers<TSettings, TData, TTarget, TStoredData, TInjectedData, TAccumulatedData>,
     ): void {
-        if (this._dataProviderTransformers.has(dataProviderCtor.name)) {
-            throw new Error(`Transformer function for data provider ${dataProviderCtor.name} already registered`);
-        }
-        this._dataProviderTransformers.set(dataProviderName, transformers);
+        this._transformerRegistry.registerDataProviderTransformers(dataProviderName, transformers);
     }
 
     registerGroupCustomPropsCollector<TSettings extends Settings, TGroupType extends keyof TCustomGroupProps>(
         groupName: TGroupType,
+        // Not used at runtime - only passed so that the group's settings types are inferred for the collector
         groupCtor: {
             new (...params: any[]): CustomGroupImplementation | CustomGroupImplementationWithSettings<TSettings>;
         },
         collector: GroupCustomPropsCollector<TSettings, TGroupType, TCustomGroupProps>,
     ): void {
-        if (this._dataProviderTransformers.has(groupCtor.name)) {
-            throw new Error(`Data collector function for group ${groupCtor.name} already registered`);
-        }
-        this._groupCustomPropsCollectors.set(groupName, collector);
+        this._transformerRegistry.registerGroupCustomPropsCollector(groupName, collector);
     }
 
     make(
@@ -297,10 +208,10 @@ export class VisualizationAssembler<
     ): AssemblerProduct<TTarget, TCustomGroupProps, TAccumulatedData> {
         return this.makeRecursively(
             dataProviderManager.getGroupDelegate(),
-            [],
+            { before: [], after: [] },
             options?.initialAccumulatedData ?? ({} as TAccumulatedData),
+            dataProviderManager.isDeserializing(),
             options?.injectedData,
-            options?.disableCache,
         );
     }
 
@@ -313,38 +224,18 @@ export class VisualizationAssembler<
         }
     }
 
-    private makeRecursively(
+    /*
+     * Collects the groups and data providers on the level of the given group delegate. Context boundaries only scope
+     * settings, so their items are collected as if they were on the level of the boundary itself - e.g. a provider in a
+     * boundary is passed down into the views next to it, just like a provider outside of it.
+     */
+    private collectLevelItemsRecursively(
         groupDelegate: GroupDelegate,
-        inheritedDataProviders: DataProvider<any, any, any>[],
-        accumulatedData: TAccumulatedData,
-        injectedData?: TInjectedData,
-        /**
-         * @deprecated - Exposed for a hotfix, avoid usage. See issue #1272
-         */
-        disableCache?: boolean,
-    ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
-        const children: (
-            | VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>
-            | DataProviderVisualization<TTarget>
-        )[] = [];
-        const annotations: Annotation[] = [];
-        const aggregatedErrorMessages: (StatusMessage | string)[] = [];
-        const allItemIds = new Set<string>();
-        let hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget> = {};
-        let numLoadingDataProviders = 0;
-        let numDataProviders = 0;
-        let combinedBoundingBox: bbox.BBox | null = null;
-
-        const itemGroups: ItemGroup[] = [];
-        const dataProviders: DataProvider<any, any, any>[] = [];
-
-        const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
-            if (boundingBox) {
-                combinedBoundingBox =
-                    combinedBoundingBox === null ? boundingBox : bbox.combine(boundingBox, combinedBoundingBox);
-            }
-        };
-
+        allItemIds: Set<string>,
+        aggregatedErrorMessages: (StatusMessage | string)[],
+        groups: CollectedGroup[],
+        dataProviders: DataProvider<any, any, any>[],
+    ): void {
         for (const child of groupDelegate.getChildren()) {
             // Register item id
             allItemIds.add(child.getItemDelegate().getId());
@@ -372,33 +263,76 @@ export class VisualizationAssembler<
                 continue;
             }
 
-            if (instanceofItemGroup(child)) {
-                itemGroups.push(child);
-            }
-
-            if (child instanceof DataProvider) {
+            if (child instanceof Group) {
+                groups.push({ group: child, numDataProvidersBefore: dataProviders.length });
+            } else if (instanceofItemGroup(child)) {
+                this.collectLevelItemsRecursively(
+                    child.getGroupDelegate(),
+                    allItemIds,
+                    aggregatedErrorMessages,
+                    groups,
+                    dataProviders,
+                );
+            } else if (child instanceof DataProvider) {
                 dataProviders.push(child);
             }
         }
+    }
 
-        for (const itemGroup of itemGroups) {
+    private makeRecursively(
+        groupDelegate: GroupDelegate,
+        inheritedDataProviders: InheritedDataProviders,
+        accumulatedData: TAccumulatedData,
+        isRestoringState: boolean,
+        injectedData?: TInjectedData,
+    ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
+        const children: (
+            | VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>
+            | DataProviderVisualization<TTarget>
+        )[] = [];
+        const annotations: Annotation[] = [];
+        const aggregatedErrorMessages: (StatusMessage | string)[] = [];
+        const aggregatedActionRequiredMessages: (StatusMessage | string)[] = [];
+        const allItemIds = new Set<string>();
+        let hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget> = {};
+        let numLoadingDataProviders = 0;
+        let numDataProviders = 0;
+        let combinedBoundingBox: bbox.BBox | null = null;
+
+        const groups: CollectedGroup[] = [];
+        const dataProviders: DataProvider<any, any, any>[] = [];
+
+        const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
+            if (boundingBox) {
+                combinedBoundingBox =
+                    combinedBoundingBox === null ? boundingBox : bbox.combine(boundingBox, combinedBoundingBox);
+            }
+        };
+
+        this.collectLevelItemsRecursively(groupDelegate, allItemIds, aggregatedErrorMessages, groups, dataProviders);
+
+        for (const { group, numDataProvidersBefore } of groups) {
             const product = this.makeRecursively(
-                itemGroup.getGroupDelegate(),
-                [...inheritedDataProviders, ...dataProviders],
+                group.getGroupDelegate(),
+                {
+                    before: [...inheritedDataProviders.before, ...dataProviders.slice(0, numDataProvidersBefore)],
+                    after: [...dataProviders.slice(numDataProvidersBefore), ...inheritedDataProviders.after],
+                },
                 accumulatedData,
+                isRestoringState,
                 injectedData,
-                disableCache,
             );
 
             accumulatedData = product.accumulatedData;
             aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
+            aggregatedActionRequiredMessages.push(...product.aggregatedActionRequiredMessages);
 
             // Add all descendant item ids of the group to the set of all item ids
             for (const id of product.allItemIds) {
                 allItemIds.add(id);
             }
 
-            hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
+            hoverVisualizationFunctions = mergeHoverVisualizationFunctions(
                 hoverVisualizationFunctions,
                 product.hoverVisualizationFunctions,
             );
@@ -406,30 +340,22 @@ export class VisualizationAssembler<
             numDataProviders += product.numDataProviders;
             maybeApplyBoundingBox(product.combinedBoundingBox);
 
-            if (itemGroup instanceof Group) {
-                const group = this.makeGroup(itemGroup, product);
-
-                children.push(group);
-                continue;
-            } else {
-                annotations.push(...product.annotations);
-            }
-
-            children.push(...product.children);
+            children.push(this.makeGroup(group, product));
         }
 
-        for (const child of [...inheritedDataProviders, ...dataProviders]) {
-            if (children.some((el) => el.id === child.getItemDelegate().getId())) {
-                continue;
-            }
-
+        for (const child of [...inheritedDataProviders.before, ...dataProviders, ...inheritedDataProviders.after]) {
             numDataProviders++;
 
-            if (child.getStatus() === DataProviderStatus.LOADING) {
+            // IDLE as well - a provider that hasn't started loading yet has no current data either
+            if (child.getStatus() === DataProviderStatus.LOADING || child.getStatus() === DataProviderStatus.IDLE) {
                 numLoadingDataProviders++;
             }
 
             if (child.getStatus() === DataProviderStatus.INVALID_SETTINGS) {
+                const invalidSettings = child.getSettingsContextDelegate().getInvalidSettings();
+                const name = child.getItemDelegate().getName();
+                const details = invalidSettings.length > 0 ? `: invalid ${invalidSettings.join(", ")}` : "";
+                aggregatedActionRequiredMessages.push(`${name}${details}`);
                 continue;
             }
 
@@ -445,7 +371,14 @@ export class VisualizationAssembler<
                 continue;
             }
 
-            const dataProviderObjects = this.makeDataProviderObjects(child, accumulatedData, injectedData);
+            const transformers = this._transformerRegistry.getDataProviderTransformers(child.getType());
+            const transformerArgs = makeTransformerArgs(child, injectedData, this._providerMemoStore);
+            const dataProviderObjects = this.makeDataProviderObjects(
+                child,
+                transformers,
+                transformerArgs,
+                injectedData,
+            );
 
             if (!dataProviderObjects.visualization) {
                 continue;
@@ -454,11 +387,13 @@ export class VisualizationAssembler<
             maybeApplyBoundingBox(dataProviderObjects.boundingBox);
             children.push(dataProviderObjects.visualization);
             annotations.push(...dataProviderObjects.annotations);
-            hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
+            hoverVisualizationFunctions = mergeHoverVisualizationFunctions(
                 hoverVisualizationFunctions,
                 dataProviderObjects.hoverVisualizationFunctions,
             );
-            accumulatedData = dataProviderObjects.accumulatedData ?? accumulatedData;
+            // Always reduced anew, as the result depends on the accumulated data passed in, which changes with the
+            // providers before this one
+            accumulatedData = transformers.reduceAccumulatedData?.(accumulatedData, transformerArgs) ?? accumulatedData;
         }
 
         return {
@@ -469,11 +404,13 @@ export class VisualizationAssembler<
             groupType: null,
             children,
             aggregatedErrorMessages,
+            aggregatedActionRequiredMessages,
             allItemIds,
             combinedBoundingBox,
             annotations,
             numLoadingDataProviders,
             numDataProviders,
+            isRestoringState,
             accumulatedData,
             hoverVisualizationFunctions,
             customProps: {} as TCustomGroupProps,
@@ -482,44 +419,32 @@ export class VisualizationAssembler<
 
     private makeDataProviderObjects(
         dataProvider: DataProvider<any, any, any>,
-        initialAccumulatedData: TAccumulatedData,
-        injectedData?: TInjectedData,
-        /**
-         * @deprecated - Exposed for a hotfix, avoid usage. See issue #1272
-         */
-        disableCache?: boolean,
-    ): DataProviderObjects<TTarget, TAccumulatedData> {
-        // ! Cache logic returns the wrong accumulated data for WellLogViewer in some cases. As a hot-fix, we'll allow
-        // ! the cache to be disabled here, but this should be reverted once the issue has been resolved. See #1272
-        if (!disableCache && this._cachedDataProviderVisualizationsMap.has(dataProvider)) {
-            const cached = this._cachedDataProviderVisualizationsMap.get(dataProvider);
-            if (cached && cached.revisionNumber === dataProvider.getRevisionNumber()) {
-                return cached.objects;
-            }
+        transformers: DataProviderTransformers<any, any, TTarget, any, TInjectedData, TAccumulatedData>,
+        transformerArgs: TransformerArgs<any, any, any, TInjectedData>,
+        injectedData: TInjectedData | undefined,
+    ): DataProviderObjects<TTarget> {
+        const cached = this._providerObjectsCache.get(dataProvider, injectedData);
+        if (cached) {
+            return cached;
         }
 
-        const visualization = this.makeDataProviderVisualization(dataProvider, injectedData);
-        const hoverVisualizationFunctions = this.makeDataProviderHoverVisualizationFunctions(
-            dataProvider,
-            injectedData,
-        );
-        const annotations = this.makeDataProviderAnnotations(dataProvider, injectedData);
-        const boundingBox = this.makeDataProviderBoundingBox(dataProvider);
-        const accumulatedData = this.accumulateDataProviderData(dataProvider, initialAccumulatedData, injectedData);
-
-        const objects: DataProviderObjects<TTarget, TAccumulatedData> = {
-            visualization,
-            hoverVisualizationFunctions,
-            annotations,
-            boundingBox,
-            accumulatedData,
+        const visualization = transformers.transformToVisualization(transformerArgs);
+        const objects: DataProviderObjects<TTarget> = {
+            visualization: visualization
+                ? {
+                      itemType: VisualizationItemType.DATA_PROVIDER_VISUALIZATION,
+                      id: dataProvider.getItemDelegate().getId(),
+                      name: dataProvider.getItemDelegate().getName(),
+                      type: dataProvider.getType(),
+                      visualization,
+                  }
+                : null,
+            hoverVisualizationFunctions: transformers.transformToHoverVisualization?.(transformerArgs) ?? {},
+            annotations: transformers.transformToAnnotations?.(transformerArgs) ?? [],
+            boundingBox: transformers.transformToBoundingBox?.(transformerArgs) ?? null,
         };
 
-        this._cachedDataProviderVisualizationsMap.set(dataProvider, {
-            revisionNumber: dataProvider.getRevisionNumber(),
-            objects,
-        });
-
+        this._providerObjectsCache.set(dataProvider, injectedData, objects);
         return objects;
     }
 
@@ -530,7 +455,7 @@ export class VisualizationAssembler<
         group: Group<TSettings>,
         product: VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData, GroupType>,
     ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
-        const func = this._groupCustomPropsCollectors.get(group.getGroupType());
+        const func = this._transformerRegistry.getGroupCustomPropsCollector(group.getGroupType());
 
         return {
             itemType: VisualizationItemType.GROUP,
@@ -541,10 +466,12 @@ export class VisualizationAssembler<
             children: product.children,
             annotations: product.annotations,
             aggregatedErrorMessages: product.aggregatedErrorMessages,
+            aggregatedActionRequiredMessages: product.aggregatedActionRequiredMessages,
             allItemIds: product.allItemIds,
             combinedBoundingBox: product.combinedBoundingBox,
             numLoadingDataProviders: product.numLoadingDataProviders,
             numDataProviders: product.numDataProviders,
+            isRestoringState: product.isRestoringState,
             accumulatedData: product.accumulatedData,
             hoverVisualizationFunctions: product.hoverVisualizationFunctions,
             customProps:
@@ -555,129 +482,5 @@ export class VisualizationAssembler<
                         group.getSharedSettingsDelegate()?.getWrappedSettings()[setting].getValue() ?? null,
                 }) ?? ({} as TCustomGroupProps),
         };
-    }
-
-    private makeFactoryFunctionArgs<
-        TSettings extends Settings,
-        TData,
-        TStoredData extends StoredData = Record<string, never>,
-    >(
-        dataProvider: DataProvider<TSettings, TData, any>,
-        injectedData?: TInjectedData,
-    ): TransformerArgs<TSettings, TData, TStoredData, TInjectedData> {
-        function getInjectedData() {
-            if (!injectedData) {
-                throw new Error("No injected data provided. Did you forget to pass it to the factory?");
-            }
-            return injectedData;
-        }
-
-        return {
-            id: dataProvider.getItemDelegate().getId(),
-            name: dataProvider.getItemDelegate().getName(),
-            isLoading: dataProvider.getStatus() === DataProviderStatus.LOADING,
-            getInjectedData: getInjectedData.bind(this),
-            getDataValueRange: dataProvider.getDataValueRange.bind(dataProvider),
-            ...dataProvider.makeAccessors(),
-        };
-    }
-
-    private makeDataProviderVisualization(
-        dataProvider: DataProvider<any, any, any>,
-        injectedData?: TInjectedData,
-    ): DataProviderVisualization<TTarget> | null {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToVisualization;
-        if (!func) {
-            throw new Error(`No visualization transformer found for data provider ${dataProvider.getType()}`);
-        }
-
-        const visualization = func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
-        if (!visualization) {
-            return null;
-        }
-
-        const visualizationObj: DataProviderVisualization<TTarget> = {
-            itemType: VisualizationItemType.DATA_PROVIDER_VISUALIZATION,
-            id: dataProvider.getItemDelegate().getId(),
-            name: dataProvider.getItemDelegate().getName(),
-            type: dataProvider.getType(),
-            visualization,
-        };
-
-        return visualizationObj;
-    }
-
-    private makeDataProviderHoverVisualizationFunctions(
-        dataProvider: DataProvider<any, any, any>,
-        injectedData?: TInjectedData,
-    ): HoverVisualizationFunctions<TTarget> {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToHoverVisualization;
-        if (!func) {
-            return {};
-        }
-
-        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
-    }
-
-    private makeDataProviderBoundingBox(
-        dataProvider: DataProvider<any, any, any>,
-        injectedData?: TInjectedData,
-    ): bbox.BBox | null {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToBoundingBox;
-        if (!func) {
-            return null;
-        }
-
-        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
-    }
-
-    private makeDataProviderAnnotations(
-        dataProvider: DataProvider<any, any, any>,
-        injectedData?: TInjectedData,
-    ): Annotation[] {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToAnnotations;
-        if (!func) {
-            return [];
-        }
-
-        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
-    }
-
-    private accumulateDataProviderData(
-        dataProvider: DataProvider<any, any, any>,
-        accumulatedData: TAccumulatedData,
-        injectedData?: TInjectedData,
-    ): TAccumulatedData | null {
-        const func = this._dataProviderTransformers.get(dataProvider.getType())?.reduceAccumulatedData;
-        if (!func) {
-            return null;
-        }
-
-        return func(accumulatedData, this.makeFactoryFunctionArgs(dataProvider, injectedData));
-    }
-
-    private mergeHoverVisualizationFunctions(
-        base: HoverVisualizationFunctions<TTarget>,
-        additional: HoverVisualizationFunctions<TTarget>,
-    ): HoverVisualizationFunctions<TTarget> {
-        const merged: HoverVisualizationFunctions<TTarget> = { ...base };
-
-        for (const key in additional) {
-            const typedKey = key as HoverTopic;
-            const baseFn = base[typedKey];
-            const additionalFn = additional[typedKey];
-
-            if (baseFn && additionalFn) {
-                // TypeScript can't narrow K per key in a dynamic loop; we assert here intentionally
-                merged[typedKey] = ((hoverInfo: any) => [
-                    ...(baseFn as any)(hoverInfo),
-                    ...(additionalFn as any)(hoverInfo),
-                ]) as any;
-            } else if (additionalFn) {
-                merged[typedKey] = additionalFn as any;
-            }
-        }
-
-        return merged;
     }
 }

@@ -133,8 +133,23 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
             case "attribute":
                 groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.dataProviderManager));
                 return;
+            case "depth-attribute":
+                groupDelegate.appendChild(new SharedSetting(Setting.DEPTH_ATTRIBUTE, null, props.dataProviderManager));
+                return;
             case "date":
                 groupDelegate.appendChild(new SharedSetting(Setting.TIME_OR_INTERVAL, null, props.dataProviderManager));
+                return;
+            case "time-type":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_TYPE, null, props.dataProviderManager));
+                return;
+            case "time-point":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_POINT, null, props.dataProviderManager));
+                return;
+            case "time-interval":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_INTERVAL, null, props.dataProviderManager));
+                return;
+            case "time-point-pair":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_POINT_PAIR, null, props.dataProviderManager));
                 return;
         }
     }
@@ -255,9 +270,34 @@ const SHARED_SETTINGS_CHILDREN = [
         label: "Attribute",
     },
     {
+        identifier: "depth-attribute",
+        icon: <Icon data={settings} size={16} />,
+        label: "Depth Attribute",
+    },
+    {
         identifier: "date",
         icon: <Icon data={settings} size={16} />,
         label: "Date",
+    },
+    {
+        identifier: "time-type",
+        icon: <Icon data={settings} size={16} />,
+        label: "Time type",
+    },
+    {
+        identifier: "time-point",
+        icon: <Icon data={settings} size={16} />,
+        label: "Time step",
+    },
+    {
+        identifier: "time-interval",
+        icon: <Icon data={settings} size={16} />,
+        label: "Time interval",
+    },
+    {
+        identifier: "time-point-pair",
+        icon: <Icon data={settings} size={16} />,
+        label: "Time steps (difference)",
     },
 ];
 

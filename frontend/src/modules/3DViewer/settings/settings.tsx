@@ -8,6 +8,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Setting } from "@lib/components/Setting";
 import { usePersistedDataProviderManager } from "@modules/_shared/DataProviderFramework/hooks/usePersistedDataProviderManager";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import { dataProviderManagerAtom, dataProviderStateAtom } from "./atoms/baseAtoms";
 import { fieldIdentifierAtom } from "./atoms/persistableFixableAtoms";
@@ -37,23 +38,22 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             if (!dataProviderManager) {
                 return;
             }
-            dataProviderManager.updateGlobalSetting("fieldId", fieldIdentifier.value);
+            dataProviderManager.updateGlobalSetting("fieldId", fieldIdentifier.value, fieldIdentifier.isValidInContext);
         },
         [fieldIdentifier, dataProviderManager],
     );
 
+    // The effect above passes the field on to the data provider manager, with its validity
     function handleFieldChange(fieldId: string | null) {
         setFieldIdentifier(fieldId);
-        if (!dataProviderManager) {
-            return;
-        }
-        dataProviderManager.updateGlobalSetting("fieldId", fieldId);
     }
+
+    const fieldIdentifierAnnotations = useMakePersistableFixableAtomAnnotations(fieldIdentifierAtom);
 
     return (
         <div className="gap-y-xs px-xs py-xs flex h-full flex-col">
             <Setting.Panel>
-                <Setting.Field label="Field">
+                <Setting.Field label="Field" annotations={fieldIdentifierAnnotations}>
                     <FieldDropdown
                         ensembleSet={ensembleSet}
                         onChange={handleFieldChange}

@@ -8,7 +8,7 @@ import { effectiveRealizationAtom, selectedEnsembleIdentAtom } from "./persistab
 
 export const realizationFlowNetworkQueryAtom = atomWithQuery((get) => {
     const { value: selectedEnsembleIdent, isValidInContext: ensembleIdentValid } = get(selectedEnsembleIdentAtom);
-    const { value: selectedRealization, isValidInContext: realizationValid } = get(effectiveRealizationAtom);
+    const { value: selectedRealization, isValidInContext: realizationValid } = get(selectedRealizationAtom);
     const selectedResamplingFrequency = get(selectedResamplingFrequencyAtom);
     const selectedNodeTypesArray = [...get(selectedNodeTypesAtom)];
 

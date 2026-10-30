@@ -107,6 +107,7 @@ function isInternalState<T>(value: T | PersistableAtomState<T>): value is Persis
 export type PersistableAtomDependenciesState = "loading" | "blocked" | "error" | "loaded";
 
 type QueryLikeResult = {
+    isEnabled: boolean;
     isFetching: boolean;
     isError: boolean;
     isPending: boolean;
@@ -117,41 +118,39 @@ type QueryLikeResult = {
  * TanStack Query result - including a currently-disabled query (e.g. one gated on an invalid
  * upstream persistableFixableAtom's validity, per the query-gating convention used across modules).
  *
- * A disabled query never fetches, so `isFetching`/`isError` are both false on it, same as a query
- * that genuinely finished successfully - but it must NOT be reported as "loaded". `dependenciesState`
- * gates `dependenciesResolved` in persistableFixableAtom's lifecycle effect, which in turn gates BOTH
- * the one-time settle-fixup and the PERSISTENCE/TEMPLATE -> USER promotion. Reporting "loaded" while
- * disabled would let either of those fire against an empty/meaningless options set that has nothing
- * to do with the setting's real availability, corrupting or discarding a perfectly good persisted
- * value. `isPending` (true for both "disabled" and "genuinely still fetching") is what correctly
- * keeps this unresolved until the query has actually had a chance to run - reported as "blocked"
- * rather than "loading" specifically when there's no real fetch in progress, so consumers don't need
- * to separately work out whether to show a loading spinner.
+ * A disabled query must NOT be reported as "loaded". `dependenciesState` gates `dependenciesResolved`
+ * in persistableFixableAtom's lifecycle effect, which in turn gates BOTH the one-time settle-fixup
+ * and the PERSISTENCE/TEMPLATE -> USER promotion. Reporting "loaded" while disabled would let either
+ * of those fire against options that have nothing to do with the setting's real availability -
+ * corrupting or discarding a perfectly good persisted value, or settling a fresh atom on a default
+ * that is then kept instead of being initialized from the query once it's enabled again.
+ *
+ * The result status alone can't tell "disabled" apart from "done": a disabled query never fetches,
+ * and its status reflects whatever is cached for its key - `isPending` while nothing is, but plain
+ * success (or a stale error) if an earlier enabled run left a result behind. So a disabled query is
+ * always reported as "blocked", whatever is cached. An enabled query that has no result yet without
+ * fetching (e.g. paused while offline) is "blocked" as well. Both are reported as "blocked" rather
+ * than "loading" so consumers don't need to separately work out whether to show a loading spinner.
  */
 export function computeQueryDependenciesState(query: QueryLikeResult): PersistableAtomDependenciesState {
-    if (query.isError) {
-        return "error";
-    }
-    if (query.isFetching) {
-        return "loading";
-    }
-    if (query.isPending) {
-        return "blocked";
-    }
-    return "loaded";
+    return computeQueriesDependenciesState([query]);
 }
 
 /**
  * Same as {@link computeQueryDependenciesState}, for the `atomWithQueries` (one-query-per-item) case.
+ * Only enabled queries can make the state "error" or "loading"; any disabled query makes it at least
+ * "blocked".
  */
 export function computeQueriesDependenciesState(queries: QueryLikeResult[]): PersistableAtomDependenciesState {
-    if (queries.some((query) => query.isError)) {
+    const enabledQueries = queries.filter((query) => query.isEnabled);
+
+    if (enabledQueries.some((query) => query.isError)) {
         return "error";
     }
-    if (queries.some((query) => query.isFetching)) {
+    if (enabledQueries.some((query) => query.isFetching)) {
         return "loading";
     }
-    if (queries.some((query) => query.isPending)) {
+    if (enabledQueries.length < queries.length || enabledQueries.some((query) => query.isPending)) {
         return "blocked";
     }
     return "loaded";
@@ -352,8 +351,7 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
     });
 
     // One-way latch: becomes true the first time this atom's dependencies have resolved at least once
-    // (computeDependenciesState reports anything but "loading", or immediately if that callback
-    // wasn't given). While false, a USER-sourced value is masked on every read exactly as before this
+    // (computeDependenciesState reports "loaded", or immediately if that callback wasn't given). While false, a USER-sourced value is masked on every read exactly as before this
     // change, so a freshly-mounted atom still lands on a sensible default instead of flashing
     // "invalid" while its dependencies are still loading for the first time. Once true, masking stops
     // for good for USER-sourced values: an invalid value is kept as-is and reported as invalid via
@@ -515,11 +513,10 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
             const settled = get(settledAtom);
             const internalState = get(internalStateAtom);
             const { dependenciesState, isValid, computeFixup } = deriveState(get, internalState.value);
-            const nowResolved = dependenciesState !== "loading" && dependenciesState !== "blocked";
-
-            if (!nowResolved) {
-                // Dependencies regressed since this was queued - nothing to do now, a future
-                // resolution of the (now-changed) dependency will re-trigger this effect.
+            if (dependenciesState !== "loaded") {
+                // Dependencies regressed (or failed) since this was queued - nothing to do now, a
+                // future successful resolution of the (now-changed) dependency will re-trigger this
+                // effect.
                 return;
             }
 

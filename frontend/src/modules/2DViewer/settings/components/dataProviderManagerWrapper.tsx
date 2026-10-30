@@ -186,6 +186,11 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "attribute":
                 groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.dataProviderManager));
                 return;
+            case "surface-attribute":
+                groupDelegate.appendChild(
+                    new SharedSetting(Setting.SURFACE_ATTRIBUTE, null, props.dataProviderManager),
+                );
+                return;
             case "seismic-attribute":
                 groupDelegate.appendChild(
                     new SharedSetting(Setting.SEISMIC_ATTRIBUTE, null, props.dataProviderManager),
@@ -199,6 +204,12 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 return;
             case "time-interval":
                 groupDelegate.appendChild(new SharedSetting(Setting.TIME_INTERVAL, null, props.dataProviderManager));
+                return;
+            case "time-type":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_TYPE, null, props.dataProviderManager));
+                return;
+            case "time-point-pair":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_POINT_PAIR, null, props.dataProviderManager));
                 return;
             case "color-scale":
                 groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
@@ -438,6 +449,11 @@ const ACTIONS: ActionGroup[] = [
                 label: "Unsorted Attribute",
             },
             {
+                identifier: "surface-attribute",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Surface Attribute",
+            },
+            {
                 identifier: "seismic-attribute",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Seismic Attribute",
@@ -456,6 +472,16 @@ const ACTIONS: ActionGroup[] = [
                 identifier: "time-interval",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Time interval",
+            },
+            {
+                identifier: "time-type",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Time type",
+            },
+            {
+                identifier: "time-point-pair",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Time steps (difference)",
             },
             {
                 identifier: "color-scale",

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { cloneDeep, isEqual } from "lodash-es";
+import { clamp, cloneDeep, isEqual } from "lodash-es";
 
 import type { Grid3dZone_api } from "@api";
 import { Button } from "@lib/components/Button";
@@ -324,16 +324,18 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
             ) {
                 // Lock callbacks handle sentinel updates when locking; skip to avoid overwriting them
                 if (reason === "range-locked") return;
+                // Bounds changes make the slider emit a clamped value; ignore it so a retained
+                // out-of-range draft stays visible (and invalid) until the user edits it. Sentinels
+                // already follow the new bounds on their own.
+                if (reason === "clamp-value") return;
 
                 const base = internalValue ?? defaultBase;
 
-                // Preserve a sentinel when:
-                // - the constraint changed (clamp-value): keep all existing sentinels
-                // - the value for that position didn't move (still at the constraint boundary):
-                //   the other thumb was dragged, so this position should stay locked
+                // Preserve a sentinel when the value for that position didn't move (still at the
+                // constraint boundary): the other thumb was dragged, so this position should stay locked
                 function keepSentinel(current: number | "min" | "max", newVal: number, constraintVal: number): boolean {
                     if (current !== "min" && current !== "max") return false;
-                    return reason === "clamp-value" || newVal === constraintVal;
+                    return newVal === constraintVal;
                 }
 
                 if (key === "k") {
@@ -471,6 +473,13 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                     )
                                   : false;
 
+                            // Each input is bounded by the other one's value - which may be retained outside the grid's
+                            // range. Only these bounds are kept within the range (so min <= max), not the values: an
+                            // out-of-range value is shown as is, and only an edit by the user is clamped.
+                            const [rangeMin, rangeMax] = valueConstraints.range[label];
+                            const lowerInputMax = rangeValue ? clamp(rangeValue[1], rangeMin, rangeMax) : rangeMax;
+                            const upperInputMin = rangeValue ? clamp(rangeValue[0], rangeMin, rangeMax) : rangeMin;
+
                             function handleNumberInputChange(
                                 value: number | null,
                                 reason: string,
@@ -523,8 +532,8 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                                     <NumberInput
                                                         value={rangeValue[0]}
                                                         layoutClassName="w-16 shrink-0"
-                                                        min={valueConstraints.range[label][0]}
-                                                        max={rangeValue[1]}
+                                                        min={rangeMin}
+                                                        max={lowerInputMax}
                                                         onValueCommitted={(v, eventDetails) =>
                                                             handleNumberInputChange(v, eventDetails.reason, 0, true)
                                                         }
@@ -551,8 +560,8 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                                     <NumberInput
                                                         layoutClassName="w-16 shrink-0"
                                                         value={rangeValue[1]}
-                                                        min={rangeValue[0]}
-                                                        max={valueConstraints.range[label][1]}
+                                                        min={upperInputMin}
+                                                        max={rangeMax}
                                                         onValueCommitted={(v, eventDetails) =>
                                                             handleNumberInputChange(v, eventDetails.reason, 1, true)
                                                         }

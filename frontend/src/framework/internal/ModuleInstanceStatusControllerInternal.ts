@@ -1,19 +1,18 @@
 import React from "react";
 
-
 import type { InternalAxiosRequestConfig } from "axios";
 import { cloneDeep, filter, isEqual, keys } from "lodash-es";
 import { v4 } from "uuid";
 
-import { StatusSource } from "@framework/ModuleInstanceStatusController";
-import type {
-    ModuleInstanceStatusController,
-    Origin,
-    StatusMessageType,
-    StatusMessageWithType,
+import {
+    type ModuleInstanceStatusController,
+    type Origin,
+    type StatusMessageWithType,
+    type StatusMessageType,
+    StatusSource,
 } from "@framework/ModuleInstanceStatusController";
 
-type StatusMessage = {
+export type StatusMessage = {
     source: StatusSource;
     message: string;
     type: StatusMessageType;

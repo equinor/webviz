@@ -135,17 +135,12 @@ class InplaceVolumesTableAccess:
         Dictionary with column names as key and array of unique column values as value.
         """
 
-        realizations = await self._ensemble_context.realizationids_async
-        if len(realizations) == 0:
-            raise InvalidDataError(
-                f"No realizations found in the ensemble {self._case_uuid}, {self._ensemble_name}",
-                Service.SUMO,
-            )
+        realization = await self._get_first_realization_with_table_async(table_name)
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         table_loader.require_standard_result(StandardResultName.inplace_volumes)
         table_loader.require_table_name(table_name)
 
-        pa_table = await table_loader.get_single_realization_async(realizations[0])
+        pa_table = await table_loader.get_single_realization_async(realization)
 
         column_names = pa_table.column_names
         column_names_and_values = {}
@@ -162,17 +157,12 @@ class InplaceVolumesTableAccess:
         """
         Get object with list of inplace volume columns and dictionary of index columns with their unique column values for the inplace volumes table.
         """
-        realizations = await self._ensemble_context.realizationids_async
-        if len(realizations) == 0:
-            raise InvalidDataError(
-                f"No realizations found in the ensemble {self._case_uuid}, {self._ensemble_name}",
-                Service.SUMO,
-            )
+        realization = await self._get_first_realization_with_table_async(table_name)
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         table_loader.require_standard_result(StandardResultName.inplace_volumes)
         table_loader.require_table_name(table_name)
 
-        pa_table = await table_loader.get_single_realization_async(realizations[0])
+        pa_table = await table_loader.get_single_realization_async(realization)
         column_names = pa_table.column_names
 
         index_columns = [col for col in InplaceVolumes.index_columns() if col in column_names]
@@ -187,3 +177,18 @@ class InplaceVolumesTableAccess:
         return VolumeColumnsAndIndexUniqueValues(
             volume_columns=volumetric_columns, index_unique_values_map=index_column_unique_values_map
         )
+
+    async def _get_first_realization_with_table_async(self, table_name: str) -> int:
+        table_context = self._ensemble_context.tables.filter(
+            name=table_name,
+            standard_result=StandardResultName.inplace_volumes,
+            realization=True,
+            aggregation=False,
+        )
+        realizations = await table_context.realizationids_async
+        if len(realizations) == 0:
+            raise InvalidDataError(
+                f"No realizations with inplace volumes table {table_name} found in the ensemble {self._case_uuid}, {self._ensemble_name}",
+                Service.SUMO,
+            )
+        return min(realizations)

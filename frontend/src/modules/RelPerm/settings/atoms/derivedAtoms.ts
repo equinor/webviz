@@ -14,6 +14,12 @@ import {
 } from "./baseAtoms";
 import { selectedEnsembleIdentsAtom, selectedSaturationAxisNameAtom, selectedSatnumsAtom } from "./persistableFixableAtoms";
 import {
+    selectedEnsembleIdentsAtom,
+    selectedSaturationAxisNameAtom,
+    selectedSatnumsAtom,
+    selectedTableNameAtom,
+} from "./persistableFixableAtoms";
+import {
     relPermRealizationDataQueriesAtom,
     relPermTableDefinitionQueriesAtom,
     relPermTableNamesQueriesAtom,
@@ -29,16 +35,56 @@ function intersectArrays<T>(arrays: T[][]): T[] {
     }, arrays[0]);
 }
 
+// Disabled queries keep their cached data, so options must not be derived from them while the selections they
+// depend on are invalid - otherwise stale options are listed next to "No valid value until another invalid setting is fixed."
 export const availableTableNamesAtom = atom<string[]>((get) => {
+    if (!get(selectedEnsembleIdentsAtom).isValidInContext) {
+        return [];
+    }
+
     const tableNameQueries = get(relPermTableNamesQueriesAtom);
     const loadedTableNames = tableNameQueries.flatMap((query) => (query.data ? [query.data] : []));
 
     return intersectArrays(loadedTableNames);
 });
 
+function arraysHaveSameValues(left: string[], right: string[]): boolean {
+    if (left.length !== right.length) {
+        return false;
+    }
+
+    const sortedLeft = [...left].sort();
+    const sortedRight = [...right].sort();
+    return sortedLeft.every((value, index) => value === sortedRight[index]);
+}
+
+export const tableNameSetsDifferAtom = atom<boolean>((get) => {
+    const loadedTableNameSets = get(relPermTableNamesQueriesAtom).flatMap((query) => (query.data ? [query.data] : []));
+
+    return (
+        loadedTableNameSets.length > 1 &&
+        loadedTableNameSets.some((tableNames) => !arraysHaveSameValues(tableNames, loadedTableNameSets[0]))
+    );
+});
+
+export const commonTableNamesAreMissingAtom = atom<boolean>((get) => {
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const tableNameQueries = get(relPermTableNamesQueriesAtom);
+    const loadedTableNameSets = tableNameQueries.filter((query) => query.data);
+    const allTableNameQueriesLoaded =
+        selectedEnsembleIdents.length > 0 &&
+        tableNameQueries.every((query) => query.data !== undefined || query.isError);
+
+    return allTableNameQueriesLoaded && loadedTableNameSets.length > 1 && get(availableTableNamesAtom).length === 0;
+});
+
 export const ensembleTableDefinitionsAtom = atom<RelPermEnsembleTableDefinition[]>((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
     const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
+
+    if (!get(selectedEnsembleIdentsAtom).isValidInContext || !get(selectedTableNameAtom).isValidInContext) {
+        return [];
+    }
 
     return tableDefinitionQueries.flatMap((queryResult, index) => {
         if (!queryResult.data) {

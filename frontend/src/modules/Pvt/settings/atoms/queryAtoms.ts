@@ -32,12 +32,19 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
             });
             return () => ({
                 ...options,
-                enabled: Boolean(el.ensembleIdent && el.realization !== null) && ensembleIdentsValid && realizationsValid,
+                enabled:
+                    Boolean(el.ensembleIdent && el.realization !== null) && ensembleIdentsValid && realizationsValid,
             });
         })
         .flat();
 
     function combine(results: UseQueryResult<PvtData_api[], Error>[]): CombinedPvtDataResult {
+        // A disabled query keeps its cached data and error, which must not be exposed for an invalid
+        // selection (e.g. a realization excluded by the realization filter)
+        if (!ensembleIdentsValid || !realizationsValid) {
+            return { tableCollections: [], errors: [], isFetching: false, allQueriesFailed: false };
+        }
+
         return {
             tableCollections: ensembleIdentsAndRealizations.map((el, idx) => {
                 return {
@@ -48,7 +55,8 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
             }),
             errors: results.map((result) => result.error).filter((err) => err !== null) as Error[],
             isFetching: results.some((result) => result.isFetching),
-            allQueriesFailed: results.every((result) => result.isError),
+            // Without any queries (e.g. all realizations filtered out), nothing has failed
+            allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
         };
     }
 

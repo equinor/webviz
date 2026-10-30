@@ -40,7 +40,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
             if (!dataProviderManager) {
                 return;
             }
-            dataProviderManager.updateGlobalSetting("fieldId", selectedFieldIdentifier.value);
+            dataProviderManager.updateGlobalSetting(
+                "fieldId",
+                selectedFieldIdentifier.value,
+                selectedFieldIdentifier.isValidInContext,
+            );
         },
         [selectedFieldIdentifier, dataProviderManager],
     );

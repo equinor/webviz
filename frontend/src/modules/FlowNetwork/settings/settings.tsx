@@ -14,8 +14,10 @@ import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/Wor
 import { Combobox } from "@lib/components/Combobox";
 import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
+import type { SettingAnnotation } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
 import { TextInput } from "@lib/components/TextInput";
+import { useFlagActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
@@ -24,6 +26,7 @@ import { FrequencyEnumToStringMapping, NodeTypeEnumToStringMapping } from "../ty
 
 import { selectedNodeTypesAtom, selectedResamplingFrequencyAtom } from "./atoms/baseAtoms";
 import {
+    areQuerySelectionsValidAtom,
     availableDateTimesAtom,
     availableRealizationsAtom,
     availableTreeTypesAtom,
@@ -47,6 +50,7 @@ import { realizationFlowNetworkQueryAtom } from "./atoms/queryAtoms";
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
+    const flagActionRequiredToStatusWriter = useFlagActionRequiredToStatusWriter(statusWriter);
 
     const availableRealizations = useAtomValue(availableRealizationsAtom);
     const availableTreeTypes = useAtomValue(availableTreeTypesAtom);
@@ -69,8 +73,12 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const isDateTimeElevated = useAtomValue(isDateTimeElevatedAtom);
 
     const flowNetworkQuery = useAtomValue(realizationFlowNetworkQueryAtom);
+    const areQuerySelectionsValid = useAtomValue(areQuerySelectionsValidAtom);
 
-    propagateQueryErrorToStatusWriter(flowNetworkQuery, statusWriter);
+    // A disabled query keeps its cached error, which must not be reported for an invalid selection
+    if (areQuerySelectionsValid) {
+        propagateQueryErrorToStatusWriter(flowNetworkQuery, statusWriter);
+    }
 
     const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(workbenchSession);
     const timeStepSliderDebounceTimeMs = 10;
@@ -86,7 +94,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         setSelectedEnsembleIdent(ensembleIdent);
     }
 
-    function handleSelectedTimeStepIndexChange(value: number | readonly number[]) {
+    function handleSelectedTimeStepIndexChange(value: number | readonly number[], eventDetails: { reason: string }) {
+        // Bounds changes make the slider emit a clamped value; ignore it so a retained invalid time step stays until the
+        // user edits it
+        if (eventDetails.reason === "clamp-value") return;
+
         const singleValue = typeof value === "number" ? value : value.length > 0 ? value[0] : 0;
         const validIndex = singleValue >= 0 && singleValue < availableDateTimes.length ? singleValue : null;
         const newDateTime = validIndex !== null ? availableDateTimes[validIndex] : null;
@@ -102,7 +114,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const createValueLabelFormat = React.useCallback(
         function createValueLabelFormat(value: number): string {
-            if (!availableDateTimes || availableDateTimes.length === 0 || value >= availableDateTimes.length) return "";
+            if (!availableDateTimes || value < 0 || value >= availableDateTimes.length) return "";
 
             return availableDateTimes[value];
         },
@@ -118,9 +130,17 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedNodeKeyAnnotations = useMakePersistableFixableAtomAnnotations(selectedNodeKeyAtom);
     const selectedDateTimeAnnotations = useMakePersistableFixableAtomAnnotations(selectedDateTimeAtom);
 
+    const handleSettingsAnnotationsChange = React.useCallback(
+        function handleSettingsAnnotationsChange(annotations: SettingAnnotation[]) {
+            const invalidFieldValueMessages = annotations.filter((a) => a.type === "error").map((a) => a.message);
+            flagActionRequiredToStatusWriter(invalidFieldValueMessages);
+        },
+        [flagActionRequiredToStatusWriter],
+    );
+
     return (
         <Setting.ScrollArea>
-            <Setting.Panel>
+            <Setting.Panel onAnnotationsChange={handleSettingsAnnotationsChange}>
                 <Setting.Section title="Data" defaultOpen>
                     <Setting.Field label="Ensemble" annotations={selectedEnsembleIdentAnnotations}>
                         <EnsembleDropdown
@@ -142,7 +162,19 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 )}
                             </span>
                         }
-                        annotations={isRealizationElevated ? [] : selectedRealizationAnnotations}
+                        annotations={
+                            // Without a realization to choose (e.g. all excluded by the realization filter), the
+                            // network settings are blocked - so point at the cause
+                            selectedEnsembleIdent.isValidInContext && availableRealizations.length === 0
+                                ? [
+                                      ...selectedRealizationAnnotations,
+                                      {
+                                          type: "warning",
+                                          message: "No realizations available. Check the realization filter.",
+                                      },
+                                  ]
+                                : selectedRealizationAnnotations
+                        }
                     >
                         <Combobox
                             items={availableRealizations.map((real) => {
@@ -162,7 +194,15 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             onValueChange={(v) => v && setSelectedResamplingFrequency(v)}
                         />
                     </Setting.Field>
-                    <Setting.Field label="Node Types">
+                    <Setting.Field
+                        label="Node Types"
+                        annotations={
+                            // No data is loaded without a node type, which blocks the network settings below
+                            selectedNodeTypes.size === 0
+                                ? [{ type: "error", message: "Select at least one node type." }]
+                                : []
+                        }
+                    >
                         <Select
                             options={Object.values(NodeType_api).map((val: NodeType_api) => {
                                 return { value: val, label: NodeTypeEnumToStringMapping[val] };
@@ -254,7 +294,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                         return createValueLabelFormat(v);
                                     }
                                 }}
-                                value={selectedDateTimeIndex !== -1 ? selectedDateTimeIndex : 0}
+                                // -1 for an invalid time step: the slider shows it at the start, but still treats
+                                // a click there as a change - so the first time step can be picked
+                                value={selectedDateTimeIndex}
                                 valueLabelFormat={createValueLabelFormat}
                                 onValueChange={handleSelectedTimeStepIndexChange}
                             />

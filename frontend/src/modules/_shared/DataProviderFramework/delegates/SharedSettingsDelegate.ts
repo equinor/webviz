@@ -17,6 +17,7 @@ import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../interfacesAn
 import { SettingRegistry } from "../settings/SettingRegistry";
 import type { Settings, SettingTypeDefinitions } from "../settings/settingsDefinitions";
 
+import { assertNoCircularValueConstraints } from "./_utils/assertNoCircularValueConstraints";
 import { Dependency, type Read } from "./_utils/Dependency";
 
 export enum SharedSettingsDelegateTopic {
@@ -169,7 +170,7 @@ export class SharedSettingsDelegate<
             // Temporary skip undefined settingsDelegate (await persistence versioning)
             // - Setting might have been removed since creation of the serialized state (e.g. session).
             if (settingDelegate === undefined) {
-                reportError(`Setting with key '${key}' does not exist anymore. Cannot apply persisted value.`);
+                reportError(`Setting with key '${key}' does not exist anymore. Cannot apply saved value.`);
                 continue;
             }
 
@@ -185,6 +186,7 @@ export class SharedSettingsDelegate<
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("dependencies");
 
         this._dependencies = [];
+        const valueConstraintsDependencies = new Map<string, Dependency<any, TSettings, any, any, any>[]>();
 
         const makeLocalSettingGetter = <K extends TSettingKey>(key: K, handler: (value: TSettingTypes[K]) => void) => {
             const handleChange = (): void => {
@@ -257,6 +259,10 @@ export class SharedSettingsDelegate<
             return this._parentItem.getItemDelegate().getDataProviderManager().getGlobalSetting(key);
         };
 
+        const globalSettingValidityGetter = (key: keyof GlobalSettings): boolean => {
+            return this._parentItem.getItemDelegate().getDataProviderManager().isGlobalSettingValid(key);
+        };
+
         const createDependency = <T, TReads extends Record<string, Read<any>> = Record<string, never>>(
             debugName: string,
             resolverSpec: ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads>,
@@ -269,6 +275,7 @@ export class SharedSettingsDelegate<
                 loadingStateGetter,
                 makeGlobalSettingGetter,
                 debugName,
+                globalSettingValidityGetter,
             );
             this._dependencies.push(dependency);
             dependency.initialize();
@@ -299,6 +306,10 @@ export class SharedSettingsDelegate<
 
             const debugName = `ValueConstraintsUpdater_${settingKey}`;
             const dependency = createDependency(debugName, resolverSpec);
+            valueConstraintsDependencies.set(settingKey, [
+                ...(valueConstraintsDependencies.get(settingKey) ?? []),
+                dependency,
+            ]);
 
             dependency.subscribe((valueConstraints) => {
                 // Set the value constraints on the internal setting, not the wrapped setting
@@ -315,6 +326,12 @@ export class SharedSettingsDelegate<
                 }
             });
 
+            // Blocked before it stops loading, so the external setting controller sees it blocked rather than resolved
+            dependency.subscribeBlocked((blockedBy) => {
+                internalSetting.setBlocked(true, blockedBy);
+                internalSetting.setLoading(false);
+            });
+
             this.subscribeToDependencyStatusMessages(dependency);
 
             return dependency;
@@ -328,16 +345,23 @@ export class SharedSettingsDelegate<
             resolverSpec: ResolverSpec<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey, TReads>,
         ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey, TReads> => {
             const debugName = `SettingAttributesUpdater_${settingKey}`;
+            const markAttributesResolved = this._wrappedSettings[settingKey].registerAttributesBinding();
             const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribe((attributes: Partial<SettingAttributes> | null) => {
-                if (attributes === null) {
-                    return;
+                // A failed resolver leaves the default attributes, rather than keeping the setting from ever being shown
+                if (attributes !== null) {
+                    this._wrappedSettings[settingKey].updateAttributes(attributes);
                 }
-                this._wrappedSettings[settingKey].updateAttributes(attributes);
+                markAttributesResolved();
             });
 
             dependency.subscribeLoading(() => {
+                this.handleSettingChanged();
+            });
+            // The current attributes stay - while it waits, the setting must neither disappear nor hold up a restore
+            dependency.subscribeBlocked(() => {
+                markAttributesResolved();
                 this.handleSettingChanged();
             });
             this.subscribeToDependencyStatusMessages(dependency);
@@ -352,6 +376,9 @@ export class SharedSettingsDelegate<
             const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribeLoading(() => {
+                this.handleSettingChanged();
+            });
+            dependency.subscribeBlocked(() => {
                 this.handleSettingChanged();
             });
             this.subscribeToDependencyStatusMessages(dependency);
@@ -393,6 +420,11 @@ export class SharedSettingsDelegate<
         if (this._setupBasicBindingsContext) {
             this._setupBasicBindingsContext(context);
         }
+
+        // Settings blocking each other would wait for each other for good - see Dependency
+        assertNoCircularValueConstraints(valueConstraintsDependencies, (settingKey) =>
+            this._wrappedSettings[settingKey as TSettingKey].getLabel(),
+        );
     }
 
     private subscribeToDependencyStatusMessages(dependency: Dependency<any, any, any, any, any>): void {

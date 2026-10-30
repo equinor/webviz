@@ -33,7 +33,10 @@ import { SliderNumberSetting } from "../implementations/SliderNumberSetting";
 import { SliderRangeSetting } from "../implementations/SliderRangeSetting";
 import { StaticRotationSetting } from "../implementations/StaticRotationSetting";
 import { StatisticFunctionSetting } from "../implementations/StatisticFunctionSetting";
+import { SurfaceAttributeSetting } from "../implementations/SurfaceAttributeSetting";
 import { TimeOrIntervalSetting } from "../implementations/TimeOrIntervalSetting";
+import { TimePointPairSetting } from "../implementations/TimePointPairSetting";
+import { TimeTypeSetting } from "../implementations/TimeTypeSetting";
 import { WellboreDepthFilterAttributeSetting } from "../implementations/WellboreDepthFilterAttributeSetting";
 import { WellboreDepthFilterSetting } from "../implementations/WellboreDepthFilterSetting";
 import { Setting } from "../settingsDefinitions";
@@ -73,8 +76,9 @@ SettingRegistry.registerSetting(Setting.LABEL_ROTATION, "Label rotation", Static
 SettingRegistry.registerSetting(Setting.SHOW_LINES, "Show lines", BooleanSetting);
 
 SettingRegistry.registerSetting(Setting.ATTRIBUTE, "Attribute", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.SEISMIC_ATTRIBUTE, "Seismic Attribute", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.DEPTH_ATTRIBUTE, "Depth Attribute", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.SURFACE_ATTRIBUTE, "Surface Attribute", SurfaceAttributeSetting);
+SettingRegistry.registerSetting(Setting.SEISMIC_ATTRIBUTE, "Seismic Attribute", SurfaceAttributeSetting);
+SettingRegistry.registerSetting(Setting.DEPTH_ATTRIBUTE, "Depth Attribute", SurfaceAttributeSetting);
 SettingRegistry.registerSetting(Setting.ENSEMBLE, "Ensemble", EnsembleSetting);
 SettingRegistry.registerSetting(Setting.COLOR_SCALE, "Color Scale", ColorScaleSetting);
 SettingRegistry.registerSetting(Setting.DEPTH_COLOR_SCALE, "Depth Color Scale", ColorScaleSetting, {
@@ -150,6 +154,7 @@ SettingRegistry.registerSetting(Setting.FORMATION_NAME, "Formation Name", Dropdo
     customConstructorParameters: [{ showBrowseButtons: true }],
 });
 SettingRegistry.registerSetting(Setting.SURFACE_NAMES, "Surface Names", SelectStringSetting);
+SettingRegistry.registerSetting(Setting.TIME_TYPE, "Time Type", TimeTypeSetting);
 SettingRegistry.registerSetting(Setting.TIME_OR_INTERVAL, "Time or Interval", TimeOrIntervalSetting, {
     elevatedSettingAdapter: makeTimePointDpfElevatedSettingAdapter(),
 });
@@ -157,6 +162,7 @@ SettingRegistry.registerSetting(Setting.TIME_POINT, "Time Point", TimeOrInterval
     elevatedSettingAdapter: makeTimePointDpfElevatedSettingAdapter(),
 });
 SettingRegistry.registerSetting(Setting.TIME_INTERVAL, "Time Interval", TimeOrIntervalSetting);
+SettingRegistry.registerSetting(Setting.TIME_POINT_PAIR, "Time Steps", TimePointPairSetting);
 
 SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Wellbore Picks", DrilledWellborePicksSetting);
 SettingRegistry.registerSetting(Setting.REPRESENTATION, "Representation", RepresentationSetting);

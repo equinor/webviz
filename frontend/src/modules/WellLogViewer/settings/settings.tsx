@@ -75,6 +75,9 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     // Wellbore selection
     const wellboreHeadersQuery = useAtomValue(drilledWellboreHeadersQueryAtom);
     const [selectedWellboreHeader, setSelectedWellboreHeader] = useSyncedWellboreSetting(syncHelper);
+    // A blocked selection (e.g. while the field is invalid) can still report a retained null as valid - it is not usable
+    const selectedWellboreUuid = useAtomValue(selectedWellboreUuidAtom);
+    const isSelectedWellboreValid = selectedWellboreUuid.isValidInContext && !selectedWellboreUuid.isBlocked;
 
     const handleWellboreSelectionChange = React.useCallback(
         function handleWellboreSelectionChange(wellboreUuid: string | null) {
@@ -85,15 +88,24 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
 
     // Error messages
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
-    const wellboreHeadersErrorMessage = propagateQueryErrorToStatusWriter(wellboreHeadersQuery, statusWriter) ?? "";
+    // A disabled query keeps its cached error, which must not be reported for an invalid field
+    const wellboreHeadersErrorMessage = wellboreHeadersQuery.isEnabled
+        ? (propagateQueryErrorToStatusWriter(wellboreHeadersQuery, statusWriter) ?? "")
+        : "";
 
     React.useEffect(() => {
-        providerManager?.updateGlobalSetting("fieldId", selectedField.value);
-    }, [providerManager, selectedField.value]);
+        providerManager?.updateGlobalSetting("fieldId", selectedField.value, selectedField.isValidInContext);
+    }, [providerManager, selectedField.value, selectedField.isValidInContext]);
 
     React.useEffect(() => {
-        providerManager?.updateGlobalSetting("wellboreUuid", selectedWellboreHeader?.wellboreUuid ?? null);
-    }, [providerManager, selectedWellboreHeader]);
+        // An invalid wellbore (e.g. while the field is invalid, no header resolves) blocks the providers reading it,
+        // instead of leaving them pending on a null value
+        providerManager?.updateGlobalSetting(
+            "wellboreUuid",
+            selectedWellboreHeader?.wellboreUuid ?? null,
+            isSelectedWellboreValid,
+        );
+    }, [providerManager, selectedWellboreHeader, isSelectedWellboreValid]);
 
     const fieldSettingAnnotations = useMakePersistableFixableAtomAnnotations(selectedFieldIdentAtom);
     const wellboreSettingAnnotations = useMakePersistableFixableAtomAnnotations(selectedWellboreUuidAtom);

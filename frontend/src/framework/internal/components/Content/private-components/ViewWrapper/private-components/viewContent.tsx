@@ -21,6 +21,7 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Paragraph } from "@lib/components/Typography/compositions";
 
+import { ActionRequiredOverlayBar } from "./actionRequiredOverlayBar";
 import { CrashView } from "./crashView";
 
 type ViewContentProps = {
@@ -116,9 +117,8 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         return (
             <div className="gap-y-xs px-xs py-xs flex h-full w-full flex-col items-center justify-center">
                 <Paragraph size="sm" tone="warning" layoutClassName="mx-2xs my-2xs text-center max-w-96">
-                    The persisted view state for this module&apos;s view is invalid and could not be applied. It has
-                    most likely been outdated by a module update. You can reset the module to its default view to
-                    continue using it.
+                    The saved view state for this module is invalid and could not be applied. It has most likely been
+                    outdated by a module update. You can reset the module to its default view to continue using it.
                 </Paragraph>
                 <Button onClick={() => props.moduleInstance.resetInvalidPersistedFlags()} size="small">
                     Reset module
@@ -151,33 +151,36 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     const View = props.moduleInstance.getViewFC();
     return (
         <ErrorBoundary moduleInstance={props.moduleInstance}>
-            <div className="px-2xs py-2xs h-full w-full">
-                <DebugProfiler
-                    id={`${props.moduleInstance.getId()}-view`}
-                    statusController={props.moduleInstance.getStatusController()}
-                    source={StatusSource.View}
-                    guiMessageBroker={props.workbench.getGuiMessageBroker()}
-                >
-                    <Provider store={atomStore}>
-                        <HydrateQueryClientAtom>
-                            <ApplyInterfaceEffectsToView moduleInstance={props.moduleInstance}>
-                                {/* eslint-disable-next-line @eslint-react/static-components -- Legacy */}
-                                <View
-                                    viewContext={props.moduleInstance.getContext()}
-                                    workbenchSession={props.workbench.getSessionManager().getActiveSession()}
-                                    syncSettingsService={dashboard.getSyncSettingsService()}
-                                    hoverService={dashboard.getHoverService()}
+            <div className="relative h-full w-full">
+                <ActionRequiredOverlayBar workbench={props.workbench} moduleInstance={props.moduleInstance} />
+                <div className="px-2xs py-2xs h-full w-full">
+                    <DebugProfiler
+                        id={`${props.moduleInstance.getId()}-view`}
+                        statusController={props.moduleInstance.getStatusController()}
+                        source={StatusSource.View}
+                        guiMessageBroker={props.workbench.getGuiMessageBroker()}
+                    >
+                        <Provider store={atomStore}>
+                            <HydrateQueryClientAtom>
+                                <ApplyInterfaceEffectsToView moduleInstance={props.moduleInstance}>
+                                    {/* eslint-disable-next-line @eslint-react/static-components -- Legacy */}
+                                    <View
+                                        viewContext={props.moduleInstance.getContext()}
+                                        workbenchSession={props.workbench.getSessionManager().getActiveSession()}
+                                        syncSettingsService={dashboard.getSyncSettingsService()}
+                                        hoverService={dashboard.getHoverService()}
                                     elevatedSettingsService={dashboard.getElevatedSettingsService()}
-                                    workbenchSettings={props.workbench
-                                        .getSessionManager()
-                                        .getActiveSession()
-                                        .getWorkbenchSettings()}
-                                    initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                                />
-                            </ApplyInterfaceEffectsToView>
-                        </HydrateQueryClientAtom>
-                    </Provider>
-                </DebugProfiler>
+                                        workbenchSettings={props.workbench
+                                            .getSessionManager()
+                                            .getActiveSession()
+                                            .getWorkbenchSettings()}
+                                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                                    />
+                                </ApplyInterfaceEffectsToView>
+                            </HydrateQueryClientAtom>
+                        </Provider>
+                    </DebugProfiler>
+                </div>
             </div>
         </ErrorBoundary>
     );

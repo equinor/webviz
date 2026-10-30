@@ -158,7 +158,11 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                 setPrevVisible(props.value?.visible ?? null);
             }
 
-            function handleSliderChange(index: number, val: number) {
+            function handleSliderChange(index: number, val: number, reason: string) {
+                // Bounds changes make the slider emit a clamped value; ignore it so a retained
+                // out-of-range coordinate stays visible (and invalid) until the user edits it
+                if (reason === "clamp-value") return;
+
                 const newValue: [number, number, number] = [...(internalValue ?? [0, 0, 0])];
                 newValue[index] = val;
                 setInternalValue(newValue);
@@ -240,7 +244,9 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                                     <Slider
                                         min={valueConstraints[index][0]}
                                         max={valueConstraints[index][1]}
-                                        onValueChange={(value) => handleSliderChange(index, value as number)}
+                                        onValueChange={(value, eventDetails) =>
+                                            handleSliderChange(index, value as number, eventDetails.reason)
+                                        }
                                         value={props.value?.value[index] ?? valueConstraints[index][0]}
                                         valueLabelDisplay="auto"
                                         step={valueConstraints[index][2]}

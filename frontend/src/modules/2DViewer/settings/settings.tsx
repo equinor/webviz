@@ -39,7 +39,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             if (!dataProviderManager) {
                 return;
             }
-            dataProviderManager.updateGlobalSetting("fieldId", fieldIdentifier.value);
+            dataProviderManager.updateGlobalSetting("fieldId", fieldIdentifier.value, fieldIdentifier.isValidInContext);
         },
         [fieldIdentifier, dataProviderManager],
     );
