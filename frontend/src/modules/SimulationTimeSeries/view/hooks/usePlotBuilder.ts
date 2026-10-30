@@ -8,13 +8,13 @@ import { isInvalidStatisticsResampleFrequency } from "@modules/SimulationTimeSer
 import type { VectorHexColorMap } from "../../typesAndEnums";
 import { VisualizationMode } from "../../typesAndEnums";
 import { resampleFrequencyAtom } from "../atoms/baseAtoms";
+import { effectiveActiveTimestampUtcMsAtom, highlightedRealizationAtom } from "../atoms/dashboardSettingAtoms";
 import {
     loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     loadedVectorSpecificationsAndObservationDataAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
     loadedVectorSpecificationsAndStatisticsDataAtom,
 } from "../atoms/derivedAtoms";
-import { activeTimestampUtcMsAtom } from "../atoms/persistableFixableAtoms";
 import type { EnsemblesParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { PlotBuilder } from "../utils/PlotBuilder";
 import type { SubplotOwner } from "../utils/PlotBuilder";
@@ -50,7 +50,8 @@ export function usePlotBuilder(
     );
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
-    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
+    const activeTimestampUtcMs = useAtomValue(effectiveActiveTimestampUtcMsAtom).value;
+    const highlightedRealization = useAtomValue(highlightedRealizationAtom);
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 
@@ -78,6 +79,7 @@ export function usePlotBuilder(
         subplotLimitation.maxDirectionElements,
         scatterType,
     );
+    plotBuilder.setHighlightedRealizationNumber(highlightedRealization);
 
     // Add traces based on visualization mode
     if (

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
+import { DashboardSettingsService } from "@framework/DashboardSettings/DashboardSettingsService";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import {
     SettingsContextDelegate,
@@ -25,6 +26,7 @@ function makeFakeDataProviderManager() {
         getGlobalSetting: () => null,
         getWorkbenchSession: () => null,
         getWorkbenchSettings: () => null,
+        getDashboardSettingsService: () => new DashboardSettingsService(),
         getQueryClient: () => null,
     } as unknown as DataProviderManager;
 

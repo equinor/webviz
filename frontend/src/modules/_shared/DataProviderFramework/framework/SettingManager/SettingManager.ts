@@ -1,6 +1,15 @@
 import { isEqual } from "lodash-es";
 import { v4 } from "uuid";
 
+import {
+    DashboardSettingInstanceTopic,
+    type DashboardSettingConstraintSourceHandle,
+    type DashboardSettingInstance,
+} from "@framework/DashboardSettings/DashboardSettingInstance";
+import {
+    DashboardSettingsServiceTopic,
+    type DashboardSettingsService,
+} from "@framework/DashboardSettings/DashboardSettingsService";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
@@ -9,6 +18,7 @@ import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunct
 
 import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingAttributes } from "../../interfacesAndTypes/customSettingsHandler";
+import type { DpfDashboardSettingAdapter } from "../../settings/SettingRegistry/dashboardSettingAdapters";
 import type { Setting, SettingTypeDefinitions } from "../../settings/settingsDefinitions";
 import type { ExternalSettingController } from "../ExternalSettingController/ExternalSettingController";
 import { Group } from "../Group/Group";
@@ -30,6 +40,7 @@ export enum SettingTopic {
     ATTRIBUTES = "ATTRIBUTES",
     ARE_ATTRIBUTES_RESOLVED = "ARE_ATTRIBUTES_RESOLVED",
     IS_PERSISTED_VALUE_VALID = "IS_PERSISTED_VALUE_VALID",
+    IS_DASHBOARD_CONTROLLED = "IS_DASHBOARD_CONTROLLED",
 }
 
 export type SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstraints> = {
@@ -49,6 +60,7 @@ export type SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstrain
     [SettingTopic.ATTRIBUTES]: SettingAttributes;
     [SettingTopic.ARE_ATTRIBUTES_RESOLVED]: boolean;
     [SettingTopic.IS_PERSISTED_VALUE_VALID]: boolean;
+    [SettingTopic.IS_DASHBOARD_CONTROLLED]: boolean;
 };
 
 export type SettingManagerParams<
@@ -66,6 +78,12 @@ export type SettingManagerParams<
     label: string;
     defaultValue: TInternalValue;
     customSettingImplementation: CustomSettingImplementation<TInternalValue, TExternalValue, TValueConstraints>;
+    dashboardSettingAdapter?: DpfDashboardSettingAdapter<TInternalValue, TValueConstraints, any, any>;
+};
+
+type DashboardSettingConnection = {
+    instance: DashboardSettingInstance<any, any>;
+    handle: DashboardSettingConstraintSourceHandle<any>;
 };
 
 export enum ExternalControllerProviderType {
@@ -131,16 +149,25 @@ export class SettingManager<
         new UnsubscribeFunctionsManagerDelegate();
     private _cachedExternalValue: TExternalValue | null | NoCache = NO_CACHE;
 
+    // While the dashboard setting is active on the dashboard, its value (mapped by the adapter) replaces
+    // this setting's own - which is kept as the local value, and used again once it is no longer active.
+    private _dashboardSettingAdapter: DpfDashboardSettingAdapter<TInternalValue, TValueConstraints, any, any> | null;
+    private _dashboardSettingsService: DashboardSettingsService | null = null;
+    private _dashboardSettingConnection: DashboardSettingConnection | null = null;
+    private _cachedDashboardInternalValue: TInternalValue | NoCache = NO_CACHE;
+
     constructor({
         type,
         customSettingImplementation,
         defaultValue,
         label,
+        dashboardSettingAdapter,
     }: SettingManagerParams<TSetting, TInternalValue, TExternalValue, TValueConstraints>) {
         this._id = v4();
         this._type = type;
         this._label = label;
         this._customSettingImplementation = customSettingImplementation;
+        this._dashboardSettingAdapter = dashboardSettingAdapter ?? null;
         this._internalValue = defaultValue;
         this._isStatic = customSettingImplementation.getIsStatic?.() ?? false;
         if (this._isStatic) {
@@ -160,7 +187,12 @@ export class SettingManager<
     ): void {
         this._externalController = externalController;
 
-        this.setInternalValueAndInvalidateCache(externalController.getSetting().getInternalValue());
+        // The controlling setting is the dashboard setting's consumer now - this one follows it.
+        this.updateDashboardSettingConnection();
+
+        // Mirrors the controller's local value (not a dashboard value), so this setting keeps a sensible
+        // value of its own once it is no longer controlled.
+        this.setInternalValueAndInvalidateCache(externalController.getSetting().getLocalInternalValue());
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
@@ -168,7 +200,7 @@ export class SettingManager<
                 .getSetting()
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingTopic.INTERNAL_VALUE)(() => {
-                this.setInternalValueAndInvalidateCache(externalController.getSetting().getInternalValue());
+                this.setInternalValueAndInvalidateCache(externalController.getSetting().getLocalInternalValue());
                 this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INTERNAL_VALUE);
             }),
         );
@@ -274,16 +306,56 @@ export class SettingManager<
     }
 
     unregisterExternalSettingController(): void {
-        const newInternalValue = this._externalController?.getSetting().getInternalValue() ?? this._internalValue;
+        const newInternalValue =
+            this._externalController?.getSetting().getLocalInternalValue() ?? this._internalValue;
         this.setInternalValueAndInvalidateCache(newInternalValue);
         this._externalController = null;
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("external-setting-controller");
+        this.updateDashboardSettingConnection();
         this.applyValueConstraints();
         this.notifySnapshotSourceChange();
     }
 
     beforeDestroy(): void {
+        this.disconnectDashboardSetting();
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
+    }
+
+    /**
+     * Lets this setting follow the dashboard setting its type is registered with (if any), whenever that
+     * is active on the dashboard - see `DpfDashboardSettingAdapter`.
+     */
+    connectDashboardSettingsService(dashboardSettingsService: DashboardSettingsService): void {
+        if (!this._dashboardSettingAdapter || this._dashboardSettingsService === dashboardSettingsService) {
+            return;
+        }
+
+        this._dashboardSettingsService = dashboardSettingsService;
+
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("dashboard-settings-service");
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "dashboard-settings-service",
+            dashboardSettingsService
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(DashboardSettingsServiceTopic.ACTIVE_SETTINGS)(() => {
+                this.updateDashboardSettingConnection();
+            }),
+        );
+
+        this.updateDashboardSettingConnection();
+    }
+
+    // Whether the setting is currently controlled by its dashboard setting - connected, and following it.
+    isDashboardControlled(): boolean {
+        return this.getFollowedDashboardSettingConnection() !== null;
+    }
+
+    getDashboardSettingLabel(): string | null {
+        return this._dashboardSettingConnection?.instance.getDefinition().label ?? null;
+    }
+
+    keepsComponentEditableWhileDashboardControlled(): boolean {
+        return this._dashboardSettingAdapter?.keepsComponentEditableWhileControlled ?? false;
     }
 
     getId(): string {
@@ -346,9 +418,24 @@ export class SettingManager<
         return true;
     }
 
+    // The value in effect - the dashboard value while this setting is controlled by one.
     getInternalValue(): TInternalValue {
         if (this._externalController) {
             return this._externalController.getSetting().getInternalValue();
+        }
+
+        const followedConnection = this.getFollowedDashboardSettingConnection();
+        if (followedConnection) {
+            return this.getDashboardInternalValue(followedConnection);
+        }
+
+        return this.getLocalInternalValue();
+    }
+
+    // The setting's own value, regardless of any dashboard setting - this is what is persisted.
+    getLocalInternalValue(): TInternalValue {
+        if (this._externalController) {
+            return this._externalController.getSetting().getLocalInternalValue();
         }
 
         if (this._currentValueFromPersistence !== null) {
@@ -363,14 +450,11 @@ export class SettingManager<
             return this._externalController.getSetting().getValue();
         }
 
-        let value = this._internalValue;
-        if (this._currentValueFromPersistence !== null) {
-            value = this._currentValueFromPersistence;
-        }
-
         if (!this._isStatic && this._valueConstraints === null) {
             return null;
         }
+
+        const value = this.getInternalValue();
 
         // Return cached value if available
         if (this._cachedExternalValue !== NO_CACHE) {
@@ -397,16 +481,17 @@ export class SettingManager<
     serializeValue(): string {
         if (this._customSettingImplementation.serializeValue) {
             return this._customSettingImplementation.serializeValue.bind(this._customSettingImplementation)(
-                this.getInternalValue(),
+                this.getLocalInternalValue(),
             );
         }
 
-        return JSON.stringify(this.getInternalValue());
+        return JSON.stringify(this.getLocalInternalValue());
     }
 
     deserializeValue(serializedValue: string): void {
         // Invalidate cache since _currentValueFromPersistence affects the value returned by getValue()
-        this._cachedExternalValue = NO_CACHE;
+        // (and the local value the dashboard value is mapped against)
+        this.invalidateValueCaches();
 
         try {
             const deserializedValue = this._customSettingImplementation.deserializeValue.bind(
@@ -471,9 +556,13 @@ export class SettingManager<
 
         this.setInternalValueAndInvalidateCache(value);
 
-        this.setValueValid(this.checkIfValueIsValid(this._internalValue));
+        this.setValueValid(this.checkIfValueIsValid(this.getInternalValue()));
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INTERNAL_VALUE);
+        if (this._dashboardSettingConnection) {
+            // A changed local value may change whether the setting follows its dashboard setting
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_DASHBOARD_CONTROLLED);
+        }
     }
 
     setValueValid(isValueValid: boolean): void {
@@ -490,6 +579,8 @@ export class SettingManager<
         if (this._loading !== loading) {
             this._loading = loading;
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+            // Pending while loading, settled (with the current constraints) again once done.
+            this.contributeDashboardSettingConstraints();
         }
 
         // Resolving again ends being blocked - only after the loading state is published, so nothing that reacts to
@@ -660,6 +751,8 @@ export class SettingManager<
                     return this.isInitialized();
                 case SettingTopic.ATTRIBUTES:
                     return this._attributes;
+                case SettingTopic.IS_DASHBOARD_CONTROLLED:
+                    return this.isDashboardControlled();
                 case SettingTopic.ARE_ATTRIBUTES_RESOLVED:
                     return this.areAttributesResolved();
                 default:
@@ -715,10 +808,11 @@ export class SettingManager<
 
     private applyValueConstraints(): boolean {
         let valueChanged = false;
-        // Once initialized, an invalid value is kept for the user to resolve - only an empty one is still filled
+        const localInternalValue = this.getLocalInternalValue();
+        // Preserve initialized, non-empty local values for the user to resolve, but still fix up the local value while dashboard.
         const isValueFixedUp =
-            (!this._initialized || this.getInternalValue() === null) &&
-            !this.checkIfValueIsValid(this.getInternalValue()) &&
+            (!this._initialized || localInternalValue === null) &&
+            !this.checkIfValueIsValid(localInternalValue) &&
             this.maybeFixupValue();
         const isPersistedValueReset = this.maybeResetPersistedValue();
         if (isValueFixedUp || isPersistedValueReset) {
@@ -769,6 +863,8 @@ export class SettingManager<
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
         }
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CONSTRAINTS);
+
+        this.contributeDashboardSettingConstraints();
     }
 
     makeComponent() {
@@ -838,23 +934,154 @@ export class SettingManager<
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CONSTRAINTS);
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED_VALUE_VALID);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_DASHBOARD_CONTROLLED);
     }
 
     /**
-     * Sets the internal value and invalidates the external value cache.
+     * Sets the internal value and invalidates the value caches.
      * Use this instead of directly assigning to this._internalValue.
      */
     private setInternalValueAndInvalidateCache(value: TInternalValue): void {
         this._internalValue = value;
-        this._cachedExternalValue = NO_CACHE;
+        this.invalidateValueCaches();
     }
 
     /**
-     * Sets the value constraints and invalidates the external value cache.
+     * Sets the value constraints and invalidates the value caches.
      * Use this instead of directly assigning to this._valueConstraints.
      */
     private setValueConstraintsAndInvalidateCache(valueConstraints: TValueConstraints | null): void {
         this._valueConstraints = valueConstraints;
+        this.invalidateValueCaches();
+    }
+
+    private invalidateValueCaches(): void {
         this._cachedExternalValue = NO_CACHE;
+        this._cachedDashboardInternalValue = NO_CACHE;
+    }
+
+    // Connects to the dashboard setting while it is active on the dashboard - unless this setting is
+    // externally controlled, in which case the controlling setting is the one connected.
+    private updateDashboardSettingConnection(): void {
+        if (!this._dashboardSettingAdapter || !this._dashboardSettingsService) {
+            return;
+        }
+
+        const instance = this._externalController
+            ? null
+            : this._dashboardSettingsService.getSetting(this._dashboardSettingAdapter.definition);
+
+        if (instance === (this._dashboardSettingConnection?.instance ?? null)) {
+            return;
+        }
+
+        this.disconnectDashboardSetting();
+        if (instance) {
+            this.connectDashboardSetting(instance);
+        }
+
+        this.handleEffectiveValueChange();
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_DASHBOARD_CONTROLLED);
+    }
+
+    private connectDashboardSetting(instance: DashboardSettingInstance<any, any>): void {
+        if (!this._dashboardSettingAdapter) {
+            return;
+        }
+
+        const handle = instance.registerConstraintSource(this._id);
+        this._dashboardSettingConnection = { instance, handle };
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "dashboard-setting-instance",
+            instance.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardSettingInstanceTopic.VALUE)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_ABOUT_TO_BE_CHANGED);
+                this.handleEffectiveValueChange();
+            }),
+        );
+
+        this.contributeDashboardSettingConstraints();
+    }
+
+    private disconnectDashboardSetting(): void {
+        if (!this._dashboardSettingConnection) {
+            return;
+        }
+
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("dashboard-setting-instance");
+        this._dashboardSettingConnection.handle.unregister();
+        this._dashboardSettingConnection = null;
+    }
+
+    private contributeDashboardSettingConstraints(): void {
+        const connection = this._dashboardSettingConnection;
+        if (!connection || !this._dashboardSettingAdapter || this._isStatic) {
+            return;
+        }
+
+        if (this._loading) {
+            connection.handle.markPending();
+            return;
+        }
+
+        const dashboardConstraints =
+            this._valueConstraints === null
+                ? null
+                : this._dashboardSettingAdapter.mapValueConstraintsToDashboardConstraints(this._valueConstraints);
+
+        if (dashboardConstraints === null) {
+            connection.handle.clearConstraints();
+            return;
+        }
+
+        connection.handle.updateConstraints(dashboardConstraints);
+    }
+
+    // Cached like the external value: snapshot getters need a stable reference, and an adapter may build
+    // a new object on every call.
+    private getDashboardInternalValue(connection: DashboardSettingConnection): TInternalValue {
+        if (this._cachedDashboardInternalValue !== NO_CACHE) {
+            return this._cachedDashboardInternalValue;
+        }
+
+        // Dynamic settings can only map the dashboard value once their own constraints are known.
+        if (!this._dashboardSettingAdapter || (!this._isStatic && this._valueConstraints === null)) {
+            return null as TInternalValue;
+        }
+
+        const dashboardInternalValue = this._dashboardSettingAdapter.mapDashboardValueToInternalValue(
+            connection.instance.getValue(),
+            this._valueConstraints as TValueConstraints,
+            this.getLocalInternalValue(),
+        );
+        this._cachedDashboardInternalValue = dashboardInternalValue;
+
+        return dashboardInternalValue;
+    }
+
+    // The connection, if this setting currently follows the dashboard value - see
+    // `DpfDashboardSettingAdapter.followsDashboardValue`.
+    private getFollowedDashboardSettingConnection(): DashboardSettingConnection | null {
+        const connection = this._dashboardSettingConnection;
+        if (!connection || !this._dashboardSettingAdapter) {
+            return null;
+        }
+
+        const follows =
+            this._dashboardSettingAdapter.followsDashboardValue?.(
+                connection.instance.getValue(),
+                this.getLocalInternalValue(),
+            ) ?? true;
+
+        return follows ? connection : null;
+    }
+
+    private handleEffectiveValueChange(): void {
+        this.invalidateValueCaches();
+        this.setValueValid(this.checkIfValueIsValid(this.getInternalValue()));
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INTERNAL_VALUE);
+        // A changed dashboard value may change whether the setting follows it
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_DASHBOARD_CONTROLLED);
     }
 }

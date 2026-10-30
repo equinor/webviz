@@ -103,6 +103,8 @@ export class SettingsContextDelegate<
 
         // Global settings are not subscribed to here - changes reach the settings through the dependencies that read them
         for (const key in this._settings) {
+            this._settings[key].connectDashboardSettingsService(dataProviderManager.getDashboardSettingsService());
+
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "settings",
                 this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(() => {

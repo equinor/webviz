@@ -301,6 +301,10 @@ export type PersistableFixableAtomOptions<TValue, TPrecomputedValue = unknown> =
     | PersistableFixableAtomOptionsWithoutPrecompute<TValue>;
 
 const PERSISTABLE_ATOM = Symbol("persistableAtom");
+// The atom's own validity check, for values other than its current one - see `isPersistableFixableValueValid`.
+const VALIDATE_VALUE = Symbol("persistableFixableAtom.validateValue");
+
+type ValidatePersistableFixableValue<TValue> = (get: Getter, value: TValue) => boolean;
 
 /**
  * Write-only sentinel used to imperatively trigger a fixup of a persistableFixableAtom's *current*
@@ -547,6 +551,12 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
         enumerable: false,
     });
 
+    const validateValue: ValidatePersistableFixableValue<TValue> = (get, value) => deriveState(get, value).isValid;
+    Object.defineProperty(atomWithEffect, VALIDATE_VALUE, {
+        value: validateValue,
+        enumerable: false,
+    });
+
     return atomWithEffect;
 }
 
@@ -554,6 +564,25 @@ type PersistableFlagged = { [PERSISTABLE_ATOM]: true };
 
 export function isPersistableAtom(a: unknown): a is Atom<unknown> & PersistableFlagged {
     return !!(a && typeof a === "object" && (a as any)[PERSISTABLE_ATOM] === true);
+}
+
+/**
+ * Whether `value` would be valid in `atom`'s current context, using the atom's own `isValidFunction` -
+ * e.g. for a value that replaces the atom's own while a dashboard setting controls it. Reads through
+ * `get`, so a derived atom calling this re-evaluates when the validity's dependencies change.
+ */
+export function isPersistableFixableValueValid<TValue>(
+    atom: PersistableFixableAtom<TValue>,
+    get: Getter,
+    value: TValue,
+): boolean {
+    const validateValue = (atom as unknown as { [VALIDATE_VALUE]?: ValidatePersistableFixableValue<TValue> })[
+        VALIDATE_VALUE
+    ];
+    if (!validateValue) {
+        throw new Error("Atom was not created by persistableFixableAtom.");
+    }
+    return validateValue(get, value);
 }
 
 export function setIfDefined<Value, Result>(

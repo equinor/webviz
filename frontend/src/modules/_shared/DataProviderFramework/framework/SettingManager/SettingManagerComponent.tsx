@@ -2,6 +2,7 @@ import React from "react";
 
 import { Error, HourglassEmpty, Link } from "@mui/icons-material";
 
+import { DashboardSettingIndicator } from "@framework/DashboardSettings/components/DashboardSettingIndicator";
 import { Field } from "@lib/components/Field";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -37,6 +38,7 @@ export function SettingManagerComponent<
     const isValidPersistedValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED_VALUE_VALID);
     const valueConstraints = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE_CONSTRAINTS);
     const isExternallyControlled = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_EXTERNALLY_CONTROLLED);
+    const isDashboardControlled = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_DASHBOARD_CONTROLLED);
     const externalControllerProvider = usePublishSubscribeTopicValue(
         props.setting,
         SettingTopic.EXTERNAL_CONTROLLER_PROVIDER,
@@ -118,6 +120,37 @@ export function SettingManagerComponent<
         );
     }
 
+    const dashboardSettingIndicator = isDashboardControlled ? (
+        <DashboardSettingIndicator
+            dashboardSettingLabel={props.setting.getDashboardSettingLabel() ?? ""}
+            isValueValidHere={isValid || actuallyLoading}
+        />
+    ) : null;
+
+    if (isDashboardControlled && !props.setting.keepsComponentEditableWhileDashboardControlled()) {
+        return (
+            <React.Fragment key={props.setting.getId()}>
+                <div className="gap-x-2xs px-2xs py-4xs text-body-sm flex w-32 items-center">
+                    <span>{props.setting.getLabel()}</span>
+                    {dashboardSettingIndicator}
+                </div>
+                <div className="gap-x-2xs py-4xs px-2xs flex w-full items-center">
+                    <StatusWrapper isPending={actuallyLoading}>
+                        {isValid || actuallyLoading ? (
+                            props.setting.valueToRepresentation(
+                                value,
+                                props.manager.getWorkbenchSession(),
+                                props.manager.getWorkbenchSettings(),
+                            )
+                        ) : (
+                            <i className="text-warning-subtle">Dashboard value not available here</i>
+                        )}
+                    </StatusWrapper>
+                </div>
+            </React.Fragment>
+        );
+    }
+
     // A blocked setting is not judged invalid, as its value constraints may be outdated - for the same reason, it can't
     // be changed until it is no longer blocked
     const isShownAsInvalid = !isValid && !actuallyLoading && !isBlocked;
@@ -125,7 +158,10 @@ export function SettingManagerComponent<
 
     return (
         <React.Fragment key={props.setting.getId()}>
-            <div className="px-2xs py-4xs text-body-sm flex w-32 items-center">{props.setting.getLabel()}</div>
+            <div className="gap-x-2xs px-2xs py-4xs text-body-sm flex w-32 items-center">
+                <span>{props.setting.getLabel()}</span>
+                {dashboardSettingIndicator}
+            </div>
             <div className="px-2xs py-4xs w-full min-w-0">
                 <StatusWrapper isPending={actuallyLoading}>
                     <div className="gap-y-3xs flex min-w-0 flex-col">

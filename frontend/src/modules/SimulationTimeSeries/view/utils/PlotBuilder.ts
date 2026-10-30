@@ -68,6 +68,10 @@ export class PlotBuilder {
     private _hasHistoryTraces = false;
     private _hasObservationTraces = false;
 
+    private _highlightedRealizationNumber: number | null = null;
+    private _dimmedRealizationOpacity = 0.2;
+    private _highlightedRealizationLineWidth = 3;
+
     private _historyVectorColor = "black";
     private _observationColor = "black";
 
@@ -367,6 +371,11 @@ export class PlotBuilder {
 
             const hasParameterForEnsemble = this._ensemblesParameterColoring.hasParameterForEnsemble(ensembleIdent);
 
+            const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
+
+            // The highlighted realization's trace is drawn last (on top) - added after the loop
+            let highlightedTrace: Partial<TimeSeriesPlotData> | null = null;
+
             // Add traces for each realization with color based on parameter value
             for (const realizationData of elm.data) {
                 let parameterColor = this._parameterFallbackColor;
@@ -383,6 +392,12 @@ export class PlotBuilder {
                     parameterColor = this._ensemblesParameterColoring.getColorScale().getColorForValue(value);
                 }
 
+                const isHighlightedRealization = realizationData.realization === this._highlightedRealizationNumber;
+                const opacity =
+                    this._highlightedRealizationNumber !== null && !isHighlightedRealization
+                        ? this._dimmedRealizationOpacity
+                        : undefined;
+
                 const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
                 const lineShape = getTraceLineShape(realizationData);
                 const vectorRealizationTrace = createVectorRealizationTrace({
@@ -393,6 +408,8 @@ export class PlotBuilder {
                     lineShape: lineShape,
                     hoverTemplate: this._defaultHoverTemplate,
                     showLegend: addLegendForTraces,
+                    opacity: opacity,
+                    lineWidth: isHighlightedRealization ? this._highlightedRealizationLineWidth : undefined,
                     type: this._scatterType,
                 });
 
@@ -402,8 +419,11 @@ export class PlotBuilder {
                     realizationData.realization,
                 );
 
-                const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
-                this._figure.addTrace(vectorRealizationTrace, row, col);
+                if (isHighlightedRealization) {
+                    highlightedTrace = vectorRealizationTrace;
+                } else {
+                    this._figure.addTrace(vectorRealizationTrace, row, col);
+                }
 
                 this._hasRealizationsTracesColoredByParameter = true;
                 this.createVectorSubplotTitleAndInsertIntoMap(
@@ -411,6 +431,10 @@ export class PlotBuilder {
                     realizationData.unit,
                     realizationData.derivedVectorInfo,
                 );
+            }
+
+            if (highlightedTrace) {
+                this._figure.addTrace(highlightedTrace, row, col);
             }
         }
     }
@@ -448,24 +472,55 @@ export class PlotBuilder {
 
             const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
             const lineShape = getTraceLineShape(elm.data[0]);
+
+            const highlightedRealizationData =
+                this._highlightedRealizationNumber !== null
+                    ? elm.data.find((data) => data.realization === this._highlightedRealizationNumber)
+                    : undefined;
+            const regularRealizationsData = highlightedRealizationData
+                ? elm.data.filter((data) => data !== highlightedRealizationData)
+                : elm.data;
+
             const vectorRealizationTraces = createVectorRealizationTraces({
-                vectorRealizationsData: elm.data,
+                vectorRealizationsData: regularRealizationsData,
                 name: name,
                 color: color,
                 legendGroup: legendGroup,
                 lineShape: lineShape,
                 hoverTemplate: this._defaultHoverTemplate,
                 showLegend: addLegendForTraces,
+                opacity: highlightedRealizationData ? this._dimmedRealizationOpacity : undefined,
                 type: this._scatterType,
             });
 
             vectorRealizationTraces.forEach((trace, index) => {
-                const realization = elm.data[index]?.realization ?? index;
+                const realization = regularRealizationsData[index]?.realization ?? index;
                 trace.uid = this.makeVectorTraceUid("realization", elm.vectorSpecification, realization);
             });
 
             const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
             this._figure.addTraces(vectorRealizationTraces, row, col);
+
+            // The highlighted realization's trace is drawn last (on top), at full opacity and in its own color
+            if (highlightedRealizationData) {
+                const highlightedTrace = createVectorRealizationTrace({
+                    vectorRealizationData: highlightedRealizationData,
+                    name: name,
+                    color: color,
+                    legendGroup: legendGroup,
+                    lineShape: lineShape,
+                    hoverTemplate: this._defaultHoverTemplate,
+                    showLegend: false,
+                    lineWidth: this._highlightedRealizationLineWidth,
+                    type: this._scatterType,
+                });
+                highlightedTrace.uid = this.makeVectorTraceUid(
+                    "realization",
+                    elm.vectorSpecification,
+                    highlightedRealizationData.realization,
+                );
+                this._figure.addTrace(highlightedTrace, row, col);
+            }
 
             if (elm.data.length !== 0) {
                 this.createVectorSubplotTitleAndInsertIntoMap(
@@ -658,6 +713,17 @@ export class PlotBuilder {
 
             this._hasObservationTraces = true;
         }
+    }
+
+    /**
+     * Set a single realization number to highlight among realization traces.
+     *
+     * When set, non-highlighted realization traces are dimmed (reduced opacity) and the highlighted
+     * realization's trace is drawn last (on top) with a wider line, keeping its original color so it still
+     * reflects e.g. per-parameter coloring and per-ensemble color.
+     */
+    setHighlightedRealizationNumber(realizationNumber: number | null): void {
+        this._highlightedRealizationNumber = realizationNumber;
     }
 
     addTimeAnnotation(timestampUtcMs: number): void {

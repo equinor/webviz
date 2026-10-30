@@ -148,6 +148,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
             <ProviderManagerComponentWrapper
                 workbenchSession={props.workbenchSession}
                 workbenchSettings={props.workbenchSettings}
+                dashboardSettingsService={props.dashboardSettingsService}
             />
         </div>
     );

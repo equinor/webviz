@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { clone, isEqual } from "lodash-es";
 
+import type { DashboardSettingsService } from "@framework/DashboardSettings/DashboardSettingsService";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
@@ -81,6 +82,7 @@ export const GLOBAL_SETTING_LABELS: Record<keyof GlobalSettings, string> = {
 export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProviderManagerTopicPayload> {
     private _workbenchSession: WorkbenchSession;
     private _workbenchSettings: WorkbenchSettings;
+    private _dashboardSettingsService: DashboardSettingsService;
     private _groupDelegate: GroupDelegate;
     private _queryClient: QueryClient;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<DataProviderManagerTopicPayload>();
@@ -101,9 +103,15 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     private _cancelPendingReadinessWait: (() => void) | null = null;
     private _groupColorGenerator: Generator<string, string>;
 
-    constructor(workbenchSession: WorkbenchSession, workbenchSettings: WorkbenchSettings, queryClient: QueryClient) {
+    constructor(
+        workbenchSession: WorkbenchSession,
+        workbenchSettings: WorkbenchSettings,
+        dashboardSettingsService: DashboardSettingsService,
+        queryClient: QueryClient,
+    ) {
         this._workbenchSession = workbenchSession;
         this._workbenchSettings = workbenchSettings;
+        this._dashboardSettingsService = dashboardSettingsService;
         this._queryClient = queryClient;
         this._itemDelegate = new ItemDelegate("DataProviderManager", 0, this);
         this._groupDelegate = new GroupDelegate(this);
@@ -256,6 +264,11 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
 
     getWorkbenchSettings(): WorkbenchSettings {
         return this._workbenchSettings;
+    }
+
+    // The dashboard settings of the dashboard this manager's module instance belongs to.
+    getDashboardSettingsService(): DashboardSettingsService {
+        return this._dashboardSettingsService;
     }
 
     makeSnapshotGetter<T extends DataProviderManagerTopic>(topic: T): () => DataProviderManagerTopicPayload[T] {

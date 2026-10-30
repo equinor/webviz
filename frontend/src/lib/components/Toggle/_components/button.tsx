@@ -29,7 +29,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps<string>>(f
         <ToggleBase
             {...baseProps}
             render={(toggleProps, state) => {
-                let variant: ButtonProps_["variant"] = "outlined";
+                let variant: ButtonProps_["variant"] = "ghost";
                 if (state.pressed) {
                     variant = "contained";
                 }

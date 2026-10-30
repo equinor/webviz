@@ -1,5 +1,9 @@
 import { InitialFluidContactType_api } from "@api";
-import { defaultContinuousDivergingColorPalettes, defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
+import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
+import {
+    defaultContinuousDivergingColorPalettes,
+    defaultContinuousSequentialColorPalettes,
+} from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import { BooleanNumberSetting } from "../implementations/BooleanNumberSetting";
@@ -38,6 +42,7 @@ import { WellboreDepthFilterSetting } from "../implementations/WellboreDepthFilt
 import { Setting } from "../settingsDefinitions";
 
 import { SettingRegistry } from "./_SettingRegistry";
+import { makeIdentityDpfDashboardSettingAdapter, makeTimePointDpfDashboardSettingAdapter } from "./dashboardSettingAdapters";
 
 const FLUID_CONTACT_LABELS: Record<InitialFluidContactType_api, string> = {
     [InitialFluidContactType_api.FGL]: "Free gas level",
@@ -121,8 +126,9 @@ SettingRegistry.registerSetting(Setting.FLUID_CONTACT, "Fluid Contact", Dropdown
         },
     ],
 });
+const INTERSECTION_EXTENSION_LENGTH_CONFIG = { min: 0, max: 5000, defaultValue: 500 };
 SettingRegistry.registerSetting(Setting.INTERSECTION, "Intersection", IntersectionSetting, {
-    customConstructorParameters: [{ extensionLengthConfig: { min: 0, max: 5000, defaultValue: 500 } }],
+    customConstructorParameters: [{ extensionLengthConfig: INTERSECTION_EXTENSION_LENGTH_CONFIG }],
 });
 SettingRegistry.registerSetting(Setting.OPACITY_PERCENT, "Color Opacity", SliderNumberSetting, {
     customConstructorParameters: [{ minMax: { min: 0, max: 100 }, step: 1 }],
@@ -130,7 +136,9 @@ SettingRegistry.registerSetting(Setting.OPACITY_PERCENT, "Color Opacity", Slider
 SettingRegistry.registerSetting(Setting.POLYGONS_ATTRIBUTE, "Polygons Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.POLYGONS_NAME, "Polygons Name", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.POLYGON_VISUALIZATION, "Polygon Visualization", PolygonVisualizationSetting);
-SettingRegistry.registerSetting(Setting.REALIZATION, "Realization", DropdownNumberSetting);
+SettingRegistry.registerSetting(Setting.REALIZATION, "Realization", DropdownNumberSetting, {
+    dashboardSettingAdapter: makeIdentityDpfDashboardSettingAdapter(REALIZATION_DASHBOARD_SETTING),
+});
 SettingRegistry.registerSetting(Setting.REALIZATIONS, "Realizations", SelectNumberSetting);
 SettingRegistry.registerSetting(Setting.SEISMIC_SLICES, "Seismic Slices", SeismicSliceSetting);
 SettingRegistry.registerSetting(Setting.SENSITIVITY, "Sensitivity", SensitivitySetting);
@@ -147,8 +155,12 @@ SettingRegistry.registerSetting(Setting.FORMATION_NAME, "Formation Name", Dropdo
 });
 SettingRegistry.registerSetting(Setting.SURFACE_NAMES, "Surface Names", SelectStringSetting);
 SettingRegistry.registerSetting(Setting.TIME_TYPE, "Time Type", TimeTypeSetting);
-SettingRegistry.registerSetting(Setting.TIME_OR_INTERVAL, "Time or Interval", TimeOrIntervalSetting);
-SettingRegistry.registerSetting(Setting.TIME_POINT, "Time Point", TimeOrIntervalSetting);
+SettingRegistry.registerSetting(Setting.TIME_OR_INTERVAL, "Time or Interval", TimeOrIntervalSetting, {
+    dashboardSettingAdapter: makeTimePointDpfDashboardSettingAdapter(),
+});
+SettingRegistry.registerSetting(Setting.TIME_POINT, "Time Point", TimeOrIntervalSetting, {
+    dashboardSettingAdapter: makeTimePointDpfDashboardSettingAdapter(),
+});
 SettingRegistry.registerSetting(Setting.TIME_INTERVAL, "Time Interval", TimeOrIntervalSetting);
 SettingRegistry.registerSetting(Setting.TIME_POINT_PAIR, "Time Steps", TimePointPairSetting);
 

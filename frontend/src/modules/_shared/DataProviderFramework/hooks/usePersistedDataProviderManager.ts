@@ -2,6 +2,7 @@ import React from "react";
 
 import type { QueryClient } from "@tanstack/query-core";
 
+import type { DashboardSettingsService } from "@framework/DashboardSettings/DashboardSettingsService";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
@@ -15,6 +16,7 @@ export type UsePersistedDataProviderManagerOptions = {
     serializedState: string | null;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
+    dashboardSettingsService: DashboardSettingsService;
     queryClient: QueryClient;
 };
 
@@ -25,6 +27,7 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
         setSerializedState,
         workbenchSession,
         workbenchSettings,
+        dashboardSettingsService,
         queryClient,
     } = options;
 
@@ -63,7 +66,12 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
      */
     React.useEffect(
         function setupDataProviderManagerEffect() {
-            const manager = new DataProviderManager(workbenchSession, workbenchSettings, queryClient);
+            const manager = new DataProviderManager(
+                workbenchSession,
+                workbenchSettings,
+                dashboardSettingsService,
+                queryClient,
+            );
             dataProviderManagerRef.current = manager;
             setDataProviderManager(manager);
 
@@ -91,7 +99,14 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
                 manager.beforeDestroy();
             };
         },
-        [persistDataProviderManagerState, queryClient, setDataProviderManager, workbenchSession, workbenchSettings],
+        [
+            persistDataProviderManagerState,
+            queryClient,
+            setDataProviderManager,
+            workbenchSession,
+            workbenchSettings,
+            dashboardSettingsService,
+        ],
     );
 
     /**
