@@ -9,7 +9,6 @@ import {
     statSync,
     utimesSync,
     writeFileSync,
-    writeSync,
 } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -181,20 +180,8 @@ export function preloadNarrationModel(): Promise<void> {
 export async function terminateNarrationWorker(): Promise<void> {
     if (worker) {
         // Interrupting native ONNX inference can abort the entire Playwright process.
-        writeSync(
-            2,
-            `[narration] ${new Date().toISOString()} pid=${process.pid} waiting for ${activeSynthesis.size} active synthesis request(s) before termination\n`,
-        );
         await Promise.all(activeSynthesis);
-        writeSync(
-            2,
-            `[narration] ${new Date().toISOString()} pid=${process.pid} thread=${worker.threadId} termination starting\n`,
-        );
-        const exitCode = await worker.terminate();
-        writeSync(
-            2,
-            `[narration] ${new Date().toISOString()} pid=${process.pid} termination finished code=${exitCode}\n`,
-        );
+        await worker.terminate();
         worker = null;
     }
 }
