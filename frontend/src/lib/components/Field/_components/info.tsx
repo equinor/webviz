@@ -19,7 +19,7 @@ export type InfoProps = {
 export function Info(props: InfoProps): React.ReactNode {
     return (
         <Popover.Root>
-            <Popover.Trigger size="small" tone="neutral" variant="ghost" iconOnly round>
+            <Popover.Trigger aria-label="More information" size="small" tone="neutral" variant="ghost" iconOnly round>
                 <InfoIcon fontSize="small" />
             </Popover.Trigger>
             <Popover.Popup side={props.side} align={props.align} sticky={false}>

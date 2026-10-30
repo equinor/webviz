@@ -54,6 +54,7 @@ type WorkerMessage =
 let worker: Worker | null = null;
 let nextRequestId = 0;
 const pendingSynth = new Map<number, { resolve: (durationMs: number) => void; reject: (error: unknown) => void }>();
+const activeSynthesis = new Set<Promise<void>>();
 let readyWaiters: Array<{ resolve: () => void; reject: (error: unknown) => void }> = [];
 
 /** Lazily spawn the TTS worker and wire up its message handling. */
@@ -94,10 +95,17 @@ function getWorker(): Worker {
 function synthesizeInWorker(text: string, outPath: string): Promise<number> {
     const activeWorker = getWorker();
     const id = nextRequestId++;
-    return new Promise<number>((resolve, reject) => {
+    const request = new Promise<number>((resolve, reject) => {
         pendingSynth.set(id, { resolve, reject });
         activeWorker.postMessage({ type: "synthesize", id, text, outPath });
     });
+    const completion = request.then(
+        () => undefined,
+        () => undefined,
+    );
+    activeSynthesis.add(completion);
+    void completion.then(() => activeSynthesis.delete(completion));
+    return request;
 }
 
 /**
@@ -172,6 +180,12 @@ export function preloadNarrationModel(): Promise<void> {
 /** Shut the TTS worker down so it doesn't keep the Playwright worker process alive after the run. */
 export async function terminateNarrationWorker(): Promise<void> {
     if (worker) {
+        // Interrupting native ONNX inference can abort the entire Playwright process.
+        writeSync(
+            2,
+            `[narration] ${new Date().toISOString()} pid=${process.pid} waiting for ${activeSynthesis.size} active synthesis request(s) before termination\n`,
+        );
+        await Promise.all(activeSynthesis);
         writeSync(
             2,
             `[narration] ${new Date().toISOString()} pid=${process.pid} thread=${worker.threadId} termination starting\n`,

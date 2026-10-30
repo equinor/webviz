@@ -632,13 +632,14 @@ export async function sweepSliderAcross(
 
 /**
  * Add a vector to the Simulation Time Series vector selector by typing its full name and confirming
- * with Enter, then asserting its tag appears. The vector tree may still be loading when the field is
- * first focused, so this retries the type-and-confirm until the tag shows up. `vectorName` uses the
+ * with Enter, then asserting its tag appears. Settings may still be importing after the module header
+ * appears. The vector tree may still be loading when the field is first focused, so this retries the
+ * type-and-confirm until the tag shows up. `vectorName` uses the
  * selector's colon-separated form for well vectors, e.g. "FOPR" or "WGOR:A1".
  */
 export async function addVectorToSelector(page: Page, vectorName: string): Promise<void> {
     const vectorSelectorContainer = page.getByTestId("vector-selector");
-    await expect(vectorSelectorContainer).toBeVisible();
+    await expect(vectorSelectorContainer).toBeVisible({ timeout: 60_000 });
     const vectorInput = vectorSelectorContainer.locator("input").last();
     const vectorTag = vectorSelectorContainer.locator(`li[title="${vectorName}"]`);
 
@@ -660,7 +661,7 @@ export async function addVectorToSelector(page: Page, vectorName: string): Promi
  */
 export async function removeVectorFromSelector(page: Page, vectorName: string): Promise<void> {
     const vectorSelectorContainer = page.getByTestId("vector-selector");
-    await expect(vectorSelectorContainer).toBeVisible();
+    await expect(vectorSelectorContainer).toBeVisible({ timeout: 60_000 });
     const vectorTag = vectorSelectorContainer.locator(`li[title="${vectorName}"]`);
     await smoothClick(page, vectorTag.getByRole("button", { name: "Remove" }));
     await expect(vectorTag).toHaveCount(0, { timeout: 30_000 });
