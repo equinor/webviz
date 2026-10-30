@@ -5,7 +5,7 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 
 import { useActiveSession } from "../ActiveSessionBoundary";
 
-import { ElevatedSettingsToggle } from "./_panels/elevatedSettingsToggle";
+import { DashboardSettingsToggle } from "./_panels/dashboardSettingsToggle";
 import { StartPanel } from "./_panels/start";
 
 export type ActionBarProps = {
@@ -24,7 +24,7 @@ export function ActionBar(props: ActionBarProps) {
         <div className="border-b-neutral-subtle bg-surface/30 px-xs py-4xs shadow-elevation-raised flex border-b-2">
             <StartPanel workbench={props.workbench} />
             <Separator orientation="vertical" />
-            <ElevatedSettingsToggle workbench={props.workbench} />
+            <DashboardSettingsToggle workbench={props.workbench} />
         </div>
     );
 }

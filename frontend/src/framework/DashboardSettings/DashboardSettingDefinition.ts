@@ -6,7 +6,7 @@ export type CombineConstraintsFunction<TConstraints> = (a: TConstraints, b: TCon
 // (compared with `===`) for free, and settings without constraints (`null`/`undefined`, e.g. a boolean
 // toggle or a color scale) need no combiners either. Other shapes, e.g. a `{ min, max }` range, must
 // provide both combiners.
-type ElevatedSettingCombineOptions<TConstraints> = [TConstraints] extends [readonly unknown[] | null | undefined]
+type DashboardSettingCombineOptions<TConstraints> = [TConstraints] extends [readonly unknown[] | null | undefined]
     ? {
           unionConstraints?: CombineConstraintsFunction<TConstraints>;
           intersectConstraints?: CombineConstraintsFunction<TConstraints>;
@@ -16,7 +16,7 @@ type ElevatedSettingCombineOptions<TConstraints> = [TConstraints] extends [reado
           intersectConstraints: CombineConstraintsFunction<TConstraints>;
       };
 
-export type ElevatedSettingComponentProps<TValue, TConstraints> = {
+export type DashboardSettingComponentProps<TValue, TConstraints> = {
     value: TValue;
     constraints: TConstraints;
     isValueValid: boolean;
@@ -25,7 +25,7 @@ export type ElevatedSettingComponentProps<TValue, TConstraints> = {
     onValueChange: (value: TValue) => void;
 };
 
-export type ElevatedSettingOptions<TValue, TConstraints> = {
+export type DashboardSettingOptions<TValue, TConstraints> = {
     key: string;
 
     label: string;
@@ -37,7 +37,7 @@ export type ElevatedSettingOptions<TValue, TConstraints> = {
     isValueValid?: (value: TValue, constraints: TConstraints) => boolean;
 
     // Provides a valid replacement for an invalid value. Only used for the one-time fixup of the default
-    // value when the setting first settles, and for an explicit `ElevatedSettingInstance.fixupValue()`
+    // value when the setting first settles, and for an explicit `DashboardSettingInstance.fixupValue()`
     // - an invalid value is otherwise kept and reported, like in `persistableFixableAtom`.
     fixupValue?: (value: TValue, constraints: TConstraints) => TValue;
 
@@ -45,9 +45,9 @@ export type ElevatedSettingOptions<TValue, TConstraints> = {
     serializeValue?: (value: TValue) => unknown;
     deserializeValue?: (serializedValue: unknown) => TValue;
 
-    // The control rendered for the setting in the dashboard's elevated settings panel.
-    Component: React.ComponentType<ElevatedSettingComponentProps<TValue, TConstraints>>;
-} & ElevatedSettingCombineOptions<TConstraints>;
+    // The control rendered for the setting in the dashboard settings panel.
+    Component: React.ComponentType<DashboardSettingComponentProps<TValue, TConstraints>>;
+} & DashboardSettingCombineOptions<TConstraints>;
 
 function unionDefaultConstraints<TConstraints>(a: TConstraints, b: TConstraints): TConstraints {
     if (a === null || a === undefined) {
@@ -74,12 +74,12 @@ function hasDefaultCombiners(constraints: unknown): boolean {
     return constraints === null || constraints === undefined || Array.isArray(constraints);
 }
 
-export class ElevatedSettingDefinition<TValue, TConstraints> {
+export class DashboardSettingDefinition<TValue, TConstraints> {
     readonly key: string;
     readonly label: string;
     readonly defaultValue: TValue;
     readonly initialConstraints: TConstraints;
-    readonly Component: React.ComponentType<ElevatedSettingComponentProps<TValue, TConstraints>>;
+    readonly Component: React.ComponentType<DashboardSettingComponentProps<TValue, TConstraints>>;
 
     private readonly _unionConstraints: CombineConstraintsFunction<TConstraints>;
     private readonly _intersectConstraints: CombineConstraintsFunction<TConstraints>;
@@ -88,7 +88,7 @@ export class ElevatedSettingDefinition<TValue, TConstraints> {
     private readonly _serializeValue?: (value: TValue) => unknown;
     private readonly _deserializeValue?: (serializedValue: unknown) => TValue;
 
-    constructor(options: ElevatedSettingOptions<TValue, TConstraints>) {
+    constructor(options: DashboardSettingOptions<TValue, TConstraints>) {
         this.key = options.key;
         this.label = options.label;
         this.defaultValue = options.defaultValue;
@@ -110,7 +110,7 @@ export class ElevatedSettingDefinition<TValue, TConstraints> {
             (!combineOptions.unionConstraints || !combineOptions.intersectConstraints)
         ) {
             throw new Error(
-                `Elevated setting '${options.key}' has non-array constraints and must provide both 'unionConstraints' and 'intersectConstraints'.`,
+                `Dashboard setting '${options.key}' has non-array constraints and must provide both 'unionConstraints' and 'intersectConstraints'.`,
             );
         }
 

@@ -1,7 +1,7 @@
-import { ElevatedOptionListSelect } from "../components/ElevatedOptionListSelect";
-import type { ElevatedSettingComponentProps, ElevatedSettingOptions } from "../ElevatedSettingDefinition";
+import { DashboardOptionListSelect } from "../components/DashboardOptionListSelect";
+import type { DashboardSettingComponentProps, DashboardSettingOptions } from "../DashboardSettingDefinition";
 
-export type OptionListElevatedSettingConfig<TValue extends string | number, TOption> = {
+export type OptionListDashboardSettingConfig<TValue extends string | number, TOption> = {
     key: string;
     label: string;
     getOptionValue: (option: TOption) => TValue;
@@ -10,13 +10,13 @@ export type OptionListElevatedSettingConfig<TValue extends string | number, TOpt
     compareOptions?: (a: TOption, b: TOption) => number;
 };
 
-// Makes the options for an elevated setting whose value is one of a list of options (identified by
-// `getOptionValue`), rendered by `ElevatedOptionListSelect` - the common case of realizations, grid
+// Makes the options for a dashboard setting whose value is one of a list of options (identified by
+// `getOptionValue`), rendered by `DashboardOptionListSelect` - the common case of realizations, grid
 // models, wellbores, ... Only a helper for that one shape: register the result with
-// `ElevatedSettingRegistry.registerElevatedSetting`, spreading it to override any part if needed.
-export function makeOptionListElevatedSettingOptions<TValue extends string | number, TOption>(
-    config: OptionListElevatedSettingConfig<TValue, TOption>,
-): ElevatedSettingOptions<TValue | null, readonly TOption[]> {
+// `DashboardSettingRegistry.registerDashboardSetting`, spreading it to override any part if needed.
+export function makeOptionListDashboardSettingOptions<TValue extends string | number, TOption>(
+    config: OptionListDashboardSettingConfig<TValue, TOption>,
+): DashboardSettingOptions<TValue | null, readonly TOption[]> {
     const { getOptionValue, getOptionLabel, compareOptions } = config;
 
     function hasOption(constraints: readonly TOption[], value: TValue): boolean {
@@ -24,8 +24,8 @@ export function makeOptionListElevatedSettingOptions<TValue extends string | num
     }
 
     // Binds the option accessors - the panel only passes the common component props.
-    function OptionListComponent(props: ElevatedSettingComponentProps<TValue | null, readonly TOption[]>) {
-        return <ElevatedOptionListSelect {...props} getOptionValue={getOptionValue} getOptionLabel={getOptionLabel} />;
+    function OptionListComponent(props: DashboardSettingComponentProps<TValue | null, readonly TOption[]>) {
+        return <DashboardOptionListSelect {...props} getOptionValue={getOptionValue} getOptionLabel={getOptionLabel} />;
     }
 
     return {

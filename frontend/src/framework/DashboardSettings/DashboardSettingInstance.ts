@@ -2,9 +2,9 @@ import { isEqual } from "lodash-es";
 
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
-import type { ElevatedSettingDefinition } from "./ElevatedSettingDefinition";
+import type { DashboardSettingDefinition } from "./DashboardSettingDefinition";
 
-export enum ElevatedSettingInstanceTopic {
+export enum DashboardSettingInstanceTopic {
     VALUE = "VALUE",
     VALUE_SOURCE = "VALUE_SOURCE",
     IS_VALUE_VALID = "IS_VALUE_VALID",
@@ -16,9 +16,9 @@ export enum ElevatedSettingInstanceTopic {
 // Where the current value came from. Follows the same fix-up strategy as `persistableFixableAtom` and
 // DPF settings: an invalid value is never replaced automatically once the setting has settled - it is
 // kept and reported via `IS_VALUE_VALID` until the user picks a valid one.
-export enum ElevatedSettingValueSource {
+export enum DashboardSettingValueSource {
     // Chosen by the user or still the default. The default gets a one-time fixup the first time the
-    // setting settles, so a freshly elevated setting lands on a sensible value.
+    // setting settles, so a newly registered dashboard setting lands on a sensible value.
     USER = "USER",
     // Restored from a persisted session or applied by a template. Never fixed up, not even on the first
     // settle - it turns into a `USER` value as soon as it is valid in the current context.
@@ -27,25 +27,25 @@ export enum ElevatedSettingValueSource {
 
 // How the constraint sources' contributions are combined. Decided by the instance - the sources only
 // hand in the options they offer.
-export enum ElevatedSettingCombineStrategy {
+export enum DashboardSettingCombineStrategy {
     // Any value at least one source offers - the broadest selection.
     UNION = "union",
     // Only values every source offers.
     INTERSECTION = "intersection",
 }
 
-export type ElevatedSettingInstanceTopicPayloads<TValue, TConstraints> = {
-    [ElevatedSettingInstanceTopic.VALUE]: TValue;
-    [ElevatedSettingInstanceTopic.VALUE_SOURCE]: ElevatedSettingValueSource;
-    [ElevatedSettingInstanceTopic.IS_VALUE_VALID]: boolean;
-    [ElevatedSettingInstanceTopic.CONSTRAINTS]: TConstraints;
-    [ElevatedSettingInstanceTopic.IS_SETTLING]: boolean;
-    [ElevatedSettingInstanceTopic.SOURCE_COUNT]: number;
+export type DashboardSettingInstanceTopicPayloads<TValue, TConstraints> = {
+    [DashboardSettingInstanceTopic.VALUE]: TValue;
+    [DashboardSettingInstanceTopic.VALUE_SOURCE]: DashboardSettingValueSource;
+    [DashboardSettingInstanceTopic.IS_VALUE_VALID]: boolean;
+    [DashboardSettingInstanceTopic.CONSTRAINTS]: TConstraints;
+    [DashboardSettingInstanceTopic.IS_SETTLING]: boolean;
+    [DashboardSettingInstanceTopic.SOURCE_COUNT]: number;
 };
 
-// A constraint source is anything contributing options to an elevated setting - currently the consumer
+// A constraint source is anything contributing options to a dashboard setting - currently the consumer
 // adapters (modules, DPF settings), which also read its value. The instance doesn't care which kind.
-export type ElevatedSettingConstraintSourceHandle<TConstraints> = {
+export type DashboardSettingConstraintSourceHandle<TConstraints> = {
     // The source has settled, and these are the options it contributes.
     updateConstraints(constraints: TConstraints): void;
     // The source is recomputing its options (e.g. an upstream value changed and data is being fetched).
@@ -56,12 +56,12 @@ export type ElevatedSettingConstraintSourceHandle<TConstraints> = {
     unregister(): void;
 };
 
-export type ElevatedSettingInstanceOptions<TValue, TConstraints> = {
+export type DashboardSettingInstanceOptions<TValue, TConstraints> = {
     value?: TValue;
-    valueSource?: ElevatedSettingValueSource;
+    valueSource?: DashboardSettingValueSource;
     constraintOverride?: TConstraints;
     // Defaults to `UNION` - the only strategy in use for now.
-    combineStrategy?: ElevatedSettingCombineStrategy;
+    combineStrategy?: DashboardSettingCombineStrategy;
 };
 
 type ConstraintSourceState<TConstraints> = {
@@ -69,14 +69,14 @@ type ConstraintSourceState<TConstraints> = {
     isPending: boolean;
 };
 
-export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSubscribe<
-    ElevatedSettingInstanceTopicPayloads<TValue, TConstraints>
+export class DashboardSettingInstance<TValue, TConstraints> implements PublishSubscribe<
+    DashboardSettingInstanceTopicPayloads<TValue, TConstraints>
 > {
-    private readonly _definition: ElevatedSettingDefinition<TValue, TConstraints>;
-    private readonly _combineStrategy: ElevatedSettingCombineStrategy;
+    private readonly _definition: DashboardSettingDefinition<TValue, TConstraints>;
+    private readonly _combineStrategy: DashboardSettingCombineStrategy;
 
     private _value: TValue;
-    private _valueSource: ElevatedSettingValueSource;
+    private _valueSource: DashboardSettingValueSource;
     private _isValueValid = true;
 
     private readonly _constraintSources = new Map<string, ConstraintSourceState<TConstraints>>();
@@ -95,23 +95,23 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
     private _isDestroyed = false;
 
     private readonly _publishSubscribeDelegate = new PublishSubscribeDelegate<
-        ElevatedSettingInstanceTopicPayloads<TValue, TConstraints>
+        DashboardSettingInstanceTopicPayloads<TValue, TConstraints>
     >();
 
     constructor(
-        definition: ElevatedSettingDefinition<TValue, TConstraints>,
-        options?: ElevatedSettingInstanceOptions<TValue, TConstraints>,
+        definition: DashboardSettingDefinition<TValue, TConstraints>,
+        options?: DashboardSettingInstanceOptions<TValue, TConstraints>,
     ) {
         this._definition = definition;
-        this._combineStrategy = options?.combineStrategy ?? ElevatedSettingCombineStrategy.UNION;
+        this._combineStrategy = options?.combineStrategy ?? DashboardSettingCombineStrategy.UNION;
         this._value =options && "value" in options ? (options.value as TValue) : definition.defaultValue;
-        this._valueSource = options?.valueSource ?? ElevatedSettingValueSource.USER;
+        this._valueSource = options?.valueSource ?? DashboardSettingValueSource.USER;
         this._constraintOverride = options?.constraintOverride ?? null;
         this._aggregatedConstraints = this._constraintOverride ?? definition.initialConstraints;
         this._isValueValid = this.computeIsValueValid();
     }
 
-    getDefinition(): ElevatedSettingDefinition<TValue, TConstraints> {
+    getDefinition(): DashboardSettingDefinition<TValue, TConstraints> {
         return this._definition;
     }
 
@@ -119,7 +119,7 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
         return this._value;
     }
 
-    getValueSource(): ElevatedSettingValueSource {
+    getValueSource(): DashboardSettingValueSource {
         return this._valueSource;
     }
 
@@ -145,11 +145,11 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
         return this._constraintOverride;
     }
 
-    setValue(value: TValue, valueSource: ElevatedSettingValueSource = ElevatedSettingValueSource.USER): void {
+    setValue(value: TValue, valueSource: DashboardSettingValueSource = DashboardSettingValueSource.USER): void {
         this.setValueSource(valueSource);
         this.applyValue(value);
 
-        if (valueSource === ElevatedSettingValueSource.RESTORED) {
+        if (valueSource === DashboardSettingValueSource.RESTORED) {
             // A restored value that already fits the current context is a regular value from here on.
             this.maybePromoteRestoredValue();
         }
@@ -162,7 +162,7 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
             return;
         }
 
-        this.setValueSource(ElevatedSettingValueSource.USER);
+        this.setValueSource(DashboardSettingValueSource.USER);
         this.applyValue(this._definition.fixupValue(this._value, this._aggregatedConstraints));
     }
 
@@ -176,10 +176,10 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
         this.recompute();
     }
 
-    registerConstraintSource(sourceId: string): ElevatedSettingConstraintSourceHandle<TConstraints> {
+    registerConstraintSource(sourceId: string): DashboardSettingConstraintSourceHandle<TConstraints> {
         if (this._constraintSources.has(sourceId)) {
             throw new Error(
-                `Constraint source with ID '${sourceId}' is already registered for elevated setting '${this._definition.key}'.`,
+                `Constraint source with ID '${sourceId}' is already registered for dashboard setting '${this._definition.key}'.`,
             );
         }
 
@@ -188,14 +188,14 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
             isPending: false,
         };
         this._constraintSources.set(sourceId, state);
-        this._publishSubscribeDelegate.notifySubscribers(ElevatedSettingInstanceTopic.SOURCE_COUNT);
+        this._publishSubscribeDelegate.notifySubscribers(DashboardSettingInstanceTopic.SOURCE_COUNT);
 
         let registered = true;
 
         const assertRegistered = () => {
             if (!registered) {
                 throw new Error(
-                    `Constraint source with ID '${sourceId}' has already been unregistered from elevated setting '${this._definition.key}'.`,
+                    `Constraint source with ID '${sourceId}' has already been unregistered from dashboard setting '${this._definition.key}'.`,
                 );
             }
         };
@@ -239,7 +239,7 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
                     return;
                 }
                 this._constraintSources.delete(sourceId);
-                this._publishSubscribeDelegate.notifySubscribers(ElevatedSettingInstanceTopic.SOURCE_COUNT);
+                this._publishSubscribeDelegate.notifySubscribers(DashboardSettingInstanceTopic.SOURCE_COUNT);
                 this.recompute();
             },
         };
@@ -250,22 +250,22 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
         this._constraintSources.clear();
     }
 
-    makeSnapshotGetter<TTopic extends ElevatedSettingInstanceTopic>(
+    makeSnapshotGetter<TTopic extends DashboardSettingInstanceTopic>(
         topic: TTopic,
-    ): () => ElevatedSettingInstanceTopicPayloads<TValue, TConstraints>[TTopic] {
+    ): () => DashboardSettingInstanceTopicPayloads<TValue, TConstraints>[TTopic] {
         const snapshotGetter = (): any => {
             switch (topic) {
-                case ElevatedSettingInstanceTopic.VALUE:
+                case DashboardSettingInstanceTopic.VALUE:
                     return this._value;
-                case ElevatedSettingInstanceTopic.VALUE_SOURCE:
+                case DashboardSettingInstanceTopic.VALUE_SOURCE:
                     return this._valueSource;
-                case ElevatedSettingInstanceTopic.IS_VALUE_VALID:
+                case DashboardSettingInstanceTopic.IS_VALUE_VALID:
                     return this._isValueValid;
-                case ElevatedSettingInstanceTopic.CONSTRAINTS:
+                case DashboardSettingInstanceTopic.CONSTRAINTS:
                     return this._aggregatedConstraints;
-                case ElevatedSettingInstanceTopic.IS_SETTLING:
+                case DashboardSettingInstanceTopic.IS_SETTLING:
                     return this._isSettling;
-                case ElevatedSettingInstanceTopic.SOURCE_COUNT:
+                case DashboardSettingInstanceTopic.SOURCE_COUNT:
                     return this._constraintSources.size;
                 default:
                     throw new Error(`Unknown topic: ${topic}`);
@@ -275,7 +275,7 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
         return snapshotGetter;
     }
 
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<ElevatedSettingInstanceTopicPayloads<TValue, TConstraints>> {
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<DashboardSettingInstanceTopicPayloads<TValue, TConstraints>> {
         return this._publishSubscribeDelegate;
     }
 
@@ -311,7 +311,7 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
             return this._definition.initialConstraints;
         }
 
-        if (this._combineStrategy === ElevatedSettingCombineStrategy.INTERSECTION) {
+        if (this._combineStrategy === DashboardSettingCombineStrategy.INTERSECTION) {
             return contributions.reduce((acc, current) => this._definition.intersectConstraints(acc, current));
         }
 
@@ -349,12 +349,12 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
 
         if (constraintsChanged) {
             this._aggregatedConstraints = newConstraints;
-            this._publishSubscribeDelegate.notifySubscribers(ElevatedSettingInstanceTopic.CONSTRAINTS);
+            this._publishSubscribeDelegate.notifySubscribers(DashboardSettingInstanceTopic.CONSTRAINTS);
         }
 
         if (isSettlingChanged) {
             this._isSettling = newIsSettling;
-            this._publishSubscribeDelegate.notifySubscribers(ElevatedSettingInstanceTopic.IS_SETTLING);
+            this._publishSubscribeDelegate.notifySubscribers(DashboardSettingInstanceTopic.IS_SETTLING);
         }
 
         this.updateIsValueValid();
@@ -378,10 +378,10 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
         if (!this._hasSettled) {
             this._hasSettled = true;
 
-            // One-time fixup so a freshly elevated setting lands on a sensible value. Never applied
+            // One-time fixup so a newly registered dashboard setting lands on a sensible value. Never applied
             // again afterwards - from here on an invalid value is kept and reported instead.
             if (
-                this._valueSource === ElevatedSettingValueSource.USER &&
+                this._valueSource === DashboardSettingValueSource.USER &&
                 !this._definition.isValueValid(this._value, this._aggregatedConstraints)
             ) {
                 this.applyValue(this._definition.fixupValue(this._value, this._aggregatedConstraints));
@@ -392,12 +392,12 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
     }
 
     private maybePromoteRestoredValue(): void {
-        if (this._valueSource !== ElevatedSettingValueSource.RESTORED || !this.isSettled()) {
+        if (this._valueSource !== DashboardSettingValueSource.RESTORED || !this.isSettled()) {
             return;
         }
 
         if (this._definition.isValueValid(this._value, this._aggregatedConstraints)) {
-            this.setValueSource(ElevatedSettingValueSource.USER);
+            this.setValueSource(DashboardSettingValueSource.USER);
         }
     }
 
@@ -407,18 +407,18 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
         }
 
         this._value = value;
-        this._publishSubscribeDelegate.notifySubscribers(ElevatedSettingInstanceTopic.VALUE);
+        this._publishSubscribeDelegate.notifySubscribers(DashboardSettingInstanceTopic.VALUE);
 
         this.updateIsValueValid();
     }
 
-    private setValueSource(valueSource: ElevatedSettingValueSource): void {
+    private setValueSource(valueSource: DashboardSettingValueSource): void {
         if (this._valueSource === valueSource) {
             return;
         }
 
         this._valueSource = valueSource;
-        this._publishSubscribeDelegate.notifySubscribers(ElevatedSettingInstanceTopic.VALUE_SOURCE);
+        this._publishSubscribeDelegate.notifySubscribers(DashboardSettingInstanceTopic.VALUE_SOURCE);
     }
 
     private updateIsValueValid(): void {
@@ -428,6 +428,6 @@ export class ElevatedSettingInstance<TValue, TConstraints> implements PublishSub
         }
 
         this._isValueValid = isValueValid;
-        this._publishSubscribeDelegate.notifySubscribers(ElevatedSettingInstanceTopic.IS_VALUE_VALID);
+        this._publishSubscribeDelegate.notifySubscribers(DashboardSettingInstanceTopic.IS_VALUE_VALID);
     }
 }

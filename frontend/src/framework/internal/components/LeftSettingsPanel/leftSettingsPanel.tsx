@@ -2,7 +2,7 @@ import React from "react";
 
 import { Settings, Link } from "@mui/icons-material";
 
-import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { Workbench } from "@framework/Workbench";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -10,7 +10,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useActiveDashboard } from "../ActiveDashboardBoundary";
 
-import { ElevatedSettingsPanel } from "./private-components/elevatedSettingsPanel";
+import { DashboardSettingsPanel } from "./private-components/dashboardSettingsPanel";
 import { EmptySettingsPlaceholder } from "./private-components/emptySettingsPlaceholder";
 import { ModuleSettingsHeader } from "./private-components/moduleSettingsHeader";
 import { ModuleSettingsStack } from "./private-components/moduleSettingsStack";
@@ -30,9 +30,9 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
         props.workbench.getGuiMessageBroker(),
         GuiState.LeftSettingsPanelIsCollapsed,
     );
-    const [isElevatedSettingsPanelVisible, setIsElevatedSettingsPanelVisible] = useGuiState(
+    const [isDashboardControlledSettingsPanelVisible, setIsDashboardSettingsPanelVisible] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.ElevatedSettingsPanelVisible,
+        GuiState.DashboardSettingsPanelVisible,
     );
     const [drawerContent, setDrawerContent] = React.useState<DrawerContent>(DrawerContent.ModuleSettings);
 
@@ -56,17 +56,17 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
         setIsCollapsed(true);
     }
 
-    const handleCloseElevatedSettingsPanel = React.useCallback(
-        function handleCloseElevatedSettingsPanel() {
-            setIsElevatedSettingsPanelVisible(false);
+    const handleCloseDashboardSettingsPanel = React.useCallback(
+        function handleCloseDashboardSettingsPanel() {
+            setIsDashboardSettingsPanelVisible(false);
         },
-        [setIsElevatedSettingsPanelVisible],
+        [setIsDashboardSettingsPanelVisible],
     );
 
     return (
         <div className="bg-surface flex h-full flex-col overflow-hidden">
-            {isElevatedSettingsPanelVisible && !isCollapsed && (
-                <ElevatedSettingsPanel onClose={handleCloseElevatedSettingsPanel} />
+            {isDashboardControlledSettingsPanelVisible && !isCollapsed && (
+                <DashboardSettingsPanel onClose={handleCloseDashboardSettingsPanel} />
             )}
             <ModuleSettingsHeader
                 activeTab={drawerContent}

@@ -75,9 +75,9 @@ export class SharedSettingsDelegate<
         for (const key in wrappedSettings) {
             const setting = wrappedSettings[key];
 
-            // A group's own (wrapped) setting is the elevated setting's consumer on behalf of the settings it
+            // A group's own (wrapped) setting is the dashboard setting's consumer on behalf of the settings it
             // controls - those don't connect themselves while externally controlled.
-            setting.connectElevatedSettingsService(dataProviderManager.getElevatedSettingsService());
+            setting.connectDashboardSettingsService(dataProviderManager.getDashboardSettingsService());
 
             const internalSetting = this._internalSettings.get(key);
             const externalSettingController = new ExternalSettingController(parentItem, setting, internalSetting);

@@ -28,7 +28,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     usePersistedDataProviderManager({
         workbenchSession: props.workbenchSession,
         workbenchSettings: props.workbenchSettings,
-        elevatedSettingsService: props.elevatedSettingsService,
+        dashboardSettingsService: props.dashboardSettingsService,
         queryClient,
         serializedState: dataProviderSerializedState,
         setSerializedState: setDataProviderSerializedState,

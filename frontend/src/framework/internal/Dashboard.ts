@@ -3,10 +3,10 @@ import { nanoid } from "nanoid";
 import { v4 } from "uuid";
 
 import {
-    ElevatedSettingsService,
-    ElevatedSettingsServiceTopic,
-} from "@framework/ElevatedSettings/ElevatedSettingsService";
-import { ElevatedSettingsServiceAtom } from "@framework/ElevatedSettings/ElevatedSettingsServiceAtom";
+    DashboardSettingsService,
+    DashboardSettingsServiceTopic,
+} from "@framework/DashboardSettings/DashboardSettingsService";
+import { DashboardSettingsServiceAtom } from "@framework/DashboardSettings/DashboardSettingsServiceAtom";
 import { HoverService } from "@framework/HoverService";
 import { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { Template } from "@framework/TemplateRegistry";
@@ -70,7 +70,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     // kept mounted at once by the dashboard hot-cache.
     private _syncSettingsService = new SyncSettingsService();
     private _hoverService = new HoverService();
-    private _elevatedSettingsService = new ElevatedSettingsService();
+    private _dashboardSettingsService = new DashboardSettingsService();
 
     constructor(atomStoreMaster: AtomStoreMaster, name?: string) {
         this._id = nanoid(DASHBOARD_ID_LENGTH);
@@ -79,10 +79,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._atomStoreMaster = atomStoreMaster;
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-            "elevated-settings-service",
-            this._elevatedSettingsService
+            "dashboard-settings-service",
+            this._dashboardSettingsService
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(ElevatedSettingsServiceTopic.STATE_REVISION)(() => this.handleStateChange()),
+                .makeSubscriberFunction(DashboardSettingsServiceTopic.STATE_REVISION)(() => this.handleStateChange()),
         );
     }
 
@@ -126,8 +126,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         return this._hoverService;
     }
 
-    getElevatedSettingsService(): ElevatedSettingsService {
-        return this._elevatedSettingsService;
+    getDashboardSettingsService(): DashboardSettingsService {
+        return this._dashboardSettingsService;
     }
 
     getMetadata(): DashboardMetadata {
@@ -174,14 +174,14 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     serializeState(): SerializedDashboardState {
         if (this._cachedState) {
-            // Destructuring the cached state and overriding the id, name, description and elevated settings
+            // Destructuring the cached state and overriding the id, name, description and dashboard settings
             // (which stay live while module instances are unloaded) with the current values.
             return {
                 ...this._cachedState,
                 id: this._id,
                 name: this._metadata.name,
                 description: this._metadata.description,
-                elevatedSettings: this._elevatedSettingsService.serializeState(),
+                dashboardSettings: this._dashboardSettingsService.serializeState(),
             };
         }
 
@@ -213,7 +213,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             description: this._metadata.description,
             activeModuleInstanceId: this._activeModuleInstanceId,
             moduleInstances,
-            elevatedSettings: this._elevatedSettingsService.serializeState(),
+            dashboardSettings: this._dashboardSettingsService.serializeState(),
         };
     }
 
@@ -226,9 +226,9 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         this.clearLayout();
 
-        // Restored right away, unlike the module instances - so the elevated settings are already in
+        // Restored right away, unlike the module instances - so the dashboard settings are already in
         // place (and their values marked as restored) when the module instances connect on load().
-        this._elevatedSettingsService.deserializeState(serializedDashboard.elevatedSettings ?? {});
+        this._dashboardSettingsService.deserializeState(serializedDashboard.dashboardSettings ?? {});
 
         // Stopping here since we don't want to initialize module instances for
         // inactive dashboards. The module instances will be initialized when the dashboard is activated.
@@ -329,8 +329,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         const id = predefinedId ?? Dashboard.makeModuleInstanceId();
 
         const atomStore = this._atomStoreMaster.makeAtomStoreForModuleInstance(id);
-        // Lets the module's atoms reach this dashboard's elevated settings (see ElevatedSettings/adapters/jotai)
-        atomStore.set(ElevatedSettingsServiceAtom, this._elevatedSettingsService);
+        // Lets the module's atoms reach this dashboard's settings (see DashboardSettings/adapters/jotai)
+        atomStore.set(DashboardSettingsServiceAtom, this._dashboardSettingsService);
 
         let moduleInstance: ModuleInstance<any, any>;
         try {
@@ -448,8 +448,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
      */
     beforeDestroy(): void {
         this.clearLayout();
-        this._unsubscribeFunctionsManagerDelegate.unsubscribe("elevated-settings-service");
-        this._elevatedSettingsService.beforeDestroy();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("dashboard-settings-service");
+        this._dashboardSettingsService.beforeDestroy();
     }
 
     static fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster, id?: string): Dashboard {
@@ -467,8 +467,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         };
 
         // Before the module instances are created, so they connect to settings that are already in place.
-        for (const { definition, options } of template.elevatedSettings ?? []) {
-            dashboard._elevatedSettingsService.addSetting(definition, options);
+        for (const { definition, options } of template.dashboardSettings ?? []) {
+            dashboard._dashboardSettingsService.addSetting(definition, options);
         }
 
         const layout: LayoutElement[] = [];

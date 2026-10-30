@@ -8,13 +8,13 @@ import { isInvalidStatisticsResampleFrequency } from "@modules/SimulationTimeSer
 import type { VectorHexColorMap } from "../../typesAndEnums";
 import { VisualizationMode } from "../../typesAndEnums";
 import { resampleFrequencyAtom } from "../atoms/baseAtoms";
+import { effectiveActiveTimestampUtcMsAtom, highlightedRealizationAtom } from "../atoms/dashboardSettingAtoms";
 import {
     loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     loadedVectorSpecificationsAndObservationDataAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
     loadedVectorSpecificationsAndStatisticsDataAtom,
 } from "../atoms/derivedAtoms";
-import { effectiveActiveTimestampUtcMsAtom, highlightedRealizationAtom } from "../atoms/elevatedSettingAtoms";
 import type { EnsemblesParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { PlotBuilder } from "../utils/PlotBuilder";
 import type { SubplotOwner } from "../utils/PlotBuilder";

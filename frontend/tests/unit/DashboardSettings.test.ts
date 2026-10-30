@@ -1,22 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ElevatedSettingDefinition, type ElevatedSettingOptions } from "@framework/ElevatedSettings/ElevatedSettingDefinition";
+import { DashboardSettingDefinition, type DashboardSettingOptions } from "@framework/DashboardSettings/DashboardSettingDefinition";
 import {
-    ElevatedSettingCombineStrategy,
-    ElevatedSettingInstance,
-    ElevatedSettingInstanceTopic,
-    ElevatedSettingValueSource,
-} from "@framework/ElevatedSettings/ElevatedSettingInstance";
-import { ElevatedSettingRegistry } from "@framework/ElevatedSettings/ElevatedSettingRegistry";
+    DashboardSettingCombineStrategy,
+    DashboardSettingInstance,
+    DashboardSettingInstanceTopic,
+    DashboardSettingValueSource,
+} from "@framework/DashboardSettings/DashboardSettingInstance";
+import { DashboardSettingRegistry } from "@framework/DashboardSettings/DashboardSettingRegistry";
 import {
-    ElevatedSettingsService,
-    ElevatedSettingsServiceTopic,
-} from "@framework/ElevatedSettings/ElevatedSettingsService";
-import { makeOptionListElevatedSettingOptions } from "@framework/ElevatedSettings/utils/optionListElevatedSetting";
+    DashboardSettingsService,
+    DashboardSettingsServiceTopic,
+} from "@framework/DashboardSettings/DashboardSettingsService";
+import { makeOptionListDashboardSettingOptions } from "@framework/DashboardSettings/utils/optionListDashboardSetting";
 
 function makeListOptions(
-    overrides?: Partial<ElevatedSettingOptions<string | null, readonly string[]>>,
-): ElevatedSettingOptions<string | null, readonly string[]> {
+    overrides?: Partial<DashboardSettingOptions<string | null, readonly string[]>>,
+): DashboardSettingOptions<string | null, readonly string[]> {
     return {
         key: "test",
         label: "Test",
@@ -31,22 +31,22 @@ function makeListOptions(
 }
 
 function makeListDefinition(
-    overrides?: Partial<ElevatedSettingOptions<string | null, readonly string[]>>,
-): ElevatedSettingDefinition<string | null, readonly string[]> {
-    return new ElevatedSettingDefinition(makeListOptions(overrides));
+    overrides?: Partial<DashboardSettingOptions<string | null, readonly string[]>>,
+): DashboardSettingDefinition<string | null, readonly string[]> {
+    return new DashboardSettingDefinition(makeListOptions(overrides));
 }
 
 function makeInstance(
-    overrides?: Partial<ElevatedSettingOptions<string | null, readonly string[]>>,
-): ElevatedSettingInstance<string | null, readonly string[]> {
-    return new ElevatedSettingInstance(makeListDefinition(overrides));
+    overrides?: Partial<DashboardSettingOptions<string | null, readonly string[]>>,
+): DashboardSettingInstance<string | null, readonly string[]> {
+    return new DashboardSettingInstance(makeListDefinition(overrides));
 }
 
-describe("ElevatedSettingDefinition", () => {
+describe("DashboardSettingDefinition", () => {
     it("requires union/intersect combiners for non-array constraints", () => {
         expect(
             () =>
-                new ElevatedSettingDefinition<number, { min: number; max: number }>({
+                new DashboardSettingDefinition<number, { min: number; max: number }>({
                     key: "range",
                     label: "Range",
                     defaultValue: 0,
@@ -57,7 +57,7 @@ describe("ElevatedSettingDefinition", () => {
     });
 
     it("uses custom combiners for non-array constraints", () => {
-        const definition = new ElevatedSettingDefinition<number, { min: number; max: number }>({
+        const definition = new DashboardSettingDefinition<number, { min: number; max: number }>({
             key: "range",
             label: "Range",
             defaultValue: 0,
@@ -66,9 +66,9 @@ describe("ElevatedSettingDefinition", () => {
             intersectConstraints: (a, b) => ({ min: Math.max(a.min, b.min), max: Math.min(a.max, b.max) }),
             Component: () => null,
         });
-        const unionInstance = new ElevatedSettingInstance(definition);
-        const intersectionInstance = new ElevatedSettingInstance(definition, {
-            combineStrategy: ElevatedSettingCombineStrategy.INTERSECTION,
+        const unionInstance = new DashboardSettingInstance(definition);
+        const intersectionInstance = new DashboardSettingInstance(definition, {
+            combineStrategy: DashboardSettingCombineStrategy.INTERSECTION,
         });
 
         for (const instance of [unionInstance, intersectionInstance]) {
@@ -81,11 +81,11 @@ describe("ElevatedSettingDefinition", () => {
     });
 });
 
-describe("makeOptionListElevatedSettingOptions", () => {
+describe("makeOptionListDashboardSettingOptions", () => {
     type Wellbore = { uuid: string; name: string };
 
-    const definition = new ElevatedSettingDefinition(
-        makeOptionListElevatedSettingOptions<string, Wellbore>({
+    const definition = new DashboardSettingDefinition(
+        makeOptionListDashboardSettingOptions<string, Wellbore>({
             key: "wellbore",
             label: "Wellbore",
             getOptionValue: (wellbore) => wellbore.uuid,
@@ -95,7 +95,7 @@ describe("makeOptionListElevatedSettingOptions", () => {
     );
 
     it("dedupes options by value and sorts the union", () => {
-        const instance = new ElevatedSettingInstance(definition);
+        const instance = new DashboardSettingInstance(definition);
         instance.registerConstraintSource("a").updateConstraints([
             { uuid: "2", name: "B" },
             { uuid: "1", name: "A" },
@@ -109,8 +109,8 @@ describe("makeOptionListElevatedSettingOptions", () => {
     });
 
     it("intersects options by value", () => {
-        const instance = new ElevatedSettingInstance(definition, {
-            combineStrategy: ElevatedSettingCombineStrategy.INTERSECTION,
+        const instance = new DashboardSettingInstance(definition, {
+            combineStrategy: DashboardSettingCombineStrategy.INTERSECTION,
         });
         instance.registerConstraintSource("a").updateConstraints([
             { uuid: "1", name: "A" },
@@ -122,7 +122,7 @@ describe("makeOptionListElevatedSettingOptions", () => {
     });
 
     it("starts at null and settles on the first option", () => {
-        const instance = new ElevatedSettingInstance(definition);
+        const instance = new DashboardSettingInstance(definition);
         expect(instance.getValue()).toBeNull();
 
         instance.registerConstraintSource("a").updateConstraints([
@@ -140,9 +140,9 @@ describe("makeOptionListElevatedSettingOptions", () => {
     });
 });
 
-describe("ElevatedSettingDefinition - settings without constraints", () => {
+describe("DashboardSettingDefinition - settings without constraints", () => {
     it("needs no combiners, and never fixes up the value", () => {
-        const definition = new ElevatedSettingDefinition<boolean, null>({
+        const definition = new DashboardSettingDefinition<boolean, null>({
             key: "toggle",
             label: "Toggle",
             defaultValue: false,
@@ -150,7 +150,7 @@ describe("ElevatedSettingDefinition - settings without constraints", () => {
             fixupValue: () => true,
             Component: () => null,
         });
-        const instance = new ElevatedSettingInstance(definition);
+        const instance = new DashboardSettingInstance(definition);
         const source = instance.registerConstraintSource("a");
 
         source.markPending();
@@ -163,7 +163,7 @@ describe("ElevatedSettingDefinition - settings without constraints", () => {
     });
 });
 
-describe("ElevatedSettingInstance - aggregation", () => {
+describe("DashboardSettingInstance - aggregation", () => {
     it("unions all contributions by default", () => {
         const instance = makeInstance();
         instance.registerConstraintSource("a").updateConstraints(["x", "y"]);
@@ -173,8 +173,8 @@ describe("ElevatedSettingInstance - aggregation", () => {
     });
 
     it("intersects all contributions with the INTERSECTION strategy", () => {
-        const instance = new ElevatedSettingInstance(makeListDefinition(), {
-            combineStrategy: ElevatedSettingCombineStrategy.INTERSECTION,
+        const instance = new DashboardSettingInstance(makeListDefinition(), {
+            combineStrategy: DashboardSettingCombineStrategy.INTERSECTION,
         });
         instance.registerConstraintSource("a").updateConstraints(["x", "y", "z"]);
         instance.registerConstraintSource("b").updateConstraints(["y", "z", "w"]);
@@ -243,7 +243,7 @@ describe("ElevatedSettingInstance - aggregation", () => {
     });
 });
 
-describe("ElevatedSettingInstance - value rule", () => {
+describe("DashboardSettingInstance - value rule", () => {
     it("does not touch the value before any source has contributed", () => {
         const instance = makeInstance();
         instance.registerConstraintSource("a");
@@ -281,7 +281,7 @@ describe("ElevatedSettingInstance - value rule", () => {
         instance.setValue("y");
 
         const onValidityChange = vi.fn();
-        instance.getPublishSubscribeDelegate().subscribe(ElevatedSettingInstanceTopic.IS_VALUE_VALID, onValidityChange);
+        instance.getPublishSubscribeDelegate().subscribe(DashboardSettingInstanceTopic.IS_VALUE_VALID, onValidityChange);
 
         a.updateConstraints(["x"]);
 
@@ -317,20 +317,20 @@ describe("ElevatedSettingInstance - value rule", () => {
     });
 
     it("never fixes up a restored value, and promotes it once it becomes valid", () => {
-        const instance = new ElevatedSettingInstance(makeListDefinition(), {
+        const instance = new DashboardSettingInstance(makeListDefinition(), {
             value: "z",
-            valueSource: ElevatedSettingValueSource.RESTORED,
+            valueSource: DashboardSettingValueSource.RESTORED,
         });
         const a = instance.registerConstraintSource("a");
 
         a.updateConstraints(["x", "y"]);
         expect(instance.getValue()).toBe("z");
-        expect(instance.getValueSource()).toBe(ElevatedSettingValueSource.RESTORED);
+        expect(instance.getValueSource()).toBe(DashboardSettingValueSource.RESTORED);
         expect(instance.isValueValid()).toBe(false);
 
         a.updateConstraints(["x", "y", "z"]);
         expect(instance.getValue()).toBe("z");
-        expect(instance.getValueSource()).toBe(ElevatedSettingValueSource.USER);
+        expect(instance.getValueSource()).toBe(DashboardSettingValueSource.USER);
         expect(instance.isValueValid()).toBe(true);
     });
 
@@ -338,27 +338,27 @@ describe("ElevatedSettingInstance - value rule", () => {
         const instance = makeInstance();
         instance.registerConstraintSource("a").updateConstraints(["x", "y"]);
 
-        instance.setValue("y", ElevatedSettingValueSource.RESTORED);
+        instance.setValue("y", DashboardSettingValueSource.RESTORED);
 
-        expect(instance.getValueSource()).toBe(ElevatedSettingValueSource.USER);
+        expect(instance.getValueSource()).toBe(DashboardSettingValueSource.USER);
     });
 
     it("turns a restored value into a user value when the user picks one", () => {
-        const instance = new ElevatedSettingInstance(makeListDefinition(), {
+        const instance = new DashboardSettingInstance(makeListDefinition(), {
             value: "z",
-            valueSource: ElevatedSettingValueSource.RESTORED,
+            valueSource: DashboardSettingValueSource.RESTORED,
         });
         instance.registerConstraintSource("a").updateConstraints(["x"]);
 
         instance.setValue("x");
 
-        expect(instance.getValueSource()).toBe(ElevatedSettingValueSource.USER);
+        expect(instance.getValueSource()).toBe(DashboardSettingValueSource.USER);
     });
 });
 
-describe("Elevated settings - implicit dependencies through consumers", () => {
+describe("Dashboard settings - implicit dependencies through consumers", () => {
     // A downstream consumer (think: a DPF layer) whose grid property options depend on the grid model
-    // it gets from the elevated grid model setting. It recomputes asynchronously, like a fetch.
+    // it gets from the dashboard grid model setting. It recomputes asynchronously, like a fetch.
     const PROPERTIES_PER_GRID: Record<string, string[]> = {
         gridA: ["PORO", "PERMX"],
         gridB: ["PORO", "NTG"],
@@ -366,8 +366,8 @@ describe("Elevated settings - implicit dependencies through consumers", () => {
     };
 
     function connectConsumer(
-        gridModel: ElevatedSettingInstance<string | null, readonly string[]>,
-        gridProperty: ElevatedSettingInstance<string | null, readonly string[]>,
+        gridModel: DashboardSettingInstance<string | null, readonly string[]>,
+        gridProperty: DashboardSettingInstance<string | null, readonly string[]>,
     ) {
         const gridModelSource = gridModel.registerConstraintSource("layer");
         const gridPropertySource = gridProperty.registerConstraintSource("layer");
@@ -379,7 +379,7 @@ describe("Elevated settings - implicit dependencies through consumers", () => {
             pendingFetches.push(() => gridPropertySource.updateConstraints(PROPERTIES_PER_GRID[model ?? ""] ?? []));
         }
 
-        gridModel.getPublishSubscribeDelegate().subscribe(ElevatedSettingInstanceTopic.VALUE, refreshProperties);
+        gridModel.getPublishSubscribeDelegate().subscribe(DashboardSettingInstanceTopic.VALUE, refreshProperties);
         gridModelSource.updateConstraints(Object.keys(PROPERTIES_PER_GRID));
         refreshProperties();
 
@@ -411,12 +411,12 @@ describe("Elevated settings - implicit dependencies through consumers", () => {
     });
 });
 
-describe("ElevatedSettingsService", () => {
-    const FIRST = ElevatedSettingRegistry.registerElevatedSetting(makeListOptions({ key: "service-test-first" }));
-    const SECOND = ElevatedSettingRegistry.registerElevatedSetting(makeListOptions({ key: "service-test-second" }));
+describe("DashboardSettingsService", () => {
+    const FIRST = DashboardSettingRegistry.registerDashboardSetting(makeListOptions({ key: "service-test-first" }));
+    const SECOND = DashboardSettingRegistry.registerDashboardSetting(makeListOptions({ key: "service-test-second" }));
 
     it("lists active settings in registration order", () => {
-        const service = new ElevatedSettingsService();
+        const service = new DashboardSettingsService();
         service.addSetting(SECOND);
         service.addSetting(FIRST);
 
@@ -427,22 +427,22 @@ describe("ElevatedSettingsService", () => {
     });
 
     it("refuses to add the same setting twice", () => {
-        const service = new ElevatedSettingsService();
+        const service = new DashboardSettingsService();
         service.addSetting(FIRST);
 
         expect(() => service.addSetting(FIRST)).toThrow(/already active/);
     });
 
     it("treats an explicitly given initial value as restored", () => {
-        const service = new ElevatedSettingsService();
+        const service = new DashboardSettingsService();
         const instance = service.addSetting(FIRST, { value: "z" });
 
         expect(instance.getValue()).toBe("z");
-        expect(instance.getValueSource()).toBe(ElevatedSettingValueSource.RESTORED);
+        expect(instance.getValueSource()).toBe(DashboardSettingValueSource.RESTORED);
     });
 
     it("destroys removed instances", () => {
-        const service = new ElevatedSettingsService();
+        const service = new DashboardSettingsService();
         const instance = service.addSetting(FIRST);
         const source = instance.registerConstraintSource("a");
 
@@ -454,8 +454,8 @@ describe("ElevatedSettingsService", () => {
     });
 
     it("bumps the state revision on add, remove and value changes", () => {
-        const service = new ElevatedSettingsService();
-        const getRevision = service.makeSnapshotGetter(ElevatedSettingsServiceTopic.STATE_REVISION);
+        const service = new DashboardSettingsService();
+        const getRevision = service.makeSnapshotGetter(DashboardSettingsServiceTopic.STATE_REVISION);
 
         const start = getRevision();
         const instance = service.addSetting(FIRST);
@@ -472,12 +472,12 @@ describe("ElevatedSettingsService", () => {
     });
 
     it("round-trips its state, restoring values as restored and replacing the active settings", () => {
-        const service = new ElevatedSettingsService();
+        const service = new DashboardSettingsService();
         service.addSetting(FIRST).setValue("x");
         const serialized = service.serializeState();
         expect(serialized).toEqual({ [FIRST.key]: "x" });
 
-        const otherService = new ElevatedSettingsService();
+        const otherService = new DashboardSettingsService();
         otherService.addSetting(SECOND);
         const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -488,6 +488,6 @@ describe("ElevatedSettingsService", () => {
         expect(otherService.hasSetting(SECOND)).toBe(false);
         const restored = otherService.getSetting(FIRST);
         expect(restored?.getValue()).toBe("x");
-        expect(restored?.getValueSource()).toBe(ElevatedSettingValueSource.RESTORED);
+        expect(restored?.getValueSource()).toBe(DashboardSettingValueSource.RESTORED);
     });
 });

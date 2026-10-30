@@ -4,9 +4,9 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { NodeType_api, Frequency_api } from "@api";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import { ElevatedSettingIndicator } from "@framework/ElevatedSettings/components/ElevatedSettingIndicator";
-import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
-import { TIME_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/time";
+import { DashboardSettingIndicator } from "@framework/DashboardSettings/components/DashboardSettingIndicator";
+import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
+import { TIME_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/time";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -36,8 +36,8 @@ import {
 import {
     effectiveDateTimeAtom,
     effectiveRealizationAtom,
-    isDateTimeElevatedAtom,
-    isRealizationElevatedAtom,
+    isDateTimeDashboardControlledAtom,
+    isRealizationDashboardControlledAtom,
     selectedDateTimeAtom,
     selectedEdgeKeyAtom,
     selectedEnsembleIdentAtom,
@@ -67,10 +67,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useAtom(selectedEnsembleIdentAtom);
     const effectiveRealization = useAtomValue(effectiveRealizationAtom);
     const setSelectedRealization = useSetAtom(selectedRealizationAtom);
-    const isRealizationElevated = useAtomValue(isRealizationElevatedAtom);
+    const isRealizationDashboardControlled = useAtomValue(isRealizationDashboardControlledAtom);
     const effectiveDateTime = useAtomValue(effectiveDateTimeAtom);
     const setSelectedDateTime = useSetAtom(selectedDateTimeAtom);
-    const isDateTimeElevated = useAtomValue(isDateTimeElevatedAtom);
+    const isDateTimeDashboardControlled = useAtomValue(isDateTimeDashboardControlledAtom);
 
     const flowNetworkQuery = useAtomValue(realizationFlowNetworkQueryAtom);
     const areQuerySelectionsValid = useAtomValue(areQuerySelectionsValidAtom);
@@ -129,8 +129,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedEdgeKeyAnnotations = useMakePersistableFixableAtomAnnotations(selectedEdgeKeyAtom);
     const selectedNodeKeyAnnotations = useMakePersistableFixableAtomAnnotations(selectedNodeKeyAtom);
     const selectedDateTimeAnnotations = useMakePersistableFixableAtomAnnotations(selectedDateTimeAtom);
-    // Keep annotations for the local selection hidden while the field follows an elevated realization.
-    const realizationAnnotations = isRealizationElevated
+    // Keep annotations for the local selection hidden while the field follows a dashboard realization.
+    const realizationAnnotations = isRealizationDashboardControlled
         ? []
         : selectedEnsembleIdent.isValidInContext && availableRealizations.length === 0
           ? [
@@ -166,9 +166,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         label={
                             <span className="gap-x-2xs flex items-center">
                                 Realization
-                                {isRealizationElevated && (
-                                    <ElevatedSettingIndicator
-                                        elevatedSettingLabel={REALIZATION_ELEVATED_SETTING.label}
+                                {isRealizationDashboardControlled && (
+                                    <DashboardSettingIndicator
+                                        dashboardSettingLabel={REALIZATION_DASHBOARD_SETTING.label}
                                         isValueValidHere={effectiveRealization.isValidInContext}
                                     />
                                 )}
@@ -182,7 +182,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             })}
                             value={effectiveRealization.value}
                             onValueChange={setSelectedRealization}
-                            disabled={isRealizationElevated}
+                            disabled={isRealizationDashboardControlled}
                         />
                     </Setting.Field>
                     <Setting.Field label="Frequency">
@@ -269,23 +269,23 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         label={
                             <span className="gap-x-2xs flex items-center">
                                 Time step
-                                {isDateTimeElevated && (
-                                    <ElevatedSettingIndicator
-                                        elevatedSettingLabel={TIME_ELEVATED_SETTING.label}
+                                {isDateTimeDashboardControlled && (
+                                    <DashboardSettingIndicator
+                                        dashboardSettingLabel={TIME_DASHBOARD_SETTING.label}
                                         isValueValidHere={effectiveDateTime.isValidInContext}
                                     />
                                 )}
                             </span>
                         }
                         loadingOverlay={effectiveDateTime.isLoading}
-                        annotations={isDateTimeElevated ? [] : selectedDateTimeAnnotations}
+                        annotations={isDateTimeDashboardControlled ? [] : selectedDateTimeAnnotations}
                         errorOverlay={effectiveDateTime.depsHaveError ? "Could not load time steps." : undefined}
                     >
                         <div className="gap-sm flex">
                             <Slider
                                 layoutClassName="grow w-full"
                                 valueLabelDisplay="auto"
-                                disabled={!availableDateTimes.length || isDateTimeElevated}
+                                disabled={!availableDateTimes.length || isDateTimeDashboardControlled}
                                 min={0}
                                 max={availableDateTimes.length ? availableDateTimes.length - 1 : 0}
                                 markers={availableDateTimes.map((_, index) => index)}

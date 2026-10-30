@@ -1,6 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 
-import { ElevatedSettingsService } from "@framework/ElevatedSettings/ElevatedSettingsService";
+import { DashboardSettingsService } from "@framework/DashboardSettings/DashboardSettingsService";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
@@ -35,7 +35,7 @@ export function makeDataProviderManager(globalSettings: Partial<GlobalSettings> 
     const manager = new DataProviderManager(
         makeFakeWorkbenchSession(),
         makeFakeWorkbenchSettings(),
-        new ElevatedSettingsService(),
+        new DashboardSettingsService(),
         queryClient,
     );
     for (const [key, value] of Object.entries(globalSettings)) {

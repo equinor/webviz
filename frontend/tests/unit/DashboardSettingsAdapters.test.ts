@@ -2,15 +2,15 @@ import { atom, createStore, type Atom } from "jotai";
 import { describe, expect, it } from "vitest";
 
 import {
-    makeElevatedPersistableFixableAtoms,
-    makeElevatedSettingAtoms,
-} from "@framework/ElevatedSettings/adapters/jotai";
-import { ElevatedSettingDefinition } from "@framework/ElevatedSettings/ElevatedSettingDefinition";
-import { ElevatedSettingsService } from "@framework/ElevatedSettings/ElevatedSettingsService";
-import { ElevatedSettingsServiceAtom } from "@framework/ElevatedSettings/ElevatedSettingsServiceAtom";
+    makeDashboardPersistableFixableAtoms,
+    makeDashboardSettingAtoms,
+} from "@framework/DashboardSettings/adapters/jotai";
+import { DashboardSettingDefinition } from "@framework/DashboardSettings/DashboardSettingDefinition";
+import { DashboardSettingsService } from "@framework/DashboardSettings/DashboardSettingsService";
+import { DashboardSettingsServiceAtom } from "@framework/DashboardSettings/DashboardSettingsServiceAtom";
 import { persistableFixableAtom, type PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
 
-const DEFINITION = new ElevatedSettingDefinition<string | null, readonly string[]>({
+const DEFINITION = new DashboardSettingDefinition<string | null, readonly string[]>({
     key: "adapter-test",
     label: "Adapter test",
     defaultValue: null,
@@ -26,56 +26,56 @@ const localValueAtom = atom<string | null>("local");
 const availableOptionsAtom = atom<string[]>(["a", "b"]);
 const isLoadingAtom = atom(false);
 
-const { valueAtom: elevatedValueAtom, isElevatedAtom } = makeElevatedSettingAtoms(localValueAtom, {
+const { valueAtom: dashboardValueAtom, isDashboardControlledAtom } = makeDashboardSettingAtoms(localValueAtom, {
     definition: DEFINITION,
     getConstraints: (get) => get(availableOptionsAtom),
     isLoading: (get) => get(isLoadingAtom),
-    mapElevatedValue: (elevatedValue) => elevatedValue,
+    mapDashboardValue: (dashboardValue) => dashboardValue,
 });
 
-function makeModuleStore(service: ElevatedSettingsService) {
+function makeModuleStore(service: DashboardSettingsService) {
     const store = createStore();
-    store.set(ElevatedSettingsServiceAtom, service);
-    store.sub(elevatedValueAtom, () => {});
-    store.sub(isElevatedAtom, () => {});
+    store.set(DashboardSettingsServiceAtom, service);
+    store.sub(dashboardValueAtom, () => {});
+    store.sub(isDashboardControlledAtom, () => {});
     return store;
 }
 
-describe("makeElevatedSettingAtoms", () => {
-    it("reads the local value while the setting isn't elevated", () => {
-        const store = makeModuleStore(new ElevatedSettingsService());
+describe("makeDashboardSettingAtoms", () => {
+    it("reads the local value while the setting isn't dashboard", () => {
+        const store = makeModuleStore(new DashboardSettingsService());
 
-        expect(store.get(elevatedValueAtom)).toBe("local");
-        expect(store.get(isElevatedAtom)).toBe(false);
+        expect(store.get(dashboardValueAtom)).toBe("local");
+        expect(store.get(isDashboardControlledAtom)).toBe(false);
     });
 
-    it("tells whether the setting is elevated", () => {
-        const service = new ElevatedSettingsService();
+    it("tells whether the setting is dashboard", () => {
+        const service = new DashboardSettingsService();
         const store = makeModuleStore(service);
 
         service.addSetting(DEFINITION);
-        expect(store.get(isElevatedAtom)).toBe(true);
+        expect(store.get(isDashboardControlledAtom)).toBe(true);
 
         service.removeSetting(DEFINITION);
-        expect(store.get(isElevatedAtom)).toBe(false);
+        expect(store.get(isDashboardControlledAtom)).toBe(false);
     });
 
-    it("contributes its options and reads the elevated value once elevated", () => {
-        const service = new ElevatedSettingsService();
+    it("contributes its options and reads the dashboard value once dashboard", () => {
+        const service = new DashboardSettingsService();
         const store = makeModuleStore(service);
 
         const instance = service.addSetting(DEFINITION);
 
         expect(instance.getConstraints()).toEqual(["a", "b"]);
         expect(instance.getSourceCount()).toBe(1);
-        expect(store.get(elevatedValueAtom)).toBe("a");
+        expect(store.get(dashboardValueAtom)).toBe("a");
 
         instance.setValue("b");
-        expect(store.get(elevatedValueAtom)).toBe("b");
+        expect(store.get(dashboardValueAtom)).toBe("b");
     });
 
     it("updates its contribution, and marks itself pending while loading", () => {
-        const service = new ElevatedSettingsService();
+        const service = new DashboardSettingsService();
         const store = makeModuleStore(service);
         const instance = service.addSetting(DEFINITION);
 
@@ -88,12 +88,12 @@ describe("makeElevatedSettingAtoms", () => {
         expect(instance.getConstraints()).toEqual(["c"]);
 
         // Already settled before - an invalid value is kept and reported, not fixed up.
-        expect(store.get(elevatedValueAtom)).toBe("a");
+        expect(store.get(dashboardValueAtom)).toBe("a");
         expect(instance.isValueValid()).toBe(false);
     });
 
     it("keeps the contributions of several instances of the same module apart", () => {
-        const service = new ElevatedSettingsService();
+        const service = new DashboardSettingsService();
         const firstStore = makeModuleStore(service);
         const secondStore = makeModuleStore(service);
         secondStore.set(availableOptionsAtom, ["c"]);
@@ -102,34 +102,34 @@ describe("makeElevatedSettingAtoms", () => {
 
         expect(instance.getSourceCount()).toBe(2);
         expect(instance.getConstraints()).toEqual(["a", "b", "c"]);
-        expect(firstStore.get(elevatedValueAtom)).toBe("a");
-        expect(secondStore.get(elevatedValueAtom)).toBe("a");
+        expect(firstStore.get(dashboardValueAtom)).toBe("a");
+        expect(secondStore.get(dashboardValueAtom)).toBe("a");
     });
 
     it("falls back to the local value and withdraws once the setting is removed", () => {
-        const service = new ElevatedSettingsService();
+        const service = new DashboardSettingsService();
         const store = makeModuleStore(service);
         const instance = service.addSetting(DEFINITION);
 
         service.removeSetting(DEFINITION);
 
-        expect(store.get(elevatedValueAtom)).toBe("local");
+        expect(store.get(dashboardValueAtom)).toBe("local");
         expect(instance.getSourceCount()).toBe(0);
     });
 
     it("writes to the local value", () => {
-        const service = new ElevatedSettingsService();
+        const service = new DashboardSettingsService();
         const store = makeModuleStore(service);
         const instance = service.addSetting(DEFINITION);
 
-        store.set(elevatedValueAtom, "written");
+        store.set(dashboardValueAtom, "written");
 
         expect(store.get(localValueAtom)).toBe("written");
         expect(instance.getValue()).toBe("a");
     });
 });
 
-describe("makeElevatedPersistableFixableAtoms", () => {
+describe("makeDashboardPersistableFixableAtoms", () => {
     // Stands in for a module's persistableFixableAtom, whose options come from a query.
     const optionsAtom = atom<string[]>(["a", "b"]);
     const dependenciesStateAtom = atom<PersistableAtomDependenciesState>("loaded");
@@ -141,7 +141,7 @@ describe("makeElevatedPersistableFixableAtoms", () => {
     });
 
     // Same value type as the definition, so no mapping is needed.
-    const { valueAtom: effectiveAtom, isElevatedAtom: isEffectiveElevatedAtom } = makeElevatedPersistableFixableAtoms(
+    const { valueAtom: effectiveAtom, isDashboardControlledAtom: isEffectiveDashboardControlledAtom } = makeDashboardPersistableFixableAtoms(
         selectedAtom,
         {
             definition: DEFINITION,
@@ -149,27 +149,27 @@ describe("makeElevatedPersistableFixableAtoms", () => {
         },
     );
 
-    // Only follows the elevated value, without contributing options.
-    const { valueAtom: followerAtom } = makeElevatedPersistableFixableAtoms(selectedAtom, { definition: DEFINITION });
+    // Only follows the dashboard value, without contributing options.
+    const { valueAtom: followerAtom } = makeDashboardPersistableFixableAtoms(selectedAtom, { definition: DEFINITION });
 
-    function makeStore(service: ElevatedSettingsService, ...mountedAtoms: Atom<unknown>[]) {
+    function makeStore(service: DashboardSettingsService, ...mountedAtoms: Atom<unknown>[]) {
         const store = createStore();
-        store.set(ElevatedSettingsServiceAtom, service);
+        store.set(DashboardSettingsServiceAtom, service);
         for (const mountedAtom of mountedAtoms) {
             store.sub(mountedAtom, () => {});
         }
         return store;
     }
 
-    it("reads the base atom while the setting isn't elevated", () => {
-        const store = makeStore(new ElevatedSettingsService(), effectiveAtom, isEffectiveElevatedAtom);
+    it("reads the base atom while the setting isn't dashboard", () => {
+        const store = makeStore(new DashboardSettingsService(), effectiveAtom, isEffectiveDashboardControlledAtom);
 
         expect(store.get(effectiveAtom)).toBe(store.get(selectedAtom));
-        expect(store.get(isEffectiveElevatedAtom)).toBe(false);
+        expect(store.get(isEffectiveDashboardControlledAtom)).toBe(false);
     });
 
-    it("validates the elevated value with the base atom's own isValidFunction", () => {
-        const service = new ElevatedSettingsService();
+    it("validates the dashboard value with the base atom's own isValidFunction", () => {
+        const service = new DashboardSettingsService();
         const store = makeStore(service, effectiveAtom);
         const instance = service.addSetting(DEFINITION);
 
@@ -181,7 +181,7 @@ describe("makeElevatedPersistableFixableAtoms", () => {
     });
 
     it("is pending while the base atom's dependencies load, and has no opinion while they are blocked or failed", () => {
-        const service = new ElevatedSettingsService();
+        const service = new DashboardSettingsService();
         const store = makeStore(service, effectiveAtom);
         const instance = service.addSetting(DEFINITION);
 
@@ -201,8 +201,8 @@ describe("makeElevatedPersistableFixableAtoms", () => {
         expect(instance.getConstraints()).toEqual(["a", "b"]);
     });
 
-    it("only follows the elevated value when it has no getConstraints", () => {
-        const service = new ElevatedSettingsService();
+    it("only follows the dashboard value when it has no getConstraints", () => {
+        const service = new DashboardSettingsService();
         const store = makeStore(service, followerAtom);
         const instance = service.addSetting(DEFINITION);
 
@@ -213,7 +213,7 @@ describe("makeElevatedPersistableFixableAtoms", () => {
     });
 
     it("writes to the base atom", () => {
-        const service = new ElevatedSettingsService();
+        const service = new DashboardSettingsService();
         const store = makeStore(service, effectiveAtom);
         const instance = service.addSetting(DEFINITION);
 

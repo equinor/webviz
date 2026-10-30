@@ -2,7 +2,7 @@ import React from "react";
 
 import type { QueryClient } from "@tanstack/query-core";
 
-import type { ElevatedSettingsService } from "@framework/ElevatedSettings/ElevatedSettingsService";
+import type { DashboardSettingsService } from "@framework/DashboardSettings/DashboardSettingsService";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
@@ -16,7 +16,7 @@ export type UsePersistedDataProviderManagerOptions = {
     serializedState: string | null;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
-    elevatedSettingsService: ElevatedSettingsService;
+    dashboardSettingsService: DashboardSettingsService;
     queryClient: QueryClient;
 };
 
@@ -27,7 +27,7 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
         setSerializedState,
         workbenchSession,
         workbenchSettings,
-        elevatedSettingsService,
+        dashboardSettingsService,
         queryClient,
     } = options;
 
@@ -69,7 +69,7 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
             const manager = new DataProviderManager(
                 workbenchSession,
                 workbenchSettings,
-                elevatedSettingsService,
+                dashboardSettingsService,
                 queryClient,
             );
             dataProviderManagerRef.current = manager;
@@ -105,7 +105,7 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
             setDataProviderManager,
             workbenchSession,
             workbenchSettings,
-            elevatedSettingsService,
+            dashboardSettingsService,
         ],
     );
 

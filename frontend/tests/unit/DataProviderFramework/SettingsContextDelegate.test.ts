@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
-import { ElevatedSettingsService } from "@framework/ElevatedSettings/ElevatedSettingsService";
+import { DashboardSettingsService } from "@framework/DashboardSettings/DashboardSettingsService";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import {
     SettingsContextDelegate,
@@ -26,7 +26,7 @@ function makeFakeDataProviderManager() {
         getGlobalSetting: () => null,
         getWorkbenchSession: () => null,
         getWorkbenchSettings: () => null,
-        getElevatedSettingsService: () => new ElevatedSettingsService(),
+        getDashboardSettingsService: () => new DashboardSettingsService(),
         getQueryClient: () => null,
     } as unknown as DataProviderManager;
 

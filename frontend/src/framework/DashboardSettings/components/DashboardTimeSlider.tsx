@@ -4,9 +4,9 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 import { Slider } from "@lib/components/Slider";
 import type { SliderChangeEventDetails } from "@lib/components/Slider/types";
 
-import type { ElevatedSettingComponentProps } from "../ElevatedSettingDefinition";
+import type { DashboardSettingComponentProps } from "../DashboardSettingDefinition";
 
-// Every change of the elevated time makes all of its consumers refetch - so while dragging, the value is
+// Every change of the dashboard time makes all of its consumers refetch - so while dragging, the value is
 // only committed once the thumb has rested for a moment.
 const DRAG_COMMIT_DELAY_MS = 300;
 
@@ -15,10 +15,10 @@ function toIndex(sliderValue: number | readonly number[]): number {
 }
 
 /**
- * A discrete slider over the available time points (one step per time point), for the elevated time
+ * A discrete slider over the available time points (one step per time point), for the dashboard time
  * setting.
  */
-export function ElevatedTimeSlider(props: ElevatedSettingComponentProps<number | null, readonly number[]>) {
+export function DashboardTimeSlider(props: DashboardSettingComponentProps<number | null, readonly number[]>) {
     const timestamps = props.constraints;
     const selectedIndex = props.value === null ? -1 : timestamps.indexOf(props.value);
 

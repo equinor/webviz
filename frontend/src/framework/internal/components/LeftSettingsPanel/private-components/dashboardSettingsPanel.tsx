@@ -1,28 +1,18 @@
 import type React from "react";
 
-import {
-    Add,
-    Close,
-    Delete,
-    DisplaySettings,
-    Hub,
-    HubOutlined,
-    PublicOutlined,
-    Remove,
-    Tune,
-} from "@mui/icons-material";
+import { Add, Close, Delete, Tune } from "@mui/icons-material";
 
 import {
-    useElevatedSettingInstances,
-    useElevatedSettingInstanceTopic,
-} from "@framework/ElevatedSettings/adapters/react";
+    useDashboardSettingInstances,
+    useDashboardSettingInstanceTopic,
+} from "@framework/DashboardSettings/adapters/react";
 import {
-    ElevatedSettingInstanceTopic,
-    ElevatedSettingValueSource,
-    type ElevatedSettingInstance,
-} from "@framework/ElevatedSettings/ElevatedSettingInstance";
-import { ElevatedSettingRegistry } from "@framework/ElevatedSettings/ElevatedSettingRegistry";
-import type { ElevatedSettingsService } from "@framework/ElevatedSettings/ElevatedSettingsService";
+    DashboardSettingInstanceTopic,
+    DashboardSettingValueSource,
+    type DashboardSettingInstance,
+} from "@framework/DashboardSettings/DashboardSettingInstance";
+import { DashboardSettingRegistry } from "@framework/DashboardSettings/DashboardSettingRegistry";
+import type { DashboardSettingsService } from "@framework/DashboardSettings/DashboardSettingsService";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { Button } from "@lib/components/Button";
 import { Menu } from "@lib/components/Menu";
@@ -33,33 +23,33 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 import { useActiveSession } from "../../ActiveSessionBoundary";
 
-import { Badge } from "@lib/components/Badge";
-
-export type ElevatedSettingsPanelProps = {
+export type DashboardSettingsPanelProps = {
     onClose: () => void;
 };
 
-export function ElevatedSettingsPanel(props: ElevatedSettingsPanelProps): React.ReactNode {
+export function DashboardSettingsPanel(props: DashboardSettingsPanelProps): React.ReactNode {
     const dashboard = useActiveDashboard();
     const workbenchSession = useActiveSession();
     const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
-    const elevatedSettingsService = dashboard.getElevatedSettingsService();
-    const activeInstances = useElevatedSettingInstances(elevatedSettingsService);
+    const dashboardSettingsService = dashboard.getDashboardSettingsService();
+    const activeInstances = useDashboardSettingInstances(dashboardSettingsService);
 
     return (
-        <div className="border-info-subtle shadow-elevation-raised flex max-h-[40%] min-h-0 shrink-0 flex-col border-b-2">
-            <div className="gap-x-xs pr-2xs pl-xs bg-info border-b-neutral-subtle flex h-10 shrink-0 items-center border-b">
-                <HubOutlined fontSize="small" />
+        <div className="border-accent-subtle shadow-elevation-raised flex max-h-[40%] min-h-0 shrink-0 flex-col border-b-2">
+            <div className="gap-x-xs pr-2xs pl-xs bg-accent-canvas border-b-neutral-subtle flex h-10 shrink-0 items-center border-b">
+                <Tune fontSize="small" />
                 <span className="text-body-sm font-bolder grow">Dashboard settings</span>
-                <AddElevatedSettingMenu
-                    elevatedSettingsService={elevatedSettingsService}
+                <AddDashboardSettingMenu
+                    dashboardSettingsService={dashboardSettingsService}
                     activeInstances={activeInstances}
                     disabled={isSnapshot}
                 />
-                <Button size="small" tone="neutral" iconOnly variant="ghost" onClick={props.onClose}>
-                    <Close />
-                </Button>
+                <Tooltip content="Close dashboard settings panel">
+                    <Button size="small" tone="neutral" iconOnly variant="ghost" onClick={props.onClose}>
+                        <Close />
+                    </Button>
+                </Tooltip>
             </div>
             {/* Alternating row backgrounds, like in Setting.Section - the rows are the children of Setting.Panel's grid */}
             <div className="pt-xs [&>div>.setting-row:nth-child(even_of_.setting-row)]:bg-neutral/20 min-h-0 overflow-y-auto">
@@ -68,10 +58,10 @@ export function ElevatedSettingsPanel(props: ElevatedSettingsPanelProps): React.
                 ) : (
                     <Setting.Panel>
                         {activeInstances.map((instance) => (
-                            <ElevatedSettingField
+                            <DashboardSettingField
                                 key={instance.getDefinition().key}
                                 instance={instance}
-                                onRemove={() => elevatedSettingsService.removeSetting(instance.getDefinition())}
+                                onRemove={() => dashboardSettingsService.removeSetting(instance.getDefinition())}
                                 removeDisabled={isSnapshot}
                             />
                         ))}
@@ -82,15 +72,15 @@ export function ElevatedSettingsPanel(props: ElevatedSettingsPanelProps): React.
     );
 }
 
-type AddElevatedSettingMenuProps = {
-    elevatedSettingsService: ElevatedSettingsService;
-    activeInstances: readonly ElevatedSettingInstance<any, any>[];
+type AddDashboardSettingMenuProps = {
+    dashboardSettingsService: DashboardSettingsService;
+    activeInstances: readonly DashboardSettingInstance<any, any>[];
     disabled: boolean;
 };
 
-function AddElevatedSettingMenu(props: AddElevatedSettingMenuProps): React.ReactNode {
+function AddDashboardSettingMenu(props: AddDashboardSettingMenuProps): React.ReactNode {
     const activeKeys = new Set(props.activeInstances.map((instance) => instance.getDefinition().key));
-    const availableDefinitions = ElevatedSettingRegistry.getRegisteredSettings().filter(
+    const availableDefinitions = DashboardSettingRegistry.getRegisteredSettings().filter(
         (definition) => !activeKeys.has(definition.key),
     );
 
@@ -105,25 +95,28 @@ function AddElevatedSettingMenu(props: AddElevatedSettingMenuProps): React.React
 
     return (
         <Menu.Root>
-            <Menu.Trigger disabled={isDisabled}>
-                <Button
-                    aria-label="Add a dashboard setting"
-                    focusableWhenDisabled
-                    iconOnly
-                    size="small"
-                    title={title}
-                    tone="neutral"
-                    variant="ghost"
-                >
-                    <Add fontSize="inherit" />
-                </Button>
-            </Menu.Trigger>
+            <Tooltip content={title}>
+                <span>
+                    <Menu.Trigger disabled={isDisabled}>
+                        <Button
+                            aria-label="Add a dashboard setting"
+                            focusableWhenDisabled
+                            iconOnly
+                            size="small"
+                            tone="neutral"
+                            variant="ghost"
+                        >
+                            <Add fontSize="inherit" />
+                        </Button>
+                    </Menu.Trigger>
+                </span>
+            </Tooltip>
             <Menu.Popup>
                 {availableDefinitions.map((definition) => (
                     <Menu.Item
                         key={definition.key}
                         text={definition.label}
-                        onClick={() => props.elevatedSettingsService.addSetting(definition)}
+                        onClick={() => props.dashboardSettingsService.addSetting(definition)}
                     />
                 ))}
             </Menu.Popup>
@@ -131,21 +124,21 @@ function AddElevatedSettingMenu(props: AddElevatedSettingMenuProps): React.React
     );
 }
 
-type ElevatedSettingFieldProps = {
-    instance: ElevatedSettingInstance<any, any>;
+type DashboardSettingFieldProps = {
+    instance: DashboardSettingInstance<any, any>;
     onRemove: () => void;
     removeDisabled: boolean;
 };
 
-function ElevatedSettingField(props: ElevatedSettingFieldProps): React.ReactNode {
+function DashboardSettingField(props: DashboardSettingFieldProps): React.ReactNode {
     const definition = props.instance.getDefinition();
 
-    const value = useElevatedSettingInstanceTopic(props.instance, ElevatedSettingInstanceTopic.VALUE);
-    const valueSource = useElevatedSettingInstanceTopic(props.instance, ElevatedSettingInstanceTopic.VALUE_SOURCE);
-    const isValueValid = useElevatedSettingInstanceTopic(props.instance, ElevatedSettingInstanceTopic.IS_VALUE_VALID);
-    const constraints = useElevatedSettingInstanceTopic(props.instance, ElevatedSettingInstanceTopic.CONSTRAINTS);
-    const isSettling = useElevatedSettingInstanceTopic(props.instance, ElevatedSettingInstanceTopic.IS_SETTLING);
-    const sourceCount = useElevatedSettingInstanceTopic(props.instance, ElevatedSettingInstanceTopic.SOURCE_COUNT);
+    const value = useDashboardSettingInstanceTopic(props.instance, DashboardSettingInstanceTopic.VALUE);
+    const valueSource = useDashboardSettingInstanceTopic(props.instance, DashboardSettingInstanceTopic.VALUE_SOURCE);
+    const isValueValid = useDashboardSettingInstanceTopic(props.instance, DashboardSettingInstanceTopic.IS_VALUE_VALID);
+    const constraints = useDashboardSettingInstanceTopic(props.instance, DashboardSettingInstanceTopic.CONSTRAINTS);
+    const isSettling = useDashboardSettingInstanceTopic(props.instance, DashboardSettingInstanceTopic.IS_SETTLING);
+    const sourceCount = useDashboardSettingInstanceTopic(props.instance, DashboardSettingInstanceTopic.SOURCE_COUNT);
 
     const annotations: SettingAnnotation[] = [];
     if (sourceCount === 0) {
@@ -154,7 +147,7 @@ function ElevatedSettingField(props: ElevatedSettingFieldProps): React.ReactNode
         annotations.push({
             type: "error",
             message:
-                valueSource === ElevatedSettingValueSource.RESTORED
+                valueSource === DashboardSettingValueSource.RESTORED
                     ? "The restored value is invalid. Please choose a valid value."
                     : "The current value is invalid. Please choose a valid value.",
         });

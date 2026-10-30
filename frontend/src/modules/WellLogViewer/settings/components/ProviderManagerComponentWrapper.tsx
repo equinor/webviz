@@ -6,7 +6,7 @@ import { useAtom } from "jotai";
 import { get } from "lodash-es";
 
 import { WellLogCurveTypeEnum_api } from "@api";
-import type { ElevatedSettingsService } from "@framework/ElevatedSettings/ElevatedSettingsService";
+import type { DashboardSettingsService } from "@framework/DashboardSettings/DashboardSettingsService";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
@@ -166,11 +166,11 @@ function checkManagerMove(movedItem: Item, destinationGroup: ItemGroup): boolean
 export type ProviderManagerComponentWrapperProps = {
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
-    elevatedSettingsService: ElevatedSettingsService;
+    dashboardSettingsService: DashboardSettingsService;
 };
 
 export function ProviderManagerComponentWrapper(props: ProviderManagerComponentWrapperProps): React.ReactNode {
-    const { workbenchSession, workbenchSettings, elevatedSettingsService } = props;
+    const { workbenchSession, workbenchSettings, dashboardSettingsService } = props;
     const queryClient = useQueryClient();
     const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
     const [serializedState, setSerializedState] = useAtom(dataProviderStateAtom);
@@ -178,7 +178,7 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
     usePersistedDataProviderManager({
         workbenchSession,
         workbenchSettings,
-        elevatedSettingsService,
+        dashboardSettingsService,
         queryClient,
         serializedState,
         setDataProviderManager,

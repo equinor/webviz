@@ -2,8 +2,8 @@ import { v4 } from "uuid";
 
 import type { ModuleSerializedStateMap } from "@modules/ModuleSerializedStateMap";
 
-import type { ElevatedSettingDefinition } from "./ElevatedSettings/ElevatedSettingDefinition";
-import type { AddElevatedSettingOptions } from "./ElevatedSettings/ElevatedSettingsService";
+import type { DashboardSettingDefinition } from "./DashboardSettings/DashboardSettingDefinition";
+import type { AddDashboardSettingOptions } from "./DashboardSettings/DashboardSettingsService";
 import type { LayoutElement } from "./internal/Dashboard";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { KeyKind } from "./types/dataChannnel";
@@ -29,25 +29,25 @@ export type TemplateModuleInstance<M extends keyof ModuleSerializedStateMap = ke
     };
 };
 
-export type TemplateElevatedSetting = {
-    definition: ElevatedSettingDefinition<any, any>;
-    options: AddElevatedSettingOptions<any, any>;
+export type TemplateDashboardSetting = {
+    definition: DashboardSettingDefinition<any, any>;
+    options: AddDashboardSettingOptions<any, any>;
 };
 
 export type Template = {
     name: string;
     description: string;
     moduleInstances: TemplateModuleInstance[];
-    // Elevated on the dashboard before its module instances are created. A given `value` is treated
+    // Dashboard on the dashboard before its module instances are created. A given `value` is treated
     // like a restored one: kept (and flagged) if it doesn't fit the context, instead of being fixed up.
-    elevatedSettings?: TemplateElevatedSetting[];
+    dashboardSettings?: TemplateDashboardSetting[];
 };
 
-// Type-checks the value/constraint override against the elevated setting's own types.
-export function createTemplateElevatedSetting<TValue, TConstraints>(
-    definition: ElevatedSettingDefinition<TValue, TConstraints>,
-    options: AddElevatedSettingOptions<TValue, TConstraints> = {},
-): TemplateElevatedSetting {
+// Type-checks the value/constraint override against the dashboard setting's own types.
+export function createTemplateDashboardSetting<TValue, TConstraints>(
+    definition: DashboardSettingDefinition<TValue, TConstraints>,
+    options: AddDashboardSettingOptions<TValue, TConstraints> = {},
+): TemplateDashboardSetting {
     return { definition, options };
 }
 

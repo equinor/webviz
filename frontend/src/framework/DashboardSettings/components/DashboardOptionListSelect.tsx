@@ -1,9 +1,9 @@
 import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
 
-import type { ElevatedSettingComponentProps } from "../ElevatedSettingDefinition";
+import type { DashboardSettingComponentProps } from "../DashboardSettingDefinition";
 
-export type ElevatedOptionListSelectProps<TValue extends string | number, TOption> = ElevatedSettingComponentProps<
+export type DashboardOptionListSelectProps<TValue extends string | number, TOption> = DashboardSettingComponentProps<
     TValue | null,
     readonly TOption[]
 > & {
@@ -12,11 +12,11 @@ export type ElevatedOptionListSelectProps<TValue extends string | number, TOptio
 };
 
 /**
- * The options as a combobox with prev/next buttons - for elevated settings whose value is one of a list of
- * options (see `makeOptionListElevatedSettingOptions`).
+ * The options as a combobox with prev/next buttons - for dashboard settings whose value is one of a list of
+ * options (see `makeOptionListDashboardSettingOptions`).
  */
-export function ElevatedOptionListSelect<TValue extends string | number, TOption>(
-    props: ElevatedOptionListSelectProps<TValue, TOption>,
+export function DashboardOptionListSelect<TValue extends string | number, TOption>(
+    props: DashboardOptionListSelectProps<TValue, TOption>,
 ) {
     const { getOptionValue, getOptionLabel } = props;
 

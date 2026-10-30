@@ -8,8 +8,8 @@ import { makeVectorGroupDataGenerator } from "@modules/SimulationTimeSeries/data
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 import type { VectorHexColorMap, VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
 
+import { effectiveActiveTimestampUtcMsAtom } from "../atoms/dashboardSettingAtoms";
 import { loadedVectorSpecificationsAndRealizationDataAtom, queryIsFetchingAtom } from "../atoms/derivedAtoms";
-import { effectiveActiveTimestampUtcMsAtom } from "../atoms/elevatedSettingAtoms";
 import type { SubplotOwner } from "../utils/PlotBuilder";
 import { getHexColorFromOwner } from "../utils/plotColoring";
 

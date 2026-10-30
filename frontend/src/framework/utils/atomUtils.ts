@@ -568,7 +568,7 @@ export function isPersistableAtom(a: unknown): a is Atom<unknown> & PersistableF
 
 /**
  * Whether `value` would be valid in `atom`'s current context, using the atom's own `isValidFunction` -
- * e.g. for a value that replaces the atom's own while an elevated setting controls it. Reads through
+ * e.g. for a value that replaces the atom's own while a dashboard setting controls it. Reads through
  * `get`, so a derived atom calling this re-evaluates when the validity's dependencies change.
  */
 export function isPersistableFixableValueValid<TValue>(

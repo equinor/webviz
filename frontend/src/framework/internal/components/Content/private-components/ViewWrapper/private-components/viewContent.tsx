@@ -169,7 +169,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                                         workbenchSession={props.workbench.getSessionManager().getActiveSession()}
                                         syncSettingsService={dashboard.getSyncSettingsService()}
                                         hoverService={dashboard.getHoverService()}
-                                    elevatedSettingsService={dashboard.getElevatedSettingsService()}
+                                    dashboardSettingsService={dashboard.getDashboardSettingsService()}
                                         workbenchSettings={props.workbench
                                             .getSessionManager()
                                             .getActiveSession()

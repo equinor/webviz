@@ -1,3 +1,5 @@
+import "./framework/DashboardSettings/registerAllSettings";
+
 import { ThemeProvider, createTheme } from "@mui/material";
 
 import { AuthenticationBoundary } from "@framework/internal/components/AuthenticationBoundary";
@@ -6,7 +8,6 @@ import { WorkbenchWrapper } from "@framework/internal/components/WorkbenchWrappe
 import { UserSettingsProvider } from "@framework/internal/providers/UserSettingsProvider";
 import { AlertDialogNestingProvider } from "@lib/contexts/alertDialogNestingContext";
 
-import "./framework/ElevatedSettings/registerAllSettings";
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 
