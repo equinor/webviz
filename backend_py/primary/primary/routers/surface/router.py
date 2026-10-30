@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Annotated, List, Literal
+from typing import Annotated, Any, Coroutine, List, Literal
 
 import xtgeo
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
@@ -13,6 +13,11 @@ from webviz_services.sumo_access.surface_access import ExpectedError, InProgress
 from webviz_services.smda_access import SmdaAccess, StratigraphicUnit
 from webviz_services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 from webviz_services.smda_access.drogon import DrogonSmdaAccess
+from webviz_services.utils.delta_surface import (
+    SurfaceDefinitionMismatchError,
+    compute_delta_surface,
+    is_entirely_undefined,
+)
 from webviz_services.utils.statistic_function import StatisticFunction
 from webviz_services.utils.surface_intersect_with_polyline import intersect_surface_with_polyline
 from webviz_services.utils.authenticated_user import AuthenticatedUser
@@ -459,18 +464,121 @@ async def post_get_sample_surface_in_points(
     return intersections
 
 
-@router.get("/delta_surface_data")
+DELTA_SURF_DOC_STR = """
+Get a delta surface for a selection of a comparison ensemble, an optional reference ensemble, a monitor time,
+an optional base time and a realization or statistic.
+
+The primary address (*REAL* or *STAT*) encodes the comparison ensemble, the surface, and the monitor time.
+A delta ensemble is requested by giving both `reference_case_uuid` and `reference_ensemble_name`. A time delta is
+requested by giving `base_iso_time_or_interval`, which requires the address to carry a monitor time.
+At least one of the two must be given.
+
+For realization *r* the result is, where omitted terms are not fetched:
+
+```
+result[r] = (comparison[r] @ monitor - comparison[r] @ base) - (reference[r] @ monitor - reference[r] @ base)
+```
+
+Cells that are undefined in any of the surfaces involved are undefined in the result.
+Statistics of delta surfaces (*STAT* address) are not implemented yet.
+"""
+
+
+@router.get("/delta_surface_data", description=DELTA_SURF_DOC_STR + GENERAL_SURF_ADDR_DOC_STR)
 async def get_delta_surface_data(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    surf_a_addr_str: Annotated[str, Query(description="Address string of surface A, supported types: *REAL*, *OBS* and *STAT*")],
-    surf_b_addr_str: Annotated[str, Query(description="Address string of surface B, supported types: *REAL*, *OBS* and *STAT*")],
+    surf_addr_str: Annotated[str, Query(description="Surface address string for the comparison ensemble and monitor time, supported address types are *REAL* and *STAT*")],
+    reference_case_uuid: Annotated[str | None, Query(description="Case uuid of the reference ensemble, must be given together with reference_ensemble_name")] = None,
+    reference_ensemble_name: Annotated[str | None, Query(description="Name of the reference ensemble, must be given together with reference_case_uuid")] = None,
+    base_iso_time_or_interval: Annotated[str | None, Query(description="Base time or interval to subtract from the monitor time in the address")] = None,
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
+    delete_task: Annotated[bool, Query(description="If true, deletes the server-side task for this selection. Nothing to delete for realization addresses")] = False,
     # fmt:on
-) -> list[schemas.SurfaceDataFloat]:
-    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
+) -> (
+    LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng]
+    | LroInProgressResp
+    | LroFailureResp
+    | LroCommandResp
+):
+    perf_metrics = ResponsePerfMetrics(response)
+
+    if delete_task:
+        return LroCommandResp(command_ok=False, message="No task to delete")
+
+    addr = decode_surf_addr_str(surf_addr_str)
+    if not isinstance(addr, (RealizationSurfaceAddress, StatisticalSurfaceAddress)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Endpoint only supports address types REAL and STAT"
+        )
+
+    if (reference_case_uuid is None) != (reference_ensemble_name is None):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="reference_case_uuid and reference_ensemble_name must be given together",
+        )
+    has_reference = reference_case_uuid is not None and reference_ensemble_name is not None
+    reference_ensemble: tuple[str, str] | None = None
+    if reference_case_uuid is not None and reference_ensemble_name is not None:
+        reference_ensemble = (reference_case_uuid, reference_ensemble_name)
+    if not has_reference and base_iso_time_or_interval is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A reference ensemble and/or a base time must be given, use /surface_data for plain surfaces",
+        )
+    if base_iso_time_or_interval is not None:
+        if addr.iso_time_or_interval is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="base_iso_time_or_interval requires the surface address to have a time",
+            )
+        if base_iso_time_or_interval == addr.iso_time_or_interval:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="base_iso_time_or_interval must differ from the time in the surface address",
+            )
+    if has_reference and reference_case_uuid == addr.case_uuid and reference_ensemble_name == addr.ensemble_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reference ensemble must differ from the comparison ensemble",
+        )
+
+    if isinstance(addr, StatisticalSurfaceAddress):
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Statistics of delta surfaces are not implemented yet",
+        )
+
+    perf_metrics.record_lap("init")
+
+    try:
+        delta_surf = await _compute_realization_delta_surface_async(
+            access_token=authenticated_user.get_sumo_access_token(),
+            addr=addr,
+            reference_ensemble=reference_ensemble,
+            base_iso_time_or_interval=base_iso_time_or_interval,
+        )
+    except SurfaceDefinitionMismatchError as exc:
+        LOGGER.warning(f"Delta surface calculation failed for address {surf_addr_str}: {exc}")
+        return LroFailureResp(error_message=str(exc))
+    perf_metrics.record_lap("get-and-compute")
+
+    if is_entirely_undefined(delta_surf):
+        LOGGER.warning(f"Delta surface is entirely undefined for address {surf_addr_str}")
+        return LroFailureResp(
+            error_message="The delta surface has no defined values; the input surfaces have no overlapping defined cells"
+        )
+
+    api_surf_data = _resample_and_convert_to_surface_data_response(
+        xtgeo_surf=delta_surf, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
+    )
+
+    LOGGER.info(f"Got delta surface data in: {perf_metrics.to_string()}")
+
+    set_cache_time(CacheTime.NORMAL)
+    return LroSuccessResp(result=api_surf_data)
 
 
 @router.get("/misfit_surface_data")
@@ -534,6 +642,48 @@ def _resample_and_convert_to_surface_data_response(
     perf_metrics.record_lap("convert")
 
     return surf_data_response
+
+
+async def _compute_realization_delta_surface_async(
+    access_token: str,
+    addr: RealizationSurfaceAddress,
+    reference_ensemble: tuple[str, str] | None,
+    base_iso_time_or_interval: str | None,
+) -> xtgeo.RegularSurface:
+    """
+    Fetch the surfaces needed for a single realization delta and compute the delta surface.
+    """
+    monitor_time = addr.iso_time_or_interval
+    comparison_access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
+
+    fetch_coros: dict[str, Coroutine[Any, Any, xtgeo.RegularSurface]] = {}
+
+    def add_fetch(term: str, access: SurfaceAccess, time_or_interval_str: str | None) -> None:
+        fetch_coros[term] = access.get_realization_surface_data_async(
+            real_num=addr.realization,
+            name=addr.name,
+            attribute=addr.attribute,
+            time_or_interval_str=time_or_interval_str,
+        )
+
+    add_fetch("comparison_monitor", comparison_access, monitor_time)
+    if base_iso_time_or_interval is not None:
+        add_fetch("comparison_base", comparison_access, base_iso_time_or_interval)
+    if reference_ensemble is not None:
+        reference_access = SurfaceAccess.from_ensemble_name(access_token, reference_ensemble[0], reference_ensemble[1])
+        add_fetch("reference_monitor", reference_access, monitor_time)
+        if base_iso_time_or_interval is not None:
+            add_fetch("reference_base", reference_access, base_iso_time_or_interval)
+
+    fetched_surfs = await asyncio.gather(*fetch_coros.values())
+    surfs = dict(zip(fetch_coros.keys(), fetched_surfs))
+
+    return compute_delta_surface(
+        comparison_monitor=surfs["comparison_monitor"],
+        comparison_base=surfs.get("comparison_base"),
+        reference_monitor=surfs.get("reference_monitor"),
+        reference_base=surfs.get("reference_base"),
+    )
 
 
 async def _get_xtgeo_surface_from_sumo_async(
