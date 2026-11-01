@@ -10,10 +10,10 @@ from webviz_services.operations.hydrostatic_equilibrium_check.hydrostatic_equili
 from webviz_services.service_exceptions import ServiceLayerException
 from webviz_services.sumo_access.grid3d_access import Grid3dAccess
 from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
-from webviz_services.utils.sumo_blob_cache import OP_QC_CHECKS, get_sumo_blob_cache_from_sumo_client
+from webviz_services.utils.sumo_blob_cache import OP_QC_CHECKS, SumoBlobCacheError, get_sumo_blob_cache_from_sumo_client
 from webviz_services.utils.task_meta_tracker import TaskMetaTracker
 
-from ..task_exceptions import MalformedMessageError, TaskFailedError, TaskTrackingError
+from ..task_exceptions import MalformedMessageError, TaskFailedError, TaskRetryError, TaskTrackingError
 from ..task_runner import TaskSuccess
 from ..utils import message_decryption
 from ..utils.abort_signal import AbortSignal
@@ -81,9 +81,12 @@ async def qc_hydrostatic_equil_grid_property_check_task_async(
     abort_signal.raise_if_aborted()
 
     blob_cache = get_sumo_blob_cache_from_sumo_client(sumo_client, OP_QC_CHECKS)
-    await blob_cache.put_pydantic_model_async(
-        cache_key, source_obj_uuids=result.realization_result.source_object_uuids, model=result
-    )
+    try:
+        await blob_cache.put_pydantic_model_async(
+            cache_key, source_obj_uuids=result.realization_result.source_object_uuids, model=result
+        )
+    except SumoBlobCacheError as exc:
+        raise TaskRetryError(f"Failed to store grid property check result in cache: {str(exc)}") from exc
     perf_metrics.record_lap("write-cache")
 
     _logger.info(

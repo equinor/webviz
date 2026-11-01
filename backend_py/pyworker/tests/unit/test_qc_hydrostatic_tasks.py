@@ -11,8 +11,9 @@ from webviz_server_schemas.pyworker.messages import (
 )
 from webviz_services.operations.hydrostatic_equilibrium_check import hydrostatic_equilibrium_types as he_types
 from webviz_services.service_exceptions import NoDataError, Service
+from webviz_services.utils.sumo_blob_cache import SumoBlobCacheError
 
-from pyworker.task_exceptions import TaskFailedError
+from pyworker.task_exceptions import TaskFailedError, TaskRetryError
 from pyworker.tasks import qc_hydrostatic_equil_grid_property_check_task as grid_task
 from pyworker.tasks import qc_hydrostatic_equil_vector_check_task as vector_task
 from pyworker.utils.abort_signal import AbortSignal
@@ -48,10 +49,13 @@ class _FakeTaskTracker:
 
 
 class _FakeBlobCache:
-    def __init__(self) -> None:
+    def __init__(self, put_error: Exception | None = None) -> None:
         self.puts: list[dict[str, Any]] = []
+        self._put_error = put_error
 
     async def put_pydantic_model_async(self, cache_key: str, source_obj_uuids: list[str], model: Any) -> None:
+        if self._put_error:
+            raise self._put_error
         self.puts.append({"cache_key": cache_key, "source_obj_uuids": source_obj_uuids, "model": model})
 
 
@@ -160,6 +164,19 @@ async def test_vector_check_task_maps_service_error_to_task_failed(monkeypatch: 
 
 
 @pytest.mark.asyncio
+async def test_vector_check_task_maps_cache_write_error_to_retry(monkeypatch: pytest.MonkeyPatch) -> None:
+    check = _FakeCheck(result=_VECTOR_RESULT)
+    blob_cache = _FakeBlobCache(put_error=SumoBlobCacheError("blob store unavailable"))
+    monkeypatch.setattr(vector_task, "SummaryAccess", lambda *_args: "summary-access")
+    _patch_common(monkeypatch, vector_task, check, blob_cache)
+
+    with pytest.raises(TaskRetryError):
+        await vector_task.qc_hydrostatic_equil_vector_check_task_async(
+            _FakeTaskTracker(), _make_sb_msg(_vector_msg(None)), _make_abort_signal()  # type: ignore[arg-type]
+        )
+
+
+@pytest.mark.asyncio
 async def test_grid_property_check_task_stores_result_with_nested_source_uuids(monkeypatch: pytest.MonkeyPatch) -> None:
     check = _FakeCheck(result=_GRID_RESULT)
     blob_cache = _FakeBlobCache()
@@ -189,3 +206,15 @@ async def test_grid_property_check_task_maps_service_error_to_task_failed(monkey
         )
 
     assert not blob_cache.puts
+
+
+@pytest.mark.asyncio
+async def test_grid_property_check_task_maps_cache_write_error_to_retry(monkeypatch: pytest.MonkeyPatch) -> None:
+    check = _FakeCheck(result=_GRID_RESULT)
+    blob_cache = _FakeBlobCache(put_error=SumoBlobCacheError("blob store unavailable"))
+    _patch_common(monkeypatch, grid_task, check, blob_cache)
+
+    with pytest.raises(TaskRetryError):
+        await grid_task.qc_hydrostatic_equil_grid_property_check_task_async(
+            _FakeTaskTracker(), _make_sb_msg(_grid_msg()), _make_abort_signal()  # type: ignore[arg-type]
+        )
