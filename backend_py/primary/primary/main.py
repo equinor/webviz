@@ -232,7 +232,7 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")  # type: ignore[ar
 
 app.add_middleware(CacheControlMiddleware)
 
-app.add_middleware(RequestDeadlineMiddleware, timeout_s=2000)
+app.add_middleware(RequestDeadlineMiddleware, timeout_s=10)
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
