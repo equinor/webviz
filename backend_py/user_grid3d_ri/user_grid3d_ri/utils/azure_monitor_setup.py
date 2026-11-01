@@ -41,11 +41,9 @@ def setup_azure_monitor_telemetry_for_user_grid3d_ri(fastapi_app: FastAPI) -> No
         connection_string=azmon_dest.insights_connection_string,
         resource=Resource.create(attributes=azmon_dest.resource_attributes),
         sampling_ratio=1.0,
-        logging_formatter=logging.Formatter("[%(name)s]: %(message)s"),
     )
 
     FastAPIInstrumentor.instrument_app(fastapi_app)
-    HTTPXClientInstrumentor().instrument()
 
     # Experiment with instrumenting the gRPC calls as well
     GrpcAioInstrumentorClient().instrument()
