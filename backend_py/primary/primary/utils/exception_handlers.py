@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 import json
 import logging
 import traceback
@@ -14,6 +15,33 @@ from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT, HTTP_500_INTERNAL_S
 from webviz_services.service_exceptions import ServiceLayerException
 
 ROOT_LOGGER = logging.getLogger()
+
+
+def make_error_response(
+    status_code: int,
+    error_type: str,
+    message: str,
+    *,
+    service: str | None = None,
+    headers: Mapping[str, str] | None = None,
+) -> JSONResponse:
+    """
+    Helper function to create our standardized JSON error responses
+    They have the following structure:
+        {
+            "error": {
+                "type": "<error_type>",
+                "message": "<message>",
+                "service": "<service>"  # optional
+            }
+        }
+    """
+
+    error_dict = {"type": error_type, "message": message}
+    if service is not None:
+        error_dict["service"] = service
+
+    return JSONResponse(status_code=status_code, content={"error": error_dict}, headers=headers)
 
 
 def my_http_exception_handler(request: Request, exc: StarletteHTTPException) -> Response | JSONResponse:
@@ -45,15 +73,11 @@ def my_http_exception_handler(request: Request, exc: StarletteHTTPException) -> 
 
     # To be consistent with our other responses we will return the details of the HTTP exception
     # in the error.message field in the JSON response
-    return JSONResponse(
+    return make_error_response(
         status_code=exc.status_code,
+        error_type="GeneralError",
+        message=str(exc.detail),
         headers=headers,
-        content={
-            "error": {
-                "type": "GeneralError",
-                "message": str(exc.detail),
-            }
-        },
     )
 
 
@@ -95,14 +119,10 @@ def my_request_validation_error_handler(request: Request, exc: RequestValidation
     curr_span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
     curr_span.record_exception(exc)
 
-    return JSONResponse(
+    return make_error_response(
         status_code=HTTP_422_UNPROCESSABLE_CONTENT,
-        content={
-            "error": {
-                "type": "RequestValidationError",
-                "message": message,
-            }
-        },
+        error_type="RequestValidationError",
+        message=message,
     )
 
 
@@ -113,15 +133,11 @@ def service_layer_exception_handler(request: Request, exc: ServiceLayerException
     exc_name = _get_exception_name(exc)
     ROOT_LOGGER.error(f"[EXC] Service exception in {route} -> {exc_name}: {str(exc)}", exc_info=exc)
 
-    return JSONResponse(
+    return make_error_response(
         status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "error": {
-                "type": exc.get_error_type_str(),
-                "message": exc.message,
-                "service": exc.service,
-            }
-        },
+        error_type=exc.get_error_type_str(),
+        message=exc.message,
+        service=exc.service,
     )
 
 
@@ -132,14 +148,10 @@ def catch_all_exception_handler(request: Request, exc: Exception) -> JSONRespons
     ROOT_LOGGER.error(f"[EXC] Unhandled exception in {route} -> {exc_name}: {str(exc)}", exc_info=exc)
 
     # Don't leak any information to frontend
-    return JSONResponse(
+    return make_error_response(
         status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "error": {
-                "type": "InternalError",
-                "message": "Internal server error",
-            }
-        },
+        error_type="InternalError",
+        message="Internal server error",
     )
 
 

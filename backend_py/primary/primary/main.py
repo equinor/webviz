@@ -26,6 +26,7 @@ from primary.middleware.cache_control_middleware import CacheControlMiddleware, 
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanClientAddressEnrichmentMiddleware
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanEndUserEnrichmentMiddleware
 from primary.middleware.encrypted_redis_session_store import EncryptedRedisSessionStore
+from primary.middleware.request_deadline_middleware import RequestDeadlineMiddleware
 from primary.persistence.persistence_stores import PersistenceStoresSingleton
 from primary.routers.dev.router import router as dev_router
 from primary.routers.explore.router import router as explore_router
@@ -99,6 +100,7 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 @asynccontextmanager
 async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
+    
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
     # The opt-out for the credential creation here is only meant for special scenarios such as e2e testing.
@@ -229,6 +231,8 @@ app.add_middleware(OtelSpanClientAddressEnrichmentMiddleware)
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")  # type: ignore[arg-type]
 
 app.add_middleware(CacheControlMiddleware)
+
+app.add_middleware(RequestDeadlineMiddleware, timeout_s=10)
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
