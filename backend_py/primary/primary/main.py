@@ -232,7 +232,9 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")  # type: ignore[ar
 
 app.add_middleware(CacheControlMiddleware)
 
-app.add_middleware(RequestDeadlineMiddleware, timeout_s=10)
+# The deadline here must be aligned with the timeout in nginx, which is currently 130s
+# Set it slightly shorter (10s) than the nginx timeout to ensure the middleware triggers before nginx does.
+app.add_middleware(RequestDeadlineMiddleware, deadline_s=120)
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
