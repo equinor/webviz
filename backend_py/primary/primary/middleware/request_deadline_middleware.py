@@ -2,7 +2,6 @@ import asyncio
 import logging
 import time
 
-from opentelemetry import trace
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from primary.utils.exception_handlers import make_error_response

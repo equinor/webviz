@@ -43,7 +43,9 @@ class HTTPXAsyncClientWrapper:
         )
 
         self._async_client = httpx.AsyncClient(limits=limits)
-        LOGGER.info(f"HTTPXAsyncClientWrapper: instantiated shared AsyncClient, {limits=} (id={id(self._async_client)})")
+        LOGGER.info(
+            f"HTTPXAsyncClientWrapper: instantiated shared AsyncClient, {limits=} (id={id(self._async_client)})"
+        )
 
         self._pool_snapshot_task = asyncio.create_task(
             self._log_pool_snapshots_async(),
