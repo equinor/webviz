@@ -1,6 +1,7 @@
 import React from "react";
 
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
+import { Button } from "@lib/components/Button";
 import { Slider } from "@lib/components/Slider";
 import type { SliderChangeEventDetails } from "@lib/components/Slider/types";
 
@@ -79,6 +80,10 @@ export function DashboardTimeSlider(props: DashboardSettingComponentProps<number
         valueText = timestampUtcMsToCompactIsoString(props.value);
     }
 
+    // An unavailable value puts the thumb on the first time point, where pressing it changes nothing - and with a
+    // single time point, the slider can't change at all. So that time point is offered explicitly instead.
+    const canSelectDisplayedTimestamp = selectedIndex === -1 && draggedIndex === null && timestamps.length > 0;
+
     return (
         <div className="gap-x-sm flex items-center">
             <Slider
@@ -96,6 +101,16 @@ export function DashboardTimeSlider(props: DashboardSettingComponentProps<number
                 onValueChange={handleValueChange}
             />
             <span className="text-body-sm shrink-0 whitespace-nowrap">{valueText}</span>
+            {canSelectDisplayedTimestamp && (
+                <Button
+                    size="small"
+                    variant="outlined"
+                    layoutClassName="shrink-0"
+                    onClick={() => commitIndex(displayedIndex)}
+                >
+                    Use {formatIndex(displayedIndex)}
+                </Button>
+            )}
         </div>
     );
 }

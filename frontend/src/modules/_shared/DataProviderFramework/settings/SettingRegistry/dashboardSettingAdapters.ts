@@ -24,10 +24,15 @@ export type DpfDashboardSettingAdapter<TInternalValue, TValueConstraints, TDashb
         localValue: TInternalValue,
     ) => TInternalValue;
 
-    // Whether the setting follows the dashboard value at all, given its own (local) value - e.g. only when
-    // it has picked the same kind of value. While it doesn't, it keeps its local value and isn't shown as
-    // controlled, but still contributes its constraints. Defaults to always following.
-    followsDashboardValue?: (dashboardValue: TDashboardValue, localValue: TInternalValue) => boolean;
+    // Whether the setting follows the dashboard value at all, given its own (local) value and its value constraints
+    // (`null` while not known yet) - e.g. only when it has picked the same kind of value, or only when it has options
+    // the dashboard value can map onto. While it doesn't, it keeps its local value and isn't shown as controlled, but
+    // still contributes its constraints. Defaults to always following.
+    followsDashboardValue?: (
+        dashboardValue: TDashboardValue,
+        localValue: TInternalValue,
+        valueConstraints: TValueConstraints | null,
+    ) => boolean;
 
     // Keeps the setting's own component editable while it is controlled, instead of showing a read-only
     // representation. The component is told via `isControlledByDashboardSetting`, and must itself disable
@@ -55,8 +60,9 @@ function isTimePoint(option: string): boolean {
 
 // For settings with ISO time string options (`TIME_POINT`, `TIME_OR_INTERVAL`): contributes the time
 // points as timestamps, and maps the dashboard time back onto the option with the same timestamp. A
-// setting without any time point options (e.g. a static grid property) has no opinion and keeps its own
-// value.
+// setting without any time point options (e.g. a static grid property, or a seismic attribute with only
+// intervals) has no opinion: it doesn't follow the dashboard time, so it keeps its own value and stays
+// editable.
 export function makeTimePointDpfDashboardSettingAdapter(): DpfDashboardSettingAdapter<
     string | null,
     string[],
@@ -69,6 +75,9 @@ export function makeTimePointDpfDashboardSettingAdapter(): DpfDashboardSettingAd
             const timePoints = valueConstraints.filter(isTimePoint);
             return timePoints.length > 0 ? timePoints.map(isoStringToTimestampUtcMs) : null;
         },
+        // Followed until the options are known, so a time point setting isn't briefly editable while they load
+        followsDashboardValue: (_dashboardValue, _localValue, valueConstraints) =>
+            valueConstraints === null || valueConstraints.some(isTimePoint),
         mapDashboardValueToInternalValue: (dashboardValue, valueConstraints, localValue) => {
             const timePoints = valueConstraints.filter(isTimePoint);
             if (timePoints.length === 0) {

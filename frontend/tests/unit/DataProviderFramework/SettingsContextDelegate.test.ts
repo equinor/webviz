@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { DashboardSettingsService } from "@framework/DashboardSettings/DashboardSettingsService";
+import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import {
     SettingsContextDelegate,
@@ -13,20 +14,23 @@ import type {
 import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { SettingManager } from "@modules/_shared/DataProviderFramework/framework/SettingManager/SettingManager";
 import type { CustomSettingsHandler } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import { DropdownNumberSetting } from "@modules/_shared/DataProviderFramework/settings/implementations/DropdownNumberSetting";
 import { DropdownStringSetting } from "@modules/_shared/DataProviderFramework/settings/implementations/DropdownStringSetting";
+import { makeIdentityDpfDashboardSettingAdapter } from "@modules/_shared/DataProviderFramework/settings/SettingRegistry/dashboardSettingAdapters";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 const SETTINGS = [Setting.SURFACE_NAME] as const;
+const REALIZATION_SETTINGS = [Setting.REALIZATION] as const;
 
 // Just enough of a DataProviderManager for a SettingsContextDelegate without bindings.
-function makeFakeDataProviderManager() {
+function makeFakeDataProviderManager(dashboardSettingsService = new DashboardSettingsService()) {
     const publishSubscribeDelegate = new PublishSubscribeDelegate<DataProviderManagerTopicPayload>();
     const manager = {
         getPublishSubscribeDelegate: () => publishSubscribeDelegate,
         getGlobalSetting: () => null,
         getWorkbenchSession: () => null,
         getWorkbenchSettings: () => null,
-        getDashboardSettingsService: () => new DashboardSettingsService(),
+        getDashboardSettingsService: () => dashboardSettingsService,
         getQueryClient: () => null,
     } as unknown as DataProviderManager;
 
@@ -54,6 +58,26 @@ function makeContext(defaultValue: string | null = null) {
     });
 
     return { context, setting, publishGlobalSettings };
+}
+
+function makeRealizationContext(dashboardSettingsService: DashboardSettingsService) {
+    const setting = new SettingManager({
+        type: Setting.REALIZATION,
+        label: "Realization",
+        defaultValue: null,
+        customSettingImplementation: new DropdownNumberSetting(),
+        dashboardSettingAdapter: makeIdentityDpfDashboardSettingAdapter(REALIZATION_DASHBOARD_SETTING),
+    });
+    const handler: CustomSettingsHandler<typeof REALIZATION_SETTINGS> = {
+        settings: REALIZATION_SETTINGS,
+        setupBindings: () => {},
+    };
+    const { manager } = makeFakeDataProviderManager(dashboardSettingsService);
+    const context = new SettingsContextDelegate<typeof REALIZATION_SETTINGS>(handler, manager, {
+        [Setting.REALIZATION]: setting,
+    });
+
+    return { context, setting };
 }
 
 describe("SettingsContextDelegate status with persisted values", () => {
@@ -100,5 +124,27 @@ describe("SettingsContextDelegate status with persisted values", () => {
 
         expect(setting.isValueValid()).toBe(true);
         expect(context.getStatus()).toBe(SettingsContextStatus.INVALID_SETTINGS);
+    });
+
+    test("ignores a rejected persisted local value while the dashboard setting controls the setting", () => {
+        const dashboardSettingsService = new DashboardSettingsService();
+        const { context, setting } = makeRealizationContext(dashboardSettingsService);
+        context.deserializeSettings({ [Setting.REALIZATION]: JSON.stringify(3) }, () => {});
+        setting.setValueConstraints([1, 2]);
+        expect(context.getStatus()).toBe(SettingsContextStatus.INVALID_SETTINGS);
+
+        dashboardSettingsService.addSetting(REALIZATION_DASHBOARD_SETTING);
+
+        expect(setting.isDashboardControlled()).toBe(true);
+        expect(context.getStatus()).toBe(SettingsContextStatus.VALID_SETTINGS);
+        expect(context.getValues()[Setting.REALIZATION]).toBe(1);
+        expect(setting.isPersistedValue()).toBe(true);
+        expect(setting.getLocalInternalValue()).toBe(3);
+
+        dashboardSettingsService.removeSetting(REALIZATION_DASHBOARD_SETTING);
+
+        expect(context.getStatus()).toBe(SettingsContextStatus.INVALID_SETTINGS);
+        expect(context.getValues()[Setting.REALIZATION]).toBeUndefined();
+        expect(setting.getLocalInternalValue()).toBe(3);
     });
 });

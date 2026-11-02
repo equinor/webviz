@@ -31,4 +31,14 @@ describe("makeTimePointDpfDashboardSettingAdapter", () => {
     it("keeps the local value when the setting has no time points", () => {
         expect(adapter.mapDashboardValueToInternalValue(Date.UTC(2018, 0, 1), ["NO_TIME"], "NO_TIME")).toBe("NO_TIME");
     });
+
+    it("follows the dashboard time only when the setting has time points, or its options aren't known yet", () => {
+        const interval = "2018-01-01T00:00:00/2019-01-01T00:00:00";
+
+        expect(adapter.followsDashboardValue?.(Date.UTC(2018, 0, 1), interval, [interval])).toBe(false);
+        expect(adapter.followsDashboardValue?.(Date.UTC(2018, 0, 1), null, [interval, "2018-01-01T00:00:00"])).toBe(
+            true,
+        );
+        expect(adapter.followsDashboardValue?.(Date.UTC(2018, 0, 1), null, null)).toBe(true);
+    });
 });

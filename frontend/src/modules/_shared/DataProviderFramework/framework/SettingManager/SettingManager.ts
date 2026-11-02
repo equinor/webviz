@@ -412,9 +412,13 @@ export class SettingManager<
             return false;
         }
 
+        const prevVisible = this._attributes.visible;
         this._attributes = newAttributes;
 
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.ATTRIBUTES);
+        if (this._attributes.visible !== prevVisible) {
+            this.contributeDashboardSettingConstraints();
+        }
         return true;
     }
 
@@ -530,6 +534,16 @@ export class SettingManager<
             return true;
         }
         return this._currentValueFromPersistence !== null;
+    }
+
+    // Whether a held persisted value is the value in effect - not while the dashboard setting controls this setting.
+    // The persisted local value is kept regardless, and is in effect again once the dashboard setting no longer controls it.
+    isPersistedValueInEffect(): boolean {
+        if (this._externalController) {
+            return this._externalController.getSetting().isPersistedValueInEffect();
+        }
+
+        return this.isPersistedValue() && !this.isDashboardControlled();
     }
 
     private setPersistedValueIsValid(isValid: boolean): void {
@@ -865,6 +879,10 @@ export class SettingManager<
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
         }
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CONSTRAINTS);
+        if (this._dashboardSettingConnection) {
+            // Changed constraints may change whether the setting follows its dashboard setting
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_DASHBOARD_CONTROLLED);
+        }
 
         this.contributeDashboardSettingConstraints();
     }
@@ -1021,6 +1039,13 @@ export class SettingManager<
             return;
         }
 
+        // A hidden setting is not used by its provider, so its options must not reach the dashboard setting - just
+        // like it doesn't narrow a shared setting's constraints (see ExternalSettingController)
+        if (!this._attributes.visible) {
+            connection.handle.clearConstraints();
+            return;
+        }
+
         if (this._blocked) {
             connection.handle.clearConstraints();
             return;
@@ -1078,6 +1103,7 @@ export class SettingManager<
             this._dashboardSettingAdapter.followsDashboardValue?.(
                 connection.instance.getValue(),
                 this.getLocalInternalValue(),
+                this._valueConstraints,
             ) ?? true;
 
         return follows ? connection : null;

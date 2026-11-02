@@ -46,7 +46,14 @@ export function DashboardSettingsPanel(props: DashboardSettingsPanelProps): Reac
                     disabled={isSnapshot}
                 />
                 <Tooltip content="Close dashboard settings panel">
-                    <Button size="small" tone="neutral" iconOnly variant="ghost" onClick={props.onClose}>
+                    <Button
+                        aria-label="Close dashboard settings panel"
+                        size="small"
+                        tone="neutral"
+                        iconOnly
+                        variant="ghost"
+                        onClick={props.onClose}
+                    >
                         <Close />
                     </Button>
                 </Tooltip>
