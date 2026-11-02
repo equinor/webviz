@@ -11,6 +11,7 @@ export enum DashboardSettingInstanceTopic {
     CONSTRAINTS = "CONSTRAINTS",
     IS_SETTLING = "IS_SETTLING",
     SOURCE_COUNT = "SOURCE_COUNT",
+    CONSTRAINT_OVERRIDE = "CONSTRAINT_OVERRIDE",
 }
 
 // Where the current value came from. Follows the same fix-up strategy as `persistableFixableAtom` and
@@ -41,6 +42,7 @@ export type DashboardSettingInstanceTopicPayloads<TValue, TConstraints> = {
     [DashboardSettingInstanceTopic.CONSTRAINTS]: TConstraints;
     [DashboardSettingInstanceTopic.IS_SETTLING]: boolean;
     [DashboardSettingInstanceTopic.SOURCE_COUNT]: number;
+    [DashboardSettingInstanceTopic.CONSTRAINT_OVERRIDE]: TConstraints | null;
 };
 
 // A constraint source is anything contributing options to a dashboard setting - currently the consumer
@@ -175,6 +177,7 @@ export class DashboardSettingInstance<TValue, TConstraints> implements PublishSu
 
         this._constraintOverride = override;
         this.recompute();
+        this._publishSubscribeDelegate.notifySubscribers(DashboardSettingInstanceTopic.CONSTRAINT_OVERRIDE);
     }
 
     registerConstraintSource(sourceId: string): DashboardSettingConstraintSourceHandle<TConstraints> {
@@ -268,6 +271,8 @@ export class DashboardSettingInstance<TValue, TConstraints> implements PublishSu
                     return this._isSettling;
                 case DashboardSettingInstanceTopic.SOURCE_COUNT:
                     return this._constraintSources.size;
+                case DashboardSettingInstanceTopic.CONSTRAINT_OVERRIDE:
+                    return this._constraintOverride;
                 default:
                     throw new Error(`Unknown topic: ${topic}`);
             }
@@ -312,11 +317,13 @@ export class DashboardSettingInstance<TValue, TConstraints> implements PublishSu
             return this._definition.initialConstraints;
         }
 
-        if (this._combineStrategy === DashboardSettingCombineStrategy.INTERSECTION) {
-            return contributions.reduce((acc, current) => this._definition.intersectConstraints(acc, current));
-        }
+        // Normalized once afterwards - with a single contribution, `reduce` never calls a combiner
+        const combined =
+            this._combineStrategy === DashboardSettingCombineStrategy.INTERSECTION
+                ? contributions.reduce((acc, current) => this._definition.intersectConstraints(acc, current))
+                : contributions.reduce((acc, current) => this._definition.unionConstraints(acc, current));
 
-        return contributions.reduce((acc, current) => this._definition.unionConstraints(acc, current));
+        return this._definition.normalizeConstraints(combined);
     }
 
     private computeIsSettling(): boolean {

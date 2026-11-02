@@ -74,12 +74,17 @@ export class DashboardSettingsService implements PublishSubscribe<DashboardSetti
         });
 
         this._instances.set(definition.key, instance);
-        this._instanceUnsubscribeFunctions.set(
-            definition.key,
-            instance
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(DashboardSettingInstanceTopic.VALUE)(() => this.bumpStateRevision()),
-        );
+        // The constraint override is persisted along with the value, so changing either changes the persisted state
+        const unsubscribeValue = instance
+            .getPublishSubscribeDelegate()
+            .makeSubscriberFunction(DashboardSettingInstanceTopic.VALUE)(() => this.bumpStateRevision());
+        const unsubscribeConstraintOverride = instance
+            .getPublishSubscribeDelegate()
+            .makeSubscriberFunction(DashboardSettingInstanceTopic.CONSTRAINT_OVERRIDE)(() => this.bumpStateRevision());
+        this._instanceUnsubscribeFunctions.set(definition.key, () => {
+            unsubscribeValue();
+            unsubscribeConstraintOverride();
+        });
 
         this.updateActiveSettings();
         this.bumpStateRevision();
@@ -121,14 +126,19 @@ export class DashboardSettingsService implements PublishSubscribe<DashboardSetti
 
         for (const instance of this._activeSettings) {
             const definition = instance.getDefinition();
-            state[definition.key] = definition.serializeValue(instance.getValue());
+            const constraintOverride = instance.getConstraintOverride();
+            state[definition.key] = {
+                value: definition.serializeValue(instance.getValue()),
+                ...(constraintOverride !== null && { constraintOverride }),
+            };
         }
 
         return state;
     }
 
-    // Replaces the active settings with the serialized ones. Values are restored as-is - they are not
-    // fixed up if they turn out to be invalid once the constraint sources have reported back.
+    // Replaces the active settings with the serialized ones, along with their constraint overrides - a setting
+    // without one aggregates its sources' contributions again. Values are restored as-is - they are not fixed up if
+    // they turn out to be invalid once the constraint sources have reported back.
     deserializeState(state: SerializedDashboardSettingsState): void {
         for (const instance of this._activeSettings) {
             if (!(instance.getDefinition().key in state)) {
@@ -136,26 +146,34 @@ export class DashboardSettingsService implements PublishSubscribe<DashboardSetti
             }
         }
 
-        for (const [key, serializedValue] of Object.entries(state)) {
+        for (const [key, serializedSetting] of Object.entries(state)) {
             const definition = DashboardSettingRegistry.getRegisteredSetting(key);
             if (!definition) {
                 console.warn(`Skipping unknown dashboard setting '${key}' in persisted state.`);
                 continue;
             }
+            if (!("value" in serializedSetting)) {
+                console.warn(`Skipping dashboard setting '${key}' without a value in persisted state.`);
+                continue;
+            }
 
             let value: unknown;
             try {
-                value = definition.deserializeValue(serializedValue);
+                value = definition.deserializeValue(serializedSetting.value);
             } catch (error) {
                 console.warn(`Failed to deserialize value of dashboard setting '${key}' - skipping it.`, error);
                 continue;
             }
 
+            const constraintOverride = serializedSetting.constraintOverride ?? null;
+
             const instance = this._instances.get(key);
             if (instance) {
+                // Before the value, so a restored value is judged by the restored constraints
+                instance.setConstraintOverride(constraintOverride);
                 instance.setValue(value, DashboardSettingValueSource.RESTORED);
             } else {
-                this.addSetting(definition, { value });
+                this.addSetting(definition, { value, constraintOverride: constraintOverride ?? undefined });
             }
         }
     }

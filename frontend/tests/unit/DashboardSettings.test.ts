@@ -79,6 +79,36 @@ describe("DashboardSettingDefinition", () => {
         expect(unionInstance.getConstraints()).toEqual({ min: 0, max: 20 });
         expect(intersectionInstance.getConstraints()).toEqual({ min: 5, max: 10 });
     });
+
+    it("normalizes the combined contributions once, a single one included, without combining it with the initial constraints", () => {
+        const unionConstraints = vi.fn((a: { min: number; max: number }, b: { min: number; max: number }) => ({
+            min: Math.min(a.min, b.min),
+            max: Math.max(a.max, b.max),
+        }));
+        const definition = new DashboardSettingDefinition<number, { min: number; max: number }>({
+            key: "range",
+            label: "Range",
+            defaultValue: 0,
+            initialConstraints: { min: 0, max: 0 },
+            unionConstraints,
+            intersectConstraints: (a, b) => ({ min: Math.max(a.min, b.min), max: Math.min(a.max, b.max) }),
+            normalizeConstraints: (constraints) => ({
+                min: Math.floor(constraints.min),
+                max: Math.ceil(constraints.max),
+            }),
+            Component: () => null,
+        });
+        const instance = new DashboardSettingInstance(definition);
+        const a = instance.registerConstraintSource("a");
+
+        a.updateConstraints({ min: 2.5, max: 7.5 });
+        expect(instance.getConstraints()).toEqual({ min: 2, max: 8 });
+        expect(unionConstraints).not.toHaveBeenCalled();
+
+        instance.registerConstraintSource("b").updateConstraints({ min: 5.5, max: 9.5 });
+        expect(instance.getConstraints()).toEqual({ min: 2, max: 10 });
+        expect(unionConstraints).toHaveBeenCalledExactlyOnceWith({ min: 2.5, max: 7.5 }, { min: 5.5, max: 9.5 });
+    });
 });
 
 describe("makeOptionListDashboardSettingOptions", () => {
@@ -108,6 +138,20 @@ describe("makeOptionListDashboardSettingOptions", () => {
         expect(instance.getConstraints().map((wellbore) => wellbore.uuid)).toEqual(["1", "2", "3"]);
     });
 
+    it("dedupes and sorts a single source's options too, without touching the source's array", () => {
+        const instance = new DashboardSettingInstance(definition);
+        const contribution = [
+            { uuid: "3", name: "C" },
+            { uuid: "1", name: "A" },
+            { uuid: "2", name: "B" },
+            { uuid: "1", name: "A" },
+        ];
+        instance.registerConstraintSource("a").updateConstraints(contribution);
+
+        expect(instance.getConstraints().map((wellbore) => wellbore.uuid)).toEqual(["1", "2", "3"]);
+        expect(contribution.map((wellbore) => wellbore.uuid)).toEqual(["3", "1", "2", "1"]);
+    });
+
     it("intersects options by value", () => {
         const instance = new DashboardSettingInstance(definition, {
             combineStrategy: DashboardSettingCombineStrategy.INTERSECTION,
@@ -130,7 +174,8 @@ describe("makeOptionListDashboardSettingOptions", () => {
             { uuid: "1", name: "A" },
         ]);
 
-        expect(instance.getValue()).toBe("2");
+        // The first of the sorted options - not the first one contributed
+        expect(instance.getValue()).toBe("1");
     });
 
     it("only considers null valid when there are no options", () => {
@@ -485,13 +530,13 @@ describe("DashboardSettingsService", () => {
         const service = new DashboardSettingsService();
         service.addSetting(FIRST).setValue("x");
         const serialized = service.serializeState();
-        expect(serialized).toEqual({ [FIRST.key]: "x" });
+        expect(serialized).toEqual({ [FIRST.key]: { value: "x" } });
 
         const otherService = new DashboardSettingsService();
         otherService.addSetting(SECOND);
         const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-        otherService.deserializeState({ ...serialized, "unknown-key": 42 });
+        otherService.deserializeState({ ...serialized, "unknown-key": { value: 42 } });
 
         expect(warn).toHaveBeenCalledOnce();
         warn.mockRestore();
@@ -499,5 +544,54 @@ describe("DashboardSettingsService", () => {
         const restored = otherService.getSetting(FIRST);
         expect(restored?.getValue()).toBe("x");
         expect(restored?.getValueSource()).toBe(DashboardSettingValueSource.RESTORED);
+    });
+
+    it("round-trips constraint overrides, which restrict the options of the restored setting", () => {
+        const service = new DashboardSettingsService();
+        service.addSetting(FIRST, { constraintOverride: ["x", "y"] }).setValue("y");
+        service.addSetting(SECOND);
+
+        const serialized = service.serializeState();
+        expect(serialized).toEqual({
+            [FIRST.key]: { value: "y", constraintOverride: ["x", "y"] },
+            [SECOND.key]: { value: null },
+        });
+
+        const otherService = new DashboardSettingsService();
+        otherService.deserializeState(serialized);
+
+        const restored = otherService.getSetting(FIRST)!;
+        restored.registerConstraintSource("a").updateConstraints(["x", "y", "z"]);
+        expect(restored.getConstraintOverride()).toEqual(["x", "y"]);
+        expect(restored.getConstraints()).toEqual(["x", "y"]);
+        expect(restored.getValue()).toBe("y");
+        expect(otherService.getSetting(SECOND)?.getConstraintOverride()).toBeNull();
+    });
+
+    it("clears the override of an already active setting that has none in the restored state", () => {
+        const service = new DashboardSettingsService();
+        const instance = service.addSetting(FIRST, { constraintOverride: ["x"] });
+
+        service.deserializeState({ [FIRST.key]: { value: "y" } });
+
+        expect(service.getSetting(FIRST)).toBe(instance);
+        expect(instance.getConstraintOverride()).toBeNull();
+    });
+
+    it("bumps the state revision when a constraint override changes", () => {
+        const service = new DashboardSettingsService();
+        const instance = service.addSetting(FIRST);
+        const getRevision = service.makeSnapshotGetter(DashboardSettingsServiceTopic.STATE_REVISION);
+        const start = getRevision();
+
+        instance.setConstraintOverride(["x"]);
+        expect(getRevision()).toBeGreaterThan(start);
+
+        const afterSet = getRevision();
+        instance.setConstraintOverride(["x"]);
+        expect(getRevision()).toBe(afterSet);
+
+        instance.setConstraintOverride(null);
+        expect(getRevision()).toBeGreaterThan(afterSet);
     });
 });

@@ -6,7 +6,7 @@ export type OptionListDashboardSettingConfig<TValue extends string | number, TOp
     label: string;
     getOptionValue: (option: TOption) => TValue;
     getOptionLabel: (option: TOption) => string;
-    // Applied to the union of the sources' options, so they don't show up in contribution order.
+    // Applied to the combined options - also those of a single source - so they don't show up in contribution order.
     compareOptions?: (a: TOption, b: TOption) => number;
 };
 
@@ -35,11 +35,16 @@ export function makeOptionListDashboardSettingOptions<TValue extends string | nu
         initialConstraints: [],
         // Options are compared by their value, so equal-but-distinct option objects from different
         // sources (e.g. two layers' wellbore headers) are deduplicated.
-        unionConstraints: (a, b) => {
-            const union = [...a, ...b.filter((option) => !hasOption(a, getOptionValue(option)))];
-            return compareOptions ? union.sort(compareOptions) : union;
-        },
+        unionConstraints: (a, b) => [...a, ...b.filter((option) => !hasOption(a, getOptionValue(option)))],
         intersectConstraints: (a, b) => a.filter((option) => hasOption(b, getOptionValue(option))),
+        // Also deduplicates a single source's options. Sorts a copy - the sources' own arrays are left untouched.
+        normalizeConstraints: (constraints) => {
+            const unique = constraints.filter(
+                (option, index) =>
+                    constraints.findIndex((other) => getOptionValue(other) === getOptionValue(option)) === index,
+            );
+            return compareOptions ? unique.sort(compareOptions) : unique;
+        },
         isValueValid: (value, constraints) =>
             value === null ? constraints.length === 0 : hasOption(constraints, value),
         fixupValue: (_value, constraints) => (constraints.length > 0 ? getOptionValue(constraints[0]) : null),

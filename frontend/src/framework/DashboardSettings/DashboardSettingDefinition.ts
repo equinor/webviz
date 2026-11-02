@@ -34,6 +34,11 @@ export type DashboardSettingOptions<TValue, TConstraints> = {
 
     initialConstraints: TConstraints;
 
+    // Brings the combined contributions into their canonical form (e.g. deduplicated and sorted) - applied once to
+    // the result, however many sources contribute, so a single source's options get the same treatment as a union
+    // of several. Not applied to `initialConstraints`.
+    normalizeConstraints?: (constraints: TConstraints) => TConstraints;
+
     isValueValid?: (value: TValue, constraints: TConstraints) => boolean;
 
     // Provides a valid replacement for an invalid value. Only used for the one-time fixup of the default
@@ -83,6 +88,7 @@ export class DashboardSettingDefinition<TValue, TConstraints> {
 
     private readonly _unionConstraints: CombineConstraintsFunction<TConstraints>;
     private readonly _intersectConstraints: CombineConstraintsFunction<TConstraints>;
+    private readonly _normalizeConstraints?: (constraints: TConstraints) => TConstraints;
     private readonly _isValueValid?: (value: TValue, constraints: TConstraints) => boolean;
     private readonly _fixupValue?: (value: TValue, constraints: TConstraints) => TValue;
     private readonly _serializeValue?: (value: TValue) => unknown;
@@ -94,6 +100,7 @@ export class DashboardSettingDefinition<TValue, TConstraints> {
         this.defaultValue = options.defaultValue;
         this.initialConstraints = options.initialConstraints;
         this.Component = options.Component;
+        this._normalizeConstraints = options.normalizeConstraints;
         this._isValueValid = options.isValueValid;
         this._fixupValue = options.fixupValue;
         this._serializeValue = options.serializeValue;
@@ -124,6 +131,13 @@ export class DashboardSettingDefinition<TValue, TConstraints> {
 
     intersectConstraints(a: TConstraints, b: TConstraints): TConstraints {
         return this._intersectConstraints(a, b);
+    }
+
+    normalizeConstraints(constraints: TConstraints): TConstraints {
+        if (this._normalizeConstraints) {
+            return this._normalizeConstraints(constraints);
+        }
+        return constraints;
     }
 
     isValueValid(value: TValue, constraints: TConstraints): boolean {

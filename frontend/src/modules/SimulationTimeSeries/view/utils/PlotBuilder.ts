@@ -489,7 +489,8 @@ export class PlotBuilder {
                 lineShape: lineShape,
                 hoverTemplate: this._defaultHoverTemplate,
                 showLegend: addLegendForTraces,
-                opacity: highlightedRealizationData ? this._dimmedRealizationOpacity : undefined,
+                // Dimmed whenever a realization is highlighted - also when this vector/ensemble doesn't contain it
+                opacity: this._highlightedRealizationNumber !== null ? this._dimmedRealizationOpacity : undefined,
                 type: this._scatterType,
             });
 
