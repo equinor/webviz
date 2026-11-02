@@ -32,6 +32,8 @@ export function ConfirmDeleteDashboardDialog(props: ConfirmDeleteDashboardDialog
                     onClick: props.onClose,
                     tone: "neutral",
                     closesDialog: true,
+                    // Focus the least destructive action, since deleting cannot be undone
+                    autoFocus: true,
                 },
             ]}
         >

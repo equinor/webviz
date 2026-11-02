@@ -13,6 +13,10 @@ export type ConfirmOptions<T = string> = {
     title: string;
     /** Plain text or formatted content, e.g. to list affected items */
     message: string | React.ReactNode;
+    /**
+     * Shown left to right; the last action is rendered as the primary button.
+     * If the primary action has color "danger", the action with id "cancel" is focused when the dialog opens.
+     */
     actions: ConfirmAction<T>[];
     variant?: ConfirmationVariant;
 };
