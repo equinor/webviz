@@ -1,4 +1,4 @@
-import { Settings, Tune } from "@mui/icons-material";
+import { Tune } from "@mui/icons-material";
 
 import { useDashboardSettingInstances } from "@framework/DashboardSettings/adapters/react";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";

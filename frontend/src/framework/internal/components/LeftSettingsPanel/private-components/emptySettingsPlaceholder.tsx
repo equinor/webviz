@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { Settings, Tune } from "@mui/icons-material";
+import { Settings } from "@mui/icons-material";
 
 import { Paragraph } from "@lib/components/Typography/compositions";
 

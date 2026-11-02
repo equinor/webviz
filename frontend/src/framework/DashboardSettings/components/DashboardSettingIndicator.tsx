@@ -1,4 +1,4 @@
-import { HubOutlined, Tune } from "@mui/icons-material";
+import { Tune } from "@mui/icons-material";
 
 import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
