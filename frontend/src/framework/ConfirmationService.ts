@@ -1,3 +1,5 @@
+import type React from "react";
+
 export type ConfirmationVariant = "error" | "info";
 export type ConfirmActionColor = "primary" | "danger" | "secondary";
 
@@ -9,7 +11,8 @@ export type ConfirmAction<T = string> = {
 
 export type ConfirmOptions<T = string> = {
     title: string;
-    message: string;
+    /** Plain text or formatted content, e.g. to list affected items */
+    message: string | React.ReactNode;
     actions: ConfirmAction<T>[];
     variant?: ConfirmationVariant;
 };

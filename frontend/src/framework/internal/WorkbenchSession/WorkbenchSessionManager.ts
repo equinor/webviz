@@ -8,6 +8,7 @@ import {
     updateSessionMutation,
     type SessionUpdate_api,
 } from "@api";
+import type { ConfirmAction } from "@framework/ConfirmationService";
 import { ConfirmationService } from "@framework/ConfirmationService";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
@@ -41,6 +42,7 @@ import {
     loadWorkbenchSessionFromLocalStorage,
 } from "./utils/loaders";
 import { localStorageKeyForSessionId } from "./utils/localStorageHelpers";
+import { makeSnapshotDeletionMessage, type SnapshotDeletionItem } from "./utils/snapshotDeletionMessage";
 import { buildWorkbenchUrl, readWorkbenchUrlLocation, UrlError, type WorkbenchUrlLocation } from "./utils/url";
 import type { WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
 
@@ -1125,41 +1127,66 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     // ========== Deletion Operations ==========
 
     async deleteSession(sessionId: string): Promise<boolean> {
+        const deletedIds = await this.deleteSessions([sessionId]);
+        return deletedIds.includes(sessionId);
+    }
+
+    /**
+     * Deletes the given sessions after a single user confirmation.
+     * @returns The ids of the sessions that were successfully deleted
+     */
+    async deleteSessions(sessionIds: string[]): Promise<string[]> {
+        if (!sessionIds.length) return [];
+
+        const isPlural = sessionIds.length > 1;
         const result = await ConfirmationService.confirm({
             title: "Are you sure?",
-            message:
-                "This session will be deleted. This action can not be reversed. Note that any snapshots made from this session will still be available",
+            message: isPlural
+                ? `${sessionIds.length} sessions will be deleted. This action can not be reversed. Note that any snapshots made from these sessions will still be available`
+                : "This session will be deleted. This action can not be reversed. Note that any snapshots made from this session will still be available",
             actions: [
                 { id: "cancel", label: "No, cancel" },
                 { id: "delete", label: "Yes, delete", color: "danger" },
             ],
         });
 
-        if (result !== "delete") return false;
+        if (result !== "delete") return [];
 
-        let success = false;
-        this.createLoadingToast("deleteSession", "Deleting session...");
+        this.createLoadingToast("deleteSession", isPlural ? "Deleting sessions..." : "Deleting session...");
 
-        try {
-            await this._queryClient
-                .getMutationCache()
-                .build(this._queryClient, {
-                    ...deleteSessionMutation(),
-                    onSuccess: () => {
-                        this.dismissToast("deleteSession");
-                        this.createToast("Session successfully deleted.", "success");
-                        success = true;
-                        removeSessionQueryData(this._queryClient, sessionId);
-                    },
-                })
-                .execute({ path: { session_id: sessionId } });
-        } catch (error) {
-            this.dismissToast("deleteSession");
-            this.createToast("An error occurred while deleting the session.", "error");
-            console.error("Failed to delete session:", error);
+        const results = await Promise.allSettled(
+            sessionIds.map(async (sessionId) => {
+                await this._queryClient
+                    .getMutationCache()
+                    .build(this._queryClient, deleteSessionMutation())
+                    .execute({ path: { session_id: sessionId } });
+
+                removeSessionQueryData(this._queryClient, sessionId);
+                return sessionId;
+            }),
+        );
+
+        this.dismissToast("deleteSession");
+
+        const deletedIds: string[] = [];
+        for (const res of results) {
+            if (res.status === "fulfilled") {
+                deletedIds.push(res.value);
+            } else {
+                console.error("Failed to delete session:", res.reason);
+            }
         }
 
-        return success;
+        const numFailed = sessionIds.length - deletedIds.length;
+        if (numFailed === 0) {
+            this.createToast(isPlural ? "Sessions successfully deleted." : "Session successfully deleted.", "success");
+        } else if (!isPlural) {
+            this.createToast("An error occurred while deleting the session.", "error");
+        } else {
+            this.createToast(`Failed to delete ${numFailed} of ${sessionIds.length} sessions.`, "error");
+        }
+
+        return deletedIds;
     }
 
     async deleteSnapshot(snapshotId: string): Promise<boolean> {
@@ -1237,4 +1264,96 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
         return success;
     }
+
+    /**
+     * Deletes snapshots owned by the user (for all users) and removes the others from the user's list,
+     * after a single confirmation. The confirmation lets the user choose to only remove owned snapshots from their list.
+     * @returns The ids of the snapshots that were deleted and removed, respectively
+     */
+    async deleteOrRemoveSnapshots(
+        toDelete: SnapshotDeletionItem[],
+        toRemove: SnapshotDeletionItem[],
+    ): Promise<{ deletedIds: string[]; removedIds: string[] }> {
+        const noResult = { deletedIds: [], removedIds: [] };
+        const total = toDelete.length + toRemove.length;
+        if (!total) return noResult;
+
+        const actions: ConfirmAction[] = [{ id: "cancel", label: "Cancel" }];
+        if (toDelete.length) {
+            actions.push({ id: "remove-only", label: "Only remove from my list", color: "secondary" });
+            actions.push({ id: "delete", label: "Delete", color: "danger" });
+        } else {
+            actions.push({ id: "remove", label: "Remove", color: "danger" });
+        }
+
+        const result = await ConfirmationService.confirm({
+            title: toDelete.length ? "Delete snapshots?" : "Remove snapshots from list?",
+            message: makeSnapshotDeletionMessage(toDelete, toRemove),
+            actions,
+        });
+
+        if (result === "cancel") return noResult;
+
+        const idsToDelete = result === "delete" ? toDelete.map((s) => s.snapshotId) : [];
+        const idsToRemove = [
+            ...toRemove.map((s) => s.snapshotId),
+            ...(result === "remove-only" ? toDelete.map((s) => s.snapshotId) : []),
+        ];
+
+        this.createLoadingToast("deleteOrRemoveSnapshots", "Updating snapshots...");
+
+        const [deleteResults, removeResults] = await Promise.all([
+            Promise.allSettled(
+                idsToDelete.map(async (snapshotId) => {
+                    await this._queryClient
+                        .getMutationCache()
+                        .build(this._queryClient, deleteSnapshotMutation())
+                        .execute({ path: { snapshot_id: snapshotId } });
+                    return snapshotId;
+                }),
+            ),
+            Promise.allSettled(
+                idsToRemove.map(async (snapshotId) => {
+                    await this._queryClient
+                        .getMutationCache()
+                        .build(this._queryClient, deleteSnapshotAccessLogMutation())
+                        .execute({ path: { snapshot_id: snapshotId } });
+                    return snapshotId;
+                }),
+            ),
+        ]);
+
+        this.dismissToast("deleteOrRemoveSnapshots");
+
+        const deletedIds = collectFulfilled(deleteResults, "Failed to delete snapshot:");
+        const removedIds = collectFulfilled(removeResults, "Failed to remove snapshot from list:");
+
+        if (deletedIds.length || removedIds.length) {
+            removeSnapshotQueryData(this._queryClient);
+        }
+
+        const numFailed = idsToDelete.length + idsToRemove.length - deletedIds.length - removedIds.length;
+        if (numFailed === 0) {
+            this.createToast("Snapshots successfully updated.", "success");
+        } else {
+            this.createToast(
+                `Failed to update ${numFailed} of ${idsToDelete.length + idsToRemove.length} snapshots.`,
+                "error",
+            );
+        }
+
+        return { deletedIds, removedIds };
+    }
+}
+
+function collectFulfilled(results: PromiseSettledResult<string>[], errorMessage: string): string[] {
+    const ids: string[] = [];
+    for (const res of results) {
+        if (res.status === "fulfilled") {
+            ids.push(res.value);
+        } else {
+            console.error(errorMessage, res.reason);
+        }
+    }
+    return ids;
 }
