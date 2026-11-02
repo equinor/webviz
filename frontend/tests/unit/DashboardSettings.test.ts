@@ -260,6 +260,16 @@ describe("DashboardSettingInstance - value rule", () => {
         expect(instance.isValueValid()).toBe(true);
     });
 
+    it("fixes up the default value when initialized with a constraint override", () => {
+        const instance = new DashboardSettingInstance(makeListDefinition(), {
+            constraintOverride: ["x", "y"],
+        });
+
+        expect(instance.getValue()).toBe("x");
+        expect(instance.isValueValid()).toBe(true);
+        expect(instance.isSettling()).toBe(false);
+    });
+
     it("defers the first-settle fixup while any source is pending", () => {
         const instance = makeInstance();
         const a = instance.registerConstraintSource("a");

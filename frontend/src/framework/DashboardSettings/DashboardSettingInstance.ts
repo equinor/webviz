@@ -109,6 +109,7 @@ export class DashboardSettingInstance<TValue, TConstraints> implements PublishSu
         this._constraintOverride = options?.constraintOverride ?? null;
         this._aggregatedConstraints = this._constraintOverride ?? definition.initialConstraints;
         this._isValueValid = this.computeIsValueValid();
+        this.applyValueRule();
     }
 
     getDefinition(): DashboardSettingDefinition<TValue, TConstraints> {

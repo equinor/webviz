@@ -127,7 +127,7 @@ export class SettingManager<
     private _valueConstraints: TValueConstraints | null = null;
     private _loading: boolean = false;
     // Blocked: the value constraints can't be resolved, as a setting they are read from is invalid (or blocked itself).
-    // The current value and constraints are kept until they can be resolved again.
+    // The current value and constraints are kept locally until they can be resolved again.
     private _blocked: boolean = false;
     private _blockedBy: string[] = [];
     private _initialized: boolean = false;
@@ -608,6 +608,8 @@ export class SettingManager<
             this._blockedBy = newBlockedBy;
         }
 
+        this.contributeDashboardSettingConstraints();
+
         // Also notified when only the labels change, as ExternalSettingController combines them on this topic
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_BLOCKED);
         if (isBlockedByChanged) {
@@ -1016,6 +1018,11 @@ export class SettingManager<
     private contributeDashboardSettingConstraints(): void {
         const connection = this._dashboardSettingConnection;
         if (!connection || !this._dashboardSettingAdapter || this._isStatic) {
+            return;
+        }
+
+        if (this._blocked) {
+            connection.handle.clearConstraints();
             return;
         }
 
