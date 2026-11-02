@@ -40,10 +40,10 @@ def setup_azure_monitor_telemetry_for_primary(fastapi_app: FastAPI) -> None:
         resource=Resource.create(attributes=azmon_dest.resource_attributes),
         sampling_ratio=1.0,
         instrumentation_options={
-            # "django": {"enabled": False},
-            # "flask": {"enabled": False},
-            # "psycopg2": {"enabled": False},
-            "fastapi": {"enabled": False}
+            "django": {"enabled": False},
+            "flask": {"enabled": False},
+            "psycopg2": {"enabled": False},
+            "fastapi": {"enabled": False},
         },
     )
 

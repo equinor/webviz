@@ -100,7 +100,6 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 @asynccontextmanager
 async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
-    
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
     # The opt-out for the credential creation here is only meant for special scenarios such as e2e testing.
