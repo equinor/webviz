@@ -3,8 +3,8 @@ import logging
 from azure.monitor.opentelemetry import configure_azure_monitor
 from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.instrumentation.redis import RedisInstrumentor
+from opentelemetry.instrumentation.logging.handler import LoggingHandler
 from opentelemetry.sdk.resources import Resource
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 from webviz_core_utils.azure_monitor_destination import AzureMonitorDestination
@@ -31,21 +31,31 @@ def setup_azure_monitor_telemetry_for_primary(fastapi_app: FastAPI) -> None:
 
     # Starting with version 1.8.6, the default sampler is RateLimitedSampler. We restore the old behavior by setting the
     # sampling_ratio to 1.0, which restores classic Application Insights sampler.
+    # Starting with version 1.8.10, httpx is automatically instrumented by the Azure Monitor OpenTelemetry integration.
+    #
+    # We disabe the automatic instrumentation of fastapi since we manually instrument it below.
+    # The remaining disabled instrumentations are for libraries where the auto instrumentation was noisy.
     configure_azure_monitor(
         connection_string=azmon_dest.insights_connection_string,
         resource=Resource.create(attributes=azmon_dest.resource_attributes),
         sampling_ratio=1.0,
-        logging_formatter=logging.Formatter("[%(name)s]: %(message)s"),
         instrumentation_options={
             "django": {"enabled": False},
             "flask": {"enabled": False},
             "psycopg2": {"enabled": False},
+            "fastapi": {"enabled": False},
         },
     )
 
     FastAPIInstrumentor.instrument_app(fastapi_app)
 
-    HTTPXClientInstrumentor().instrument()
-
     # Should we keep Redis instrumented or does it generate more noise than insights?
     RedisInstrumentor().instrument()
+
+    # Newer versions of azure monitor include the Python logger name as the logger_name custom property :-)
+    # This work-around also re-enables the old code.file.path, code.function.name, and code.line.number on logs.
+    # Currently, configure_azure_monitor() does not expose a public option to turn them back on, hence the hack below.
+    root_logger = logging.getLogger()
+    for handler in root_logger.handlers:
+        if isinstance(handler, LoggingHandler):
+            handler._log_code_attributes = True
