@@ -41,6 +41,7 @@ def setup_azure_monitor_telemetry_for_user_grid3d_ri(fastapi_app: FastAPI) -> No
         connection_string=azmon_dest.insights_connection_string,
         resource=Resource.create(attributes=azmon_dest.resource_attributes),
         sampling_ratio=1.0,
+        instrumentation_options={"fastapi": {"enabled": False}},
     )
 
     FastAPIInstrumentor.instrument_app(fastapi_app)
