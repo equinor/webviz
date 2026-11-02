@@ -58,4 +58,7 @@ def setup_azure_monitor_telemetry_for_primary(fastapi_app: FastAPI) -> None:
     root_logger = logging.getLogger()
     for handler in root_logger.handlers:
         if isinstance(handler, LoggingHandler):
-            handler._log_code_attributes = True
+            if hasattr(handler, "_log_code_attributes"):
+                handler._log_code_attributes = True  # pylint: disable=protected-access
+            else:
+                LOGGER.warning("LoggingHandler does not support code attributes")
