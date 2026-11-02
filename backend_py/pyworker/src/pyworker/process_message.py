@@ -15,6 +15,8 @@ from .task_exceptions import TaskFailedError, TaskDeferredError, TaskAbortedErro
 from .task_runner import run_tracked_user_task_async
 from .tasks.dev_test_task import dev_test_task_async
 from .tasks.create_combined_vector_table_task import create_combined_vector_table_task_async
+from .tasks.qc_hydrostatic_equil_vector_check_task import qc_hydrostatic_equil_vector_check_task_async
+from .tasks.qc_hydrostatic_equil_grid_property_check_task import qc_hydrostatic_equil_grid_property_check_task_async
 
 _logger = logging.getLogger(__name__)
 _tracer = trace.get_tracer(__name__)
@@ -52,6 +54,16 @@ async def process_message_async(
                     case WorkerOperation.CREATE_COMBINED_VECTOR_TABLE:
                         await run_tracked_user_task_async(
                             msg, create_combined_vector_table_task_async, abort_signal, max_delivery_count
+                        )
+
+                    case WorkerOperation.QC_HYDROSTATIC_EQUIL_VECTOR_CHECK:
+                        await run_tracked_user_task_async(
+                            msg, qc_hydrostatic_equil_vector_check_task_async, abort_signal, max_delivery_count
+                        )
+
+                    case WorkerOperation.QC_HYDROSTATIC_EQUIL_GRID_PROPERTY_CHECK:
+                        await run_tracked_user_task_async(
+                            msg, qc_hydrostatic_equil_grid_property_check_task_async, abort_signal, max_delivery_count
                         )
 
                     case _:

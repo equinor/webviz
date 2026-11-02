@@ -79,6 +79,12 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataErrors_api,
     GetHistoricalVectorDataResponses_api,
+    GetHydrostaticEquilibriumGridPropertyCheckHybridData_api,
+    GetHydrostaticEquilibriumGridPropertyCheckHybridErrors_api,
+    GetHydrostaticEquilibriumGridPropertyCheckHybridResponses_api,
+    GetHydrostaticEquilibriumVectorCheckHybridData_api,
+    GetHydrostaticEquilibriumVectorCheckHybridErrors_api,
+    GetHydrostaticEquilibriumVectorCheckHybridResponses_api,
     GetInitialFluidContactSurfacesMetadataData_api,
     GetInitialFluidContactSurfacesMetadataErrors_api,
     GetInitialFluidContactSurfacesMetadataResponses_api,
@@ -1615,6 +1621,62 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(
         url: "/vfp/vfp_table/",
         ...options,
         query: { ...options.query, _rv: "47651e" },
+    });
+
+/**
+ * Get Hydrostatic Equilibrium Vector Check Hybrid
+ *
+ * Check that there is no production/injection between t0 and t1 for the hydrostatic-equilibrium QC.
+ *
+ * Evaluates all (or the requested) realizations in the ensemble. The cumulative production/injection vectors are
+ * required to be zero at t1, and t1 must be sufficiently far from start of simulation (t0). The caller resolves
+ * `t0_iso`/`t1_iso` once (e.g. from a grid model's available property time steps) and passes them in.
+ *
+ * Hybrid long-running operation: the check is computed by a worker task and the result is cached.
+ */
+export const getHydrostaticEquilibriumVectorCheckHybrid = <ThrowOnError extends boolean = false>(
+    options: Options<GetHydrostaticEquilibriumVectorCheckHybridData_api, ThrowOnError>,
+): RequestResult<
+    GetHydrostaticEquilibriumVectorCheckHybridResponses_api,
+    GetHydrostaticEquilibriumVectorCheckHybridErrors_api,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        GetHydrostaticEquilibriumVectorCheckHybridResponses_api,
+        GetHydrostaticEquilibriumVectorCheckHybridErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/qc/hydrostatic_equilibrium_vector_check_hybrid",
+        ...options,
+    });
+
+/**
+ * Get Hydrostatic Equilibrium Grid Property Check Hybrid
+ *
+ * Check that dynamic 3D grid properties are unchanged between t0 and t1, for a single realization.
+ *
+ * Computed one realization at a time - the caller issues one request per realization and aggregates the results
+ * as they arrive. Only the raw per-property change metrics are returned; the client applies its own threshold to
+ * derive the pass/fail verdict, so changing the threshold does not trigger a recompute.
+ *
+ * Hybrid long-running operation: the check is computed by a worker task and the result is cached.
+ */
+export const getHydrostaticEquilibriumGridPropertyCheckHybrid = <ThrowOnError extends boolean = false>(
+    options: Options<GetHydrostaticEquilibriumGridPropertyCheckHybridData_api, ThrowOnError>,
+): RequestResult<
+    GetHydrostaticEquilibriumGridPropertyCheckHybridResponses_api,
+    GetHydrostaticEquilibriumGridPropertyCheckHybridErrors_api,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        GetHydrostaticEquilibriumGridPropertyCheckHybridResponses_api,
+        GetHydrostaticEquilibriumGridPropertyCheckHybridErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/qc/hydrostatic_equilibrium_grid_property_check_hybrid",
+        ...options,
     });
 
 /**

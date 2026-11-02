@@ -17,6 +17,8 @@ NonEmptyList = Annotated[list[T], Len(min_length=1)]
 class WorkerOperation(StrEnum):
     DEV_TEST = "dev-test"
     CREATE_COMBINED_VECTOR_TABLE = "create-combined-vector-table"
+    QC_HYDROSTATIC_EQUIL_VECTOR_CHECK = "qc-hydrostatic-equil-vector-check"
+    QC_HYDROSTATIC_EQUIL_GRID_PROPERTY_CHECK = "qc-hydrostatic-equil-grid-property-check"
 
 
 # Base class for tracked user tasks.
@@ -37,4 +39,21 @@ class CreateCombinedVectorTableMsg(UserTaskMsgHeader):
     case_uuid: NonEmptyStr
     ensemble_name: NonEmptyStr
     vector_names: NonEmptyList[NonEmptyStr]
+    encrypted_access_token: NonEmptyBytes
+
+
+class QcHydrostaticEquilVectorCheckMsg(UserTaskMsgHeader):
+    case_uuid: NonEmptyStr
+    ensemble_name: NonEmptyStr
+    t0_iso: NonEmptyStr
+    t1_iso: NonEmptyStr
+    realizations: list[int] | None
+    encrypted_access_token: NonEmptyBytes
+
+
+class QcHydrostaticEquilGridPropertyCheckMsg(UserTaskMsgHeader):
+    case_uuid: NonEmptyStr
+    ensemble_name: NonEmptyStr
+    grid_name: NonEmptyStr
+    realization: int
     encrypted_access_token: NonEmptyBytes
