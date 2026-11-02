@@ -3,7 +3,6 @@ import logging
 from fastapi import FastAPI
 from azure.monitor.opentelemetry import configure_azure_monitor
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.instrumentation.grpc import GrpcAioInstrumentorClient
 from opentelemetry.sdk.resources import Resource
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
