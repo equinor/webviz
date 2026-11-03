@@ -10,6 +10,7 @@ import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import {
     fixupUserSelectedIndexValues,
+    getSelectionForOfferedIndexColumns,
     isSelectedIndicesWithValuesValidSubset,
 } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
 import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
@@ -41,14 +42,10 @@ function isValidSensitivityCase(
 }
 
 function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
-    const tableDefinitions = get(tableDefinitionsQueryAtom);
-    if (tableDefinitions.isLoading) {
-        return "loading";
-    }
-    if (tableDefinitions.errors.length > 0) {
-        return "error";
-    }
-    return "loaded";
+    // Not derived from isLoading: that is false while a query is disabled or has no result yet, which reported "loaded"
+    // and let the atoms settle on the empty definitions of that moment - depending on timing, e.g. with an empty
+    // index-value selection that is invalid once the definitions arrive
+    return get(tableDefinitionsQueryAtom).dependenciesState;
 }
 
 export const selectedReferenceEnsembleIdentAtom = persistableFixableAtom<RegularEnsembleIdent | null>({
@@ -97,6 +94,8 @@ export const selectedReferenceSensitivityCaseAtom = persistableFixableAtom<
     EnsembleSensitivities | null
 >({
     initialValue: null,
+    computeDependenciesState: ({ get }) =>
+        get(selectedReferenceEnsembleIdentAtom).isValidInContext ? "loaded" : "blocked",
     precomputeFunction: ({ get }) => get(referenceSensitivitiesAtom),
     isValidFunction: ({ value, precomputedValue }) => isValidSensitivityCase(value, precomputedValue),
     fixupFunction: ({ precomputedValue }) =>
@@ -108,6 +107,8 @@ export const selectedComparisonSensitivityCaseAtom = persistableFixableAtom<
     EnsembleSensitivities | null
 >({
     initialValue: null,
+    computeDependenciesState: ({ get }) =>
+        get(selectedComparisonEnsembleIdentAtom).isValidInContext ? "loaded" : "blocked",
     precomputeFunction: ({ get }) => get(comparisonSensitivitiesAtom),
     isValidFunction: ({ value, precomputedValue }) => isValidSensitivityCase(value, precomputedValue),
     fixupFunction: ({ get, precomputedValue }) => {
@@ -157,18 +158,13 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => get(availableIndicesWithValuesAtom),
     isValidFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
-        // An empty selection is only invalid when there are columns available to select from. When
-        // the two sources share no filterable index column, [] is itself the valid selection.
-        if (availableIndicesWithValues.length === 0) {
-            return value.length === 0;
-        }
-
-        // A selection that omits a newly available index column must count as invalid, so the
-        // SELECT_ALL fixup runs and the column is not left as an empty (everything-filtered) filter.
-        const coversAllAvailableColumns = availableIndicesWithValues.every((available) =>
-            value.some((selected) => selected.indexColumn === available.indexColumn),
-        );
-        return coversAllAvailableColumns && isSelectedIndicesWithValuesValidSubset(value, availableIndicesWithValues);
+        // Only the offered columns are judged, and one without an entry counts as unfiltered - see
+        // getSelectionForOfferedIndexColumns(). Entries for other columns (e.g. kept from previously selected tables) are
+        // not used by the query either (see indicesWithValuesForQueryAtom) - they are kept, but ignored, so they apply
+        // again once their columns are offered again. When no column is offered, there is nothing to select, so any
+        // selection is valid.
+        const offeredSelection = getSelectionForOfferedIndexColumns(value, availableIndicesWithValues);
+        return isSelectedIndicesWithValuesValidSubset(offeredSelection, availableIndicesWithValues);
     },
     fixupFunction: ({ value, precomputedValue: availableIndicesWithValues }) =>
         fixupUserSelectedIndexValues(value ?? [], availableIndicesWithValues, FixupSelection.SELECT_ALL),

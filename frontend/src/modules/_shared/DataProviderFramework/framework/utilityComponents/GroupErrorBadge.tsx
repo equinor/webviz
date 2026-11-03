@@ -18,7 +18,7 @@ export function GroupErrorBadge(props: GroupErrorBadgeProps) {
 
     const revisionNumber = usePublishSubscribeTopicValue(
         props.group.getItemDelegate().getDataProviderManager(),
-        DataProviderManagerTopic.DATA_REVISION,
+        DataProviderManagerTopic.GUI_STATE_REVISION,
     );
 
     const deserializationErrors = usePublishSubscribeTopicValue(

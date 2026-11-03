@@ -190,7 +190,6 @@ async def _run_query_and_aggregate_surf_info_async(sumo_client: SumoClient, quer
                 },
             },
         },
-        "_source": True,
         "size": 0,
     }
 
@@ -232,7 +231,6 @@ async def _run_query_and_aggregate_time_intervals_async(
                 },
             },
         },
-        "_source": True,
         "size": 0,
     }
 
@@ -265,7 +263,6 @@ async def _run_query_and_aggregate_time_points_async(sumo_client: SumoClient, qu
                 },
             },
         },
-        "_source": True,
         "size": 0,
     }
 

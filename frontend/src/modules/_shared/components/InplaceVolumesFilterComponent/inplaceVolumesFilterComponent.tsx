@@ -37,8 +37,9 @@ export type InplaceVolumesFilterComponentProps = {
     availableSensitivityCases?: SensitivityCaseOption[];
     selectedSensitivityCases?: SensitivityCaseIdent[];
     sensitivityCasesAnnotations?: SettingAnnotation[];
-
     dataAnnotations?: SettingAnnotation[];
+    ensembleAnnotations?: SettingAnnotation[];
+    tableNamesAnnotations?: SettingAnnotation[];
     selectionAnnotations?: SettingAnnotation[];
     debounceMs?: number;
     allowDeltaEnsembles?: boolean;
@@ -292,6 +293,20 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
 
     const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(props.workbenchSession);
 
+    // Errors are shown on the index columns whose selection holds values that are no longer available, so that the
+    // section header counts them. Other annotations (e.g. waiting for valid table sources) are shown for the section.
+    const selectionErrorAnnotations =
+        props.selectionAnnotations?.filter((annotation) => annotation.type === "error") ?? [];
+    const otherSelectionAnnotations =
+        props.selectionAnnotations?.filter((annotation) => annotation.type !== "error") ?? [];
+
+    function hasUnavailableSelectedValues(availableIndexWithValues: InplaceVolumesIndexWithValues_api): boolean {
+        const selectedValues =
+            props.selectedIndicesWithValues.find((el) => el.indexColumn === availableIndexWithValues.indexColumn)
+                ?.values ?? [];
+        return selectedValues.some((value) => !availableIndexWithValues.values.includes(value));
+    }
+
     return (
         <>
             <Setting.Section title="Data" defaultOpen>
@@ -304,7 +319,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         {annotation.message}
                     </Banner>
                 ))}
-                <Setting.Field label="Ensembles" stacked>
+                <Setting.Field label="Ensembles" annotations={props.ensembleAnnotations} stacked>
                     {props.allowDeltaEnsembles ? (
                         <EnsemblePicker
                             ensembles={props.ensembleSet.getEnsembleArray()}
@@ -328,6 +343,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                     stacked
                     loadingOverlay={props.isPending ?? false}
                     label="Table sources"
+                    annotations={props.tableNamesAnnotations}
                     errorOverlay={
                         !props.isPending && tableSourceOptions.length === 0
                             ? "No table names. See logs for details."
@@ -377,18 +393,24 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             </Setting.Section>
 
             <Setting.Section title="Data Selection">
-                {!props.availableIndicesWithValues.length && (
+                {/* Only judged for valid table sources - invalid ones or ones waiting for valid ensembles have no
+                    filters to compare yet */}
+                {!props.availableIndicesWithValues.length && !props.tableNamesAnnotations?.length && (
                     // TODO - Waiting for section overlay. Temp workaround
                     <Banner layoutClassName="col-span-3" tone="danger">
                         Selected tables are not comparable because they have no filters in common
                     </Banner>
                 )}
 
-                {props.selectionAnnotations?.map((annotation) => (
+                {otherSelectionAnnotations.map((annotation) => (
                     <Banner
                         key={annotation.message}
                         layoutClassName="col-span-3"
-                        tone={({ info: "info", warning: "warning", error: "danger" } as const)[annotation.type]}
+                        tone={
+                            ({ info: "info", warning: "warning", error: "danger", invalid: "danger" } as const)[
+                                annotation.type
+                            ]
+                        }
                     >
                         {annotation.message}
                     </Banner>
@@ -400,14 +422,19 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         label: value.toString(),
                     }));
 
+                    // A column without an entry has never been filtered - all its values count as selected
                     const value =
-                        indicesWithValues.find((el) => el.indexColumn === indexWithValues.indexColumn)?.values ?? [];
+                        indicesWithValues.find((el) => el.indexColumn === indexWithValues.indexColumn)?.values ??
+                        indexWithValues.values;
 
                     return (
                         <Setting.Field
                             key={indexWithValues.indexColumn}
                             label={indexWithValues.indexColumn}
                             stacked
+                            annotations={
+                                hasUnavailableSelectedValues(indexWithValues) ? selectionErrorAnnotations : undefined
+                            }
                             errorOverlay={
                                 !props.areCurrentlySelectedTablesComparable
                                     ? "Selected tables are not comparable because their filter values differ"

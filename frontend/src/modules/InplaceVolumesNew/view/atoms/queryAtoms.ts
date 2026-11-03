@@ -81,7 +81,8 @@ export const aggregatedTableDataQueriesAtom = atom((get) => {
     const delta = get(deltaAggregatedTableDataQueriesAtom);
     const realizationToSensitivityCaseLabel = get(realizationToSensitivityCaseLabelMapAtom);
 
-    // Disabled queries still return cached data, which may not match the current (invalid) selection.
+    // Disabled queries keep their cached results and errors, which must not be shown for an invalid selection
+    // (e.g. one ensemble of several removed from the session)
     if (!get(areSelectedTablesComparableAtom) || !get(areTableDefinitionSelectionsValidAtom)) {
         return {
             tablesData: [],

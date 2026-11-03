@@ -7,6 +7,8 @@ import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
+import { FIXUP } from "@framework/utils/atomUtils";
+import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
@@ -110,6 +112,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIndexValueCriteria,
     );
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
+        const haveEnsemblesChanged = !areEnsembleIdentListsEqual(
+            newFilter.ensembleIdents,
+            selectedEnsembleIdents.value,
+        );
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
         setSelectedIndicesWithValues(newFilter.indicesWithValues);
@@ -120,6 +126,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         );
         if (newFilter.sensitivityCases) {
             setSelectedSensitivityCases(newFilter.sensitivityCases);
+        }
+        if (haveEnsemblesChanged) {
+            // Cases belong to the ensemble: fill them in for a new one instead of keeping an empty or stale selection.
+            setSelectedSensitivityCases(FIXUP);
         }
     }
 
@@ -155,6 +165,18 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         groupByIndicesOptions.push({ label: indicesWithValues.indexColumn, value: indicesWithValues.indexColumn });
     }
 
+    // Retained values that are no longer available are still shown as chips. When the user changes the selection, they
+    // are dropped rather than carried along with the new values.
+    function handleResultNamesChange(resultNames: string[]) {
+        setSelectedResultNames(resultNames.filter((name) => resultNameOptions.some((option) => option.value === name)));
+    }
+
+    function handleGroupByIndicesChange(groupByIndices: string[]) {
+        setSettledGroupByIndices(
+            groupByIndices.filter((index) => groupByIndicesOptions.some((option) => option.value === index)),
+        );
+    }
+
     const statisticOptions = React.useMemo<ComboboxItem<InplaceVolumesStatistic_api>[]>(() => {
         return Object.values(InplaceVolumesStatistic_api).map((v) => {
             return { value: v, label: InplaceVolumesStatisticEnumToStringMapping[v] };
@@ -167,6 +189,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const selectedIndicesWithValuesAnnotations =
         useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
+    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
+    const selectedTableNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedTableNamesAtom);
 
     const tableSettings = (
         <Setting.Section title="Responses and grouping" defaultOpen>
@@ -209,7 +233,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     selectionMode="chips"
                     showClearAllButton
                     placeholder="Select responses..."
-                    onValueChange={setSelectedResultNames}
+                    onValueChange={handleResultNamesChange}
                 />
             </Setting.Field>
             <Setting.Field label="Grouping" annotations={selectedGroupByIndicesAnnotations}>
@@ -218,7 +242,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     items={groupByIndicesOptions}
                     multiple
                     showClearAllButton
-                    onValueChange={setSettledGroupByIndices}
+                    onValueChange={handleGroupByIndicesChange}
                     placeholder="Select one ore more groups..."
                 />
             </Setting.Field>
@@ -258,6 +282,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     additionalSettings={tableSettings}
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
                     selectionAnnotations={selectedIndicesWithValuesAnnotations}
+                    ensembleAnnotations={selectedEnsembleIdentsAnnotations}
+                    tableNamesAnnotations={selectedTableNamesAnnotations}
                     allowDeltaEnsembles
                     onChange={handleFilterChange}
                 />

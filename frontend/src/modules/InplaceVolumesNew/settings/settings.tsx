@@ -5,6 +5,8 @@ import { useAtom, useAtomValue } from "jotai";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
+import { FIXUP } from "@framework/utils/atomUtils";
+import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Banner } from "@lib/components/Banner";
 import { Combobox } from "@lib/components/Combobox";
@@ -35,7 +37,11 @@ import {
     selectedPlotTypeAtom,
     showTableAtom,
 } from "./atoms/baseAtoms";
-import { sensitivityModeAtom, tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
+import {
+    offeredSelectedIndicesWithValuesAtom,
+    sensitivityModeAtom,
+    tableDefinitionsAccessorAtom,
+} from "./atoms/derivedAtoms";
 import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
@@ -69,6 +75,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedSelectorColumn, setSelectedSelectorColumn] = useAtom(selectedSelectorColumnAtom);
 
     const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
+    const offeredSelectedIndicesWithValues = useAtomValue(offeredSelectedIndicesWithValuesAtom);
 
     const [selectedFirstResultName, setSelectedFirstResultName] = useAtom(selectedResultNameAtom);
     const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(selectedSubplotByAtom);
@@ -83,6 +90,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     propagateAllApiErrorsToStatusWriter(tableDefinitionsQueryResult.errors, statusWriter);
 
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
+        const haveEnsemblesChanged = !areEnsembleIdentListsEqual(
+            newFilter.ensembleIdents,
+            selectedEnsembleIdents.value,
+        );
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
         setSelectedIndicesWithValues(newFilter.indicesWithValues);
@@ -93,6 +104,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         );
         if (newFilter.sensitivityCases) {
             setSelectedSensitivityCases(newFilter.sensitivityCases);
+        }
+        if (haveEnsemblesChanged) {
+            // Cases belong to the ensemble: fill them in for a new one instead of keeping an empty or stale selection.
+            setSelectedSensitivityCases(FIXUP);
         }
     }
 
@@ -143,8 +158,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const requiredFluid = selectedFirstResultName.value
         ? FLUID_SPECIFIC_RESULT_NAMES[selectedFirstResultName.value]
         : undefined;
+    // The offered selection - a FLUID column without an entry has never been filtered, so all fluids count as selected
     const selectedFluids =
-        selectedIndicesWithValues.value
+        offeredSelectedIndicesWithValues
             .find((index) => index.indexColumn === TableOriginKey.FLUID)
             ?.values.map((value) => value.toLowerCase()) ?? [];
     const isRequiredFluidSelected = requiredFluid !== undefined && selectedFluids.includes(requiredFluid);
@@ -154,6 +170,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectedSubplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
     const selectedSensitivityCasesAnnotations = useMakePersistableFixableAtomAnnotations(selectedSensitivityCasesAtom);
+    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
+    const selectedTableNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedTableNamesAtom);
+    const selectedIndicesWithValuesAnnotations =
+        useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
 
     function handleOptionChange<K extends keyof InplaceVolumesPlotOptions>(key: K) {
         return (value: InplaceVolumesPlotOptions[K]) => setPlotOptions({ ...plotOptions, [key]: value });
@@ -361,6 +381,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             : undefined
                     }
                     additionalSettings={plotSettings}
+                    ensembleAnnotations={selectedEnsembleIdentsAnnotations}
+                    tableNamesAnnotations={selectedTableNamesAnnotations}
+                    selectionAnnotations={selectedIndicesWithValuesAnnotations}
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
                     allowDeltaEnsembles
                     onChange={handleFilterChange}

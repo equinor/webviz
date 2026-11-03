@@ -5,7 +5,6 @@ import type { QueryClient } from "@tanstack/query-core";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
-import { GroupDelegateTopic } from "../delegates/GroupDelegate";
 import { DataProviderManager, DataProviderManagerTopic } from "../framework/DataProviderManager/DataProviderManager";
 
 export type UsePersistedDataProviderManagerOptions = {
@@ -47,7 +46,10 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
             return;
         }
 
-        const serializedState = JSON.stringify(manager.serializeState());
+        const serializedState = manager.getSerializedState();
+        if (serializedState === null) {
+            return;
+        }
         dataProviderSerializedStateRef.current = serializedState;
         setSerializedStateRef.current(serializedState);
     }, []);
@@ -78,17 +80,14 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
             }
 
             // Subscribe to DataProviderManager state changes to persist state.
-            const unsubscribeDataRev = manager
+            const unsubscribeSerializedStateRev = manager
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION)(persistDataProviderManagerState);
-            const unsubscribeExpands = manager
-                .getGroupDelegate()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(persistDataProviderManagerState);
+                .makeSubscriberFunction(DataProviderManagerTopic.SERIALIZED_STATE_REVISION)(
+                persistDataProviderManagerState,
+            );
 
             return function cleanup() {
-                unsubscribeDataRev();
-                unsubscribeExpands();
+                unsubscribeSerializedStateRev();
                 manager.beforeDestroy();
             };
         },

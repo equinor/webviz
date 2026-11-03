@@ -28,6 +28,11 @@ export type EnsembleDropdownProps = (
       }
 ) & {
     ensembleRealizationFilterFunction?: EnsembleRealizationFilterFunction;
+    /**
+     * Idents that should still appear in `ensembles` (so their label resolves correctly) but cannot
+     * be selected - e.g. the currently selected ensemble when it is no longer valid in this context.
+     */
+    disabledEnsembleIdents?: readonly (RegularEnsembleIdent | DeltaEnsembleIdent)[];
 } & (
         | ({
               showBrowseButtons: true;
@@ -44,6 +49,7 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
         allowDeltaEnsembles,
         value,
         ensembleRealizationFilterFunction,
+        disabledEnsembleIdents,
         ...rest
     } = props;
 
@@ -51,8 +57,9 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
         return ensembles.map((ens) => ({
             value: ens.getIdent().toString(),
             label: ens.getDisplayName(),
+            disabled: disabledEnsembleIdents?.some((ident) => ident.equals(ens.getIdent())) ?? false,
         }));
-    }, [ensembles]);
+    }, [ensembles, disabledEnsembleIdents]);
 
     const ensembleByIdentStr = React.useMemo(
         () => new Map(ensembles.map((ens) => [ens.getIdent().toString(), ens])),

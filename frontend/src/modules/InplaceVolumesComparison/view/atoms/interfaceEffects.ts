@@ -11,6 +11,7 @@ import {
     indexColumnsWithNoSelectedValuesAtom,
     indicesWithValuesAtom,
     isIndexValueIntersectionActiveAtom,
+    isSubplotByValidAtom,
     referenceEnsembleIdentAtom,
     resultNameAtom,
     showTableAtom,
@@ -58,6 +59,9 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(areSelectedIndicesWithValuesValidAtom, getInterfaceValue("areSelectedIndicesWithValuesValid"));
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(isSubplotByValidAtom, getInterfaceValue("isSubplotByValid"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(showTableAtom, getInterfaceValue("showTable"));

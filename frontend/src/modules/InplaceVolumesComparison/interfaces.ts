@@ -41,6 +41,8 @@ export type SettingsToViewInterface = {
     areSelectedTablesComparable: boolean;
     /** False for a persisted/template index-value selection that is invalid in the current context. */
     areSelectedIndicesWithValuesValid: boolean;
+    /** False for a persisted/previous subplot-by column that is not available in the current tables. */
+    isSubplotByValid: boolean;
     showTable: boolean;
 };
 
@@ -62,5 +64,6 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     areSourcesDistinct: (get) => get(areSourcesDistinctAtom),
     areSelectedTablesComparable: (get) => get(areSelectedTablesComparableAtom),
     areSelectedIndicesWithValuesValid: (get) => get(areSelectedIndicesWithValuesValidAtom),
+    isSubplotByValid: (get) => get(selectedSubplotByAtom).isValidInContext,
     showTable: (get) => get(showTableAtom),
 };

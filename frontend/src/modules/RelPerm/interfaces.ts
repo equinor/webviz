@@ -1,14 +1,13 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import { selectedCurveTypeAtom } from "./settings/atoms/baseAtoms";
+import { relPermDataAccessorStatusAtom, visualizationSettingsAtom } from "./settings/atoms/derivedAtoms";
 import {
-    relPermDataAccessorStatusAtom,
     selectedCurveNamesAtom,
     selectedSaturationAxisNameAtom,
     selectedSatnumsAtom,
     selectedTableNameAtom,
-    visualizationSettingsAtom,
-} from "./settings/atoms/derivedAtoms";
+} from "./settings/atoms/persistableFixableAtoms";
 import type { CurveType, RelPermDataAccessorStatus, VisualizationSettings } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
@@ -26,10 +25,10 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    tableName: (get) => get(selectedTableNameAtom),
-    saturationAxisName: (get) => get(selectedSaturationAxisNameAtom),
-    curveNames: (get) => get(selectedCurveNamesAtom),
-    satnums: (get) => get(selectedSatnumsAtom),
+    tableName: (get) => get(selectedTableNameAtom).value,
+    saturationAxisName: (get) => get(selectedSaturationAxisNameAtom).value,
+    curveNames: (get) => get(selectedCurveNamesAtom).value,
+    satnums: (get) => get(selectedSatnumsAtom).value,
     curveType: (get) => get(selectedCurveTypeAtom),
     visualizationSettings: (get) => get(visualizationSettingsAtom),
     relPermDataAccessorStatus: (get) => get(relPermDataAccessorStatusAtom),

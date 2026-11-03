@@ -35,7 +35,7 @@ router = APIRouter()
 
 
 @router.get("/inplace_table_definitions/")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.LONG, result_version=1)
 async def get_inplace_table_definitions(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],

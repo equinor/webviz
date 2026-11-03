@@ -12,12 +12,12 @@ import {
     areSelectedTablesComparableAtom,
     areTableDefinitionSelectionsValidAtom,
     isSensitivityEnsembleSelectionBlockedAtom,
+    offeredSelectedIndicesWithValuesAtom,
     sensitivitySelectionAtom,
 } from "./settings/atoms/derivedAtoms";
 import {
     selectedGroupByIndicesAtom,
     selectedEnsembleIdentsAtom,
-    selectedIndicesWithValuesAtom,
     selectedResultNamesAtom,
     selectedTableNamesAtom,
 } from "./settings/atoms/persistableFixableAtoms";
@@ -44,7 +44,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return {
             ensembleIdents: get(selectedEnsembleIdentsAtom).value,
             tableNames: get(selectedTableNamesAtom).value,
-            indicesWithValues: get(selectedIndicesWithValuesAtom).value,
+            // Entries for columns that are not offered must not be queried for
+            indicesWithValues: get(offeredSelectedIndicesWithValuesAtom),
             areSelectedTablesComparable: get(areSelectedTablesComparableAtom),
         };
     },

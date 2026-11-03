@@ -103,6 +103,20 @@ export const perRealizationTableDataResultsAtom = atom((get) => {
     const regular = get(regularPerRealizationTableDataWithSensitivityAtom);
     const delta = get(deltaPerRealizationTableDataResultsAtom);
 
+    // Disabled queries keep their cached results and errors, which must not be shown for an invalid selection
+    // (e.g. one ensemble of several removed from the session)
+    if (!get(areTableDefinitionSelectionsValidAtom)) {
+        return {
+            tablesData: [],
+            isFetching: false,
+            allQueriesFailed: false,
+            errors: [],
+            droppedFluidSelections: [],
+            unmatchedRows: [],
+            numDroppedSensitivityRows: 0,
+        };
+    }
+
     const tablesData = [...regular.tablesData, ...delta.tablesData];
 
     return {
@@ -151,6 +165,19 @@ const regularStatisticalTableDataResultsAtom = atomWithQueries((get) => {
  */
 export const statisticalTableDataResultsAtom = atom((get) => {
     const delta = get(deltaPerRealizationTableDataResultsAtom);
+
+    // Like the per-realization results, cached results must not be shown for an invalid selection
+    if (!get(areTableDefinitionSelectionsValidAtom)) {
+        return {
+            tablesData: [],
+            isFetching: false,
+            allQueriesFailed: false,
+            errors: [],
+            droppedFluidSelections: [],
+            unmatchedRows: [],
+            numDroppedSensitivityRows: 0,
+        };
+    }
 
     // A disabled query can still return cached data, so the backend result is ignored in sensitivity mode.
     const regular =
