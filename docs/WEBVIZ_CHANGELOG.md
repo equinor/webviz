@@ -27,6 +27,7 @@
 - **Sensitivity/Response plot**: When the data channel holds several responses (e.g. one per region), one tornado is shown per response instead of only the first, and the table lists all responses.
 - **Sensitivity/Response plot**: Sensitivities with no data in the received response (e.g. cases filtered out in the sending module) are left out and listed in a warning, instead of being drawn as zero. A reference sensitivity without data is reported instead of being treated as zero.
 - **Inplace Volumes Plot**: Hovers show which group (e.g. sensitivity case) a value belongs to and the actual realization number. Clicking a legend item now applies to all subplots, and long legends scroll.
+- **Inplace Volumes Plot**: Changing plot type, response, subplot, colour or histogram type resets the zoom instead of keeping a zoom that could leave the plot empty. Scroll zoom on box and distribution plots only zooms the value axis, and zooming no longer makes the subplots jump while the margins adjust.
 
 ### Added
 

@@ -59,7 +59,8 @@ export function configurePlotlyLayoutAxisByPlotType(plotBuilder: PlotBuilder, op
 }
 
 function configureDistributionPlot(plotBuilder: PlotBuilder, resultName: string): void {
-    plotBuilder.setYAxisOptions({ visible: false });
+    // The density axis is hidden, so zooming it only stretches the curves.
+    plotBuilder.setYAxisOptions({ visible: false, fixedrange: true });
     plotBuilder.setXAxisOptions({ zeroline: false, title: { text: resultName } });
 }
 
@@ -81,7 +82,13 @@ export function makeBoxPlotLayoutOptions(
     numSubplots: number,
 ): { yAxis: Partial<LayoutAxis>; showLegend: boolean } {
     const showRowLabels = numSubplots <= 1;
-    const yAxis: Partial<LayoutAxis> = { type: "category", showticklabels: showRowLabels, automargin: showRowLabels };
+    // Zooming the rows only stretches the boxes; scroll zoom then scales them out of the subplot until Plotly redraws.
+    const yAxis: Partial<LayoutAxis> = {
+        type: "category",
+        showticklabels: showRowLabels,
+        automargin: showRowLabels,
+        fixedrange: true,
+    };
     if (rowLabels) {
         // Plotly lists categories bottom-up.
         yAxis.categoryorder = "array";

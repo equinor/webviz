@@ -35,6 +35,7 @@ export class PlotBuilder {
     private _histogramType: HistogramType | null = null;
     private _plotType: PlotType | null = null;
     private _showLegend = true;
+    private _uiRevision: string | null = null;
 
     constructor(groupedData: GroupedTableData, plotFunction: PlotFunction) {
         this._groupedData = groupedData;
@@ -73,11 +74,19 @@ export class PlotBuilder {
         this._highlightedSubPlotNames = subPlotNames;
     }
 
+    /** Zoom and pan are kept while this stays the same, and reset when it changes. */
+    setUiRevision(uiRevision: string): void {
+        this._uiRevision = uiRevision;
+    }
+
     private updateLayout(figure: Figure, hideXTickLabels: boolean) {
         const numRows = figure.getNumRows();
         const numCols = figure.getNumColumns();
         const numSubplots = this._groupedData.getNumSubplots();
-        const xAxisOverrides: Partial<LayoutAxis> = { automargin: true };
+        // Numeric tick labels at a subplot's side would push the side margins and shift all subplots on every zoom step.
+        // Rotated category labels need the side margins. The types lack Plotly's flag-list form.
+        const automargin = this._axesOptions.x?.type === "category" ? true : ("height" as unknown as boolean);
+        const xAxisOverrides: Partial<LayoutAxis> = { automargin };
         if (hideXTickLabels) {
             xAxisOverrides.showticklabels = false;
             const title = this._axesOptions.x?.title;
@@ -133,6 +142,9 @@ export class PlotBuilder {
         });
         if (!this._showLegend) {
             figure.updateLayout({ showlegend: false });
+        }
+        if (this._uiRevision !== null) {
+            figure.updateLayout({ uirevision: this._uiRevision });
         }
         if (this._plotType === PlotType.BAR) {
             // Force normal legend order for the bar plot.

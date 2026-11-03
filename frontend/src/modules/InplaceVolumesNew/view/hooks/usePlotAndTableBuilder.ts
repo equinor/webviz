@@ -134,6 +134,9 @@ export function useBuildPlotAndTable(
         numSubplots: groupedData.getNumSubplots(),
     });
 
+    // A zoom on one plot type or response is meaningless on another, and can leave the plot empty.
+    plotBuilder.setUiRevision([plotType, resultName, barSelectorColumn, subplotBy, colorBy, histogramType].join("|"));
+
     // Set highlighted subplots based on hover state
     const hoveredItem = hoveredRegion ?? hoveredZone ?? hoveredFacies;
     if (hoveredItem) {

@@ -64,7 +64,7 @@ function makeTable(): Table {
     ]);
 }
 
-function buildBoxPlotLayout(subplotBy: string): Partial<Layout> & Record<string, unknown> {
+function buildBoxPlotLayout(subplotBy: string, uiRevision?: string): Partial<Layout> & Record<string, unknown> {
     const colorBy = "SENSITIVITY";
     const groupedData = new GroupedTableData({
         table: makeTable(),
@@ -102,6 +102,9 @@ function buildBoxPlotLayout(subplotBy: string): Partial<Layout> & Record<string,
         boxRowLabels: groupedData.getColorLabels(),
         numSubplots: groupedData.getNumSubplots(),
     });
+    if (uiRevision) {
+        plotBuilder.setUiRevision(uiRevision);
+    }
     const element = plotBuilder.build(750, 1100) as React.ReactElement<{ layout: Partial<Layout> }>;
     return element.props.layout as Partial<Layout> & Record<string, unknown>;
 }
@@ -131,6 +134,11 @@ describe("makeBoxPlotLayoutOptions", () => {
     test("without shared rows each subplot lists its own", () => {
         expect(makeBoxPlotLayoutOptions(null, 2).yAxis.categoryarray).toBeUndefined();
     });
+
+    test("the rows can't be zoomed", () => {
+        expect(makeBoxPlotLayoutOptions(["a"], 1).yAxis.fixedrange).toBe(true);
+        expect(makeBoxPlotLayoutOptions(["a"], 3).yAxis.fixedrange).toBe(true);
+    });
 });
 
 describe("box plot layout", () => {
@@ -156,5 +164,17 @@ describe("box plot layout", () => {
             automargin: true,
         });
         expect(layout.showlegend).toBe(false);
+    });
+
+    test("numeric x axes only grow the bottom margin, so zooming doesn't shift the subplots", () => {
+        const layout = buildBoxPlotLayout("ZONE");
+        for (const axisKey of ["xaxis1", "xaxis2", "xaxis3"]) {
+            expect(layout[axisKey]).toMatchObject({ automargin: "height" });
+        }
+    });
+
+    test("the ui revision is passed to the layout", () => {
+        expect(buildBoxPlotLayout("ZONE", "BOX|STOIIP").uirevision).toBe("BOX|STOIIP");
+        expect(buildBoxPlotLayout("ZONE").uirevision).toBeUndefined();
     });
 });
