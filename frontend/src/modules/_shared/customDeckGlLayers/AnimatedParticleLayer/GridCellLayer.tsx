@@ -169,6 +169,7 @@ export class GridCellLayer extends CompositeLayer<GridCellLayerProps> {
                     this.getSubLayerProps({
                         id: `face-velocity-arrow-${dir}`,
                         data: this.props.data,
+                        _full3d: true,
                         getFillColor: [...DEBUG_DIRECTION_COLORS[dir], 255],
                         getPolygon: (d: GridCell) => {
                             const faceIndex = DIRECTIONS_TO_INDEX[dir];
