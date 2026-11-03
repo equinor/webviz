@@ -24,10 +24,7 @@ export function GlobalConfirmationDialog(): React.ReactNode {
         return null;
     }
 
-    // Actions are listed in visual left-to-right order; the last one is the primary action
     const primaryAction = options.actions[options.actions.length - 1];
-    // For destructive confirmations, focus the least destructive action (cancel) so Enter does not confirm by accident
-    const focusCancel = primaryAction.color === "danger";
 
     return (
         <AlertDialog
@@ -41,7 +38,6 @@ export function GlobalConfirmationDialog(): React.ReactNode {
                 label: action.label,
                 tone: mapActionColorToButtonTone(action.color),
                 onClick: () => handleAction(action.id),
-                autoFocus: focusCancel && action.id === "cancel",
             }))}
             title={options.title}
         >

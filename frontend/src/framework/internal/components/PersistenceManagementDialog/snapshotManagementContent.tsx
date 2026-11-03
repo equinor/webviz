@@ -100,6 +100,14 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         500,
     );
 
+    // Selected snapshots hidden by a filter would otherwise still be targeted by bulk deletion
+    const filterCriteria = [immediateTitleFilterValue, visitedAtRange, onlyShowOwnSnapshots, hideDeletedSnapshots];
+    const [prevFilterCriteria, setPrevFilterCriteria] = React.useState(filterCriteria);
+    if (filterCriteria.some((criterion, index) => criterion !== prevFilterCriteria[index])) {
+        setPrevFilterCriteria(filterCriteria);
+        setSelectedSnapshots([]);
+    }
+
     function handleClearTitleFilter() {
         setTitleFilterValue("");
     }
@@ -339,6 +347,9 @@ function SnapshotTable(props: SnapshotTableProps) {
 
     React.useEffect(
         function maybeDeselectRemovedEntries() {
+            // Only a settled, fully loaded result proves a missing entry was removed; otherwise it may be on an unloaded page
+            if (!snapshotsQuery.isSuccess || snapshotsQuery.isFetching || snapshotsQuery.hasNextPage) return;
+
             const remaining = props.selectedSnapshots.filter((selected) =>
                 tableData.some((s) => s.snapshotId === selected.snapshotId),
             );
@@ -346,7 +357,14 @@ function SnapshotTable(props: SnapshotTableProps) {
                 onSelectedSnapshotsChange(remaining);
             }
         },
-        [onSelectedSnapshotsChange, props.selectedSnapshots, tableData],
+        [
+            onSelectedSnapshotsChange,
+            props.selectedSnapshots,
+            tableData,
+            snapshotsQuery.isSuccess,
+            snapshotsQuery.isFetching,
+            snapshotsQuery.hasNextPage,
+        ],
     );
 
     const numSelectedLoadedSnapshots = tableData.filter((s) => selectedSnapshotIds.includes(s.snapshotId)).length;

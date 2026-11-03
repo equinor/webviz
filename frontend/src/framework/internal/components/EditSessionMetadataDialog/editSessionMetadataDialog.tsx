@@ -211,16 +211,16 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                 onOpenChange={setShowConfirmationDialog}
                 title="Discard changes?"
                 primaryAction={{
-                    label: "Discard",
-                    onClick: handleDiscardChanges,
-                    tone: "danger",
+                    label: "Keep editing",
+                    onClick: () => setShowConfirmationDialog(false),
+                    tone: "neutral",
                     closesDialog: true,
                 }}
                 secondaryActions={[
                     {
-                        label: "Keep editing",
-                        onClick: () => setShowConfirmationDialog(false),
-                        tone: "neutral",
+                        label: "Discard",
+                        onClick: handleDiscardChanges,
+                        tone: "danger",
                         closesDialog: true,
                     },
                 ]}

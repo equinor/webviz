@@ -52,6 +52,14 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         500,
     );
 
+    // Selected sessions hidden by a filter would otherwise still be targeted by bulk deletion
+    const filterCriteria = [immediateTitleFilterValue, updatedAtRange];
+    const [prevFilterCriteria, setPrevFilterCriteria] = React.useState(filterCriteria);
+    if (filterCriteria.some((criterion, index) => criterion !== prevFilterCriteria[index])) {
+        setPrevFilterCriteria(filterCriteria);
+        setSelectedSessions([]);
+    }
+
     function handleClearTitleFilter() {
         setTitleFilterValue("");
     }

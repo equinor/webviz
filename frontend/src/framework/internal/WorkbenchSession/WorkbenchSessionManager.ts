@@ -428,8 +428,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 message: `Could not load session from local storage. ${errorExplanation} Do you want to discard the possibly corrupted local storage session ${additionalMessage}`,
                 actions: [
                     { id: "retry", label: "Retry" },
-                    { id: "cancel", label: "No, cancel" },
                     { id: "discard", label: "Yes, discard", color: "danger" },
+                    { id: "cancel", label: "No, cancel" },
                 ],
             });
 
@@ -942,8 +942,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 message:
                     "By applying this template, your current dashboard will be replaced and lose its state. Do you want to proceed?",
                 actions: [
-                    { id: "cancel", label: "No, cancel" },
                     { id: "delete", label: "Yes, proceed", color: "danger" },
+                    { id: "cancel", label: "No, cancel" },
                 ],
             });
 
@@ -1004,8 +1004,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 message: `Could not load workbench session from local storage. Discard corrupted session?`,
                 actions: [
                     { id: "retry", label: "Retry" },
-                    { id: "cancel", label: "No, cancel" },
                     { id: "discard", label: "Yes, discard", color: "danger" },
+                    { id: "cancel", label: "No, cancel" },
                 ],
             });
 
@@ -1144,8 +1144,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             title: "Are you sure?",
             message: makeSessionDeletionMessage(sessionIds.length),
             actions: [
-                { id: "cancel", label: "No, cancel" },
                 { id: "delete", label: "Yes, delete", color: "danger" },
+                { id: "cancel", label: "No, cancel" },
             ],
         });
 
@@ -1194,8 +1194,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             message:
                 "This snapshot will be deleted and will no longer be available to any user. This action cannot be reversed.",
             actions: [
-                { id: "cancel", label: "No, cancel" },
                 { id: "delete", label: "Yes, delete", color: "danger" },
+                { id: "cancel", label: "No, cancel" },
             ],
         });
 
@@ -1232,8 +1232,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             message:
                 "The snapshot will be removed from your list of visited snapshots. If it hasn't been deleted, you can open the snapshot again using its ID.",
             actions: [
-                { id: "cancel", label: "No, cancel" },
                 { id: "delete", label: "Yes, remove", color: "danger" },
+                { id: "cancel", label: "No, cancel" },
             ],
         });
 
@@ -1277,13 +1277,14 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         const total = toDelete.length + toRemove.length;
         if (!total) return noResult;
 
-        const actions: ConfirmAction[] = [{ id: "cancel", label: "No, cancel" }];
+        const actions: ConfirmAction[] = [];
         if (toDelete.length) {
             actions.push({ id: "remove-only", label: "Only remove from my list", color: "danger" });
             actions.push({ id: "delete", label: "Yes, delete", color: "danger" });
         } else {
             actions.push({ id: "remove", label: "Yes, remove", color: "danger" });
         }
+        actions.push({ id: "cancel", label: "No, cancel" });
 
         const result = await ConfirmationService.confirm({
             title: toDelete.length ? "Delete snapshots?" : "Remove snapshots from list?",
