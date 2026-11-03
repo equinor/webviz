@@ -52,8 +52,9 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         500,
     );
 
-    // Selected sessions hidden by a filter would otherwise still be targeted by bulk deletion
-    const filterCriteria = [immediateTitleFilterValue, updatedAtRange];
+    // Selected sessions hidden by a filter would otherwise still be targeted by bulk deletion. The title is tracked both
+    // as typed and once applied, since rows from the previous filter remain selectable during the debounce
+    const filterCriteria = [immediateTitleFilterValue, titleFilterValue, updatedAtRange];
     const [prevFilterCriteria, setPrevFilterCriteria] = React.useState(filterCriteria);
     if (filterCriteria.some((criterion, index) => criterion !== prevFilterCriteria[index])) {
         setPrevFilterCriteria(filterCriteria);

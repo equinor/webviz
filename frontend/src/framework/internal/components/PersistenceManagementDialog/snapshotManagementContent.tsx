@@ -100,8 +100,15 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         500,
     );
 
-    // Selected snapshots hidden by a filter would otherwise still be targeted by bulk deletion
-    const filterCriteria = [immediateTitleFilterValue, visitedAtRange, onlyShowOwnSnapshots, hideDeletedSnapshots];
+    // Selected snapshots hidden by a filter would otherwise still be targeted by bulk deletion. The title is tracked both
+    // as typed and once applied, since rows from the previous filter remain selectable during the debounce
+    const filterCriteria = [
+        immediateTitleFilterValue,
+        titleFilterValue,
+        visitedAtRange,
+        onlyShowOwnSnapshots,
+        hideDeletedSnapshots,
+    ];
     const [prevFilterCriteria, setPrevFilterCriteria] = React.useState(filterCriteria);
     if (filterCriteria.some((criterion, index) => criterion !== prevFilterCriteria[index])) {
         setPrevFilterCriteria(filterCriteria);
@@ -493,8 +500,10 @@ function SnapshotRow(props: SnapshotRowProps) {
             layoutClassName="group/snapshot-row"
             data-deleted={isDeleted ? "" : undefined}
             onClick={() => props.onClick(item)}
-            onDoubleClick={() => {
-                if (!isDeleted) props.onOpen(item.snapshotId);
+            onDoubleClick={(evt) => {
+                // Buttons inside cells (e.g. copy URL) only stop click propagation, so their double-clicks still bubble here
+                if (isDeleted || (evt.target as HTMLElement).closest("button")) return;
+                props.onOpen(item.snapshotId);
             }}
         >
             {/* Stop propagation on the cell, since the checkbox also dispatches a click on its hidden input */}
