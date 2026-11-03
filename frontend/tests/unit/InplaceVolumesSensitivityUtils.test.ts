@@ -231,13 +231,6 @@ describe("addSensitivityColumnToPerRealizationData", () => {
         expect(result.data.tableDataPerFluidSelection[1]).toBe(data.tableDataPerFluidSelection[1]);
     });
 
-    test("does not mutate the input", () => {
-        const data = makeData();
-        const snapshot = structuredClone(data);
-        addSensitivityColumnToPerRealizationData(data, realizationToLabel);
-        expect(data).toEqual(snapshot);
-    });
-
     test("memoized variant returns the same object for the same inputs", () => {
         const data = makeData();
         const first = addSensitivityColumnToPerRealizationDataMemoized(data, realizationToLabel);

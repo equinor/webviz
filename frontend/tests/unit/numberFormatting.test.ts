@@ -4,7 +4,7 @@ import {
     formatNumber,
     formatWithLargeValuePrefixes,
     makeLargeValuePrefixAxisFormat,
-} from "../../src/modules/_shared/utils/numberFormatting";
+} from "@modules/_shared/utils/numberFormatting";
 
 describe("formatNumber", () => {
     describe("default (significant digits, 3 sig figs)", () => {

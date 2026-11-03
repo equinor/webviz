@@ -1,6 +1,6 @@
 import type React from "react";
 
-import type { Layout } from "plotly.js";
+import type { Layout, LayoutAxis, PlotData } from "plotly.js";
 import { describe, expect, test, vi } from "vitest";
 
 import { EnsembleSet } from "@framework/EnsembleSet";
@@ -64,7 +64,10 @@ function makeTable(): Table {
     ]);
 }
 
-function buildBoxPlotLayout(subplotBy: string, uiRevision?: string): Partial<Layout> & Record<string, unknown> {
+function buildBoxPlot(
+    subplotBy: string,
+    uiRevision?: string,
+): { layout: Partial<Layout> & Record<string, unknown>; data: Partial<PlotData>[] } {
     const colorBy = "SENSITIVITY";
     const groupedData = new GroupedTableData({
         table: makeTable(),
@@ -99,14 +102,17 @@ function buildBoxPlotLayout(subplotBy: string, uiRevision?: string): Partial<Lay
         colorBy,
         histogramType: HistogramType.Overlay,
         barSelectorLength: 0,
-        boxRowLabels: groupedData.getColorLabels(),
+        boxRowLabels: subplotBy === colorBy ? null : groupedData.getColorLabels(),
         numSubplots: groupedData.getNumSubplots(),
     });
     if (uiRevision) {
         plotBuilder.setUiRevision(uiRevision);
     }
-    const element = plotBuilder.build(750, 1100) as React.ReactElement<{ layout: Partial<Layout> }>;
-    return element.props.layout as Partial<Layout> & Record<string, unknown>;
+    const element = plotBuilder.build(750, 1100) as React.ReactElement<{
+        layout: Partial<Layout> & Record<string, unknown>;
+        data: Partial<PlotData>[];
+    }>;
+    return { layout: element.props.layout, data: element.props.data };
 }
 
 describe("makeBoxPlotLayoutOptions", () => {
@@ -131,10 +137,6 @@ describe("makeBoxPlotLayoutOptions", () => {
         expect(rows).toEqual(["a", "b", "c"]);
     });
 
-    test("without shared rows each subplot lists its own", () => {
-        expect(makeBoxPlotLayoutOptions(null, 2).yAxis.categoryarray).toBeUndefined();
-    });
-
     test("the rows can't be zoomed", () => {
         expect(makeBoxPlotLayoutOptions(["a"], 1).yAxis.fixedrange).toBe(true);
         expect(makeBoxPlotLayoutOptions(["a"], 3).yAxis.fixedrange).toBe(true);
@@ -143,7 +145,7 @@ describe("makeBoxPlotLayoutOptions", () => {
 
 describe("box plot layout", () => {
     test("every subplot gets the same row order, also where a group is missing", () => {
-        const layout = buildBoxPlotLayout("ZONE");
+        const { layout } = buildBoxPlot("ZONE");
         const expectedRows = CASES.toReversed();
         for (const axisKey of ["yaxis1", "yaxis2", "yaxis3"]) {
             expect(layout[axisKey]).toMatchObject({
@@ -156,8 +158,18 @@ describe("box plot layout", () => {
         expect(layout.showlegend).toBeUndefined();
     });
 
+    test("with subplot = colour, each subplot only lists its own row", () => {
+        const { layout, data } = buildBoxPlot("SENSITIVITY");
+        for (const [index, sensitivityCase] of CASES.entries()) {
+            const axisIndex = index + 1;
+            expect((layout[`yaxis${axisIndex}`] as Partial<LayoutAxis>).categoryarray).toBeUndefined();
+            const boxes = data.filter((trace) => trace.type === "box" && trace.yaxis === `y${axisIndex}`);
+            expect(new Set(boxes.flatMap((trace) => trace.y as string[]))).toEqual(new Set([sensitivityCase]));
+        }
+    });
+
     test("a single subplot shows row labels and no legend", () => {
-        const layout = buildBoxPlotLayout("ENSEMBLE");
+        const { layout } = buildBoxPlot("ENSEMBLE");
         expect(layout.yaxis1).toMatchObject({
             categoryarray: CASES.toReversed(),
             showticklabels: true,
@@ -167,14 +179,14 @@ describe("box plot layout", () => {
     });
 
     test("numeric x axes only grow the bottom margin, so zooming doesn't shift the subplots", () => {
-        const layout = buildBoxPlotLayout("ZONE");
+        const { layout } = buildBoxPlot("ZONE");
         for (const axisKey of ["xaxis1", "xaxis2", "xaxis3"]) {
             expect(layout[axisKey]).toMatchObject({ automargin: "height" });
         }
     });
 
     test("the ui revision is passed to the layout", () => {
-        expect(buildBoxPlotLayout("ZONE", "BOX|STOIIP").uirevision).toBe("BOX|STOIIP");
-        expect(buildBoxPlotLayout("ZONE").uirevision).toBeUndefined();
+        expect(buildBoxPlot("ZONE", "BOX|STOIIP").layout.uirevision).toBe("BOX|STOIIP");
+        expect(buildBoxPlot("ZONE").layout.uirevision).toBeUndefined();
     });
 });

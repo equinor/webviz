@@ -5,6 +5,8 @@ import { makePlotlyBoxPlotTraces } from "@modules/InplaceVolumesNew/view/utils/p
 import { makePlotlyDensityTraces } from "@modules/InplaceVolumesNew/view/utils/plotly/distribution";
 import { makePlotlyHistogramTraces } from "@modules/InplaceVolumesNew/view/utils/plotly/histogram";
 
+import { hoverTemplateToLines } from "../utils/plotlyHoverText";
+
 const TITLE = "volon:high";
 const VALUES = [10, 20, 30];
 const REALIZATIONS = [230, 231, 239];
@@ -13,7 +15,7 @@ function expectEveryHoverToStartWithTitle(hovertemplate: string | string[] | und
     const templates = Array.isArray(hovertemplate) ? hovertemplate : [hovertemplate];
     expect(templates.length).toBeGreaterThan(0);
     for (const template of templates) {
-        expect(template?.startsWith(`<b>${TITLE}</b><br>`)).toBe(true);
+        expect(hoverTemplateToLines(template ?? "")[0]).toBe(TITLE);
     }
 }
 

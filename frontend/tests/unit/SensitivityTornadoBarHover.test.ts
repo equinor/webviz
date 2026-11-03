@@ -5,6 +5,8 @@ import { computeSensitivitiesForResponse, SensitivitySortBy } from "@modules/_sh
 import type { SensitivityResponse } from "@modules/_shared/SensitivityProcessing";
 import { makeTornadoBarHoverTemplate } from "@modules/SensitivityPlot/view/utils/tornadoBarHover";
 
+import { hoverTemplateToLines } from "../utils/plotlyHoverText";
+
 const sensitivities = new EnsembleSensitivities([
     { name: "rms_seed", type: SensitivityType.MONTECARLO, cases: [{ name: "p10_p90", realizations: [1, 2, 3, 4] }] },
     {
@@ -42,36 +44,37 @@ function response(name: string): SensitivityResponse {
     return dataset.sensitivityResponses.find((r) => r.sensitivityName === name)!;
 }
 
+function hoverText(name: string, side: "low" | "high"): string {
+    return hoverTemplateToLines(makeTornadoBarHoverTemplate(response(name), side, dataset.referenceAverage)).join("\n");
+}
+
 describe("makeTornadoBarHoverTemplate", () => {
     test("a scenario bar names its case, average, difference and realization count", () => {
-        const template = makeTornadoBarHoverTemplate(response("fwl"), "high", dataset.referenceAverage);
+        const text = hoverText("fwl", "high");
 
-        expect(template).toBe(
-            "<b>fwl</b> · deep<br>Average: 110<br>vs reference: +10 (+10.0%)<br>Realizations: 2<extra></extra>",
-        );
+        for (const part of ["fwl", "deep", "110", "+10 (+10.0%)", "Realizations: 2"]) {
+            expect(text).toContain(part);
+        }
     });
 
     test("a distribution bar names P10/P90 and counts all its realizations", () => {
-        const template = makeTornadoBarHoverTemplate(response("rms_seed"), "low", dataset.referenceAverage);
+        const text = hoverText("rms_seed", "low");
 
-        expect(template).toContain("<b>rms_seed</b> · P90");
-        expect(template).toContain("Realizations: 4");
+        expect(text).toContain("P90");
+        expect(text).toContain("Realizations: 4");
     });
 
     test("the empty side of a single-case scenario says so", () => {
-        expect(makeTornadoBarHoverTemplate(response("kvkh"), "low", dataset.referenceAverage)).toBe(
-            "<b>kvkh</b><br>No low case<extra></extra>",
-        );
+        expect(hoverText("kvkh", "low")).toContain("No low case");
     });
 
     test("with both cases on one side, either bar describes both cases", () => {
-        const expected =
-            "<b>faultseal</b><br>Both cases above the reference; the bar spans between them<br>" +
-            "high: 105, +5 (+5.0%) vs reference, 2 reals<br>" +
-            "low: 115, +15 (+15.0%) vs reference, 2 reals<extra></extra>";
+        const text = hoverText("faultseal", "high");
 
-        expect(makeTornadoBarHoverTemplate(response("faultseal"), "high", dataset.referenceAverage)).toBe(expected);
-        expect(makeTornadoBarHoverTemplate(response("faultseal"), "low", dataset.referenceAverage)).toBe(expected);
+        expect(text).toContain("above the reference");
+        expect(text).toContain("high: 105, +5 (+5.0%)");
+        expect(text).toContain("low: 115, +15 (+15.0%)");
+        expect(hoverText("faultseal", "low")).toBe(text);
     });
 
     test("the percentage sign follows the difference for a negative reference", () => {

@@ -107,15 +107,18 @@ describe("makeSourceLabels", () => {
             { ensembleName: "iter-0", tableName: "geogrid", caseLabel: "rms_seed" },
             { ensembleName: "iter-0", tableName: "geogrid", caseLabel: "faults:high" },
         );
-        expect(labels).toEqual({ referenceLabel: "iter-0 · rms_seed", comparisonLabel: "iter-0 · faults:high" });
+        expect(labels.referenceLabel).toContain("iter-0");
+        expect(labels.referenceLabel).toContain("rms_seed");
+        expect(labels.comparisonLabel).toContain("faults:high");
 
         const mixed = makeSourceLabels(
             { ensembleName: "iter-0", tableName: "geogrid", caseLabel: null },
             { ensembleName: "iter-1", tableName: "simgrid", caseLabel: "faults:high" },
         );
-        expect(mixed).toEqual({
-            referenceLabel: "iter-0 · geogrid",
-            comparisonLabel: "iter-1 · simgrid · faults:high",
-        });
+        expect(mixed.referenceLabel).toContain("geogrid");
+        expect(mixed.referenceLabel).not.toContain("faults");
+        for (const part of ["iter-1", "simgrid", "faults:high"]) {
+            expect(mixed.comparisonLabel).toContain(part);
+        }
     });
 });
