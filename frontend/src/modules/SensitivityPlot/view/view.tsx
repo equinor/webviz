@@ -65,21 +65,24 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
 
     const computedResponses: ComputedResponse[] = [];
     const responsesWithoutReferenceData: string[] = [];
+    let missingReferenceSensitivity: string | null = null;
     const sensitivitiesWithoutData = new Set<string>();
     for (const response of responseChannelData.responses) {
         const sensitivities = response.channelEnsemble.getSensitivities();
-        if (!referenceSensitivityName || !sensitivities) {
+        if (!sensitivities) {
             continue;
         }
+        // An unset or unavailable reference falls back to the default one.
         const sensitivityResponseDataset = computeSensitivitiesForResponse(
             sensitivities,
             response.ensemblePerRealResponse,
-            referenceSensitivityName,
+            referenceSensitivityName ?? "",
             sensitivitySortBy,
             hideZeroY,
         );
         if (!sensitivityResponseDataset.hasReferenceData) {
             responsesWithoutReferenceData.push(response.title);
+            missingReferenceSensitivity = sensitivityResponseDataset.referenceSensitivity;
             continue;
         }
         sensitivityResponseDataset.sensitivitiesWithoutData.forEach((name) => sensitivitiesWithoutData.add(name));
@@ -94,7 +97,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
         });
     }
 
-    const referenceMissingMessage = `The reference sensitivity ${referenceSensitivityName} has no data in the received response. Include it in the sending module's selection.`;
+    const referenceMissingMessage = `The reference sensitivity ${missingReferenceSensitivity} has no data in the received response. Include it in the sending module's selection.`;
     if (responsesWithoutReferenceData.length > 0 && computedResponses.length > 0) {
         statusWriter.addWarning(`${referenceMissingMessage} Not shown: ${responsesWithoutReferenceData.join(", ")}`);
     }

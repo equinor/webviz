@@ -9,9 +9,9 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { DroppedFluidSelection, UnmatchedDeltaRows } from "./deltaTableUtils";
 import type { Column } from "./Table";
 
-export type SensitivityCaseRef = { sensitivityName: string; caseName: string };
+export type SensitivityCaseIdent = { sensitivityName: string; caseName: string };
 
-export const SENSITIVITY_CASE_REF_SCHEMA = {
+export const SENSITIVITY_CASE_IDENT_SCHEMA = {
     properties: {
         sensitivityName: { type: "string" },
         caseName: { type: "string" },
@@ -21,14 +21,14 @@ export const SENSITIVITY_CASE_REF_SCHEMA = {
 export type InplaceVolumesTableData = {
     ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     tableName: string;
-    sensitivityCase?: SensitivityCaseRef | null;
+    sensitivityCase?: SensitivityCaseIdent | null;
     data: InplaceVolumesTableDataPerFluidSelection_api;
 };
 
 export type InplaceVolumesStatisticalTableData = {
     ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     tableName: string;
-    sensitivityCase?: SensitivityCaseRef | null;
+    sensitivityCase?: SensitivityCaseIdent | null;
     data: InplaceVolumesStatisticalTableDataPerFluidSelection_api;
 };
 

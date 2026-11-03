@@ -6,6 +6,35 @@ const MAX_TICK_LABEL_ROW_FRACTION = 0.4;
 const MAX_SPACING_ROW_DOMAIN_FRACTION = 0.5;
 const AVERAGE_CHAR_WIDTH_FACTOR = 0.6;
 
+export type SubplotXAxisSpacingOptions = {
+    numRows: number;
+    /** Height in px for the subplot rows plus the bottom row's tick labels and axis title. */
+    availableHeight: number;
+    /** Each row's share of the figure domain before spacing, as `makeSubplots` divides it. */
+    rowDomainSize: number;
+    showTickLabels: boolean;
+    /** Category tick labels, or null for numeric axes. */
+    categoryLabels: readonly string[] | null;
+    tickAngle: number;
+    tickFontSize: number;
+    /**
+     * The x axis title, or null if there is none. Only subplots with an empty cell below show it.
+     * `standoff` is Plotly's `title.standoff`: the gap in px between the tick labels and the title.
+     */
+    axisTitle: { standoff: number; fontSize: number } | null;
+};
+
+export type SubplotXAxisSpacing = {
+    /** False if the tick labels don't fit; the axis title then gets a second line with a hover hint. */
+    showTickLabels: boolean;
+    /** Height in px the tick labels take below the axis; 0 when they are hidden. */
+    tickLabelExtent: number;
+    /** Gap in px between two subplot rows. */
+    verticalGap: number;
+    /** `verticalGap` as a fraction of the plot area, as expected by `makeSubplots`. */
+    verticalSpacing: number;
+};
+
 /**
  * Approximate height in px of the x tick labels below an axis. Rotated category labels are sized from the
  * longest label; anything else is assumed to take one line.
@@ -22,31 +51,6 @@ export function estimateXTickLabelExtent(
     }
     return fontSize + 4;
 }
-
-export type SubplotXAxisSpacingOptions = {
-    numRows: number;
-    /** Height in px for the subplot rows plus the bottom row's tick labels and axis title. */
-    availableHeight: number;
-    /** Each row's share of the figure domain before spacing, as `makeSubplots` divides it. */
-    rowDomainSize: number;
-    showTickLabels: boolean;
-    /** Category tick labels, or null for numeric axes. */
-    categoryLabels: readonly string[] | null;
-    tickAngle: number;
-    tickFontSize: number;
-    /** The x axis title, or null if there is none. Only subplots with an empty cell below show it. */
-    axisTitle: { standoff: number; fontSize: number } | null;
-};
-
-export type SubplotXAxisSpacing = {
-    /** False if the tick labels don't fit; the axis title then gets a second line with a hover hint. */
-    showTickLabels: boolean;
-    tickLabelExtent: number;
-    /** Gap in px between two subplot rows. */
-    verticalGap: number;
-    /** `verticalGap` as a fraction of the plot area, as expected by `makeSubplots`. */
-    verticalSpacing: number;
-};
 
 function axisTitleHeight(axisTitle: SubplotXAxisSpacingOptions["axisTitle"], numLines: number): number {
     return axisTitle ? axisTitle.standoff + numLines * (axisTitle.fontSize + 4) : 0;

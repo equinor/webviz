@@ -7,7 +7,7 @@ import { InplaceVolumesStatistic_api } from "@api";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import {
-    makeSensitivityCaseLabelForRef,
+    makeSensitivityCaseLabelForIdent,
     makeSensitivityCasesWithoutRealizationsWarning,
 } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import type { InplaceVolumesStatisticalTableData } from "@modules/_shared/InplaceVolumes/types";
@@ -114,7 +114,7 @@ function makeSourceCaseLabel(ensembleSet: EnsembleSet, source: WaterfallSource):
     if (!source.sensitivityCase || !sensitivities) {
         return null;
     }
-    return makeSensitivityCaseLabelForRef(sensitivities, source.sensitivityCase);
+    return makeSensitivityCaseLabelForIdent(sensitivities, source.sensitivityCase);
 }
 
 function makeSkippedGroupsWarning(skippedGroupLabels: string[]): string | null {

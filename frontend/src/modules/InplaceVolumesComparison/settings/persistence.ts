@@ -1,8 +1,8 @@
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
-import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
-import { SENSITIVITY_CASE_REF_SCHEMA } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { SENSITIVITY_CASE_IDENT_SCHEMA } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
@@ -30,12 +30,12 @@ export type SerializedSettings = {
     indicesWithValues: InplaceVolumesIndexWithValuesAsStrings[];
     indexValueCriteria: IndexValueCriteria;
     showTable: boolean;
-    referenceSensitivityCase?: SensitivityCaseRef | null;
-    comparisonSensitivityCase?: SensitivityCaseRef | null;
+    referenceSensitivityCase?: SensitivityCaseIdent | null;
+    comparisonSensitivityCase?: SensitivityCaseIdent | null;
 };
 
 const NULLABLE_SENSITIVITY_CASE_SCHEMA = {
-    ...SENSITIVITY_CASE_REF_SCHEMA,
+    ...SENSITIVITY_CASE_IDENT_SCHEMA,
     nullable: true,
 } as const;
 

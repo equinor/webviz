@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { EnsembleSensitivities, SensitivityType } from "@framework/EnsembleSensitivities";
+import { SortDirection } from "@lib/components/Table/typesAndEnums";
 import { computeSensitivitiesForResponse, SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
 import {
     makeSensitivityTableRows,
@@ -77,12 +78,21 @@ describe("makeSensitivityTableRows", () => {
 
 describe("sortSensitivityTableRows", () => {
     test("rows without a value go last in both directions", () => {
-        const ascending = sortSensitivityTableRows(rows, "avgHigh", "asc").map((r) => r.sensitivity);
-        const descending = sortSensitivityTableRows(rows, "avgHigh", "desc").map((r) => r.sensitivity);
+        const ascending = sortSensitivityTableRows(rows, { columnKey: "avgHigh", direction: SortDirection.ASC }).map(
+            (r) => r.sensitivity,
+        );
+        const descending = sortSensitivityTableRows(rows, { columnKey: "avgHigh", direction: SortDirection.DESC }).map(
+            (r) => r.sensitivity,
+        );
 
         expect(ascending.slice(0, 2)).toEqual(["fwl", "kvkh"]);
         expect(descending.slice(0, 2)).toEqual(["kvkh", "fwl"]);
         expect(ascending.slice(2).sort()).toEqual(["minpv", "rms_seed"]);
         expect(descending.slice(2).sort()).toEqual(["minpv", "rms_seed"]);
+    });
+
+    test("no sort state or no direction keeps the row order", () => {
+        expect(sortSensitivityTableRows(rows, null)).toBe(rows);
+        expect(sortSensitivityTableRows(rows, { columnKey: "avgHigh", direction: SortDirection.NONE })).toBe(rows);
     });
 });

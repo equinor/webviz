@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import {
     findTableDataForSource,
     makeSourceLabels,
@@ -15,7 +15,7 @@ function makeTableData(
     ensembleIdent: RegularEnsembleIdent,
     tableName: string,
     marker: string,
-    sensitivityCase?: SensitivityCaseRef | null,
+    sensitivityCase?: SensitivityCaseIdent | null,
 ) {
     return { ensembleIdent, tableName, marker, sensitivityCase };
 }
@@ -23,7 +23,7 @@ function makeTableData(
 function makeSource(
     ensembleIdent: RegularEnsembleIdent,
     tableName: string,
-    sensitivityCase: SensitivityCaseRef | null = null,
+    sensitivityCase: SensitivityCaseIdent | null = null,
 ): WaterfallSource {
     return { ensembleIdent, tableName, sensitivityCase };
 }

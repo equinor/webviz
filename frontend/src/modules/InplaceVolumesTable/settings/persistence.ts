@@ -2,8 +2,8 @@ import { InplaceVolumesStatistic_api } from "@api";
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { getEnsembleIdentsFromStrings } from "@framework/utils/ensembleIdentUtils";
-import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
-import { SENSITIVITY_CASE_REF_SCHEMA } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { SENSITIVITY_CASE_IDENT_SCHEMA } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
@@ -36,7 +36,7 @@ export type SerializedSettings = {
     selectedStatisticOptions: InplaceVolumesStatistic_api[];
     selectedStatisticsLayout?: StatisticsLayout;
     selectedIndexValueCriteria: IndexValueCriteria;
-    selectedSensitivityCases?: SensitivityCaseRef[];
+    selectedSensitivityCases?: SensitivityCaseIdent[];
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
@@ -79,7 +79,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
             enum: Object.values(StatisticsLayout),
         },
         selectedSensitivityCases: {
-            elements: SENSITIVITY_CASE_REF_SCHEMA,
+            elements: SENSITIVITY_CASE_IDENT_SCHEMA,
         },
     },
 }));

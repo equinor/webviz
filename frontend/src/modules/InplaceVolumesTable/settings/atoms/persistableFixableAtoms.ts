@@ -11,7 +11,7 @@ import {
     fixupUserSelectedIndexValues,
     isSelectedIndicesWithValuesValidSubset,
 } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
-import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import {
     fixupSensitivityCaseSelection,
     isValidSensitivityCaseSelection,
@@ -129,7 +129,7 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
     },
 });
 
-export const selectedSensitivityCasesAtom = persistableFixableAtom<SensitivityCaseRef[], SensitivityCaseRef[]>({
+export const selectedSensitivityCasesAtom = persistableFixableAtom<SensitivityCaseIdent[], SensitivityCaseIdent[]>({
     initialValue: [],
     precomputeFunction: ({ get }) => get(availableSensitivityCasesAtom),
     isValidFunction: ({ value, precomputedValue }) => isValidSensitivityCaseSelection(value, precomputedValue),

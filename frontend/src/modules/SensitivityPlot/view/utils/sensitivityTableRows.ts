@@ -1,4 +1,6 @@
 import { SensitivityType } from "@framework/EnsembleSensitivities";
+import type { TableSortState } from "@lib/components/Table/typesAndEnums";
+import { SortDirection } from "@lib/components/Table/typesAndEnums";
 import { hasCaseOnSide } from "@modules/_shared/SensitivityProcessing";
 import type { SensitivityResponse, SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing";
 
@@ -69,12 +71,15 @@ export function makeSensitivityTableRows(datasets: SensitivityResponseDataset[])
 /** Sorts by one column; rows without a value in that column go last in both directions. */
 export function sortSensitivityTableRows(
     rows: SensitivityTableRow[],
-    columnKey: keyof SensitivityTableRow,
-    direction: "asc" | "desc",
+    sortState: TableSortState | null,
 ): SensitivityTableRow[] {
+    if (!sortState || sortState.direction === SortDirection.NONE) {
+        return rows;
+    }
+    const columnKey = sortState.columnKey as keyof SensitivityTableRow;
     const withValue = rows.filter((row) => row[columnKey] !== null);
     const withoutValue = rows.filter((row) => row[columnKey] === null);
-    const sign = direction === "asc" ? 1 : -1;
+    const sign = sortState.direction === SortDirection.ASC ? 1 : -1;
     const sorted = withValue.toSorted((a, b) => {
         const left = a[columnKey]!;
         const right = b[columnKey]!;

@@ -2,11 +2,11 @@ import { atom } from "jotai";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type {
-    SensitivityCaseRef,
+    SensitivityCaseIdent,
     SensitivityMode,
     SensitivitySelection,
 } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
-import { getSensitivityCaseRefs, resolveSensitivityMode } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { getSensitivityCaseIdents, resolveSensitivityMode } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
 import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
@@ -25,9 +25,9 @@ export const sensitivityModeAtom = atom<SensitivityMode>((get) => {
     return resolveSensitivityMode(get(EnsembleSetAtom), get(selectedEnsembleIdentsAtom).value);
 });
 
-export const availableSensitivityCasesAtom = atom<SensitivityCaseRef[]>((get) => {
+export const availableSensitivityCasesAtom = atom<SensitivityCaseIdent[]>((get) => {
     const sensitivityMode = get(sensitivityModeAtom);
-    return sensitivityMode.kind === "active" ? getSensitivityCaseRefs(sensitivityMode.sensitivities) : [];
+    return sensitivityMode.kind === "active" ? getSensitivityCaseIdents(sensitivityMode.sensitivities) : [];
 });
 
 export const isSensitivityEnsembleSelectionBlockedAtom = atom<boolean>((get) => {

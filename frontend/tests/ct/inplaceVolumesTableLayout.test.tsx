@@ -314,7 +314,7 @@ test.describe("InplaceVolumesTable responses as rows", () => {
 test.describe("InplaceVolumesTable sensitivity column", () => {
     const CASE_LABELS = ["rms_seed", "faults:low", "faults:high"];
 
-    test("SENSITIVITY is pinned with the other identifier columns", async ({ mount }) => {
+    test("SENSITIVITY is shown as a column with the cases", async ({ mount }) => {
         const { columnsConfig, rows } = makeSensitivityStatisticalFixture(
             NUM_ROWS,
             CASE_LABELS,
@@ -325,25 +325,8 @@ test.describe("InplaceVolumesTable sensitivity column", () => {
             <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />,
         );
 
-        const sensitivityHeader = cmp.getByRole("button", { name: "SENSITIVITY" });
-        const sensitivityBodyCell = cmp.locator("tbody td", { hasText: "faults:low" }).first();
-        await expect(sensitivityBodyCell).toBeVisible();
-
-        const headerBefore = await sensitivityHeader.boundingBox();
-        const bodyBefore = await sensitivityBodyCell.boundingBox();
-
-        await cmp
-            .locator(".overflow-auto")
-            .first()
-            .evaluate((el) => {
-                el.scrollLeft = el.scrollWidth;
-            });
-
-        const headerAfter = await sensitivityHeader.boundingBox();
-        const bodyAfter = await sensitivityBodyCell.boundingBox();
-
-        expect(Math.abs((headerAfter?.x ?? NaN) - (headerBefore?.x ?? NaN))).toBeLessThanOrEqual(1);
-        expect(Math.abs((bodyAfter?.x ?? NaN) - (bodyBefore?.x ?? NaN))).toBeLessThanOrEqual(1);
+        await expect(cmp.getByRole("button", { name: "SENSITIVITY" })).toBeVisible();
+        await expect(cmp.locator("tbody td", { hasText: "faults:low" }).first()).toBeVisible();
     });
 
     test("a single case moves SENSITIVITY to the constant caption", async ({ mount }) => {

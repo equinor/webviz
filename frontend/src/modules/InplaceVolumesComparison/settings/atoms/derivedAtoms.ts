@@ -5,7 +5,7 @@ import type { InplaceVolumesIndexWithValues_api, InplaceVolumesTableDefinition_a
 import type { EnsembleSensitivities } from "@framework/EnsembleSensitivities";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { getMultiCaseSensitivities, isSameSensitivityCase } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria, TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
@@ -53,8 +53,8 @@ export const comparisonSensitivitiesAtom = atom<EnsembleSensitivities | null>((g
  * side with sensitivities has no case, or a restored case that is invalid in the current context.
  */
 function getEffectiveSensitivityCases(get: Getter): {
-    reference: SensitivityCaseRef | null;
-    comparison: SensitivityCaseRef | null;
+    reference: SensitivityCaseIdent | null;
+    comparison: SensitivityCaseIdent | null;
     isComplete: boolean;
 } {
     const referenceCase = get(selectedReferenceSensitivityCaseAtom);

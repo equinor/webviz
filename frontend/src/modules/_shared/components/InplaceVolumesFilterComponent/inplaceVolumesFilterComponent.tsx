@@ -20,7 +20,7 @@ import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { filterAndOrderSelectedIndexValues } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
-import type { SensitivityCaseOption, SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import type { SensitivityCaseOption, SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { makeSensitivityCaseKey } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 export type InplaceVolumesFilterComponentProps = {
@@ -35,7 +35,7 @@ export type InplaceVolumesFilterComponentProps = {
     selectedIndicesWithValues: InplaceVolumesIndexWithValues_api[];
     selectedAllowIndicesValuesIntersection: boolean;
     availableSensitivityCases?: SensitivityCaseOption[];
-    selectedSensitivityCases?: SensitivityCaseRef[];
+    selectedSensitivityCases?: SensitivityCaseIdent[];
     sensitivityCasesAnnotations?: SettingAnnotation[];
 
     dataAnnotations?: SettingAnnotation[];
@@ -58,7 +58,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     const [indicesWithValues, setIndicesWithValues] = React.useState<InplaceVolumesIndexWithValues_api[]>(
         props.selectedIndicesWithValues,
     );
-    const [sensitivityCases, setSensitivityCases] = React.useState<SensitivityCaseRef[]>(
+    const [sensitivityCases, setSensitivityCases] = React.useState<SensitivityCaseIdent[]>(
         props.selectedSensitivityCases ?? [],
     );
 
@@ -69,9 +69,9 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     const [prevIndicesWithValues, setPrevIndicesWithValues] = React.useState<InplaceVolumesIndexWithValues_api[]>(
         props.selectedIndicesWithValues,
     );
-    const [prevSensitivityCases, setPrevSensitivityCases] = React.useState<SensitivityCaseRef[] | undefined>(
-        props.selectedSensitivityCases,
-    );
+    const [prevSelectedSensitivityCases, setPrevSelectedSensitivityCases] = React.useState<
+        SensitivityCaseIdent[] | undefined
+    >(props.selectedSensitivityCases);
     const [prevSyncedFilter, setPrevSyncedFilter] = React.useState<InplaceVolumesFilterSettings | null>(null);
 
     // const debounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -86,9 +86,9 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         setPrevTableNames(props.selectedTableNames);
     }
 
-    if (!isEqual(props.selectedSensitivityCases, prevSensitivityCases)) {
+    if (!isEqual(props.selectedSensitivityCases, prevSelectedSensitivityCases)) {
         setSensitivityCases(props.selectedSensitivityCases ?? []);
-        setPrevSensitivityCases(props.selectedSensitivityCases);
+        setPrevSelectedSensitivityCases(props.selectedSensitivityCases);
     }
 
     if (!isEqual(props.selectedIndicesWithValues, prevIndicesWithValues)) {
@@ -140,7 +140,9 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
 
             // Only adopt cases when the publisher knows about them; validity is fixed up by the module's atom.
             if (syncedFilter.sensitivityCases && !isEqual(syncedFilter.sensitivityCases, sensitivityCases)) {
-                const newSensitivityCases = syncedFilter.sensitivityCases.map((ref) => ({ ...ref }));
+                const newSensitivityCases = syncedFilter.sensitivityCases.map((sensitivityCase) => ({
+                    ...sensitivityCase,
+                }));
                 setSensitivityCases(newSensitivityCases);
                 filter.sensitivityCases = newSensitivityCases;
             }
@@ -234,8 +236,8 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
 
     function handleSensitivityCasesChange(newKeys: string[], publish = true): void {
         const newSensitivityCases = (props.availableSensitivityCases ?? [])
-            .filter((option) => newKeys.includes(makeSensitivityCaseKey(option.ref)))
-            .map((option) => option.ref);
+            .filter((option) => newKeys.includes(makeSensitivityCaseKey(option.caseIdent)))
+            .map((option) => option.caseIdent);
         setSensitivityCases(newSensitivityCases);
         const filter = {
             ensembleIdents,
@@ -284,7 +286,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
 
     const tableSourceOptions = props.availableTableNames.map((source) => ({ value: source, label: source }));
     const sensitivityCaseOptions = (props.availableSensitivityCases ?? []).map((option) => ({
-        value: makeSensitivityCaseKey(option.ref),
+        value: makeSensitivityCaseKey(option.caseIdent),
         label: option.label,
     }));
 

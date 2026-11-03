@@ -10,6 +10,17 @@ function formatSigned(value: number): string {
 
 type CaseSummary = { name: string; value: number; difference: number; percentage: string; numRealizations: number };
 
+/** A distribution's P90 and P10 come from all its realizations; a scenario case only from its own. */
+function getNumRealizations(response: SensitivityResponse, side: "low" | "high"): number {
+    if (response.sensitivityType === SensitivityType.MONTECARLO) {
+        return response.lowCaseRealizationValues.length + response.highCaseRealizationValues.length;
+    }
+    if (side === "low") {
+        return response.lowCaseRealizationValues.length;
+    }
+    return response.highCaseRealizationValues.length;
+}
+
 /** Null for the empty side of a single-case scenario, which sits at the reference. */
 function summarizeCase(
     response: SensitivityResponse,
@@ -27,10 +38,7 @@ function summarizeCase(
     const percentageValue = referenceAverage !== 0 ? (difference / Math.abs(referenceAverage)) * 100 : null;
     const percentage =
         percentageValue !== null ? `${percentageValue > 0 ? "+" : ""}${percentageValue.toFixed(1)}%` : "";
-    const numRealizations =
-        response.sensitivityType === SensitivityType.MONTECARLO
-            ? response.lowCaseRealizationValues.length + response.highCaseRealizationValues.length
-            : (isLow ? response.lowCaseRealizationValues : response.highCaseRealizationValues).length;
+    const numRealizations = getNumRealizations(response, side);
     return { name, value, difference, percentage, numRealizations };
 }
 

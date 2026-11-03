@@ -160,16 +160,11 @@ export class PlotBuilder {
      * only needs to add some air.
      */
     build(height: number, width: number, options?: PlotBuilderOptions): React.ReactNode {
-        const { figure, hideXTickLabels } = this.buildSubplots(height, width, options ?? {});
-        this.updateLayout(figure, hideXTickLabels);
+        const figure = this.buildFigure(height, width, options ?? {});
         return <Plot layout={figure.makeLayout()} data={figure.makeData()} />;
     }
 
-    private buildSubplots(
-        height: number,
-        width: number,
-        options: PlotBuilderOptions,
-    ): { figure: Figure; hideXTickLabels: boolean } {
+    private buildFigure(height: number, width: number, options: PlotBuilderOptions): Figure {
         const subplotGroups = this._groupedData.getSubplotGroups();
         const numSubplots = subplotGroups.length;
 
@@ -181,7 +176,8 @@ export class PlotBuilder {
                 width,
                 ...options,
             });
-            return { figure, hideXTickLabels: false };
+            this.updateLayout(figure, false);
+            return figure;
         }
 
         const { numRows, numCols } = calcNumRowsAndCols(numSubplots);
@@ -275,6 +271,7 @@ export class PlotBuilder {
             );
         }
 
-        return { figure, hideXTickLabels: !spacing.showTickLabels && xAxisOptions.showticklabels !== false };
+        this.updateLayout(figure, !spacing.showTickLabels && xAxisOptions.showticklabels !== false);
+        return figure;
     }
 }

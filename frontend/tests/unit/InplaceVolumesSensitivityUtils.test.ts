@@ -22,7 +22,7 @@ import {
     findSensitivityCaseLabelsWithoutRealizations,
     fixupSensitivityCaseSelection,
     getRealizationsForSensitivityCases,
-    getSensitivityCaseRefs,
+    getSensitivityCaseIdents,
     isSameSensitivityCase,
     isValidSensitivityCaseSelection,
     makeDroppedSensitivityRowsWarning,
@@ -75,29 +75,29 @@ const SENS_ENSEMBLE = makeEnsemble("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", SENSI
 const PLAIN_ENSEMBLE = makeEnsemble("22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", null);
 const OTHER_PLAIN_ENSEMBLE = makeEnsemble("33333333-aaaa-4444-aaaa-aaaaaaaaaaaa", null);
 
-describe("sensitivity case labels and refs", () => {
+describe("sensitivity case labels and idents", () => {
     test("scenario labels include the case, montecarlo labels only the sensitivity", () => {
         expect(makeSensitivityCaseLabel(SENSITIVITY_ARR[1], "low")).toBe("faults:low");
         expect(makeSensitivityCaseLabel(SENSITIVITY_ARR[0], "p10_p90")).toBe("rms_seed");
     });
 
-    test("refs and label order follow the ensemble", () => {
-        const refs = getSensitivityCaseRefs(SENSITIVITIES);
-        expect(refs).toEqual([
+    test("case idents and label order follow the ensemble", () => {
+        const caseIdents = getSensitivityCaseIdents(SENSITIVITIES);
+        expect(caseIdents).toEqual([
             { sensitivityName: "rms_seed", caseName: "p10_p90" },
             { sensitivityName: "faults", caseName: "low" },
             { sensitivityName: "faults", caseName: "high" },
         ]);
 
-        const shuffled = [refs[2], refs[0]];
+        const shuffled = [caseIdents[2], caseIdents[0]];
         expect(makeSensitivityCaseLabelOrder(SENSITIVITIES, shuffled)).toEqual(["rms_seed", "faults:high"]);
-        expect(filterValidSensitivityCases(shuffled, refs)).toEqual([refs[0], refs[2]]);
+        expect(filterValidSensitivityCases(shuffled, caseIdents)).toEqual([caseIdents[0], caseIdents[2]]);
     });
 
     test("filterValidSensitivityCases drops unavailable cases", () => {
-        const refs = getSensitivityCaseRefs(SENSITIVITIES);
+        const caseIdents = getSensitivityCaseIdents(SENSITIVITIES);
         const unknown = { sensitivityName: "faults", caseName: "mid" };
-        expect(filterValidSensitivityCases([unknown, refs[1]], refs)).toEqual([refs[1]]);
+        expect(filterValidSensitivityCases([unknown, caseIdents[1]], caseIdents)).toEqual([caseIdents[1]]);
     });
 
     test("isSameSensitivityCase compares by value and handles null", () => {
@@ -128,20 +128,20 @@ describe("sensitivity case labels and refs", () => {
 });
 
 describe("sensitivity case selection", () => {
-    const refs = getSensitivityCaseRefs(SENSITIVITIES);
+    const caseIdents = getSensitivityCaseIdents(SENSITIVITIES);
     const unknown = { sensitivityName: "faults", caseName: "mid" };
 
     test("isValidSensitivityCaseSelection requires available cases and a non-empty selection", () => {
-        expect(isValidSensitivityCaseSelection([refs[1]], refs)).toBe(true);
-        expect(isValidSensitivityCaseSelection([refs[1], unknown], refs)).toBe(false);
-        expect(isValidSensitivityCaseSelection([], refs)).toBe(false);
+        expect(isValidSensitivityCaseSelection([caseIdents[1]], caseIdents)).toBe(true);
+        expect(isValidSensitivityCaseSelection([caseIdents[1], unknown], caseIdents)).toBe(false);
+        expect(isValidSensitivityCaseSelection([], caseIdents)).toBe(false);
         expect(isValidSensitivityCaseSelection([], [])).toBe(true);
     });
 
     test("fixupSensitivityCaseSelection keeps valid cases and falls back to all cases", () => {
-        expect(fixupSensitivityCaseSelection([unknown, refs[2]], refs)).toEqual([refs[2]]);
-        expect(fixupSensitivityCaseSelection([unknown], refs)).toEqual(refs);
-        expect(fixupSensitivityCaseSelection(undefined, refs)).toEqual(refs);
+        expect(fixupSensitivityCaseSelection([unknown, caseIdents[2]], caseIdents)).toEqual([caseIdents[2]]);
+        expect(fixupSensitivityCaseSelection([unknown], caseIdents)).toEqual(caseIdents);
+        expect(fixupSensitivityCaseSelection(undefined, caseIdents)).toEqual(caseIdents);
     });
 });
 
@@ -327,7 +327,7 @@ describe("sensitivity and case order", () => {
             },
         ]);
 
-        expect(getSensitivityCaseRefs(unordered)).toEqual([
+        expect(getSensitivityCaseIdents(unordered)).toEqual([
             { sensitivityName: "rms_seed", caseName: "p10_p90" },
             { sensitivityName: "faults", caseName: "low" },
             { sensitivityName: "faults", caseName: "high" },

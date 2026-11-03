@@ -1,13 +1,13 @@
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { isSameSensitivityCase } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 /** One side of the comparison: a table within an ensemble, restricted to a sensitivity case if any. */
 export type WaterfallSource = {
     ensembleIdent: RegularEnsembleIdent;
     tableName: string;
-    sensitivityCase: SensitivityCaseRef | null;
+    sensitivityCase: SensitivityCaseIdent | null;
 };
 
 /**
@@ -18,7 +18,7 @@ export type WaterfallSource = {
 type IdentifiedBySource = {
     ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     tableName: string;
-    sensitivityCase?: SensitivityCaseRef | null;
+    sensitivityCase?: SensitivityCaseIdent | null;
 };
 
 /**

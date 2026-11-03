@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { useAtom } from "jotai";
 
@@ -63,20 +63,11 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         }
     }
 
-    const defaultReferenceSensitivityName =
-        invalidEnsembleType === null &&
-        (!referenceSensitivityName || !sensitivityNames.includes(referenceSensitivityName))
-            ? pickDefaultReferenceSensitivityName(sensitivityNames)
-            : null;
-
-    React.useEffect(
-        function applyDefaultReferenceSensitivityName() {
-            if (defaultReferenceSensitivityName !== null) {
-                setReferenceSensitivityName(defaultReferenceSensitivityName);
-            }
-        },
-        [defaultReferenceSensitivityName, setReferenceSensitivityName],
-    );
+    // Shown only; the view's processing applies the same fallback, so the stored choice is kept as is.
+    const effectiveReferenceSensitivityName =
+        referenceSensitivityName && sensitivityNames.includes(referenceSensitivityName)
+            ? referenceSensitivityName
+            : pickDefaultReferenceSensitivityName(sensitivityNames);
 
     if (invalidEnsembleType) {
         return (
@@ -99,7 +90,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                     <Setting.Field label="Reference sensitivity">
                         <Combobox<string>
                             items={sensitivityNames.map((s) => ({ label: s, value: s }))}
-                            value={referenceSensitivityName}
+                            value={effectiveReferenceSensitivityName}
                             onValueChange={setReferenceSensitivityName}
                         />
                     </Setting.Field>

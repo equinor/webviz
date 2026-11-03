@@ -12,7 +12,7 @@ import {
     fixupUserSelectedIndexValues,
     isSelectedIndicesWithValuesValidSubset,
 } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
-import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import {
     hasSensitivityCase,
     pickDefaultComparisonSensitivityCase,
@@ -31,7 +31,7 @@ import {
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
 function isValidSensitivityCase(
-    value: SensitivityCaseRef | null,
+    value: SensitivityCaseIdent | null,
     sensitivities: EnsembleSensitivities | null,
 ): boolean {
     if (!sensitivities) {
@@ -93,7 +93,7 @@ export const selectedComparisonTableNameAtom = persistableFixableAtom<string | n
 });
 
 export const selectedReferenceSensitivityCaseAtom = persistableFixableAtom<
-    SensitivityCaseRef | null,
+    SensitivityCaseIdent | null,
     EnsembleSensitivities | null
 >({
     initialValue: null,
@@ -104,7 +104,7 @@ export const selectedReferenceSensitivityCaseAtom = persistableFixableAtom<
 });
 
 export const selectedComparisonSensitivityCaseAtom = persistableFixableAtom<
-    SensitivityCaseRef | null,
+    SensitivityCaseIdent | null,
     EnsembleSensitivities | null
 >({
     initialValue: null,

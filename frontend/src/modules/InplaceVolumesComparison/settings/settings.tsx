@@ -15,7 +15,7 @@ import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import type { SensitivityCaseRef } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { getSensitivityCaseOptions, makeSensitivityCaseKey } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
@@ -71,20 +71,20 @@ function makeSensitivityCaseItems(sensitivities: EnsembleSensitivities | null): 
     }
     return getSensitivityCaseOptions(sensitivities).map((option) => ({
         label: option.label,
-        value: makeSensitivityCaseKey(option.ref),
+        value: makeSensitivityCaseKey(option.caseIdent),
     }));
 }
 
 function findSensitivityCaseByKey(
     sensitivities: EnsembleSensitivities | null,
     key: string | null,
-): SensitivityCaseRef | null {
+): SensitivityCaseIdent | null {
     if (!sensitivities || key === null) {
         return null;
     }
     return (
-        getSensitivityCaseOptions(sensitivities).find((option) => makeSensitivityCaseKey(option.ref) === key)?.ref ??
-        null
+        getSensitivityCaseOptions(sensitivities).find((option) => makeSensitivityCaseKey(option.caseIdent) === key)
+            ?.caseIdent ?? null
     );
 }
 

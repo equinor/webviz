@@ -2,7 +2,6 @@ import React from "react";
 
 import { Table } from "@lib/components/Table";
 import type { TableSortState } from "@lib/components/Table/typesAndEnums";
-import { SortDirection } from "@lib/components/Table/typesAndEnums";
 import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing";
 import { formatWithLargeValuePrefixes } from "@modules/_shared/utils/numberFormatting";
 
@@ -53,15 +52,7 @@ function getCommonUnit(datasets: SensitivityResponseDataset[]): string | null {
 const SensitivityTable: React.FC<SensitivityTableProps> = ({ datasets }) => {
     const [columnSorting, setColumnSorting] = React.useState<TableSortState | null>(null);
 
-    const rows = makeSensitivityTableRows(datasets);
-    const sortedRows =
-        !columnSorting || columnSorting.direction === SortDirection.NONE
-            ? rows
-            : sortSensitivityTableRows(
-                  rows,
-                  columnSorting.columnKey as keyof SensitivityTableRow,
-                  columnSorting.direction,
-              );
+    const sortedRows = sortSensitivityTableRows(makeSensitivityTableRows(datasets), columnSorting);
     const unit = getCommonUnit(datasets);
 
     return (

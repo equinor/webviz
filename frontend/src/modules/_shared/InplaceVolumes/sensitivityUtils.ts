@@ -13,19 +13,19 @@ import { createSensitivityColorMap } from "@modules/_shared/sensitivityColors";
 import { pickDefaultReferenceSensitivityName } from "@modules/_shared/SensitivityProcessing";
 
 import { encodeSelectorColumn, expandSelectorColumn } from "./selectorColumnUtils";
-import type { SensitivityCaseRef } from "./types";
-import { SENSITIVITY_CASE_REF_SCHEMA, TableOriginKey } from "./types";
+import type { SensitivityCaseIdent } from "./types";
+import { SENSITIVITY_CASE_IDENT_SCHEMA, TableOriginKey } from "./types";
 
-export { SENSITIVITY_CASE_REF_SCHEMA, type SensitivityCaseRef };
+export { SENSITIVITY_CASE_IDENT_SCHEMA, type SensitivityCaseIdent };
 
-export type SensitivitySelection = { ensembleIdent: RegularEnsembleIdent; selectedCases: SensitivityCaseRef[] };
+export type SensitivitySelection = { ensembleIdent: RegularEnsembleIdent; selectedCases: SensitivityCaseIdent[] };
 
 export type SensitivityMode =
     | { kind: "off" }
     | { kind: "active"; ensemble: RegularEnsemble; sensitivities: EnsembleSensitivities }
     | { kind: "blocked" };
 
-export type SensitivityCaseOption = { ref: SensitivityCaseRef; label: string };
+export type SensitivityCaseOption = { caseIdent: SensitivityCaseIdent; label: string };
 
 export const SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE =
     "Ensembles with sensitivities can only be analysed one at a time. Select a single ensemble.";
@@ -64,20 +64,20 @@ export function getMultiCaseSensitivities(sensitivities: EnsembleSensitivities |
     return numCases > 1 ? sensitivities : null;
 }
 
-export function getSensitivityCaseRefs(sensitivities: EnsembleSensitivities): SensitivityCaseRef[] {
-    return getSensitivityCaseOptions(sensitivities).map((option) => option.ref);
+export function getSensitivityCaseIdents(sensitivities: EnsembleSensitivities): SensitivityCaseIdent[] {
+    return getSensitivityCaseOptions(sensitivities).map((option) => option.caseIdent);
 }
 
 export function getSensitivityCaseOptions(sensitivities: EnsembleSensitivities): SensitivityCaseOption[] {
     return getOrderedSensitivityArr(sensitivities).flatMap((sensitivity) =>
         sensitivity.cases.map((sensitivityCase) => ({
-            ref: { sensitivityName: sensitivity.name, caseName: sensitivityCase.name },
+            caseIdent: { sensitivityName: sensitivity.name, caseName: sensitivityCase.name },
             label: makeSensitivityCaseLabel(sensitivity, sensitivityCase.name),
         })),
     );
 }
 
-export function isSameSensitivityCase(a: SensitivityCaseRef | null, b: SensitivityCaseRef | null): boolean {
+export function isSameSensitivityCase(a: SensitivityCaseIdent | null, b: SensitivityCaseIdent | null): boolean {
     if (a === null || b === null) {
         return a === b;
     }
@@ -86,9 +86,9 @@ export function isSameSensitivityCase(a: SensitivityCaseRef | null, b: Sensitivi
 
 /** Keep the selected cases that are available, in the order of the available list. */
 export function filterValidSensitivityCases(
-    selected: SensitivityCaseRef[],
-    available: SensitivityCaseRef[],
-): SensitivityCaseRef[] {
+    selected: SensitivityCaseIdent[],
+    available: SensitivityCaseIdent[],
+): SensitivityCaseIdent[] {
     return available.filter((availableCase) =>
         selected.some((selectedCase) => isSameSensitivityCase(selectedCase, availableCase)),
     );
@@ -96,8 +96,8 @@ export function filterValidSensitivityCases(
 
 /** Every selected case is available, and at least one is selected when any is available. */
 export function isValidSensitivityCaseSelection(
-    selected: SensitivityCaseRef[],
-    available: SensitivityCaseRef[],
+    selected: SensitivityCaseIdent[],
+    available: SensitivityCaseIdent[],
 ): boolean {
     const allAvailable = filterValidSensitivityCases(selected, available).length === selected.length;
     return allAvailable && (available.length === 0 || selected.length > 0);
@@ -105,29 +105,34 @@ export function isValidSensitivityCaseSelection(
 
 /** Keep the valid selected cases; fall back to all available cases when none remain. */
 export function fixupSensitivityCaseSelection(
-    selected: SensitivityCaseRef[] | undefined,
-    available: SensitivityCaseRef[],
-): SensitivityCaseRef[] {
+    selected: SensitivityCaseIdent[] | undefined,
+    available: SensitivityCaseIdent[],
+): SensitivityCaseIdent[] {
     const validCases = filterValidSensitivityCases(selected ?? [], available);
     return validCases.length > 0 ? validCases : [...available];
 }
 
 /** Stable string key for a case, e.g. as a select option value. */
-export function makeSensitivityCaseKey(ref: SensitivityCaseRef): string {
-    return JSON.stringify([ref.sensitivityName, ref.caseName]);
+export function makeSensitivityCaseKey(caseIdent: SensitivityCaseIdent): string {
+    return JSON.stringify([caseIdent.sensitivityName, caseIdent.caseName]);
 }
 
-export function hasSensitivityCase(sensitivities: EnsembleSensitivities, ref: SensitivityCaseRef): boolean {
-    return getSensitivityCaseRefs(sensitivities).some((available) => isSameSensitivityCase(available, ref));
+export function hasSensitivityCase(sensitivities: EnsembleSensitivities, caseIdent: SensitivityCaseIdent): boolean {
+    return getSensitivityCaseIdents(sensitivities).some((available) => isSameSensitivityCase(available, caseIdent));
 }
 
-export function makeSensitivityCaseLabelForRef(sensitivities: EnsembleSensitivities, ref: SensitivityCaseRef): string {
-    const sensitivity = sensitivities.getSensitivityArr().find((sens) => sens.name === ref.sensitivityName);
-    return sensitivity ? makeSensitivityCaseLabel(sensitivity, ref.caseName) : `${ref.sensitivityName}:${ref.caseName}`;
+export function makeSensitivityCaseLabelForIdent(
+    sensitivities: EnsembleSensitivities,
+    caseIdent: SensitivityCaseIdent,
+): string {
+    const sensitivity = sensitivities.getSensitivityArr().find((sens) => sens.name === caseIdent.sensitivityName);
+    return sensitivity
+        ? makeSensitivityCaseLabel(sensitivity, caseIdent.caseName)
+        : `${caseIdent.sensitivityName}:${caseIdent.caseName}`;
 }
 
 /** The base case to compare against: `rms_seed`, else `rms`, else the first sensitivity; its first case. */
-export function pickDefaultReferenceSensitivityCase(sensitivities: EnsembleSensitivities): SensitivityCaseRef | null {
+export function pickDefaultReferenceSensitivityCase(sensitivities: EnsembleSensitivities): SensitivityCaseIdent | null {
     const sensitivityArr = getOrderedSensitivityArr(sensitivities);
     const defaultName = pickDefaultReferenceSensitivityName(sensitivityArr.map((sens) => sens.name));
     const sensitivity = sensitivityArr.find((sens) => sens.name === defaultName);
@@ -138,21 +143,21 @@ export function pickDefaultReferenceSensitivityCase(sensitivities: EnsembleSensi
 /** The first case, in ensemble order, that differs from the reference case. */
 export function pickDefaultComparisonSensitivityCase(
     sensitivities: EnsembleSensitivities,
-    referenceCase: SensitivityCaseRef | null,
-): SensitivityCaseRef | null {
-    const refs = getSensitivityCaseRefs(sensitivities);
-    return refs.find((ref) => !isSameSensitivityCase(ref, referenceCase)) ?? refs[0] ?? null;
+    referenceCase: SensitivityCaseIdent | null,
+): SensitivityCaseIdent | null {
+    const caseIdents = getSensitivityCaseIdents(sensitivities);
+    return caseIdents.find((caseIdent) => !isSameSensitivityCase(caseIdent, referenceCase)) ?? caseIdents[0] ?? null;
 }
 
 function getSelectedCasesInEnsembleOrder(
     sensitivities: EnsembleSensitivities,
-    cases: SensitivityCaseRef[],
+    cases: SensitivityCaseIdent[],
 ): { sensitivity: Sensitivity; caseName: string; realizations: number[] }[] {
     const result: { sensitivity: Sensitivity; caseName: string; realizations: number[] }[] = [];
     for (const sensitivity of getOrderedSensitivityArr(sensitivities)) {
         for (const sensitivityCase of sensitivity.cases) {
-            const ref = { sensitivityName: sensitivity.name, caseName: sensitivityCase.name };
-            if (cases.some((selectedCase) => isSameSensitivityCase(selectedCase, ref))) {
+            const caseIdent = { sensitivityName: sensitivity.name, caseName: sensitivityCase.name };
+            if (cases.some((selectedCase) => isSameSensitivityCase(selectedCase, caseIdent))) {
                 result.push({
                     sensitivity,
                     caseName: sensitivityCase.name,
@@ -166,7 +171,7 @@ function getSelectedCasesInEnsembleOrder(
 
 export function getRealizationsForSensitivityCases(
     sensitivities: EnsembleSensitivities,
-    cases: SensitivityCaseRef[],
+    cases: SensitivityCaseIdent[],
 ): number[] {
     const realizations = new Set<number>();
     for (const selectedCase of getSelectedCasesInEnsembleOrder(sensitivities, cases)) {
@@ -181,7 +186,7 @@ export function getRealizationsForSensitivityCases(
 export function restrictRealizationsToSensitivityCases(
     realizations: readonly number[],
     sensitivities: EnsembleSensitivities,
-    cases: SensitivityCaseRef[],
+    cases: SensitivityCaseIdent[],
 ): number[] {
     const caseRealizations = new Set(getRealizationsForSensitivityCases(sensitivities, cases));
     return realizations.filter((realization) => caseRealizations.has(realization));
@@ -189,7 +194,7 @@ export function restrictRealizationsToSensitivityCases(
 
 export function makeRealizationToSensitivityCaseLabelMap(
     sensitivities: EnsembleSensitivities,
-    cases: SensitivityCaseRef[],
+    cases: SensitivityCaseIdent[],
 ): Map<number, string> {
     const realizationToLabel = new Map<number, string>();
     for (const selectedCase of getSelectedCasesInEnsembleOrder(sensitivities, cases)) {
@@ -205,7 +210,7 @@ export function makeRealizationToSensitivityCaseLabelMap(
 
 export function makeSensitivityCaseLabelOrder(
     sensitivities: EnsembleSensitivities,
-    cases: SensitivityCaseRef[],
+    cases: SensitivityCaseIdent[],
 ): string[] {
     return getSelectedCasesInEnsembleOrder(sensitivities, cases).map((selectedCase) =>
         makeSensitivityCaseLabel(selectedCase.sensitivity, selectedCase.caseName),
@@ -215,7 +220,7 @@ export function makeSensitivityCaseLabelOrder(
 /** Labels of the selected cases that have no realization in `validRealizations`, in display order. */
 export function findSensitivityCaseLabelsWithoutRealizations(
     sensitivities: EnsembleSensitivities,
-    cases: SensitivityCaseRef[],
+    cases: SensitivityCaseIdent[],
     validRealizations: ReadonlySet<number>,
 ): string[] {
     const realizationToLabel = makeRealizationToSensitivityCaseLabelMap(sensitivities, cases);
