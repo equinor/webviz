@@ -1280,7 +1280,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
         const actions: ConfirmAction[] = [{ id: "cancel", label: "Cancel" }];
         if (toDelete.length) {
-            actions.push({ id: "remove-only", label: "Only remove from my list", color: "secondary" });
+            actions.push({ id: "remove-only", label: "Only remove from my list", color: "danger" });
             actions.push({ id: "delete", label: "Delete", color: "danger" });
         } else {
             actions.push({ id: "remove", label: "Remove", color: "danger" });
