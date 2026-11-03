@@ -42,9 +42,10 @@ import {
     loadWorkbenchSessionFromLocalStorage,
 } from "./utils/loaders";
 import { localStorageKeyForSessionId } from "./utils/localStorageHelpers";
-import { makeSnapshotDeletionMessage, type SnapshotDeletionItem } from "./utils/snapshotDeletionMessage";
+import { makeSnapshotDeletionMessage, type SnapshotDeletionItem } from "./_components/snapshotDeletionMessage";
 import { buildWorkbenchUrl, readWorkbenchUrlLocation, UrlError, type WorkbenchUrlLocation } from "./utils/url";
 import type { WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
+import { makeSessionDeletionMessage } from "./_components/sessionDeletionMessage";
 
 const SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT = 15;
 
@@ -1141,9 +1142,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         const isPlural = sessionIds.length > 1;
         const result = await ConfirmationService.confirm({
             title: "Are you sure?",
-            message: isPlural
-                ? `${sessionIds.length} sessions will be deleted. This action can not be reversed. Note that any snapshots made from these sessions will still be available`
-                : "This session will be deleted. This action can not be reversed. Note that any snapshots made from this session will still be available",
+            message: makeSessionDeletionMessage(sessionIds.length),
             actions: [
                 { id: "cancel", label: "No, cancel" },
                 { id: "delete", label: "Yes, delete", color: "danger" },
@@ -1278,12 +1277,12 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         const total = toDelete.length + toRemove.length;
         if (!total) return noResult;
 
-        const actions: ConfirmAction[] = [{ id: "cancel", label: "Cancel" }];
+        const actions: ConfirmAction[] = [{ id: "cancel", label: "No, cancel" }];
         if (toDelete.length) {
             actions.push({ id: "remove-only", label: "Only remove from my list", color: "danger" });
-            actions.push({ id: "delete", label: "Delete", color: "danger" });
+            actions.push({ id: "delete", label: "Yes, delete", color: "danger" });
         } else {
-            actions.push({ id: "remove", label: "Remove", color: "danger" });
+            actions.push({ id: "remove", label: "Yes, remove", color: "danger" });
         }
 
         const result = await ConfirmationService.confirm({
