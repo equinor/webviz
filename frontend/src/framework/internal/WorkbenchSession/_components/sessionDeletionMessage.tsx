@@ -1,5 +1,6 @@
-import { Paragraph } from "@lib/components/Typography/compositions";
 import type React from "react";
+
+import { Paragraph } from "@lib/components/Typography/compositions";
 
 export function makeSessionDeletionMessage(count: number): React.ReactNode {
     const isPlural = count > 1;

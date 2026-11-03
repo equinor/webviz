@@ -31,6 +31,8 @@ import {
     type PersistResult,
 } from "../persistence/core/persistSessionToBackend";
 
+import { makeSessionDeletionMessage } from "./_components/sessionDeletionMessage";
+import { makeSnapshotDeletionMessage, type SnapshotDeletionItem } from "./_components/snapshotDeletionMessage";
 import { PrivateWorkbenchSession, PrivateWorkbenchSessionTopic } from "./PrivateWorkbenchSession";
 import { removeSessionQueryData, removeSnapshotQueryData, replaceSessionQueryData } from "./utils/crudHelpers";
 import { SessionValidationError } from "./utils/deserialization";
@@ -42,10 +44,8 @@ import {
     loadWorkbenchSessionFromLocalStorage,
 } from "./utils/loaders";
 import { localStorageKeyForSessionId } from "./utils/localStorageHelpers";
-import { makeSnapshotDeletionMessage, type SnapshotDeletionItem } from "./_components/snapshotDeletionMessage";
 import { buildWorkbenchUrl, readWorkbenchUrlLocation, UrlError, type WorkbenchUrlLocation } from "./utils/url";
 import type { WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
-import { makeSessionDeletionMessage } from "./_components/sessionDeletionMessage";
 
 const SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT = 15;
 

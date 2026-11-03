@@ -9,6 +9,7 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { FieldCompositions } from "@lib/components/Field/compositions";
+import { Hidden } from "@lib/components/Hidden";
 import { TextArea } from "@lib/components/TextArea";
 import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
@@ -18,7 +19,6 @@ import { truncateString } from "@lib/utils/strings";
 
 import { dashboardsToPreviewItems } from "../DashboardPreview/_utils";
 import { DashboardPreviewCarousel } from "../DashboardPreview/dashboardPreviewCarousel";
-import { Hidden } from "@lib/components/Hidden";
 
 export type EditSessionMetadataDialogProps = {
     workbench: Workbench;
