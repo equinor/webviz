@@ -19,6 +19,7 @@ export class RegularEnsemble {
     private _fipRegionsMapping: EnsembleFipRegionsMapping;
     private _color: string;
     private _customName: string | null;
+    private _restartFromChain: readonly RegularEnsembleIdent[];
 
     constructor(
         assetName: string,
@@ -33,6 +34,7 @@ export class RegularEnsemble {
         fipRegionsMappingArray: FipRegionMapping[] | null,
         color: string,
         customName: string | null = null,
+        restartFromChain: RegularEnsembleIdent[] = [],
     ) {
         this._ensembleIdent = new RegularEnsembleIdent(caseUuid, ensembleName);
         this._assetName = assetName;
@@ -44,6 +46,7 @@ export class RegularEnsemble {
         this._fipRegionsMapping = new EnsembleFipRegionsMapping(fipRegionsMappingArray ?? []);
         this._color = color;
         this._customName = customName;
+        this._restartFromChain = Array.from(restartFromChain);
 
         this._sensitivities = null;
         if (sensitivityArray && sensitivityArray.length > 0) {
@@ -114,5 +117,20 @@ export class RegularEnsemble {
 
     getCustomName(): string | null {
         return this._customName;
+    }
+
+    /**
+     * Ensembles this ensemble was restarted from, nearest parent first.
+     */
+    getRestartFromChain(): readonly RegularEnsembleIdent[] {
+        return this._restartFromChain;
+    }
+
+    getRestartFromEnsembleIdent(): RegularEnsembleIdent | null {
+        return this._restartFromChain[0] ?? null;
+    }
+
+    isRestartEnsemble(): boolean {
+        return this._restartFromChain.length > 0;
     }
 }
