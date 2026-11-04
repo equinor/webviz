@@ -23,7 +23,7 @@ import type { Sensitivity, SensitivityCase } from "../EnsembleSensitivities";
 import { SensitivityType } from "../EnsembleSensitivities";
 import { EnsembleSet } from "../EnsembleSet";
 import { RegularEnsemble } from "../RegularEnsemble";
-import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
+import { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleFingerprints";
 
@@ -41,7 +41,7 @@ export type EnsembleLoadingErrorInfoMap = {
 };
 
 export type EnsembleLoadingWarningInfoMap = {
-    [ensembleIdentString: string]: { warningMessage: string; displayName: string };
+    [ensembleIdentString: string]: { warningMessages: string[]; displayName: string };
 };
 
 export type UserEnsembleSetting = {
@@ -146,6 +146,9 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const fipRegionsMappingArray = buildFipRegionsMappingArrFromApiResponse(
             ensembleApiData.ensembleDetails.fipRegions,
         );
+        const restartFromChain = ensembleApiData.ensembleDetails.restartChain.ancestors.map(
+            (item) => new RegularEnsembleIdent(item.caseUuid, item.ensembleName),
+        );
 
         // Refine the display name of any warning for this ensemble now that we know the custom name
         const existingWarningInfo = ensembleLoadingWarningInfoMap[ensembleIdentString];
@@ -171,6 +174,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                 fipRegionsMappingArray,
                 ensembleSetting.color,
                 ensembleSetting.customName,
+                restartFromChain,
             ),
         );
     }
@@ -412,12 +416,13 @@ async function loadEnsembleApiDataMapFromBackend(
         }
 
         // Surface non-fatal warnings, e.g. realization-level parameters missing from the standard result or
-        // parameters from restart ensembles that could not be combined. The ensemble still loads.
+        // a restart ensemble whose parameters could not be combined. The ensemble still loads.
         if (parametersAndSensitivities.warnings.length > 0) {
-            const warningMessage = parametersAndSensitivities.warnings.join("\n\n");
-            console.warn(warningMessage, ensembleIdentString);
+            for (const warning of parametersAndSensitivities.warnings) {
+                console.warn(warning, ensembleIdentString);
+            }
             ensembleLoadingWarningInfoMap[ensembleIdentString] = {
-                warningMessage: warningMessage,
+                warningMessages: [...parametersAndSensitivities.warnings],
                 displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
             };
         }
@@ -473,6 +478,10 @@ function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_a
     const retParameterArray: Parameter[] = [];
 
     for (const apiPar of apiParameterArray) {
+        const sourceEnsembleIdent = apiPar.sourceEnsemble
+            ? new RegularEnsembleIdent(apiPar.sourceEnsemble.caseUuid, apiPar.sourceEnsemble.ensembleName)
+            : undefined;
+
         if (apiPar.isDiscrete) {
             const retPar: DiscreteParameter = {
                 type: ParameterType.DISCRETE,
@@ -483,6 +492,7 @@ function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_a
                 isNumerical: apiPar.isNumerical,
                 realizations: apiPar.realizations,
                 values: apiPar.values,
+                sourceEnsembleIdent,
             };
             retParameterArray.push(retPar);
         } else {
@@ -495,6 +505,7 @@ function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_a
                 isLogarithmic: apiPar.isLogarithmic,
                 realizations: apiPar.realizations,
                 values: apiPar.values as number[],
+                sourceEnsembleIdent,
             };
             retParameterArray.push(retPar);
         }
