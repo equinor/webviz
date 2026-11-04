@@ -1,5 +1,7 @@
 import { MinMax } from "@lib/utils/MinMax";
 
+import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
+
 export enum ParameterType {
     CONTINUOUS,
     DISCRETE,
@@ -14,6 +16,7 @@ export type ContinuousParameter = {
     readonly isLogarithmic: boolean;
     readonly realizations: number[]; // The two arrays, realizations and values, must always be same length
     readonly values: number[]; // Array items will be floating point.
+    readonly sourceEnsembleIdent?: RegularEnsembleIdent; // Set when inherited from a restart ensemble
 };
 
 export type DiscreteParameter = {
@@ -25,6 +28,7 @@ export type DiscreteParameter = {
     readonly isNumerical: boolean;
     readonly realizations: number[]; // The two arrays, realizations and values, must always be same length
     readonly values: number[] | string[]; // Array items can be string or int. Should maybe utilize Int32Array or string[] instead?
+    readonly sourceEnsembleIdent?: RegularEnsembleIdent; // Set when inherited from a restart ensemble
 };
 
 export type Parameter = ContinuousParameter | DiscreteParameter;
