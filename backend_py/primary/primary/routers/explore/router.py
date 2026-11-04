@@ -4,7 +4,9 @@ from typing import List, Coroutine, Any
 
 from fastapi import APIRouter, Depends, Path, Query, Body, Response
 
+from webviz_services.service_exceptions import ServiceLayerException
 from webviz_services.sumo_access.case_inspector import CaseInspector
+from webviz_services.sumo_access.ensemble_lineage import RestartAncestor
 from webviz_services.sumo_access.sumo_inspector import SumoInspector
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
 from webviz_services.utils.authenticated_user import AuthenticatedUser
@@ -90,15 +92,24 @@ async def get_ensemble_details(
     """Get more detailed information for an ensemble"""
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    case_name = await case_inspector.get_case_name_async()
-    realizations = await case_inspector.get_realizations_in_ensemble_async(ensemble_name)
-    asset_name = await case_inspector.get_asset_name_async()
-    field_identifiers = await case_inspector.get_field_identifiers_async()
-    stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
-    standard_results = await case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
+    try:
+        async with asyncio.TaskGroup() as tg:
+            restart_chain_task = tg.create_task(case_inspector.get_restart_chain_async(ensemble_name))
 
-    fip_regions: List[schemas.FipRegion] = []
-    fip_regions_mapping = await case_inspector.get_fip_regions_mapping_async(ensemble_name)
+            case_name = await case_inspector.get_case_name_async()
+            realizations = await case_inspector.get_realizations_in_ensemble_async(ensemble_name)
+            asset_name = await case_inspector.get_asset_name_async()
+            field_identifiers = await case_inspector.get_field_identifiers_async()
+            stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
+            standard_results = await case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
+
+            fip_regions: List[schemas.FipRegion] = []
+            fip_regions_mapping = await case_inspector.get_fip_regions_mapping_async(ensemble_name)
+    except* ServiceLayerException as exc_group:
+        for exc in exc_group.exceptions:
+            raise exc from exc_group  # Reraise the first exception
+
+    restart_chain = restart_chain_task.result()
 
     if fip_regions_mapping is not None:
         for mapping in fip_regions_mapping.root:
@@ -114,6 +125,36 @@ async def get_ensemble_details(
         stratigraphicColumnIdentifier=stratigraphic_column_identifier,
         standardResults=standard_results,
         fipRegions=fip_regions,
+        restartFromChain=[_to_api_restart_from_ensemble(ancestor) for ancestor in restart_chain.ancestors],
+        restartFromUnresolvedUuid=restart_chain.unresolved_ensemble_uuid,
+    )
+
+
+@router.get("/cases/{case_uuid}/ensemble_restart_infos")
+@cache_time(CacheTime.NORMAL)
+async def get_ensemble_restart_infos(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Path(description="Sumo case uuid"),
+) -> list[schemas.EnsembleRestartInfo]:
+    """Get the ensemble each ensemble in the case was directly restarted from, if any"""
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    restart_infos = await case_inspector.get_ensemble_restart_infos_async()
+
+    return [
+        schemas.EnsembleRestartInfo(
+            ensembleName=info.ensemble_name,
+            restartFrom=_to_api_restart_from_ensemble(info.restart_from) if info.restart_from is not None else None,
+            restartFromUnresolvedUuid=info.restart_from_unresolved_uuid,
+        )
+        for info in restart_infos
+    ]
+
+
+def _to_api_restart_from_ensemble(ancestor: RestartAncestor) -> schemas.RestartFromEnsemble:
+    return schemas.RestartFromEnsemble(
+        caseUuid=ancestor.case_uuid,
+        caseName=ancestor.case_name,
+        ensembleName=ancestor.ensemble_name,
     )
 
 

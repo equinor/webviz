@@ -5,6 +5,7 @@ import httpx
 import pytest
 
 from webviz_services.sumo_access import ensemble_lineage
+from webviz_services.sumo_access.case_inspector import CaseInspector, EnsembleInfo
 from webviz_services.sumo_access.ensemble_lineage import (
     MAX_RESTART_CHAIN_DEPTH,
     RestartAncestor,
@@ -187,3 +188,23 @@ async def test_chain_exactly_at_depth_cap_is_not_truncated(fake_sumo: _FakeSumo)
 
     assert len(chain.ancestors) == MAX_RESTART_CHAIN_DEPTH
     assert chain.truncated is False
+
+
+async def test_case_inspector_ensemble_restart_infos_gives_direct_parent_only(fake_sumo: _FakeSumo) -> None:
+    fake_sumo.add_ensemble("uuid-iter2", "case-a", "Case A", "iter-2")
+    fake_sumo.add_ensemble("uuid-iter3", "case-a", "Case A", "iter-3", restart_from="uuid-iter2")
+    fake_sumo.add_ensemble("uuid-pred", "case-a", "Case A", "pred", restart_from="uuid-iter3")
+    fake_sumo.add_ensemble("uuid-pred2", "case-a", "Case A", "pred2", restart_from="uuid-deleted")
+    ensembles = [EnsembleInfo(name=name, realization_count=1) for name in ["iter-2", "iter-3", "pred", "pred2"]]
+
+    inspector = CaseInspector(sumo_client=MagicMock(), case_uuid="case-a")
+    with patch.object(CaseInspector, "get_ensembles_async", AsyncMock(return_value=ensembles)):
+        infos = await inspector.get_ensemble_restart_infos_async()
+
+    infos_by_name = {info.ensemble_name: info for info in infos}
+    assert infos_by_name["iter-2"].restart_from is None
+    assert infos_by_name["iter-2"].restart_from_unresolved_uuid is None
+    assert infos_by_name["iter-3"].restart_from == RestartAncestor("uuid-iter2", "case-a", "Case A", "iter-2")
+    assert infos_by_name["pred"].restart_from == RestartAncestor("uuid-iter3", "case-a", "Case A", "iter-3")
+    assert infos_by_name["pred2"].restart_from is None
+    assert infos_by_name["pred2"].restart_from_unresolved_uuid == "uuid-deleted"
