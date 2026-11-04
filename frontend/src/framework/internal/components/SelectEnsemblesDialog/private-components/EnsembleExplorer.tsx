@@ -1,9 +1,11 @@
 import React from "react";
 
-import { Add, Check, CheckBox, CheckBoxOutlineBlank, Close, FilterList, Remove } from "@mui/icons-material";
+import { Add, Check, CheckBox, CheckBoxOutlineBlank, Close, FilterList, Remove, Replay } from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
 
-import { type EnsembleInfo_api } from "@api";
+import { getEnsembleRestartInfosOptions, type EnsembleInfo_api, type EnsembleRestartInfo_api } from "@api";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { tanstackDebugTimeOverride } from "@framework/utils/debug";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { Field } from "@lib/components/Field";
@@ -18,6 +20,9 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { InternalRegularEnsembleSetting } from "../types";
 
 import { CaseExplorer, type CaseSelection } from "./CaseExplorer/CaseExplorer";
+
+const STALE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
+const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 
 export type EnsembleExplorerProps = {
     queriesDisabled: boolean;
@@ -51,6 +56,23 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
     const [selectedCase, setSelectedCase] = React.useState<CaseSelection | null>(null);
 
     const [filterText, setFilterText] = React.useState("");
+
+    const selectedCaseUuid = selectedCase?.caseUuid ?? "";
+    const ensembleRestartInfosQuery = useQuery({
+        ...getEnsembleRestartInfosOptions({ path: { case_uuid: selectedCaseUuid } }),
+        enabled: !!selectedCaseUuid && !props.queriesDisabled,
+        gcTime: CACHE_TIME,
+        staleTime: STALE_TIME,
+    });
+
+    const restartInfoByEnsembleName = React.useMemo(
+        function makeRestartInfoByEnsembleName() {
+            return new Map<string, EnsembleRestartInfo_api>(
+                (ensembleRestartInfosQuery.data ?? []).map((info) => [info.ensembleName, info]),
+            );
+        },
+        [ensembleRestartInfosQuery.data],
+    );
 
     if (prevSelectedEnsembles !== props.selectedEnsembles) {
         setPrevSelectedEnsembles(props.selectedEnsembles);
@@ -269,6 +291,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                     <EnsembleRow
                                         key={ens.name}
                                         ensemble={ens}
+                                        restartInfo={restartInfoByEnsembleName.get(ens.name)}
                                         selected={isEnsembleSelected(ens.name)}
                                         onSelect={() => handleSelectEnsemble(ens.name)}
                                         onUnselect={() => handleUnselectEnsemble(ens.name)}
@@ -330,6 +353,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
 }
 type EnsembleRowProps = {
     ensemble: EnsembleInfo_api;
+    restartInfo?: EnsembleRestartInfo_api;
     selected: boolean;
     status: "added" | "removed" | "unchanged";
     onSelect: () => void;
@@ -412,8 +436,32 @@ function EnsembleRow(props: EnsembleRowProps) {
             >
                 {props.ensemble.name}{" "}
                 <Typography size="xs">({props.ensemble.realizationCount} realizations)</Typography>
+                <RestartBadge restartInfo={props.restartInfo} />
             </span>
         </div>
+    );
+}
+
+function RestartBadge(props: { restartInfo?: EnsembleRestartInfo_api }): React.ReactNode {
+    if (!props.restartInfo) {
+        return null;
+    }
+
+    let tooltip: string;
+    if (props.restartInfo.restartFrom) {
+        tooltip = `Restarted from ${props.restartInfo.restartFrom.caseName} / ${props.restartInfo.restartFrom.ensembleName}`;
+    } else if (props.restartInfo.restartFromUnresolvedUuid) {
+        tooltip = "Restarted from an ensemble that could not be found (deleted or no access)";
+    } else {
+        return null;
+    }
+
+    return (
+        <Tooltip content={tooltip}>
+            <span className="flex items-center" aria-label={tooltip}>
+                <Replay fontSize="inherit" />
+            </span>
+        </Tooltip>
     );
 }
 
