@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from typing import AsyncGenerator
 import datetime
 import logging
 import os
@@ -27,6 +27,7 @@ from primary.middleware.otel_span_enrichment_middleware import OtelSpanClientAdd
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanEndUserEnrichmentMiddleware
 from primary.middleware.encrypted_redis_session_store import EncryptedRedisSessionStore
 from primary.middleware.request_deadline_middleware import RequestDeadlineMiddleware
+from primary.middleware.slow_request_monitor import SlowRequestMonitor
 from primary.persistence.persistence_stores import PersistenceStoresSingleton
 from primary.routers.dev.router import router as dev_router
 from primary.routers.explore.router import router as explore_router
@@ -98,7 +99,7 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 
 
 @asynccontextmanager
-async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
+async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncGenerator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
@@ -231,9 +232,15 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")  # type: ignore[ar
 
 app.add_middleware(CacheControlMiddleware)
 
+# The slow request monitor is for diagnostics and will trigger logging of the state of
+# the HTTPX connection pool when requests exceed the specified threshold
+slow_request_monitor = SlowRequestMonitor(
+    lambda: HTTPX_ASYNC_CLIENT_WRAPPER.client, slow_request_threshold_s=60, logging_interval_s=15
+)
+
 # The deadline here must be aligned with the timeout in nginx, which is currently 130s
 # Set it slightly shorter (10s) than the nginx timeout to ensure the middleware triggers before nginx does.
-app.add_middleware(RequestDeadlineMiddleware, deadline_s=120)
+app.add_middleware(RequestDeadlineMiddleware, deadline_s=120, slow_request_monitor=slow_request_monitor)
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
