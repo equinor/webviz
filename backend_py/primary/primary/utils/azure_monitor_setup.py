@@ -33,7 +33,7 @@ def setup_azure_monitor_telemetry_for_primary(fastapi_app: FastAPI) -> None:
     # sampling_ratio to 1.0, which restores classic Application Insights sampler.
     # Starting with version 1.8.10, httpx is automatically instrumented by the Azure Monitor OpenTelemetry integration.
     #
-    # We disabe the automatic instrumentation of fastapi since we manually instrument it below.
+    # We disable the automatic instrumentation of fastapi since we manually instrument it below.
     # The remaining disabled instrumentations are for libraries where the auto instrumentation was noisy.
     configure_azure_monitor(
         connection_string=azmon_dest.insights_connection_string,
@@ -58,4 +58,7 @@ def setup_azure_monitor_telemetry_for_primary(fastapi_app: FastAPI) -> None:
     root_logger = logging.getLogger()
     for handler in root_logger.handlers:
         if isinstance(handler, LoggingHandler):
-            handler._log_code_attributes = True
+            if hasattr(handler, "_log_code_attributes"):
+                handler._log_code_attributes = True  # pylint: disable=protected-access
+            else:
+                LOGGER.warning("LoggingHandler does not support code attributes")
