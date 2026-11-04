@@ -301,6 +301,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                         key={ens.name}
                                         ensemble={ens}
                                         restartInfo={restartInfoByEnsembleName.get(ens.name)}
+                                        caseUuid={selectedCase.caseUuid}
                                         selected={isEnsembleSelected(ens.name)}
                                         onSelect={() => handleSelectEnsemble(ens.name)}
                                         onUnselect={() => handleUnselectEnsemble(ens.name)}
@@ -363,6 +364,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
 type EnsembleRowProps = {
     ensemble: EnsembleInfo_api;
     restartInfo?: EnsembleRestartInfo_api;
+    caseUuid: string;
     selected: boolean;
     status: "added" | "removed" | "unchanged";
     onSelect: () => void;
@@ -445,22 +447,24 @@ function EnsembleRow(props: EnsembleRowProps) {
             >
                 {props.ensemble.name}{" "}
                 <Typography size="xs">({props.ensemble.realizationCount} realizations)</Typography>
-                <RestartBadge restartInfo={props.restartInfo} />
+                <RestartBadge restartInfo={props.restartInfo} caseUuid={props.caseUuid} />
             </span>
         </div>
     );
 }
 
-function RestartBadge(props: { restartInfo?: EnsembleRestartInfo_api }): React.ReactNode {
+function RestartBadge(props: { restartInfo?: EnsembleRestartInfo_api; caseUuid: string }): React.ReactNode {
     if (!props.restartInfo) {
         return null;
     }
 
     let tooltip: string;
-    let parentEnsembleName: string | null = null;
+    let parentLabel: string | null = null;
     if (props.restartInfo.restartFrom) {
-        tooltip = `Restarted from ${props.restartInfo.restartFrom.caseName} / ${props.restartInfo.restartFrom.ensembleName}`;
-        parentEnsembleName = props.restartInfo.restartFrom.ensembleName;
+        const { caseUuid, caseName, ensembleName } = props.restartInfo.restartFrom;
+        tooltip = `Restarted from ${caseName} / ${ensembleName}`;
+        // Only spell out the case when the parent lives in a different one than the ensemble being browsed
+        parentLabel = caseUuid === props.caseUuid ? ensembleName : `${caseName} / ${ensembleName}`;
     } else if (props.restartInfo.restartFromUnresolvedUuid) {
         tooltip = "Restarted from an ensemble that could not be found (deleted or no access)";
     } else {
@@ -471,7 +475,7 @@ function RestartBadge(props: { restartInfo?: EnsembleRestartInfo_api }): React.R
         <Tooltip content={tooltip}>
             <span className="gap-x-2xs flex items-center opacity-75" aria-label={tooltip}>
                 <SubdirectoryArrowRight fontSize="inherit" />
-                {parentEnsembleName && <Typography size="xs">{parentEnsembleName}</Typography>}
+                {parentLabel && <Typography size="xs">{parentLabel}</Typography>}
             </span>
         </Tooltip>
     );
