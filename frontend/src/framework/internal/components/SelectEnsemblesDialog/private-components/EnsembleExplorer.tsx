@@ -1,6 +1,15 @@
 import React from "react";
 
-import { Add, Check, CheckBox, CheckBoxOutlineBlank, Close, FilterList, Remove, Replay } from "@mui/icons-material";
+import {
+    Add,
+    Check,
+    CheckBox,
+    CheckBoxOutlineBlank,
+    Close,
+    FilterList,
+    Remove,
+    SubdirectoryArrowRight,
+} from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import { getEnsembleRestartInfosOptions, type EnsembleInfo_api, type EnsembleRestartInfo_api } from "@api";
@@ -448,8 +457,10 @@ function RestartBadge(props: { restartInfo?: EnsembleRestartInfo_api }): React.R
     }
 
     let tooltip: string;
+    let parentEnsembleName: string | null = null;
     if (props.restartInfo.restartFrom) {
         tooltip = `Restarted from ${props.restartInfo.restartFrom.caseName} / ${props.restartInfo.restartFrom.ensembleName}`;
+        parentEnsembleName = props.restartInfo.restartFrom.ensembleName;
     } else if (props.restartInfo.restartFromUnresolvedUuid) {
         tooltip = "Restarted from an ensemble that could not be found (deleted or no access)";
     } else {
@@ -458,8 +469,9 @@ function RestartBadge(props: { restartInfo?: EnsembleRestartInfo_api }): React.R
 
     return (
         <Tooltip content={tooltip}>
-            <span className="flex items-center" aria-label={tooltip}>
-                <Replay fontSize="inherit" />
+            <span className="text-neutral-subtle gap-x-2xs flex items-center" aria-label={tooltip}>
+                <SubdirectoryArrowRight fontSize="inherit" />
+                {parentEnsembleName && <Typography size="xs">{parentEnsembleName}</Typography>}
             </span>
         </Tooltip>
     );
