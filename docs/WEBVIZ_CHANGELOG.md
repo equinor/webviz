@@ -5,6 +5,12 @@
 
 # Changelog
 
+## November 2026
+
+### Added
+
+- **Restart ensembles**: When an ensemble was restarted from another ensemble, the parameters of that ensemble are now loaded together with its own, and restart ensembles are marked in the ensemble selection dialog. If parameter names are in conflict between the two, the ensemble fails to load with an explanation. If the ensemble it was restarted from cannot be found, only its own parameters are loaded and a warning is shown.
+
 ## October 2026
 
 ### Added
