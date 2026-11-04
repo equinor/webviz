@@ -17,7 +17,7 @@ class RequestDeadlineMiddleware:
     middleware should typically be slightly shorter than the actual timeout enforced by the reverse proxy.
     """
 
-    def __init__(self, app: ASGIApp, deadline_s: float = 110) -> None:
+    def __init__(self, app: ASGIApp, deadline_s: float) -> None:
         self.app = app
         self.deadline_s = deadline_s
 
