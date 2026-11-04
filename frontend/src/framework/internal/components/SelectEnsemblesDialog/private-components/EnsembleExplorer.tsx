@@ -469,7 +469,7 @@ function RestartBadge(props: { restartInfo?: EnsembleRestartInfo_api }): React.R
 
     return (
         <Tooltip content={tooltip}>
-            <span className="text-neutral-subtle gap-x-2xs flex items-center" aria-label={tooltip}>
+            <span className="gap-x-2xs flex items-center opacity-75" aria-label={tooltip}>
                 <SubdirectoryArrowRight fontSize="inherit" />
                 {parentEnsembleName && <Typography size="xs">{parentEnsembleName}</Typography>}
             </span>
