@@ -746,16 +746,27 @@ function earlyComparison(page: Page) {
     return viewRegion(page).getByRole("region", { name: "Early value comparison" });
 }
 
-/** The displayed comparison value in currency units, undoing the display scale shown in the header. */
+/**
+ * The comparison value in currency units, from the exact value in the cell title. The visible text is checked to
+ * agree with it on the display scale shown in the header.
+ */
 async function comparisonValue(page: Page, rowLabel: string): Promise<number | "Unavailable"> {
-    const header = await earlyComparison(page).getByRole("columnheader").nth(2).textContent();
-    const scale = header!.includes("thousand") ? 1e3 : header!.includes("million") ? 1e6 : 1;
-    const text = (await earlyComparison(page)
-        .getByRole("row", { name: rowLabel })
-        .getByRole("cell")
-        .nth(2)
-        .textContent())!;
-    return text.trim() === "Unavailable" ? "Unavailable" : Number(text) * scale;
+    const header = (await earlyComparison(page).getByRole("columnheader").nth(2).textContent())!;
+    const scale = header.includes("billion")
+        ? 1e9
+        : header.includes("million")
+          ? 1e6
+          : header.includes("thousand")
+            ? 1e3
+            : 1;
+    const cell = earlyComparison(page).getByRole("row", { name: rowLabel }).getByRole("cell").nth(2);
+    const text = (await cell.textContent())!.trim();
+    if (text === "Unavailable") return "Unavailable";
+    const exact = parseFloat((await cell.getAttribute("title"))!);
+    const shown = Number(text);
+    const decimals = text.split(".")[1]?.length ?? 0;
+    expect(Math.abs(shown - exact / scale)).toBeLessThanOrEqual(0.5 * 10 ** -decimals + 1e-12);
+    return exact;
 }
 
 function expectDisplayedClose(actual: number | "Unavailable", expected: number) {
@@ -769,11 +780,22 @@ async function plottedValue(page: Page, traceName: string, year: number): Promis
         .first()
         .evaluate(
             (element, args) => {
-                const trace = (element as unknown as { data: { name: string; x: number[]; y: number[] }[] }).data.find(
-                    (candidate) => candidate.name === args.traceName,
-                );
+                const plot = element as unknown as {
+                    data: { name: string; x: number[]; y: number[] }[];
+                    layout: { yaxis: { title: { text: string } } };
+                };
+                const trace = plot.data.find((candidate) => candidate.name === args.traceName);
                 const index = trace ? Array.from(trace.x).indexOf(args.year) : -1;
-                return index < 0 ? null : trace!.y[index];
+                // Plotted values are on the display scale named in the axis title.
+                const title = plot.layout.yaxis.title.text;
+                const scale = title.includes("billion")
+                    ? 1e9
+                    : title.includes("million")
+                      ? 1e6
+                      : title.includes("thousand")
+                        ? 1e3
+                        : 1;
+                return index < 0 ? null : trace!.y[index] * scale;
             },
             { traceName, year },
         );

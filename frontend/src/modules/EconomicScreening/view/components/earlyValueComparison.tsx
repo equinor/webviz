@@ -3,7 +3,11 @@ import { EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
 import { formatMonthIndex } from "@modules/EconomicScreening/utils/calendar";
 import { computeDistributionSummary } from "@modules/EconomicScreening/utils/distributionAggregation";
 import type { EvaluationHorizon } from "@modules/EconomicScreening/utils/evaluationHorizon";
-import { getMeasureDisplayName, getMeasureDisplayScale } from "@modules/EconomicScreening/utils/measureAccessors";
+import {
+    formatMeasureValue,
+    getMeasureDisplayName,
+    getMeasureDisplayScale,
+} from "@modules/EconomicScreening/utils/measureAccessors";
 import type { MonthlyRealizationEconomicResult } from "@modules/EconomicScreening/utils/monthlyEconomics";
 import { monthIndexOf } from "@modules/EconomicScreening/utils/monthlyProduction";
 
@@ -41,7 +45,6 @@ export function EarlyValueComparison(props: EarlyValueComparisonProps): React.Re
         [...earlyValues, ...fullValues].map((entry) => entry.value),
         props.currency,
     );
-    const format = (value: number) => formatNumber(value / scale.factor, { numSignificantDigits: 6 });
 
     const earlyEndMonthIndex = Math.min(monthIndexOf(endYear, 12), horizon.endMonthIndex);
     const periodStart = `Jan ${horizon.startYear}`;
@@ -97,11 +100,18 @@ export function EarlyValueComparison(props: EarlyValueComparisonProps): React.Re
                             <tr key={row.key}>
                                 <td className={cellClassName}>{row.label}</td>
                                 <td className={cellClassName}>{row.period}</td>
-                                <td className={`${cellClassName} tabular-nums`}>
+                                <td
+                                    className={`${cellClassName} tabular-nums`}
+                                    title={
+                                        value === undefined
+                                            ? undefined
+                                            : `${formatNumber(value, { numSignificantDigits: 8 })} ${props.currency}`
+                                    }
+                                >
                                     {value === undefined ? (
                                         <span className="font-light">Unavailable</span>
                                     ) : (
-                                        format(value)
+                                        formatMeasureValue(value, scale)
                                     )}
                                 </td>
                                 {isAggregate && (

@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
 
-import { formatNumber } from "../../src/modules/_shared/utils/numberFormatting";
+import {
+    formatCommonScaleUnit,
+    formatNumber,
+    formatWithCommonScale,
+    makeCommonNumberScale,
+} from "../../src/modules/_shared/utils/numberFormatting";
 
 describe("formatNumber", () => {
     describe("default (significant digits, 3 sig figs)", () => {
@@ -185,5 +190,44 @@ describe("formatNumber", () => {
         test("without unit label", () => {
             expect(formatNumber(2 ** 10, { unitSystem: "binary" })).toBe("1 Ki");
         });
+    });
+});
+
+describe("makeCommonNumberScale", () => {
+    test("gives every value the prefix and decimals of the largest magnitude", () => {
+        const scale = makeCommonNumberScale([5.38e6, 6.2432e6, 7.176e6, 9.5e5]);
+        expect(scale).toEqual({ factor: 1e6, prefix: "M", style: "si", numDecimalPlaces: 2 });
+        expect([5.38e6, 6.2432e6, 9.5e5].map((value) => formatWithCommonScale(value, scale))).toEqual([
+            "5.38",
+            "6.24",
+            "0.95",
+        ]);
+        expect(formatCommonScaleUnit(scale, "Sm³")).toBe("MSm³");
+    });
+
+    test("uses words for the words style, and negative values for magnitude", () => {
+        const scale = makeCommonNumberScale([-3.312e9, 2.1e9], { style: "words" });
+        expect(scale).toEqual({ factor: 1e9, prefix: "billion", style: "words", numDecimalPlaces: 2 });
+        expect(formatWithCommonScale(-3.312e9, scale)).toBe("-3.31");
+        expect(formatCommonScaleUnit(scale, "USD")).toBe("billion USD");
+    });
+
+    test("moves to the next prefix when rounding reaches it", () => {
+        expect(makeCommonNumberScale([999_600])).toMatchObject({ factor: 1e6, prefix: "M", numDecimalPlaces: 2 });
+    });
+
+    test("keeps values below 1000 unscaled with significant decimals", () => {
+        const scale = makeCommonNumberScale([12.345, 0.5]);
+        expect(scale).toEqual({ factor: 1, prefix: "", style: "si", numDecimalPlaces: 1 });
+        expect(formatWithCommonScale(0.5, scale)).toBe("0.5");
+        expect(formatCommonScaleUnit(scale, "%")).toBe("%");
+        expect(makeCommonNumberScale([0.25]).numDecimalPlaces).toBe(3);
+    });
+
+    test("handles empty, zero and non-finite input", () => {
+        expect(makeCommonNumberScale([])).toEqual({ factor: 1, prefix: "", style: "si", numDecimalPlaces: 0 });
+        expect(makeCommonNumberScale([0, Number.NaN])).toMatchObject({ factor: 1, numDecimalPlaces: 0 });
+        expect(formatWithCommonScale(-0.001, makeCommonNumberScale([10]))).toBe("0.0");
+        expect(formatWithCommonScale(Number.NaN, makeCommonNumberScale([10]))).toBe("NaN");
     });
 });

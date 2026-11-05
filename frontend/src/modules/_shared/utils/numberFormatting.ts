@@ -152,3 +152,67 @@ export function formatNumber(value: number, options?: NumberFormatOptions): stri
     // Standard notation without prefix
     return `${sign}${formatAbsValue(absValue, maxDecimals, numSigDigits)}${unitSuffix}`;
 }
+
+export type CommonScalePrefixStyle = "si" | "words";
+
+/** One prefix and decimal count shared by a set of values, e.g. the statistics of a distribution. */
+export type CommonNumberScale = {
+    factor: number;
+    /** "M" for the SI style, "million" for the words style, "" without scaling. */
+    prefix: string;
+    style: CommonScalePrefixStyle;
+    numDecimalPlaces: number;
+};
+
+const WORD_PREFIXES: readonly [number, string][] = [
+    [1e12, "trillion"],
+    [1e9, "billion"],
+    [1e6, "million"],
+    [1e3, "thousand"],
+    [1, ""],
+];
+
+/**
+ * Picks one scale for a set of values, so they read on the same prefix with the same number of decimals.
+ *
+ * The prefix and decimals follow the largest magnitude, which gets `numSignificantDigits`; smaller values
+ * keep the same decimals instead of switching prefix. Only prefixes at or above the base unit are used.
+ *   makeCommonNumberScale([5.38e6, 6.24e6, 7.18e6])          → factor 1e6, prefix "M", 2 decimals
+ *   makeCommonNumberScale([9.5e5, 1.2e6], { style: "words" }) → factor 1e6, prefix "million", 2 decimals
+ */
+export function makeCommonNumberScale(
+    values: readonly number[],
+    options?: { style?: CommonScalePrefixStyle; numSignificantDigits?: number },
+): CommonNumberScale {
+    const style = options?.style ?? "si";
+    const numSigDigits = options?.numSignificantDigits ?? DEFAULT_FORMAT_OPTIONS.numSignificantDigits;
+    const finiteValues = values.filter((value) => Number.isFinite(value));
+    const maxAbsValue = finiteValues.length > 0 ? Math.max(...finiteValues.map(Math.abs)) : 0;
+
+    if (maxAbsValue === 0) {
+        return { factor: 1, prefix: "", style, numDecimalPlaces: 0 };
+    }
+
+    // Pre-round before prefix selection to avoid "1000 k" instead of "1 M"
+    const preRounded = parseFloat(maxAbsValue.toPrecision(numSigDigits));
+    const prefixes = style === "words" ? WORD_PREFIXES : BASE_AND_LARGER_SI_PREFIXES;
+    const [factor, prefix] = prefixes.find(([f]) => preRounded >= f) ?? prefixes.at(-1)!;
+    const numIntegerDigits = Math.floor(Math.log10(preRounded / factor)) + 1;
+
+    return { factor, prefix, style, numDecimalPlaces: Math.max(0, numSigDigits - numIntegerDigits) };
+}
+
+/** Formats a value on a common scale, without the prefix; the prefix belongs in the unit label. */
+export function formatWithCommonScale(value: number, scale: CommonNumberScale): string {
+    if (!Number.isFinite(value)) return value.toString();
+    const text = (value / scale.factor).toFixed(scale.numDecimalPlaces);
+    // Avoid "-0.00" for small negative values
+    return /^-0(\.0+)?$/.test(text) ? text.slice(1) : text;
+}
+
+/** The unit label for a common scale: "MSm³" for the SI style, "million USD" for the words style. */
+export function formatCommonScaleUnit(scale: CommonNumberScale, unit: string): string {
+    if (!scale.prefix) return unit;
+    if (scale.style === "words") return unit ? `${scale.prefix} ${unit}` : scale.prefix;
+    return `${scale.prefix}${unit}`;
+}

@@ -1,4 +1,10 @@
 import { simulationUnitReformat } from "@modules/_shared/reservoirSimulationStringUtils";
+import type { CommonNumberScale } from "@modules/_shared/utils/numberFormatting";
+import {
+    formatCommonScaleUnit,
+    formatWithCommonScale,
+    makeCommonNumberScale,
+} from "@modules/_shared/utils/numberFormatting";
 import type { OilPriceBasis } from "@modules/EconomicScreening/typesAndEnums";
 import {
     EconomicMeasure,
@@ -21,8 +27,8 @@ export type MeasureValues = {
     values: number[];
 };
 
-export type MeasureDisplayScale = {
-    factor: number;
+/** A common scale for a set of values, with the prefixed unit label. */
+export type MeasureDisplayScale = CommonNumberScale & {
     unit: string;
 };
 
@@ -113,15 +119,18 @@ export function getMeasureUnit(measure: EconomicMeasure, context: MeasureUnitCon
 }
 
 export function getMeasureDisplayScale(measure: EconomicMeasure, values: number[], unit: string): MeasureDisplayScale {
-    if (measure !== EconomicMeasure.NPV || values.length === 0) {
-        return { factor: 1, unit };
-    }
+    const isMoney = measure === EconomicMeasure.NPV || measure === EconomicMeasure.BREAK_EVEN_OIL_PRICE;
+    return makeDisplayScale(values, unit, isMoney);
+}
 
-    const maximumAbsoluteValue = Math.max(...values.map(Math.abs));
-    if (maximumAbsoluteValue >= 1e9) return { factor: 1e9, unit: `billion ${unit}` };
-    if (maximumAbsoluteValue >= 1e6) return { factor: 1e6, unit: `million ${unit}` };
-    if (maximumAbsoluteValue >= 1e3) return { factor: 1e3, unit: `thousand ${unit}` };
-    return { factor: 1, unit };
+/** Money reads as "million USD", volumes and other units as SI prefixes, e.g. "MSm³". */
+export function makeDisplayScale(values: number[], unit: string, isMoney: boolean): MeasureDisplayScale {
+    const scale = makeCommonNumberScale(values, { style: isMoney ? "words" : "si" });
+    return { ...scale, unit: formatCommonScaleUnit(scale, unit) };
+}
+
+export function formatMeasureValue(value: number, displayScale: MeasureDisplayScale): string {
+    return formatWithCommonScale(value, displayScale);
 }
 
 export function getMeasureDisplayName(measure: EconomicMeasure, isDelta = false): string {

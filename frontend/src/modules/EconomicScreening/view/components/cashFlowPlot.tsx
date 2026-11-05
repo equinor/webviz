@@ -3,6 +3,7 @@ import type { Layout, PlotData } from "plotly.js";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { CashFlowProfileType } from "@modules/EconomicScreening/typesAndEnums";
+import { makeDisplayScale } from "@modules/EconomicScreening/utils/measureAccessors";
 import type { MonthlyRealizationEconomicResult } from "@modules/EconomicScreening/utils/monthlyEconomics";
 import {
     aggregateAnnualVolumeProfiles,
@@ -115,13 +116,20 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
 
     const selectedProfile =
         props.profileType === CashFlowProfileType.ANNUAL_OIL_VOLUME && oilAggregate
-            ? { aggregate: oilAggregate, band: oilAggregate, name: "Annual oil volume", unit: props.oilUnit }
+            ? {
+                  aggregate: oilAggregate,
+                  band: oilAggregate,
+                  name: "Annual oil volume",
+                  unit: props.oilUnit,
+                  isMoney: false,
+              }
             : props.profileType === CashFlowProfileType.ANNUAL_SALES_GAS_VOLUME && salesGasAggregate
               ? {
                     aggregate: salesGasAggregate,
                     band: salesGasAggregate,
                     name: "Annual sales gas volume",
                     unit: props.gasUnit,
+                    isMoney: false,
                 }
               : props.profileType === CashFlowProfileType.ANNUAL_NET_CASH_FLOW && cashFlowAggregate
                 ? {
@@ -129,6 +137,7 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
                       band: cashFlowAggregate.annualNetCashFlow,
                       name: "Annual net cash flow",
                       unit: props.currency,
+                      isMoney: true,
                   }
                 : props.profileType === CashFlowProfileType.CUMULATIVE_DISCOUNTED_CASH_FLOW && cashFlowAggregate
                   ? {
@@ -136,6 +145,7 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
                         band: cashFlowAggregate.cumulativeDiscountedCashFlow,
                         name: "Cumulative discounted cash flow",
                         unit: props.currency,
+                        isMoney: true,
                     }
                   : null;
     if (!selectedProfile) {
@@ -148,10 +158,19 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
         props.selectedRealization,
     );
 
+    // One scale for every plotted value, so the axis and hover read on the same prefix and decimals.
+    const band = selectedProfile.band;
+    const displayScale = makeDisplayScale(
+        [...band.p10, ...band.p90, ...band.median, ...(selectedRealizationProfile?.values ?? [])],
+        selectedProfile.unit,
+        selectedProfile.isMoney,
+    );
+    const scaled = (values: number[]) => values.map((value) => value / displayScale.factor);
+
     const data: Partial<PlotData>[] = [
         {
             x: selectedProfile.aggregate.years,
-            y: selectedProfile.band.p10,
+            y: scaled(band.p10),
             type: "scatter",
             mode: "lines",
             name: "P10",
@@ -160,7 +179,7 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
         },
         {
             x: selectedProfile.aggregate.years,
-            y: selectedProfile.band.p90,
+            y: scaled(band.p90),
             type: "scatter",
             mode: "lines",
             name: "P90-P10",
@@ -170,7 +189,7 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
         },
         {
             x: selectedProfile.aggregate.years,
-            y: selectedProfile.band.median,
+            y: scaled(band.median),
             type: "scatter",
             mode: "lines+markers",
             name: "P50",
@@ -180,7 +199,7 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
             ? [
                   {
                       x: selectedRealizationProfile.series.years,
-                      y: selectedRealizationProfile.values,
+                      y: scaled(selectedRealizationProfile.values),
                       type: "scatter" as const,
                       mode: "lines+markers" as const,
                       name: `Realization ${selectedRealizationProfile.series.realization}`,
@@ -204,7 +223,12 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
         height: props.height,
         margin: { l: 70, r: 20, t: 20, b: 50 },
         xaxis: { title: { text: "Year" }, tickformat: "d", hoverformat: "d", dtick: yearTickStep },
-        yaxis: { title: { text: `${selectedProfile.name} [${selectedProfile.unit}]` }, zeroline: true },
+        yaxis: {
+            title: { text: `${selectedProfile.name} [${displayScale.unit}]` },
+            zeroline: true,
+            exponentformat: "none",
+            hoverformat: `.${displayScale.numDecimalPlaces}f`,
+        },
         showlegend: true,
         // Above the plot area, where it cannot cover the year ticks or axis title; the top margin grows to fit it.
         legend: { x: 0, xanchor: "left", y: 1, yanchor: "bottom" },

@@ -43,12 +43,12 @@ import {
 } from "./atoms/baseAtoms";
 import { economicScreeningResultsAtom } from "./atoms/derivedAtoms";
 import { CashFlowPlot, hasRealizationProfile } from "./components/cashFlowPlot";
+import { DistributionSummary } from "./components/distributionSummary";
 import { EarlyMeasureChannelPublisher } from "./components/earlyMeasureChannelPublisher";
 import { EarlyValueComparison } from "./components/earlyValueComparison";
 import { MeasureChannelPublisher } from "./components/measureChannelPublisher";
 import { MeasureDistributionPlot } from "./components/measureDistributionPlot";
 import { RealizationResultsTable } from "./components/realizationResultsTable";
-import { ResultsStatisticsTable } from "./components/resultsStatisticsTable";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 
 const MIN_PLOT_HEIGHT_PX = 200;
@@ -216,33 +216,33 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     )}
                     {resultMode === ResultMode.DISTRIBUTION && (
                         <>
-                            <ResultsStatisticsTable
+                            <DistributionSummary
                                 measure={selectedMeasure}
                                 measureValues={measureValues}
                                 results={results}
-                                unit={getMeasureUnit(selectedMeasure, unitContext)}
                                 breakEvenTargetCount={breakEvenTargetCount}
-                                isDelta={isDeltaEnsemble}
                             />
-                            <ResponsivePlotArea>
-                                {(width, height) => (
-                                    <MeasureDistributionPlot
-                                        measure={selectedMeasure}
-                                        measureValues={measureValues}
-                                        unit={getMeasureUnit(selectedMeasure, unitContext)}
-                                        plotType={distributionPlotType}
-                                        color={ensembleColor}
-                                        width={width}
-                                        height={height}
-                                        targetValue={
-                                            selectedMeasure === EconomicMeasure.BREAK_EVEN_OIL_PRICE
-                                                ? priceAssumptions.oilPrice
-                                                : null
-                                        }
-                                        isDelta={isDeltaEnsemble}
-                                    />
-                                )}
-                            </ResponsivePlotArea>
+                            {measureValues.values.length > 0 && (
+                                <ResponsivePlotArea>
+                                    {(width, height) => (
+                                        <MeasureDistributionPlot
+                                            measure={selectedMeasure}
+                                            measureValues={measureValues}
+                                            unit={getMeasureUnit(selectedMeasure, unitContext)}
+                                            plotType={distributionPlotType}
+                                            color={ensembleColor}
+                                            width={width}
+                                            height={height}
+                                            targetValue={
+                                                selectedMeasure === EconomicMeasure.BREAK_EVEN_OIL_PRICE
+                                                    ? priceAssumptions.oilPrice
+                                                    : null
+                                            }
+                                            isDelta={isDeltaEnsemble}
+                                        />
+                                    )}
+                                </ResponsivePlotArea>
+                            )}
                         </>
                     )}
                     {resultMode === ResultMode.TIME_PROFILE && hasSelectedTimeProfileData && (
@@ -265,8 +265,11 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                                                 ? shownEarlyEndYear
                                                 : null
                                         }
-                                        oilUnit={oilUnit}
-                                        gasUnit={gasUnit}
+                                        oilUnit={getMeasureUnit(EconomicMeasure.UNDISCOUNTED_OIL_VOLUME, unitContext)}
+                                        gasUnit={getMeasureUnit(
+                                            EconomicMeasure.UNDISCOUNTED_SALES_GAS_VOLUME,
+                                            unitContext,
+                                        )}
                                         color={ensembleColor}
                                         width={width}
                                         height={height}

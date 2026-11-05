@@ -4,6 +4,7 @@ import { EconomicMeasure, IrrStatus, OilPriceBasis } from "@modules/EconomicScre
 import { Ineligibility } from "@modules/EconomicScreening/utils/eligibility";
 import {
     getMeasureDisplayName,
+    formatMeasureValue,
     getMeasureDisplayScale,
     getMeasureUnavailableReason,
     getMeasureUnit,
@@ -129,17 +130,27 @@ describe("getMeasureUnit", () => {
 });
 
 describe("getMeasureDisplayScale", () => {
-    test("uses one explicit billion-currency scale for a large NPV distribution", () => {
+    test("uses one word-prefixed currency scale for a large NPV distribution", () => {
         expect(getMeasureDisplayScale(EconomicMeasure.NPV, [3.312e9, -2.1e9], "USD")).toEqual({
             factor: 1e9,
+            prefix: "billion",
+            style: "words",
+            numDecimalPlaces: 2,
             unit: "billion USD",
         });
     });
 
-    test("does not scale non-financial measures", () => {
-        expect(getMeasureDisplayScale(EconomicMeasure.DISCOUNTED_OIL_VOLUME, [3.312e9], "Sm3")).toEqual({
+    test("uses one SI-prefixed scale for volumes", () => {
+        const scale = getMeasureDisplayScale(EconomicMeasure.DISCOUNTED_OIL_VOLUME, [5.38e6, 7.176e6], "Sm³");
+        expect(scale).toMatchObject({ factor: 1e6, unit: "MSm³", numDecimalPlaces: 2 });
+        expect(formatMeasureValue(5.38e6, scale)).toBe("5.38");
+    });
+
+    test("keeps percent and prices below 1000 unscaled", () => {
+        expect(getMeasureDisplayScale(EconomicMeasure.IRR, [12.345, 8.1], "%")).toMatchObject({
             factor: 1,
-            unit: "Sm3",
+            unit: "%",
+            numDecimalPlaces: 1,
         });
     });
 });

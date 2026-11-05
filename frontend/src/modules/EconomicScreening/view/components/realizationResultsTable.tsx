@@ -1,8 +1,8 @@
 import { Table } from "@lib/components/Table";
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 import { EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
-import type { MeasureUnitContext } from "@modules/EconomicScreening/utils/measureAccessors";
+import type { MeasureDisplayScale, MeasureUnitContext } from "@modules/EconomicScreening/utils/measureAccessors";
 import {
+    formatMeasureValue,
     getMeasureDisplayName,
     getMeasureDisplayScale,
     getMeasureUnit,
@@ -17,8 +17,9 @@ export type RealizationResultsTableProps = {
     isDelta: boolean;
 };
 
-function formatValue(value: number | undefined, scaleFactor: number): string {
-    return value === undefined ? "Unavailable" : formatNumber(value / scaleFactor, { numSignificantDigits: 4 });
+function formatValue(value: number | undefined, displayScale: MeasureDisplayScale | undefined): string {
+    if (value === undefined) return "Unavailable";
+    return displayScale ? formatMeasureValue(value, displayScale) : value.toString();
 }
 
 export function RealizationResultsTable(props: RealizationResultsTableProps): React.ReactNode {
@@ -79,7 +80,7 @@ export function RealizationResultsTable(props: RealizationResultsTableProps): Re
                                     <Table.Cell key={measure}>
                                         {formatValue(
                                             valuesByMeasure.get(measure)?.get(result.realization),
-                                            displayScaleByMeasure.get(measure)?.factor ?? 1,
+                                            displayScaleByMeasure.get(measure),
                                         )}
                                     </Table.Cell>
                                 ))}

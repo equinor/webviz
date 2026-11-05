@@ -150,9 +150,9 @@ The 1 July 2020 source date closes June 2020, so the last production month is Ju
 
 ## Reading distributions and units
 
-Each valid realization contributes one calculated value. P90 is the lower 10th percentile and P10 the upper 90th percentile. An exceedance curve shows the fraction of valid realizations strictly above a value; it is not automatically a probability of commercial success.
+Each valid realization contributes one calculated value. P90 is the lower 10th percentile and P10 the upper 90th percentile. The distribution plot marks P90, P50, P10 and the mean as vertical lines. An exceedance curve shows the fraction of valid realizations strictly above a value; it is not automatically a probability of commercial success.
 
-Display scaling such as million or billion improves readability only and is not applied to channel values. Volume channels use simulator volume units, NPV channels use the selected currency, IRR channels use percent, and break-even channels use the selected oil-price basis. Calculations retain full precision.
+Displayed values share one scale per plot or table column, with three significant digits for the largest value: money reads as, for example, million USD, and volumes use SI prefixes such as MSm³. The scaling is for readability only and is not applied to channel values. Volume channels use simulator volume units, NPV channels use the selected currency, IRR channels use percent, and break-even channels use the selected oil-price basis. Calculations retain full precision.
 
 ## Worked example
 
