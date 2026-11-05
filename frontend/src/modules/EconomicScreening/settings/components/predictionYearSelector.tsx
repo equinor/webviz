@@ -1,7 +1,12 @@
 import React from "react";
 
 import { Combobox } from "@lib/components/Combobox";
-import { MAX_CALENDAR_YEAR, MIN_CALENDAR_YEAR, parseCalendarYear } from "@modules/EconomicScreening/utils/calendar";
+import {
+    formatYearStart,
+    MAX_CALENDAR_YEAR,
+    MIN_CALENDAR_YEAR,
+    parseYearStart,
+} from "@modules/EconomicScreening/utils/calendar";
 
 export type PredictionYearSelectorProps = {
     value: number | null;
@@ -17,7 +22,7 @@ export function PredictionYearSelector(props: PredictionYearSelectorProps): Reac
     const wrapperRef = React.useRef<HTMLDivElement>(null);
     // Text typed since the last selection; Escape discards it, leaving the selector commits it.
     const pendingTextRef = React.useRef<string | null>(null);
-    const typedYear = parseCalendarYear(inputText);
+    const typedYear = parseYearStart(inputText);
     const suggested = new Set(props.suggestedYears);
     const years = new Set(props.suggestedYears);
     if (props.value !== null) years.add(props.value);
@@ -26,7 +31,7 @@ export function PredictionYearSelector(props: PredictionYearSelectorProps): Reac
         .sort((first, second) => first - second)
         .map((year) => ({
             value: year,
-            label: String(year),
+            label: formatYearStart(year),
             description: suggested.has(year) ? undefined : "No source data from 1 January",
         }));
 
@@ -52,7 +57,7 @@ export function PredictionYearSelector(props: PredictionYearSelectorProps): Reac
         }
         const pendingText = pendingTextRef.current;
         pendingTextRef.current = null;
-        const year = pendingText === null ? null : parseCalendarYear(pendingText);
+        const year = pendingText === null ? null : parseYearStart(pendingText);
         if (year !== null && year !== props.value) {
             props.onValueChange(year);
         }
@@ -69,7 +74,6 @@ export function PredictionYearSelector(props: PredictionYearSelectorProps): Reac
                 showClearAllButton
                 loading={props.isLoading && props.suggestedYears.length === 0}
                 placeholder="Search or type a year"
-                startAdornment={<span className="text-body-sm text-subtle whitespace-nowrap">1 Jan</span>}
                 noMatchesText={`Type a whole year within ${MIN_CALENDAR_YEAR}-${MAX_CALENDAR_YEAR}.`}
             />
         </div>

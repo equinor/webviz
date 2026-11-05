@@ -7,7 +7,7 @@ import {
     ResultMode,
     type CostProfileEntry,
 } from "@modules/EconomicScreening/typesAndEnums";
-import { parseCalendarYear } from "@modules/EconomicScreening/utils/calendar";
+import { formatYearStart, parseCalendarYear, parseYearStart } from "@modules/EconomicScreening/utils/calendar";
 import { hasIncludedNonZeroCost } from "@modules/EconomicScreening/utils/costProfile";
 import { getResultRequirement, MeasureRequirement } from "@modules/EconomicScreening/utils/eligibility";
 import { resolveEvaluationHorizon } from "@modules/EconomicScreening/utils/evaluationHorizon";
@@ -483,6 +483,12 @@ describe("prediction and cost helpers", () => {
         expect(parseCalendarYear("203")).toBeNull();
         expect(parseCalendarYear("2031.5")).toBeNull();
         expect(parseCalendarYear("")).toBeNull();
+        expect(formatYearStart(2031)).toBe("1 Jan 2031");
+        expect(parseYearStart("1 Jan 2031")).toBe(2031);
+        expect(parseYearStart(" 1 january 2031 ")).toBe(2031);
+        expect(parseYearStart("2031")).toBe(2031);
+        expect(parseYearStart("2 Jan 2031")).toBeNull();
+        expect(parseYearStart("1 Jan 20")).toBeNull();
     });
 
     test("counts individual included non-zero entries, not a signed net sum", () => {

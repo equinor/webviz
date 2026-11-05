@@ -17,11 +17,7 @@ import { getFieldIssueText } from "../../../utils/setupReadiness";
 import { CalculationHelpDialog } from "../../../view/components/calculationHelpDialog";
 import { discountRatePercentAtom, predictionStartYearAtom } from "../../atoms/baseAtoms";
 import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "../../atoms/persistableFixableAtoms";
-import {
-    evaluationHorizonStateAtom,
-    isSourceLoadingAtom,
-    predictionStartYearSuggestionsAtom,
-} from "../../atoms/sourceSnapshotAtoms";
+import { isSourceLoadingAtom, predictionStartYearSuggestionsAtom } from "../../atoms/sourceSnapshotAtoms";
 import { DISCOUNT_RATE_HELP, EVALUATION_START_HELP } from "../../helpTexts";
 import { NUMBER_INPUT_DEBOUNCE_MS, setupFieldClassName, type SettingsSectionProps } from "../../settingsSections";
 import { PredictionYearSelector } from "../predictionYearSelector";
@@ -37,7 +33,6 @@ export function DataAndValuationSection(props: DataAndValuationSectionProps): Re
     const setSelectedRealization = useSetAtom(selectedRealizationAtom);
     const [discountRatePercent, setDiscountRatePercent] = useAtom(discountRatePercentAtom);
     const [predictionStartYear, setPredictionStartYear] = useAtom(predictionStartYearAtom);
-    const evaluationHorizon = useAtomValue(evaluationHorizonStateAtom);
     const isSourceLoading = useAtomValue(isSourceLoadingAtom);
     const predictionStartYearSuggestions = useAtomValue(predictionStartYearSuggestionsAtom);
     const selectedEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentAtom);
@@ -80,21 +75,16 @@ export function DataAndValuationSection(props: DataAndValuationSectionProps): Re
             <Setting.Field
                 label="Evaluation start"
                 help={{ title: "Evaluation start", content: EVALUATION_START_HELP }}
-                contentClassName={`${setupFieldClassName("predictionYear")} flex flex-col gap-y-3xs`}
+                contentClassName={setupFieldClassName("predictionYear")}
                 warningAnnotation={getFieldIssueText(props.readiness, "predictionYear")}
                 stacked
             >
-                <>
-                    <PredictionYearSelector
-                        value={predictionStartYear}
-                        suggestedYears={predictionStartYearSuggestions}
-                        isLoading={isSourceLoading}
-                        onValueChange={setPredictionStartYear}
-                    />
-                    {predictionStartYear !== null && evaluationHorizon.status !== "START_AFTER_END" && (
-                        <span className="text-body-xs text-subtle">Also the valuation date.</span>
-                    )}
-                </>
+                <PredictionYearSelector
+                    value={predictionStartYear}
+                    suggestedYears={predictionStartYearSuggestions}
+                    isLoading={isSourceLoading}
+                    onValueChange={setPredictionStartYear}
+                />
             </Setting.Field>
             <Setting.Field
                 label="Discount rate [%]"
