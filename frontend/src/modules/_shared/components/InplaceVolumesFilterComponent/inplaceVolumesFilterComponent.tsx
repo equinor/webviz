@@ -301,9 +301,9 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                     help={{
                         content: (
                             <>
-                                Tables with the same filters may contain different values, such as different zone
-                                names. Enable this setting to compare them using only the values available in every
-                                table. Values not shared by all tables are omitted.
+                                Tables with the same filters may contain different values, such as different zone names.
+                                Enable this setting to compare them using only the values available in every table.
+                                Values not shared by all tables are omitted.
                                 <br />
                                 Filters that are not available in every selected table are always omitted.
                             </>
@@ -333,7 +333,11 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                     <Banner
                         key={annotation.message}
                         layoutClassName="col-span-3"
-                        tone={({ info: "info", warning: "warning", error: "danger" } as const)[annotation.type]}
+                        tone={
+                            ({ info: "info", warning: "warning", error: "danger", invalid: "danger" } as const)[
+                                annotation.type
+                            ]
+                        }
                     >
                         {annotation.message}
                     </Banner>

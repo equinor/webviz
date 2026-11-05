@@ -106,6 +106,7 @@ export type VisualizationGroup<
     children: (VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
     annotations: Annotation[];
     aggregatedErrorMessages: (StatusMessage | string)[];
+    aggregatedActionRequiredMessages: (StatusMessage | string)[];
     allItemIds: Set<string>;
     combinedBoundingBox: bbox.BBox | null;
     numLoadingDataProviders: number;
@@ -291,6 +292,7 @@ export class VisualizationAssembler<
         )[] = [];
         const annotations: Annotation[] = [];
         const aggregatedErrorMessages: (StatusMessage | string)[] = [];
+        const aggregatedActionRequiredMessages: (StatusMessage | string)[] = [];
         const allItemIds = new Set<string>();
         let hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget> = {};
         let numLoadingDataProviders = 0;
@@ -323,6 +325,7 @@ export class VisualizationAssembler<
 
             accumulatedData = product.accumulatedData;
             aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
+            aggregatedActionRequiredMessages.push(...product.aggregatedActionRequiredMessages);
 
             // Add all descendant item ids of the group to the set of all item ids
             for (const id of product.allItemIds) {
@@ -349,6 +352,10 @@ export class VisualizationAssembler<
             }
 
             if (child.getStatus() === DataProviderStatus.INVALID_SETTINGS) {
+                const invalidSettings = child.getSettingsContextDelegate().getInvalidSettings();
+                const name = child.getItemDelegate().getName();
+                const details = invalidSettings.length > 0 ? `: invalid ${invalidSettings.join(", ")}` : "";
+                aggregatedActionRequiredMessages.push(`${name}${details}`);
                 continue;
             }
 
@@ -397,6 +404,7 @@ export class VisualizationAssembler<
             groupType: null,
             children,
             aggregatedErrorMessages,
+            aggregatedActionRequiredMessages,
             allItemIds,
             combinedBoundingBox,
             annotations,
@@ -458,6 +466,7 @@ export class VisualizationAssembler<
             children: product.children,
             annotations: product.annotations,
             aggregatedErrorMessages: product.aggregatedErrorMessages,
+            aggregatedActionRequiredMessages: product.aggregatedActionRequiredMessages,
             allItemIds: product.allItemIds,
             combinedBoundingBox: product.combinedBoundingBox,
             numLoadingDataProviders: product.numLoadingDataProviders,

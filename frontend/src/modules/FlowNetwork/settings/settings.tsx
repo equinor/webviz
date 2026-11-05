@@ -11,8 +11,10 @@ import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/Wor
 import { Combobox } from "@lib/components/Combobox";
 import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
+import type { SettingAnnotation } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
 import { TextInput } from "@lib/components/TextInput";
+import { useFlagActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
@@ -41,6 +43,7 @@ import { realizationFlowNetworkQueryAtom } from "./atoms/queryAtoms";
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
+    const flagActionRequiredToStatusWriter = useFlagActionRequiredToStatusWriter(statusWriter);
 
     const availableRealizations = useAtomValue(availableRealizationsAtom);
     const availableTreeTypes = useAtomValue(availableTreeTypesAtom);
@@ -116,9 +119,17 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedNodeKeyAnnotations = useMakePersistableFixableAtomAnnotations(selectedNodeKeyAtom);
     const selectedDateTimeAnnotations = useMakePersistableFixableAtomAnnotations(selectedDateTimeAtom);
 
+    const handleSettingsAnnotationsChange = React.useCallback(
+        function handleSettingsAnnotationsChange(annotations: SettingAnnotation[]) {
+            const invalidFieldValueMessages = annotations.filter((a) => a.type === "error").map((a) => a.message);
+            flagActionRequiredToStatusWriter(invalidFieldValueMessages);
+        },
+        [flagActionRequiredToStatusWriter],
+    );
+
     return (
         <Setting.ScrollArea>
-            <Setting.Panel>
+            <Setting.Panel onAnnotationsChange={handleSettingsAnnotationsChange}>
                 <Setting.Section title="Data" defaultOpen>
                     <Setting.Field label="Ensemble" annotations={selectedEnsembleIdentAnnotations}>
                         <EnsembleDropdown
