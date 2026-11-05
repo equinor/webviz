@@ -15,7 +15,8 @@ export type EarlyMeasureChannelPublisherProps = {
     ensembleDisplayName: string;
     color: string;
     enabled: boolean;
-    assumptionContext: string;
+    discountRatePercent: number;
+    predictionStartYear: number | null;
 };
 
 export function EarlyMeasureChannelPublisher(props: EarlyMeasureChannelPublisherProps): null {
@@ -27,7 +28,8 @@ export function EarlyMeasureChannelPublisher(props: EarlyMeasureChannelPublisher
             props.unit,
             props.ensembleIdentString,
             props.color,
-            props.assumptionContext,
+            props.discountRatePercent,
+            props.predictionStartYear,
         ],
         enabled: props.enabled,
         contents: [
@@ -42,7 +44,10 @@ export function EarlyMeasureChannelPublisher(props: EarlyMeasureChannelPublisher
                     props.ensembleIdentString,
                     props.ensembleDisplayName,
                     props.color,
-                    props.assumptionContext,
+                    {
+                        discountRatePercent: props.discountRatePercent,
+                        predictionStartYear: props.predictionStartYear,
+                    },
                 ),
             },
         ],

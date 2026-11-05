@@ -291,7 +291,7 @@ async function expectPublishedState(page: Page, state: ScaleState, options: { fi
     const oil = expectKeyedValues(OIL_CHANNEL, fullOil, (entry) => entry.discountedOil);
     expect(oil.metaData.unit).toBe("Sm³");
     const earlyOil = expectKeyedValues(EARLY_OIL_CHANNEL, expected, (entry) => entry.earlyDiscountedOil);
-    expect(earlyOil.metaData.displayString).toContain(`Through ${state.earlyEndYear}`);
+    expect(earlyOil.metaData.displayString).toContain(`Early discounted oil volume through ${state.earlyEndYear}`);
     if (!options.financial) {
         expect(contentOf(NPV_CHANNEL)).toBeNull();
         expect(contentOf(IRR_CHANNEL)).toBeNull();
@@ -301,19 +301,15 @@ async function expectPublishedState(page: Page, state: ScaleState, options: { fi
     }
     const npv = expectKeyedValues(NPV_CHANNEL, fullOil, (entry) => entry.npv);
     expect(npv.metaData.unit).toBe("USD");
-    for (const context of [
-        `Discount rate ${state.inputs.discountRatePercent}%`,
-        `Valuation 1 Jan ${state.inputs.predictionStartYear}`,
-        `Evaluation ${state.inputs.predictionStartYear}-${SCALE_LAST_YEAR}`,
-        "Currency USD",
-    ]) {
-        expect(npv.metaData.displayString).toContain(context);
-    }
+    const inputsLabel = `; ${state.inputs.discountRatePercent}%, from ${state.inputs.predictionStartYear})`;
+    expect(npv.metaData.displayString).toMatch(/^NPV \(.+; /);
+    expect(npv.metaData.displayString!.endsWith(inputsLabel)).toBe(true);
     const breakEven = expectKeyedValues(BREAK_EVEN_CHANNEL, fullOil, (entry) => entry.breakEvenOilPrice);
     expect(breakEven.metaData.unit).toBe("USD per Sm³");
     const earlyDcf = expectKeyedValues(EARLY_DCF_CHANNEL, expected, (entry) => entry.earlyDcf);
     expect(earlyDcf.metaData.unit).toBe("USD");
-    expect(earlyDcf.metaData.displayString).toContain(`Through ${state.earlyEndYear}`);
+    expect(earlyDcf.metaData.displayString).toContain(`Early discounted cash flow through ${state.earlyEndYear} (`);
+    expect(earlyDcf.metaData.displayString!.endsWith(inputsLabel)).toBe(true);
 
     // Every regular IRR is finite; each published rate is a root of that realization's own cash flow.
     const irr = contentOf(IRR_CHANNEL)!;

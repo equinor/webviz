@@ -84,7 +84,8 @@ export function EarlyMeasureChannelPublisherHarness({ enabled }: { enabled: bool
                 ensembleDisplayName="Ensemble"
                 color="#000000"
                 enabled={enabled}
-                assumptionContext=""
+                discountRatePercent={8}
+                predictionStartYear={2018}
             />
             <output data-testid="received-content-count">{received.channel?.contents.length ?? 0}</output>
             <output data-testid="received-data-count">{received.channel?.contents[0]?.dataArray.length ?? 0}</output>

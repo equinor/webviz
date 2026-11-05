@@ -315,7 +315,7 @@ test("DistributionPlot receives regular full and early outputs keyed by actual r
         page,
         expectedByKey(DESIGN_REALIZATIONS, (r) => expectedDcfThrough2031(DESIGN_MONTHLY_OIL[r])),
     );
-    expect(await axisTitle(page, "Distribution consumer", "x")).toContain("Through 2031");
+    expect(await axisTitle(page, "Distribution consumer", "x")).toContain("Early discounted cash flow through 2031");
     await expectVisibleUnit(page, "x", "USD");
 
     await component.update(
@@ -323,9 +323,9 @@ test("DistributionPlot receives regular full and early outputs keyed by actual r
     );
     const expectedNpvByKey = expectedByKey(FULL_OIL_KEYS, (r) => expectedNpv(DESIGN_MONTHLY_OIL[r]));
     await expectDistributionBars(page, expectedNpvByKey);
-    expect(await axisTitle(page, "Distribution consumer", "x")).toContain("Net present value");
+    expect(await axisTitle(page, "Distribution consumer", "x")).toMatch(/^NPV \(/);
     await expectVisibleUnit(page, "x", "USD");
-    expect((await recordTitleClipping(page, "x", "regular NPV bars")).text).toContain("Net present value");
+    expect((await recordTitleClipping(page, "x", "regular NPV bars")).text).toMatch(/^NPV \(/);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/distribution-regular-npv-bars.png` });
 
     // X/Y: NPV lacks interior realization 5 while the early output has it, so zipping positions would misalign.
@@ -349,7 +349,7 @@ test("DistributionPlot receives regular full and early outputs keyed by actual r
         expect(scatter.x[index]).toBeCloseTo(expectedNpv(DESIGN_MONTHLY_OIL[key]), 4);
         expect(scatter.y[index] as number).toBeCloseTo(expectedDcfThrough2031(DESIGN_MONTHLY_OIL[key]), 4);
     });
-    expect(await axisTitle(page, "Distribution consumer", "y")).toContain("Through 2031");
+    expect(await axisTitle(page, "Distribution consumer", "y")).toContain("Early discounted cash flow through 2031");
     await expectVisibleUnit(page, "x", "USD");
     await expectVisibleUnit(page, "y", "USD");
     await recordTitleClipping(page, "x", "scatter X");
@@ -585,7 +585,7 @@ test("consumers withdraw and recover producer outputs for drafts, early settings
         expect(x).toBeCloseTo(expectedNpv(DESIGN_MONTHLY_OIL[key]), 4);
         expect(y).toBeCloseTo(-CAPEX_PV, 4);
     });
-    expect(await axisTitle(page, "Distribution consumer", "y")).toContain("Through 2030");
+    expect(await axisTitle(page, "Distribution consumer", "y")).toContain("Early discounted cash flow through 2030");
     await expectDesignNpvTornado(page);
     await component.update(<EconomicScreeningConnectedConsumersHarness {...scatterProps} />);
     await expect.poll(async () => (await readScatterByKey(page))[0]?.[2]).toBeCloseTo(expectedDcfThrough2031(1000), 4);
@@ -778,7 +778,7 @@ test("representative NPV, volume, IRR and break-even units reach DistributionPlo
         // Published in percent: the corresponding rate is a root of the realization's cash flow.
         expect(Math.abs(npvAtRate(oil(realization), irrPercent / 100)) / CAPEX_2030_USD).toBeLessThan(1e-6);
     }
-    expect(await axisTitle(page, "Distribution consumer", "x")).toContain("Internal rate of return");
+    expect(await axisTitle(page, "Distribution consumer", "x")).toContain("IRR (");
     await expectVisibleUnit(page, "x", "%");
 
     await component.update(

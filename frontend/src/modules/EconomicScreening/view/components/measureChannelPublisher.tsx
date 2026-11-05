@@ -16,7 +16,8 @@ export type MeasureChannelPublisherProps = {
     ensembleDisplayName: string;
     color: string;
     enabled: boolean;
-    assumptionContext: string;
+    discountRatePercent: number;
+    predictionStartYear: number | null;
 };
 
 /** Renders nothing; exists so that each channel gets its own hook call. */
@@ -28,7 +29,8 @@ export function MeasureChannelPublisher(props: MeasureChannelPublisherProps): nu
             props.unitContext,
             props.ensembleIdentString,
             props.color,
-            props.assumptionContext,
+            props.discountRatePercent,
+            props.predictionStartYear,
         ],
         enabled: props.enabled,
         contents: [
@@ -42,7 +44,10 @@ export function MeasureChannelPublisher(props: MeasureChannelPublisherProps): nu
                     props.ensembleIdentString,
                     props.ensembleDisplayName,
                     props.color,
-                    props.assumptionContext,
+                    {
+                        discountRatePercent: props.discountRatePercent,
+                        predictionStartYear: props.predictionStartYear,
+                    },
                 ),
             },
         ],

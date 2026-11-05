@@ -47,7 +47,7 @@ describe("makeEarlyMeasureDataGenerator", () => {
         )();
 
         expect(generated.data).toEqual([{ key: 12, value: 10 }]);
-        expect(generated.metaData.displayString).toBe("Through 2020: Ensemble");
+        expect(generated.metaData.displayString).toBe("Early discounted oil volume through 2020 (Ensemble)");
     });
 
     test("does not publish values computed for a different early year", () => {
@@ -78,7 +78,7 @@ describe("makeEarlyMeasureDataGenerator", () => {
         expect(generated.data).toEqual([]);
     });
 
-    test("includes compact assumption provenance in the channel metadata", () => {
+    test("names the measure, ensemble and only the inputs that change the value", () => {
         const generated = makeEarlyMeasureDataGenerator(
             [result],
             EarlyEconomicMeasure.DISCOUNTED_CASH_FLOW,
@@ -87,10 +87,12 @@ describe("makeEarlyMeasureDataGenerator", () => {
             "ensemble",
             "Ensemble",
             "#000",
-            "Discount rate 8%",
+            { discountRatePercent: 8, predictionStartYear: 2018 },
         )();
 
-        expect(generated.metaData.displayString).toBe("Through 2020: Ensemble; Discount rate 8%");
+        expect(generated.metaData.displayString).toBe(
+            "Early discounted cash flow through 2020 (Ensemble; 8%, from 2018)",
+        );
     });
 });
 

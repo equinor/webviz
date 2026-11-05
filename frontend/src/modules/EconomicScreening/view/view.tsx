@@ -155,7 +155,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     ensembleDisplayName={ensembleDisplayName}
                     color={ensembleColor}
                     enabled={!isFetching && hasResults && (!isCostDraftInvalid || !isFinancialMeasure(measure))}
-                    assumptionContext={activeAssumptions.join("; ")}
+                    discountRatePercent={economicAssumptions.discountRatePercent}
+                    predictionStartYear={horizon?.startYear ?? null}
                 />
             ))}
             {Object.values(EarlyEconomicMeasure).map((measure) => (
@@ -183,7 +184,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                         isEarlyValueConfigurationValid &&
                         earlyValueEndYear !== null
                     }
-                    assumptionContext={activeAssumptions.join("; ")}
+                    discountRatePercent={economicAssumptions.discountRatePercent}
+                    predictionStartYear={horizon?.startYear ?? null}
                 />
             ))}
 
