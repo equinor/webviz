@@ -46,6 +46,7 @@ class ServiceRateLimitError(ServiceLayerException):
     We have exceeded the rate limit for some underlying service, eg. Sumo rate limit exceeded.
     """
 
+
 class ServiceUnavailableError(ServiceLayerException):
     """
     Some underlying service is unavailable, eg. Sumo is down.
