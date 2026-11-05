@@ -242,7 +242,7 @@ slow_req_monitor = SlowRequestMonitor(
 # These excluded paths rely on the grid3d user service which may have long processing times when provisioning
 # the backing Radix job. To be consistent with previous behavior, we exclude these paths from the request deadline
 # enforcement until the provisioning of the backing Radix job is optimized.
-excluded_paths = [
+exclude_paths = [
     "/grid3d/grid_surface",
     "/grid3d/grid_parameter",
     "/grid3d/grid_parameter_time_diff",
@@ -253,7 +253,7 @@ excluded_paths = [
 # The deadline here must be aligned with the timeout in nginx, which is currently 130s
 # Set it slightly shorter (10s) than the nginx timeout to ensure the middleware triggers before nginx does.
 app.add_middleware(
-    RequestDeadlineMiddleware, deadline_s=120, excluded_paths=excluded_paths, slow_req_monitor=slow_req_monitor
+    RequestDeadlineMiddleware, deadline_s=120, exclude_paths=exclude_paths, slow_req_monitor=slow_req_monitor
 )
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
