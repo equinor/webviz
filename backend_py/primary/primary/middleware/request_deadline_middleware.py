@@ -23,11 +23,13 @@ class RequestDeadlineMiddleware:
         self,
         app: ASGIApp,
         deadline_s: float,
-        slow_request_monitor: SlowRequestMonitor | None = None,
+        exclude_paths: list[str] | None = None,
+        slow_req_monitor: SlowRequestMonitor | None = None,
     ) -> None:
         self._app = app
         self._deadline_s = deadline_s
-        self._slow_request_monitor = slow_request_monitor
+        self._exclude_paths = exclude_paths or []
+        self._slow_req_monitor = slow_req_monitor
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -36,6 +38,17 @@ class RequestDeadlineMiddleware:
 
         request_method = scope.get("method", "")
         request_path = scope.get("path", "")
+
+        path_to_check = request_path
+        root_path = scope.get("root_path", "")
+        if root_path:
+            path_to_check = path_to_check.replace(root_path, "")
+
+        if path_to_check in self._exclude_paths:
+            LOGGER.debug(f"RequestDeadlineMiddleware excluding request for path: {path_to_check=}")
+            await self._app(scope, receive, send)
+            return
+
         started_at = time.monotonic()
 
         # Wrap the send function so we can track if the response has started
@@ -53,8 +66,8 @@ class RequestDeadlineMiddleware:
 
         # Wrap the slow request monitor context manager if configured.
         monitor_cm: contextlib.AbstractAsyncContextManager[None] = contextlib.nullcontext()
-        if self._slow_request_monitor:
-            monitor_cm = self._slow_request_monitor.watch_request_async(request_method, request_path)
+        if self._slow_req_monitor:
+            monitor_cm = self._slow_req_monitor.watch_request_async(request_method, request_path)
 
         try:
             async with monitor_cm:

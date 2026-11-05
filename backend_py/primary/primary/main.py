@@ -234,13 +234,27 @@ app.add_middleware(CacheControlMiddleware)
 
 # The slow request monitor is for diagnostics and will trigger logging of the state of
 # the HTTPX connection pool when requests exceed the specified threshold
-slow_request_monitor = SlowRequestMonitor(
+slow_req_monitor = SlowRequestMonitor(
     lambda: HTTPX_ASYNC_CLIENT_WRAPPER.client, slow_request_threshold_s=60, logging_interval_s=15
 )
 
+# The deadline middleware will cancel HTTP request processing if it exceeds the specified deadline.
+# These excluded paths rely on the grid3d user service which may have long processing times when provisioning
+# the backing Radix job. To be consistent with previous behavior, we exclude these paths from the request deadline
+# enforcement until the provisioning of the backing Radix job is optimized.
+excluded_paths = [
+    "/grid3d/grid_surface",
+    "/grid3d/grid_parameter",
+    "/grid3d/grid_parameter_time_diff",
+    "/grid3d/get_polyline_intersection",
+    "/grid3d/get_polyline_intersection_time_diff",
+]
+
 # The deadline here must be aligned with the timeout in nginx, which is currently 130s
 # Set it slightly shorter (10s) than the nginx timeout to ensure the middleware triggers before nginx does.
-app.add_middleware(RequestDeadlineMiddleware, deadline_s=120, slow_request_monitor=slow_request_monitor)
+app.add_middleware(
+    RequestDeadlineMiddleware, deadline_s=120, excluded_paths=excluded_paths, slow_req_monitor=slow_req_monitor
+)
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
