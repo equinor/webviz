@@ -4,6 +4,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { isEqual } from "lodash-es";
 
 import { Button } from "@lib/components/Button";
+import { Field } from "@lib/components/Field";
 import { NumberInput } from "@lib/components/NumberInput";
 import { Slider } from "@lib/components/Slider";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -20,6 +21,11 @@ type ValueType = {
     applied: boolean;
 } | null;
 type ValueConstraintsType = [[number, number, number], [number, number, number], [number, number, number]];
+
+function isAxisValueValid(val: number, [min, max, step]: [number, number, number]): boolean {
+    return val >= min && val <= max && (val - min) % step === 0;
+}
+
 export class SeismicSliceSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     valueConstraintsIntersectionReducerDefinition = {
         reducer: (accumulator: ValueConstraintsType, valueConstraints: ValueConstraintsType) => {
@@ -116,10 +122,7 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
         if (!value || !Array.isArray(value.value) || value.value.length !== 3) {
             return false;
         }
-        return value.value.every((val, index) => {
-            const [min, max, step] = valueConstraints[index];
-            return val >= min && val <= max && (val - min) % step === 0;
-        });
+        return value.value.every((val, index) => isAxisValueValid(val, valueConstraints[index]));
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
@@ -155,7 +158,11 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                 setPrevVisible(props.value?.visible ?? null);
             }
 
-            function handleSliderChange(index: number, val: number) {
+            function handleSliderChange(index: number, val: number, reason: string) {
+                // Bounds changes make the slider emit a clamped value; ignore it so a retained
+                // out-of-range coordinate stays visible (and invalid) until the user edits it
+                if (reason === "clamp-value") return;
+
                 const newValue: [number, number, number] = [...(internalValue ?? [0, 0, 0])];
                 newValue[index] = val;
                 setInternalValue(newValue);
@@ -237,7 +244,9 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                                     <Slider
                                         min={valueConstraints[index][0]}
                                         max={valueConstraints[index][1]}
-                                        onValueChange={(value) => handleSliderChange(index, value as number)}
+                                        onValueChange={(value, eventDetails) =>
+                                            handleSliderChange(index, value as number, eventDetails.reason)
+                                        }
                                         value={props.value?.value[index] ?? valueConstraints[index][0]}
                                         valueLabelDisplay="auto"
                                         step={valueConstraints[index][2]}
@@ -245,11 +254,19 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                                     />
                                 </div>
                                 <div className={resolveClassNames("min-w-16 flex-1", { hidden: !inputsVisible })}>
-                                    <NumberInput
-                                        value={internalValue?.[index] ?? 0}
-                                        onValueChange={(value) => handleInputChange(index, value)}
-                                        disabled={props.disabled}
-                                    />
+                                    <Field.Root
+                                        inline
+                                        invalid={
+                                            internalValue !== null &&
+                                            !isAxisValueValid(internalValue[index], valueConstraints[index])
+                                        }
+                                    >
+                                        <NumberInput
+                                            value={internalValue?.[index] ?? 0}
+                                            onValueChange={(value) => handleInputChange(index, value)}
+                                            disabled={props.disabled}
+                                        />
+                                    </Field.Root>
                                 </div>
                             </div>
                         ))}

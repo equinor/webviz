@@ -388,6 +388,36 @@ describe("Economic Screening source query lifecycle", () => {
         cleanUp(queryClient, unmountView);
     });
 
+    test("keeps a removed ensemble as an invalid choice and stops using it", async () => {
+        resetRequests();
+        const removedEnsemble = makeEnsemble("66666666-6666-4666-8666-666666666666", "Removed", [1, 2]);
+        const remainingEnsemble = makeEnsemble("77777777-7777-4777-8777-777777777777", "Remaining", [7]);
+        EnsembleFingerprintStore.setAll(
+            new Map([
+                [removedEnsemble.getIdent().toString(), "removed-fingerprint"],
+                [remainingEnsemble.getIdent().toString(), "remaining-fingerprint"],
+            ]),
+        );
+        const { store, queryClient } = makeStore(new EnsembleSet([removedEnsemble, remainingEnsemble]));
+        store.set(selectedEnsembleIdentAtom, removedEnsemble.getIdent());
+        const { instance } = await createEconomicScreeningInstance(store);
+        const unmountSettings = mountSettings(store);
+        const unmountView = mountView(store, instance);
+        await waitFor(() => executedRequestKeys.length === 2);
+
+        store.set(EnsembleSetAtom, new EnsembleSet([remainingEnsemble]));
+        await waitFor(() => store.get(settingsSourceSnapshotAtom).status === SourceStatus.NO_ENSEMBLE);
+
+        const selection = store.get(selectedEnsembleIdentAtom);
+        expect(selection.value?.toString()).toBe(removedEnsemble.getIdent().toString());
+        expect(selection.isValidInContext).toBe(false);
+        expect(store.get(settingsSourceSnapshotAtom).ensembleIdent).toBeNull();
+        expect(store.get(economicScreeningResultsAtom).results).toEqual([]);
+        expect(executedRequestKeys).toHaveLength(2);
+
+        cleanUp(queryClient, unmountView, unmountSettings);
+    });
+
     test("requests delta sources with coverage through the typed delta endpoint", async () => {
         resetRequests();
         const comparison = makeEnsemble("44444444-4444-4444-8444-444444444444", "Comparison", [1, 3, 5]);

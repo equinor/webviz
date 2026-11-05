@@ -23,7 +23,7 @@ import {
     isSelectedEnsembleDeltaAtom,
     salesGasStrategyAtom,
 } from "./derivedAtoms";
-import { selectedEnsembleIdentAtom } from "./persistableFixableAtoms";
+import { validSelectedEnsembleIdentAtom } from "./persistableFixableAtoms";
 
 /** Fixed positions of the vectors in `vectorDataQueriesAtom`. */
 export const VectorQueryIndex = {
@@ -44,7 +44,7 @@ const VECTOR_NAMES_IN_QUERY_ORDER = [
 
 /** Realizations of the selected ensemble that pass the current realization filter. */
 export const validRealizationNumbersAtom = atom<number[] | null>((get) => {
-    const ensembleIdent = get(selectedEnsembleIdentAtom).value;
+    const ensembleIdent = get(validSelectedEnsembleIdentAtom);
     if (!ensembleIdent) {
         return null;
     }
@@ -59,7 +59,7 @@ export function getAllEnsembleRealizationNumbers(
 }
 
 const allEnsembleRealizationNumbersAtom = atom<number[] | null>((get) => {
-    return getAllEnsembleRealizationNumbers(get(selectedEnsembleIdentAtom).value, get(EnsembleSetAtom));
+    return getAllEnsembleRealizationNumbers(get(validSelectedEnsembleIdentAtom), get(EnsembleSetAtom));
 });
 
 const encodedAllEnsembleRealizationsAtom = atom<string | null>((get) => {
@@ -85,7 +85,7 @@ export const isVectorNeededAtom = atom<boolean[]>((get) => {
  * horizon and cost years do not move with realization filtering; filtering is applied afterwards.
  */
 const regularEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
-    const ensembleIdent = get(selectedEnsembleIdentAtom).value;
+    const ensembleIdent = get(validSelectedEnsembleIdentAtom);
     const regularEnsembleIdent =
         ensembleIdent && isEnsembleIdentOfType(ensembleIdent, RegularEnsembleIdent) ? ensembleIdent : null;
     const realizationsEncodedAsUintListStr = get(encodedAllEnsembleRealizationsAtom);
@@ -111,7 +111,7 @@ const regularEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
 });
 
 const deltaEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
-    const ensembleIdent = get(selectedEnsembleIdentAtom).value;
+    const ensembleIdent = get(validSelectedEnsembleIdentAtom);
     const deltaEnsembleIdent =
         ensembleIdent && isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent) ? ensembleIdent : null;
     const comparisonEnsembleIdent = deltaEnsembleIdent?.getComparisonEnsembleIdent() ?? null;
@@ -142,7 +142,7 @@ const deltaEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
 
 /** Delta FGCT is differenced server-side; fetch constituent FGCT separately for diagnostics only. */
 export const deltaConstituentGasConsumptionQueriesAtom = atomWithQueries((get) => {
-    const ensembleIdent = get(selectedEnsembleIdentAtom).value;
+    const ensembleIdent = get(validSelectedEnsembleIdentAtom);
     const deltaEnsembleIdent =
         ensembleIdent && isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent) ? ensembleIdent : null;
     const constituents = deltaEnsembleIdent

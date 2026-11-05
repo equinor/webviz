@@ -1,9 +1,5 @@
 import { atom } from "jotai";
 
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
-
 import { ColorBy, CurveType, GroupBy, type RelPermEnsembleTableDefinition } from "../../typesAndEnums";
 
 import {
@@ -17,25 +13,16 @@ import {
     showStatisticalLinesAtom,
 } from "./baseAtoms";
 import {
-    userSelectedCurveNamesAtom,
-    userSelectedEnsembleIdentsAtom,
-    userSelectedSaturationAxisNameAtom,
-    userSelectedSatnumsAtom,
-    userSelectedTableNameAtom,
+    selectedEnsembleIdentsAtom,
+    selectedSaturationAxisNameAtom,
+    selectedSatnumsAtom,
+    selectedTableNameAtom,
 } from "./persistableFixableAtoms";
 import {
     relPermRealizationDataQueriesAtom,
     relPermTableDefinitionQueriesAtom,
     relPermTableNamesQueriesAtom,
 } from "./queryAtoms";
-
-function fixupSelectedOrFirstValue<T extends string | number>(selectedValue: T | null, values: T[]): T | null {
-    if (selectedValue !== null && values.includes(selectedValue)) {
-        return selectedValue;
-    }
-
-    return values[0] ?? null;
-}
 
 function intersectArrays<T>(arrays: T[][]): T[] {
     if (arrays.length === 0) {
@@ -47,27 +34,56 @@ function intersectArrays<T>(arrays: T[][]): T[] {
     }, arrays[0]);
 }
 
-export const selectedEnsembleIdentsAtom = atom<RegularEnsembleIdent[]>((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom).value;
-
-    return fixupRegularEnsembleIdents(userSelectedEnsembleIdents, ensembleSet) ?? [];
-});
-
+// Disabled queries keep their cached data, so options must not be derived from them while the selections they
+// depend on are invalid - otherwise stale options are listed next to "No valid value until another invalid setting is fixed."
 export const availableTableNamesAtom = atom<string[]>((get) => {
+    if (!get(selectedEnsembleIdentsAtom).isValidInContext) {
+        return [];
+    }
+
     const tableNameQueries = get(relPermTableNamesQueriesAtom);
     const loadedTableNames = tableNameQueries.flatMap((query) => (query.data ? [query.data] : []));
 
     return intersectArrays(loadedTableNames);
 });
 
-export const selectedTableNameAtom = atom<string | null>((get) => {
-    return fixupSelectedOrFirstValue(get(userSelectedTableNameAtom).value, get(availableTableNamesAtom));
+function arraysHaveSameValues(left: string[], right: string[]): boolean {
+    if (left.length !== right.length) {
+        return false;
+    }
+
+    const sortedLeft = [...left].sort();
+    const sortedRight = [...right].sort();
+    return sortedLeft.every((value, index) => value === sortedRight[index]);
+}
+
+export const tableNameSetsDifferAtom = atom<boolean>((get) => {
+    const loadedTableNameSets = get(relPermTableNamesQueriesAtom).flatMap((query) => (query.data ? [query.data] : []));
+
+    return (
+        loadedTableNameSets.length > 1 &&
+        loadedTableNameSets.some((tableNames) => !arraysHaveSameValues(tableNames, loadedTableNameSets[0]))
+    );
+});
+
+export const commonTableNamesAreMissingAtom = atom<boolean>((get) => {
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const tableNameQueries = get(relPermTableNamesQueriesAtom);
+    const loadedTableNameSets = tableNameQueries.filter((query) => query.data);
+    const allTableNameQueriesLoaded =
+        selectedEnsembleIdents.length > 0 &&
+        tableNameQueries.every((query) => query.data !== undefined || query.isError);
+
+    return allTableNameQueriesLoaded && loadedTableNameSets.length > 1 && get(availableTableNamesAtom).length === 0;
 });
 
 export const ensembleTableDefinitionsAtom = atom<RelPermEnsembleTableDefinition[]>((get) => {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
     const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
+
+    if (!get(selectedEnsembleIdentsAtom).isValidInContext || !get(selectedTableNameAtom).isValidInContext) {
+        return [];
+    }
 
     return tableDefinitionQueries.flatMap((queryResult, index) => {
         if (!queryResult.data) {
@@ -87,16 +103,9 @@ export const availableSaturationAxisNamesAtom = atom<string[]>((get) => {
     return intersectArrays(axisNamesPerDefinition);
 });
 
-export const selectedSaturationAxisNameAtom = atom<string | null>((get) => {
-    return fixupSelectedOrFirstValue(
-        get(userSelectedSaturationAxisNameAtom).value,
-        get(availableSaturationAxisNamesAtom),
-    );
-});
-
 export const availableCurveNamesAtom = atom<string[]>((get) => {
     const tableDefinitions = get(ensembleTableDefinitionsAtom);
-    const selectedSaturationAxisName = get(selectedSaturationAxisNameAtom);
+    const selectedSaturationAxisName = get(selectedSaturationAxisNameAtom).value;
     const selectedCurveType = get(selectedCurveTypeAtom);
 
     if (!selectedSaturationAxisName) {
@@ -120,14 +129,6 @@ export const availableCurveNamesAtom = atom<string[]>((get) => {
     return intersectArrays(curveNamesPerDefinition);
 });
 
-export const selectedCurveNamesAtom = atom<string[]>((get) => {
-    const availableCurveNames = get(availableCurveNamesAtom);
-    const userSelectedCurveNames = get(userSelectedCurveNamesAtom).value;
-    const selectedCurveNames = userSelectedCurveNames.filter((curveName) => availableCurveNames.includes(curveName));
-
-    return selectedCurveNames.length > 0 ? selectedCurveNames : availableCurveNames;
-});
-
 export const availableSatnumsAtom = atom<number[]>((get) => {
     const tableDefinitions = get(ensembleTableDefinitionsAtom);
     const satnumsPerDefinition = tableDefinitions.map((definition) => definition.tableDefinition.satnums);
@@ -135,19 +136,11 @@ export const availableSatnumsAtom = atom<number[]>((get) => {
     return intersectArrays(satnumsPerDefinition);
 });
 
-export const selectedSatnumsAtom = atom<number[]>((get) => {
-    const availableSatnums = get(availableSatnumsAtom);
-    const userSelectedSatnums = get(userSelectedSatnumsAtom).value;
-    const selectedSatnums = userSelectedSatnums.filter((satnum) => availableSatnums.includes(satnum));
-
-    return selectedSatnums.length > 0 ? selectedSatnums : availableSatnums.slice(0, 1);
-});
-
 export const relPermDataAccessorStatusAtom = atom((get) => get(relPermRealizationDataQueriesAtom));
 
 export const visualizationSettingsAtom = atom((get) => {
     const selectedGroupBy = get(selectedGroupByAtom);
-    const shouldForceSatnumColor = get(selectedSatnumsAtom).length > 1 && selectedGroupBy !== GroupBy.SATNUM;
+    const shouldForceSatnumColor = get(selectedSatnumsAtom).value.length > 1 && selectedGroupBy !== GroupBy.SATNUM;
 
     return {
         showIndividualRealizations: get(showIndividualRealizationsAtom),

@@ -2,15 +2,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { MockInstance } from "vitest";
 
 import { CustomDataProviderType as TwoDViewerCustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
+import { CustomDataProviderType as ThreeDViewerCustomDataProviderType } from "@modules/3DViewer/DataProviderFramework/customDataProviderTypes";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { ContextBoundary } from "@modules/_shared/DataProviderFramework/framework/ContextBoundary/ContextBoundary";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
-import type {
-    ErrorPlaceholder} from "@modules/_shared/DataProviderFramework/framework/ErrorPlaceholder/ErrorPlaceholder";
-import {
-    isErrorPlaceholder,
-} from "@modules/_shared/DataProviderFramework/framework/ErrorPlaceholder/ErrorPlaceholder";
+import type { ErrorPlaceholder } from "@modules/_shared/DataProviderFramework/framework/ErrorPlaceholder/ErrorPlaceholder";
+import { isErrorPlaceholder } from "@modules/_shared/DataProviderFramework/framework/ErrorPlaceholder/ErrorPlaceholder";
 import { DeserializationAssistant } from "@modules/_shared/DataProviderFramework/framework/utils/DeserializationAssistant";
 import type {
     SerializedContextBoundary,
@@ -18,6 +16,7 @@ import type {
     SerializedSharedSetting,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
 import { SerializedType } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
+import { TimeType } from "@modules/_shared/DataProviderFramework/settings/implementations/TimeTypeSetting";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { CustomDataProviderType as IntersectionCustomDataProviderType } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 
@@ -341,5 +340,101 @@ describe("DeserializationAssistant - legacy surface-attribute setting-key migrat
         expect(fakeProvider.deserializeState.mock.calls[0][0].settings).toEqual({
             surfaceAttribute: JSON.stringify("ds_extract_geogrid"),
         });
+    });
+});
+
+const GRID_PROVIDER_TYPES: string[] = [
+    TwoDViewerCustomDataProviderType.REALIZATION_GRID_2D,
+    ThreeDViewerCustomDataProviderType.REALIZATION_GRID_3D,
+    DataProviderType.INTERSECTION_REALIZATION_GRID,
+    DataProviderType.INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID,
+];
+
+describe("DeserializationAssistant - legacy grid timeOrInterval migration", () => {
+    let makeDataProviderSpy: MockInstance<typeof DataProviderRegistry.makeDataProvider>;
+
+    beforeEach(() => {
+        makeDataProviderSpy = vi.spyOn(DataProviderRegistry, "makeDataProvider");
+    });
+
+    afterEach(() => {
+        makeDataProviderSpy.mockRestore();
+    });
+
+    function migrate(type: string, settings: Record<string, string>): Record<string, string> {
+        const fakeProvider = makeFakeProvider();
+        makeDataProviderSpy.mockReturnValue(fakeProvider as any);
+        new DeserializationAssistant(FAKE_MANAGER).makeItem(makeSerializedDataProvider(type, settings));
+        return fakeProvider.deserializeState.mock.calls[0][0].settings;
+    }
+
+    test.each(GRID_PROVIDER_TYPES)("migrates a time point for registered type %s", (type) => {
+        const settings = migrate(type, {
+            attribute: JSON.stringify("PRESSURE"),
+            timeOrInterval: JSON.stringify("2018-01-01"),
+        });
+
+        expect(settings).toEqual({
+            attribute: JSON.stringify("PRESSURE"),
+            timeType: JSON.stringify(TimeType.TIME_POINT),
+            timePoint: JSON.stringify("2018-01-01T00:00:00"),
+        });
+    });
+
+    test("migrates an interval", () => {
+        const settings = migrate(ThreeDViewerCustomDataProviderType.REALIZATION_GRID_3D, {
+            timeOrInterval: JSON.stringify("2018-01-01/2020-07-01"),
+        });
+
+        expect(settings).toEqual({
+            timeType: JSON.stringify(TimeType.INTERVAL),
+            timeInterval: JSON.stringify("2018-01-01T00:00:00/2020-07-01T00:00:00"),
+        });
+    });
+
+    test("migrates the NO_TIME sentinel to a static time type", () => {
+        const settings = migrate(ThreeDViewerCustomDataProviderType.REALIZATION_GRID_3D, {
+            timeOrInterval: JSON.stringify("NO_TIME"),
+        });
+
+        expect(settings).toEqual({ timeType: JSON.stringify(TimeType.NO_TIME) });
+    });
+
+    test("drops a null legacy value so the time type is resolved from available data", () => {
+        const settings = migrate(ThreeDViewerCustomDataProviderType.REALIZATION_GRID_3D, {
+            timeOrInterval: JSON.stringify(null),
+        });
+
+        expect(settings).toEqual({});
+    });
+
+    test("an existing time type wins and the legacy key is removed", () => {
+        const current = {
+            timeType: JSON.stringify(TimeType.INTERVAL),
+            timeInterval: JSON.stringify("2018-01-01/2020-07-01"),
+        };
+        const settings = migrate(ThreeDViewerCustomDataProviderType.REALIZATION_GRID_3D, {
+            ...current,
+            timeOrInterval: JSON.stringify("2018-01-01"),
+        });
+
+        expect(settings).toEqual(current);
+    });
+
+    test("seismic providers keep their timeOrInterval setting", () => {
+        const settings = { timeOrInterval: JSON.stringify("2018-01-01") };
+
+        expect(migrate(DataProviderType.INTERSECTION_SEISMIC, settings)).toEqual(settings);
+    });
+
+    test("a malformed legacy value yields an ErrorPlaceholder retaining the original payload", () => {
+        const serialized = makeSerializedDataProvider(ThreeDViewerCustomDataProviderType.REALIZATION_GRID_3D, {
+            timeOrInterval: "not json",
+        });
+
+        const item = new DeserializationAssistant(FAKE_MANAGER).makeItem(serialized);
+
+        expect(isErrorPlaceholder(item)).toBe(true);
+        expect((item as ErrorPlaceholder).serializeState()).toBe(serialized);
     });
 });

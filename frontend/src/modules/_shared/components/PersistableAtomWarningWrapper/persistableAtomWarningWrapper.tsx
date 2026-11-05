@@ -34,7 +34,7 @@ export function useMakePersistableAtomWarningMessage(atom: PersistableFixableAto
     if (!isValidInContext && _source) {
         switch (_source) {
             case Source.PERSISTENCE:
-                return "The persisted value is invalid. Please choose a valid value.";
+                return "The saved value is invalid. Please choose a valid value.";
             case Source.TEMPLATE:
                 return "The template value is invalid. Please choose a valid value.";
             default:

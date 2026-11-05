@@ -26,13 +26,13 @@ import {
     oilPriceBasisAtom,
 } from "../../atoms/baseAtoms";
 import { activeVectorListQueryAtom, hasOilProductionVectorAtom, salesGasStrategyAtom } from "../../atoms/derivedAtoms";
-import { selectedEnsembleIdentAtom } from "../../atoms/persistableFixableAtoms";
+import { validSelectedEnsembleIdentAtom } from "../../atoms/persistableFixableAtoms";
 import { CURRENCY_HELP, GAS_PRICE_HELP, makeSalesGasSourceHelp, OIL_PRICE_HELP } from "../../helpTexts";
 import { NUMBER_INPUT_DEBOUNCE_MS, setupFieldClassName, type SettingsSectionProps } from "../../settingsSections";
 import { NamedRadioGroup } from "../namedRadioGroup";
 
 export function PricesSection(props: SettingsSectionProps): ReactNode {
-    const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
+    const selectedEnsembleIdent = useAtomValue(validSelectedEnsembleIdentAtom);
     const [currency, setCurrency] = useAtom(currencyAtom);
     const [oilPrice, setOilPrice] = useAtom(oilPriceAtom);
     const [oilPriceBasis, setOilPriceBasis] = useAtom(oilPriceBasisAtom);
@@ -75,7 +75,7 @@ export function PricesSection(props: SettingsSectionProps): ReactNode {
     }
 
     function setMissingComponentAssumption(key: keyof MissingComponentAssumptions, accepted: boolean) {
-        const ensembleKey = selectedEnsembleIdent.value?.toString();
+        const ensembleKey = selectedEnsembleIdent?.toString();
         if (!ensembleKey) {
             return;
         }
@@ -86,7 +86,7 @@ export function PricesSection(props: SettingsSectionProps): ReactNode {
     }
 
     const selectedMissingComponentAssumptions =
-        missingComponentAssumptionsByEnsemble[selectedEnsembleIdent.value?.toString() ?? ""];
+        missingComponentAssumptionsByEnsemble[selectedEnsembleIdent?.toString() ?? ""];
 
     return (
         <Setting.Section {...props.sectionProps}>

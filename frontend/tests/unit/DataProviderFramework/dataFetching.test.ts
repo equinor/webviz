@@ -92,6 +92,31 @@ describe("Data fetching", () => {
         expect(onGuiStateRevision.mock.calls.length).toBeGreaterThan(numGuiStateRevisions);
     });
 
+    // A hidden setting can still change, e.g. through a shared setting that controls it
+    test("doesn't refetch when a hidden setting changes, but does once it is shown again", async () => {
+        backend.catalogues["field-a"].depth["Base reservoir"] = [1, 2];
+        const manager = makeDataProviderManager({ fieldId: "field-a" });
+        manager.deserializeState(managerState([filterProvider("Filter")]));
+        await settle(manager);
+        const provider = findProvider(manager, "Filter");
+        const surfaceName = getProviderSetting(provider, Setting.SURFACE_NAME);
+        expect(surfaceName.getAttributes().visible).toBe(false);
+        expect(surfaceName.getValue()).toBe("Top reservoir");
+
+        surfaceName.setValue("Base reservoir");
+        await settle(manager);
+
+        expect(backend.callsTo("getLabelData")).toEqual([[false]]);
+        expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+
+        // Shown without changing anything else the data depends on - the setting applies again
+        surfaceName.updateAttributes({ visible: true });
+        await settle(manager);
+
+        expect(backend.callsTo("getLabelData")).toEqual([[false], [false]]);
+        expect(provider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+    });
+
     test("discards a fetch that a settings change superseded", async () => {
         const { manager, provider } = await restoreSurface();
         backend.delayMs = 100;

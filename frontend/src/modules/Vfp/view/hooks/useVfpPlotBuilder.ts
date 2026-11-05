@@ -23,6 +23,7 @@ export function usePlotBuilder(
     const selectedWfrIndices = viewContext.useSettingsToViewInterfaceValue("selectedWfrIndices");
     const selectedGfrIndices = viewContext.useSettingsToViewInterfaceValue("selectedGfrIndices");
     const selectedAlqIndices = viewContext.useSettingsToViewInterfaceValue("selectedAlqIndices");
+    const isParameterSelectionValid = viewContext.useSettingsToViewInterfaceValue("isParameterSelectionValid");
     const selectedPressureOption = viewContext.useSettingsToViewInterfaceValue("selectedPressureOption");
     const selectedColorBy = viewContext.useSettingsToViewInterfaceValue("selectedColorBy");
 
@@ -43,7 +44,8 @@ export function usePlotBuilder(
 
     const plotData = React.useMemo(
         function makePlotData() {
-            if (!vfpTypeAndPlotBuilder) {
+            // Retained invalid indices would make the flattened BHP lookup read the wrong slice
+            if (!vfpTypeAndPlotBuilder || !isParameterSelectionValid) {
                 return null;
             }
             if (vfpTypeAndPlotBuilder.type === VfpType.VFPPROD) {
@@ -63,6 +65,7 @@ export function usePlotBuilder(
             throw new Error(`Unsupported VFP type: ${vfpTypeAndPlotBuilder.type}`);
         },
         [
+            isParameterSelectionValid,
             selectedAlqIndices,
             selectedColorBy,
             selectedGfrIndices,

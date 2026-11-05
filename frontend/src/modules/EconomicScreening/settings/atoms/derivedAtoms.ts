@@ -5,11 +5,11 @@ import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import type { SalesGasStrategy } from "@modules/EconomicScreening/utils/vectorResolution";
 import { determineSalesGasStrategy, OIL_PRODUCTION_VECTOR } from "@modules/EconomicScreening/utils/vectorResolution";
 
-import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./persistableFixableAtoms";
+import { selectedRealizationAtom, validSelectedEnsembleIdentAtom } from "./persistableFixableAtoms";
 import { deltaEnsembleVectorListQueryAtom, regularEnsembleVectorListQueryAtom } from "./queryAtoms";
 
 export const isSelectedEnsembleDeltaAtom = atom<boolean>((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom).value;
+    const selectedEnsembleIdent = get(validSelectedEnsembleIdentAtom);
     return Boolean(selectedEnsembleIdent && isEnsembleIdentOfType(selectedEnsembleIdent, DeltaEnsembleIdent));
 });
 

@@ -1,3 +1,5 @@
+import { atom } from "jotai";
+
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -18,6 +20,12 @@ export const selectedEnsembleIdentAtom = persistableFixableAtom<RegularEnsembleI
     },
 });
 
+/** The selected ensemble while it is in the ensemble set, otherwise null. Queries and results use only this. */
+export const validSelectedEnsembleIdentAtom = atom<RegularEnsembleIdent | DeltaEnsembleIdent | null>((get) => {
+    const selection = get(selectedEnsembleIdentAtom);
+    return selection.isValidInContext ? selection.value : null;
+});
+
 /**
  * Display-only realization choice. It is valid only for the ensemble it was chosen in and while the
  * realization passes the filter; otherwise Aggregate is shown. It never changes calculations or channels.
@@ -30,13 +38,13 @@ export const selectedRealizationAtom = persistableFixableAtom<RealizationSelecti
         if (value.realization === null) {
             return true;
         }
-        const ensembleIdent = get(selectedEnsembleIdentAtom).value;
+        const ensembleIdent = get(validSelectedEnsembleIdentAtom);
         if (!ensembleIdent || ensembleIdent.toString() !== value.ensembleIdentString) {
             return false;
         }
         return get(ValidEnsembleRealizationsFunctionAtom)(ensembleIdent).includes(value.realization);
     },
     fixupFunction: ({ get }) => {
-        return { ensembleIdentString: get(selectedEnsembleIdentAtom).value?.toString() ?? null, realization: null };
+        return { ensembleIdentString: get(validSelectedEnsembleIdentAtom)?.toString() ?? null, realization: null };
     },
 });

@@ -107,6 +107,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectedSelectorColumnAnnotations = useMakePersistableFixableAtomAnnotations(selectedSelectorColumnAtom);
     const selectedSubplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
+    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
+    const selectedTableNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedTableNamesAtom);
+    const selectedIndicesWithValuesAnnotations =
+        useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
 
     const plotSettings = (
         <Setting.Section title="Plot settings" defaultOpen>
@@ -150,14 +154,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 <Combobox
                     value={selectedSubplotBy.value}
                     items={subplotOptions}
-                    onValueChange={(v) => v && setSelectedSubplotBy}
+                    onValueChange={(v) => v && setSelectedSubplotBy(v)}
                 />
             </Setting.Field>
             <Setting.Field label="Color by" annotations={selectedColorByAnnotations}>
                 <Combobox
                     value={selectedColorBy.value}
                     items={colorByOptions}
-                    onValueChange={(v) => v && setSelectedColorBy}
+                    onValueChange={(v) => v && setSelectedColorBy(v)}
                 />
             </Setting.Field>
         </Setting.Section>
@@ -182,6 +186,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
                     }
                     additionalSettings={plotSettings}
+                    ensembleAnnotations={selectedEnsembleIdentsAnnotations}
+                    tableNamesAnnotations={selectedTableNamesAnnotations}
+                    selectionAnnotations={selectedIndicesWithValuesAnnotations}
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
                     onChange={handleFilterChange}
                 />

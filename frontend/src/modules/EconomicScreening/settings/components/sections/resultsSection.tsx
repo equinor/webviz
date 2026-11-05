@@ -22,7 +22,7 @@ import {
     selectedMeasureAtom,
 } from "../../atoms/baseAtoms";
 import { displayedRealizationAtom } from "../../atoms/derivedAtoms";
-import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "../../atoms/persistableFixableAtoms";
+import { selectedRealizationAtom, validSelectedEnsembleIdentAtom } from "../../atoms/persistableFixableAtoms";
 import { validRealizationNumbersAtom } from "../../atoms/sourceQueryAtoms";
 import { REALIZATION_HELP, RESULTS_HELP } from "../../helpTexts";
 import type { SectionStateProps } from "../../settingsSections";
@@ -38,7 +38,7 @@ export type ResultsSectionProps = {
 };
 
 export function ResultsSection(props: ResultsSectionProps): ReactNode {
-    const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
+    const selectedEnsembleIdent = useAtomValue(validSelectedEnsembleIdentAtom);
     const [resultMode, setResultMode] = useAtom(resultModeAtom);
     const [selectedMeasure, setSelectedMeasure] = useAtom(selectedMeasureAtom);
     const [distributionPlotType, setDistributionPlotType] = useAtom(distributionPlotTypeAtom);
@@ -49,7 +49,7 @@ export function ResultsSection(props: ResultsSectionProps): ReactNode {
 
     function handleRealizationChange(realization: number | null) {
         setSelectedRealization({
-            ensembleIdentString: selectedEnsembleIdent.value?.toString() ?? null,
+            ensembleIdentString: selectedEnsembleIdent?.toString() ?? null,
             realization,
         });
     }

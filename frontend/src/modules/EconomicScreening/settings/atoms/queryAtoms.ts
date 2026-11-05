@@ -6,10 +6,10 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
-import { selectedEnsembleIdentAtom } from "./persistableFixableAtoms";
+import { validSelectedEnsembleIdentAtom } from "./persistableFixableAtoms";
 
 export const regularEnsembleVectorListQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom).value;
+    const selectedEnsembleIdent = get(validSelectedEnsembleIdentAtom);
     const regularEnsembleIdent =
         selectedEnsembleIdent && isEnsembleIdentOfType(selectedEnsembleIdent, RegularEnsembleIdent)
             ? selectedEnsembleIdent
@@ -28,7 +28,7 @@ export const regularEnsembleVectorListQueryAtom = atomWithQuery((get) => {
 });
 
 export const deltaEnsembleVectorListQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom).value;
+    const selectedEnsembleIdent = get(validSelectedEnsembleIdentAtom);
     const deltaEnsembleIdent =
         selectedEnsembleIdent && isEnsembleIdentOfType(selectedEnsembleIdent, DeltaEnsembleIdent)
             ? selectedEnsembleIdent

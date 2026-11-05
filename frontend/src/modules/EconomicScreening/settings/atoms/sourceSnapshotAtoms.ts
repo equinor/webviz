@@ -33,7 +33,7 @@ import {
 
 import { missingComponentAssumptionsAtom, predictionStartYearAtom } from "./baseAtoms";
 import { activeVectorListQueryAtom, isSelectedEnsembleDeltaAtom, salesGasStrategyAtom } from "./derivedAtoms";
-import { selectedEnsembleIdentAtom } from "./persistableFixableAtoms";
+import { validSelectedEnsembleIdentAtom } from "./persistableFixableAtoms";
 import {
     deltaConstituentGasConsumptionQueriesAtom,
     isVectorNeededAtom,
@@ -72,7 +72,7 @@ const queryErrorAtom = atom<string | null>((get) => {
 
 /** Pending or failed requests never count as loaded. */
 const sourceStatusAtom = atom<SourceStatus>((get) => {
-    if (!get(selectedEnsembleIdentAtom).value) {
+    if (!get(validSelectedEnsembleIdentAtom)) {
         return SourceStatus.NO_ENSEMBLE;
     }
     const vectorListQuery = get(activeVectorListQueryAtom);
@@ -109,7 +109,7 @@ const salesGasDataAtom = atom<SalesGasData>((get) => {
     const salesGasStrategy = get(salesGasStrategyAtom);
     const queries = get(vectorDataQueriesAtom);
     const sourceKind = get(sourceKindAtom);
-    const ensembleKey = get(selectedEnsembleIdentAtom).value?.toString();
+    const ensembleKey = get(validSelectedEnsembleIdentAtom)?.toString();
     const missingComponentAssumptions = ensembleKey ? get(missingComponentAssumptionsAtom)[ensembleKey] : undefined;
 
     if (salesGasStrategy.kind === "DIRECT") {
@@ -214,7 +214,7 @@ export const sourceSnapshotAtom = atom<EconomicSourceSnapshot>((get) => {
     const salesGasData = get(salesGasDataAtom);
     const isReady = status === SourceStatus.READY;
     return {
-        ensembleIdent: get(selectedEnsembleIdentAtom).value,
+        ensembleIdent: get(validSelectedEnsembleIdentAtom),
         status,
         isFetching: get(isFetchingAtom),
         queryError: get(queryErrorAtom),

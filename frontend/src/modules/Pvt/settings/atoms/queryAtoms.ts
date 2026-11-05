@@ -10,8 +10,8 @@ import type { CombinedPvtDataResult } from "../../typesAndEnums";
 import { selectedEnsembleIdentsAtom, selectedRealizationNumbersAtom } from "./persistableFixableAtoms";
 
 export const pvtDataQueriesAtom = atomWithQueries((get) => {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
-    const selectedRealizations = get(selectedRealizationNumbersAtom).value;
+    const { value: selectedEnsembleIdents, isValidInContext: ensembleIdentsValid } = get(selectedEnsembleIdentsAtom);
+    const { value: selectedRealizations, isValidInContext: realizationsValid } = get(selectedRealizationNumbersAtom);
 
     const ensembleIdentsAndRealizations: { ensembleIdent: RegularEnsembleIdent; realization: number }[] = [];
     for (const ensembleIdent of selectedEnsembleIdents) {
@@ -32,12 +32,19 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
             });
             return () => ({
                 ...options,
-                enabled: Boolean(el.ensembleIdent && el.realization !== null),
+                enabled:
+                    Boolean(el.ensembleIdent && el.realization !== null) && ensembleIdentsValid && realizationsValid,
             });
         })
         .flat();
 
     function combine(results: UseQueryResult<PvtData_api[], Error>[]): CombinedPvtDataResult {
+        // A disabled query keeps its cached data and error, which must not be exposed for an invalid
+        // selection (e.g. a realization excluded by the realization filter)
+        if (!ensembleIdentsValid || !realizationsValid) {
+            return { tableCollections: [], errors: [], isFetching: false, allQueriesFailed: false };
+        }
+
         return {
             tableCollections: ensembleIdentsAndRealizations.map((el, idx) => {
                 return {
@@ -48,7 +55,8 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
             }),
             errors: results.map((result) => result.error).filter((err) => err !== null) as Error[],
             isFetching: results.some((result) => result.isFetching),
-            allQueriesFailed: results.every((result) => result.isError),
+            // Without any queries (e.g. all realizations filtered out), nothing has failed
+            allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
         };
     }
 

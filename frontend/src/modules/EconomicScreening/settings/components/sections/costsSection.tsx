@@ -8,14 +8,14 @@ import { Setting } from "@lib/components/Setting";
 
 import { getFieldIssueText } from "../../../utils/setupReadiness";
 import { costDraftStatusAtom, costProfileAtom, currencyAtom } from "../../atoms/baseAtoms";
-import { selectedEnsembleIdentAtom } from "../../atoms/persistableFixableAtoms";
+import { validSelectedEnsembleIdentAtom } from "../../atoms/persistableFixableAtoms";
 import { evaluationHorizonStateAtom, isSourceLoadingAtom } from "../../atoms/sourceSnapshotAtoms";
 import { ANNUAL_COSTS_DELTA_HELP, ANNUAL_COSTS_HELP } from "../../helpTexts";
 import { setupFieldClassName, type SettingsSectionProps } from "../../settingsSections";
 import { CostProfileEditor } from "../costProfileEditor";
 
 export function CostsSection(props: SettingsSectionProps): ReactNode {
-    const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
+    const selectedEnsembleIdent = useAtomValue(validSelectedEnsembleIdentAtom);
     const [costProfile, setCostProfile] = useAtom(costProfileAtom);
     const setCostDraftStatus = useSetAtom(costDraftStatusAtom);
     const currency = useAtomValue(currencyAtom);
@@ -23,7 +23,7 @@ export function CostsSection(props: SettingsSectionProps): ReactNode {
     const isSourceLoading = useAtomValue(isSourceLoadingAtom);
 
     const isDeltaEnsembleSelected =
-        selectedEnsembleIdent.value !== null && isEnsembleIdentOfType(selectedEnsembleIdent.value, DeltaEnsembleIdent);
+        selectedEnsembleIdent !== null && isEnsembleIdentOfType(selectedEnsembleIdent, DeltaEnsembleIdent);
 
     return (
         <Setting.Section {...props.sectionProps}>
@@ -38,7 +38,7 @@ export function CostsSection(props: SettingsSectionProps): ReactNode {
                 stacked
             >
                 <CostProfileEditor
-                    ensembleKey={selectedEnsembleIdent.value?.toString()}
+                    ensembleKey={selectedEnsembleIdent?.toString()}
                     value={costProfile}
                     currency={currency}
                     isDelta={isDeltaEnsembleSelected}

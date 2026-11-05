@@ -25,7 +25,7 @@ import {
     selectedMeasureAtom,
 } from "./atoms/baseAtoms";
 import { activeVectorListQueryAtom, hasOilProductionVectorAtom } from "./atoms/derivedAtoms";
-import { selectedEnsembleIdentAtom } from "./atoms/persistableFixableAtoms";
+import { validSelectedEnsembleIdentAtom } from "./atoms/persistableFixableAtoms";
 import {
     evaluationHorizonStateAtom,
     selectedProductSupportAtom,
@@ -72,7 +72,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
 
     useGasOnlyMeasureFallback();
 
-    const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
+    const selectedEnsembleIdent = useAtomValue(validSelectedEnsembleIdentAtom);
     const earlyValueConfiguration = useAtomValue(earlyValueConfigurationAtom);
     const oilPrice = useAtomValue(oilPriceAtom);
     const gasPrice = useAtomValue(gasPriceAtom);
@@ -89,12 +89,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     const hasOilProductionVector = useAtomValue(hasOilProductionVectorAtom);
 
     const isDeltaEnsembleSelected =
-        selectedEnsembleIdent.value !== null && isEnsembleIdentOfType(selectedEnsembleIdent.value, DeltaEnsembleIdent);
+        selectedEnsembleIdent !== null && isEnsembleIdentOfType(selectedEnsembleIdent, DeltaEnsembleIdent);
     const selectedMissingComponentAssumptions =
-        missingComponentAssumptionsByEnsemble[selectedEnsembleIdent.value?.toString() ?? ""];
+        missingComponentAssumptionsByEnsemble[selectedEnsembleIdent?.toString() ?? ""];
 
     const setupReadiness = getSetupReadiness({
-        hasEnsemble: selectedEnsembleIdent.value !== null,
+        hasEnsemble: selectedEnsembleIdent !== null,
         vectorListStatus: vectorListQuery.isError ? "ERROR" : vectorListQuery.isSuccess ? "READY" : "LOADING",
         snapshot: sourceSnapshot,
         hasOilVector: hasOilProductionVector,

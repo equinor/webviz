@@ -3,7 +3,8 @@ import React from "react";
 import { Login, Logout } from "@mui/icons-material";
 
 import { postLogout } from "@api";
-import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
+import { AuthState } from "@framework/internal/auth/AuthStateStore";
+import { useAuthState, useUserInfo } from "@framework/internal/auth/hooks";
 import { Avatar } from "@lib/components/Avatar";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -20,7 +21,8 @@ export type LoginButtonProps = {
 export const LoginButton: React.FC<LoginButtonProps> = (props) => {
     const textRef = React.useRef<HTMLSpanElement>(null);
 
-    const { authState, userInfo } = useAuthProvider();
+    const authState = useAuthState();
+    const userInfo = useUserInfo();
 
     async function handleLogout() {
         console.debug("Logging out...");
