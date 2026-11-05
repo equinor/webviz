@@ -133,7 +133,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     ].filter((assumption): assumption is string => assumption !== null);
     const pendingMessage =
         evaluationHorizon.status === "NO_START"
-            ? "Enter a prediction start year in the settings to calculate results."
+            ? "Enter an evaluation start year in the settings to calculate results."
             : sourceSnapshot.status === SourceStatus.READY
               ? getEvaluationHorizonError(evaluationHorizon)
               : null;

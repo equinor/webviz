@@ -69,6 +69,7 @@ export function PredictionYearSelector(props: PredictionYearSelectorProps): Reac
                 showClearAllButton
                 loading={props.isLoading && props.suggestedYears.length === 0}
                 placeholder="Search or type a year"
+                startAdornment={<span className="text-body-sm text-subtle whitespace-nowrap">1 Jan</span>}
                 noMatchesText={`Type a whole year within ${MIN_CALENDAR_YEAR}-${MAX_CALENDAR_YEAR}.`}
             />
         </div>

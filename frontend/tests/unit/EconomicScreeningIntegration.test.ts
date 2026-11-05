@@ -364,7 +364,7 @@ describe("Economic Screening query results to channel data", () => {
         expect(metricData(store, EconomicMeasure.DISCOUNTED_OIL_VOLUME)).toEqual([]);
     });
 
-    test("withdraws every value while the prediction start is missing or after the simulation end", async () => {
+    test("withdraws every value while the evaluation start is missing or after the simulation end", async () => {
         const { store } = await setup();
         expect(metricData(store, EconomicMeasure.NPV)).toHaveLength(2);
 

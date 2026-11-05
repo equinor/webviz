@@ -26,7 +26,7 @@ export type CostProfileEditorProps = {
     value: CostProfileEntry[];
     currency: string;
     isDelta: boolean;
-    /** Generated cost years run from the prediction start through the simulation end, inclusive. */
+    /** Generated cost years run from the evaluation start through the simulation end, inclusive. */
     horizon: EvaluationHorizonState;
     /** The source is loading or refetching; applying pasted costs waits for it. */
     isSourceLoading?: boolean;
@@ -184,12 +184,12 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
             <div className="gap-y-xs flex flex-col items-start">
                 <span className="text-sm font-light">
                     {horizon.status === "NO_START"
-                        ? "Enter a prediction start year to generate cost years."
+                        ? "Enter an evaluation start year to generate cost years."
                         : isSourceLoading || horizon.status === "LOADING"
                           ? "Cost years are generated when the simulation data has loaded."
                           : endYear === null
                             ? "Cost years are unavailable until source coverage establishes the simulation end."
-                            : `The prediction start year is after the simulation end (${endYear}).`}
+                            : `The evaluation start year is after the simulation end (${endYear}).`}
                 </span>
                 {excludedNotice}
             </div>

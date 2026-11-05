@@ -22,7 +22,7 @@ import {
     isSourceLoadingAtom,
     predictionStartYearSuggestionsAtom,
 } from "../../atoms/sourceSnapshotAtoms";
-import { DISCOUNT_RATE_HELP, PREDICTION_START_YEAR_HELP } from "../../helpTexts";
+import { DISCOUNT_RATE_HELP, EVALUATION_START_HELP } from "../../helpTexts";
 import { NUMBER_INPUT_DEBOUNCE_MS, setupFieldClassName, type SettingsSectionProps } from "../../settingsSections";
 import { PredictionYearSelector } from "../predictionYearSelector";
 
@@ -78,8 +78,8 @@ export function DataAndValuationSection(props: DataAndValuationSectionProps): Re
                 />
             </Setting.Field>
             <Setting.Field
-                label="Prediction start year"
-                help={{ title: "Prediction start year", content: PREDICTION_START_YEAR_HELP }}
+                label="Evaluation start"
+                help={{ title: "Evaluation start", content: EVALUATION_START_HELP }}
                 contentClassName={`${setupFieldClassName("predictionYear")} flex flex-col gap-y-3xs`}
                 warningAnnotation={getFieldIssueText(props.readiness, "predictionYear")}
                 stacked
@@ -92,7 +92,7 @@ export function DataAndValuationSection(props: DataAndValuationSectionProps): Re
                         onValueChange={setPredictionStartYear}
                     />
                     {predictionStartYear !== null && evaluationHorizon.status !== "START_AFTER_END" && (
-                        <span className="text-body-xs text-subtle">Valuation: 1 January {predictionStartYear}</span>
+                        <span className="text-body-xs text-subtle">Also the valuation date.</span>
                     )}
                 </>
             </Setting.Field>

@@ -198,7 +198,7 @@ export function getSetupReadiness(input: SetupReadinessInput): SetupReadiness {
     const horizon = evaluationHorizon.status === "READY" ? evaluationHorizon.horizon : null;
 
     if (evaluationHorizon.status === "NO_START") {
-        addInput("Enter a prediction start year.", "predictionYear");
+        addInput("Enter an evaluation start year.", "predictionYear");
     } else if (snapshot.status === SourceStatus.READY) {
         const horizonError = getEvaluationHorizonError(evaluationHorizon);
         if (horizonError) {

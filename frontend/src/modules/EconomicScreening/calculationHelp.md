@@ -27,7 +27,7 @@ Monthly values are resampled from the simulator's own report dates, so the modul
 
 Source-aligned and interpolated months are used. A partial, unsupported, or unverified month anywhere in the evaluation makes that product's full-evaluation totals and the financial results that need it unavailable for the realization. The months are not trimmed, prorated, or treated as zero. For a delta ensemble, a month is supported only when both the comparison and the reference cover it. When the server provides no coverage information, nothing is published.
 
-The evaluation runs from 1 January of the prediction start year through the last supported month of the full ensemble. A source ending on 1 January closes the previous December; it does not add production in the new year. Each realization and product must be covered for every month of this common evaluation. A realization that ends earlier is not extended with zeros. Months before a realization's first source date are not assumed to be zero, even when the first cumulative value is zero, so a prediction start before the source data makes financial results unavailable. Source coverage describes the source dates only; it is not proof of a successful simulation or of the intended forecast period.
+The evaluation runs from 1 January of the evaluation start year through the last supported month of the full ensemble. A source ending on 1 January closes the previous December; it does not add production in the new year. Each realization and product must be covered for every month of this common evaluation. A realization that ends earlier is not extended with zeros. Months before a realization's first source date are not assumed to be zero, even when the first cumulative value is zero, so an evaluation start before the source data makes financial results unavailable. Source coverage describes the source dates only; it is not proof of a successful simulation or of the intended forecast period.
 
 ## Realizations and ensemble results
 
@@ -35,9 +35,9 @@ The module calculates each realization separately. It does not first average pro
 
 Charts, percentiles, and output channels use one finite calculated value from each eligible realization. The table count shows how many realizations are valid for the selected measure out of the selected realizations. Missing, unavailable, and undefined values are excluded, not set to zero.
 
-Filtering changes the realizations shown in the chart and statistics. It does not move the prediction start, the valuation date, the simulation end, or the generated cost years, which are found from the full selected ensemble.
+Filtering changes the realizations shown in the chart and statistics. It does not move the evaluation start, the valuation date, the simulation end, or the generated cost years, which are found from the full selected ensemble.
 
-## Discounting and prediction start
+## Discounting and evaluation start
 
 Volumes and money received later contribute less at a positive discount rate. An 8% rate is written as 0.08 in the calculation.
 
@@ -47,7 +47,7 @@ t for a month = year - start year + (month - 0.5) / 12
 t for annual CAPEX = year - start year + 0.5
 ```
 
-Results are valued at **1 January of the prediction start year**, which you enter. Production volumes and their revenue are discounted at the midpoint of each month. Each year's OPEX is paid as twelve equal monthly amounts, one twelfth at each month midpoint, using the same factors as that year's production. Annual CAPEX is discounted at mid-year. These are screening conventions chosen for this module. R-90150 specifies that total expected cost estimates are expressed in mid-year cost; that is related cost-basis context, not a requirement for all of these timing choices, and this module does not claim R-90150 compliance.
+Results are valued at **1 January of the evaluation start year**, which you enter. Production volumes and their revenue are discounted at the midpoint of each month. Each year's OPEX is paid as twelve equal monthly amounts, one twelfth at each month midpoint, using the same factors as that year's production. Annual CAPEX is discounted at mid-year. These are screening conventions chosen for this module. R-90150 specifies that total expected cost estimates are expressed in mid-year cost; that is related cost-basis context, not a requirement for all of these timing choices, and this module does not claim R-90150 compliance.
 
 The full annual OPEX you enter applies to every included year, even when the evaluation ends before December in the final year. In that case the remaining monthly OPEX amounts are still paid after the last revenue month; they do not extend production coverage.
 
@@ -70,7 +70,7 @@ NPV = revenue PV - cost PV
 
 Prices and costs use the selected currency, NOK or USD. Changing the currency does not convert entered values. A blank price is unspecified, so NPV is unavailable unless that product is confirmed zero in every month of the evaluation. A price of 0 intentionally omits that product's revenue; it does not turn missing volume data into zero volume.
 
-Cost years are generated from the prediction start year through the simulation end. Blank cost cells are zero, so an operating cost does not repeat through the remaining years. Costs stored for years outside these rows are kept and listed, but not used. Zero entered costs means the NPV is discounted revenue, not a complete project-profitability estimate.
+Cost years are generated from the evaluation start year through the simulation end. Blank cost cells are zero, so an operating cost does not repeat through the remaining years. Costs stored for years outside these rows are kept and listed, but not used. Zero entered costs means the NPV is discounted revenue, not a complete project-profitability estimate.
 
 ## Break-even oil price
 
@@ -112,7 +112,7 @@ Incremental IRR and break-even oil price are calculated from the incremental cas
 
 Early value answers a different question from the full-evaluation result: **how much discounted volume or cash flow has accumulated by a chosen year?**
 
-For example, suppose the prediction start year is 2030 and the evaluation covers 2030 through 2050, with a valuation date of 1 January 2030:
+For example, suppose the evaluation start year is 2030 and the evaluation covers 2030 through 2050, with a valuation date of 1 January 2030:
 
 - **Full evaluation:** "What is the discounted value of the whole forecast, through 2050?"
 - **Early value through 2035:** "How much discounted value has accumulated from 2030 through the end of 2035?"
@@ -127,13 +127,13 @@ This is useful when two development options produce similar total volumes but on
 
 ### Setting it up
 
-Early value is off by default. In the Results settings, check **Early value** and enter **Calculate through year**, an inclusive calendar year within the evaluation. The view then shows early discounted cash flow beside the full NPV, and the cumulative discounted cash flow profile marks the chosen year. The value is the accumulated discounted cash flow from 1 January of the prediction start year through the end of that year. It is not the remaining future value, and it is not a new valuation date.
+Early value is off by default. In the Results settings, check **Early value** and enter **Calculate through year**, an inclusive calendar year within the evaluation. The view then shows early discounted cash flow beside the full NPV, and the cumulative discounted cash flow profile marks the chosen year. The value is the accumulated discounted cash flow from 1 January of the evaluation start year through the end of that year. It is not the remaining future value, and it is not a new valuation date.
 
 With one realization selected, the comparison shows that realization's early value and full NPV, or states that a side is unavailable. With Aggregate, it shows the P50 of each horizon and how many realizations are valid for it. The two horizons can have different valid realizations, so the two P50 values need not come from one realization.
 
 ### Example: January 2018 to July 2020
 
-Suppose the source data runs from 1 January 2018 to 1 July 2020, the prediction start year is 2018, and 2018 is an investment year with no production:
+Suppose the source data runs from 1 January 2018 to 1 July 2020, the evaluation start year is 2018, and 2018 is an investment year with no production:
 
 - **Through 2018:** only 2018's discounted flows, here mostly the discounted CAPEX, so the early value is negative.
 - **Through 2019:** the discounted flows of 2018 and 2019.
@@ -160,7 +160,7 @@ This illustrative example covers 2020 and 2021, with source-aligned monthly cove
 
 - Monthly production: 10 Sm3 oil and 100 Sm3 sales gas in every month.
 - Prices: 2 USD/Sm3 oil and 0.1 USD/Sm3 gas, so monthly revenue is 30 USD.
-- Discount rate: 10%, with prediction start year 2020, valued at 1 January 2020.
+- Discount rate: 10%, with evaluation start year 2020, valued at 1 January 2020.
 - Costs: CAPEX of 100 USD in 2020, discounted at mid-2020, and OPEX of 60 USD in each of 2020 and 2021, paid as 5 USD per month.
 
 ### Monthly and annual values

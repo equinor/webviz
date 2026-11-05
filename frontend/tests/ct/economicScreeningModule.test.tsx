@@ -436,8 +436,8 @@ test("keeps compact setup status visible and reveals a closed field section", as
     });
     await expect(status).toBeInViewport();
     await status.locator("summary").click();
-    await status.getByRole("button", { name: "Enter a prediction start year." }).click();
-    const year = settings.getByRole("combobox", { name: "Prediction start year", exact: true });
+    await status.getByRole("button", { name: "Enter an evaluation start year." }).click();
+    const year = settings.getByRole("combobox", { name: "Evaluation start", exact: true });
     await expect(year).toBeFocused();
     await expect(year).toBeInViewport();
     await page.keyboard.type("2030");
@@ -574,7 +574,7 @@ test("lists every known NPV setup requirement together before any price edit", a
     await expect
         .poll(() => setupItems(page))
         .toEqual([
-            "Enter a prediction start year.",
+            "Enter an evaluation start year.",
             "Enter an oil price, or 0 to omit oil revenue.",
             "Enter a gas price, or 0 to omit gas revenue.",
             "Gas consumption (FGCT) is missing: accept “Assume no gas consumption” or enter a gas price of 0.",
@@ -589,7 +589,7 @@ test("lists every known NPV setup requirement together before any price edit", a
     await expect
         .poll(() => setupItems(page))
         .toEqual([
-            "Enter a prediction start year.",
+            "Enter an evaluation start year.",
             "Enter a gas price, or 0 to omit gas revenue.",
             "Gas consumption (FGCT) is missing: accept “Assume no gas consumption” or enter a gas price of 0.",
         ]);
@@ -597,7 +597,7 @@ test("lists every known NPV setup requirement together before any price edit", a
     // Zero gas price resolves gas revenue only; sales-gas volume still needs the missing component.
     await gasPrice.fill("0");
     await gasPrice.blur();
-    await expect.poll(() => setupItems(page)).toEqual(["Enter a prediction start year."]);
+    await expect.poll(() => setupItems(page)).toEqual(["Enter an evaluation start year."]);
     await expect(settings.getByRole("checkbox", { name: "Assume no gas consumption" })).not.toBeChecked();
 
     await settings.getByRole("combobox", { name: "Measure" }).click();
@@ -606,13 +606,13 @@ test("lists every known NPV setup requirement together before any price edit", a
     await expect
         .poll(() => setupItems(page))
         .toEqual([
-            "Enter a prediction start year.",
+            "Enter an evaluation start year.",
             "Gas consumption (FGCT) is missing: accept “Assume no gas consumption” to calculate sales gas.",
         ]);
     await settings.getByRole("combobox", { name: "Measure" }).click();
     await page.getByRole("option", { name: "Break-even oil price" }).click();
     await expect(setupStatus(page)).toContainText("Needed for break-even oil price");
-    await expect.poll(() => setupItems(page)).toEqual(["Enter a prediction start year."]);
+    await expect.poll(() => setupItems(page)).toEqual(["Enter an evaluation start year."]);
     expect(fixtures.vectorDataRequests.sort()).toEqual(["FGIT", "FGPT", "FOPT"]);
     expect(fixtures.unexpectedApiRequests).toEqual([]);
 });
@@ -816,9 +816,9 @@ test("suggests covered years, accepts typed years and keeps the choice under fil
         />,
     );
     const settings = settingsRegion(page);
-    const year = settings.getByRole("combobox", { name: "Prediction start year" });
+    const year = settings.getByRole("combobox", { name: "Evaluation start" });
     await expect(year).toHaveValue("");
-    await expect(settings.getByText(/^Valuation:/)).toHaveCount(0);
+    await expect(settings.getByText("Also the valuation date.")).toHaveCount(0);
 
     // Keyboard search: covered zero-production 2018 is suggested; no history is selected automatically.
     await year.click();
@@ -828,7 +828,7 @@ test("suggests covered years, accepts typed years and keeps the choice under fil
     await page.keyboard.press("Enter");
     await expect(year).toHaveValue("2019");
     await expectPopupClosed(page);
-    await expect(settings.getByText("Valuation: 1 January 2019")).toBeVisible();
+    await expect(settings.getByText("Also the valuation date.")).toBeVisible();
     await expect(settings.getByRole("cell", { name: "2019", exact: true })).toBeVisible();
 
     // A typed year outside the suggestions is accepted and explained through the existing validation.
@@ -839,24 +839,24 @@ test("suggests covered years, accepts typed years and keeps the choice under fil
     await page.keyboard.press("Enter");
     await expect(year).toHaveValue("2031");
     await expectPopupClosed(page);
-    await expect(settings.getByText(/^Valuation:/)).toHaveCount(0);
+    await expect(settings.getByText("Also the valuation date.")).toHaveCount(0);
     await expect(setupStatus(page)).toContainText(
-        "The prediction start year 2031 is after the supported simulation end (Jun 2020).",
+        "The evaluation start year 2031 is after the supported simulation end (Jun 2020).",
     );
     await expect(
-        viewRegion(page).getByText("The prediction start year 2031 is after the supported simulation end (Jun 2020)."),
+        viewRegion(page).getByText("The evaluation start year 2031 is after the supported simulation end (Jun 2020)."),
     ).toBeVisible();
 
     // Pointer selection, then clearing back to blank.
-    await settings.getByRole("button", { name: "Prediction start year" }).click();
+    await settings.getByRole("button", { name: "Evaluation start" }).click();
     await page.getByRole("option", { name: "2018", exact: true }).click();
     await expect(year).toHaveValue("2018");
     await expectPopupClosed(page);
-    await expect(settings.getByText("Valuation: 1 January 2018")).toBeVisible();
+    await expect(settings.getByText("Also the valuation date.")).toBeVisible();
     await settings.getByRole("button", { name: "Clear selection" }).first().click();
     await expect(year).toHaveValue("");
-    await expect(settings.getByText(/^Valuation:/)).toHaveCount(0);
-    await expect.poll(() => setupItems(page)).toContain("Enter a prediction start year.");
+    await expect(settings.getByText("Also the valuation date.")).toHaveCount(0);
+    await expect.poll(() => setupItems(page)).toContain("Enter an evaluation start year.");
 
     await year.click();
     await page.keyboard.type("2019");
@@ -875,7 +875,7 @@ test("suggests covered years, accepts typed years and keeps the choice under fil
         channelEntries(await readPublishedChannels(page), NPV_CHANNEL).map((entry) => entry.key);
     await expect.poll(npvKeys).toEqual([8]);
     await expect(year).toHaveValue("2019");
-    await settings.getByRole("button", { name: "Prediction start year" }).click();
+    await settings.getByRole("button", { name: "Evaluation start" }).click();
     await expect(page.getByRole("option")).toHaveText(["2018", "2019", "2020"]);
     await page.keyboard.press("Escape");
     await expect(year).toHaveValue("2019");
@@ -883,7 +883,7 @@ test("suggests covered years, accepts typed years and keeps the choice under fil
     expect(fixtures.unexpectedApiRequests).toEqual([]);
 });
 
-test("keeps a stored prediction start year that is outside the suggestions", async ({ mount, page }) => {
+test("keeps a stored evaluation start year that is outside the suggestions", async ({ mount, page }) => {
     await routeSourceFixtures(page, { seriesFor: earlySeriesFor });
     await mount(
         <EconomicScreeningModuleHarness
@@ -893,10 +893,11 @@ test("keeps a stored prediction start year that is outside the suggestions", asy
             initialState={{ predictionStartYear: 2016 }}
         />,
     );
-    const year = settingsRegion(page).getByRole("combobox", { name: "Prediction start year" });
+    const year = settingsRegion(page).getByRole("combobox", { name: "Evaluation start" });
     await expect(settingsRegion(page).getByRole("cell", { name: "2016", exact: true })).toBeVisible();
     await expect(year).toHaveValue("2016");
-    await expect(settingsRegion(page).getByText("Valuation: 1 January 2016")).toBeVisible();
+    await expect(settingsRegion(page).getByText("1 Jan", { exact: true })).toBeVisible();
+    await expect(settingsRegion(page).getByText("Also the valuation date.")).toBeVisible();
     await year.click();
     await expect(page.getByRole("option")).toHaveText(["2016No source data from 1 January", "2018", "2019", "2020"]);
 });
@@ -912,13 +913,13 @@ test("commits a typed whole year when focus leaves, and Escape cancels the edit"
         />,
     );
     const settings = settingsRegion(page);
-    const year = settings.getByRole("combobox", { name: "Prediction start year" });
-    await expect(settings.getByText("Valuation: 1 January 2019")).toBeVisible();
+    const year = settings.getByRole("combobox", { name: "Evaluation start" });
+    await expect(settings.getByText("Also the valuation date.")).toBeVisible();
 
     await typeAndTabAway(page, year, "2018");
     await expectPopupClosed(page);
     await expect(year).toHaveValue("2018");
-    await expect(settings.getByText("Valuation: 1 January 2018")).toBeVisible();
+    await expect(settings.getByText("Also the valuation date.")).toBeVisible();
     await expect(settings.getByRole("cell", { name: "2018", exact: true })).toBeVisible();
 
     // Tab also commits a typed year outside the suggestions.
@@ -928,7 +929,7 @@ test("commits a typed whole year when focus leaves, and Escape cancels the edit"
     await page.keyboard.press("Tab");
     await expectPopupClosed(page);
     await expect(year).toHaveValue("2017");
-    await expect(settings.getByText("Valuation: 1 January 2017")).toBeVisible();
+    await expect(settings.getByText("Also the valuation date.")).toBeVisible();
 
     await year.click();
     await page.keyboard.press("ControlOrMeta+a");
@@ -937,17 +938,17 @@ test("commits a typed whole year when focus leaves, and Escape cancels the edit"
     await page.keyboard.press("Tab");
     await expectPopupClosed(page);
     await expect(year).toHaveValue("2017");
-    await expect(settings.getByText("Valuation: 1 January 2017")).toBeVisible();
+    await expect(settings.getByText("Also the valuation date.")).toBeVisible();
 
     // Text that is not a whole year is discarded.
     await typeAndTabAway(page, year, "20");
     await expectPopupClosed(page);
     await expect(year).toHaveValue("2017");
-    await expect(settings.getByText("Valuation: 1 January 2017")).toBeVisible();
+    await expect(settings.getByText("Also the valuation date.")).toBeVisible();
 
     await settings.getByRole("button", { name: "Clear selection" }).first().click();
     await expect(year).toHaveValue("");
-    await expect(settings.getByText(/^Valuation:/)).toHaveCount(0);
+    await expect(settings.getByText("Also the valuation date.")).toHaveCount(0);
     expect(fixtures.unexpectedApiRequests).toEqual([]);
 });
 
@@ -966,14 +967,14 @@ test("reports missing source coverage for the selected realizations in the setup
     await expect(setupStatus(page)).toContainText("Source data:");
     await expect(setupStatus(page)).not.toContainText("Setup ready");
     expect(await npvCount()).toBe(0);
-    await expect(settings.getByRole("combobox", { name: "Prediction start year" })).toHaveValue("2016");
+    await expect(settings.getByRole("combobox", { name: "Evaluation start" })).toHaveValue("2016");
 
     // A zero price removes only that product's coverage requirement.
     const gasPrice = settings.getByRole("textbox", { name: /^Gas price/ });
     await typeAndTabAway(page, gasPrice, "0");
     await expect.poll(() => setupItems(page)).toEqual([coverageBefore("Oil")]);
 
-    await typeAndTabAway(page, settings.getByRole("combobox", { name: "Prediction start year" }), "2018");
+    await typeAndTabAway(page, settings.getByRole("combobox", { name: "Evaluation start" }), "2018");
     await expect(setupStatus(page)).toHaveText("Setup ready");
     await expect.poll(npvCount).toBe(2);
 

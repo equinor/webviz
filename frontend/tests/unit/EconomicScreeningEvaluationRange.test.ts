@@ -14,9 +14,9 @@ function getPredictionHorizonError(predictionStartYear: number | null, envelopeE
 }
 
 describe("getEvaluationHorizonError", () => {
-    test("requires an explicit prediction start year", () => {
+    test("requires an explicit evaluation start year", () => {
         expect(getPredictionHorizonError(null, monthIndexOf(2040, 12))).toBe(
-            "Enter a prediction start year to calculate results.",
+            "Enter an evaluation start year to calculate results.",
         );
     });
 
@@ -28,7 +28,7 @@ describe("getEvaluationHorizonError", () => {
 
     test("rejects a start after the supported end and accepts a start in the final supported year", () => {
         expect(getPredictionHorizonError(2031, monthIndexOf(2030, 12))).toBe(
-            "The prediction start year 2031 is after the supported simulation end (Dec 2030).",
+            "The evaluation start year 2031 is after the supported simulation end (Dec 2030).",
         );
         expect(getPredictionHorizonError(2030, monthIndexOf(2030, 3))).toBeNull();
     });

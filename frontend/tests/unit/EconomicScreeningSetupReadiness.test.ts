@@ -103,7 +103,7 @@ describe("getSetupReadiness", () => {
         expect(getSetupReadiness(readyInput())).toEqual({
             isLoading: false,
             issues: [
-                { kind: SetupIssueKind.INPUT, message: "Enter a prediction start year.", field: "predictionYear" },
+                { kind: SetupIssueKind.INPUT, message: "Enter an evaluation start year.", field: "predictionYear" },
                 {
                     kind: SetupIssueKind.INPUT,
                     message: "Enter an oil price, or 0 to omit oil revenue.",
@@ -126,7 +126,7 @@ describe("getSetupReadiness", () => {
 
     test("keeps the other requirements when only the oil price is resolved", () => {
         expect(messages(readyInput({ oilPrice: 50 }))).toEqual([
-            "Enter a prediction start year.",
+            "Enter an evaluation start year.",
             "Enter a gas price, or 0 to omit gas revenue.",
             "Gas consumption (FGCT) is missing: accept “Assume no gas consumption” or enter a gas price of 0.",
         ]);
@@ -216,7 +216,7 @@ describe("getSetupReadiness", () => {
         expect(getSetupReadiness(loading)).toEqual({
             isLoading: true,
             issues: [
-                { kind: SetupIssueKind.INPUT, message: "Enter a prediction start year.", field: "predictionYear" },
+                { kind: SetupIssueKind.INPUT, message: "Enter an evaluation start year.", field: "predictionYear" },
             ],
         });
         const dataLoading = readyInput({
@@ -344,7 +344,7 @@ describe("getSetupReadiness", () => {
         expect(getSetupReadiness(readyInput({ predictionStartYear: 2021, oilPrice: 1, gasPrice: 0 })).issues).toEqual([
             {
                 kind: SetupIssueKind.SOURCE,
-                message: "The prediction start year 2021 is after the supported simulation end (Jun 2020).",
+                message: "The evaluation start year 2021 is after the supported simulation end (Jun 2020).",
                 field: "predictionYear",
             },
         ]);
