@@ -1,4 +1,5 @@
 from webviz_services.utils.authenticated_user import AuthenticatedUser
+from primary.middleware.add_warnings_middleware import resolve_warnings
 
 from webviz_services.sumo_access.deprecated_inplace_volumetrics_access import DEPRECATED_InplaceVolumetricsAccess
 from webviz_services.deprecated_inplace_volumetrics_assembler.deprecated_inplace_volumetrics_assembler import (
@@ -59,7 +60,7 @@ async def handle_aggregated_per_realization_table_data_for_deprecated_format_asy
         adjusted_group_by_indices = None
 
     assembler = DEPRECATED_InplaceVolumetricsAssembler(access)
-    data = await assembler.create_accumulated_by_selection_per_realization_volumetric_table_data_async(
+    result = await assembler.create_accumulated_by_selection_per_realization_volumetric_table_data_async(
         table_name=table_name,
         result_names=set(result_names),
         fluid_zones=DeprecatedInplaceVolumetricsConverters.convert_schema_to_fluid_zones(indices_with_values),
@@ -72,6 +73,9 @@ async def handle_aggregated_per_realization_table_data_for_deprecated_format_asy
         realizations=realizations,
         accumulate_fluid_zones=do_accumulate_fluid_zones,
     )
+
+    # Report warnings (e.g. missing realizations) to the client if it allows warnings, otherwise raise them as an exception
+    data = resolve_warnings(result)
 
     return DeprecatedInplaceVolumetricsConverters.convert_table_data_per_fluid_selection_to_schema(data)
 
@@ -100,7 +104,7 @@ async def handle_aggregated_statistical_table_data_for_deprecated_format_async(
         adjusted_group_by_indices = None
 
     assembler = DEPRECATED_InplaceVolumetricsAssembler(access)
-    data = await assembler.create_accumulated_by_selection_statistical_volumetric_table_data_async(
+    result = await assembler.create_accumulated_by_selection_statistical_volumetric_table_data_async(
         table_name=table_name,
         result_names=set(result_names),
         fluid_zones=DeprecatedInplaceVolumetricsConverters.convert_schema_to_fluid_zones(indices_with_values),
@@ -113,5 +117,8 @@ async def handle_aggregated_statistical_table_data_for_deprecated_format_async(
         realizations=realizations,
         accumulate_fluid_zones=do_accumulate_fluid_zones,
     )
+
+    # Report warnings (e.g. missing realizations) to the client if it allows warnings, otherwise raise them as an exception
+    data = resolve_warnings(result)
 
     return DeprecatedInplaceVolumetricsConverters.convert_statistical_table_data_per_fluid_selection_to_schema(data)

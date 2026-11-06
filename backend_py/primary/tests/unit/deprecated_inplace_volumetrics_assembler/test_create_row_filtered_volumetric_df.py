@@ -1,4 +1,3 @@
-import re
 from typing import List
 import pytest
 import polars as pl
@@ -11,7 +10,7 @@ from webviz_services.sumo_access.deprecated_inplace_volumetrics_types import (
     InplaceVolumetricsIdentifierWithValues,
 )
 from webviz_services.sumo_access.deprecated_inplace_volumetrics_access import IGNORED_IDENTIFIER_COLUMN_VALUES
-from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError, NoDataError
+from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError
 
 
 @pytest.fixture
@@ -30,17 +29,22 @@ def test_create_row_filtered_volumetric_df_no_realizations(inplace_volumetrics_d
         )
 
 
-def test_create_row_filtered_volumetric_df_no_data_found(inplace_volumetrics_df: pl.DataFrame) -> None:
-    with pytest.raises(
-        NoDataError,
-        match=re.escape("Missing data error. The following realization values do not exist in 'REAL' column: [4, 5]"),
-    ):
-        DEPRECATED_InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
-            table_name="test_table",
-            inplace_volumetrics_df=inplace_volumetrics_df,
-            realizations=[4, 5],
-            identifiers_with_values=[],
-        )
+def test_create_row_filtered_volumetric_df_missing_realizations_gives_warning(
+    inplace_volumetrics_df: pl.DataFrame,
+) -> None:
+    result = DEPRECATED_InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
+        table_name="test_table",
+        inplace_volumetrics_df=inplace_volumetrics_df,
+        realizations=[2, 4, 5],
+        identifiers_with_values=[],
+    )
+
+    warnings = result.get_warnings()
+    assert len(warnings) == 1
+    assert "4" in warnings[0].message and "5" in warnings[0].message
+    assert result.get_value_ignore_warnings().sort("REAL").equals(
+        pl.DataFrame({"REAL": [2], "ZONE": ["B"], "VOLUME": [20]})
+    )
 
 
 def test_create_row_filtered_volumetric_df_with_realizations(inplace_volumetrics_df: pl.DataFrame) -> None:
@@ -50,7 +54,7 @@ def test_create_row_filtered_volumetric_df_with_realizations(inplace_volumetrics
         inplace_volumetrics_df=inplace_volumetrics_df,
         realizations=valid_realizations,
         identifiers_with_values=[],
-    )
+    ).get_value_ignore_warnings()
 
     expected_df = pl.DataFrame({"REAL": [1, 2], "ZONE": ["A", "B"], "VOLUME": [10, 20]})
 
@@ -67,7 +71,7 @@ def test_create_row_filtered_volumetric_df_with_identifiers(inplace_volumetrics_
         inplace_volumetrics_df=inplace_volumetrics_df,
         realizations=None,
         identifiers_with_values=identifiers_with_values,
-    )
+    ).get_value_ignore_warnings()
 
     expected_df = pl.DataFrame({"REAL": [1, 3], "ZONE": ["A", "C"], "VOLUME": [10, 30]})
 
@@ -107,7 +111,7 @@ def test_create_row_filtered_volumetric_df_with_ignored_identifier_values() -> N
         inplace_volumetrics_df=inplace_volumetrics_df,
         realizations=None,
         identifiers_with_values=identifiers_with_values,
-    )
+    ).get_value_ignore_warnings()
 
     expected_df = pl.DataFrame({"REAL": [1, 2], "ZONE": ["A", "B"], "VOLUME": [10, 20]})
 
@@ -140,7 +144,7 @@ def test_create_row_filtered_volumetric_df_with_realizations_and_identifiers() -
         inplace_volumetrics_df=inplace_volumetrics_df,
         realizations=wanted_realizations,
         identifiers_with_values=identifiers_with_values,
-    )
+    ).get_value_ignore_warnings()
 
     assert result_df is not None
     assert result_df.sort("REAL").equals(expected_df)

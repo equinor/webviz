@@ -2,6 +2,7 @@ import { useAtomValue } from "jotai";
 
 import type { ViewStatusWriter } from "@framework/StatusWriter";
 import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
+import { propagateWarningsToStatusWriter } from "@modules/_shared/utils/propagateWarningsToStatusWriter";
 
 import { indicesWithValuesAtom } from "../atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "../atoms/queryAtoms";
@@ -11,6 +12,8 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter) 
     const indicesWithValues = useAtomValue(indicesWithValuesAtom);
 
     propagateAllApiErrorsToStatusWriter(queriesResult.errors, statusWriter);
+
+    propagateWarningsToStatusWriter(queriesResult.warnings, statusWriter);
 
     for (const elm of indicesWithValues) {
         if (elm.values.length === 0) {

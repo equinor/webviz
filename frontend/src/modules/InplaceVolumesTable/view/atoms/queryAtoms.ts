@@ -80,6 +80,7 @@ export const perRealizationTableDataResultsAtom = atom((get) => {
             isFetching: false,
             allQueriesFailed: false,
             errors: [],
+            warnings: [],
             droppedFluidSelections: [],
             unmatchedRows: [],
         };
@@ -92,6 +93,7 @@ export const perRealizationTableDataResultsAtom = atom((get) => {
         isFetching: regular.isFetching || delta.isFetching,
         allQueriesFailed: (regular.allQueriesFailed || delta.allQueriesFailed) && tablesData.length === 0,
         errors: [...regular.errors, ...delta.errors],
+        warnings: [...regular.warnings, ...delta.warnings],
         droppedFluidSelections: delta.droppedFluidSelections,
         unmatchedRows: delta.unmatchedRows,
     };
@@ -136,6 +138,7 @@ export const statisticalTableDataResultsAtom = atom((get) => {
             isFetching: false,
             allQueriesFailed: false,
             errors: [],
+            warnings: [],
             droppedFluidSelections: [],
             unmatchedRows: [],
         };
@@ -154,6 +157,7 @@ export const statisticalTableDataResultsAtom = atom((get) => {
         isFetching: regular.isFetching || delta.isFetching,
         allQueriesFailed: (regular.allQueriesFailed || delta.allQueriesFailed) && tablesData.length === 0,
         errors: [...regular.errors, ...delta.errors],
+        warnings: [...regular.warnings, ...delta.warnings],
         droppedFluidSelections: delta.droppedFluidSelections,
         unmatchedRows: delta.unmatchedRows,
     };
