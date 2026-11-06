@@ -10,13 +10,29 @@
 ### Added
 
 - **Simulation time series modules**: "Simulation Time Series" and "Simulation Time Series Per Sensitivity" now show a hover marker and a selected-timestamp marker with date badges in the plot. The markers can be turned on/off with the new "Show timestamp marker in plot" setting. Note that the selected timestamp is also the marker for the data channel; the data channel still provides data for the selected timestamp when the markers are hidden.
+- **In-place volumes plots**: For an ensemble with sensitivities (design matrix), all plots and the statistics table are split per sensitivity case and coloured by case by default. A new "Sensitivity cases" filter selects which cases are included.
+- **Inplace Volumes Table**: For an ensemble with sensitivities, a SENSITIVITY column is added and statistics are computed per sensitivity case.
+- **Inplace Volumes Comparison**: For an ensemble with sensitivities, each side selects a sensitivity case, so a case can be compared against the base case of the same ensemble.
+- **Inplace Volumes Plot**: Box plots show one named row per group (e.g. sensitivity case), aligned across subplots. With a single subplot the names are on the axis instead of in the legend, and hovering a box shows its statistics.
 
 ### Changed
 
 - **Simulation Time Series**: The module now uses the shared hover timestamp, so a timestamp hovered here is highlighted in other modules, and a timestamp hovered in other modules is highlighted here. The hover marker is gray when hovering in the module itself, and red when the hover comes from another module.
 - **Settings**: A selection that is no longer available (e.g. after switching ensemble) is now kept and marked as invalid instead of being silently replaced, and no data is loaded until it is valid again. Settings that depend on an invalid setting wait for it to be fixed.
+- **Sensitivity/Response plot**: The sensitivity table now shows each sensitivity's type. Distributions (Monte Carlo) list Mean, P90 and P10, and scenarios list the average of their low and high case, with realization counts last. Values are absolute and no longer follow the chart's scaling.
+- **Sensitivity/Response plot**: Large values use metric prefixes (k, M, G) like the inplace volumes modules, instead of K and B. The response unit, when the sending module provides one, is shown in the table headers.
+- **Sensitivity/Response plot**: The tornado's x-axis fits what is drawn; hidden realization and mean points no longer widen it, so the bars use the available width.
+- **Sensitivity/Response plot**: Hovering a tornado bar shows its case (e.g. `deep`, or P10/P90 for distributions), its value, the difference from the reference and the number of realizations.
 
 ### Fixed
+
+- **Simulation Time Series Sensitivity**: Responses sent over the data channel now carry the vector's unit instead of the placeholder "unit".
+- **Inplace Volumes Plot**: In a bar plot with one bar per zone, region or other category, the statistics table below the plot now shows one row per category instead of pooling all categories together.
+- **Sensitivity/Response plot**: "Hide sensitivities without impact" now also hides sensitivities whose difference from the reference is only rounding noise, and Monte Carlo sensitivities that match a Monte Carlo reference. The reference itself is always shown.
+- **Sensitivity/Response plot**: When the data channel holds several responses (e.g. one per region), one tornado is shown per response instead of only the first, and the table lists all responses.
+- **Sensitivity/Response plot**: Sensitivities with no data in the received response (e.g. cases filtered out in the sending module) are left out and listed in a warning, instead of being drawn as zero. A reference sensitivity without data is reported instead of being treated as zero.
+- **Inplace Volumes Plot**: Hovers show which group (e.g. sensitivity case) a value belongs to and the actual realization number. Clicking a legend item now applies to all subplots, and long legends scroll.
+- **Inplace Volumes Plot**: Changing plot type, response, subplot, colour or histogram type resets the zoom instead of keeping a zoom that could leave the plot empty. Scroll zoom on box and distribution plots only zooms the value axis, and zooming no longer makes the subplots jump while the margins adjust.
 
 - **2D, 3D, Intersection and Well log viewers**: Fixed several issues with loading saved sessions and changing layer settings.
 - **2D, 3D and Intersection viewers**: Layers in a context boundary outside the views are now shown in every view, like other layers outside the views. Previously they were not shown at all. Layers outside the views and in context boundaries are now also stacked in the order of the layer list. Previously, layers outside a view were always drawn on top of the view's own layers, and layers in a context boundary always below the layers next to it.

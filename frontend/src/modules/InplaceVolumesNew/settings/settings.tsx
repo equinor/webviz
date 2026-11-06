@@ -5,6 +5,8 @@ import { useAtom, useAtomValue } from "jotai";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
+import { FIXUP } from "@framework/utils/atomUtils";
+import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Banner } from "@lib/components/Banner";
 import { Combobox } from "@lib/components/Combobox";
@@ -16,6 +18,10 @@ import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { HistogramType } from "@modules/_shared/histogram";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
+import {
+    getSensitivityCaseOptions,
+    SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { FLUID_SPECIFIC_RESULT_NAMES, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
@@ -31,13 +37,18 @@ import {
     selectedPlotTypeAtom,
     showTableAtom,
 } from "./atoms/baseAtoms";
-import { offeredSelectedIndicesWithValuesAtom, tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
+import {
+    offeredSelectedIndicesWithValuesAtom,
+    sensitivityModeAtom,
+    tableDefinitionsAccessorAtom,
+} from "./atoms/derivedAtoms";
 import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
     selectedIndicesWithValuesAtom,
     selectedResultNameAtom,
     selectedSelectorColumnAtom,
+    selectedSensitivityCasesAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
 } from "./atoms/persistableFixableAtoms";
@@ -53,6 +64,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const tableDefinitionsQueryResult = useAtomValue(tableDefinitionsQueryAtom);
     const tableDefinitionsAccessor = useAtomValue(tableDefinitionsAccessorAtom);
+    const sensitivityMode = useAtomValue(sensitivityModeAtom);
+    const isSensitivityModeActive = sensitivityMode.kind === "active";
+    const [selectedSensitivityCases, setSelectedSensitivityCases] = useAtom(selectedSensitivityCasesAtom);
 
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
 
@@ -76,6 +90,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     propagateAllApiErrorsToStatusWriter(tableDefinitionsQueryResult.errors, statusWriter);
 
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
+        const haveEnsemblesChanged = !areEnsembleIdentListsEqual(
+            newFilter.ensembleIdents,
+            selectedEnsembleIdents.value,
+        );
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
         setSelectedIndicesWithValues(newFilter.indicesWithValues);
@@ -84,6 +102,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 ? IndexValueCriteria.ALLOW_INTERSECTION
                 : IndexValueCriteria.REQUIRE_EQUALITY,
         );
+        if (newFilter.sensitivityCases) {
+            setSelectedSensitivityCases(newFilter.sensitivityCases);
+        }
+        if (haveEnsemblesChanged) {
+            // Cases belong to the ensemble: fill them in for a new one instead of keeping an empty or stale selection.
+            setSelectedSensitivityCases(FIXUP);
+        }
     }
 
     const resultNameOptions: ComboboxItem<string>[] = tableDefinitionsAccessor
@@ -106,12 +131,20 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectorOptions: ComboboxItem<string>[] = [
         ...tableDefinitionsAccessor.getCommonSelectorColumns().map((name) => ({ label: name, value: name })),
     ];
+    if (isSensitivityModeActive) {
+        selectorOptions.push({ label: "SENSITIVITY", value: TableOriginKey.SENSITIVITY });
+    }
 
-    const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames.value);
+    const subplotOptions = makeSubplotByOptions(
+        tableDefinitionsAccessor,
+        selectedTableNames.value,
+        isSensitivityModeActive,
+    );
     const colorByOptions = makeColorByOptions(
         tableDefinitionsAccessor,
         selectedSubplotBy.value,
         selectedTableNames.value,
+        isSensitivityModeActive,
     );
     const plotTypeOptions: ComboboxItem<PlotType>[] = [];
     for (const [type, label] of Object.entries(plotTypeToStringMapping)) {
@@ -136,6 +169,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectedSelectorColumnAnnotations = useMakePersistableFixableAtomAnnotations(selectedSelectorColumnAtom);
     const selectedSubplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
+    const selectedSensitivityCasesAnnotations = useMakePersistableFixableAtomAnnotations(selectedSensitivityCasesAtom);
     const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
     const selectedTableNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedTableNamesAtom);
     const selectedIndicesWithValuesAnnotations =
@@ -333,6 +367,18 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     selectedTableNames={selectedTableNames.value}
                     selectedAllowIndicesValuesIntersection={
                         selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
+                    }
+                    availableSensitivityCases={
+                        sensitivityMode.kind === "active"
+                            ? getSensitivityCaseOptions(sensitivityMode.sensitivities)
+                            : []
+                    }
+                    selectedSensitivityCases={selectedSensitivityCases.value}
+                    sensitivityCasesAnnotations={selectedSensitivityCasesAnnotations}
+                    dataAnnotations={
+                        sensitivityMode.kind === "blocked"
+                            ? [{ type: "error", message: SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE }]
+                            : undefined
                     }
                     additionalSettings={plotSettings}
                     ensembleAnnotations={selectedEnsembleIdentsAnnotations}

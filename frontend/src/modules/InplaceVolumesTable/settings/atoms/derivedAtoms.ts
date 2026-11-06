@@ -1,6 +1,13 @@
 import { atom } from "jotai";
 
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { getSelectionForOfferedIndexColumns } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
+import type {
+    SensitivityCaseIdent,
+    SensitivityMode,
+    SensitivitySelection,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { getSensitivityCaseIdents, resolveSensitivityMode } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
 import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
@@ -9,9 +16,34 @@ import {
     selectedGroupByIndicesAtom,
     selectedIndicesWithValuesAtom,
     selectedResultNamesAtom,
+    selectedSensitivityCasesAtom,
     selectedTableNamesAtom,
 } from "./persistableFixableAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
+
+export const sensitivityModeAtom = atom<SensitivityMode>((get) => {
+    return resolveSensitivityMode(get(EnsembleSetAtom), get(selectedEnsembleIdentsAtom).value);
+});
+
+export const availableSensitivityCasesAtom = atom<SensitivityCaseIdent[]>((get) => {
+    const sensitivityMode = get(sensitivityModeAtom);
+    return sensitivityMode.kind === "active" ? getSensitivityCaseIdents(sensitivityMode.sensitivities) : [];
+});
+
+export const isSensitivityEnsembleSelectionBlockedAtom = atom<boolean>((get) => {
+    return get(sensitivityModeAtom).kind === "blocked";
+});
+
+export const sensitivitySelectionAtom = atom<SensitivitySelection | null>((get) => {
+    const sensitivityMode = get(sensitivityModeAtom);
+    if (sensitivityMode.kind !== "active") {
+        return null;
+    }
+    return {
+        ensembleIdent: sensitivityMode.ensemble.getIdent(),
+        selectedCases: get(selectedSensitivityCasesAtom).value,
+    };
+});
 
 export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get) => {
     const selectedTableNames = get(selectedTableNamesAtom);
@@ -51,6 +83,14 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
         !selectedEnsembleIdents.isValidInContext ||
         !tableDefinitionsAccessor.hasEnsembleIdents(selectedEnsembleIdents.value)
     ) {
+        return false;
+    }
+
+    if (get(isSensitivityEnsembleSelectionBlockedAtom)) {
+        return false;
+    }
+
+    if (get(sensitivityModeAtom).kind === "active" && !get(selectedSensitivityCasesAtom).isValidInContext) {
         return false;
     }
 

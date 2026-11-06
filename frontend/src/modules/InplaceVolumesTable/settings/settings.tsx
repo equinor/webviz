@@ -7,6 +7,8 @@ import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
+import { FIXUP } from "@framework/utils/atomUtils";
+import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
@@ -14,6 +16,10 @@ import { Setting } from "@lib/components/Setting";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
+import {
+    getSensitivityCaseOptions,
+    SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import {
     InplaceVolumesStatisticEnumToStringMapping,
@@ -34,12 +40,13 @@ import {
     selectedStatisticsLayoutAtom,
     selectedTableTypeAtom,
 } from "./atoms/baseAtoms";
-import { tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
+import { sensitivityModeAtom, tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedGroupByIndicesAtom,
     selectedIndicesWithValuesAtom,
     selectedResultNamesAtom,
+    selectedSensitivityCasesAtom,
     selectedTableNamesAtom,
 } from "./atoms/persistableFixableAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
@@ -52,6 +59,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const tableDefinitionsQuery = useAtomValue(tableDefinitionsQueryAtom);
     const tableDefinitionsAccessor = useAtomValue(tableDefinitionsAccessorAtom);
+    const sensitivityMode = useAtomValue(sensitivityModeAtom);
+    const [selectedSensitivityCases, setSelectedSensitivityCases] = useAtom(selectedSensitivityCasesAtom);
 
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
     const [selectedTableNames, setSelectedTableNames] = useAtom(selectedTableNamesAtom);
@@ -103,6 +112,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIndexValueCriteria,
     );
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
+        const haveEnsemblesChanged = !areEnsembleIdentListsEqual(
+            newFilter.ensembleIdents,
+            selectedEnsembleIdents.value,
+        );
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
         setSelectedIndicesWithValues(newFilter.indicesWithValues);
@@ -111,6 +124,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 ? IndexValueCriteria.ALLOW_INTERSECTION
                 : IndexValueCriteria.REQUIRE_EQUALITY,
         );
+        if (newFilter.sensitivityCases) {
+            setSelectedSensitivityCases(newFilter.sensitivityCases);
+        }
+        if (haveEnsemblesChanged) {
+            // Cases belong to the ensemble: fill them in for a new one instead of keeping an empty or stale selection.
+            setSelectedSensitivityCases(FIXUP);
+        }
     }
 
     function handleSelectedTableTypeChange(value: string | null) {
@@ -165,6 +185,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const selectedResultNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedResultNamesAtom);
     const selectedGroupByIndicesAnnotations = useMakePersistableFixableAtomAnnotations(selectedGroupByIndicesAtom);
+    const selectedSensitivityCasesAnnotations = useMakePersistableFixableAtomAnnotations(selectedSensitivityCasesAtom);
 
     const selectedIndicesWithValuesAnnotations =
         useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
@@ -245,6 +266,18 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     selectedTableNames={selectedTableNames.value}
                     selectedAllowIndicesValuesIntersection={
                         selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
+                    }
+                    availableSensitivityCases={
+                        sensitivityMode.kind === "active"
+                            ? getSensitivityCaseOptions(sensitivityMode.sensitivities)
+                            : []
+                    }
+                    selectedSensitivityCases={selectedSensitivityCases.value}
+                    sensitivityCasesAnnotations={selectedSensitivityCasesAnnotations}
+                    dataAnnotations={
+                        sensitivityMode.kind === "blocked"
+                            ? [{ type: "error", message: SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE }]
+                            : undefined
                     }
                     additionalSettings={tableSettings}
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
