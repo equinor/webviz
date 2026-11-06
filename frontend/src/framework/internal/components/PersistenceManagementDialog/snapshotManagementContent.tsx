@@ -405,19 +405,21 @@ function SnapshotTable(props: SnapshotTableProps) {
             onChangeColumnSort={setTableSortState}
         >
             <Table.Head sticky>
-                <Table.Column colKey="select" widthInPercent={4} sortable={false}>
-                    <Checkbox
-                        size="small"
-                        aria-label="Select all snapshots"
-                        checked={allLoadedSnapshotsSelected}
-                        indeterminate={someLoadedSnapshotsSelected}
-                        disabled={tableData.length === 0}
-                        onCheckedChange={handleToggleAllSelected}
-                    />
+                <Table.Column colKey="select" width={60} sortable={false} noPadding>
+                    <div className="px-sm">
+                        <Checkbox
+                            size="small"
+                            aria-label="Select all snapshots"
+                            checked={allLoadedSnapshotsSelected}
+                            indeterminate={someLoadedSnapshotsSelected}
+                            disabled={tableData.length === 0}
+                            onCheckedChange={handleToggleAllSelected}
+                        />
+                    </div>
                 </Table.Column>
                 <Table.Column
                     colKey="visits"
-                    widthInPercent={7}
+                    width={60}
                     // The sorting adornment require some space, which normally looks a bit weirdly aligned
                     // for as the column text here is centered. We remove the right side padding to make the
                     // alignment look more natural in the un-sorted state
@@ -428,19 +430,19 @@ function SnapshotTable(props: SnapshotTableProps) {
                 <Table.Column colKey="snapshotMetadata.title" widthInPercent={24}>
                     Title
                 </Table.Column>
-                <Table.Column colKey="snapshotMetadata.description" sortable={false} widthInPercent={20}>
+                <Table.Column colKey="snapshotMetadata.description" sortable={false}>
                     Description
                 </Table.Column>
                 <Table.Column colKey="snapshotId" sortable={false} widthInPercent={12}>
                     URL
                 </Table.Column>
-                <Table.Column colKey="snapshotMetadata.ownerId" sortable={false} widthInPercent={11}>
+                <Table.Column colKey="snapshotMetadata.ownerId" sortable={false} width={120}>
                     Owner
                 </Table.Column>
-                <Table.Column colKey="lastVisitedAt" widthInPercent={16}>
+                <Table.Column colKey="lastVisitedAt" width={160}>
                     Last visited at
                 </Table.Column>
-                <Table.Column colKey="actions" sortable={false} widthInPercent={6} layoutClassName="text-right">
+                <Table.Column colKey="actions" sortable={false} width={80} layoutClassName="text-right">
                     Actions
                 </Table.Column>
             </Table.Head>

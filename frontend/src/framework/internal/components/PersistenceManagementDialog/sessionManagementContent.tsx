@@ -303,29 +303,31 @@ function SessionTable(props: SessionTableProps) {
             onChangeColumnSort={setTableSortState}
         >
             <Table.Head sticky>
-                <Table.Column colKey="select" widthInPercent={5} sortable={false}>
-                    <Checkbox
-                        size="small"
-                        aria-label="Select all sessions"
-                        checked={allLoadedSessionsSelected}
-                        indeterminate={someLoadedSessionsSelected}
-                        disabled={tableData.length === 0}
-                        onCheckedChange={handleToggleAllSelected}
-                    />
+                <Table.Column colKey="select" width={60} sortable={false} noPadding>
+                    <div className="px-sm">
+                        <Checkbox
+                            size="small"
+                            aria-label="Select all sessions"
+                            checked={allLoadedSessionsSelected}
+                            indeterminate={someLoadedSessionsSelected}
+                            disabled={tableData.length === 0}
+                            onCheckedChange={handleToggleAllSelected}
+                        />
+                    </div>
                 </Table.Column>
-                <Table.Column colKey="title" widthInPercent={20}>
+                <Table.Column colKey="title" widthInPercent={25}>
                     Title
                 </Table.Column>
-                <Table.Column colKey="description" sortable={false} widthInPercent={37}>
+                <Table.Column colKey="description" sortable={false}>
                     Description
                 </Table.Column>
-                <Table.Column colKey="updatedAt" widthInPercent={15}>
+                <Table.Column colKey="updatedAt" width={160}>
                     Updated at
                 </Table.Column>
-                <Table.Column colKey="createdAt" widthInPercent={15}>
+                <Table.Column colKey="createdAt" width={160}>
                     Created at
                 </Table.Column>
-                <Table.Column colKey="actions" sortable={false} widthInPercent={8} layoutClassName="text-right">
+                <Table.Column colKey="actions" sortable={false} width={80} layoutClassName="text-right">
                     Actions
                 </Table.Column>
             </Table.Head>
