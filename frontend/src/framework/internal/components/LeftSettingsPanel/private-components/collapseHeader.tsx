@@ -1,3 +1,4 @@
+import { Tooltip } from "@lib/components/Tooltip";
 import { KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight } from "@mui/icons-material";
 
 export type CollapseHeaderProps = {
@@ -7,11 +8,18 @@ export type CollapseHeaderProps = {
 
 export function CollapseHeader(props: CollapseHeaderProps) {
     return (
-        <div
-            onClick={props.onCollapseChange}
-            className="bg-neutral-strong text-neutral-strong-on-emphasis p-3xs flex cursor-pointer items-center justify-end"
+        <Tooltip
+            content={props.isCollapsed ? "Expand settings panel" : "Collapse settings panel"}
+            delay="medium"
+            side="right"
         >
-            {props.isCollapsed ? <KeyboardDoubleArrowRight /> : <KeyboardDoubleArrowLeft />}
-        </div>
+            <div
+                onClick={props.onCollapseChange}
+                className="bg-neutral fill-text-neutral-strong p-3xs hover:bg-neutral-hover active:bg-neutral-active flex cursor-pointer items-center justify-end"
+                aria-label={props.isCollapsed ? "Expand settings panel" : "Collapse settings panel"}
+            >
+                {props.isCollapsed ? <KeyboardDoubleArrowRight /> : <KeyboardDoubleArrowLeft />}
+            </div>
+        </Tooltip>
     );
 }
