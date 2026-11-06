@@ -15,6 +15,7 @@ import { EmptySettingsPlaceholder } from "./private-components/emptySettingsPlac
 import { ModuleSettingsHeader } from "./private-components/moduleSettingsHeader";
 import { ModuleSettingsStack } from "./private-components/moduleSettingsStack";
 import { ModuleSyncSettings } from "./private-components/moduleSyncSettings";
+import { CollapseHeader } from "./private-components/collapseHeader";
 
 enum DrawerContent {
     ModuleSettings = "ModuleSettings",
@@ -65,6 +66,10 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
 
     return (
         <div className="bg-surface flex h-full flex-col overflow-hidden">
+            <CollapseHeader
+                isCollapsed={isCollapsed}
+                onCollapseChange={isCollapsed ? handleExpandPanel : handleCollapsePanel}
+            />
             {isDashboardControlledSettingsPanelVisible && !isCollapsed && (
                 <DashboardSettingsPanel onClose={handleCloseDashboardSettingsPanel} />
             )}

@@ -80,7 +80,7 @@ describe("DashboardSettingDefinition", () => {
         expect(intersectionInstance.getConstraints()).toEqual({ min: 5, max: 10 });
     });
 
-    it("normalizes the combined contributions once, a single one included, without combining it with the initial constraints", () => {
+    it("canonicalizes the combined contributions once, a single one included, without combining it with the initial constraints", () => {
         const unionConstraints = vi.fn((a: { min: number; max: number }, b: { min: number; max: number }) => ({
             min: Math.min(a.min, b.min),
             max: Math.max(a.max, b.max),
@@ -92,7 +92,7 @@ describe("DashboardSettingDefinition", () => {
             initialConstraints: { min: 0, max: 0 },
             unionConstraints,
             intersectConstraints: (a, b) => ({ min: Math.max(a.min, b.min), max: Math.min(a.max, b.max) }),
-            normalizeConstraints: (constraints) => ({
+            canonicalizeConstraints: (constraints) => ({
                 min: Math.floor(constraints.min),
                 max: Math.ceil(constraints.max),
             }),

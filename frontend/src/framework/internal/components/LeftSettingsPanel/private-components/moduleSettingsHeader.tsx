@@ -69,21 +69,7 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
 
     function makeHeaderContent() {
         if (props.isCollapsed) {
-            return (
-                <Button
-                    onClick={props.onExpandClick}
-                    title="Expand settings panel"
-                    iconOnly
-                    tone="neutral"
-                    size="small"
-                    variant="ghost"
-                >
-                    <div className="flex flex-row items-center">
-                        {activeTab?.icon ?? <Settings fontSize="inherit" />}
-                        <ChevronRight fontSize="inherit" />
-                    </div>
-                </Button>
-            );
+            return activeTab?.icon ?? <Settings fontSize="inherit" />;
         }
 
         const highlightWarning = !!warningText && !isWarningVisible;
@@ -116,16 +102,6 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
                         </span>
                     </Tooltip>
                 )}
-                <Button
-                    onClick={props.onCollapseClick}
-                    title="Collapse settings panel"
-                    iconOnly
-                    tone="neutral"
-                    size="small"
-                    variant="ghost"
-                >
-                    <ChevronLeft fontSize="inherit" />
-                </Button>
             </>
         );
     }

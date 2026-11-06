@@ -317,13 +317,13 @@ export class DashboardSettingInstance<TValue, TConstraints> implements PublishSu
             return this._definition.initialConstraints;
         }
 
-        // Normalized once afterwards - with a single contribution, `reduce` never calls a combiner
+        // Canonicalized once afterwards - with a single contribution, `reduce` never calls a combiner
         const combined =
             this._combineStrategy === DashboardSettingCombineStrategy.INTERSECTION
                 ? contributions.reduce((acc, current) => this._definition.intersectConstraints(acc, current))
                 : contributions.reduce((acc, current) => this._definition.unionConstraints(acc, current));
 
-        return this._definition.normalizeConstraints(combined);
+        return this._definition.canonicalizeConstraints(combined);
     }
 
     private computeIsSettling(): boolean {

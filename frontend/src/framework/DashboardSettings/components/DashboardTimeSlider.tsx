@@ -1,15 +1,14 @@
-import React from "react";
-
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { Button } from "@lib/components/Button";
 import { Slider } from "@lib/components/Slider";
 import type { SliderChangeEventDetails } from "@lib/components/Slider/types";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 
 import type { DashboardSettingComponentProps } from "../DashboardSettingDefinition";
 
-// Every change of the dashboard time makes all of its consumers refetch - so while dragging, the value is
-// only committed once the thumb has rested for a moment.
-const DRAG_COMMIT_DELAY_MS = 300;
+// Every change of the dashboard time makes all of its consumers refetch - so while dragging or stepping with the
+// keyboard, the value is only committed once it has rested for a moment.
+const COMMIT_DELAY_MS = 300;
 
 function toIndex(sliderValue: number | readonly number[]): number {
     return typeof sliderValue === "number" ? sliderValue : (sliderValue[0] ?? 0);
@@ -21,21 +20,15 @@ function toIndex(sliderValue: number | readonly number[]): number {
  */
 export function DashboardTimeSlider(props: DashboardSettingComponentProps<number | null, readonly number[]>) {
     const timestamps = props.constraints;
-    const selectedIndex = props.value === null ? -1 : timestamps.indexOf(props.value);
 
-    // While dragging, before the value is committed
-    const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null);
-    const displayedIndex = draggedIndex ?? Math.max(selectedIndex, 0);
-
-    const commitTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    React.useEffect(function clearPendingCommitOnUnmount() {
-        return () => {
-            if (commitTimeoutRef.current) {
-                clearTimeout(commitTimeoutRef.current);
-            }
-        };
-    }, []);
+    // Follows the slider right away, while the commit to the dashboard is debounced
+    const [immediateValue, setImmediateValue, commitController] = useDebouncedOnChange<number | null>(
+        props.value,
+        props.onValueChange,
+        COMMIT_DELAY_MS,
+    );
+    const selectedIndex = immediateValue === null ? -1 : timestamps.indexOf(immediateValue);
+    const displayedIndex = Math.max(selectedIndex, 0);
 
     function formatIndex(index: number): string {
         const timestamp = timestamps[index];
@@ -43,46 +36,34 @@ export function DashboardTimeSlider(props: DashboardSettingComponentProps<number
     }
 
     function commitIndex(index: number) {
-        setDraggedIndex(null);
-
         const timestamp = timestamps[index];
         if (timestamp !== undefined) {
-            props.onValueChange(timestamp);
+            setImmediateValue(timestamp);
+            commitController.flush();
         }
     }
 
     function handleValueChange(sliderValue: number | readonly number[], eventDetails: SliderChangeEventDetails) {
         const index = toIndex(sliderValue);
 
-        if (commitTimeoutRef.current) {
-            clearTimeout(commitTimeoutRef.current);
-            commitTimeoutRef.current = null;
-        }
-
-        // Track presses and keyboard steps commit right away
-        if (eventDetails.reason !== "drag") {
+        // Drags and keyboard steps are debounced - track presses and marker clicks commit right away
+        if (eventDetails.reason !== "drag" && eventDetails.reason !== "keyboard") {
             commitIndex(index);
             return;
         }
 
-        setDraggedIndex(index);
-        commitTimeoutRef.current = setTimeout(() => {
-            commitTimeoutRef.current = null;
-            commitIndex(index);
-        }, DRAG_COMMIT_DELAY_MS);
+        const timestamp = timestamps[index];
+        if (timestamp !== undefined) {
+            setImmediateValue(timestamp);
+        }
     }
 
     // Shows the actual value - also one that isn't among the options (the slider can't show that)
-    let valueText = "No value";
-    if (draggedIndex !== null) {
-        valueText = formatIndex(draggedIndex);
-    } else if (props.value !== null) {
-        valueText = timestampUtcMsToCompactIsoString(props.value);
-    }
+    const valueText = immediateValue === null ? "No value" : timestampUtcMsToCompactIsoString(immediateValue);
 
     // An unavailable value puts the thumb on the first time point, where pressing it changes nothing - and with a
     // single time point, the slider can't change at all. So that time point is offered explicitly instead.
-    const canSelectDisplayedTimestamp = selectedIndex === -1 && draggedIndex === null && timestamps.length > 0;
+    const canSelectDisplayedTimestamp = selectedIndex === -1 && timestamps.length > 0;
 
     return (
         <div className="gap-x-sm flex items-center">

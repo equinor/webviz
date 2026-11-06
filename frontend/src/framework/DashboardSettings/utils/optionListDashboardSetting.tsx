@@ -38,7 +38,7 @@ export function makeOptionListDashboardSettingOptions<TValue extends string | nu
         unionConstraints: (a, b) => [...a, ...b.filter((option) => !hasOption(a, getOptionValue(option)))],
         intersectConstraints: (a, b) => a.filter((option) => hasOption(b, getOptionValue(option))),
         // Also deduplicates a single source's options. Sorts a copy - the sources' own arrays are left untouched.
-        normalizeConstraints: (constraints) => {
+        canonicalizeConstraints: (constraints) => {
             const unique = constraints.filter(
                 (option, index) =>
                     constraints.findIndex((other) => getOptionValue(other) === getOptionValue(option)) === index,
