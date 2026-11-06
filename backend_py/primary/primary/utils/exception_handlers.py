@@ -26,10 +26,13 @@ def my_http_exception_handler(request: Request, exc: StarletteHTTPException) -> 
     # Based on FastAPI's doc, but with logging added
     # See, https://fastapi.tiangolo.com/tutorial/handling-errors/?h=err#override-the-httpexception-error-handler
 
-    # Usually we would pass exc_info to the logger so that the telemetry will see this as an exception.
-    # This generates quite a bit of noise in the log, so try an alternative approach where we explicitly
-    # record the exception on the telemetry span below instead
+    # Record the exception on the span
+    curr_span = trace.get_current_span()
+    curr_span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
+    curr_span.record_exception(exc)
 
+    # Don't log the full traceback for this class of exceptions, but simply log the location where it was raised.
+    # The full traceback can be found in the telemetry since it is recorded on the span.
     route = _make_route_string(request)
     exc_name = _get_exception_name(exc)
     exc_raise_location = _make_raise_location_string(exc)
@@ -38,13 +41,7 @@ def my_http_exception_handler(request: Request, exc: StarletteHTTPException) -> 
         f"Location of HTTP exception:\n  {exc_raise_location}"
     )
 
-    # Record the exception on the span
-    curr_span = trace.get_current_span()
-    curr_span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
-    curr_span.record_exception(exc)
-
     headers = getattr(exc, "headers", None)
-
     if not is_body_allowed_for_status_code(exc.status_code):
         return Response(status_code=exc.status_code, headers=headers)
 
@@ -65,6 +62,11 @@ def my_http_exception_handler(request: Request, exc: StarletteHTTPException) -> 
 def my_request_validation_error_handler(request: Request, exc: RequestValidationError) -> Response:
     # Our customized exception handler for FastAPI's RequestValidationError that is raised when Pydantic
     # validation detects that a request contains invalid data.
+
+    # Record the full exception on the telemetry span
+    curr_span = trace.get_current_span()
+    curr_span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
+    curr_span.record_exception(exc)
 
     # Try and simplify the errors a little bit by just reporting msg, loc, and input
     # Also try and concatenate the loc array into a string
@@ -93,11 +95,6 @@ def my_request_validation_error_handler(request: Request, exc: RequestValidation
 
     EXCEPTIONS_LOGGER.error(f"[EXC] FastAPI validation exception in {route} -> {exc_name}: {message}")
 
-    # Record the full exception on the telemetry span
-    curr_span = trace.get_current_span()
-    curr_span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
-    curr_span.record_exception(exc)
-
     return JSONResponse(
         status_code=HTTP_422_UNPROCESSABLE_CONTENT,
         content={
@@ -110,19 +107,18 @@ def my_request_validation_error_handler(request: Request, exc: RequestValidation
 
 
 def service_layer_exception_handler(request: Request, exc: ServiceLayerException) -> JSONResponse:
-    # For the logging, the traceback is embedded as text so it shows in the console log.
-    # We deliberately don't pass exc_info when logging since that would create an exception entry in
-    # telemetry in addition to the one we record on the span.
-
-    route = _make_route_string(request)
-    exc_name = _get_exception_name(exc)
-    exc_traceback_str = _format_exception_for_log(exc)
-    EXCEPTIONS_LOGGER.error(f"[EXC] Service exception in {route} -> {exc_name}: {str(exc)}\n{exc_traceback_str}")
-
     # Record full exception details on the telemetry span
     curr_span = trace.get_current_span()
     curr_span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
     curr_span.record_exception(exc)
+
+    # For the logging, the traceback is embedded as text so it shows in the console log.
+    # We deliberately don't pass exc_info when logging since that would create an exception entry in
+    # telemetry in addition to the one we record on the span.
+    route = _make_route_string(request)
+    exc_name = _get_exception_name(exc)
+    exc_traceback_str = _format_exception_for_log(exc)
+    EXCEPTIONS_LOGGER.error(f"[EXC] Service exception in {route} -> {exc_name}: {str(exc)}\n{exc_traceback_str}")
 
     return JSONResponse(
         status_code=HTTP_500_INTERNAL_SERVER_ERROR,
