@@ -4,7 +4,10 @@ import pyarrow.compute as pc
 import polars as pl
 
 
+from webviz_core_utils.result_warning import ResultWarning
+from webviz_core_utils.result_with_warnings import ResultWithWarnings
 from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError
+from webviz_services.service_warnings import make_missing_realizations_warning
 from webviz_services.services_enum import Service
 from webviz_services.sumo_access.well_completions_access import WellCompletionsAccess
 
@@ -39,6 +42,7 @@ class WellCompletionsAssembler:
         self._well_completions_access = well_completions_access
 
         self._well_completions_df = None
+        self._missing_real_warnings: list[ResultWarning] = []
         self._sorted_unique_dates = None
         self._zone_name_list = None
         self._well_attributes = None
@@ -69,6 +73,13 @@ class WellCompletionsAssembler:
         self._initialize_well_completions_data_from_df()
 
     async def fetch_and_initialize_well_completions_table_data_async(self, realizations: list[int] | None) -> None:
+        """
+        Fetch and initialize well completions data for the given realizations, or all if None.
+
+        Requested realizations without data are left out and reported as a warning by
+        create_well_completions_data(). If none of the requested realizations have data,
+        InvalidDataError is raised.
+        """
         if self._well_completions_df is not None:
             raise InvalidDataError("Well completions data already fetched and initialized!", Service.GENERAL)
 
@@ -79,6 +90,16 @@ class WellCompletionsAssembler:
 
         # Filter rows based on the "REAL" column
         if realizations is not None:
+            available_realizations = set(pc.unique(well_completions_table["REAL"]).to_pylist())
+            missing_realizations = set(realizations) - available_realizations
+
+            if missing_realizations:
+                self._missing_real_warnings.append(
+                    make_missing_realizations_warning(
+                        sorted(missing_realizations), Service.SUMO, data_type="well completions data"
+                    )
+                )
+
             real_column = well_completions_table["REAL"]
             realization_mask = pc.is_in(real_column, value_set=pa.array(realizations))
             well_completions_table = well_completions_table.filter(realization_mask)
@@ -118,14 +139,14 @@ class WellCompletionsAssembler:
         )
         self._well_completions_df = self._well_completions_df.with_columns(date_index_column_expression)
 
-    def create_well_completions_data(self) -> WellCompletionsData:
-        """Creates well completions dataset for front-end"""
+    def create_well_completions_data(self) -> ResultWithWarnings[WellCompletionsData]:
+        """Creates well completions dataset for front-end, with warnings from fetching the data"""
         if self._well_completions_df is None:
             raise InvalidDataError("Well completions data is not initialized", Service.GENERAL)
         if self._zone_name_list is None:
             raise InvalidDataError("Zone name list is not initialized", Service.GENERAL)
 
-        return WellCompletionsData(
+        data = WellCompletionsData(
             version="1.1.0",
             units=WellCompletionsUnits(
                 kh=WellCompletionsUnitInfo(unit=self._kh_unit, decimalPlaces=self._kh_decimal_places)
@@ -134,6 +155,7 @@ class WellCompletionsAssembler:
             sorted_completion_dates=self._create_sorted_unique_dates_string_list(),
             wells=self._extract_wells(),
         )
+        return ResultWithWarnings(data, list(self._missing_real_warnings))
 
     def _create_sorted_unique_dates_string_list(self) -> list[str]:
         """Returns a list of sorted completion dates as string"""
