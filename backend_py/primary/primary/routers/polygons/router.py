@@ -7,8 +7,10 @@ from webviz_core_utils.perf_timer import PerfTimer
 from webviz_services.smda_access.drogon import DrogonSmdaAccess
 from webviz_services.smda_access import SmdaAccess
 from webviz_services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
+from webviz_services.service_exceptions import AuthorizationError
 from webviz_services.sumo_access.case_inspector import CaseInspector
 from webviz_services.sumo_access.polygons_access import PolygonsAccess
+from webviz_services.sumo_access.polygons_types import PolygonsMeta
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
@@ -46,13 +48,23 @@ async def get_polygons_directory(
     else:
         # Stratigraphy is only used for ordering polygon names, so users without SMDA access still get the polygons
         LOGGER.info("User has no SMDA access, skipping stratigraphic ordering of polygons")
-        polygons_metas = converters.to_api_polygons_directory(polygons_dir, [])
-        return sorted(polygons_metas, key=lambda meta: meta.name)
+        return _to_api_polygons_directory_sorted_by_name(polygons_dir)
 
-    strat_units = await smda_access.get_stratigraphic_units_async(strat_column_identifier)
+    try:
+        strat_units = await smda_access.get_stratigraphic_units_async(strat_column_identifier)
+    except AuthorizationError:
+        # The user may have an SMDA token but still be denied by SMDA (e.g. affiliate users)
+        LOGGER.info("User is not authorized in SMDA, skipping stratigraphic ordering of polygons")
+        return _to_api_polygons_directory_sorted_by_name(polygons_dir)
+
     sorted_stratigraphic_surfaces = sort_stratigraphic_names_by_hierarchy(strat_units)
 
     return converters.to_api_polygons_directory(polygons_dir, sorted_stratigraphic_surfaces)
+
+
+def _to_api_polygons_directory_sorted_by_name(polygons_dir: List[PolygonsMeta]) -> List[schemas.PolygonsMeta]:
+    polygons_metas = converters.to_api_polygons_directory(polygons_dir, [])
+    return sorted(polygons_metas, key=lambda meta: meta.name)
 
 
 @router.get("/polygons_data/")

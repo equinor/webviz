@@ -19,7 +19,7 @@ from webviz_services.utils.authenticated_user import AuthenticatedUser
 from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
 from webviz_services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from webviz_services.surface_query_service.surface_query_service import RealizationSampleResult
-from webviz_services.service_exceptions import ServiceLayerException
+from webviz_services.service_exceptions import AuthorizationError, ServiceLayerException
 from webviz_services.utils.surfaces_well_trajectory_formation_segments import (
     create_well_trajectory_formation_segments,
     validate_depth_surfaces_for_formation_segments,
@@ -504,7 +504,13 @@ async def _get_stratigraphic_units_for_strat_column_async(
         LOGGER.info("User has no SMDA access, skipping stratigraphic ordering of surfaces")
         return []
 
-    strat_units = await smda_access.get_stratigraphic_units_async(strat_column_identifier)
+    try:
+        strat_units = await smda_access.get_stratigraphic_units_async(strat_column_identifier)
+    except AuthorizationError:
+        # The user may have an SMDA token but still be denied by SMDA (e.g. affiliate users)
+        LOGGER.info("User is not authorized in SMDA, skipping stratigraphic ordering of surfaces")
+        return []
+
     perf_metrics.record_lap("get-strat-units")
 
     LOGGER.info(f"Got stratigraphic units for case in : {perf_metrics.to_string()}")
