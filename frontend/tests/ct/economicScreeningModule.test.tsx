@@ -1226,10 +1226,18 @@ test("starts prices and costs closed for volumes and opens them once a result ne
     const costs = settings.getByRole("button", { name: "Costs", exact: true });
     const selectMeasure = async (name: string) => {
         await settings.getByRole("combobox", { name: "Measure" }).click();
-        await page.getByRole("option", { name, exact: true }).click();
+        // Options are named by their label followed by the description.
+        await page.getByRole("option", { name: new RegExp(`^${name}`) }).click();
     };
 
     await expect(settings.getByRole("combobox", { name: "Measure" })).toHaveValue("Discounted oil volume");
+    await settings.getByRole("combobox", { name: "Measure" }).click();
+    await expect(page.getByRole("group", { name: "Financial" })).toContainText("Needs prices.");
+    await expect(page.getByRole("option", { name: /^Net present value/ })).toContainText(
+        "Discounted revenue minus discounted costs.",
+    );
+    await page.screenshot({ path: `${UX_SCREENSHOT_DIR}/desktop-measure-options.png` });
+    await page.keyboard.press("Escape");
     await expect(prices).toHaveAttribute("aria-expanded", "false");
     await expect(costs).toHaveAttribute("aria-expanded", "false");
 

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { Combobox } from "@lib/components/Combobox";
+import type { ComboboxGroup } from "@lib/components/Combobox/types";
 import { Setting } from "@lib/components/Setting";
 
 import {
@@ -24,13 +25,39 @@ import {
 import { displayedRealizationAtom } from "../../atoms/derivedAtoms";
 import { selectedRealizationAtom, validSelectedEnsembleIdentAtom } from "../../atoms/persistableFixableAtoms";
 import { validRealizationNumbersAtom } from "../../atoms/sourceQueryAtoms";
-import { REALIZATION_HELP, RESULTS_HELP } from "../../helpTexts";
+import { MEASURE_DESCRIPTIONS, REALIZATION_HELP, RESULTS_HELP } from "../../helpTexts";
 import type { SectionStateProps } from "../../settingsSections";
 import { NamedRadioGroup } from "../namedRadioGroup";
 
 const DISTRIBUTION_PLOT_TYPE_ITEMS = Object.values(DistributionPlotType).map((value) => ({
     value,
     label: DistributionPlotTypeEnumToStringMapping[value],
+}));
+
+const MEASURE_GROUPS: { title: string; measures: EconomicMeasure[] }[] = [
+    {
+        title: "Volumes",
+        measures: [
+            EconomicMeasure.DISCOUNTED_OIL_VOLUME,
+            EconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME,
+            EconomicMeasure.DISCOUNTED_OIL_EQUIVALENTS,
+            EconomicMeasure.UNDISCOUNTED_OIL_VOLUME,
+            EconomicMeasure.UNDISCOUNTED_SALES_GAS_VOLUME,
+        ],
+    },
+    {
+        title: "Financial",
+        measures: [EconomicMeasure.NPV, EconomicMeasure.IRR, EconomicMeasure.BREAK_EVEN_OIL_PRICE],
+    },
+];
+
+const MEASURE_ITEMS: ComboboxGroup<EconomicMeasure>[] = MEASURE_GROUPS.map((group) => ({
+    value: group.title,
+    items: group.measures.map((measure) => ({
+        value: measure,
+        label: EconomicMeasureEnumToStringMapping[measure],
+        description: MEASURE_DESCRIPTIONS[measure],
+    })),
 }));
 
 export type ResultsSectionProps = {
@@ -73,11 +100,8 @@ export function ResultsSection(props: ResultsSectionProps): ReactNode {
             {resultMode === ResultMode.DISTRIBUTION && (
                 <>
                     <Setting.Field label="Measure" stacked>
-                        <Combobox
-                            items={Object.values(EconomicMeasure).map((value) => ({
-                                value,
-                                label: EconomicMeasureEnumToStringMapping[value],
-                            }))}
+                        <Combobox<EconomicMeasure>
+                            items={MEASURE_ITEMS}
                             value={selectedMeasure}
                             onValueChange={(value) => value !== null && setSelectedMeasure(value)}
                         />

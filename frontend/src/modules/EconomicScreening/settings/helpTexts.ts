@@ -1,5 +1,6 @@
 import { simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
+import { EconomicMeasure } from "../typesAndEnums";
 import type { SalesGasStrategy } from "../utils/vectorResolution";
 
 export const EVALUATION_START_HELP =
@@ -47,3 +48,14 @@ export const EARLY_VALUE_HELP =
 
 export const EARLY_VALUE_END_YEAR_HELP =
     "Inclusive last calendar year of the early value, within the evaluation years. Through the final evaluation year, it equals the full result for a fully eligible realization.";
+
+export const MEASURE_DESCRIPTIONS: Record<EconomicMeasure, string> = {
+    [EconomicMeasure.DISCOUNTED_OIL_VOLUME]: "Oil production, weighted by when it is produced.",
+    [EconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME]: "Sales gas production, weighted by when it is produced.",
+    [EconomicMeasure.DISCOUNTED_OIL_EQUIVALENTS]: "Discounted oil plus discounted gas / 1000 (SODIR factor).",
+    [EconomicMeasure.UNDISCOUNTED_OIL_VOLUME]: "Total oil production over the evaluation.",
+    [EconomicMeasure.UNDISCOUNTED_SALES_GAS_VOLUME]: "Total sales gas production over the evaluation.",
+    [EconomicMeasure.NPV]: "Discounted revenue minus discounted costs. Needs prices.",
+    [EconomicMeasure.IRR]: "Discount rate that makes NPV zero. Needs prices, and costs for a sign change.",
+    [EconomicMeasure.BREAK_EVEN_OIL_PRICE]: "Oil price that makes NPV zero, gas price fixed. Needs costs.",
+};
