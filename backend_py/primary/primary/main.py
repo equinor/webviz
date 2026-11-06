@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from typing import AsyncGenerator
 import datetime
 import logging
 import os
@@ -26,6 +26,8 @@ from primary.middleware.cache_control_middleware import CacheControlMiddleware, 
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanClientAddressEnrichmentMiddleware
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanEndUserEnrichmentMiddleware
 from primary.middleware.encrypted_redis_session_store import EncryptedRedisSessionStore
+from primary.middleware.request_deadline_middleware import RequestDeadlineMiddleware
+from primary.middleware.slow_request_monitor import SlowRequestMonitor
 from primary.persistence.persistence_stores import PersistenceStoresSingleton
 from primary.routers.dev.router import router as dev_router
 from primary.routers.explore.router import router as explore_router
@@ -97,7 +99,7 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 
 
 @asynccontextmanager
-async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
+async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncGenerator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
@@ -229,6 +231,30 @@ app.add_middleware(OtelSpanClientAddressEnrichmentMiddleware)
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")  # type: ignore[arg-type]
 
 app.add_middleware(CacheControlMiddleware)
+
+# The slow request monitor is for diagnostics and will trigger logging of the state of
+# the HTTPX connection pool when requests exceed the specified threshold
+slow_req_monitor = SlowRequestMonitor(
+    lambda: HTTPX_ASYNC_CLIENT_WRAPPER.client, slow_request_threshold_s=60, logging_interval_s=15
+)
+
+# The deadline middleware will cancel HTTP request processing if it exceeds the specified deadline.
+# These excluded paths rely on the grid3d user service which may have long processing times when provisioning
+# the backing Radix job. To be consistent with previous behavior, we exclude these paths from the request deadline
+# enforcement until the provisioning of the backing Radix job is optimized.
+exclude_paths = [
+    "/grid3d/grid_surface",
+    "/grid3d/grid_parameter",
+    "/grid3d/grid_parameter_time_diff",
+    "/grid3d/get_polyline_intersection",
+    "/grid3d/get_polyline_intersection_time_diff",
+]
+
+# The deadline here must be aligned with the timeout in nginx, which is currently 130s
+# Set it slightly shorter (10s) than the nginx timeout to ensure the middleware triggers before nginx does.
+app.add_middleware(
+    RequestDeadlineMiddleware, deadline_s=120, exclude_paths=exclude_paths, slow_req_monitor=slow_req_monitor
+)
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
