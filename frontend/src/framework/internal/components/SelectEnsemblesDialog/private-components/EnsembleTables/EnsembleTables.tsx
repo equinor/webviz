@@ -191,6 +191,10 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                                         <Tag label="Delta Ensemble" /> = <Tag label="Comparison Ensemble" /> -{" "}
                                         <Tag label="Reference Ensemble" />
                                     </div>
+                                    <div>
+                                        Data without a delta (e.g. parameters, wells, polygons) is taken from the
+                                        comparison ensemble.
+                                    </div>
                                 </div>
                             </Popover.Content>
                         </Popover.Popup>
