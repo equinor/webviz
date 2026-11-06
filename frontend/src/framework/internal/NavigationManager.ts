@@ -31,6 +31,7 @@ export class NavigationManager {
     private _boundHandleBeforeUnload: (event: BeforeUnloadEvent) => void;
     private _boundHandlePopState: (event: PopStateEvent) => void;
     private _isStarted = false;
+    private _isDestroyed = false;
 
     private _currentIndex = 0;
     // Newest entry known to exist - pushing a new entry discards all entries after the current one
@@ -57,7 +58,7 @@ export class NavigationManager {
      * listeners would otherwise keep reacting to back/forward navigation.
      */
     start(): void {
-        if (this._isStarted) {
+        if (this._isStarted || this._isDestroyed) {
             return;
         }
         this._isStarted = true;
@@ -149,7 +150,7 @@ export class NavigationManager {
      * @returns Whether the skip was started.
      */
     skipEntry(): boolean {
-        if (this._lastStep !== 1 && this._lastStep !== -1) {
+        if (this._isDestroyed || (this._lastStep !== 1 && this._lastStep !== -1)) {
             return false;
         }
         const targetIndex = this._currentIndex + this._lastStep;
@@ -174,6 +175,11 @@ export class NavigationManager {
      * Use this instead of calling window.history.pushState() directly.
      */
     pushState(url: string): void {
+        // A destroyed workbench's pending work (e.g. a session load that fails afterwards) must not touch the history
+        if (this._isDestroyed) {
+            return;
+        }
+
         // An entry identical to the current one would only add a back/forward step that does nothing
         if (new URL(url, window.location.href).href === window.location.href) {
             this.replaceState(url);
@@ -192,6 +198,10 @@ export class NavigationManager {
      * Use this instead of calling window.history.replaceState() directly.
      */
     replaceState(url: string): void {
+        if (this._isDestroyed) {
+            return;
+        }
+
         window.history.replaceState(makeHistoryState(this._currentIndex), "", url);
         this._currentUrl = url;
     }
@@ -200,9 +210,9 @@ export class NavigationManager {
      * Clean up event listeners - MUST be called when Workbench is destroyed
      */
     beforeDestroy(): void {
+        this._isDestroyed = true;
         window.removeEventListener("beforeunload", this._boundHandleBeforeUnload);
         window.removeEventListener("popstate", this._boundHandlePopState);
-        this._isStarted = false;
 
         this._onBeforeUnloadCallback = null;
         this._onNavigateCallback = null;

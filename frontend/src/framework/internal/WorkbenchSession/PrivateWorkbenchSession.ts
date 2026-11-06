@@ -108,6 +108,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     private _ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap = {};
     private _ensembleLoadingWarningInfoMap: EnsembleLoadingWarningInfoMap = {};
+    private _isDestroyed = false;
 
     private constructor(queryClient: QueryClient, isSnapshot = false) {
         this._atomStoreMaster = new AtomStoreMaster();
@@ -272,6 +273,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             userEnsembleSettings,
             userDeltaEnsembleSettings,
         );
+        // Destroyed while loading - nothing would tear down what is created from here on
+        if (this._isDestroyed) {
+            return;
+        }
         this.setEnsembleSet(newSet);
         this._ensembleLoadingErrorInfoMap = ensembleLoadingErrorInfoMap;
         this._ensembleLoadingWarningInfoMap = ensembleLoadingWarningInfoMap;
@@ -709,6 +714,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     beforeDestroy(): void {
+        this._isDestroyed = true;
         // clear() doesn't route through unregisterDashboard(), so any pending hot-cache evictions
         // wouldn't otherwise be cancelled - cancel them explicitly here to avoid a stale timer
         // referencing a dashboard whose atom stores etc. may already be gone.
