@@ -16,6 +16,7 @@ import type { EdsDateRange } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
 import { Avatar } from "@lib/components/Avatar";
 import { Button } from "@lib/components/Button";
+import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DateRangePicker } from "@lib/components/DateRangePicker";
 import { Field } from "@lib/components/Field";
@@ -85,7 +86,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
 
     const userId = useUserInfo()?.user_id;
 
-    const [selectedSnapshot, setSelectedSnapshot] = React.useState<SnapshotAccessLog_api | null>(null);
+    const [selectedSnapshots, setSelectedSnapshots] = React.useState<SnapshotAccessLog_api[]>([]);
     const [deletePending, setDeletePending] = React.useState<boolean>(false);
 
     const [titleFilterValue, setTitleFilterValue] = React.useState<string>("");
@@ -99,46 +100,54 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         500,
     );
 
+    // Selected snapshots hidden by a filter would otherwise still be targeted by bulk deletion. The title is tracked both
+    // as typed and once applied, since rows from the previous filter remain selectable during the debounce
+    const filterCriteria = [
+        immediateTitleFilterValue,
+        titleFilterValue,
+        visitedAtRange,
+        onlyShowOwnSnapshots,
+        hideDeletedSnapshots,
+    ];
+    const [prevFilterCriteria, setPrevFilterCriteria] = React.useState(filterCriteria);
+    if (filterCriteria.some((criterion, index) => criterion !== prevFilterCriteria[index])) {
+        setPrevFilterCriteria(filterCriteria);
+        setSelectedSnapshots([]);
+    }
+
     function handleClearTitleFilter() {
         setTitleFilterValue("");
     }
 
     async function handleDeleteClick() {
-        if (!selectedSnapshot || !userId) return;
+        if (!selectedSnapshots.length || !userId) return;
 
-        const snapshotOwnerId = selectedSnapshot.snapshotMetadata.ownerId;
+        // Only snapshots owned by the user, and not already deleted, can be deleted. The rest can only be removed from the list
+        const toDelete = selectedSnapshots.filter((s) => s.snapshotMetadata.ownerId === userId && !s.snapshotDeleted);
+        const toRemove = selectedSnapshots.filter((s) => !toDelete.includes(s));
+        const toDeletionItem = (s: SnapshotAccessLog_api) => ({
+            snapshotId: s.snapshotId,
+            title: s.snapshotMetadata.title,
+        });
 
         setDeletePending(true);
 
-        let success: boolean;
-        if (userId === snapshotOwnerId) {
-            success = await props.workbench.getSessionManager().deleteSnapshot(selectedSnapshot.snapshotId);
-        } else {
-            success = await props.workbench.getSessionManager().deleteSnapshotAccessLog(selectedSnapshot.snapshotId);
-        }
+        const { deletedIds, removedIds } = await props.workbench
+            .getSessionManager()
+            .deleteOrRemoveSnapshots(toDelete.map(toDeletionItem), toRemove.map(toDeletionItem));
 
         setDeletePending(false);
 
-        if (!success) {
-            return;
-        }
+        const handledIds = [...deletedIds, ...removedIds];
+        if (!handledIds.length) return;
 
-        setSelectedSnapshot(null);
+        setSelectedSnapshots((prev) => prev.filter((s) => !handledIds.includes(s.snapshotId)));
     }
 
-    async function handleOpenSnapshotClick() {
-        if (!selectedSnapshot) return;
-
-        await props.workbench.getSessionManager().openSnapshot(selectedSnapshot.snapshotId);
+    async function openSnapshot(snapshotId: string) {
+        await props.workbench.getSessionManager().openSnapshot(snapshotId);
     }
 
-    let deleteButtonText = "Delete snapshot";
-    let deleteButtonTooltip = "Delete selected snapshot (permanently removes it for all users)";
-    if (selectedSnapshot && selectedSnapshot.snapshotMetadata.ownerId !== userId) {
-        deleteButtonText = "Remove from list";
-        deleteButtonTooltip =
-            "Remove snapshot from list (you are not the owner, snapshot will remain accessible to other users)";
-    }
     return (
         <div className="gap-y-sm flex h-full flex-col">
             <div className="gap-x-sm flex">
@@ -185,31 +194,23 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 />
                 <span className="grow" />
                 <Tooltip.Provider side="bottom">
-                    <Tooltip content="Open selected snapshot">
-                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
-                        <span>
-                            <Button
-                                variant="ghost"
-                                tone="accent"
-                                disabled={!selectedSnapshot || selectedSnapshot?.snapshotDeleted}
-                                onClick={handleOpenSnapshotClick}
-                                icon={<FileOpen />}
-                            >
-                                Open
-                            </Button>
-                        </span>
-                    </Tooltip>
-                    <Tooltip content={deleteButtonTooltip}>
+                    <Tooltip
+                        content={
+                            selectedSnapshots.length > 1
+                                ? `Delete or remove the ${selectedSnapshots.length} selected snapshots`
+                                : "Delete or remove the selected snapshot"
+                        }
+                    >
                         {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
                         <span>
                             <Button
                                 variant="ghost"
                                 tone="danger"
-                                disabled={!selectedSnapshot || deletePending || !userId}
+                                disabled={!selectedSnapshots.length || deletePending || !userId}
                                 onClick={handleDeleteClick}
                                 icon={deletePending ? <CircularProgress /> : <Delete />}
                             >
-                                {deleteButtonText}
+                                Delete
                             </Button>
                         </span>
                     </Tooltip>
@@ -227,21 +228,22 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
             </div>
 
             <SnapshotTable
-                selectedSnapshot={selectedSnapshot}
+                selectedSnapshots={selectedSnapshots}
                 active={props.active}
                 titleFilter={titleFilterValue}
                 lastVisitedAtFilter={visitedAtRange}
                 showMySnapshotsOnly={onlyShowOwnSnapshots}
                 hideDeletedSnapshots={hideDeletedSnapshots}
                 refreshActionRef={queryRefreshActionRef}
-                onSelectedSnapshotChange={setSelectedSnapshot}
+                onSelectedSnapshotsChange={setSelectedSnapshots}
+                onOpenSnapshot={openSnapshot}
             />
         </div>
     );
 }
 
 type SnapshotTableProps = {
-    selectedSnapshot: SnapshotAccessLog_api | null;
+    selectedSnapshots: SnapshotAccessLog_api[];
     active: boolean;
     titleFilter: string | null;
     lastVisitedAtFilter: EdsDateRange | null;
@@ -250,11 +252,12 @@ type SnapshotTableProps = {
 
     refreshActionRef: React.RefObject<UseRefreshQueryResult | null>;
 
-    onSelectedSnapshotChange: (snapshotId: SnapshotAccessLog_api | null) => void;
+    onSelectedSnapshotsChange: (snapshots: SnapshotAccessLog_api[]) => void;
+    onOpenSnapshot: (snapshotId: string) => void;
 };
 
 function SnapshotTable(props: SnapshotTableProps) {
-    const { onSelectedSnapshotChange } = props;
+    const { onSelectedSnapshotsChange } = props;
 
     const wrapperRef = React.useRef<HTMLDivElement>(null);
 
@@ -344,14 +347,49 @@ function SnapshotTable(props: SnapshotTableProps) {
         ],
     );
 
+    const selectedSnapshotIds = React.useMemo(
+        () => props.selectedSnapshots.map((s) => s.snapshotId),
+        [props.selectedSnapshots],
+    );
+
     React.useEffect(
-        function maybeDeselectRemovedEntry() {
-            if (props.selectedSnapshot && !tableData.some((s) => props.selectedSnapshot?.snapshotId === s.snapshotId)) {
-                onSelectedSnapshotChange(null);
+        function maybeDeselectRemovedEntries() {
+            // Only a settled, fully loaded result proves a missing entry was removed; otherwise it may be on an unloaded page
+            if (!snapshotsQuery.isSuccess || snapshotsQuery.isFetching || snapshotsQuery.hasNextPage) return;
+
+            const remaining = props.selectedSnapshots.filter((selected) =>
+                tableData.some((s) => s.snapshotId === selected.snapshotId),
+            );
+            if (remaining.length !== props.selectedSnapshots.length) {
+                onSelectedSnapshotsChange(remaining);
             }
         },
-        [onSelectedSnapshotChange, props.selectedSnapshot, tableData],
+        [
+            onSelectedSnapshotsChange,
+            props.selectedSnapshots,
+            tableData,
+            snapshotsQuery.isSuccess,
+            snapshotsQuery.isFetching,
+            snapshotsQuery.hasNextPage,
+        ],
     );
+
+    const numSelectedLoadedSnapshots = tableData.filter((s) => selectedSnapshotIds.includes(s.snapshotId)).length;
+    const allLoadedSnapshotsSelected = tableData.length > 0 && numSelectedLoadedSnapshots === tableData.length;
+    const someLoadedSnapshotsSelected = numSelectedLoadedSnapshots > 0 && !allLoadedSnapshotsSelected;
+
+    function handleToggleAllSelected(checked: boolean) {
+        onSelectedSnapshotsChange(checked ? tableData : []);
+    }
+
+    function handleToggleSnapshotSelected(snapshot: SnapshotAccessLog_api, checked: boolean) {
+        const otherSnapshots = props.selectedSnapshots.filter((s) => s.snapshotId !== snapshot.snapshotId);
+        onSelectedSnapshotsChange(checked ? [...otherSnapshots, snapshot] : otherSnapshots);
+    }
+
+    function handleRowClick(snapshot: SnapshotAccessLog_api) {
+        onSelectedSnapshotsChange([snapshot]);
+    }
 
     return (
         <Table.Root
@@ -359,19 +397,29 @@ function SnapshotTable(props: SnapshotTableProps) {
             size="small"
             overflowWrapperRef={wrapperRef}
             sortable
-            selectable
+            // Selection is fully controlled here; the table's own toggle-on-click handler is intentionally not used
+            selectable="multiple"
             fixed
             columnSorting={tableSortState}
-            rowSelection={props.selectedSnapshot?.snapshotId ?? null}
+            rowSelection={selectedSnapshotIds}
             onChangeColumnSort={setTableSortState}
-            onChangeRowSelection={(snapshotId) =>
-                onSelectedSnapshotChange(tableData.find((s) => s.snapshotId === snapshotId) ?? null)
-            }
         >
             <Table.Head sticky>
+                <Table.Column colKey="select" width={60} sortable={false} noPadding>
+                    <div className="px-sm">
+                        <Checkbox
+                            size="small"
+                            aria-label="Select all snapshots"
+                            checked={allLoadedSnapshotsSelected}
+                            indeterminate={someLoadedSnapshotsSelected}
+                            disabled={tableData.length === 0}
+                            onCheckedChange={handleToggleAllSelected}
+                        />
+                    </div>
+                </Table.Column>
                 <Table.Column
                     colKey="visits"
-                    widthInPercent={7}
+                    width={60}
                     // The sorting adornment require some space, which normally looks a bit weirdly aligned
                     // for as the column text here is centered. We remove the right side padding to make the
                     // alignment look more natural in the un-sorted state
@@ -382,17 +430,20 @@ function SnapshotTable(props: SnapshotTableProps) {
                 <Table.Column colKey="snapshotMetadata.title" widthInPercent={24}>
                     Title
                 </Table.Column>
-                <Table.Column colKey="snapshotMetadata.description" sortable={false} widthInPercent={26}>
+                <Table.Column colKey="snapshotMetadata.description" sortable={false}>
                     Description
                 </Table.Column>
                 <Table.Column colKey="snapshotId" sortable={false} widthInPercent={12}>
                     URL
                 </Table.Column>
-                <Table.Column colKey="snapshotMetadata.ownerId" sortable={false} widthInPercent={11}>
+                <Table.Column colKey="snapshotMetadata.ownerId" sortable={false} width={120}>
                     Owner
                 </Table.Column>
-                <Table.Column colKey="lastVisitedAt" widthInPercent={20}>
+                <Table.Column colKey="lastVisitedAt" width={160}>
                     Last visited at
+                </Table.Column>
+                <Table.Column colKey="actions" sortable={false} width={80} layoutClassName="text-right">
+                    Actions
                 </Table.Column>
             </Table.Head>
             <Table.Body emptyMessage="No snapshots found.">
@@ -406,7 +457,16 @@ function SnapshotTable(props: SnapshotTableProps) {
                         if (item === PENDING_ROW) {
                             return <TableCompositions.PendingRow key={`pending-row--${idx}`} />;
                         } else {
-                            return <SnapshotRow key={item.snapshotId} item={item} />;
+                            return (
+                                <SnapshotRow
+                                    key={item.snapshotId}
+                                    item={item}
+                                    selected={selectedSnapshotIds.includes(item.snapshotId)}
+                                    onSelectedChange={handleToggleSnapshotSelected}
+                                    onClick={handleRowClick}
+                                    onOpen={props.onOpenSnapshot}
+                                />
+                            );
                         }
                     }}
                     onScroll={onTableScrollIndexChange}
@@ -419,7 +479,15 @@ function SnapshotTable(props: SnapshotTableProps) {
     );
 }
 
-function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
+type SnapshotRowProps = {
+    item: SnapshotAccessLog_api;
+    selected: boolean;
+    onSelectedChange: (snapshot: SnapshotAccessLog_api, selected: boolean) => void;
+    onClick: (snapshot: SnapshotAccessLog_api) => void;
+    onOpen: (snapshotId: string) => void;
+};
+
+function SnapshotRow(props: SnapshotRowProps) {
     const { item } = props;
     const ownerInfo = useUserGraphInfo(item.snapshotMetadata.ownerId);
     const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
@@ -430,10 +498,25 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
 
     return (
         <Table.Row
-            rowKey={item.snapshotMetadata.id}
+            rowKey={item.snapshotId}
             layoutClassName="group/snapshot-row"
             data-deleted={isDeleted ? "" : undefined}
+            onClick={() => props.onClick(item)}
+            onDoubleClick={(evt) => {
+                // Buttons inside cells (e.g. copy URL) only stop click propagation, so their double-clicks still bubble here
+                if (isDeleted || (evt.target as HTMLElement).closest("button")) return;
+                props.onOpen(item.snapshotId);
+            }}
         >
+            {/* Stop propagation on the cell, since the checkbox also dispatches a click on its hidden input */}
+            <Table.Cell onClick={(evt) => evt.stopPropagation()} onDoubleClick={(evt) => evt.stopPropagation()}>
+                <Checkbox
+                    size="small"
+                    aria-label={`Select snapshot ${item.snapshotMetadata.title}`}
+                    checked={props.selected}
+                    onCheckedChange={(checked) => props.onSelectedChange(item, checked)}
+                />
+            </Table.Cell>
             <Table.Cell layoutClassName="text-center! group-data-deleted/snapshot-row:line-through">
                 {item.visits}
             </Table.Cell>
@@ -445,7 +528,7 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
                     {isDeleted && (
                         <strong
                             title="This snapshot has been deleted by the snapshot owner"
-                            className="text-danger-subtle group-data-selected/snapshot-row:text-danger-strong-on-emphasis"
+                            className="text-danger-subtle"
                         >
                             (Deleted)
                         </strong>
@@ -453,9 +536,7 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
                 </div>
             </Table.Cell>
             <Table.Cell layoutClassName="group-data-deleted/snapshot-row:*:line-through">
-                {item.snapshotMetadata.description || (
-                    <span className="italic group-not-data-selected/snapshot-row:text-current/50">N/A</span>
-                )}
+                {item.snapshotMetadata.description || <span className="text-current/50 italic">N/A</span>}
             </Table.Cell>
             <Table.Cell layoutClassName="group-data-deleted/snapshot-row:line-through">
                 <TableCompositions.CopyCellValue onCopyRequested={() => url}>
@@ -476,6 +557,31 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
                 ) : (
                     <span className="text-current/50 italic">N/A</span>
                 )}
+            </Table.Cell>
+            <Table.Cell
+                noPadding
+                // Row actions should not change the selection or trigger the row double-click
+                onClick={(evt) => evt.stopPropagation()}
+                onDoubleClick={(evt) => evt.stopPropagation()}
+            >
+                <div className="px-sm flex items-center justify-end">
+                    <Tooltip content={isDeleted ? "Deleted snapshots cannot be opened" : "Open snapshot"} side="left">
+                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                        <span>
+                            <Button
+                                variant="ghost"
+                                tone="accent"
+                                size="small"
+                                iconOnly
+                                aria-label={`Open snapshot ${item.snapshotMetadata.title}`}
+                                disabled={isDeleted}
+                                onClick={() => props.onOpen(item.snapshotId)}
+                            >
+                                <FileOpen style={{ fontSize: 16 }} />
+                            </Button>
+                        </span>
+                    </Tooltip>
+                </div>
             </Table.Cell>
         </Table.Row>
     );

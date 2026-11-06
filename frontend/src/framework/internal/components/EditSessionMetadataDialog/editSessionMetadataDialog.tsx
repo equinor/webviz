@@ -9,6 +9,7 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { FieldCompositions } from "@lib/components/Field/compositions";
+import { Hidden } from "@lib/components/Hidden";
 import { TextArea } from "@lib/components/TextArea";
 import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
@@ -26,6 +27,7 @@ export type EditSessionMetadataDialogProps = {
     description?: string;
     open: boolean;
     onClose?: () => void;
+    showPreview?: boolean;
 };
 
 export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps) {
@@ -130,9 +132,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
     const activeWorkbenchSession = hasActiveSession ? props.workbench.getSessionManager().getActiveSession() : null;
     const isEditingActiveSession =
         activeWorkbenchSession !== null && (activeWorkbenchSession.getId() === props.id || props.id === null);
-    const dashboards = isEditingActiveSession
-        ? dashboardsToPreviewItems(activeWorkbenchSession.getDashboards())
-        : [];
+    const dashboards = isEditingActiveSession ? dashboardsToPreviewItems(activeWorkbenchSession.getDashboards()) : [];
 
     return (
         <>
@@ -142,7 +142,9 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                 </Dialog.Header>
                 <form id={formId} onSubmit={handleSave}>
                     <Dialog.Body layoutClassName="flex items-center gap-x-sm">
-                        <DashboardPreviewCarousel height={220} width={150} dashboards={dashboards} />
+                        <Hidden hidden={!props.showPreview}>
+                            <DashboardPreviewCarousel height={220} width={150} dashboards={dashboards} />
+                        </Hidden>
                         <div className="gap-y-sm flex min-w-0 grow flex-col">
                             <FieldCompositions.Default
                                 label="Title"
@@ -209,16 +211,16 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                 onOpenChange={setShowConfirmationDialog}
                 title="Discard changes?"
                 primaryAction={{
-                    label: "Discard",
-                    onClick: handleDiscardChanges,
-                    tone: "danger",
+                    label: "Keep editing",
+                    onClick: () => setShowConfirmationDialog(false),
+                    tone: "neutral",
                     closesDialog: true,
                 }}
                 secondaryActions={[
                     {
-                        label: "Keep editing",
-                        onClick: () => setShowConfirmationDialog(false),
-                        tone: "neutral",
+                        label: "Discard",
+                        onClick: handleDiscardChanges,
+                        tone: "danger",
                         closesDialog: true,
                     },
                 ]}
