@@ -83,6 +83,28 @@ async def test_unrelated_timeout_error_propagates_unchanged() -> None:
     mock_send.assert_not_awaited()
 
 
+async def test_excluded_path_is_not_cancelled_by_deadline() -> None:
+    app_completed = False
+
+    async def fake_asgi_app(scope: Scope, receive: Receive, send: Send) -> None:
+        nonlocal app_completed
+        await asyncio.sleep(0.01)
+        app_completed = True
+
+    middleware = RequestDeadlineMiddleware(
+        fake_asgi_app,
+        deadline_s=0.001,
+        exclude_paths=["/health"],
+    )
+
+    scope: Scope = {"type": "http", "method": "GET", "path": "/health"}
+    mock_send = AsyncMock()
+    await middleware(scope, AsyncMock(), mock_send)
+
+    assert app_completed
+    mock_send.assert_not_awaited()
+
+
 @pytest.mark.parametrize("scope_type", ["lifespan", "websocket"])
 async def test_non_http_scope_passes_through(scope_type: str) -> None:
     fake_asgi_app = AsyncMock()

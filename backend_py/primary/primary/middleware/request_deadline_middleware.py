@@ -39,14 +39,17 @@ class RequestDeadlineMiddleware:
         request_method = scope.get("method", "")
         request_path = scope.get("path", "")
 
-        path_to_check = request_path
-        root_path = scope.get("root_path", "")
-        if root_path:
-            path_to_check = path_to_check.replace(root_path, "")
+        # Track this request with the slow request monitor when configured.
+        slow_req_monitor_cm: contextlib.AbstractAsyncContextManager[None] = contextlib.nullcontext()
+        if self._slow_req_monitor:
+            slow_req_monitor_cm = self._slow_req_monitor.watch_request_async(request_method, request_path)
 
-        if path_to_check in self._exclude_paths:
-            LOGGER.debug(f"RequestDeadlineMiddleware excluding request for path: {path_to_check=}")
-            await self._app(scope, receive, send)
+        # Remove the root path prefix (such as "/api") from the request path before exclusion check
+        exclusion_check_path = request_path.removeprefix(scope.get("root_path", ""))
+        if exclusion_check_path in self._exclude_paths:
+            LOGGER.debug(f"RequestDeadlineMiddleware excluding request for path: {exclusion_check_path =}")
+            async with slow_req_monitor_cm:
+                await self._app(scope, receive, send)
             return
 
         started_at = time.monotonic()
@@ -64,13 +67,8 @@ class RequestDeadlineMiddleware:
         # with 'async with', will raise TimeoutError if the request takes too long.
         timeout_cm: asyncio.Timeout = asyncio.timeout(self._deadline_s)
 
-        # Wrap the slow request monitor context manager if configured.
-        monitor_cm: contextlib.AbstractAsyncContextManager[None] = contextlib.nullcontext()
-        if self._slow_req_monitor:
-            monitor_cm = self._slow_req_monitor.watch_request_async(request_method, request_path)
-
         try:
-            async with monitor_cm:
+            async with slow_req_monitor_cm:
                 async with timeout_cm:
                     await self._app(scope, receive, send_and_track_response_start_async)
 
