@@ -13,6 +13,10 @@ export type ColorTileWithBadgeProps = ColorTileProps & {
     badgeClassName?: string;
     /** The MUI icon component rendered as the badge. */
     badgeIcon: React.ComponentType<SvgIconProps>;
+    /** When true, renders the secondary badge icon over the bottom-right corner of the tile. */
+    showSecondaryBadge?: boolean;
+    /** The MUI icon component rendered as the secondary badge. */
+    secondaryBadgeIcon?: React.ComponentType<SvgIconProps>;
 };
 
 const DEFAULT_PROPS = {
@@ -22,12 +26,16 @@ const DEFAULT_PROPS = {
 export const ColorTileWithBadge = React.forwardRef<HTMLDivElement, ColorTileWithBadgeProps>(
     function ColorTileWithBadge(props, ref) {
         const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+        const badgeBaseClassName = `${defaultedProps.badgeClassName} text-neutral-strong absolute -right-1.5 rounded-full p-px`;
         return (
             <div ref={ref} className="mr-xs relative inline-flex items-center bg-inherit">
                 <ColorTile.Tile {...defaultedProps} />
                 {defaultedProps.showBadge && (
-                    <defaultedProps.badgeIcon
-                        className={`${defaultedProps.badgeClassName} text-neutral-strong absolute -top-1 -right-1.5 rounded-full p-px`}
+                    <defaultedProps.badgeIcon className={`${badgeBaseClassName} -top-1`} fontSize="inherit" />
+                )}
+                {defaultedProps.showSecondaryBadge && defaultedProps.secondaryBadgeIcon && (
+                    <defaultedProps.secondaryBadgeIcon
+                        className={`${badgeBaseClassName} -bottom-1`}
                         fontSize="inherit"
                     />
                 )}
