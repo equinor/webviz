@@ -11,7 +11,8 @@ from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_core_utils.perf_metrics import PerfMetrics
 
-from webviz_services.service_exceptions import InvalidDataError, NoDataError, Service
+from webviz_services.service_exceptions import InvalidDataError, NoDataError
+from webviz_services.services_enum import Service
 
 from ._arrow_table_loader import ArrowTableLoader
 from .relperm_types import (

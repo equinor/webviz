@@ -2,7 +2,8 @@ import pytest
 import pyarrow as pa
 import numpy as np
 
-from webviz_services.service_exceptions import InvalidDataError, Service
+from webviz_services.service_exceptions import InvalidDataError
+from webviz_services.services_enum import Service
 
 from webviz_services.utils.arrow_helpers import is_date_column_monotonically_increasing
 from webviz_services.utils.arrow_helpers import find_first_non_increasing_date_pair

@@ -15,7 +15,7 @@ from webviz_core_utils.perf_metrics import PerfMetrics, make_metrics_string_s
 from webviz_server_schemas.user_grid3d_ri import api_schemas as server_api_schemas
 
 from webviz_services.utils.authenticated_user import AuthenticatedUser
-from webviz_services.service_exceptions import Service
+from webviz_services.services_enum import Service
 from webviz_services.service_exceptions import ServiceRequestError, ServiceTimeoutError, ServiceUnavailableError
 from webviz_services.sumo_access.queries.grid3d import get_grid_geometry_and_property_blob_ids_async
 from webviz_services.sumo_access.queries.grid3d import get_grid_geometry_blob_id_async

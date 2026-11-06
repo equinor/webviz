@@ -8,7 +8,8 @@ from xtgeo.common.constants import UNDEF_LIMIT
 
 from numpy.typing import NDArray
 
-from webviz_services.service_exceptions import InvalidParameterError, Service
+from webviz_services.service_exceptions import InvalidParameterError
+from webviz_services.services_enum import Service
 
 
 def surface_to_float32_numpy_array(surface: xtgeo.RegularSurface) -> NDArray[np.float32]:

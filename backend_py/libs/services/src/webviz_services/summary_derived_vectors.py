@@ -6,7 +6,8 @@ import numpy as np
 import pyarrow as pa
 import polars as pl
 
-from webviz_services.service_exceptions import InvalidDataError, Service
+from webviz_services.service_exceptions import InvalidDataError
+from webviz_services.services_enum import Service
 from webviz_services.utils.arrow_helpers import validate_summary_vector_table_pa
 
 

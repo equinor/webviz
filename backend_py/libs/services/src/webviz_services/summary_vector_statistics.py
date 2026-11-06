@@ -7,7 +7,8 @@ import pyarrow as pa
 
 from .utils.arrow_helpers import create_float_downcasting_schema
 from .utils.statistic_function import StatisticFunction
-from .service_exceptions import Service, InvalidParameterError
+from .service_exceptions import InvalidParameterError
+from .services_enum import Service
 
 
 @dataclass

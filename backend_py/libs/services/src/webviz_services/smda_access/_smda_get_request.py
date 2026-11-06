@@ -5,7 +5,8 @@ from webviz_core_utils.perf_timer import PerfTimer
 
 from webviz_services.services_config import get_services_config
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
-from webviz_services.service_exceptions import ServiceRequestError, NoDataError, Service
+from webviz_services.service_exceptions import ServiceRequestError, NoDataError
+from webviz_services.services_enum import Service
 
 LOGGER = logging.getLogger(__name__)
 

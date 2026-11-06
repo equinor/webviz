@@ -10,7 +10,8 @@ The methods can be used to calculate, aggregate and create inplace volumes data 
 import polars as pl
 
 from webviz_services.sumo_access.inplace_volumes_table_types import InplaceVolumes
-from webviz_services.service_exceptions import Service, InvalidDataError
+from webviz_services.service_exceptions import InvalidDataError
+from webviz_services.services_enum import Service
 
 from .polars_column_utils import is_invalid_column
 

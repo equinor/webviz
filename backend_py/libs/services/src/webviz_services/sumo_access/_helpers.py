@@ -4,7 +4,8 @@ from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import Case
 from webviz_core_utils.perf_metrics import PerfMetrics
 
-from webviz_services.service_exceptions import Service, NoDataError
+from webviz_services.service_exceptions import NoDataError
+from webviz_services.services_enum import Service
 
 LOGGER = logging.getLogger(__name__)
 

@@ -11,9 +11,9 @@ from webviz_services.service_exceptions import (
     InvalidParameterError,
     MultipleDataMatchesError,
     NoDataError,
-    Service,
     ServiceLayerException,
 )
+from webviz_services.services_enum import Service
 
 LOGGER = logging.getLogger(__name__)
 

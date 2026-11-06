@@ -20,7 +20,6 @@ from webviz_services.utils.otel_span_tracing import otel_span_decorator, start_o
 from webviz_services.utils.statistic_function import StatisticFunction
 from webviz_services.utils.surface_helpers import are_all_surface_values_undefined
 from webviz_services.service_exceptions import (
-    Service,
     NoDataError,
     MultipleDataMatchesError,
     InvalidParameterError,
@@ -28,6 +27,7 @@ from webviz_services.service_exceptions import (
     InvalidDataError,
     ServiceTimeoutError,
 )
+from webviz_services.services_enum import Service
 
 from .surface_types import (
     InitialFluidContactSurfaceMeta,

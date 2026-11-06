@@ -6,7 +6,8 @@ import numpy as np
 import xtgeo
 
 
-from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError, Service
+from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError
+from webviz_services.services_enum import Service
 
 from .surface_helpers import (
     get_surface_picks_for_well_trajectory_from_xtgeo,

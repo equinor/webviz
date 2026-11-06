@@ -8,7 +8,8 @@ from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import CPGrid
 
 from webviz_core_utils.timestamp_utils import iso_str_to_date_str, timestamp_utc_ms_to_iso_str
-from webviz_services.service_exceptions import InvalidDataError, Service
+from webviz_services.service_exceptions import InvalidDataError
+from webviz_services.services_enum import Service
 from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)

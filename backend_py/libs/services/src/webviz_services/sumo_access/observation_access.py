@@ -8,7 +8,8 @@ from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Table
 from pydantic import ValidationError
 
-from webviz_services.service_exceptions import InvalidDataError, MultipleDataMatchesError, Service
+from webviz_services.service_exceptions import InvalidDataError, MultipleDataMatchesError
+from webviz_services.services_enum import Service
 
 from .sumo_client_factory import create_sumo_client
 from .observation_types import (

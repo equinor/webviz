@@ -4,7 +4,8 @@ import pyarrow.compute as pc
 import polars as pl
 
 
-from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError, Service
+from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError
+from webviz_services.services_enum import Service
 from webviz_services.sumo_access.well_completions_access import WellCompletionsAccess
 
 from webviz_services.sumo_access.well_completions_types import (

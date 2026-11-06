@@ -3,7 +3,8 @@ from typing import Any, Dict
 
 from pydantic import BaseModel, model_validator
 
-from webviz_services.service_exceptions import InvalidDataError, Service
+from webviz_services.service_exceptions import InvalidDataError
+from webviz_services.services_enum import Service
 
 
 # Type of VFP curve

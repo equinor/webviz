@@ -1,6 +1,7 @@
 import polars as pl
 
-from webviz_services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
+from webviz_services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError
+from webviz_services.services_enum import Service
 
 from webviz_services.flow_network_assembler.flow_network_types import TreeType
 

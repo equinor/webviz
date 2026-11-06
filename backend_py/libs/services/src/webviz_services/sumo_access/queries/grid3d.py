@@ -6,8 +6,8 @@ from fmu.sumo.explorer import TimeFilter, TimeType
 from webviz_services.service_exceptions import (
     InvalidDataError,
     MultipleDataMatchesError,
-    Service,
 )
+from webviz_services.services_enum import Service
 
 
 def get_time_filter(time_or_interval_str: Optional[str]) -> TimeFilter:

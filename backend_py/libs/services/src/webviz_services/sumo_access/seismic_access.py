@@ -4,7 +4,8 @@ from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects.cube import Cube
 
-from webviz_services.service_exceptions import InvalidDataError, NoDataError, Service
+from webviz_services.service_exceptions import InvalidDataError, NoDataError
+from webviz_services.services_enum import Service
 
 from .seismic_types import SeismicCubeMeta, SeismicCubeSpec, VdsHandle, SeismicRepresentation
 from .sumo_client_factory import create_sumo_client

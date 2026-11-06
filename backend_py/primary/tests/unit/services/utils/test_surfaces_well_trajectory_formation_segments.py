@@ -6,7 +6,8 @@ from webviz_services.utils.surfaces_well_trajectory_formation_segments import (
     WellTrajectory,
 )
 from webviz_services.utils.surface_helpers import PickDirection, SurfaceWellPick
-from webviz_services.service_exceptions import InvalidDataError, Service
+from webviz_services.service_exceptions import InvalidDataError
+from webviz_services.services_enum import Service
 
 
 def create_well_trajectory(md_points: list[float]) -> WellTrajectory:

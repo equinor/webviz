@@ -11,9 +11,9 @@ from webviz_services.service_exceptions import (
     NoDataError,
     InvalidDataError,
     ServiceRequestError,
-    Service,
     MultipleDataMatchesError,
 )
+from webviz_services.services_enum import Service
 
 from .sumo_client_factory import create_sumo_client
 from .parameter_types import (

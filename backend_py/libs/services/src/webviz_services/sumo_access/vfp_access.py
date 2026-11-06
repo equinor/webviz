@@ -6,7 +6,8 @@ import pyarrow as pa
 import pyarrow.compute as pc
 from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
-from webviz_services.service_exceptions import InvalidParameterError, NoDataError, Service
+from webviz_services.service_exceptions import InvalidParameterError, NoDataError
+from webviz_services.services_enum import Service
 
 from ._arrow_table_loader import ArrowTableLoader
 from .sumo_client_factory import create_sumo_client

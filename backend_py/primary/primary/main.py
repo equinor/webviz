@@ -22,6 +22,7 @@ from webviz_services.platform.message_bus import MessageBusSingleton
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
+from primary.middleware.add_warnings_middleware import AddWarningsMiddleware
 from primary.middleware.cache_control_middleware import CacheControlMiddleware, add_cache_info_to_openapi
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanClientAddressEnrichmentMiddleware
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanEndUserEnrichmentMiddleware
@@ -202,6 +203,9 @@ override_default_fastapi_exception_handlers(app)
 # Note that FastAPI/Starlette middleware is executed in reverse order of addition:
 #  Last added -> runs first (outermost) on request
 #  First added -> runs last (innermost) on request
+
+# Adds a Webviz-Content-Warnings header with warnings reported by the endpoint (opt-in via Webviz-Allow-Warnings header)
+app.add_middleware(AddWarningsMiddleware)
 
 # This middleware instance approximately measures execution time of the route handler itself
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total-exec-route")

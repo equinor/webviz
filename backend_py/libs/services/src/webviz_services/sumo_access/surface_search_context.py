@@ -5,7 +5,8 @@ from typing import Sequence
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 
-from webviz_services.service_exceptions import InvalidParameterError, Service
+from webviz_services.service_exceptions import InvalidParameterError
+from webviz_services.services_enum import Service
 
 from .surface_types import STD_RES_SUB_NAME_FIELD, StdResAttribute, SurfaceAttribute, TagNameAttribute
 
