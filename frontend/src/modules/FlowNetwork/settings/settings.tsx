@@ -1,9 +1,12 @@
 import React from "react";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { NodeType_api, Frequency_api } from "@api";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { DashboardSettingIndicator } from "@framework/DashboardSettings/components/DashboardSettingIndicator";
+import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
+import { TIME_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/time";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -31,6 +34,10 @@ import {
     nodeMetadataListAtom,
 } from "./atoms/derivedAtoms";
 import {
+    effectiveDateTimeAtom,
+    effectiveRealizationAtom,
+    isDateTimeDashboardControlledAtom,
+    isRealizationDashboardControlledAtom,
     selectedDateTimeAtom,
     selectedEdgeKeyAtom,
     selectedEnsembleIdentAtom,
@@ -58,8 +65,12 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [selectedEdgeKey, setSelectedEdgeKey] = useAtom(selectedEdgeKeyAtom);
     const [selectedNodeKey, setSelectedNodeKey] = useAtom(selectedNodeKeyAtom);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useAtom(selectedEnsembleIdentAtom);
-    const [selectedRealization, setSelectedRealization] = useAtom(selectedRealizationAtom);
-    const [selectedDateTime, setSelectedDateTime] = useAtom(selectedDateTimeAtom);
+    const effectiveRealization = useAtomValue(effectiveRealizationAtom);
+    const setSelectedRealization = useSetAtom(selectedRealizationAtom);
+    const isRealizationDashboardControlled = useAtomValue(isRealizationDashboardControlledAtom);
+    const effectiveDateTime = useAtomValue(effectiveDateTimeAtom);
+    const setSelectedDateTime = useSetAtom(selectedDateTimeAtom);
+    const isDateTimeDashboardControlled = useAtomValue(isDateTimeDashboardControlledAtom);
 
     const flowNetworkQuery = useAtomValue(realizationFlowNetworkQueryAtom);
     const areQuerySelectionsValid = useAtomValue(areQuerySelectionsValidAtom);
@@ -110,7 +121,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         [availableDateTimes],
     );
 
-    const selectedDateTimeIndex = selectedDateTime.value ? availableDateTimes.indexOf(selectedDateTime.value) : -1;
+    const selectedDateTimeIndex = effectiveDateTime.value ? availableDateTimes.indexOf(effectiveDateTime.value) : -1;
 
     const selectedEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentAtom);
     const selectedTreeTypeAnnotations = useMakePersistableFixableAtomAnnotations(selectedTreeTypeAtom);
@@ -118,6 +129,18 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedEdgeKeyAnnotations = useMakePersistableFixableAtomAnnotations(selectedEdgeKeyAtom);
     const selectedNodeKeyAnnotations = useMakePersistableFixableAtomAnnotations(selectedNodeKeyAtom);
     const selectedDateTimeAnnotations = useMakePersistableFixableAtomAnnotations(selectedDateTimeAtom);
+    // Keep annotations for the local selection hidden while the field follows a dashboard realization.
+    const realizationAnnotations = isRealizationDashboardControlled
+        ? []
+        : selectedEnsembleIdent.isValidInContext && availableRealizations.length === 0
+          ? [
+                ...selectedRealizationAnnotations,
+                {
+                    type: "warning" as const,
+                    message: "No realizations available. Check the realization filter.",
+                },
+            ]
+          : selectedRealizationAnnotations;
 
     const handleSettingsAnnotationsChange = React.useCallback(
         function handleSettingsAnnotationsChange(annotations: SettingAnnotation[]) {
@@ -140,27 +163,26 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         />
                     </Setting.Field>
                     <Setting.Field
-                        label="Realization"
-                        annotations={
-                            // Without a realization to choose (e.g. all excluded by the realization filter), the
-                            // network settings are blocked - so point at the cause
-                            selectedEnsembleIdent.isValidInContext && availableRealizations.length === 0
-                                ? [
-                                      ...selectedRealizationAnnotations,
-                                      {
-                                          type: "warning",
-                                          message: "No realizations available. Check the realization filter.",
-                                      },
-                                  ]
-                                : selectedRealizationAnnotations
+                        label={
+                            <span className="gap-x-2xs flex items-center">
+                                Realization
+                                {isRealizationDashboardControlled && (
+                                    <DashboardSettingIndicator
+                                        dashboardSettingLabel={REALIZATION_DASHBOARD_SETTING.label}
+                                        isValueValidHere={effectiveRealization.isValidInContext}
+                                    />
+                                )}
+                            </span>
                         }
+                        annotations={realizationAnnotations}
                     >
                         <Combobox
                             items={availableRealizations.map((real) => {
                                 return { value: real, label: real.toString() };
                             })}
-                            value={selectedRealization.value}
+                            value={effectiveRealization.value}
                             onValueChange={setSelectedRealization}
+                            disabled={isRealizationDashboardControlled}
                         />
                     </Setting.Field>
                     <Setting.Field label="Frequency">
@@ -244,16 +266,26 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         />
                     </Setting.Field>
                     <Setting.Field
-                        label="Time step"
-                        loadingOverlay={selectedDateTime.isLoading}
-                        annotations={selectedDateTimeAnnotations}
-                        errorOverlay={selectedDateTime.depsHaveError ? "Could not load time steps." : undefined}
+                        label={
+                            <span className="gap-x-2xs flex items-center">
+                                Time step
+                                {isDateTimeDashboardControlled && (
+                                    <DashboardSettingIndicator
+                                        dashboardSettingLabel={TIME_DASHBOARD_SETTING.label}
+                                        isValueValidHere={effectiveDateTime.isValidInContext}
+                                    />
+                                )}
+                            </span>
+                        }
+                        loadingOverlay={effectiveDateTime.isLoading}
+                        annotations={isDateTimeDashboardControlled ? [] : selectedDateTimeAnnotations}
+                        errorOverlay={effectiveDateTime.depsHaveError ? "Could not load time steps." : undefined}
                     >
                         <div className="gap-sm flex">
                             <Slider
                                 layoutClassName="grow w-full"
                                 valueLabelDisplay="auto"
-                                disabled={!availableDateTimes.length}
+                                disabled={!availableDateTimes.length || isDateTimeDashboardControlled}
                                 min={0}
                                 max={availableDateTimes.length ? availableDateTimes.length - 1 : 0}
                                 markers={availableDateTimes.map((_, index) => index)}
@@ -270,11 +302,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             />
                             <div className="relative flex shrink">
                                 <span className="px-sm pointer-events-none invisible whitespace-nowrap">
-                                    {selectedDateTime.value ?? "No time step selected"}
+                                    {effectiveDateTime.value ?? "No time step selected"}
                                 </span>
                                 <TextInput
                                     layoutClassName="absolute! inset-0"
-                                    value={selectedDateTime.value ?? ""}
+                                    value={effectiveDateTime.value ?? ""}
                                     placeholder="No time step selected"
                                     size="small"
                                     readOnly

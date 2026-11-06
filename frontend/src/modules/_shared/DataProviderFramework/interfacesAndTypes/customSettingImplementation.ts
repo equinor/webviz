@@ -25,6 +25,12 @@ type SettingComponentPropsBase<TInternalValue> = {
     globalSettings: GlobalSettings;
     /** When true, the setting component should be rendered in a non-interactive state. */
     disabled: boolean;
+    /**
+     * When true, `value` is controlled by a dashboard setting. Only passed to components of
+     * settings whose dashboard setting adapter keeps them editable while controlled - those must disable
+     * what the dashboard setting controls themselves.
+     */
+    isControlledByDashboardSetting?: boolean;
 };
 
 // Component props for static settings (no valueConstraints)

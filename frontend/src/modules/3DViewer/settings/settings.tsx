@@ -29,6 +29,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         setSerializedState: setDataProviderState,
         workbenchSession: props.workbenchSession,
         workbenchSettings: props.workbenchSettings,
+        dashboardSettingsService: props.dashboardSettingsService,
         queryClient,
     });
 

@@ -52,6 +52,8 @@ type CreateRealizationTraceBaseOptions = {
     legendGroup: string;
     hoverTemplate?: string;
     lineShape?: "linear" | "spline" | "hv" | "vh" | "hvh" | "vhv";
+    lineWidth?: number;
+    opacity?: number;
     showLegend?: boolean;
     yaxis?: string;
     xaxis?: string;
@@ -72,6 +74,8 @@ export function createVectorRealizationTrace({
     legendGroup,
     hoverTemplate = "",
     lineShape = "linear",
+    lineWidth = 1,
+    opacity,
     showLegend = false,
     yaxis = "y",
     xaxis = "x",
@@ -84,7 +88,8 @@ export function createVectorRealizationTrace({
     return {
         x: vectorRealizationData.timestampsUtcMs,
         y: vectorRealizationData.values,
-        line: { width: 1, color: color, shape: lineShape },
+        line: { width: lineWidth, color: color, shape: lineShape },
+        opacity: opacity,
         mode: "lines",
         type: type,
         hovertemplate: `${hoverTemplate}Realization: ${vectorRealizationData.realization}`,
@@ -110,6 +115,8 @@ export function createVectorRealizationTraces({
     legendGroup,
     hoverTemplate = "",
     lineShape = "linear",
+    lineWidth,
+    opacity,
     showLegend = false,
     yaxis = "y",
     xaxis = "x",
@@ -123,6 +130,8 @@ export function createVectorRealizationTraces({
             legendGroup,
             hoverTemplate,
             lineShape,
+            lineWidth,
+            opacity,
             showLegend,
             yaxis,
             xaxis,
