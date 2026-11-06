@@ -9,7 +9,7 @@ import { Setting } from "@lib/components/Setting";
 
 import type { Interfaces } from "../interfaces";
 import { CashFlowProfileTypeEnumToStringMapping, ResultMode } from "../typesAndEnums";
-import { getResultRequirement } from "../utils/eligibility";
+import { getResultRequirement, REQUIREMENT_NEEDS } from "../utils/eligibility";
 import { getMeasureDisplayName } from "../utils/measureAccessors";
 import { getSetupReadiness, type SetupField } from "../utils/setupReadiness";
 
@@ -42,8 +42,33 @@ import { FIELD_SECTIONS, SettingsSection, setupFieldClassName } from "./settings
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     const settingsRef = useRef<HTMLDivElement>(null);
-    const [closedSections, setClosedSections] = useState<SettingsSection[]>([]);
+    const selectedMeasure = useAtomValue(selectedMeasureAtom);
+    const cashFlowProfileType = useAtomValue(cashFlowProfileTypeAtom);
+    const resultMode = useAtomValue(resultModeAtom);
+    const requirement = getResultRequirement(resultMode, selectedMeasure, cashFlowProfileType);
+    const needs = REQUIREMENT_NEEDS[requirement];
+    const needsPrices = needs.oilRevenue || needs.gasRevenue;
+    const needsCosts = needs.validCostDraft;
+
+    // Prices and costs start closed unless the selected result needs them.
+    const [closedSections, setClosedSections] = useState<SettingsSection[]>(() => [
+        ...(needsPrices ? [] : [SettingsSection.PRICES]),
+        ...(needsCosts ? [] : [SettingsSection.COSTS]),
+    ]);
+    const [previousNeeds, setPreviousNeeds] = useState({ needsPrices, needsCosts });
     const [focusTarget, setFocusTarget] = useState<SetupField | null>(null);
+
+    // Opens a section once when the selected result starts needing it; closing it again is respected.
+    if (needsPrices !== previousNeeds.needsPrices || needsCosts !== previousNeeds.needsCosts) {
+        const toOpen = [
+            ...(needsPrices && !previousNeeds.needsPrices ? [SettingsSection.PRICES] : []),
+            ...(needsCosts && !previousNeeds.needsCosts ? [SettingsSection.COSTS] : []),
+        ];
+        setPreviousNeeds({ needsPrices, needsCosts });
+        if (toOpen.length > 0) {
+            setClosedSections((current) => current.filter((section) => !toOpen.includes(section)));
+        }
+    }
 
     useEffect(() => {
         if (!focusTarget) return;
@@ -78,9 +103,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     const gasPrice = useAtomValue(gasPriceAtom);
     const costProfile = useAtomValue(costProfileAtom);
     const costDraftStatus = useAtomValue(costDraftStatusAtom);
-    const selectedMeasure = useAtomValue(selectedMeasureAtom);
-    const cashFlowProfileType = useAtomValue(cashFlowProfileTypeAtom);
-    const resultMode = useAtomValue(resultModeAtom);
     const missingComponentAssumptionsByEnsemble = useAtomValue(missingComponentAssumptionsAtom);
     const evaluationHorizon = useAtomValue(evaluationHorizonStateAtom);
     const sourceSnapshot = useAtomValue(sourceSnapshotAtom);
@@ -106,7 +128,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
         costProfile,
         costDraftStatus,
         earlyValue: earlyValueConfiguration,
-        requirement: getResultRequirement(resultMode, selectedMeasure, cashFlowProfileType),
+        requirement,
     });
     const resultLabel =
         resultMode === ResultMode.TIME_PROFILE

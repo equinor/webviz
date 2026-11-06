@@ -1217,6 +1217,57 @@ test("keeps the early comparison, marker and setup summary contained in a narrow
     await page.screenshot({ path: `${UX_SCREENSHOT_DIR}/narrow-early-time-profile.png` });
 });
 
+test("starts prices and costs closed for volumes and opens them once a result needs them", async ({ mount, page }) => {
+    await routeSourceFixtures(page);
+    await page.setViewportSize({ width: 1320, height: 700 });
+    await mount(<EconomicScreeningModuleHarness settingsOpen viewWidth={900} viewHeight={640} />);
+    const settings = settingsRegion(page);
+    const prices = settings.getByRole("button", { name: "Prices", exact: true });
+    const costs = settings.getByRole("button", { name: "Costs", exact: true });
+    const selectMeasure = async (name: string) => {
+        await settings.getByRole("combobox", { name: "Measure" }).click();
+        await page.getByRole("option", { name, exact: true }).click();
+    };
+
+    await expect(settings.getByRole("combobox", { name: "Measure" })).toHaveValue("Discounted oil volume");
+    await expect(prices).toHaveAttribute("aria-expanded", "false");
+    await expect(costs).toHaveAttribute("aria-expanded", "false");
+
+    await selectMeasure("Net present value");
+    await expect(prices).toHaveAttribute("aria-expanded", "true");
+    await expect(costs).toHaveAttribute("aria-expanded", "true");
+
+    // A section the user closes stays closed while the result still needs it.
+    await prices.click();
+    await expect(prices).toHaveAttribute("aria-expanded", "false");
+    await selectMeasure("Internal rate of return");
+    await expect(prices).toHaveAttribute("aria-expanded", "false");
+
+    // Returning to a volume result leaves the sections as they are; needing them again reopens them.
+    await selectMeasure("Discounted oil volume");
+    await expect(costs).toHaveAttribute("aria-expanded", "true");
+    await selectMeasure("Break-even oil price");
+    await expect(prices).toHaveAttribute("aria-expanded", "true");
+});
+
+test("opens prices and costs from the start when a restored result needs them", async ({ mount, page }) => {
+    await routeSourceFixtures(page);
+    await mount(
+        <EconomicScreeningModuleHarness
+            settingsOpen
+            viewWidth={900}
+            viewHeight={640}
+            initialState={{ selectedMeasure: EconomicMeasure.NPV }}
+        />,
+    );
+    const settings = settingsRegion(page);
+    await expect(settings.getByRole("button", { name: "Prices", exact: true })).toHaveAttribute(
+        "aria-expanded",
+        "true",
+    );
+    await expect(settings.getByRole("button", { name: "Costs", exact: true })).toHaveAttribute("aria-expanded", "true");
+});
+
 test("names Settings cost inputs by year without step buttons while other number fields keep them", async ({
     mount,
     page,
@@ -1225,6 +1276,8 @@ test("names Settings cost inputs by year without step buttons while other number
     await page.setViewportSize({ width: 1320, height: 700 });
     await mount(<EconomicScreeningModuleHarness settingsOpen viewWidth={900} viewHeight={640} />);
     const settings = settingsRegion(page);
+    // Costs start closed for the default volume result.
+    await settings.getByRole("button", { name: "Costs", exact: true }).click();
 
     const capex2030 = settings.getByRole("textbox", { name: "CAPEX 2030", exact: true });
     await expect(capex2030).toBeVisible();
