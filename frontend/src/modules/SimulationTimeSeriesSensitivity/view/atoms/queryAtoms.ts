@@ -1,10 +1,19 @@
+import type { UseQueryResult } from "@tanstack/react-query";
+import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import {
     Frequency_api,
+    type VectorRealizationData_api,
+    type VectorStatisticSensitivityData_api,
     getHistoricalVectorDataOptions,
-    getRealizationsVectorDataOptions,
-    getStatisticalVectorDataPerSensitivityOptions,
+    getRealizationsVectorData,
+    getRealizationsVectorDataQueryKey,
+    getStatisticalVectorDataPerSensitivity,
+    getStatisticalVectorDataPerSensitivityQueryKey,
+    getQueryResultWarnings,
+    unwrapQueryResultWarnings,
+    withWarnings,
 } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
@@ -16,7 +25,7 @@ import {
     vectorSpecificationAtom,
 } from "@modules/SimulationTimeSeriesSensitivity/view/atoms/baseAtoms";
 
-export const vectorDataQueryAtom = atomWithQuery((get) => {
+const vectorDataWithWarningsQueryAtom = atomWithQuery((get) => {
     const vectorSpecification = get(vectorSpecificationAtom);
     const resampleFrequency = get(resamplingFrequencyAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
@@ -26,7 +35,7 @@ export const vectorDataQueryAtom = atomWithQuery((get) => {
         : null;
     const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
 
-    const queryOptions = getRealizationsVectorDataOptions({
+    const queryOptions = withWarnings(getRealizationsVectorData, getRealizationsVectorDataQueryKey, {
         query: {
             case_uuid: vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
             ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
@@ -39,7 +48,7 @@ export const vectorDataQueryAtom = atomWithQuery((get) => {
     return { ...queryOptions, enabled: !!vectorSpecification };
 });
 
-export const statisticalVectorSensitivityDataQueryAtom = atomWithQuery((get) => {
+const statisticalVectorSensitivityDataWithWarningsQueryAtom = atomWithQuery((get) => {
     const vectorSpecification = get(vectorSpecificationAtom);
     const resampleFrequency = get(resamplingFrequencyAtom);
     const showStatistics = get(showStatisticsAtom);
@@ -52,19 +61,39 @@ export const statisticalVectorSensitivityDataQueryAtom = atomWithQuery((get) => 
         : null;
     const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
 
-    const queryOptions = getStatisticalVectorDataPerSensitivityOptions({
-        query: {
-            case_uuid: vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
-            ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
-            vector_name: vectorSpecification?.vectorName ?? "",
-            resampling_frequency: fallbackStatisticsResampleFrequency,
-            statistic_functions: undefined,
-            realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-            ...makeCacheBustingQueryParam(vectorSpecification?.ensembleIdent ?? null),
+    const queryOptions = withWarnings(
+        getStatisticalVectorDataPerSensitivity,
+        getStatisticalVectorDataPerSensitivityQueryKey,
+        {
+            query: {
+                case_uuid: vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
+                ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
+                vector_name: vectorSpecification?.vectorName ?? "",
+                resampling_frequency: fallbackStatisticsResampleFrequency,
+                statistic_functions: undefined,
+                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                ...makeCacheBustingQueryParam(vectorSpecification?.ensembleIdent ?? null),
+            },
         },
-    });
+    );
     return { ...queryOptions, enabled: !!(showStatistics && vectorSpecification) };
 });
+
+// Unwrap the data to keep the query result shape unchanged for consumers
+export const vectorDataQueryAtom = atom((get) => {
+    const query = get(vectorDataWithWarningsQueryAtom);
+    return unwrapQueryResultWarnings(query) as UseQueryResult<VectorRealizationData_api[]>;
+});
+
+export const statisticalVectorSensitivityDataQueryAtom = atom((get) => {
+    const query = get(statisticalVectorSensitivityDataWithWarningsQueryAtom);
+    return unwrapQueryResultWarnings(query) as UseQueryResult<VectorStatisticSensitivityData_api[]>;
+});
+
+export const vectorDataWarningsAtom = atom((get) => [
+    ...getQueryResultWarnings(get(vectorDataWithWarningsQueryAtom)),
+    ...getQueryResultWarnings(get(statisticalVectorSensitivityDataWithWarningsQueryAtom)),
+]);
 
 export const historicalVectorDataQueryAtom = atomWithQuery((get) => {
     const vectorSpecification = get(vectorSpecificationAtom);

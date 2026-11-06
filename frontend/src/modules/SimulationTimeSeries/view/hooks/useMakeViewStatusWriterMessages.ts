@@ -22,6 +22,8 @@ import {
     vectorObservationsQueriesAtom,
     regularEnsembleHistoricalVectorDataQueriesAtom,
     vectorDataQueriesAtom,
+    vectorDataWarningsAtom,
+    vectorStatisticsWarningsAtom,
     vectorStatisticsQueriesAtom,
 } from "../atoms/queryAtoms";
 
@@ -39,6 +41,7 @@ export function useMakeViewStatusWriterMessages(
     const vectorStatisticsQueries = useAtomValue(vectorStatisticsQueriesAtom);
     const vectorHistoricalQueries = useAtomValue(regularEnsembleHistoricalVectorDataQueriesAtom);
     const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
+    const vectorDataWarnings = [...useAtomValue(vectorDataWarningsAtom), ...useAtomValue(vectorStatisticsWarningsAtom)];
     const isQueryFetching = useAtomValue(queryIsFetchingAtom);
 
     statusWriter.setLoading(isQueryFetching);
@@ -48,6 +51,17 @@ export function useMakeViewStatusWriterMessages(
     propagateQueryErrorsToStatusWriter(vectorStatisticsQueries, statusWriter);
     propagateAllApiErrorsToStatusWriter(vectorHistoricalQueries?.errors ?? [], statusWriter);
     propagateAllApiErrorsToStatusWriter(vectorObservationsQueries?.errors ?? [], statusWriter);
+
+    // Warnings reported by the back-end alongside the realization data
+    // Realization and statistics queries can report the same warning, so de-duplicate the messages
+    const warningMessages = new Set<string>();
+    for (const { vectorSpecification, warning } of vectorDataWarnings) {
+        const ensembleName =
+            ensembleSet.findEnsemble(vectorSpecification.ensembleIdent)?.getDisplayName() ??
+            vectorSpecification.ensembleIdent.toString();
+        warningMessages.add(`${vectorSpecification.vectorName} for \`${ensembleName}\`: ${warning}`);
+    }
+    warningMessages.forEach((message) => statusWriter.addWarning(message));
 
     // Warning for vectors without historical data (not query error, but history vector does not exist)
     if (showHistorical) {

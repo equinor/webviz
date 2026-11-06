@@ -6,6 +6,8 @@ import pyarrow as pa
 import pyarrow.compute as pc
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
+from webviz_core_utils.result_warning import ResultWarning
+from webviz_core_utils.result_with_warnings import ResultWithWarnings
 from webviz_services.summary_vector_statistics import compute_vector_statistics
 from webviz_services.sumo_access.parameter_access import ParameterAccess
 from webviz_services.sumo_access.summary_access import Frequency, SummaryAccess
@@ -28,6 +30,7 @@ from webviz_services.summary_derived_vectors import (
 )
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.add_warnings_middleware import resolve_warnings
 from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.query_string_utils import decode_uint_list_str
@@ -78,6 +81,7 @@ async def get_vector_list(
         ret_arr.extend(_create_vector_descriptions_for_derived_vectors(total_vectors))
 
     LOGGER.info(f"Got vector list in: {perf_metrics.to_string()}")
+
     return ret_arr
 
 
@@ -138,7 +142,7 @@ async def get_delta_ensemble_vector_list(
 
 
 @router.get("/realizations_vector_data/")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.LONG, result_version=1)
 # pylint: disable-next=too-many-locals
 async def get_realizations_vector_data(
     # fmt:off
@@ -165,23 +169,28 @@ async def get_realizations_vector_data(
     is_vector_derived = is_derived_vector(vector_name)
     vector_name_to_fetch = vector_name if not is_vector_derived else get_total_vector_name(vector_name)
 
+    warnings: list[ResultWarning] = []
     ret_arr: list[schemas.VectorRealizationData] = []
     if not is_vector_derived:
-        sumo_vec_arr = await access.get_vector_async(
+        result = await access.get_vector_async(
             vector_name=vector_name_to_fetch,
             resampling_frequency=sumo_freq,
             realizations=realizations,
         )
+
+        sumo_vec_arr = result.get_value(warnings)
+
         perf_metrics.record_lap("get-vector")
 
         ret_arr = converters.realization_vector_list_to_api_vector_realization_data_list(sumo_vec_arr)
     else:
         # Handle derived vectors
-        vector_table_pa, vector_metadata = await access.get_vector_table_async(
+        result = await access.get_vector_table_async(
             vector_name=vector_name_to_fetch,
             resampling_frequency=sumo_freq,
             realizations=realizations,
         )
+        vector_table_pa, vector_metadata = result.get_value(warnings)
 
         derived_vector_type = get_derived_vector_type(vector_name)
         derived_vector_unit = create_derived_vector_unit(vector_metadata.unit, derived_vector_type)
@@ -197,11 +206,13 @@ async def get_realizations_vector_data(
         )
 
     LOGGER.info(f"Loaded realization summary data in: {perf_metrics.to_string()}")
-    return ret_arr
+
+    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
+    return resolve_warnings(ResultWithWarnings(ret_arr, warnings))
 
 
 @router.get("/delta_ensemble_realizations_vector_data/")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.LONG, result_version=1)
 # pylint: disable-next=too-many-locals
 async def get_delta_ensemble_realizations_vector_data(
     # fmt:off
@@ -240,10 +251,8 @@ async def get_delta_ensemble_realizations_vector_data(
     vector_name_to_fetch = vector_name if not is_vector_derived else get_total_vector_name(vector_name)
 
     # Create delta ensemble table and metadata:
-    (
-        delta_vector_table_pa,
-        delta_vector_metadata,
-    ) = await _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
+    warnings: list[ResultWarning] = []
+    delta_result = await _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
         authenticated_user,
         comparison_case_uuid,
         comparison_ensemble_name,
@@ -254,6 +263,7 @@ async def get_delta_ensemble_realizations_vector_data(
         service_freq,
         perf_metrics,
     )
+    delta_vector_table_pa, delta_vector_metadata = delta_result.get_value(warnings)
 
     # Create realization delta vectors
     ret_arr: list[schemas.VectorRealizationData] = []
@@ -286,7 +296,8 @@ async def get_delta_ensemble_realizations_vector_data(
         )
 
     LOGGER.info(f"Loaded realization delta ensemble summary data in: {perf_metrics.to_string()}")
-    return ret_arr
+    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
+    return resolve_warnings(ResultWithWarnings(ret_arr, warnings))
 
 
 @router.get("/historical_vector_data/")
@@ -318,7 +329,7 @@ async def get_historical_vector_data(
 
 
 @router.get("/statistical_vector_data/")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.LONG, result_version=1)
 # pylint: disable-next=too-many-locals
 async def get_statistical_vector_data(
     # fmt:off
@@ -349,11 +360,15 @@ async def get_statistical_vector_data(
     vector_name_to_fetch = vector_name if not is_vector_derived else get_total_vector_name(vector_name)
 
     # Get vector table
-    vector_table, vector_metadata = await access.get_vector_table_async(
+    warnings: list[ResultWarning] = []
+    result = await access.get_vector_table_async(
         vector_name=vector_name_to_fetch,
         resampling_frequency=service_freq,
         realizations=realizations,
     )
+
+    vector_table, vector_metadata = result.get_value(warnings)
+
     perf_metrics.record_lap("get-table")
 
     # Calculate statistics
@@ -382,11 +397,12 @@ async def get_statistical_vector_data(
     perf_metrics.record_lap("calc-stat")
     LOGGER.info(f"Loaded and computed statistical summary data in: {perf_metrics.to_string()}")
 
-    return ret_data
+    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
+    return resolve_warnings(ResultWithWarnings(ret_data, warnings))
 
 
 @router.get("/delta_ensemble_statistical_vector_data/")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.LONG, result_version=1)
 # pylint: disable=too-many-arguments
 # pylint: disable-next=too-many-locals
 async def get_delta_ensemble_statistical_vector_data(
@@ -429,10 +445,7 @@ async def get_delta_ensemble_statistical_vector_data(
     vector_name_to_fetch = vector_name if not is_vector_derived else get_total_vector_name(vector_name)
 
     # Create delta ensemble table and metadata:
-    (
-        delta_vector_table_pa,
-        delta_vector_metadata,
-    ) = await _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
+    delta_result = await _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
         authenticated_user,
         comparison_case_uuid,
         comparison_ensemble_name,
@@ -443,6 +456,8 @@ async def get_delta_ensemble_statistical_vector_data(
         service_freq,
         perf_metrics,
     )
+    warnings: list[ResultWarning] = []
+    delta_vector_table_pa, delta_vector_metadata = delta_result.get_value(warnings)
 
     # Calculate statistics
     ret_data: schemas.VectorStatisticData | None = None
@@ -475,11 +490,12 @@ async def get_delta_ensemble_statistical_vector_data(
     perf_metrics.record_lap("calc-delta-vector-stat")
     LOGGER.info(f"Loaded and computed statistical delta ensemble summary data in: {perf_metrics.to_string()}")
 
-    return ret_data
+    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
+    return resolve_warnings(ResultWithWarnings(ret_data, warnings))
 
 
 @router.get("/statistical_vector_data_per_sensitivity/")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.LONG, result_version=1)
 # pylint: disable-next=too-many-locals
 async def get_statistical_vector_data_per_sensitivity(
     # fmt:off
@@ -508,28 +524,27 @@ async def get_statistical_vector_data_per_sensitivity(
 
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
-    vector_table, vector_metadata = await summmary_access.get_vector_table_async(
-        vector_name=vector_name, resampling_frequency=service_freq, realizations=None
+    warnings: list[ResultWarning] = []
+    result = await summmary_access.get_vector_table_async(
+        vector_name=vector_name, resampling_frequency=service_freq, realizations=realizations
     )
+
+    vector_table, vector_metadata = result.get_value(warnings)
+
     ret_data: list[schemas.VectorStatisticSensitivityData] = []
     if not sensitivities:
         return ret_data
 
-    requested_realizations_mask = (
-        pc.is_in(vector_table["REAL"], value_set=pa.array(realizations)) if realizations else None
-    )
+    # The vector table is already limited to the requested realizations by the summary access
+    cases_without_reals_per_sensitivity: dict[str, list[str]] = {}
     for sensitivity in sensitivities:
         for case in sensitivity.cases:
             sens_case_realization_mask = pc.is_in(vector_table["REAL"], value_set=pa.array(case.realizations))
-            if requested_realizations_mask is not None:
-                sens_case_realization_mask = pc.and_(requested_realizations_mask, sens_case_realization_mask)
             table = vector_table.filter(sens_case_realization_mask)
 
-            if table.num_rows == 0 and requested_realizations_mask is not None:
-                raise HTTPException(
-                    status_code=404,
-                    detail="The combination of realizations to include and sensitivity case realizations results in no valid realizations",
-                )
+            if table.num_rows == 0 and realizations:
+                cases_without_reals_per_sensitivity.setdefault(sensitivity.name, []).append(case.name)
+                continue
 
             statistics = compute_vector_statistics(table, vector_name, service_stat_funcs_to_compute)
             if not statistics:
@@ -548,7 +563,23 @@ async def get_statistical_vector_data_per_sensitivity(
                 isRate=statistic_data.isRate,
             )
             ret_data.append(sensitivity_statistic_data)
-    return ret_data
+
+    # Create one single warning for all sensitivities without valid realizations, to prevent multiple warnings
+    # listed after each other in client.
+    if cases_without_reals_per_sensitivity:
+        details = "; ".join(
+            f"'{name}' (cases: {', '.join(repr(c) for c in cases)})"
+            for name, cases in cases_without_reals_per_sensitivity.items()
+        )
+
+        warnings.append(
+            ResultWarning(
+                f"No valid realizations among the requested realizations for sensitivities: {details}",
+            )
+        )
+
+    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
+    return resolve_warnings(ResultWithWarnings(ret_data, warnings))
 
 
 def _create_vector_descriptions_for_derived_vectors(
@@ -597,9 +628,11 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
     realizations: list[int] | None,
     resampling_frequency: Frequency,
     perf_metrics: ResponsePerfMetrics | None,
-) -> tuple[pa.Table, DeltaVectorMetadata]:
+) -> ResultWithWarnings[tuple[pa.Table, DeltaVectorMetadata]]:
     """
     Get vector tables for comparison and reference ensembles and create delta ensemble vector table and metadata
+
+    The warnings from the comparison and reference ensembles are forwarded as is, one after the other.
     """
     # Separate summary access to comparison and reference ensemble
     comparison_ensemble_access = SummaryAccess.from_ensemble_name(
@@ -610,12 +643,9 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
     )
 
     # Get tables parallel
-    # - Resampled data is assumed to be such that dates/timestamps are comparable between ensembles and cases, i.e. timestamps
-    #   for a resampling of a daily vector in both ensembles should be the same
-    (comparison_vector_table_pa, comparison_metadata), (
-        reference_vector_table_pa,
-        reference_metadata,
-    ) = await asyncio.gather(
+    # - Resampled data is assumed to be such that dates/timestamps are comparable between ensembles and cases,
+    #   i.e. timestamps for a resampling of a daily vector in both ensembles should be the same
+    comparison_result, reference_result = await asyncio.gather(
         comparison_ensemble_access.get_vector_table_async(
             vector_name=vector_name,
             resampling_frequency=resampling_frequency,
@@ -627,6 +657,10 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
             realizations=realizations,
         ),
     )
+
+    warnings: list[ResultWarning] = []
+    comparison_vector_table_pa, comparison_metadata = comparison_result.get_value(warnings)
+    reference_vector_table_pa, reference_metadata = reference_result.get_value(warnings)
 
     if perf_metrics:
         perf_metrics.record_lap("get-vector-tables-to-create-delta-vector-table")
@@ -651,4 +685,4 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
     if perf_metrics:
         perf_metrics.record_lap("create-delta-vector-table")
 
-    return delta_vector_table_pa, delta_vector_metadata
+    return ResultWithWarnings((delta_vector_table_pa, delta_vector_metadata), warnings)

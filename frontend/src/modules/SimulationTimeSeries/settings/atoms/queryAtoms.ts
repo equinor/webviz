@@ -1,6 +1,12 @@
 import { atom } from "jotai";
 
-import { getDeltaEnsembleVectorListOptions, getVectorListOptions } from "@api";
+import {
+    getDeltaEnsembleVectorList,
+    getDeltaEnsembleVectorListQueryKey,
+    getVectorList,
+    getVectorListQueryKey,
+    withWarnings,
+} from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
@@ -52,7 +58,7 @@ const regularEnsembleVectorListQueriesAtom = atomWithQueries((get) => {
     const { isValidInContext: ensembleIdentsValid } = get(selectedEnsembleIdentsAtom);
 
     const queries = regularEnsembleIdents.map(({ item }) => {
-        const options = getVectorListOptions({
+        const options = withWarnings(getVectorList, getVectorListQueryKey, {
             query: {
                 case_uuid: item.getCaseUuid(),
                 ensemble_name: item.getEnsembleName(),
@@ -76,7 +82,7 @@ const deltaEnsembleVectorListQueriesAtom = atomWithQueries((get) => {
         const comparisonEnsembleIdent = item.getComparisonEnsembleIdent();
         const referenceEnsembleIdent = item.getReferenceEnsembleIdent();
 
-        const options = getDeltaEnsembleVectorListOptions({
+        const options = withWarnings(getDeltaEnsembleVectorList, getDeltaEnsembleVectorListQueryKey, {
             query: {
                 comparison_case_uuid: comparisonEnsembleIdent.getCaseUuid(),
                 comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),

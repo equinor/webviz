@@ -1,6 +1,6 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 
-import type { VectorDescription_api } from "@api";
+import type { DataWithWarnings, VectorDescription_api } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
@@ -11,11 +11,11 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
  */
 export class EnsembleVectorListsHelper {
     private _ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
-    private _queries: UseQueryResult<VectorDescription_api[]>[];
+    private _queries: UseQueryResult<DataWithWarnings<VectorDescription_api[]>>[];
 
     constructor(
         ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
-        vectorListQueryResults: UseQueryResult<VectorDescription_api[]>[],
+        vectorListQueryResults: UseQueryResult<DataWithWarnings<VectorDescription_api[]>>[],
     ) {
         if (ensembleIdents.length !== vectorListQueryResults.length) {
             throw new Error("Number of ensembles and vector list query results must be equal");
@@ -43,7 +43,7 @@ export class EnsembleVectorListsHelper {
         const uniqueVectorNames = new Set<string>();
         for (const query of this._queries) {
             if (query.data) {
-                for (const vector of query.data) {
+                for (const vector of query.data.value) {
                     uniqueVectorNames.add(vector.name);
                 }
             }
@@ -63,7 +63,7 @@ export class EnsembleVectorListsHelper {
         const vectorDescriptionMap = new Map<string, VectorDescription_api>();
         for (const query of this._queries) {
             if (query.data) {
-                for (const vector of query.data) {
+                for (const vector of query.data.value) {
                     // Note: This will keep the first vector with the same name,
                     // i.e. if vectors are different in different ensembles, only the first one will be kept
                     if (!vectorDescriptionMap.has(vector.name)) {
@@ -88,7 +88,7 @@ export class EnsembleVectorListsHelper {
 
         if (index === -1 || !this._queries[index].data) return false;
 
-        return this._queries[index].data?.some((vec) => vec.name === vector) ?? false;
+        return this._queries[index].data?.value.some((vec) => vec.name === vector) ?? false;
     }
 
     /**
@@ -104,7 +104,7 @@ export class EnsembleVectorListsHelper {
         const index = this.findIndexOfEnsembleIdent(ensembleIdent);
         if (index === -1 || !this._queries[index].data) return false;
 
-        return this._queries[index].data?.some((vec) => vec.name === vector && vec.hasHistorical) ?? false;
+        return this._queries[index].data?.value.some((vec) => vec.name === vector && vec.hasHistorical) ?? false;
     }
 
     /**
