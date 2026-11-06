@@ -1,5 +1,6 @@
 import logging
 import asyncio
+from dataclasses import dataclass
 from pydantic import BaseModel, ValidationError
 from fmu.sumo.explorer.explorer import SumoClient
 from fmu.sumo.explorer.objects import Case, SearchContext
@@ -14,6 +15,13 @@ from webviz_services.service_exceptions import (
 )
 
 from ._helpers import create_sumo_case_async
+from .ensemble_lineage import (
+    RestartAncestor,
+    RestartChain,
+    get_restart_chain_async,
+    get_restart_from_uuid_async,
+    resolve_ensemble_by_uuid_async,
+)
 from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
@@ -22,6 +30,13 @@ LOGGER = logging.getLogger(__name__)
 class EnsembleInfo(BaseModel):
     name: str
     realization_count: int
+
+
+@dataclass(frozen=True)
+class EnsembleRestartInfo:
+    ensemble_name: str
+    restart_from: RestartAncestor | None
+    restart_from_unresolved_uuid: str | None
 
 
 class CaseInspector:
@@ -75,6 +90,37 @@ class CaseInspector:
 
         LOGGER.debug(f"get_ensembles_async {timer.to_string()}")
         return ens_info_arr
+
+    async def get_restart_chain_async(self, ensemble_name: str) -> RestartChain:
+        """Get the chain of ensembles that the specified ensemble was restarted from, nearest parent first"""
+        return await get_restart_chain_async(self._sumo_client, self._case_uuid, ensemble_name)
+
+    async def _get_ensemble_restart_info_async(self, ensemble_name: str) -> EnsembleRestartInfo:
+        restart_from_uuid = await get_restart_from_uuid_async(self._sumo_client, self._case_uuid, ensemble_name)
+        if restart_from_uuid is None:
+            return EnsembleRestartInfo(
+                ensemble_name=ensemble_name, restart_from=None, restart_from_unresolved_uuid=None
+            )
+
+        ancestor = await resolve_ensemble_by_uuid_async(self._sumo_client, restart_from_uuid)
+        return EnsembleRestartInfo(
+            ensemble_name=ensemble_name,
+            restart_from=ancestor,
+            restart_from_unresolved_uuid=restart_from_uuid if ancestor is None else None,
+        )
+
+    async def get_ensemble_restart_infos_async(self) -> list[EnsembleRestartInfo]:
+        """Get the direct restart parent (if any) of every ensemble in the case"""
+        timer = PerfMetrics()
+        ensembles = await self.get_ensembles_async()
+        timer.record_lap("get_ensembles")
+
+        async with asyncio.TaskGroup() as tg:
+            tasks = [tg.create_task(self._get_ensemble_restart_info_async(ens.name)) for ens in ensembles]
+        timer.record_lap("get_restart_infos")
+
+        LOGGER.debug(f"get_ensemble_restart_infos_async {timer.to_string()}")
+        return [task.result() for task in tasks]
 
     async def get_realizations_in_ensemble_async(self, ensemble_name: str) -> list[int]:
         """Get list of realizations for the specified ensemble"""

@@ -1,5 +1,8 @@
+import asyncio
 import logging
-from dataclasses import dataclass
+import dataclasses
+from dataclasses import dataclass, replace
+from typing import cast
 import polars as pl
 import pyarrow as pa
 from fmu.datamodels.standard_results.enums import StandardResultName
@@ -13,13 +16,17 @@ from webviz_services.service_exceptions import (
     ServiceRequestError,
     Service,
     MultipleDataMatchesError,
+    ServiceLayerException,
 )
 
+from ._helpers import create_sumo_case_async
+from .ensemble_lineage import MAX_RESTART_CHAIN_DEPTH, RestartAncestor, RestartChain, get_restart_chain_async
 from .sumo_client_factory import create_sumo_client
 from .parameter_types import (
     EnsembleParameter,
     EnsembleSensitivity,
     EnsembleSensitivityCase,
+    ParameterSourceEnsemble,
     SensitivityType,
 )
 
@@ -27,6 +34,8 @@ LOGGER = logging.getLogger(__name__)
 
 ERT_DESIGN_MATRIX_DOCS_URL = "https://ert.readthedocs.io/en/latest/getting_started/howto/design_matrix.html"
 ERT_RUN_TEMPLATE_DOCS_URL = "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#run-template"
+
+SENSITIVITY_PARAMETER_NAMES = ("SENSNAME", "SENSCASE")
 
 
 @dataclass
@@ -40,11 +49,11 @@ class ParameterMetadata:
 
 @dataclass
 class ParametersAndSensitivities:
-    """Parameters and sensitivities for an ensemble, with an optional non-fatal warning."""
+    """Parameters and sensitivities for an ensemble, with non-fatal user-facing warnings."""
 
     parameters: list[EnsembleParameter]
     sensitivities: list[EnsembleSensitivity]
-    non_standard_parameters_warning: str | None = None
+    warnings: list[str] = dataclasses.field(default_factory=list)
 
 
 class ParameterAccess:
@@ -70,18 +79,22 @@ class ParameterAccess:
     async def get_parameters_and_sensitivities_async(self) -> ParametersAndSensitivities:
         """Retrieve parameters and sensitivities for an ensemble.
 
+        If the ensemble has standard-result parameters and was restarted from other ensembles, the
+        standard-result parameters of those restart ensembles are combined with the ensemble's own.
+
         Returns:
             A ParametersAndSensitivities object containing:
-            - List of ensemble parameters with metadata and values
-            - List of ensemble sensitivities derived from parameters
-            - An optional non-fatal warning if realization-level parameters are missing from the
-              standard result (e.g. legacy design matrix parameters injected into parameters.txt/json)
+            - List of ensemble parameters with metadata and values, own parameters first
+            - List of ensemble sensitivities derived from the ensemble's own parameters
+            - Non-fatal user-facing warnings, e.g. if a restart ensemble could not be found or if
+              realization-level parameters are missing from the standard result (e.g. legacy design matrix
+              parameters injected into parameters.txt/json)
 
         Raises:
             MultipleDataMatchesError: If multiple parameter tables are found
             NoDataError: If no parameters are found
             ServiceRequestError: If parameter aggregation fails
-            InvalidDataError: If data format is unexpected
+            InvalidDataError: If data format is unexpected, or parameters from restart ensembles conflict
         """
 
         parameter_context = self._ensemble_context.filter(standard_result=StandardResultName.parameters)
@@ -93,26 +106,139 @@ class ParameterAccess:
                 Service.SUMO,
             )
 
-        non_standard_parameters_warning: str | None = None
+        warnings: list[str] = []
         if table_count == 0:
             LOGGER.debug(
                 f"No Standard result parameter table found for case {self._case_uuid} and ensemble {self._ensemble_name}. "
                 "Attempting legacy parameter retrieval."
             )
-            ensemble_parameters = await self._get_parameters_from_legacy_result_async()
-        else:
-            ensemble_parameters = await self._get_parameters_from_standard_result_async(parameter_context)
-            non_standard_parameters_warning = await self._detect_parameters_missing_from_standard_result_async(
-                ensemble_parameters
-            )
+            try:
+                async with asyncio.TaskGroup() as tg:
+                    legacy_parameters_task = tg.create_task(self._get_parameters_from_legacy_result_async())
+                    restart_chain_task = tg.create_task(
+                        get_restart_chain_async(self._sumo_client, self._case_uuid, self._ensemble_name)
+                    )
+            except* ServiceLayerException as exc_group:
+                for exc in exc_group.exceptions:
+                    raise exc from exc_group  # Reraise the first exception
 
-        sensitivities = _create_ensemble_sensitivities(ensemble_parameters)
+            ensemble_parameters = legacy_parameters_task.result()
+            own_parameters = ensemble_parameters
+            restart_chain = restart_chain_task.result()
+            if restart_chain.ancestors:
+                warnings.append(
+                    f"This ensemble was restarted from {_ancestor_label(restart_chain.ancestors[0])}, but its "
+                    "parameters are not stored as a standard result, so parameters from the restart ensemble were "
+                    "not combined."
+                )
+        else:
+            try:
+                async with asyncio.TaskGroup() as tg:
+                    own_parameters_task = tg.create_task(
+                        self._get_parameters_from_standard_result_async(parameter_context)
+                    )
+                    restart_chain_task = tg.create_task(
+                        get_restart_chain_async(self._sumo_client, self._case_uuid, self._ensemble_name)
+                    )
+            except* ServiceLayerException as exc_group:
+                for exc in exc_group.exceptions:
+                    raise exc from exc_group  # Reraise the first exception
+
+            own_parameters = own_parameters_task.result()
+            ensemble_parameters, restart_warnings = await self._combine_with_restart_ancestors_async(
+                own_parameters, restart_chain_task.result()
+            )
+            warnings.extend(restart_warnings)
+
+            non_standard_parameters_warning = await self._detect_parameters_missing_from_standard_result_async(
+                own_parameters
+            )
+            if non_standard_parameters_warning is not None:
+                warnings.append(non_standard_parameters_warning)
+
+        # Ancestors' SENSNAME/SENSCASE are verified identical to the child's, so the child's are sufficient
+        sensitivities = _create_ensemble_sensitivities(own_parameters)
 
         return ParametersAndSensitivities(
             parameters=ensemble_parameters,
             sensitivities=sensitivities,
-            non_standard_parameters_warning=non_standard_parameters_warning,
+            warnings=warnings,
         )
+
+    async def _combine_with_restart_ancestors_async(
+        self, own_parameters: list[EnsembleParameter], restart_chain: RestartChain
+    ) -> tuple[list[EnsembleParameter], list[str]]:
+        """Merge standard-result parameters from the restart ancestors into the ensemble's own parameters.
+
+        Browser caching of the parameters endpoint is keyed on this ensemble's fingerprint only. That is
+        sufficient since Sumo makes an ensemble read-only once other ensembles are restarted from it.
+        """
+        warnings: list[str] = []
+
+        if restart_chain.unresolved_ensemble_uuid is not None:
+            if restart_chain.ancestors:
+                warnings.append(
+                    f"Restart ensemble {_ancestor_label(restart_chain.ancestors[-1])} was restarted from ensemble "
+                    f"{restart_chain.unresolved_ensemble_uuid}, which could not be found in Sumo (deleted or no "
+                    "access). Parameters from that ensemble and any earlier ones were not loaded."
+                )
+            else:
+                warnings.append(
+                    f"This ensemble was restarted from ensemble {restart_chain.unresolved_ensemble_uuid}, which "
+                    "could not be found in Sumo (deleted or no access). Only parameters from the ensemble itself "
+                    "are loaded."
+                )
+
+        if restart_chain.truncated:
+            warnings.append(
+                f"The chain of restart ensembles is longer than {MAX_RESTART_CHAIN_DEPTH} ensembles or contains a "
+                "cycle. Only parameters from the first "
+                f"{len(restart_chain.ancestors)} restart ensemble(s) in the chain were combined."
+            )
+
+        if not restart_chain.ancestors:
+            return own_parameters, warnings
+
+        perf_metrics = PerfMetrics()
+        try:
+            async with asyncio.TaskGroup() as tg:
+                case_task = tg.create_task(create_sumo_case_async(self._sumo_client, self._case_uuid))
+                ancestor_tasks = [
+                    (
+                        ancestor,
+                        tg.create_task(_get_standard_result_parameters_for_ancestor_async(self._sumo_client, ancestor)),
+                    )
+                    for ancestor in restart_chain.ancestors
+                ]
+        except* ServiceLayerException as exc_group:
+            for exc in exc_group.exceptions:
+                raise exc from exc_group  # Reraise the first exception
+        perf_metrics.record_lap("load-ancestors")
+
+        ancestors_and_parameters: list[tuple[RestartAncestor, list[EnsembleParameter]]] = []
+        for ancestor, task in ancestor_tasks:
+            ancestor_parameters = task.result()
+            if ancestor_parameters is None:
+                warnings.append(
+                    f"Restart ensemble {_ancestor_label(ancestor)} has no standard-result parameters; its "
+                    "parameters were not combined."
+                )
+            else:
+                ancestors_and_parameters.append((ancestor, ancestor_parameters))
+
+        own_ensemble_label = f"{case_task.result().name}/{self._ensemble_name}"
+        merged_parameters, merge_warnings = _merge_restart_parameters(
+            own_parameters, ancestors_and_parameters, own_ensemble_label
+        )
+        warnings.extend(merge_warnings)
+        perf_metrics.record_lap("merge")
+
+        LOGGER.debug(
+            f"ParameterAccess._combine_with_restart_ancestors_async() took: {perf_metrics.to_string()},"
+            f" {self._case_uuid=}, {self._ensemble_name=}, {len(restart_chain.ancestors)=}"
+        )
+
+        return merged_parameters, warnings
 
     async def _detect_parameters_missing_from_standard_result_async(
         self, standard_result_parameters: list[EnsembleParameter]
@@ -252,6 +378,193 @@ class ParameterAccess:
         )
 
         return ensemble_parameters
+
+
+def _ancestor_label(ancestor: RestartAncestor) -> str:
+    return f"{ancestor.case_name}/{ancestor.ensemble_name}"
+
+
+async def _get_standard_result_parameters_for_ancestor_async(
+    sumo_client: SumoClient, ancestor: RestartAncestor
+) -> list[EnsembleParameter] | None:
+    """Load the standard-result parameters of a restart ancestor, or None if it has no standard-result parameters."""
+    parameter_context = SearchContext(sumo=sumo_client).filter(
+        uuid=ancestor.case_uuid,
+        ensemble=ancestor.ensemble_name,
+        standard_result=StandardResultName.parameters,
+    )
+    table_count = await parameter_context.length_async()
+    if table_count == 0:
+        return None
+    if table_count > 1:
+        raise MultipleDataMatchesError(
+            f"Multiple Standard result parameter tables found for restart ensemble {_ancestor_label(ancestor)}. "
+            "This is not supported.",
+            Service.SUMO,
+        )
+
+    parameter_table_obj = await parameter_context.getitem_async(0)
+    table = await parameter_table_obj.to_arrow_async()
+    return _parameter_table_to_ensemble_parameters(table)
+
+
+def _merge_restart_parameters(
+    own_parameters: list[EnsembleParameter],
+    ancestors_and_parameters: list[tuple[RestartAncestor, list[EnsembleParameter]]],
+    own_ensemble_label: str,
+) -> tuple[list[EnsembleParameter], list[str]]:
+    """Combine an ensemble's own parameters with the parameters of its restart ancestors.
+
+    Args:
+        own_parameters: The ensemble's own parameters
+        ancestors_and_parameters: Restart ancestors with their parameters, nearest parent first
+        own_ensemble_label: "<case name>/<ensemble name>" of the ensemble, used in user-facing messages
+
+    Returns:
+        The merged parameters (own first, then ancestors nearest first) and non-fatal warnings.
+        Ancestor parameters are filtered to the ensemble's realizations and tagged with their source ensemble.
+        SENSNAME/SENSCASE are kept once, from the ensemble itself.
+
+    Raises:
+        InvalidDataError: If SENSNAME/SENSCASE are not present in all sources or not aligned, or if any
+            (name, group) parameter identifier exists in more than one source.
+    """
+    _verify_sensitivity_parameters_aligned(own_parameters, ancestors_and_parameters, own_ensemble_label)
+
+    ancestors_and_non_sens_parameters = [
+        (ancestor, [param for param in parameters if param.name not in SENSITIVITY_PARAMETER_NAMES])
+        for ancestor, parameters in ancestors_and_parameters
+    ]
+    _verify_no_conflicting_parameters(own_parameters, ancestors_and_non_sens_parameters, own_ensemble_label)
+
+    own_realizations = {real for param in own_parameters for real in param.realizations}
+
+    merged_parameters = list(own_parameters)
+    warnings: list[str] = []
+    for (ancestor, all_ancestor_parameters), (_, ancestor_parameters) in zip(
+        ancestors_and_parameters, ancestors_and_non_sens_parameters
+    ):
+        ancestor_realizations = {real for param in all_ancestor_parameters for real in param.realizations}
+        missing_realizations = sorted(own_realizations - ancestor_realizations)
+        if missing_realizations:
+            warnings.append(
+                f"Restart ensemble {_ancestor_label(ancestor)} does not have realization(s) "
+                f"{', '.join(str(real) for real in missing_realizations)}; parameters from the restart ensemble "
+                "have no values for these realizations."
+            )
+
+        source_ensemble = ParameterSourceEnsemble(
+            case_uuid=ancestor.case_uuid,
+            case_name=ancestor.case_name,
+            ensemble_name=ancestor.ensemble_name,
+        )
+        for param in ancestor_parameters:
+            merged_parameters.append(_filter_parameter_to_realizations(param, own_realizations, source_ensemble))
+
+    return merged_parameters, warnings
+
+
+def _filter_parameter_to_realizations(
+    parameter: EnsembleParameter, realizations: set[int], source_ensemble: ParameterSourceEnsemble
+) -> EnsembleParameter:
+    kept_indices = [idx for idx, real in enumerate(parameter.realizations) if real in realizations]
+    filtered_values = cast(list[float] | list[int] | list[str], [parameter.values[idx] for idx in kept_indices])
+    return replace(
+        parameter,
+        realizations=[parameter.realizations[idx] for idx in kept_indices],
+        values=filtered_values,
+        is_constant=len(set(filtered_values)) == 1,
+        source_ensemble=source_ensemble,
+    )
+
+
+def _verify_sensitivity_parameters_aligned(
+    own_parameters: list[EnsembleParameter],
+    ancestors_and_parameters: list[tuple[RestartAncestor, list[EnsembleParameter]]],
+    own_ensemble_label: str,
+) -> None:
+    own_sens_parameters = _get_sensitivity_parameters_by_name(own_parameters)
+
+    error_messages: list[str] = []
+    for ancestor, ancestor_parameters in ancestors_and_parameters:
+        ancestor_label = _ancestor_label(ancestor)
+        ancestor_sens_parameters = _get_sensitivity_parameters_by_name(ancestor_parameters)
+
+        problems: list[str] = []
+        for sens_name in SENSITIVITY_PARAMETER_NAMES:
+            own_param = own_sens_parameters.get(sens_name)
+            ancestor_param = ancestor_sens_parameters.get(sens_name)
+            if own_param is not None and ancestor_param is None:
+                problems.append(f"{sens_name} is missing in {ancestor_label}")
+            elif own_param is None and ancestor_param is not None:
+                problems.append(f"{sens_name} is missing in {own_ensemble_label}")
+            elif own_param is not None and ancestor_param is not None:
+                ancestor_values_by_real = dict(zip(ancestor_param.realizations, ancestor_param.values))
+                differing_count = sum(
+                    1
+                    for real, value in zip(own_param.realizations, own_param.values)
+                    if real in ancestor_values_by_real and ancestor_values_by_real[real] != value
+                )
+                if differing_count > 0:
+                    problems.append(f"{sens_name} differs on {differing_count} realization(s)")
+
+        if problems:
+            error_messages.append(
+                f"Sensitivity parameters (SENSNAME/SENSCASE) differ between {own_ensemble_label} and restart "
+                f"ensemble {ancestor_label}: {'; '.join(problems)}."
+            )
+
+    if error_messages:
+        raise InvalidDataError("\n".join(error_messages), Service.SUMO)
+
+
+def _get_sensitivity_parameters_by_name(parameters: list[EnsembleParameter]) -> dict[str, EnsembleParameter]:
+    sens_parameters: dict[str, EnsembleParameter] = {}
+    for param in parameters:
+        if param.name in SENSITIVITY_PARAMETER_NAMES and param.name not in sens_parameters:
+            sens_parameters[param.name] = param
+    return sens_parameters
+
+
+def _verify_no_conflicting_parameters(
+    own_parameters: list[EnsembleParameter],
+    ancestors_and_parameters: list[tuple[RestartAncestor, list[EnsembleParameter]]],
+    own_ensemble_label: str,
+) -> None:
+    labelled_sources: list[tuple[str, list[EnsembleParameter]]] = [(own_ensemble_label, own_parameters)]
+    labelled_sources.extend(
+        (_ancestor_label(ancestor), parameters) for ancestor, parameters in ancestors_and_parameters
+    )
+
+    source_labels_by_ident: dict[tuple[str, str | None], list[str]] = {}
+    for label, parameters in labelled_sources:
+        for ident in dict.fromkeys((param.name, param.group_name) for param in parameters):
+            source_labels_by_ident.setdefault(ident, []).append(label)
+
+    conflicting_idents_by_sources: dict[tuple[str, ...], list[str]] = {}
+    for (name, group_name), labels in source_labels_by_ident.items():
+        if len(labels) > 1:
+            ident_str = f"{group_name}/{name}" if group_name else name
+            conflicting_idents_by_sources.setdefault(tuple(labels), []).append(ident_str)
+
+    if not conflicting_idents_by_sources:
+        return
+
+    conflict_descriptions = [
+        f"parameter(s) {', '.join(idents)} exist in {_describe_sources(list(labels))}"
+        for labels, idents in conflicting_idents_by_sources.items()
+    ]
+    raise InvalidDataError(
+        f"Cannot combine parameters from restart ensembles: {'; '.join(conflict_descriptions)}. "
+        "Rename or remove the duplicates.",
+        Service.SUMO,
+    )
+
+
+def _describe_sources(labels: list[str]) -> str:
+    if len(labels) == 2:
+        return f"both {labels[0]} and {labels[1]}"
+    return f"all of {', '.join(labels[:-1])} and {labels[-1]}"
 
 
 def _create_ensemble_sensitivities(
