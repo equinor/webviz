@@ -4703,23 +4703,41 @@ export type GetDeltaSurfaceDataData_api = {
     path?: never;
     query: {
         /**
-         * Surf A Addr Str
+         * Surf Addr Str
          *
-         * Address string of surface A, supported types: *REAL*, *OBS* and *STAT*
+         * Surface address string for the comparison ensemble and monitor time, supported address types are *REAL* and *STAT*
          */
-        surf_a_addr_str: string;
+        surf_addr_str: string;
         /**
-         * Surf B Addr Str
+         * Reference Case Uuid
          *
-         * Address string of surface B, supported types: *REAL*, *OBS* and *STAT*
+         * Case uuid of the reference ensemble, must be given together with reference_ensemble_name
          */
-        surf_b_addr_str: string;
+        reference_case_uuid?: string | null;
+        /**
+         * Reference Ensemble Name
+         *
+         * Name of the reference ensemble, must be given together with reference_case_uuid
+         */
+        reference_ensemble_name?: string | null;
+        /**
+         * Base Iso Time Or Interval
+         *
+         * Base time or interval to subtract from the monitor time in the address
+         */
+        base_iso_time_or_interval?: string | null;
         /**
          * Data Format
          *
          * Format of binary data in the response
          */
         data_format?: "float" | "png";
+        /**
+         * Delete Task
+         *
+         * If true, deletes the server-side task for this selection. Nothing to delete for realization addresses
+         */
+        delete_task?: boolean;
         /**
          * Resample To Def Str
          *
@@ -4746,7 +4764,11 @@ export type GetDeltaSurfaceDataResponses_api = {
      *
      * Successful Response
      */
-    200: Array<SurfaceDataFloat_api>;
+    200:
+        | LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api
+        | LroInProgressResp_api
+        | LroFailureResp_api
+        | LroCommandResp_api;
 };
 
 export type GetDeltaSurfaceDataResponse_api = GetDeltaSurfaceDataResponses_api[keyof GetDeltaSurfaceDataResponses_api];
