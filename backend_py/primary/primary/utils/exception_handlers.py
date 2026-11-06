@@ -13,7 +13,12 @@ from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT, HTTP_500_INTERNAL_S
 
 from webviz_services.service_exceptions import ServiceLayerException
 
-ROOT_LOGGER = logging.getLogger()
+# Setup a dedicated logger for exceptions in the primary module
+# Use an unconventional logger name to clearly separate exception logs from other logs
+EXCEPTIONS_LOGGER = logging.getLogger("primary.EXCEPTIONS")
+
+# Separator used to frame embedded tracebacks in log messages.
+_TRACEBACK_SEPARATOR = "-" * 70
 
 
 def my_http_exception_handler(request: Request, exc: StarletteHTTPException) -> Response | JSONResponse:
@@ -24,16 +29,16 @@ def my_http_exception_handler(request: Request, exc: StarletteHTTPException) -> 
     # Usually we would pass exc_info to the logger so that the telemetry will see this as an exception.
     # This generates quite a bit of noise in the log, so try an alternative approach where we explicitly
     # record the exception on the telemetry span below instead
+
     route = _make_route_string(request)
     exc_name = _get_exception_name(exc)
-    exc_location = _get_exception_location(exc)
-    # ROOT_LOGGER.error(f"[EXC] FastAPI HTTP exception in {route} -> {exc_name}: {str(exc)}", exc_info=exc)
-    ROOT_LOGGER.error(
+    exc_raise_location = _make_raise_location_string(exc)
+    EXCEPTIONS_LOGGER.error(
         f"[EXC] FastAPI HTTP exception in {route} -> {exc_name}: {str(exc)}\n"
-        f"Location of HTTP exception:\n  {exc_location}"
+        f"Location of HTTP exception:\n  {exc_raise_location}"
     )
 
-    # Try and record the exception on the span
+    # Record the exception on the span
     curr_span = trace.get_current_span()
     curr_span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
     curr_span.record_exception(exc)
@@ -86,11 +91,9 @@ def my_request_validation_error_handler(request: Request, exc: RequestValidation
     exc_name = _get_exception_name(exc)
     message = f"{len(simplified_err_arr)} validation error(s): {json.dumps(simplified_err_arr)}"
 
-    # We don't pass along the exception object to the logger here since as of december 2023, the array format of
-    # the contained errors seems to cause problems with the telemetry instrumentation.
-    ROOT_LOGGER.error(f"[EXC] FastAPI validation exception in {route} -> {exc_name}: {message}")
+    EXCEPTIONS_LOGGER.error(f"[EXC] FastAPI validation exception in {route} -> {exc_name}: {message}")
 
-    # Still, try and record the exception on the telemetry span
+    # Record the full exception on the telemetry span
     curr_span = trace.get_current_span()
     curr_span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
     curr_span.record_exception(exc)
@@ -107,11 +110,19 @@ def my_request_validation_error_handler(request: Request, exc: RequestValidation
 
 
 def service_layer_exception_handler(request: Request, exc: ServiceLayerException) -> JSONResponse:
-    # Log error with the exception message, both for the benefit of the console log itself and to propagate
-    # the exception to telemetry. For telemetry, to see this as an exception, exc_info must be passed
+    # For the logging, the traceback is embedded as text so it shows in the console log.
+    # We deliberately don't pass exc_info when logging since that would create an exception entry in
+    # telemetry in addition to the one we record on the span.
+
     route = _make_route_string(request)
     exc_name = _get_exception_name(exc)
-    ROOT_LOGGER.error(f"[EXC] Service exception in {route} -> {exc_name}: {str(exc)}", exc_info=exc)
+    exc_traceback_str = _format_exception_for_log(exc)
+    EXCEPTIONS_LOGGER.error(f"[EXC] Service exception in {route} -> {exc_name}: {str(exc)}\n{exc_traceback_str}")
+
+    # Record full exception details on the telemetry span
+    curr_span = trace.get_current_span()
+    curr_span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
+    curr_span.record_exception(exc)
 
     return JSONResponse(
         status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -126,10 +137,17 @@ def service_layer_exception_handler(request: Request, exc: ServiceLayerException
 
 
 def catch_all_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    # Log error with the exception message + exc_info for the telemetry
+    # Log error with the full exception traceback as a long string here
+    # Note that we don't pass exc_info to the logger here, to avoid creating a duplicate exception entry in telemetry.
+    #
+    # Also note that for the unhandled exceptions, we don't record any exception on the telemetry span, since as of
+    # version 1.8.10 of azure-monitor-opentelemetry, the instrumentation for FastApi does this automatically, and
+    # there seems to be no readily available way of disabling it in the instrumentation.
+
     route = _make_route_string(request)
     exc_name = _get_exception_name(exc)
-    ROOT_LOGGER.error(f"[EXC] Unhandled exception in {route} -> {exc_name}: {str(exc)}", exc_info=exc)
+    exc_traceback_str = _format_exception_for_log(exc)
+    EXCEPTIONS_LOGGER.error(f"[EXC] Unhandled exception in {route} -> {exc_name}: {str(exc)}\n{exc_traceback_str}")
 
     # Don't leak any information to frontend
     return JSONResponse(
@@ -149,11 +167,22 @@ def _get_exception_name(exc: Exception) -> str:
 
 
 def _make_route_string(request: Request) -> str:
+    # Construct a string representing the HTTP method and the request path for logging purposes.
+    # Does not include query parameters or the domain.
     return f"{request.method} {request.url.path}"
 
 
-def _get_exception_location(exc: Exception) -> str:
-    # Get the last frame where the exception occurred
+def _format_exception_for_log(exc: Exception) -> str:
+    # Format the exception as a string suitable for logging.
+    # Includes the full traceback surrounded by separator lines so it stands out in the console log.
+    # Note that the string returned by format_exception() already ends with a newline.
+    traceback_str = "".join(traceback.format_exception(exc))
+    return f"{_TRACEBACK_SEPARATOR}\n{traceback_str}{_TRACEBACK_SEPARATOR}"
+
+
+def _make_raise_location_string(exc: Exception) -> str:
+    # Construct a string representing the location where the exception was raised.
+    # Returns a single line string with the filename, line number, and function name.
     tb = exc.__traceback__
     frame: traceback.FrameSummary = traceback.extract_tb(tb)[-1]
     return f'file: "{frame.filename}", line: {frame.lineno}, in {frame.name}'
