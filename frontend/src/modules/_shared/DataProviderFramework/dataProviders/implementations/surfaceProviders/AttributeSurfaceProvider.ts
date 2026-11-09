@@ -12,7 +12,7 @@ import {
     getSurfaceDataOptions,
 } from "@api";
 import { lroProgressBus } from "@framework/LroProgressBus";
-import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
+import { wrapLongRunningQueryWithWarnings } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import type {
@@ -26,6 +26,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import { SurfaceAddressBuilder, dedupeSurfaceAttributes, isSameAttribute } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr, type AnySurfaceAddress } from "@modules/_shared/Surface/surfaceAddress";
+import { propagateWarningsToStatusWriter } from "@modules/_shared/utils/propagateWarningsToStatusWriter";
 
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 import {
@@ -379,6 +380,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
             fetchQuery,
             setProgressMessage,
             onFetchCancelOrFinish,
+            getStatusWriter,
         } = params;
 
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
@@ -467,17 +469,16 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
                 resample_to_def_str: null,
             },
         };
-        const queryKey = getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs);
 
         // For now use just a fixed delay and max duration in seconds
         // Maybe later extend delay/backoff to include:
         //  * backoff: none, linear, exponential
         //  * maxDelayS - maximum delay for linear or exponential backoff
         //  * jitter
-        const queryOptions = wrapLongRunningQuery({
+        const queryOptions = wrapLongRunningQueryWithWarnings({
             queryFn: getStatisticalSurfaceDataHybrid,
             queryFnArgs: apiFunctionArgs,
-            queryKey: queryKey,
+            queryKeyFn: getStatisticalSurfaceDataHybridQueryKey,
             delayBetweenPollsSecs: 1.0,
             maxTotalDurationSecs: 120,
         });
@@ -485,15 +486,18 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
         function handleTaskProgress(progressMessage: string | null) {
             setProgressMessage(progressMessage);
         }
-        const unsubscribe = lroProgressBus.subscribe(hashKey(queryKey), handleTaskProgress);
+        const unsubscribe = lroProgressBus.subscribe(hashKey(queryOptions.queryKey), handleTaskProgress);
         onFetchCancelOrFinish(() => {
             unsubscribe();
         });
 
-        const promise = fetchQuery({ ...queryOptions }).then((data) => ({
-            format: this._dataFormat,
-            surfaceData: transformSurfaceData(data),
-        }));
+        const promise = fetchQuery({ ...queryOptions }).then((data) => {
+            propagateWarningsToStatusWriter(data.warnings, getStatusWriter());
+            return {
+                format: this._dataFormat,
+                surfaceData: transformSurfaceData(data.value),
+            };
+        });
 
         return promise as Promise<SurfaceData>;
     }

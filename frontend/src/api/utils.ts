@@ -15,7 +15,8 @@ type SdkFunction<TOptions, TData> = (
     options: TOptions & { throwOnError: true },
 ) => PromiseLike<{ data: TData; headers: unknown }>;
 
-function parseWarnings(headers: unknown): string[] {
+/** Parses the warnings from the response headers of an SDK call */
+export function parseWarnings(headers: unknown): string[] {
     // Axios normalizes response header names to lower case
     const headerValue = (headers as Record<string, unknown> | undefined)?.[WARNINGS_RESPONSE_HEADER.toLowerCase()];
     if (typeof headerValue !== "string") {

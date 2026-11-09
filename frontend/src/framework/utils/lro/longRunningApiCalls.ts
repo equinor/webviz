@@ -5,8 +5,14 @@ import type { UseQueryOptions } from "@tanstack/react-query";
 import { hashKey } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 
-import { client } from "@api";
-import type { LroFailureResp_api, LroInProgressResp_api, HTTPValidationError_api, LroCommandResp_api } from "@api";
+import { ALLOW_WARNINGS_REQUEST_HEADER, client, parseWarnings } from "@api";
+import type {
+    DataWithWarnings,
+    LroFailureResp_api,
+    LroInProgressResp_api,
+    HTTPValidationError_api,
+    LroCommandResp_api,
+} from "@api";
 import type { RequestResult } from "@api/client";
 import { lroProgressBus } from "@framework/LroProgressBus";
 
@@ -35,13 +41,59 @@ export class LroError extends Error {
  * - maxTotalDurationSecs: The maximum total duration to poll before timing out in seconds. Default is 60 seconds.
  * @returns
  */
-export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly unknown[]>({
+export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly unknown[]>(
+    args: WrapLongRunningQueryArgs<TArgs, TData> & { queryKey: TQueryKey },
+): UseQueryOptions<TData, Error, TData, TQueryKey> {
+    return createLongRunningQueryOptions<TArgs, TData, TData, TQueryKey>({ ...args, mapSuccess: (result) => result });
+}
+
+/**
+ * Same as `wrapLongRunningQuery`, but opts in to warnings from the back-end. Tells the back-end that warnings are
+ * allowed and returns the result together with the warnings reported by the back-end.
+ *
+ * Only the response that completes the operation can carry warnings. Responses for in-progress polls never do.
+ * The query key is made from the arguments including the warnings header, so it never collides with the key of
+ * the same call made through `wrapLongRunningQuery`.
+ *
+ * @param options - Same as for `wrapLongRunningQuery`, except that the query key is given as a function. It must be the
+ * generated query key function matching the query function, e.g. `getStatisticalSurfaceDataHybridQueryKey`.
+ */
+export function wrapLongRunningQueryWithWarnings<
+    TArgs extends { headers?: unknown },
+    TData,
+    TQueryKey extends readonly unknown[],
+>({
+    queryFnArgs,
+    queryKeyFn,
+    ...rest
+}: Omit<WrapLongRunningQueryArgs<TArgs, TData>, "queryKey" | "queryFnArgs"> & {
+    queryFnArgs: TArgs;
+    queryKeyFn: (args: TArgs) => TQueryKey;
+}): UseQueryOptions<DataWithWarnings<TData>, Error, DataWithWarnings<TData>, TQueryKey> {
+    const argsWithHeader = {
+        ...queryFnArgs,
+        headers: { ...(queryFnArgs.headers as object | undefined), [ALLOW_WARNINGS_REQUEST_HEADER]: "true" },
+    };
+
+    return createLongRunningQueryOptions({
+        ...rest,
+        queryFnArgs: argsWithHeader,
+        queryKey: queryKeyFn(argsWithHeader),
+        mapSuccess: (result, response) => ({ value: result, warnings: parseWarnings(response.headers) }),
+    });
+}
+
+function createLongRunningQueryOptions<TArgs, TData, TResult, TQueryKey extends readonly unknown[]>({
     queryFn,
     queryFnArgs,
     queryKey,
+    mapSuccess,
     delayBetweenPollsSecs = 1,
     maxTotalDurationSecs = 60,
-}: WrapLongRunningQueryArgs<TArgs, TData> & { queryKey: TQueryKey }): UseQueryOptions<TData, Error, TData, TQueryKey> {
+}: Omit<WrapLongRunningQueryArgs<TArgs, TData>, "queryKey"> & {
+    queryKey: TQueryKey;
+    mapSuccess: MapSuccess<TData, TResult>;
+}): UseQueryOptions<TResult, Error, TResult, TQueryKey> {
     const busKey = hashKey(queryKey);
 
     // eslint-disable-next-line @tanstack/query/exhaustive-deps -- No good way to enforce this; we'll assume the generated open-api key is being used, which means it should include all necessary keys
@@ -75,7 +127,7 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
                     if (data?.result === undefined) {
                         throw new LroError("Missing result in successful response", data);
                     }
-                    return data.result;
+                    return mapSuccess(data.result, response);
                 }
 
                 if (data.response_type === "LroFailureResp") {
@@ -96,8 +148,9 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
                 if (data.response_type === "LroInProgressResp" && data.task_id) {
                     lroProgressBus.publish(busKey, data.progress_message ?? null);
 
-                    return pollUntilDone<TData>({
+                    return pollUntilDone<TData, TResult>({
                         busKey,
+                        mapSuccess,
                         pollResource: data.poll_url
                             ? {
                                   resourceType: "url",
@@ -181,6 +234,8 @@ type LongRunningRequestResult<TData> = RequestResult<
     false
 >;
 
+type MapSuccess<TData, TResult> = (result: TData, response: { headers?: unknown }) => TResult;
+
 type QueryFn<TArgs, TData> = (options: TArgs) => LongRunningRequestResult<TData>;
 
 interface WrapLongRunningQueryArgs<TArgs, TData> {
@@ -203,8 +258,9 @@ type PollResource<TArgs, TData> =
           options: TArgs;
       };
 
-async function pollUntilDone<T>(options: {
+async function pollUntilDone<T, TResult>(options: {
     busKey: string;
+    mapSuccess: MapSuccess<T, TResult>;
     // The URL to poll for the long-running operation status or the original query function if polled from same endpoint
     pollResource: PollResource<any, T>;
     // Not used yet, but possibly required for canceling in the future
@@ -213,7 +269,7 @@ async function pollUntilDone<T>(options: {
     maxTotalDurationSecs: number;
     signal?: AbortSignal;
     delayStrategy?: BackoffStrategy;
-}): Promise<T> {
+}): Promise<TResult> {
     const {
         pollResource,
         delayBetweenPollsSecs,
@@ -299,7 +355,7 @@ async function pollUntilDone<T>(options: {
             }
 
             if (data.response_type === "LroSuccessResp") {
-                return data.result as T;
+                return options.mapSuccess(data.result as T, response);
             }
 
             if (data.response_type === "LroFailureResp") {

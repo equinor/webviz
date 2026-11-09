@@ -12,7 +12,7 @@ import {
     type Options,
 } from "@api";
 import { lroProgressBus } from "@framework/LroProgressBus";
-import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
+import { wrapLongRunningQueryWithWarnings } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
@@ -26,6 +26,7 @@ import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
+import { propagateWarningsToStatusWriter } from "@modules/_shared/utils/propagateWarningsToStatusWriter";
 
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 import {
@@ -241,6 +242,7 @@ export class InitialFluidContactSurfaceProvider implements CustomDataProviderImp
             fetchQuery,
             setProgressMessage,
             onFetchCancelOrFinish,
+            getStatusWriter,
         } = params;
         const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
         const surfaceName = assertNonNull(getSetting(Setting.SURFACE_NAME), "No surface selected");
@@ -301,20 +303,22 @@ export class InitialFluidContactSurfaceProvider implements CustomDataProviderImp
                 resample_to_def_str: null,
             },
         };
-        const queryKey = getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs);
-        const queryOptions = wrapLongRunningQuery({
+        const queryOptions = wrapLongRunningQueryWithWarnings({
             queryFn: getStatisticalSurfaceDataHybrid,
             queryFnArgs: apiFunctionArgs,
-            queryKey,
+            queryKeyFn: getStatisticalSurfaceDataHybridQueryKey,
             delayBetweenPollsSecs: 1,
             maxTotalDurationSecs: 120,
         });
-        const unsubscribe = lroProgressBus.subscribe(hashKey(queryKey), setProgressMessage);
+        const unsubscribe = lroProgressBus.subscribe(hashKey(queryOptions.queryKey), setProgressMessage);
         onFetchCancelOrFinish(unsubscribe);
 
-        return fetchQuery({ ...queryOptions }).then((data) => ({
-            format: SurfaceDataFormat.FLOAT,
-            surfaceData: transformSurfaceData(data),
-        })) as Promise<SurfaceData>;
+        return fetchQuery({ ...queryOptions }).then((data) => {
+            propagateWarningsToStatusWriter(data.warnings, getStatusWriter());
+            return {
+                format: SurfaceDataFormat.FLOAT,
+                surfaceData: transformSurfaceData(data.value),
+            };
+        }) as Promise<SurfaceData>;
     }
 }

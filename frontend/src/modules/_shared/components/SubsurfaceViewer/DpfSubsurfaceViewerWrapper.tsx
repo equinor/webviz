@@ -191,6 +191,10 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         statusWriter.addError(message);
     }
 
+    for (const message of props.visualizationAssemblerProduct.aggregatedWarningMessages) {
+        statusWriter.addWarning(message);
+    }
+
     for (const message of props.visualizationAssemblerProduct.aggregatedActionRequiredMessages) {
         statusWriter.flagActionRequired(message);
     }

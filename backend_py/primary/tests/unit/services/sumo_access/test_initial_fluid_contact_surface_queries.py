@@ -7,7 +7,11 @@ from fmu.sumo.explorer.explorer import SearchContext
 from webviz_services.sumo_access import surface_access
 from webviz_services.service_exceptions import InvalidParameterError, MultipleDataMatchesError
 from webviz_services.sumo_access.queries.surface_queries import SurfInfo, SurfTimeType
-from webviz_services.sumo_access.surface_access import SurfaceAccess, _build_surface_meta_arr
+from webviz_services.sumo_access.surface_access import (
+    SurfaceAccess,
+    _build_surface_meta_arr,
+    _make_missing_source_realizations_warnings,
+)
 from webviz_services.sumo_access.surface_search_context import (
     apply_attribute_filter,
     time_or_interval_str_to_sumo_time_filter,
@@ -245,3 +249,12 @@ def test_generic_surface_metadata_excludes_initial_fluid_contact_standard_result
     )
 
     assert [item.name for item in result] == ["Dynamic contact"]
+
+
+def test_missing_source_realizations_warnings() -> None:
+    assert _make_missing_source_realizations_warnings(None, [1, 2]) == []
+    assert _make_missing_source_realizations_warnings([1, 2], [2, 1, 3]) == []
+
+    warnings = _make_missing_source_realizations_warnings([1, 2, 5], [1, 2])
+    assert len(warnings) == 1
+    assert "[5]" in warnings[0].message
