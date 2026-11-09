@@ -3,11 +3,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
+from webviz_core_utils.result_warning import ResultWarning
+from webviz_core_utils.result_with_warnings import ResultWithWarnings
 from webviz_services.sumo_access.rft_access import RftAccess
 from webviz_services.sumo_access.observation_access import ObservationAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.add_warnings_middleware import resolve_warnings
 from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.query_string_utils import decode_uint_list_str
 
@@ -34,7 +37,7 @@ async def get_rft_table_definition(
 
 
 @router.get("/rft_realization_data")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.LONG, result_version=1)
 async def get_rft_realization_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -55,12 +58,14 @@ async def get_rft_realization_data(
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
     access = RftAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    data = await access.get_rft_well_realization_data_async(
+    warnings: list[ResultWarning] = []
+    result = await access.get_rft_well_realization_data_async(
         well_name=well_name,
         response_name=response_name,
         timestamps_utc_ms=timestamps_utc_ms,
         realizations=realizations,
     )
+    data = result.get_value(propagate_warnings_to=warnings)
 
     ret_data: list[schemas.RftRealizationData] = []
     for item in data:
@@ -74,7 +79,8 @@ async def get_rft_realization_data(
             )
         )
 
-    return ret_data
+    # Report warnings (e.g. missing realizations) to the client if it allows warnings, otherwise raise them as an exception
+    return resolve_warnings(ResultWithWarnings(ret_data, warnings))
 
 
 @router.get("/rft_observations")

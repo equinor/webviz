@@ -6,10 +6,13 @@ from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.result_warning import ResultWarning
+from webviz_core_utils.result_with_warnings import ResultWithWarnings
 from webviz_services.service_exceptions import (
     NoDataError,
     MultipleDataMatchesError,
 )
+from webviz_services.service_warnings import make_missing_realizations_warning
 from webviz_services.services_enum import Service
 
 from ._arrow_table_loader import ArrowTableLoader
@@ -88,8 +91,13 @@ class RftAccess:
         response_name: str,
         timestamps_utc_ms: Optional[Sequence[int]],
         realizations: Optional[Sequence[int]],
-    ) -> List[RftRealizationData]:
+    ) -> ResultWithWarnings[List[RftRealizationData]]:
+        """
+        Get RFT data per realization for a well and response.
 
+        Requested realizations without RFT data in the ensemble are left out and reported as a warning.
+        """
+        warnings: list[ResultWarning] = []
         timer = PerfMetrics()
         column_names = [response_name, "DEPTH"]
 
@@ -100,7 +108,18 @@ class RftAccess:
 
         timer.record_lap("load_aggregated_arrow_table")
 
-        pl_table = cast(pl.DataFrame, pl.from_arrow(table)).lazy()
+        pl_df = cast(pl.DataFrame, pl.from_arrow(table))
+
+        if realizations is not None:
+            missing_realizations = set(realizations) - set(pl_df["REAL"].unique().to_list())
+            if missing_realizations:
+                warnings.append(
+                    make_missing_realizations_warning(
+                        sorted(missing_realizations), Service.SUMO, data_type="RFT data"
+                    )
+                )
+
+        pl_table = pl_df.lazy()
 
         if realizations is not None:
             pl_table = pl_table.filter(pl.col("REAL").is_in(realizations))
@@ -129,4 +148,4 @@ class RftAccess:
         ret_arr_rows = result_table.iter_rows(named=True)
         ret_arr = [RftRealizationData(**row) for row in ret_arr_rows]
         LOGGER.debug(f"{timer.to_string()}, {self._case_uuid=}, {self._ensemble_name=}, {well_name=}, {response_name=}")
-        return ret_arr
+        return ResultWithWarnings(ret_arr, warnings)
