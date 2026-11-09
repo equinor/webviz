@@ -287,11 +287,11 @@ function SessionTable(props: SessionTableProps) {
 
     React.useEffect(
         function maybeSyncSelectedSessionsEffect() {
-            const fullyLoaded = sessionsQuery.isSuccess && !sessionsQuery.isFetching && !sessionsQuery.hasNextPage;
+            const settled = sessionsQuery.isSuccess && !sessionsQuery.isFetching;
             const synced = props.selectedSessions.flatMap((selected) => {
                 const fresh = tableData.find((s) => s.id === selected.id);
-                // Missing sessions may be on unloaded pages until all results are fetched
-                if (!fresh) return fullyLoaded ? [] : [selected];
+                // Also drop entries that may exist on unloaded pages: rows the user can't see must not stay deletable
+                if (!fresh) return settled ? [] : [selected];
                 return [fresh];
             });
             const changed =
@@ -307,7 +307,6 @@ function SessionTable(props: SessionTableProps) {
             props.selectedSessions,
             sessionsQuery.isSuccess,
             sessionsQuery.isFetching,
-            sessionsQuery.hasNextPage,
             tableData,
         ],
     );

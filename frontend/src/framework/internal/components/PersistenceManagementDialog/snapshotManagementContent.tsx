@@ -382,11 +382,11 @@ function SnapshotTable(props: SnapshotTableProps) {
 
     React.useEffect(
         function maybeSyncSelectedSnapshotsEffect() {
-            const fullyLoaded = snapshotsQuery.isSuccess && !snapshotsQuery.isFetching && !snapshotsQuery.hasNextPage;
+            const settled = snapshotsQuery.isSuccess && !snapshotsQuery.isFetching;
             const synced = props.selectedSnapshots.flatMap((selected) => {
                 const fresh = tableData.find((s) => s.snapshotId === selected.snapshotId);
-                // Missing snapshots may be on unloaded pages until all results are fetched
-                if (!fresh) return fullyLoaded ? [] : [selected];
+                // Also drop entries that may exist on unloaded pages: rows the user can't see must not stay deletable
+                if (!fresh) return settled ? [] : [selected];
                 return [fresh];
             });
             const changed =
@@ -403,7 +403,6 @@ function SnapshotTable(props: SnapshotTableProps) {
             tableData,
             snapshotsQuery.isSuccess,
             snapshotsQuery.isFetching,
-            snapshotsQuery.hasNextPage,
         ],
     );
 
