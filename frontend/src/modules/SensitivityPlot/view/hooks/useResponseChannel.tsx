@@ -1,20 +1,17 @@
 import { Input } from "@mui/icons-material";
 
-import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ViewContext } from "@framework/ModuleContext";
-import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Tag } from "@lib/components/Tag";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
-import type { EnsemblePerRealizationResponse } from "@modules/_shared/SensitivityProcessing/types";
 import type { Interfaces } from "@modules/SensitivityPlot/interfaces";
 
+import { channelContentsToResponses, type ChannelResponse } from "../utils/channelContentsToResponses";
+
 export interface ResponseChannelData {
-    ensemblePerRealResponse: EnsemblePerRealizationResponse | null;
-    channelEnsemble: RegularEnsemble | null;
-    displayName: string | null;
+    responses: ChannelResponse[];
     warningContent: React.ReactNode | null;
 }
 
@@ -32,9 +29,7 @@ export function useResponseChannel(
     const hasChannel = !!responseReceiver.channel;
     if (!hasChannel) {
         return {
-            ensemblePerRealResponse: null,
-            channelEnsemble: null,
-            displayName: null,
+            responses: [],
             warningContent: (
                 <ContentWarning>
                     <span>
@@ -50,9 +45,7 @@ export function useResponseChannel(
 
     if (!hasChannelContents) {
         return {
-            ensemblePerRealResponse: null,
-            channelEnsemble: null,
-            displayName: responseReceiver.channel?.displayName ?? null,
+            responses: [],
             warningContent: (
                 <ContentWarning>
                     No data received on channel {responseReceiver.channel?.displayName ?? "Unknown"}
@@ -61,43 +54,22 @@ export function useResponseChannel(
         };
     }
 
-    const content = responseReceiver.channel!.contents[0];
+    const { responses, invalidEnsemble } = channelContentsToResponses(responseReceiver.channel!.contents, ensembleSet);
 
-    const ensembleIdentString = content.metaData.ensembleIdentString;
-    const channelEnsemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-
-    if (!channelEnsemble || channelEnsemble instanceof DeltaEnsemble) {
-        const ensembleType = !channelEnsemble ? "Invalid" : "Delta";
+    if (invalidEnsemble) {
         return {
-            ensemblePerRealResponse: null,
-            channelEnsemble: null,
-            displayName: responseReceiver.channel?.displayName ?? null,
+            responses: [],
             warningContent: (
                 <ContentWarning>
-                    <p>{ensembleType} ensemble detected in data channel.</p>
+                    <p>{invalidEnsemble === "missing" ? "Invalid" : "Delta"} ensemble detected in data channel.</p>
                     <p>Unable to compute sensitivity responses.</p>
                 </ContentWarning>
             ),
         };
     }
-    const realizations: number[] = [];
-    const values: number[] = [];
-
-    content.dataArray?.forEach((el) => {
-        realizations.push(el.key as number);
-        values.push(el.value as number);
-    });
-    const ensemblePerRealResponse: EnsemblePerRealizationResponse = {
-        realizations,
-        values,
-        name: content.displayName,
-        unit: "",
-    };
 
     return {
-        ensemblePerRealResponse,
-        channelEnsemble,
-        displayName: responseReceiver.channel?.displayName ?? null,
+        responses,
         warningContent: null,
     };
 }

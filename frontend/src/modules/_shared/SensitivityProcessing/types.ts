@@ -35,6 +35,10 @@ export interface SensitivityResponseDataset {
     sensitivityResponses: SensitivityResponse[];
     referenceSensitivity: string;
     referenceAverage: number;
+    /** False if none of the reference sensitivity's realizations are in the response; nothing is computed then. */
+    hasReferenceData: boolean;
+    /** Sensitivities left out because none of their realizations are in the response (e.g. filtered by the sender). */
+    sensitivitiesWithoutData: string[];
     responseName?: string;
     responseUnit?: string;
 }
