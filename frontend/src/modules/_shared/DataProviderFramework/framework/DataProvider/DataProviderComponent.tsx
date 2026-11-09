@@ -92,7 +92,14 @@ function StartActions(props: StartActionProps): React.ReactNode {
     return (
         <div className="flex items-center">
             <Tooltip content={isExpanded ? "Hide settings" : "Show settings"} side="bottom">
-                <Button onClick={handleToggleExpanded} variant="ghost" tone="neutral" size="small" iconOnly>
+                <Button
+                    onClick={handleToggleExpanded}
+                    aria-label={isExpanded ? "Hide settings" : "Show settings"}
+                    variant="ghost"
+                    tone="neutral"
+                    size="small"
+                    iconOnly
+                >
                     {isExpanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
                 </Button>
             </Tooltip>

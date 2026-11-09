@@ -43,6 +43,7 @@ export function EditName(props: EditItemNameProps): React.ReactNode {
             <div
                 className="group/edit-name gap-x-2xs font-bolder flex min-w-0 grow items-center overflow-hidden"
                 onDoubleClick={handleNameDoubleClick}
+                data-dpf-name
             >
                 {editingName ? (
                     <input

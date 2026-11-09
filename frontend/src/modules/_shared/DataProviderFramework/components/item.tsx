@@ -61,6 +61,7 @@ function Header(props: HeaderProps): React.ReactNode {
                 "gap-x-3xs bg-neutral-canvas border-b-neutral-subtle text-body-sm px-3xs flex h-8 w-full items-center border-b",
                 props.headerClassNames ?? "",
             )}
+            data-dpf-header
         >
             <SortableList.DragHandle>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />

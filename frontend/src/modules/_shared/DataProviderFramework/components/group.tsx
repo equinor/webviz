@@ -85,6 +85,7 @@ function Header(props: HeaderProps): React.ReactNode {
                 },
             )}
             style={props.headerStyle}
+            data-dpf-header
         >
             <SortableList.DragHandle>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />

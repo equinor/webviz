@@ -84,16 +84,21 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
 
 #### Selecting layers and settings in data provider framework modules
 
-Modules built on the data provider framework (e.g. the 2D Viewer) expose stable attributes for tests,
-so stories don't depend on display names that users can edit:
+Modules built on the data provider framework (2D Viewer, 3D Viewer, Intersection, Well log viewer)
+expose stable attributes for tests, so stories don't depend on display names that users can edit:
 
+- `data-dpf-manager` on the layer panel root.
 - `data-dpf-item` (`provider`, `group`, `shared-setting`, `context-boundary`, `delta-surface`) and
   `data-dpf-type` (the data provider type, group type or wrapped setting type, e.g. `DEPTH_SURFACE`,
   `VIEW`, `surfaceName`) on each item in the layer tree.
+- `data-dpf-header` on the panel's and each item's header row, and `data-dpf-name` on editable names.
 - `data-dpf-setting` (the `Setting` enum value, e.g. `representation`) on each setting's value cell,
   and `data-dpf-setting-label` on its label cell.
 
-See `tests/e2e/support/twoDViewerHelpers.ts` for helpers built on these.
+Use the generic helpers in `tests/e2e/support/dpfHelpers.ts` (add menus, settings, renaming,
+expand/collapse, color scales), and keep module specifics in a small per-module file such as
+`tests/e2e/support/twoDViewerHelpers.ts`. For deck.gl based modules, call `suppressMapHover(page)`
+(see `walkthroughHelpers.ts`) to avoid slow hover picking while recording.
 
 #### Running a single story
 
