@@ -356,7 +356,7 @@ function SessionTable(props: SessionTableProps) {
             onChangeColumnSort={setTableSortState}
         >
             <Table.Head sticky>
-                <Table.Column colKey="select" width={60} sortable={false} noPadding />
+                <Table.Column colKey="select" width={60} sortable={false} />
                 <Table.Column colKey="title" widthInPercent={25}>
                     Title
                 </Table.Column>
@@ -452,7 +452,7 @@ function SessionRow(props: SessionRowProps) {
                 onClick={(evt) => evt.stopPropagation()}
                 onDoubleClick={(evt) => evt.stopPropagation()}
             >
-                <div className="px-sm gap-x-3xs flex items-center justify-end">
+                <div className="px-sm gap-x-3xs flex items-center">
                     <Tooltip content="Open session" side="top">
                         <Button
                             variant="ghost"

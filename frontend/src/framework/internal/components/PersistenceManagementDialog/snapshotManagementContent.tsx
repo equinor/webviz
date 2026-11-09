@@ -426,7 +426,7 @@ function SnapshotTable(props: SnapshotTableProps) {
             onChangeColumnSort={setTableSortState}
         >
             <Table.Head sticky>
-                <Table.Column colKey="select" width={60} sortable={false} noPadding />
+                <Table.Column colKey="select" width={60} sortable={false} />
                 <Table.Column
                     colKey="visits"
                     width={60}
@@ -525,7 +525,12 @@ function SnapshotRow(props: SnapshotRowProps) {
             }}
         >
             {/* Stop propagation on the cell, since the checkbox also dispatches a click on its hidden input */}
-            <Table.Cell onClick={(evt) => evt.stopPropagation()} onDoubleClick={(evt) => evt.stopPropagation()}>
+            <Table.Cell
+                onClick={(evt) => evt.stopPropagation()}
+                onDoubleClick={(evt) => evt.stopPropagation()}
+                noPadding
+                layoutClassName="px-sm"
+            >
                 <Checkbox
                     size="small"
                     aria-label={`Select snapshot ${item.snapshotMetadata.title}`}
@@ -580,7 +585,7 @@ function SnapshotRow(props: SnapshotRowProps) {
                 onClick={(evt) => evt.stopPropagation()}
                 onDoubleClick={(evt) => evt.stopPropagation()}
             >
-                <div className="px-sm gap-x-3xs flex items-center justify-end">
+                <div className="px-sm gap-x-3xs flex items-center">
                     <Tooltip content={isDeleted ? "Deleted snapshots cannot be opened" : "Open snapshot"} side="left">
                         <Button
                             variant="ghost"
