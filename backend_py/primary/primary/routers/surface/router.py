@@ -22,6 +22,8 @@ from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_us
 from webviz_services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from webviz_services.surface_query_service.surface_query_service import RealizationSampleResult
 from webviz_services.service_exceptions import ServiceLayerException
+from webviz_services.service_warnings import make_missing_realizations_warning
+from webviz_services.services_enum import Service
 from webviz_services.utils.surfaces_well_trajectory_formation_segments import (
     create_well_trajectory_formation_segments,
     validate_depth_surfaces_for_formation_segments,
@@ -46,6 +48,11 @@ from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, 
 from .surface_address import decode_surf_addr_str
 
 LOGGER = logging.getLogger(__name__)
+
+# TEMP-DEBUG-WARNINGS: Remove before merging!
+_DEBUG_WARNING_CASE_UUID = "2622c673-c682-4981-8163-538fa8bb5e09"
+_DEBUG_WARNING_ENSEMBLE_NAME = "pred"
+_DEBUG_WARNING_REALIZATIONS = [5, 10]
 
 router = APIRouter()
 
@@ -383,6 +390,12 @@ async def get_statistical_surface_data_hybrid(
         warnings: list[ResultWarning] = []
         xtgeo_surf_result = expect_type(maybe_xtgeo_surf, ResultWithWarnings)
         xtgeo_surf: xtgeo.RegularSurface = xtgeo_surf_result.get_value(warnings)
+
+        # TEMP-DEBUG-WARNINGS: Fake warning for testing the warnings flow in front-end. Remove before merging!
+        if addr.case_uuid == _DEBUG_WARNING_CASE_UUID and addr.ensemble_name == _DEBUG_WARNING_ENSEMBLE_NAME:
+            warnings.append(
+                make_missing_realizations_warning(_DEBUG_WARNING_REALIZATIONS, Service.SUMO, data_type="surfaces")
+            )
 
         api_surf_data = _resample_and_convert_to_surface_data_response(
             xtgeo_surf=xtgeo_surf, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
