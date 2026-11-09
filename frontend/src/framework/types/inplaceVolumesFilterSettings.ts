@@ -7,4 +7,5 @@ export type InplaceVolumesFilterSettings = {
     tableNames: string[];
     indicesWithValues: InplaceVolumesIndexWithValues_api[];
     allowIndicesValuesIntersection: boolean;
+    sensitivityCases?: { sensitivityName: string; caseName: string }[];
 };

@@ -5,9 +5,11 @@ import {
     areTableDefinitionSelectionsValidAtom,
     colorByAtom,
     filterAtom,
+    isSensitivityEnsembleSelectionBlockedAtom,
     plotTypeAtom,
     resultNameAtom,
     selectorColumnAtom,
+    sensitivitySelectionAtom,
     subplotByAtom,
 } from "./baseAtoms";
 
@@ -39,5 +41,14 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     (getInterfaceValue, setAtomValue) => {
         const areTableDefinitionSelectionsValid = getInterfaceValue("areTableDefinitionSelectionsValid");
         setAtomValue(areTableDefinitionSelectionsValidAtom, areTableDefinitionSelectionsValid);
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(sensitivitySelectionAtom, getInterfaceValue("sensitivitySelection"));
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(
+            isSensitivityEnsembleSelectionBlockedAtom,
+            getInterfaceValue("isSensitivityEnsembleSelectionBlocked"),
+        );
     },
 ];
