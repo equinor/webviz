@@ -31,7 +31,7 @@ import {
     type PersistResult,
 } from "../persistence/core/persistSessionToBackend";
 
-import { makeSessionDeletionMessage } from "./_components/sessionDeletionMessage";
+import { makeSessionDeletionMessage, type SessionDeletionItem } from "./_components/sessionDeletionMessage";
 import { makeSnapshotDeletionMessage, type SnapshotDeletionItem } from "./_components/snapshotDeletionMessage";
 import { PrivateWorkbenchSession, PrivateWorkbenchSessionTopic } from "./PrivateWorkbenchSession";
 import { removeSessionQueryData, removeSnapshotQueryData, replaceSessionQueryData } from "./utils/crudHelpers";
@@ -1127,22 +1127,18 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     // ========== Deletion Operations ==========
 
-    async deleteSession(sessionId: string): Promise<boolean> {
-        const deletedIds = await this.deleteSessions([sessionId]);
-        return deletedIds.includes(sessionId);
-    }
-
     /**
      * Deletes the given sessions after a single user confirmation.
      * @returns The ids of the sessions that were successfully deleted
      */
-    async deleteSessions(sessionIds: string[]): Promise<string[]> {
-        if (!sessionIds.length) return [];
+    async deleteSessions(items: SessionDeletionItem[]): Promise<string[]> {
+        if (!items.length) return [];
 
+        const sessionIds = items.map((s) => s.sessionId);
         const isPlural = sessionIds.length > 1;
         const result = await ConfirmationService.confirm({
             title: "Are you sure?",
-            message: makeSessionDeletionMessage(sessionIds.length),
+            message: makeSessionDeletionMessage(items),
             actions: [
                 { id: "delete", label: "Yes, delete", color: "danger" },
                 { id: "cancel", label: "No, cancel" },

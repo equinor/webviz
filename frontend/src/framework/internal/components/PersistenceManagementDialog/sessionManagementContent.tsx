@@ -31,6 +31,7 @@ import { tableSortDirToApiSortDir, useInfiniteSessionMetadataQuery } from "./_ut
 import { NEXT_PAGE_THRESHOLD, PENDING_PAGE, PENDING_ROW } from "./constants";
 import { Typography } from "@lib/components/Typography";
 import { Hidden } from "@lib/components/Hidden";
+import { Separator } from "@lib/components/Separator";
 
 export type SessionOverviewContentProps = {
     workbench: Workbench;
@@ -72,7 +73,22 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
 
         setDeletePending(true);
 
-        const deletedIds = await props.workbench.getSessionManager().deleteSessions(selectedSessions.map((s) => s.id));
+        const deletedIds = await props.workbench
+            .getSessionManager()
+            .deleteSessions(selectedSessions.map((s) => ({ sessionId: s.id, title: s.title })));
+        setDeletePending(false);
+
+        if (!deletedIds.length) return;
+
+        setSelectedSessions((prev) => prev.filter((s) => !deletedIds.includes(s.id)));
+    }
+
+    async function deleteSession(session: SessionMetadata_api) {
+        setDeletePending(true);
+
+        const deletedIds = await props.workbench
+            .getSessionManager()
+            .deleteSessions([{ sessionId: session.id, title: session.title }]);
         setDeletePending(false);
 
         if (!deletedIds.length) return;
@@ -91,6 +107,10 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
 
     function handleNewSessionClick() {
         props.workbench.getSessionManager().startNewSession();
+    }
+
+    function handleClearSelectionClick() {
+        setSelectedSessions([]);
     }
 
     return (
@@ -132,12 +152,15 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                     </Tooltip>
                     <span className="grow" />
                     <Hidden hidden={!selectedSessions.length}>
-                        <Typography tone="neutral" size="sm">
-                            {selectedSessions.length} selected session{selectedSessions.length !== 1 ? "s" : ""}
-                        </Typography>
-                        <Button onClick={handleDeselectClick} size="!">
-                            Deselect
-                        </Button>
+                        <span className="gap-x-sm flex items-center">
+                            <Typography tone="neutral" size="sm">
+                                {selectedSessions.length} selected session{selectedSessions.length !== 1 ? "s" : ""}
+                            </Typography>
+                            <Button onClick={handleClearSelectionClick} size="small" variant="ghost">
+                                Clear
+                            </Button>
+                        </span>
+                        <Separator orientation="vertical" />
                     </Hidden>
                     <Tooltip
                         content={
@@ -182,6 +205,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                 onSelectedSessionsChange={setSelectedSessions}
                 onOpenSession={openSession}
                 onEditSession={editSession}
+                onDeleteSession={deleteSession}
             />
             <EditSessionMetadataDialog
                 workbench={props.workbench}
@@ -203,9 +227,12 @@ type SessionTableProps = {
     onSelectedSessionsChange: (sessions: SessionMetadata_api[]) => void;
     onOpenSession: (sessionId: string) => void;
     onEditSession: (session: SessionMetadata_api) => void;
+    onDeleteSession: (session: SessionMetadata_api) => void;
 };
 
 function SessionTable(props: SessionTableProps) {
+    const { onSelectedSessionsChange } = props;
+
     const wrapperRef = React.useRef<HTMLDivElement>(null);
 
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
@@ -258,13 +285,29 @@ function SessionTable(props: SessionTableProps) {
 
     const selectedSessionIds = React.useMemo(() => props.selectedSessions.map((s) => s.id), [props.selectedSessions]);
 
-    const numSelectedLoadedSessions = tableData.filter((s) => selectedSessionIds.includes(s.id)).length;
-    const allLoadedSessionsSelected = tableData.length > 0 && numSelectedLoadedSessions === tableData.length;
-    const someLoadedSessionsSelected = numSelectedLoadedSessions > 0 && !allLoadedSessionsSelected;
-
-    function handleToggleAllSelected(checked: boolean) {
-        props.onSelectedSessionsChange(checked ? tableData : []);
-    }
+    React.useEffect(
+        function maybeDeselectRemovedSessionsEffect() {
+            // Missing sessions may be on unloaded pages until all results are fetched
+            if (!sessionsQuery.isSuccess || sessionsQuery.isFetching || sessionsQuery.hasNextPage) return;
+            const remaining = props.selectedSessions.filter((selected) => {
+                return tableData.some(function matchesSelected(session) {
+                    return session.id === selected.id;
+                });
+            });
+            if (remaining.length !== props.selectedSessions.length) {
+                // Deliberately in an effect: entries can disappear on refetch without any user event to react to
+                onSelectedSessionsChange(remaining);
+            }
+        },
+        [
+            onSelectedSessionsChange,
+            props.selectedSessions,
+            sessionsQuery.isSuccess,
+            sessionsQuery.isFetching,
+            sessionsQuery.hasNextPage,
+            tableData,
+        ],
+    );
 
     function handleToggleSessionSelected(session: SessionMetadata_api, checked: boolean) {
         const otherSessions = props.selectedSessions.filter((s) => s.id !== session.id);
@@ -313,7 +356,7 @@ function SessionTable(props: SessionTableProps) {
             onChangeColumnSort={setTableSortState}
         >
             <Table.Head sticky>
-                <Table.Column colKey="select" width={60} sortable={false} noPadding></Table.Column>
+                <Table.Column colKey="select" width={60} sortable={false} noPadding />
                 <Table.Column colKey="title" widthInPercent={25}>
                     Title
                 </Table.Column>
@@ -326,7 +369,7 @@ function SessionTable(props: SessionTableProps) {
                 <Table.Column colKey="createdAt" width={160}>
                     Created at
                 </Table.Column>
-                <Table.Column colKey="actions" sortable={false} width={80} layoutClassName="text-right">
+                <Table.Column colKey="actions" sortable={false} width={100} layoutClassName="text-right">
                     Actions
                 </Table.Column>
             </Table.Head>
@@ -352,6 +395,7 @@ function SessionTable(props: SessionTableProps) {
                                     onDoubleClick={props.onOpenSession}
                                     onOpen={props.onOpenSession}
                                     onEdit={props.onEditSession}
+                                    onDelete={props.onDeleteSession}
                                 />
                             );
                         }
@@ -371,6 +415,7 @@ type SessionRowProps = {
     onDoubleClick: (sessionId: string) => void;
     onOpen: (sessionId: string) => void;
     onEdit: (session: SessionMetadata_api) => void;
+    onDelete: (session: SessionMetadata_api) => void;
 };
 
 function SessionRow(props: SessionRowProps) {
@@ -423,6 +468,18 @@ function SessionRow(props: SessionRowProps) {
                             onClick={() => props.onEdit(item)}
                         >
                             <Edit style={{ fontSize: 16 }} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip content="Delete session" side="top">
+                        <Button
+                            variant="ghost"
+                            tone="danger"
+                            size="small"
+                            iconOnly
+                            aria-label={`Delete session ${item.title}`}
+                            onClick={() => props.onDelete(item)}
+                        >
+                            <Delete style={{ fontSize: 16 }} />
                         </Button>
                     </Tooltip>
                 </div>

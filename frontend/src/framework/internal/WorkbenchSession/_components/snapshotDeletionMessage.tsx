@@ -1,8 +1,8 @@
-import React from "react";
+import type React from "react";
 
-import { Button } from "@lib/components/Button";
+import { Paragraph } from "@lib/components/Typography/compositions";
 
-const NUM_COLLAPSED_TITLES = 5;
+import { DeletionTitleList } from "./deletionTitleList";
 
 export type SnapshotDeletionItem = {
     snapshotId: string;
@@ -14,58 +14,30 @@ export function makeSnapshotDeletionMessage(
     toRemove: SnapshotDeletionItem[],
 ): React.ReactNode {
     return (
-        <div className="gap-y-sm flex flex-col">
+        <div className="gap-y-lg flex flex-col">
             {toDelete.length > 0 && (
-                <div>
-                    <p>
+                <div className="gap-y-sm flex flex-col">
+                    <Paragraph size="md">
                         <strong>
                             {toDelete.length} {toDelete.length === 1 ? "snapshot" : "snapshots"} you own
                         </strong>{" "}
-                        will be permanently deleted for all users. This cannot be undone:
-                    </p>
-                    <SnapshotTitleList items={toDelete} />
+                        will be permanently deleted for all users. This cannot be undone.
+                    </Paragraph>
+                    <DeletionTitleList items={toDelete.map((s) => ({ id: s.snapshotId, title: s.title }))} />
                 </div>
             )}
             {toRemove.length > 0 && (
-                <p>
+                <Paragraph size="md">
                     <strong>
                         {toRemove.length} {toRemove.length === 1 ? "snapshot" : "snapshots"}
                     </strong>{" "}
                     will be removed from your list. Other users are not affected.
-                </p>
+                </Paragraph>
             )}
             {toDelete.length > 0 && (
-                <p>
+                <Paragraph size="sm" italic tone="neutral">
                     Choose <em>Only remove from my list</em> to keep your snapshots available to others.
-                </p>
-            )}
-        </div>
-    );
-}
-
-function SnapshotTitleList(props: { items: SnapshotDeletionItem[] }): React.ReactNode {
-    const [expanded, setExpanded] = React.useState(false);
-
-    const canExpand = props.items.length > NUM_COLLAPSED_TITLES;
-    const visibleItems = expanded ? props.items : props.items.slice(0, NUM_COLLAPSED_TITLES);
-
-    return (
-        <div className="gap-y-2xs flex flex-col items-start">
-            <ul
-                className={
-                    expanded
-                        ? "pl-xl py-2xs border-neutral-subtle max-h-48 w-full list-disc overflow-y-auto rounded border"
-                        : "pl-xl list-disc"
-                }
-            >
-                {visibleItems.map((item) => (
-                    <li key={item.snapshotId}>{item.title}</li>
-                ))}
-            </ul>
-            {canExpand && (
-                <Button variant="ghost" tone="accent" size="small" onClick={() => setExpanded((prev) => !prev)}>
-                    {expanded ? "Show less" : `Show all ${props.items.length}`}
-                </Button>
+                </Paragraph>
             )}
         </div>
     );

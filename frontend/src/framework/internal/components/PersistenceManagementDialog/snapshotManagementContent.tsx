@@ -34,6 +34,9 @@ import { formatDate } from "@lib/utils/dates";
 
 import { tableSortDirToApiSortDir } from "./_utils";
 import { NEXT_PAGE_THRESHOLD, PENDING_PAGE, PENDING_ROW, QUERY_PAGE_SIZE } from "./constants";
+import { Hidden } from "@lib/components/Hidden";
+import { Separator } from "@lib/components/Separator";
+import { Typography } from "@lib/components/Typography";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {
@@ -119,12 +122,12 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         setTitleFilterValue("");
     }
 
-    async function handleDeleteClick() {
-        if (!selectedSnapshots.length || !userId) return;
+    async function deleteOrRemoveSnapshots(snapshots: SnapshotAccessLog_api[]) {
+        if (!snapshots.length || !userId) return;
 
         // Only snapshots owned by the user, and not already deleted, can be deleted. The rest can only be removed from the list
-        const toDelete = selectedSnapshots.filter((s) => s.snapshotMetadata.ownerId === userId && !s.snapshotDeleted);
-        const toRemove = selectedSnapshots.filter((s) => !toDelete.includes(s));
+        const toDelete = snapshots.filter((s) => s.snapshotMetadata.ownerId === userId && !s.snapshotDeleted);
+        const toRemove = snapshots.filter((s) => !toDelete.includes(s));
         const toDeletionItem = (s: SnapshotAccessLog_api) => ({
             snapshotId: s.snapshotId,
             title: s.snapshotMetadata.title,
@@ -144,8 +147,20 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         setSelectedSnapshots((prev) => prev.filter((s) => !handledIds.includes(s.snapshotId)));
     }
 
+    async function handleDeleteClick() {
+        await deleteOrRemoveSnapshots(selectedSnapshots);
+    }
+
+    async function deleteSnapshot(snapshot: SnapshotAccessLog_api) {
+        await deleteOrRemoveSnapshots([snapshot]);
+    }
+
     async function openSnapshot(snapshotId: string) {
         await props.workbench.getSessionManager().openSnapshot(snapshotId);
+    }
+
+    function handleClearSelectionClick() {
+        setSelectedSnapshots([]);
     }
 
     return (
@@ -193,6 +208,17 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     onCheckedChange={setHideDeletedSnapshots}
                 />
                 <span className="grow" />
+                <Hidden hidden={!selectedSnapshots.length}>
+                    <span className="gap-x-sm flex items-center">
+                        <Typography tone="neutral" size="sm">
+                            {selectedSnapshots.length} selected snapshot{selectedSnapshots.length !== 1 ? "s" : ""}
+                        </Typography>
+                        <Button onClick={handleClearSelectionClick} size="small" variant="ghost">
+                            Clear
+                        </Button>
+                    </span>
+                    <Separator orientation="vertical" />
+                </Hidden>
                 <Tooltip.Provider side="bottom">
                     <Tooltip
                         content={
@@ -237,6 +263,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 refreshActionRef={queryRefreshActionRef}
                 onSelectedSnapshotsChange={setSelectedSnapshots}
                 onOpenSnapshot={openSnapshot}
+                onDeleteSnapshot={deleteSnapshot}
             />
         </div>
     );
@@ -254,6 +281,7 @@ type SnapshotTableProps = {
 
     onSelectedSnapshotsChange: (snapshots: SnapshotAccessLog_api[]) => void;
     onOpenSnapshot: (snapshotId: string) => void;
+    onDeleteSnapshot: (snapshot: SnapshotAccessLog_api) => void;
 };
 
 function SnapshotTable(props: SnapshotTableProps) {
@@ -361,6 +389,7 @@ function SnapshotTable(props: SnapshotTableProps) {
                 tableData.some((s) => s.snapshotId === selected.snapshotId),
             );
             if (remaining.length !== props.selectedSnapshots.length) {
+                // Deliberately in an effect: entries can disappear on refetch without any user event to react to
                 onSelectedSnapshotsChange(remaining);
             }
         },
@@ -375,12 +404,6 @@ function SnapshotTable(props: SnapshotTableProps) {
     );
 
     const numSelectedLoadedSnapshots = tableData.filter((s) => selectedSnapshotIds.includes(s.snapshotId)).length;
-    const allLoadedSnapshotsSelected = tableData.length > 0 && numSelectedLoadedSnapshots === tableData.length;
-    const someLoadedSnapshotsSelected = numSelectedLoadedSnapshots > 0 && !allLoadedSnapshotsSelected;
-
-    function handleToggleAllSelected(checked: boolean) {
-        onSelectedSnapshotsChange(checked ? tableData : []);
-    }
 
     function handleToggleSnapshotSelected(snapshot: SnapshotAccessLog_api, checked: boolean) {
         const otherSnapshots = props.selectedSnapshots.filter((s) => s.snapshotId !== snapshot.snapshotId);
@@ -405,18 +428,7 @@ function SnapshotTable(props: SnapshotTableProps) {
             onChangeColumnSort={setTableSortState}
         >
             <Table.Head sticky>
-                <Table.Column colKey="select" width={60} sortable={false} noPadding>
-                    <div className="px-sm">
-                        <Checkbox
-                            size="small"
-                            aria-label="Select all snapshots"
-                            checked={allLoadedSnapshotsSelected}
-                            indeterminate={someLoadedSnapshotsSelected}
-                            disabled={tableData.length === 0}
-                            onCheckedChange={handleToggleAllSelected}
-                        />
-                    </div>
-                </Table.Column>
+                <Table.Column colKey="select" width={60} sortable={false} noPadding />
                 <Table.Column
                     colKey="visits"
                     width={60}
@@ -462,9 +474,11 @@ function SnapshotTable(props: SnapshotTableProps) {
                                     key={item.snapshotId}
                                     item={item}
                                     selected={selectedSnapshotIds.includes(item.snapshotId)}
+                                    canDelete={item.snapshotMetadata.ownerId === userId && !item.snapshotDeleted}
                                     onSelectedChange={handleToggleSnapshotSelected}
                                     onClick={handleRowClick}
                                     onOpen={props.onOpenSnapshot}
+                                    onDelete={props.onDeleteSnapshot}
                                 />
                             );
                         }
@@ -482,9 +496,11 @@ function SnapshotTable(props: SnapshotTableProps) {
 type SnapshotRowProps = {
     item: SnapshotAccessLog_api;
     selected: boolean;
+    canDelete: boolean;
     onSelectedChange: (snapshot: SnapshotAccessLog_api, selected: boolean) => void;
     onClick: (snapshot: SnapshotAccessLog_api) => void;
     onOpen: (snapshotId: string) => void;
+    onDelete: (snapshot: SnapshotAccessLog_api) => void;
 };
 
 function SnapshotRow(props: SnapshotRowProps) {
@@ -564,7 +580,7 @@ function SnapshotRow(props: SnapshotRowProps) {
                 onClick={(evt) => evt.stopPropagation()}
                 onDoubleClick={(evt) => evt.stopPropagation()}
             >
-                <div className="px-sm flex items-center justify-end">
+                <div className="px-sm gap-x-3xs flex items-center justify-end">
                     <Tooltip content={isDeleted ? "Deleted snapshots cannot be opened" : "Open snapshot"} side="left">
                         {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
                         <span>
@@ -580,6 +596,18 @@ function SnapshotRow(props: SnapshotRowProps) {
                                 <FileOpen style={{ fontSize: 16 }} />
                             </Button>
                         </span>
+                    </Tooltip>
+                    <Tooltip content={props.canDelete ? "Delete snapshot" : "Remove from my list"} side="left">
+                        <Button
+                            variant="ghost"
+                            tone="danger"
+                            size="small"
+                            iconOnly
+                            aria-label={`${props.canDelete ? "Delete" : "Remove"} snapshot ${item.snapshotMetadata.title}`}
+                            onClick={() => props.onDelete(item)}
+                        >
+                            <Delete style={{ fontSize: 16 }} />
+                        </Button>
                     </Tooltip>
                 </div>
             </Table.Cell>
