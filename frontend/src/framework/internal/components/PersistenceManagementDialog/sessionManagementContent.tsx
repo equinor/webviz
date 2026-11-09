@@ -14,6 +14,8 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DateRangePicker } from "@lib/components/DateRangePicker";
 import { Field } from "@lib/components/Field";
+import { Hidden } from "@lib/components/Hidden";
+import { Separator } from "@lib/components/Separator";
 import { Table } from "@lib/components/Table";
 import { TableCompositions } from "@lib/components/Table/compositions";
 import { ROW_HEIGHT_PX } from "@lib/components/Table/constants";
@@ -21,6 +23,7 @@ import type { TableSortState } from "@lib/components/Table/typesAndEnums";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/typesAndEnums";
 import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
 import { Virtualization } from "@lib/components/Virtualization";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { formatDate } from "@lib/utils/dates";
@@ -29,9 +32,6 @@ import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 
 import { tableSortDirToApiSortDir, useInfiniteSessionMetadataQuery } from "./_utils";
 import { NEXT_PAGE_THRESHOLD, PENDING_PAGE, PENDING_ROW } from "./constants";
-import { Typography } from "@lib/components/Typography";
-import { Hidden } from "@lib/components/Hidden";
-import { Separator } from "@lib/components/Separator";
 
 export type SessionOverviewContentProps = {
     workbench: Workbench;

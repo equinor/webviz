@@ -20,6 +20,8 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DateRangePicker } from "@lib/components/DateRangePicker";
 import { Field } from "@lib/components/Field";
+import { Hidden } from "@lib/components/Hidden";
+import { Separator } from "@lib/components/Separator";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { Table } from "@lib/components/Table";
 import { TableCompositions } from "@lib/components/Table/compositions";
@@ -28,15 +30,13 @@ import { SortDirection as TableSortDirection } from "@lib/components/Table/types
 import type { TableSortState } from "@lib/components/Table/typesAndEnums";
 import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
 import { Virtualization } from "@lib/components/Virtualization";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { formatDate } from "@lib/utils/dates";
 
 import { tableSortDirToApiSortDir } from "./_utils";
 import { NEXT_PAGE_THRESHOLD, PENDING_PAGE, PENDING_ROW, QUERY_PAGE_SIZE } from "./constants";
-import { Hidden } from "@lib/components/Hidden";
-import { Separator } from "@lib/components/Separator";
-import { Typography } from "@lib/components/Typography";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {
@@ -402,8 +402,6 @@ function SnapshotTable(props: SnapshotTableProps) {
             snapshotsQuery.hasNextPage,
         ],
     );
-
-    const numSelectedLoadedSnapshots = tableData.filter((s) => selectedSnapshotIds.includes(s.snapshotId)).length;
 
     function handleToggleSnapshotSelected(snapshot: SnapshotAccessLog_api, checked: boolean) {
         const otherSnapshots = props.selectedSnapshots.filter((s) => s.snapshotId !== snapshot.snapshotId);
