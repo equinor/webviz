@@ -28,6 +28,24 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
         description: "Pipe data between modules: learn how to send data from one module to generic sub-modules, in order to e.g. cross-plot data between individual modules.",
     },
     {
+        slug: "2d-viewer-depth-map-with-wells-and-faults",
+        category: "Modules",
+        title: "2D Viewer: Depth map with wells and faults",
+        description: "Build a depth map with well picks and fault polygons, keep layers in sync with shared settings, and use ensemble statistics to see the uncertainty around the wells.",
+    },
+    {
+        slug: "2d-viewer-multiple-views-simulation-maps",
+        category: "Modules",
+        title: "2D Viewer: Multiple views with simulation maps",
+        description: "Compare zone-averaged properties from the simulation grid side by side in several views, with shared formation, time step and well picks.",
+    },
+    {
+        slug: "2d-viewer-observed-vs-simulated-4d-seismic",
+        category: "Modules",
+        title: "2D Viewer: Observed vs. simulated 4D seismic",
+        description: "Compare observed 4D seismic with synthetic 4D seismic from the petro-elastic modelling workflow, using a shared color scale and time interval.",
+    },
+    {
         slug: "grid3d-viewer-3d-grid-model",
         category: "Modules",
         title: "3D Viewer",

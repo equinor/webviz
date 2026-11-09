@@ -101,6 +101,8 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
         <SortableListGroup
             key={props.group.getItemDelegate().getId()}
             id={props.group.getItemDelegate().getId()}
+            itemKind="group"
+            itemType={props.group.getGroupType()}
             title={
                 <div className="gap-x-2xs relative flex min-w-0 items-center">
                     {color && (

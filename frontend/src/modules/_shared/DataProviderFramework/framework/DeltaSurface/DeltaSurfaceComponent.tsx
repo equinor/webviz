@@ -67,6 +67,7 @@ export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.
         <SortableListGroup
             key={props.deltaSurface.getItemDelegate().getId()}
             id={props.deltaSurface.getItemDelegate().getId()}
+            itemKind="delta-surface"
             title={<EditName item={props.deltaSurface} />}
             contentStyle={{
                 backgroundColor: color ?? undefined,

@@ -82,6 +82,19 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
    npm run test:e2e:record --prefix ./frontend
    ```
 
+#### Selecting layers and settings in data provider framework modules
+
+Modules built on the data provider framework (e.g. the 2D Viewer) expose stable attributes for tests,
+so stories don't depend on display names that users can edit:
+
+- `data-dpf-item` (`provider`, `group`, `shared-setting`, `context-boundary`, `delta-surface`) and
+  `data-dpf-type` (the data provider type, group type or wrapped setting type, e.g. `DEPTH_SURFACE`,
+  `VIEW`, `surfaceName`) on each item in the layer tree.
+- `data-dpf-setting` (the `Setting` enum value, e.g. `representation`) on each setting's value cell,
+  and `data-dpf-setting-label` on its label cell.
+
+See `tests/e2e/support/twoDViewerHelpers.ts` for helpers built on these.
+
 #### Running a single story
 
 While working on one story you usually don't want to run the whole suite. Pass a filter through to

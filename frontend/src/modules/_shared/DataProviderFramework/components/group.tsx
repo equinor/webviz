@@ -10,6 +10,9 @@ export type SortableListGroupProps = {
     id: string;
     title: React.ReactNode;
     expanded: boolean;
+    /** Stable identifiers exposed as `data-dpf-item` / `data-dpf-type` for e2e tests. */
+    itemKind?: string;
+    itemType?: string;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
     headerStyle?: React.CSSProperties;
@@ -43,7 +46,7 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
 
     return (
         <SortableList.Group id={props.id}>
-            <div className="bg-canvas">
+            <div className="bg-canvas" data-dpf-item={props.itemKind} data-dpf-type={props.itemType}>
                 <Header {...props} onToggleExpanded={handleToggleExpanded} expanded={props.expanded} hovered={false} />
                 <SortableList.GroupContent>
                     <div

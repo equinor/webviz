@@ -55,6 +55,8 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
         <SortableListItem
             key={props.dataProvider.getItemDelegate().getId()}
             id={props.dataProvider.getItemDelegate().getId()}
+            itemKind="provider"
+            itemType={props.dataProvider.getType()}
             title={<EditName item={props.dataProvider} />}
             startAdornment={<StartActions dataProvider={props.dataProvider} />}
             endAdornment={<EndActions dataProvider={props.dataProvider} />}
