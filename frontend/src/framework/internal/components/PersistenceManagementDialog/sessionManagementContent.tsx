@@ -169,18 +169,16 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                                 : "Delete the selected session"
                         }
                     >
-                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
-                        <span>
-                            <Button
-                                tone="danger"
-                                disabled={!selectedSessions.length || deletePending}
-                                onClick={handleDeleteClick}
-                                variant="ghost"
-                                icon={deletePending ? <CircularProgress /> : <Delete />}
-                            >
-                                Delete
-                            </Button>
-                        </span>
+                        <Button
+                            tone="danger"
+                            disabled={!selectedSessions.length || deletePending}
+                            focusableWhenDisabled
+                            onClick={handleDeleteClick}
+                            variant="ghost"
+                            icon={deletePending ? <CircularProgress /> : <Delete />}
+                        >
+                            Delete
+                        </Button>
                     </Tooltip>
 
                     <Tooltip content="Refresh list">
@@ -202,6 +200,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                 titleFilter={titleFilterValue}
                 updatedAtFilter={updatedAtRange}
                 refreshActionRef={queryRefreshActionRef}
+                deletePending={deletePending}
                 onSelectedSessionsChange={setSelectedSessions}
                 onOpenSession={openSession}
                 onEditSession={editSession}
@@ -224,6 +223,7 @@ type SessionTableProps = {
     titleFilter: string | null;
     updatedAtFilter: EdsDateRange | null;
     refreshActionRef: React.RefObject<UseRefreshQueryResult | null>;
+    deletePending: boolean;
     onSelectedSessionsChange: (sessions: SessionMetadata_api[]) => void;
     onOpenSession: (sessionId: string) => void;
     onEditSession: (session: SessionMetadata_api) => void;
@@ -390,6 +390,7 @@ function SessionTable(props: SessionTableProps) {
                                     key={item.id}
                                     item={item}
                                     selected={selectedSessionIds.includes(item.id)}
+                                    deletePending={props.deletePending}
                                     onSelectedChange={handleToggleSessionSelected}
                                     onClick={handleRowClick}
                                     onDoubleClick={props.onOpenSession}
@@ -410,6 +411,7 @@ function SessionTable(props: SessionTableProps) {
 type SessionRowProps = {
     item: SessionMetadata_api;
     selected: boolean;
+    deletePending: boolean;
     onSelectedChange: (session: SessionMetadata_api, selected: boolean) => void;
     onClick: (session: SessionMetadata_api) => void;
     onDoubleClick: (sessionId: string) => void;
@@ -477,6 +479,8 @@ function SessionRow(props: SessionRowProps) {
                             size="small"
                             iconOnly
                             aria-label={`Delete session ${item.title}`}
+                            disabled={props.deletePending}
+                            focusableWhenDisabled
                             onClick={() => props.onDelete(item)}
                         >
                             <Delete style={{ fontSize: 16 }} />

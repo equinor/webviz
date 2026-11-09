@@ -227,18 +227,16 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                                 : "Delete or remove the selected snapshot"
                         }
                     >
-                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
-                        <span>
-                            <Button
-                                variant="ghost"
-                                tone="danger"
-                                disabled={!selectedSnapshots.length || deletePending || !userId}
-                                onClick={handleDeleteClick}
-                                icon={deletePending ? <CircularProgress /> : <Delete />}
-                            >
-                                Delete
-                            </Button>
-                        </span>
+                        <Button
+                            variant="ghost"
+                            tone="danger"
+                            disabled={!selectedSnapshots.length || deletePending || !userId}
+                            focusableWhenDisabled
+                            onClick={handleDeleteClick}
+                            icon={deletePending ? <CircularProgress /> : <Delete />}
+                        >
+                            Delete
+                        </Button>
                     </Tooltip>
                     <Tooltip content="Refresh list">
                         <Button
@@ -261,6 +259,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 showMySnapshotsOnly={onlyShowOwnSnapshots}
                 hideDeletedSnapshots={hideDeletedSnapshots}
                 refreshActionRef={queryRefreshActionRef}
+                deletePending={deletePending}
                 onSelectedSnapshotsChange={setSelectedSnapshots}
                 onOpenSnapshot={openSnapshot}
                 onDeleteSnapshot={deleteSnapshot}
@@ -278,6 +277,7 @@ type SnapshotTableProps = {
     hideDeletedSnapshots: boolean;
 
     refreshActionRef: React.RefObject<UseRefreshQueryResult | null>;
+    deletePending: boolean;
 
     onSelectedSnapshotsChange: (snapshots: SnapshotAccessLog_api[]) => void;
     onOpenSnapshot: (snapshotId: string) => void;
@@ -473,6 +473,7 @@ function SnapshotTable(props: SnapshotTableProps) {
                                     item={item}
                                     selected={selectedSnapshotIds.includes(item.snapshotId)}
                                     canDelete={item.snapshotMetadata.ownerId === userId && !item.snapshotDeleted}
+                                    deletePending={props.deletePending}
                                     onSelectedChange={handleToggleSnapshotSelected}
                                     onClick={handleRowClick}
                                     onOpen={props.onOpenSnapshot}
@@ -495,6 +496,7 @@ type SnapshotRowProps = {
     item: SnapshotAccessLog_api;
     selected: boolean;
     canDelete: boolean;
+    deletePending: boolean;
     onSelectedChange: (snapshot: SnapshotAccessLog_api, selected: boolean) => void;
     onClick: (snapshot: SnapshotAccessLog_api) => void;
     onOpen: (snapshotId: string) => void;
@@ -580,20 +582,18 @@ function SnapshotRow(props: SnapshotRowProps) {
             >
                 <div className="px-sm gap-x-3xs flex items-center justify-end">
                     <Tooltip content={isDeleted ? "Deleted snapshots cannot be opened" : "Open snapshot"} side="left">
-                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
-                        <span>
-                            <Button
-                                variant="ghost"
-                                tone="accent"
-                                size="small"
-                                iconOnly
-                                aria-label={`Open snapshot ${item.snapshotMetadata.title}`}
-                                disabled={isDeleted}
-                                onClick={() => props.onOpen(item.snapshotId)}
-                            >
-                                <FileOpen style={{ fontSize: 16 }} />
-                            </Button>
-                        </span>
+                        <Button
+                            variant="ghost"
+                            tone="accent"
+                            size="small"
+                            iconOnly
+                            aria-label={`Open snapshot ${item.snapshotMetadata.title}`}
+                            disabled={isDeleted}
+                            focusableWhenDisabled
+                            onClick={() => props.onOpen(item.snapshotId)}
+                        >
+                            <FileOpen style={{ fontSize: 16 }} />
+                        </Button>
                     </Tooltip>
                     <Tooltip content={props.canDelete ? "Delete snapshot" : "Remove from my list"} side="left">
                         <Button
@@ -602,6 +602,8 @@ function SnapshotRow(props: SnapshotRowProps) {
                             size="small"
                             iconOnly
                             aria-label={`${props.canDelete ? "Delete" : "Remove"} snapshot ${item.snapshotMetadata.title}`}
+                            disabled={props.deletePending}
+                            focusableWhenDisabled
                             onClick={() => props.onDelete(item)}
                         >
                             <Delete style={{ fontSize: 16 }} />
