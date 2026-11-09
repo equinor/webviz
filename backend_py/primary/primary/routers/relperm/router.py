@@ -3,10 +3,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
+from webviz_core_utils.result_warning import ResultWarning
+from webviz_core_utils.result_with_warnings import ResultWithWarnings
 from webviz_services.sumo_access.relperm_access import RelpermAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.add_warnings_middleware import resolve_warnings
 from primary.middleware.cache_control_middleware import CacheTime, cache_time
 from primary.utils.query_string_utils import decode_uint_list_str
 
@@ -42,7 +45,7 @@ async def get_relperm_table_definition(
 
 
 @router.get("/realization_data")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.LONG, result_version=1)
 async def get_relperm_realization_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -63,7 +66,7 @@ async def get_relperm_realization_data(
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
     access = RelpermAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    realization_data = await access.get_realization_data_async(
+    result = await access.get_realization_data_async(
         table_name=table_name,
         saturation_axis_name=saturation_axis_name,
         curve_names=curve_names,
@@ -71,4 +74,10 @@ async def get_relperm_realization_data(
         realizations=realizations,
     )
 
-    return converters.to_api_realization_data_response(realization_data)
+    warnings: list[ResultWarning] = []
+    realization_data = result.get_value(propagate_warnings_to=warnings)
+
+    # Report warnings (e.g. missing realizations) to the client if it allows warnings, otherwise raise them as an exception
+    return resolve_warnings(
+        ResultWithWarnings(converters.to_api_realization_data_response(realization_data), warnings)
+    )

@@ -3,8 +3,8 @@ import type { AxiosError } from "axios";
 import type { Getter } from "jotai";
 
 import {
-    getRelpermRealizationDataOptions,
-    type getRelpermRealizationDataQueryKey,
+    getRelpermRealizationData,
+    getRelpermRealizationDataQueryKey,
     getRelpermTableDefinitionOptions,
     type getRelpermTableDefinitionQueryKey,
     getRelpermTableNamesOptions,
@@ -12,6 +12,8 @@ import {
     type HTTPValidationError_api,
     type RelpermRealizationDataResponse_api,
     type RelpermTableDefinition_api,
+    withWarnings,
+    type DataWithWarnings,
 } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
@@ -55,9 +57,9 @@ export const relPermTableDefinitionQueriesAtom = atomWithQueries<
 >(makeRelPermTableDefinitionQueryOptions);
 
 export const relPermRealizationDataQueriesAtom = atomWithQueries<
-    RelpermRealizationDataResponse_api,
-    RelPermApiError,
-    RelpermRealizationDataResponse_api,
+    DataWithWarnings<RelpermRealizationDataResponse_api>,
+    AxiosError,
+    DataWithWarnings<RelpermRealizationDataResponse_api>,
     RelPermRealizationDataQueryKey,
     RelPermDataAccessorStatus
 >(makeRelPermRealizationDataQueryOptions);
@@ -138,7 +140,7 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
             const realizationsEncodedAsUintListStr = filteredRealizations
                 ? encodeAsUintListStr(filteredRealizations)
                 : null;
-            const options = getRelpermRealizationDataOptions({
+            const options = withWarnings(getRelpermRealizationData, getRelpermRealizationDataQueryKey, {
                 query: {
                     case_uuid: ensembleIdent.getCaseUuid(),
                     ensemble_name: ensembleIdent.getEnsembleName(),
@@ -167,7 +169,7 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
             };
         }),
         combine: function combineRelPermRealizationDataQueryResults(
-            results: UseQueryResult<RelpermRealizationDataResponse_api, RelPermApiError>[],
+            results: UseQueryResult<DataWithWarnings<RelpermRealizationDataResponse_api>, AxiosError>[],
         ): RelPermDataAccessorStatus {
             // A disabled query keeps its cached data and error, which may not match the current selections
             // (e.g. relative-permeability curves after switching to capillary pressure)
@@ -177,17 +179,23 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
                     isFetching: false,
                     isError: false,
                     errors: [],
+                    warnings: [],
                 };
             }
 
             const ensembleData: RelPermEnsembleRealizationData[] = [];
+            const warnings: string[] = [];
 
             results.forEach(function collectEnsembleData(result, index) {
                 const data = result.data;
                 if (!data) {
                     return;
                 }
-                ensembleData.push({ ensembleIdent: queryContexts[index].ensembleIdent, data });
+                const ensembleIdent = queryContexts[index].ensembleIdent;
+                ensembleData.push({ ensembleIdent, data: data.value });
+                for (const warning of data.warnings) {
+                    warnings.push(`${ensembleIdent.getEnsembleName()}: ${warning}`);
+                }
             });
 
             return {
@@ -205,6 +213,7 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
                     .filter(function isNonNullError(error) {
                         return error !== null;
                     }) as Error[],
+                warnings,
             };
         },
     };
