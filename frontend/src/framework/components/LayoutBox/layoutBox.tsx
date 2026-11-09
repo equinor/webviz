@@ -81,6 +81,20 @@ export class LayoutBox {
         return this._moduleInstanceId;
     }
 
+    private getRealRect(realSizeFactor: Size2D): Rect2D {
+        const absoluteRect = this.getAbsoluteRect();
+        return {
+            x: absoluteRect.x * realSizeFactor.width,
+            y: absoluteRect.y * realSizeFactor.height,
+            width: absoluteRect.width * realSizeFactor.width,
+            height: absoluteRect.height * realSizeFactor.height,
+        };
+    }
+
+    private isModuleBox(): boolean {
+        return this._layoutDirection === LayoutDirection.SINGLE && this._parent !== null;
+    }
+
     getRectWithMargin(realSizeFactor: Size2D): Rect2D {
         const absoluteRect = this.getAbsoluteRect();
         if (this._parent === null) {
@@ -410,44 +424,50 @@ export class LayoutBox {
         const rect = this.getRectWithMargin(realSize);
         const edges: LayoutBoxEdge[] = [];
 
-        if (this._layoutDirection === LayoutDirection.SINGLE && this._parent) {
-            if (this._parent._layoutDirection === LayoutDirection.HORIZONTAL) {
-                edges.push({
-                    rect: { x: rect.x, y: rect.y, width: rect.width, height: 0.25 * rect.height },
-                    edge: LayoutBoxEdgeType.TOP,
-                });
-                edges.push({
-                    rect: { x: rect.x, y: rect.y + 0.75 * rect.height, width: rect.width, height: 0.25 * rect.height },
-                    edge: LayoutBoxEdgeType.BOTTOM,
-                });
+        if (this.isModuleBox() && this._parent) {
+            // Module zones keep their inner boundary from the margin rect, but extend outwards to the module's
+            // visible outline so no dead band is left between them and the surrounding container zones
+            const outline = this.getRealRect(realSize);
+            const topZone: Rect2D = {
+                x: outline.x,
+                y: outline.y,
+                width: outline.width,
+                height: rect.y + 0.25 * rect.height - outline.y,
+            };
+            const bottomZoneY = rect.y + 0.75 * rect.height;
+            const bottomZone: Rect2D = {
+                x: outline.x,
+                y: bottomZoneY,
+                width: outline.width,
+                height: outline.y + outline.height - bottomZoneY,
+            };
+            const leftZone: Rect2D = {
+                x: outline.x,
+                y: outline.y,
+                width: rect.x + 0.25 * rect.width - outline.x,
+                height: outline.height,
+            };
+            const rightZoneX = rect.x + 0.75 * rect.width;
+            const rightZone: Rect2D = {
+                x: rightZoneX,
+                y: outline.y,
+                width: outline.x + outline.width - rightZoneX,
+                height: outline.height,
+            };
+
+            if (
+                this._parent._layoutDirection === LayoutDirection.HORIZONTAL ||
+                this._parent._layoutDirection === LayoutDirection.MAIN
+            ) {
+                edges.push({ rect: topZone, edge: LayoutBoxEdgeType.TOP });
+                edges.push({ rect: bottomZone, edge: LayoutBoxEdgeType.BOTTOM });
             }
-            if (this._parent._layoutDirection === LayoutDirection.VERTICAL) {
-                edges.push({
-                    rect: { x: rect.x, y: rect.y, width: 0.25 * rect.width, height: rect.height },
-                    edge: LayoutBoxEdgeType.LEFT,
-                });
-                edges.push({
-                    rect: { x: rect.x + 0.75 * rect.width, y: rect.y, width: 0.25 * rect.width, height: rect.height },
-                    edge: LayoutBoxEdgeType.RIGHT,
-                });
-            }
-            if (this._parent._layoutDirection === LayoutDirection.MAIN) {
-                edges.push({
-                    rect: { x: rect.x, y: rect.y, width: rect.width, height: 0.25 * rect.height },
-                    edge: LayoutBoxEdgeType.TOP,
-                });
-                edges.push({
-                    rect: { x: rect.x, y: rect.y + 0.75 * rect.height, width: rect.width, height: 0.25 * rect.height },
-                    edge: LayoutBoxEdgeType.BOTTOM,
-                });
-                edges.push({
-                    rect: { x: rect.x, y: rect.y, width: 0.25 * rect.width, height: rect.height },
-                    edge: LayoutBoxEdgeType.LEFT,
-                });
-                edges.push({
-                    rect: { x: rect.x + 0.75 * rect.width, y: rect.y, width: 0.25 * rect.width, height: rect.height },
-                    edge: LayoutBoxEdgeType.RIGHT,
-                });
+            if (
+                this._parent._layoutDirection === LayoutDirection.VERTICAL ||
+                this._parent._layoutDirection === LayoutDirection.MAIN
+            ) {
+                edges.push({ rect: leftZone, edge: LayoutBoxEdgeType.LEFT });
+                edges.push({ rect: rightZone, edge: LayoutBoxEdgeType.RIGHT });
             }
         }
         if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
@@ -520,6 +540,46 @@ export class LayoutBox {
         }
 
         return edges;
+    }
+
+    findDropTarget(
+        point: Vec2,
+        realSize: Size2D,
+        draggedModuleInstanceId: string,
+    ): { box: LayoutBox; edge: LayoutBoxEdge } | null {
+        // Resolve from the innermost box outwards, as before. A box without a zone at the point must not
+        // shadow its ancestors, so we only stop once a zone is actually hit.
+        for (let box = this.findBoxContainingPoint(point, realSize); box; box = box._parent) {
+            if (box.isModuleBox() && box.getModuleInstanceId() === draggedModuleInstanceId) {
+                return null;
+            }
+            const target = box.resolveDropTargetInBox(point, realSize, draggedModuleInstanceId);
+            if (target !== undefined) {
+                return target;
+            }
+        }
+
+        // The point is between a module's visible outline and its margin rect, outside every container zone
+        const moduleBox = flattenLayoutBoxes(this).find(
+            (box) => box.isModuleBox() && rectContainsPoint(box.getRealRect(realSize), point),
+        );
+        if (!moduleBox || moduleBox.getModuleInstanceId() === draggedModuleInstanceId) {
+            return null;
+        }
+        return moduleBox.resolveDropTargetInBox(point, realSize, draggedModuleInstanceId) ?? null;
+    }
+
+    // Returns undefined if no zone of this box is at the point, and null if the hit zone is not a valid drop
+    private resolveDropTargetInBox(
+        point: Vec2,
+        realSize: Size2D,
+        draggedModuleInstanceId: string,
+    ): { box: LayoutBox; edge: LayoutBoxEdge } | null | undefined {
+        if (!this.getEdgeRects(realSize).some((edgeRect) => rectContainsPoint(edgeRect.rect, point))) {
+            return undefined;
+        }
+        const edge = this.findEdgeContainingPoint(point, realSize, draggedModuleInstanceId);
+        return edge ? { box: this, edge } : null;
     }
 
     findEdgeContainingPoint(point: Vec2, realSize: Size2D, draggedModuleInstanceId: string): LayoutBoxEdge | null {
@@ -613,15 +673,11 @@ export class LayoutBox {
             return preview;
         }
 
-        const layoutBox = preview.findBoxContainingPoint(pointerPoint, realSize);
-        if (!layoutBox) {
+        const dropTarget = preview.findDropTarget(pointerPoint, realSize, draggedModuleInstanceId);
+        if (!dropTarget) {
             return null;
         }
-
-        const edge = layoutBox.findEdgeContainingPoint(pointerPoint, realSize, draggedModuleInstanceId);
-        if (!edge) {
-            return null;
-        }
+        const { box: layoutBox, edge } = dropTarget;
 
         let draggedBox = preview.findBoxContainingModuleInstance(draggedModuleInstanceId);
         if (!draggedBox) {
@@ -840,14 +896,13 @@ export const LayoutBoxComponents: React.FC<{
     pointer: Vec2;
 }> = (props) => {
     const flatBoxes = flattenLayoutBoxes(props.layoutBox);
-    const activeBox = props.layoutBox.findBoxContainingPoint(props.pointer, props.realSize);
+    const dropTarget = props.active
+        ? props.layoutBox.findDropTarget(props.pointer, props.realSize, props.active)
+        : null;
 
     const makeBoxEdges = (box: LayoutBox) => {
         const edges: LayoutBoxEdge[] = box.getEdgeRects(props.realSize);
-        let hoveredEdge: Rect2D | null = null;
-        if (props.active && props.active !== box.getModuleInstanceId() && activeBox === box) {
-            hoveredEdge = box.findEdgeContainingPoint(props.pointer, props.realSize, props.active)?.rect || null;
-        }
+        const hoveredEdge: Rect2D | null = dropTarget?.box === box ? dropTarget.edge.rect : null;
 
         return (
             <div key={box.toString()}>
