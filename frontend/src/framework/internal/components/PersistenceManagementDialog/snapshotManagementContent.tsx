@@ -381,16 +381,20 @@ function SnapshotTable(props: SnapshotTableProps) {
     );
 
     React.useEffect(
-        function maybeDeselectRemovedEntries() {
-            // Only a settled, fully loaded result proves a missing entry was removed; otherwise it may be on an unloaded page
-            if (!snapshotsQuery.isSuccess || snapshotsQuery.isFetching || snapshotsQuery.hasNextPage) return;
-
-            const remaining = props.selectedSnapshots.filter((selected) =>
-                tableData.some((s) => s.snapshotId === selected.snapshotId),
-            );
-            if (remaining.length !== props.selectedSnapshots.length) {
-                // Deliberately in an effect: entries can disappear on refetch without any user event to react to
-                onSelectedSnapshotsChange(remaining);
+        function maybeSyncSelectedSnapshotsEffect() {
+            const fullyLoaded = snapshotsQuery.isSuccess && !snapshotsQuery.isFetching && !snapshotsQuery.hasNextPage;
+            const synced = props.selectedSnapshots.flatMap((selected) => {
+                const fresh = tableData.find((s) => s.snapshotId === selected.snapshotId);
+                // Missing snapshots may be on unloaded pages until all results are fetched
+                if (!fresh) return fullyLoaded ? [] : [selected];
+                return [fresh];
+            });
+            const changed =
+                synced.length !== props.selectedSnapshots.length ||
+                synced.some((s, i) => s !== props.selectedSnapshots[i]);
+            if (changed) {
+                // Deliberately in an effect: entries can change or disappear on refetch without any user event to react to
+                onSelectedSnapshotsChange(synced);
             }
         },
         [

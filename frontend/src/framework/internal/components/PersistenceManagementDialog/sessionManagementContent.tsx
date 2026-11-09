@@ -286,17 +286,20 @@ function SessionTable(props: SessionTableProps) {
     const selectedSessionIds = React.useMemo(() => props.selectedSessions.map((s) => s.id), [props.selectedSessions]);
 
     React.useEffect(
-        function maybeDeselectRemovedSessionsEffect() {
-            // Missing sessions may be on unloaded pages until all results are fetched
-            if (!sessionsQuery.isSuccess || sessionsQuery.isFetching || sessionsQuery.hasNextPage) return;
-            const remaining = props.selectedSessions.filter((selected) => {
-                return tableData.some(function matchesSelected(session) {
-                    return session.id === selected.id;
-                });
+        function maybeSyncSelectedSessionsEffect() {
+            const fullyLoaded = sessionsQuery.isSuccess && !sessionsQuery.isFetching && !sessionsQuery.hasNextPage;
+            const synced = props.selectedSessions.flatMap((selected) => {
+                const fresh = tableData.find((s) => s.id === selected.id);
+                // Missing sessions may be on unloaded pages until all results are fetched
+                if (!fresh) return fullyLoaded ? [] : [selected];
+                return [fresh];
             });
-            if (remaining.length !== props.selectedSessions.length) {
-                // Deliberately in an effect: entries can disappear on refetch without any user event to react to
-                onSelectedSessionsChange(remaining);
+            const changed =
+                synced.length !== props.selectedSessions.length ||
+                synced.some((s, i) => s !== props.selectedSessions[i]);
+            if (changed) {
+                // Deliberately in an effect: entries can change or disappear on refetch without any user event to react to
+                onSelectedSessionsChange(synced);
             }
         },
         [
