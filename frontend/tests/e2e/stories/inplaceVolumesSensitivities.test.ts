@@ -160,12 +160,32 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         await waitForModules();
         await responseNarration;
 
-        await narrate(
+        // Point at each part of the table as the narration mentions it.
+        const table = moduleLayout.locator("table").first();
+        const rowsNarration = narrate(
             "Each row is now one sensitivity case, with the sensitivity column pinned to the left. The statistics are computed per case, over that case's realizations only. The table source is the same on every row, so it is summarised above the table instead of taking up a column.",
         );
-        await narrate(
+        await smoothMoveToLocator(page, table.getByRole("cell", { name: /^rms_seed/ }).first());
+        await pace(page, "long");
+        await smoothMoveToLocator(page, table.getByRole("button", { name: "SENSITIVITY" }));
+        await pace(page, "long");
+        await pace(page, "long");
+        await smoothMoveToLocator(page, table.getByRole("button", { name: "Mean" }).first());
+        await pace(page, "long");
+        await pace(page, "long");
+        await pace(page, "long");
+        await smoothMoveToLocator(page, moduleLayout.getByText(/TABLE_NAME: /).first());
+        await rowsNarration;
+
+        const unchangedCasesNarration = narrate(
             "Notice that several cases, such as relperm, kvkh and min-P-V, have exactly the same oil in place as rms_seed. These sensitivities only change the dynamic model, so the static volumes are untouched.",
         );
+        for (const caseLabel of [/^relperm/, /^kvkh/, /^min_?pv/i]) {
+            await smoothMoveToLocator(page, table.getByRole("cell", { name: caseLabel }).first());
+            await pace(page, "medium");
+        }
+        await smoothMoveToLocator(page, table.getByRole("cell", { name: /^rms_seed/ }).first());
+        await unchangedCasesNarration;
 
         // --- 2. Inplace Volumes Plot -----------------------------------------------------------
         markStep("From histogram to bar plot");
