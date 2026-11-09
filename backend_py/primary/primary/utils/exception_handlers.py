@@ -180,7 +180,14 @@ def _make_raise_location_string(exc: Exception) -> str:
     # Construct a string representing the location where the exception was raised.
     # Returns a single line string with the filename, line number, and function name.
     tb = exc.__traceback__
-    frame: traceback.FrameSummary = traceback.extract_tb(tb)[-1]
+    if tb is None:
+        return "<no traceback>"
+
+    frames = traceback.extract_tb(tb)
+    if not frames:
+        return "<no traceback>"
+
+    frame: traceback.FrameSummary = frames[-1]
     return f'file: "{frame.filename}", line: {frame.lineno}, in {frame.name}'
 
 
