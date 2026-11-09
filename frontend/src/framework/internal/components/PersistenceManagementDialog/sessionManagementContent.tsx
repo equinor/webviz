@@ -369,7 +369,7 @@ function SessionTable(props: SessionTableProps) {
                 <Table.Column colKey="createdAt" width={160}>
                     Created at
                 </Table.Column>
-                <Table.Column colKey="actions" sortable={false} width={100} layoutClassName="text-right">
+                <Table.Column colKey="actions" sortable={false} width={100}>
                     Actions
                 </Table.Column>
             </Table.Head>
@@ -429,7 +429,12 @@ function SessionRow(props: SessionRowProps) {
             onDoubleClick={() => props.onDoubleClick(item.id)}
         >
             {/* Stop propagation on the cell, since the checkbox also dispatches a click on its hidden input */}
-            <Table.Cell onClick={(evt) => evt.stopPropagation()} onDoubleClick={(evt) => evt.stopPropagation()}>
+            <Table.Cell
+                onClick={(evt) => evt.stopPropagation()}
+                onDoubleClick={(evt) => evt.stopPropagation()}
+                noPadding
+                layoutClassName="px-sm"
+            >
                 <Checkbox
                     size="small"
                     aria-label={`Select session ${item.title}`}

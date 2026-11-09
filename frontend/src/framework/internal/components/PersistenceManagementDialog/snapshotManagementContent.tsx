@@ -452,7 +452,7 @@ function SnapshotTable(props: SnapshotTableProps) {
                 <Table.Column colKey="lastVisitedAt" width={160}>
                     Last visited at
                 </Table.Column>
-                <Table.Column colKey="actions" sortable={false} width={80} layoutClassName="text-right">
+                <Table.Column colKey="actions" sortable={false} width={80}>
                     Actions
                 </Table.Column>
             </Table.Head>
