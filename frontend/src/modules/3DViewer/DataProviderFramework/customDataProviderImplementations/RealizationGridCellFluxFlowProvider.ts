@@ -46,7 +46,11 @@ const gridCellFluxSettings = [
     Setting.GRID_NAME,
     Setting.GRID_LAYER_K,
     Setting.TIME_OR_INTERVAL,
-    Setting.FLUX_PHASES_SHOWN,
+    Setting.PHASE,
+    // TODO: just her to toggle debug, remove later
+    Setting.SHOW_CELL_INDICES,
+    Setting.SHOW_GRID_LINES,
+    Setting.SHOW_CELL_VELOCITY,
 ] as const;
 
 export type GridCellFluxSettings = typeof gridCellFluxSettings;

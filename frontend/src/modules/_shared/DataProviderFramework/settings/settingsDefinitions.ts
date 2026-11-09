@@ -59,6 +59,8 @@ export enum Setting {
     SEISMIC_SLICES = "seismicSlices",
     SENSITIVITY = "sensitivity",
     SHOW_GRID_LINES = "showGridLines",
+    SHOW_CELL_VELOCITY = "showCellVelocity",
+    PHASE = "phase",
     FLUX_PHASES_SHOWN = "fluxPhasesShown",
     FLUX_DIRECTIONS_SHOWN = "fluxDirectionsShown",
     SHOW_GRID_POINTS = "showGridPoints",
@@ -118,6 +120,17 @@ export type SettingTypeDefinitions = {
         internalValue: boolean;
         externalValue: boolean;
         valueConstraints: null;
+    };
+    [Setting.SHOW_CELL_VELOCITY]: {
+        internalValue: boolean;
+        externalValue: boolean;
+        valueConstraints: null;
+    };
+    [Setting.PHASE]: {
+        internalValue: string | null;
+        externalValue: string | null;
+        // valueConstraints: ["oil", "water", "gas"];
+        valueConstraints: { value: string; label: string }[] | null;
     };
     [Setting.FLUX_PHASES_SHOWN]: {
         internalValue: FluxPhasesShown;

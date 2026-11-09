@@ -1,69 +1,65 @@
-import type { Accessor, AccessorFunction, LayerContext, Position } from "@deck.gl/core";
+import type { Accessor, AccessorContext, LayerContext, Position } from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
 import type { SolidPolygonLayerProps, TextLayerProps } from "@deck.gl/layers";
 import { LineLayer, SolidPolygonLayer, TextLayer } from "@deck.gl/layers";
 
-import type { GridCell } from "./types";
+import { applyAccessor } from "@framework/utils/deckgl";
+import { length, fromArray } from "@lib/utils/vec3";
+import { positionAtLengthAlong } from "@modules/_shared/utils/polylineHoverUtils";
 
-export type GridCellLayerProps = {
-    data: GridCell[];
-    getCorners: Accessor<GridCell, number[][]>;
+import type { Faces, FaceData } from "./types";
+import { FACE_CORNERS, FACES } from "./types";
+import { getFaceCenter, makeFaceData } from "./utils";
+
+export type GridCellLayerProps<TData = any> = {
+    data: TData[];
+    getCorners: Accessor<TData, Position[]>;
+    getFaceVelocities: Accessor<TData, FaceData<number[]>>;
+    getNeighborCells: Accessor<TData, FaceData<number>>;
+    velocityScale: number;
+    debug?: {
+        index?: boolean;
+        wireframe?: boolean;
+        cornerIndex?: boolean;
+        neighborIndex?: boolean;
+        velocity?: boolean;
+    };
 };
 
-const DIRECTIONS = ["x", "y", "z", "neg-x", "neg-y", "neg-z"] as const;
-const DIRECTIONS_TO_INDEX = {
-    x: 0,
-    y: 1,
-    z: 2,
-    "neg-x": 3,
-    "neg-y": 4,
-    "neg-z": 5,
+const DEBUG_DIRECTION_COLORS: FaceData<Readonly<[number, number, number]>> = {
+    I: [255, 0, 0],
+    J: [0, 255, 0],
+    K: [0, 0, 255],
+    "-I": [255, 255, 0],
+    "-J": [255, 0, 255],
+    "-K": [0, 255, 255],
 } as const;
 
-const DEBUG_DIRECTION_COLORS = {
-    x: [255, 0, 0],
-    y: [0, 255, 0],
-    z: [0, 0, 255],
-    "neg-x": [255, 255, 0],
-    "neg-y": [255, 0, 255],
-    "neg-z": [0, 255, 255],
-} as const;
-
-const DEBUG_NEIGHBOR_INDEX_LABEL_OFFSET = {
-    x: [0.5, 0, 0] as Position,
-    y: [0, 0.5, 0] as Position,
-    z: [0, 0, 0.5] as Position,
-    "neg-x": [-0.5, 0, 0] as Position,
-    "neg-y": [0, -0.5, 0] as Position,
-    "neg-z": [0, 0, -0.5] as Position,
-} as const;
-
-const DEBUG_VEL_ARROW_CENTER_OFFSET = {
-    x: [1.5, 0, 0] as Position,
-    y: [0, 1.5, 0] as Position,
-    z: [0, 0, 1.5] as Position,
-    "neg-x": [-1.5, 0, 0] as Position,
-    "neg-y": [0, -1.5, 0] as Position,
-    "neg-z": [0, 0, -1.5] as Position,
+const DEBUG_VEL_ARROW_CENTER_OFFSET: FaceData<Position> = {
+    I: [1.5, 0, 0],
+    J: [0, 1.5, 0],
+    K: [0, 0, 1.5],
+    "-I": [-1.5, 0, 0],
+    "-J": [0, -1.5, 0],
+    "-K": [0, 0, -1.5],
 } as const;
 
 type LineDatum = { sourcePosition: Position; targetPosition: Position };
 
-function applyAccessor<In, Out>(accessor: Accessor<In, Out>, datum: In): Out {
-    if (typeof accessor === "function") {
-        return (accessor as AccessorFunction<In, Out>)(datum, { index: -1, data: [], target: [] });
-    }
-
-    return accessor;
-}
-
-export class GridCellLayer extends CompositeLayer<GridCellLayerProps> {
-    static layerName = "GridCellLayer";
+export class GridCellLayer<TData> extends CompositeLayer<GridCellLayerProps<TData>> {
+    static layerName = "TDataLayer";
     static defaultProps = {
         data: { value: [], compare: true },
-        getCorners: { type: "accessor", value: (cell: GridCell) => cell.corners },
-        getFaceVelocities: { type: "accessor", value: (cell: GridCell) => cell.faceVelocities },
-        getNeighborIndices: { type: "accessor", value: (cell: GridCell) => cell.neighborIndices },
+        velocityScale: 50,
+        getCorners: { type: "accessor", value: (cell: any) => cell.corners },
+        getNeighborCells: {
+            type: "accessor",
+            value: (d: any) => d.neighborIndices ?? makeFaceData(-1),
+        },
+        getFaceVelocities: {
+            type: "accessor",
+            value: (d: any) => d.faceVelocities ?? makeFaceData([0, 0, 0]),
+        },
     };
 
     declare state: {
@@ -103,6 +99,7 @@ export class GridCellLayer extends CompositeLayer<GridCellLayerProps> {
                     data: this.state.wireFrameEdges,
                     getColor: [40, 40, 40, 200],
                     widthMinPixels: 1,
+                    visible: this.props.debug?.wireframe,
                 }),
             ),
 
@@ -110,12 +107,13 @@ export class GridCellLayer extends CompositeLayer<GridCellLayerProps> {
                 this.getSubLayerProps({
                     id: "id-corner-index-label",
                     data: this.state.corners,
+                    visible: this.props.debug?.cornerIndex,
                     getText: (d, ctx) => String(ctx.index % 8),
                     getSize: 12,
                     getPosition: (d: Position, ctx) => {
                         const cellIndex = Math.floor(ctx.index / 8);
                         const cell = this.props.data[cellIndex];
-                        const cellCenter = getCellCenter(cell);
+                        const cellCenter = getCellCenter(applyAccessor(this.props.getCorners, cell));
 
                         if (cellCenter.length === 2) {
                             offsetPosition(d, [(cellCenter[0] - d[0]) * 0.1, (cellCenter[1] - d[1]) * 0.1]);
@@ -136,50 +134,99 @@ export class GridCellLayer extends CompositeLayer<GridCellLayerProps> {
                     data: this.props.data,
                     pickable: true,
                     autoHighlight: true,
-                    getText: (d: GridCell) => d.index.toString(),
-                    getPosition: (d: GridCell) => getCellCenter(d),
+                    getSize: 12,
+                    sizeMinPixels: 12,
+                    getText: (d: TData, { index }) => index.toString(),
+                    getPosition: (d: TData) => getCellCenter(applyAccessor(this.props.getCorners, d)),
+                    visible: this.props.debug?.index,
                 } as TextLayerProps),
             ),
 
             // Cell neighbors labels
-            ...DIRECTIONS.map((dir, i) => {
+            ...FACES.map((face) => {
                 return new TextLayer(
                     this.getSubLayerProps({
-                        id: `id-label-${dir}`,
+                        id: `id-label-${face}`,
                         data: this.props.data,
                         getSize: 12,
                         sizeMinPixels: 12,
                         background: true,
                         fontSettings: { sdf: true },
-
-                        outlineColor: [...DEBUG_DIRECTION_COLORS[dir], 255],
+                        visible: this.props.debug?.neighborIndex && !["K", "-K"].includes(face),
+                        outlineColor: [...DEBUG_DIRECTION_COLORS[face], 255],
                         outlineWidth: 3,
 
                         getBackgroundColor: [255, 255, 255, 200],
-                        getText: (d: GridCell) => d.neighborIndices[i].toString(),
-                        getPosition: (d: GridCell) =>
-                            offsetPosition(getCellCenter(d), DEBUG_NEIGHBOR_INDEX_LABEL_OFFSET[dir]),
+                        getText: (d: TData) => applyAccessor(this.props.getNeighborCells, d)[face].toString(),
+                        getPosition: (d: TData) => {
+                            const faceCenter = getFaceCenter(applyAccessor(this.props.getCorners, d), face);
+                            const cellCenter = getCellCenter(applyAccessor(this.props.getCorners, d));
+
+                            const dx = cellCenter[0] - faceCenter[0];
+                            const dy = cellCenter[1] - faceCenter[1];
+                            const dz = cellCenter[2]! - faceCenter[2]!;
+                            return [faceCenter[0] + dx * 0.7, faceCenter[1] + dy * 0.7, faceCenter[2]! + dz * 0.7];
+                        },
                     } as TextLayerProps),
                 );
             }),
 
             // Face velocity arrows
-            ...DIRECTIONS.map((dir) => {
-                return new SolidPolygonLayer(
+            ...FACES.map((face) => {
+                return new SolidPolygonLayer<TData>(
                     this.getSubLayerProps({
-                        id: `face-velocity-arrow-${dir}`,
+                        id: `face-velocity-arrow-${face}`,
                         data: this.props.data,
                         _full3d: true,
-                        getFillColor: [...DEBUG_DIRECTION_COLORS[dir], 255],
-                        getPolygon: (d: GridCell) => {
-                            const faceIndex = DIRECTIONS_TO_INDEX[dir];
-                            const faceVelocity = d.faceVelocities[faceIndex];
+                        visible: this.props.debug?.velocity && !["K", "-K"].includes(face),
+                        getFillColor: [...DEBUG_DIRECTION_COLORS[face], 255],
 
-                            const arrowPosition = offsetPosition(getCellCenter(d), DEBUG_VEL_ARROW_CENTER_OFFSET[dir]);
+                        getPolygon: (d: TData, ctx: AccessorContext<TData>) => {
+                            /*
+                            const corners = applyAccessor(this.props.getCorners, d, ctx);
+                            const faceVelocity = applyAccessor(this.props.getFaceVelocities, d, ctx)[face];
 
-                            const arrowLength = 0.5; // TODO:
+                            const faceCenter = getFaceCenter(corners, face);
+                            const cellCenter = getCellCenter(corners);
 
-                            return makeArrowPolygon(arrowPosition, faceVelocity, arrowLength);
+                            const outwardDir = [faceCenter[0] - cellCenter[0], faceCenter[1] - cellCenter[1], 0];
+
+                            const dx = cellCenter[0] - faceCenter[0];
+                            const dy = cellCenter[1] - faceCenter[1];
+                            const dz = cellCenter[2]! - faceCenter[2]!;
+
+                            const arrowPosition = [
+                                faceCenter[0] + dx * 0.5,
+                                faceCenter[1] + dy * 0.5,
+                                faceCenter[2]! + dz * 0.5,
+                            ] as Position;
+
+                            // console.log(position);
+
+                            const arrowLength = length(fromArray(faceVelocity)) * this.props.velocityScale;
+                            // const arrowLength = 100;
+                            */
+
+                            const cellCenter = getCellCenter(applyAccessor(this.props.getCorners, d));
+                            const faceCenter = getFaceCenter(applyAccessor(this.props.getCorners, d), face);
+                            const faceVelocities = applyAccessor(this.props.getFaceVelocities, d, ctx);
+
+                            if (ctx.index === 1503) {
+                                console.log(face, faceVelocities);
+                            }
+
+                            const velocityVector = faceVelocities[face];
+                            const arrowPosition = offsetPosition(faceCenter, DEBUG_VEL_ARROW_CENTER_OFFSET[face]);
+                            // const outwardDir =
+                            const outwardDir = [faceCenter[0] - cellCenter[0], faceCenter[1] - cellCenter[1], 0];
+
+                            const velocitySign = Math.sign(
+                                velocityVector[0] || velocityVector[1] || velocityVector[2] || 1,
+                            );
+                            const arrowLength =
+                                length(fromArray(velocityVector)) * this.props.velocityScale * velocitySign;
+
+                            return makeArrowPolygon(arrowPosition, outwardDir, arrowLength);
                         },
                     } as SolidPolygonLayerProps),
                 );
@@ -203,21 +250,9 @@ const HEX_WIREFRAME_EDGES: readonly [number, number][] = [
     [1, 5],
     [2, 6],
     [3, 7], // verticals
-
-    // [0, 3], // Top diagonal
-    // [4, 7], // Base diagonal
-    // [0, 5],
-    // [0, 6],
-    // [1, 7],
-    // [2, 7],
-
-    // TEST
-    // [0, 2],
-    // [0, 4],
-    // [0, 6],
 ];
 
-function buildWireframeEdges(corners: number[][]): LineDatum[] {
+function buildWireframeEdges(corners: Position[]): LineDatum[] {
     // const { nx, ny, cellCornersFloat32Arr, activeUint8Arr } = data;
     // const lines: LineDatum[] = [];
     const lines: LineDatum[] = [];
@@ -235,50 +270,18 @@ function buildWireframeEdges(corners: number[][]): LineDatum[] {
     return lines;
 }
 
-function getCellCenter(cell: GridCell): Position {
-    const corners = cell.corners;
+function getCellCenter(corners: Position[]): Position {
     const center: [number, number, number] = [0, 0, 0];
 
     for (const corner of corners) {
         center[0] += corner[0];
         center[1] += corner[1];
-        center[2] += corner[2];
+        center[2] += corner[2] ?? 0;
     }
 
     center[0] /= corners.length;
     center[1] /= corners.length;
     center[2] /= corners.length;
-
-    return center as Position;
-}
-
-// TODO: Will use later
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getFaceCenter(cell: GridCell, face: "x" | "y" | "z" | "neg-x" | "neg-y" | "neg-z"): Position {
-    const corners = cell.corners;
-    const center: [number, number, number] = [0, 0, 0];
-
-    const faceIndices: Record<string, number[]> = {
-        x: [1, 3, 5, 7],
-        y: [2, 3, 6, 7],
-        z: [4, 5, 6, 7],
-        "neg-x": [0, 2, 4, 6],
-        "neg-y": [0, 1, 4, 5],
-        "neg-z": [0, 1, 2, 3],
-    };
-
-    const indices = faceIndices[face];
-
-    for (const index of indices) {
-        const corner = corners[index];
-        center[0] += corner[0];
-        center[1] += corner[1];
-        center[2] += corner[2];
-    }
-
-    center[0] /= indices.length;
-    center[1] /= indices.length;
-    center[2] /= indices.length;
 
     return center as Position;
 }

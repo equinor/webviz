@@ -4,11 +4,17 @@
 uniform highp sampler2DArray uGridVelocityTexture;
 uniform highp isampler2DArray uGridNeighborIndexTexture;
 
+in vec3 instanceStartPositions;
+in int instanceStartCellIndex;
+
 in  vec3 oldPositions;
 out vec3 newPositions;
 
 in int oldCellIndex;
 flat out int newCellIndex;
+
+in float oldAge;
+out float newAge;
 
 float randFloat(vec2 seed) {
     return fract(sin(dot(seed.xy, vec2(12.9898, 78.233))) * 43758.5453);
@@ -21,6 +27,13 @@ void main() {
     );
 
     // Sample all 6 face velocities
+    // 0: I
+    // 1: J
+    // 2: K
+    // 3: -I
+    // 4: -J
+    // 5: -K
+
     vec3 velocities[6];
     for (int i = 0; i < 6; i++) {
         velocities[i] = texelFetch(uGridVelocityTexture, ivec3(gridPosUV, i), 0).xyz;
@@ -29,9 +42,9 @@ void main() {
     int neighbors[6];
     for (int i = 0; i < 2; i++) {
         ivec4 neighborIndices = texelFetch(uGridNeighborIndexTexture, ivec3(gridPosUV, i), 0);
-        neighbors[i + 0] = neighborIndices.x;
-        neighbors[i + 1] = neighborIndices.y;
-        neighbors[i + 2] = neighborIndices.z;
+        neighbors[i * 3 + 0] = neighborIndices.x;
+        neighbors[i * 3 + 1] = neighborIndices.y;
+        neighbors[i * 3 + 2] = neighborIndices.z;
     }
 
     // Interpolate velocity using barycentric coordinates (u, v, w)
@@ -47,7 +60,9 @@ void main() {
         mix(velocities[4], velocities[1], v) +
         mix(velocities[5], velocities[2], w);
 
-    newPositions = oldPositions + interpolatedVelocity * animatedCellParticles.deltaTime;
+    newAge = oldAge + animatedCellParticles.deltaTime;
+    newPositions = oldPositions + interpolatedVelocity * animatedCellParticles.velocityScale *  animatedCellParticles.deltaTime;
+
     // newPositions = oldPositions + interpolatedVelocity * 0.016;
 
     newCellIndex = oldCellIndex;
@@ -55,7 +70,7 @@ void main() {
     // Check if coordinates are out of bounds and update cell index
     // Technically, I guess a particle could cross diagonally; we'll ignore that case as one or two particles "jumping" is barely noticeable
     if(newPositions.x < 0.0) {
-        newCellIndex = neighbors[3];
+        newCellIndex = neighbors[4];
         newPositions.x = newPositions.x + 1.0;
     }
 
@@ -65,7 +80,7 @@ void main() {
     }
 
     else if(newPositions.y < 0.0) {
-        newCellIndex = neighbors[4];
+        newCellIndex = neighbors[5];
         newPositions.y = newPositions.y + 1.0;
     }
     
@@ -83,12 +98,20 @@ void main() {
         newPositions.z = newPositions.z - 1.0;
     }
 
+    if(newAge > animatedCellParticles.maxAge) {
+        newAge = 0.0;
+        newCellIndex = -1;
+    };
+
     // TODO: This randomization has bad distribution
     if(newCellIndex == -1) {
-        float seed = newPositions.x + newPositions.y + newPositions.x;
-        float r = randFloat(vec2(float(gl_InstanceID), float(gl_InstanceID)));
+        // float seed = newPositions.x + newPositions.y + newPositions.x;
+        // float r = randFloat(vec2(float(gl_InstanceID), float(gl_InstanceID)));
 
-        newCellIndex = int(floor(r * float(animatedCellParticles.maxCellIndex + uint(1))));
-        newPositions = vec3(randFloat(vec2(seed, float(gl_InstanceID))), randFloat(vec2(seed + 1.0, float(gl_InstanceID))), randFloat(vec2(seed + 2.0, float(gl_InstanceID))));
+        // newCellIndex = int(floor(r * float(animatedCellParticles.maxCellIndex + uint(1))));
+        // newPositions = vec3(randFloat(vec2(seed, float(gl_InstanceID))), randFloat(vec2(seed + 1.0, float(gl_InstanceID))), randFloat(vec2(seed + 2.0, float(gl_InstanceID))));
+        newCellIndex = instanceStartCellIndex;
+        newPositions = instanceStartPositions;
+
     }
 }

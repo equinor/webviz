@@ -140,6 +140,20 @@ SettingRegistry.registerSetting(Setting.REALIZATIONS, "Realizations", SelectNumb
 SettingRegistry.registerSetting(Setting.SEISMIC_SLICES, "Seismic Slices", SeismicSliceSetting);
 SettingRegistry.registerSetting(Setting.SENSITIVITY, "Sensitivity", SensitivitySetting);
 SettingRegistry.registerSetting(Setting.SHOW_GRID_LINES, "Show Grid Lines", BooleanSetting);
+SettingRegistry.registerSetting(Setting.SHOW_CELL_VELOCITY, "Show Cell Velocities", BooleanSetting);
+// SettingRegistry.registerSetting(Setting., "Show Grid Lines", BooleanSetting);
+SettingRegistry.registerSetting(Setting.PHASE, "Phase", RadioGroupSetting, {
+    customConstructorParameters: [
+        {
+            staticOptions: [
+                { value: "oil", label: "Oil" },
+                { value: "gase", label: "Gas" },
+                { value: "water", label: "Water" },
+            ],
+            layout: "horizontal",
+        },
+    ],
+});
 SettingRegistry.registerSetting(Setting.FLUX_PHASES_SHOWN, "Flux Phases Shown", FluxPhasesShownSetting);
 SettingRegistry.registerSetting(Setting.FLUX_DIRECTIONS_SHOWN, "Flux Directions Shown", FluxDirectionsShownSetting);
 SettingRegistry.registerSetting(Setting.SHOW_GRID_POINTS, "Show Grid Points", BooleanSetting);

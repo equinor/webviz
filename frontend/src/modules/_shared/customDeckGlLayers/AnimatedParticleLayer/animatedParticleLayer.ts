@@ -2,38 +2,70 @@
  * A layer that animates particles moving around a grid.
  */
 
-import type { Color, DefaultProps, LayerContext, LayerProps, UpdateParameters } from "@deck.gl/core";
+import type {
+    Accessor,
+    AccessorContext,
+    Color,
+    DefaultProps,
+    LayerContext,
+    LayerProps,
+    Position,
+    UpdateParameters,
+} from "@deck.gl/core";
 import { Layer, project32 } from "@deck.gl/core";
-import type { RenderPass, TypedArray } from "@luma.gl/core";
+import type { RenderPass, TypedArray, Buffer } from "@luma.gl/core";
 import type { DynamicTextureProps, SwapBuffers } from "@luma.gl/engine";
 import { DynamicTexture, Model, Swap, BufferTransform } from "@luma.gl/engine";
 import { range } from "lodash-es";
 
+import { applyAccessor } from "@framework/utils/deckgl";
 import { randomInteger } from "@framework/utils/numberUtils";
 
 import fragmentShader from "./_shaders/particle_frag.glsl?raw";
 import transformVertexShader from "./_shaders/particle_transform_vert.glsl?raw";
 import vertexShader from "./_shaders/particle_vert.glsl?raw";
-import type { GridCell } from "./types";
+import type { FaceData, GridCell } from "./types";
 import type { AnimatedCellParticleUniformProps } from "./uniforms";
 import { animatedCellParticleUniforms } from "./uniforms";
+import { flattenFaceData, makeFaceData } from "./utils";
 
-export type AnimatedParticleLayerProps = LayerProps & {
+export type AnimatedParticleLayerProps<TData = GridCell> = LayerProps & {
+    data: TData[];
     numParticles: number;
-    grid: GridCell[];
     color: Color;
     fps: number;
     paused: boolean;
+    maxAge: number;
+    size: number;
+    velocityScale: number;
+    flat: boolean;
+    // Accessors
+    getCorners: Accessor<TData, Position[]>;
+    getFaceVelocities: Accessor<TData, FaceData<number[]>>;
+    getNeighborCells: Accessor<TData, FaceData<number>>;
 };
 
-export class AnimatedParticleLayer extends Layer<AnimatedParticleLayerProps> {
+export class AnimatedParticleLayer<TData = GridCell> extends Layer<AnimatedParticleLayerProps<TData>> {
     static layerName = "AnimatedParticleLayer";
     static defaultProps: DefaultProps<AnimatedParticleLayerProps> = {
         numParticles: 1_000,
-        grid: [],
+        data: [],
         color: [255, 0, 0, 255],
         fps: 60,
+        maxAge: 10,
         paused: false,
+        size: 12,
+        velocityScale: 1,
+        flat: false,
+        getCorners: { type: "accessor", value: (d: any) => d.corners! },
+        getNeighborCells: {
+            type: "accessor",
+            value: (d: any) => d.neighborIndices ?? makeFaceData(-1),
+        },
+        getFaceVelocities: {
+            type: "accessor",
+            value: (d: any) => d.faceVelocities ?? makeFaceData([0, 0, 0]),
+        },
     };
 
     declare state: {
@@ -47,9 +79,18 @@ export class AnimatedParticleLayer extends Layer<AnimatedParticleLayerProps> {
         transform: BufferTransform;
         positionBuffers: SwapBuffers;
         cellIndexBuffers: SwapBuffers;
+        ageBuffers: SwapBuffers;
         gridCornerPosTexture: DynamicTexture;
         gridFaceVelocitiesTexture: DynamicTexture;
         gridNeighborIndexTexture: DynamicTexture;
+
+        // TODO: Temp test without randomization
+        initialStartPositionBuffer: Buffer;
+        initialStartCellIndexBuffer: Buffer;
+
+        //
+        dataLoaded: boolean;
+        lastTimeMs: number;
     };
 
     getNumInstances(): number {
@@ -58,11 +99,15 @@ export class AnimatedParticleLayer extends Layer<AnimatedParticleLayerProps> {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     initializeState(_context: LayerContext): void {
+        this.setState({ dataLoaded: false });
+
         this.createGridCellBuffers();
         this.setupTransformFeedback();
 
         // ! Expects other buffers, keep last
         this.setupParticles();
+
+        this.setState({ dataLoaded: true });
     }
 
     override getShaders(shaders?: any) {
@@ -72,12 +117,15 @@ export class AnimatedParticleLayer extends Layer<AnimatedParticleLayerProps> {
         });
     }
 
-    updateState({ props, oldProps }: UpdateParameters<AnimatedParticleLayer>): void {
+    updateState({ props, oldProps }: UpdateParameters<AnimatedParticleLayer<TData>>): void {
         // TODO
 
         if (props.paused !== oldProps.paused) {
             this.setState({ isPaused: props.paused });
-            if (!props.paused) this.requestStep();
+            if (!props.paused) {
+                this.setState({ lastTimeMs: this.context.timeline.getTime() });
+                this.requestStep();
+            }
         }
     }
 
@@ -89,17 +137,33 @@ export class AnimatedParticleLayer extends Layer<AnimatedParticleLayerProps> {
         this.state.transform?.destroy();
         this.state.positionBuffers?.destroy();
         this.state.cellIndexBuffers?.destroy();
+        this.state.ageBuffers?.destroy();
         this.state.gridCornerPosTexture.destroy();
         this.state.gridFaceVelocitiesTexture.destroy();
         this.state.gridNeighborIndexTexture.destroy();
+
+        this.setState({ dataLoaded: false });
     }
 
-    private getParticleModuleProps(): AnimatedCellParticleUniformProps {
+    private getParticleModuleProps(includeDeltaTime = false): AnimatedCellParticleUniformProps {
+        let deltaTime = 0;
+        if (includeDeltaTime) {
+            // Compute delta-time
+            const currentTimeMs = this.context.timeline.getTime();
+            const previousTimeMs = this.state.lastTimeMs ?? 0;
+
+            deltaTime = (currentTimeMs - previousTimeMs) / 1000;
+
+            this.setState({ lastTimeMs: currentTimeMs });
+        }
+
         return {
             gridTextureSize: this.state.gridTextureSize,
-            maxCellIndex: this.props.grid.length - 1,
-            deltaTime: 0.016, // TODO: make this actually based on true delta time
-            maxAge: 10,
+            maxCellIndex: this.props.data.length - 1,
+            maxAge: this.props.maxAge,
+            deltaTime: deltaTime,
+            size: this.props.size,
+            velocityScale: this.props.velocityScale,
         };
     }
 
@@ -110,14 +174,15 @@ export class AnimatedParticleLayer extends Layer<AnimatedParticleLayerProps> {
         parameters: any;
         context: LayerContext;
     }): void {
-        const { model, positionBuffers, cellIndexBuffers } = this.state;
+        const { model, positionBuffers, cellIndexBuffers, ageBuffers } = this.state;
         const { shaderModuleProps = {} } = opts;
 
-        if (!model) return;
+        if (!model || !this.state.dataLoaded) return;
 
         model.setAttributes({
             instancePositions: positionBuffers.current,
             instanceCellIndex: cellIndexBuffers.current,
+            instanceAge: ageBuffers.current,
         });
 
         model.setBindings({
@@ -160,7 +225,14 @@ export class AnimatedParticleLayer extends Layer<AnimatedParticleLayerProps> {
     }
 
     private runTransform() {
-        const { transform, positionBuffers, cellIndexBuffers } = this.state;
+        if (!this.state.dataLoaded) return;
+
+        const { transform, positionBuffers, cellIndexBuffers, ageBuffers } = this.state;
+
+        transform.model.setAttributes({
+            instanceStartPositions: this.state.initialStartPositionBuffer,
+            instanceStartCellIndex: this.state.initialStartCellIndexBuffer,
+        });
 
         transform.model.setBindings({
             uGridPositionsTexture: this.state.gridCornerPosTexture,
@@ -169,22 +241,31 @@ export class AnimatedParticleLayer extends Layer<AnimatedParticleLayerProps> {
         });
 
         transform.model.shaderInputs.setProps({
-            animatedCellParticles: this.getParticleModuleProps(),
+            animatedCellParticles: this.getParticleModuleProps(true),
         });
 
         transform.run({
             discard: true,
-            inputBuffers: { oldPositions: positionBuffers.current, oldCellIndex: cellIndexBuffers.current },
-            outputBuffers: { newPositions: positionBuffers.next, newCellIndex: cellIndexBuffers.next },
+            inputBuffers: {
+                oldPositions: positionBuffers.current,
+                oldCellIndex: cellIndexBuffers.current,
+                oldAge: ageBuffers.current,
+            },
+            outputBuffers: {
+                newPositions: positionBuffers.next,
+                newCellIndex: cellIndexBuffers.next,
+                newAge: ageBuffers.next,
+            },
         });
 
         cellIndexBuffers.swap();
         positionBuffers.swap();
+        ageBuffers.swap();
     }
 
     private createGridCellBuffers() {
         const { device } = this.context;
-        const { grid } = this.props;
+        const { data: grid } = this.props;
 
         // Each pixel stores three values: R=X,G=Y,B=Z,A=_
         const safeGridLength = Math.max(grid.length, 1);
@@ -208,31 +289,40 @@ export class AnimatedParticleLayer extends Layer<AnimatedParticleLayerProps> {
             return slice;
         });
 
-        for (let i = 0; i < this.props.grid.length; i++) {
-            const cell = this.props.grid[i];
+        for (let i = 0; i < this.props.data.length; i++) {
+            const cell = this.props.data[i];
+            const accessorContext: AccessorContext<TData> = { index: i, data: this.props.data, target: [] };
+
             const offset = i * 4;
+
+            const corners = applyAccessor(this.props.getCorners, cell, accessorContext);
+            const velocities = applyAccessor(this.props.getFaceVelocities, cell, accessorContext);
+            const neighbors = applyAccessor(this.props.getNeighborCells, cell, accessorContext);
+
+            const velocitiesFlattened = flattenFaceData(velocities);
+            const neighborsFlattened = flattenFaceData(neighbors);
 
             // Store position values for each corner
             for (let i = 0; i < 8; i++) {
-                cellPositionTextureData[i][offset] = cell.corners[i][0];
-                cellPositionTextureData[i][offset + 1] = cell.corners[i][1];
-                cellPositionTextureData[i][offset + 2] = cell.corners[i][2];
+                cellPositionTextureData[i][offset] = corners[i][0];
+                cellPositionTextureData[i][offset + 1] = corners[i][1];
+                cellPositionTextureData[i][offset + 2] = corners[i][2] ?? 0;
                 cellPositionTextureData[i][offset + 3] = 0; // padding
             }
 
             // Store velocities for face
             // TODO: It should arguably be fairly trivial to go to corner velocities instead
             for (let i = 0; i < 6; i++) {
-                faceVelocityTextureData[i][offset] = cell.faceVelocities[i][0];
-                faceVelocityTextureData[i][offset + 1] = cell.faceVelocities[i][1];
-                faceVelocityTextureData[i][offset + 2] = cell.faceVelocities[i][2];
+                faceVelocityTextureData[i][offset] = velocitiesFlattened[i][0];
+                faceVelocityTextureData[i][offset + 1] = velocitiesFlattened[i][1];
+                faceVelocityTextureData[i][offset + 2] = velocitiesFlattened[i][2];
                 faceVelocityTextureData[i][offset + 3] = 0; // padding
             }
 
             for (let i = 0; i < 2; i++) {
-                cellNeighborIndexTextureData[i][offset] = cell.neighborIndices[i];
-                cellNeighborIndexTextureData[i][offset + 1] = cell.neighborIndices[i + 1];
-                cellNeighborIndexTextureData[i][offset + 2] = cell.neighborIndices[i + 2];
+                cellNeighborIndexTextureData[i][offset] = neighborsFlattened[i * 2];
+                cellNeighborIndexTextureData[i][offset + 1] = neighborsFlattened[i * 2 + 1];
+                cellNeighborIndexTextureData[i][offset + 2] = neighborsFlattened[i * 2 + 2];
                 cellNeighborIndexTextureData[i][offset + 3] = 0; // padding
             }
         }
@@ -307,6 +397,10 @@ export class AnimatedParticleLayer extends Layer<AnimatedParticleLayerProps> {
             bufferLayout: [
                 { name: "instancePositions", format: "float32x3", stepMode: "instance" },
                 { name: "instanceCellIndex", format: "sint32", stepMode: "instance" },
+                { name: "instanceAge", format: "float32", stepMode: "instance" },
+
+                { name: "instanceStartPositions", format: "float32x3", stepMode: "instance" },
+                { name: "instanceStartCellIndex", format: "sint32", stepMode: "instance" },
             ],
         });
 
@@ -326,16 +420,39 @@ export class AnimatedParticleLayer extends Layer<AnimatedParticleLayerProps> {
         const shaderModules = this.getShaders().modules;
 
         const cellIndex = new Int32Array(numParticles);
+        const age = new Float32Array(numParticles);
         const startPositions = new Float32Array(numParticles * 3);
 
         for (let i = 0; i < numParticles; i++) {
-            cellIndex[i] = randomInteger(0, this.props.grid.length);
+            cellIndex[i] = randomInteger(0, this.props.data.length);
 
+            // Randomize the starting age
+            age[i] = Math.random() * this.props.maxAge;
+
+            // Randomize starting positions
             startPositions[0 + i * 3] = Math.random(); // u
             startPositions[1 + i * 3] = Math.random(); // v
-            startPositions[2 + i * 3] = Math.random(); // w
+            if (this.props.flat) {
+                startPositions[2 + i * 3] = 0; // w
+            } else {
+                startPositions[2 + i * 3] = Math.random(); // w
+            }
         }
 
+        /**
+         * Potential TODO: Right now, we'll have dead particles return to their initial grid and position.
+         * It seems that the more standard approach is to have particles respawn completely random. I *believe*
+         * this is to avoid places with much movement becoming empty, and to avoid visible "lines" in the
+         * movement. Resetting looks fine enough, but we should also see how it looks with proper randomness
+         */
+        const initPosition = device.createBuffer(startPositions);
+        const initGridCell = device.createBuffer(cellIndex);
+        this.setState({
+            initialStartPositionBuffer: initPosition,
+            initialStartCellIndexBuffer: initGridCell,
+        });
+
+        // Create transformation buffers
         const positionBuffers = new Swap({
             current: device.createBuffer(startPositions),
             next: device.createBuffer(new Float32Array(numParticles * 3)),
@@ -344,6 +461,11 @@ export class AnimatedParticleLayer extends Layer<AnimatedParticleLayerProps> {
         const cellIndexBuffers = new Swap({
             current: device.createBuffer(cellIndex),
             next: device.createBuffer(new Int32Array(numParticles)),
+        });
+
+        const ageBuffers = new Swap({
+            current: device.createBuffer(age),
+            next: device.createBuffer(new Float32Array(numParticles)),
         });
 
         const transform = new BufferTransform(device, {
@@ -355,14 +477,20 @@ export class AnimatedParticleLayer extends Layer<AnimatedParticleLayerProps> {
             bufferLayout: [
                 { name: "oldPositions", format: "float32x3", stepMode: "instance" },
                 { name: "oldCellIndex", format: "sint32", stepMode: "instance" },
+                { name: "oldAge", format: "float32", stepMode: "instance" },
+
+                { name: "instanceStartPositions", format: "float32x3", stepMode: "instance" },
+                { name: "instanceStartCellIndex", format: "sint32", stepMode: "instance" },
             ],
-            outputs: ["newPositions", "newCellIndex"],
+            outputs: ["newPositions", "newCellIndex", "newAge"],
             modules: shaderModules,
         });
 
         this.setState({
             positionBuffers: positionBuffers,
             cellIndexBuffers: cellIndexBuffers,
+            ageBuffers: ageBuffers,
+
             transform: transform,
         });
     }

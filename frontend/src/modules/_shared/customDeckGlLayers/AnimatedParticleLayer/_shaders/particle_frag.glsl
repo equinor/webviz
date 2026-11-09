@@ -3,7 +3,7 @@
 
 precision highp float;
 
-flat in vec3 DEB_particle_color;
+flat in vec4 vColor;
 
 out vec4 fragColor;
 
@@ -18,6 +18,8 @@ void main() {
         discard;
     }
 
+
+
     // TODO: Color should actually be based on a user setting, or similar
-    fragColor = vec4(DEB_particle_color, 1.0);
+    fragColor = vColor;
 }

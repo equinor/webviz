@@ -6,6 +6,8 @@ uniform animatedCellParticlesUniforms {
     highp uint maxCellIndex;
     float deltaTime;
     float maxAge;
+    float size;
+    float velocityScale;
 } animatedCellParticles;
 `;
 
@@ -14,6 +16,8 @@ export type AnimatedCellParticleUniformProps = {
     maxCellIndex: number;
     deltaTime: number;
     maxAge: number;
+    size: number;
+    velocityScale: number;
 };
 
 export const animatedCellParticleUniforms = {
@@ -27,5 +31,7 @@ export const animatedCellParticleUniforms = {
         maxCellIndex: "u32",
         deltaTime: "f32",
         maxAge: "f32",
+        size: "f32",
+        velocityScale: "f32",
     },
 } as const satisfies ShaderModule<AnimatedCellParticleUniformProps>;

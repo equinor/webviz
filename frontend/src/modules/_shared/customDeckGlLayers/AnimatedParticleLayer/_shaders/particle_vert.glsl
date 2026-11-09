@@ -3,10 +3,13 @@
 
 precision highp float;
 
+in float instanceAge;
+flat out vec4 vColor;
+
 in vec3 instancePositions;
 in int instanceCellIndex;
 
-flat out vec3 DEB_particle_color;
+// flat out vec3 DEB_particle_color;
 
 uniform highp sampler2DArray uGridPositionsTexture;
 
@@ -45,29 +48,38 @@ void main() {
         corners[7].xyz * (u * v * w);
 
     gl_Position = project_position_to_clipspace(interpolatedPos, posLow, vec3(0.0), geometry.position);
-    gl_PointSize = 8.0;
+    // gl_PointSize = max(project_size_to_pixel(animatedCellParticles.size), 3.0);
+    // gl_PointSize = project_size_to_pixel(animatedCellParticles.size);
+    // gl_PointSize = animatedCellParticles.size;
+    gl_PointSize = animatedCellParticles.size / gl_Position.w;
+
 
     DECKGL_FILTER_GL_POSITION(gl_Position, geometry);
     
     vec4 color = vec4(0.0f);
     DECKGL_FILTER_COLOR(color, geometry);
+    
+    // float alpha = 1.0 - instanceAge / animatedCellParticles.maxAge;
+    float alpha = 1.0;
+    
+    vColor = vec4(1.0, 0.0, 0.0, alpha);
 
     // Debug colors based on cell index
-    if        (instanceCellIndex == 0) {
-        DEB_particle_color = vec3(1.0, 0.0, 0.0);
-    } else if (instanceCellIndex == 1) {
-        DEB_particle_color = vec3(0.0, 1.0, 0.0);
-    } else if (instanceCellIndex == 2) {
-        DEB_particle_color = vec3(0.0, 0.0, 1.0);
-    } else if (instanceCellIndex == 3) {
-        DEB_particle_color = vec3(1.0, 1.0, 0.0);
-    } else if (instanceCellIndex == 4) {
-        DEB_particle_color = vec3(1.0, 0.0, 1.0);
-    } else if (instanceCellIndex == 5) {
-        DEB_particle_color = vec3(0.0, 1.0, 1.0);
-    } else if (instanceCellIndex == 6) {
-        DEB_particle_color = vec3(0.0, 0.0, 0.0);
-    } else if (instanceCellIndex == 7) {
-        DEB_particle_color = vec3(0.5, 0.5, 0.5);
-    }
+    // if        (instanceCellIndex == 0) {
+    //     vColor = vec4(1.0, 0.0, 0.0, alpha);
+    // } else if (instanceCellIndex == 1) {
+    //     vColor = vec4(0.0, 1.0, 0.0, alpha);
+    // } else if (instanceCellIndex == 2) {
+    //     vColor = vec4(0.0, 0.0, 1.0, alpha);
+    // } else if (instanceCellIndex == 3) {
+    //     vColor = vec4(1.0, 1.0, 0.0, alpha);
+    // } else if (instanceCellIndex == 4) {
+    //     vColor = vec4(1.0, 0.0, 1.0, alpha);
+    // } else if (instanceCellIndex == 5) {
+    //     vColor = vec4(0.0, 1.0, 1.0, alpha);
+    // } else if (instanceCellIndex == 6) {
+    //     vColor = vec4(0.0, 0.0, 0.0, alpha);
+    // } else if (instanceCellIndex == 7) {
+    //     vColor = vec4(0.5, 0.5, 0.5, alpha);
+    // }
 }
