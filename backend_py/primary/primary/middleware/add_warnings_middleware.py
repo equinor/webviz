@@ -19,14 +19,12 @@ _warnings_context: ContextVar[dict[str, Any] | None] = ContextVar("warnings_cont
 _T = TypeVar("_T")
 
 
-def _warnings_to_exception(warnings: list[ResultWarning]) -> Exception | None:
+def _warnings_to_exception(warnings: list[ResultWarning]) -> Exception:
     """
-    Exception for the warnings, or None if there are no warnings. Only the first warning is converted, mirroring
-    the previous behavior where the first error raised, and avoiding huge messages for long warning lists.
+    Exception for a non-empty list of warnings. Only the first warning is converted, mirroring
+    the previous behavior where the first error raised, and avoiding huge messages for long warning
+    lists.
     """
-    if not warnings:
-        return None
-
     warning = warnings[0]
     if isinstance(warning, ServiceLayerWarning):
         return service_layer_warning_to_exception(warning)
@@ -38,13 +36,22 @@ def _warnings_to_exception(warnings: list[ResultWarning]) -> Exception | None:
 def resolve_warnings(result_with_warnings: ResultWithWarnings[_T]) -> _T:
     """
     Report all warnings to the client and return the result if the client allows warnings.
-    Otherwise raise the exception for the first warning: the service layer exception for a ServiceLayerWarning,
-    or an HTTPException for any other ResultWarning.
+    Otherwise raise the exception for the first warning: the service layer exception for a
+    ServiceLayerWarning, or an HTTPException for any other ResultWarning.
     """
     context = _warnings_context.get()
+    warnings = result_with_warnings.get_warnings()
+
+    # If warnings are allowed, add them to the context and return the value.
     if context is not None and context["allow_warnings"]:
-        return result_with_warnings.handle(lambda warnings: context["warnings"].extend(str(w) for w in warnings))
-    return result_with_warnings.get_value_or_throw(_warnings_to_exception)
+        context["warnings"].extend([str(w) for w in warnings])
+        return result_with_warnings.get_value()
+
+    # Raise exception if warnings are not allowed
+    if warnings:
+        raise _warnings_to_exception(warnings)
+
+    return result_with_warnings.get_value()
 
 
 class AddWarningsMiddleware:

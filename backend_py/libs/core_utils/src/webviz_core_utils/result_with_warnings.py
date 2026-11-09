@@ -1,4 +1,4 @@
-from typing import Callable, Generic, Sequence, TypeVar
+from typing import Generic, Sequence, TypeVar
 
 from .result_warning import ResultWarning
 
@@ -35,8 +35,7 @@ class ResultWithWarnings(Generic[T]):
     It can only be obtained through a method that either handles the warnings or makes skipping them explicit:
     - get_value(): requires the warnings to have been inspected (`has_warnings()` or `get_warnings()`), or a list
       to propagate the warnings to. Otherwise UncheckedResultWithWarningsError is raised.
-    - handle() and get_value_or_throw(): handle the warnings and return the value
-    - get_value_ignore_warnings(): explicit and greppable opt-out, discards the warnings
+    - get_value_ignore_warnings(): explicit and greppable opt-out, ignores the warnings without marking them as handled
     """
 
     def __init__(self, value: T, warnings: Sequence[ResultWarning] = ()) -> None:
@@ -72,34 +71,8 @@ class ResultWithWarnings(Generic[T]):
         return self._value
 
     def get_value_ignore_warnings(self) -> T:
-        """Explicit and greppable opt-out. Marks the warnings as handled, discards them and returns the value.
-        NOTE: Unsure if flag _checked should be set true when we ignore warnings. Currently it is set to True.
         """
-        self._checked = True  # TODO: Consider whether ignoring warnings should be treated as handling them or not.
-        return self._value
-
-    #########################################################################################################
-    #
-    # CONSIDER: Remove the functions below. Where should the responsibility of handling warnings reside?
-    #           Should the caller be responsible for handling warnings as exception, or should the class
-    #           enforce it?
-    #
-    #########################################################################################################
-
-    def get_value_or_throw(self, to_exception: Callable[[list[ResultWarning]], Exception | None]) -> T:
+        Explicit and greppable opt-out. Returns the value and ignores the warnings.
+        Does not mark the warnings as handled, so get_value() still requires them to be inspected.
         """
-        Pass the warnings (possibly an empty list) to `to_exception`, which decides which exception they map to.
-        Raise the returned exception, or return the value if `to_exception` returns None.
-        """
-        self._checked = True
-        exception = to_exception(list(self._warnings))
-        if exception is not None:
-            raise exception
-        return self._value
-
-    def handle(self, on_warnings: Callable[[list[ResultWarning]], None]) -> T:
-        """Pass the warnings to `on_warnings` (only called if there are any) and return the value."""
-        self._checked = True
-        if self._warnings:
-            on_warnings(list(self._warnings))
         return self._value
