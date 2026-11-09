@@ -17,6 +17,7 @@ import { DROGON_AHM } from "../support/drogonTestData";
 import { test } from "../support/recordingFixtures";
 import { TWO_D_VIEWER, addTwoDViewer, pointAtMap, twoDView, waitForMap } from "../support/twoDViewerHelpers";
 import {
+    RECORDING,
     addDashboard,
     captureThumbnail,
     createSessionAndSelectEnsemble,
@@ -31,6 +32,9 @@ import {
 } from "../support/walkthroughHelpers";
 
 import { meta } from "./twoDViewer.meta";
+
+/** How long the voice leads each narrated action, so speech starts before the cursor moves. */
+const SPEECH_LEAD_MS = 800;
 
 const TIME_STEP_LAYER = "ATTRIBUTE_TIME_STEP_SURFACE";
 const SEISMIC_4D_LAYER = "SEISMIC_4D_SURFACE";
@@ -64,10 +68,18 @@ test.describe("2D Viewer", () => {
         test.setTimeout(2_400_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
-        /** Speak `text` while running `action`, and wait for both before moving on. */
+        /**
+         * Speak `text` while running `action`, and wait for both before moving on. The action starts
+         * after a short lead, so the voice is already describing it when the cursor starts moving.
+         */
         async function say(text: string, action?: () => Promise<void>): Promise<void> {
             const narration = narrate(text);
-            await action?.();
+            if (action) {
+                if (RECORDING) {
+                    await page.waitForTimeout(SPEECH_LEAD_MS);
+                }
+                await action();
+            }
             await narration;
         }
 
@@ -95,8 +107,11 @@ test.describe("2D Viewer", () => {
         await say("We add the 2D Viewer.", () => addTwoDViewer(page));
 
         await say(
-            "Everything is set up in the layer panel on the left. A view is one map in the viewer, and holds the layers drawn in it. We add a view.",
-            () => smoothClick(page, page.getByRole("button", { name: "Add first view" })),
+            "The 2D Viewer is set up in the layer panel on the left, as a hierarchy. At the top are views: each view is one map in the viewer. Inside each view are layers, such as surfaces, wells and polygons, drawn on top of each other. Settings can also be shared between layers, which we will come to shortly.",
+            () => smoothMoveToLocator(page, dpfPanel(page)),
+        );
+        await say("Let's add our first view.", () =>
+            smoothClick(page, page.getByRole("button", { name: "Add first view" })),
         );
         const depthView = twoDView(page, 0);
 
@@ -109,24 +124,19 @@ test.describe("2D Viewer", () => {
             await waitForMap(page);
         });
 
-        markStep("Depth map: well picks and faults");
+        markStep("Depth map: fault lines");
         await say(
-            "Next, the cultural data. New layers go to the top of the view, and layers higher up are drawn on top. We add the official well picks, which mark where each well penetrates the surface...",
-            () => addFromMenu(page, dpfAddButton(depthView), ["Layers", "Wells", "Picks (Official)"]),
+            "Next, the fault polygons: the fault lines where the faults cut this surface. New layers go to the top of the view, and layers higher up are drawn on top.",
+            async () => {
+                await addFromMenu(page, dpfAddButton(depthView), ["Layers", "Polygons", "Fault Polygons"]);
+                await waitForMap(page);
+            },
         );
-        await say("...and the fault polygons.", () =>
-            addFromMenu(page, dpfAddButton(depthView), ["Layers", "Polygons", "Fault Polygons"]),
-        );
-        const picksLayer = dpfLayer(depthView, "DRILLED_WELLBORE_PICKS");
         const faultLayer = dpfLayer(depthView, "FAULT_POLYGONS");
-        await say("The panel gets long quickly, so we collapse the well picks to keep it tidy.", async () => {
-            await waitForMap(page);
-            await setItemExpanded(page, picksLayer, false);
-        });
 
         markStep("Depth map: shared settings");
         await say(
-            "Notice that the faults and the well picks each have their own surface name and realization, which must match the depth surface.",
+            "Notice that the fault polygons have their own surface name and realization, which must match the depth surface.",
             () => smoothMoveToLocator(page, dpfSetting(faultLayer, "surfaceName")),
         );
         await say(
@@ -139,21 +149,42 @@ test.describe("2D Viewer", () => {
         const sharedRealization = dpfSharedSetting(page, "realization");
         await expect(dpfSetting(depthLayer, "realization").getByRole("combobox")).toHaveCount(0);
         await say(
-            "The controlled settings now show a link icon. The default surface has no well picks, so we switch the shared surface name to the top of the Therys formation. The surface, the faults and the picks all follow.",
+            "The controlled settings now show a link icon. Stepping through realizations updates the surface and the faults together.",
             async () => {
-                await smoothMoveToLocator(page, dpfSetting(depthLayer, "surfaceName"));
+                await smoothMoveToLocator(page, dpfSetting(depthLayer, "realization"));
+                for (let i = 0; i < 2; i++) {
+                    await browseSettingOption(page, sharedRealization, "realization");
+                    await waitForMap(page);
+                    await pace(page, "long");
+                }
+            },
+        );
+
+        markStep("Depth map: well picks");
+        await say(
+            "Finally, we add the official well picks, which mark where each well penetrates the surface. The new layer follows the shared surface name right away.",
+            async () => {
+                await addFromMenu(page, dpfAddButton(depthView), ["Layers", "Wells", "Picks (Official)"]);
+                await waitForMap(page);
+            },
+        );
+        const picksLayer = dpfLayer(depthView, "DRILLED_WELLBORE_PICKS");
+        await say(
+            "But no picks show up: there are no well picks for the selected surface. So we change the shared surface name to the top of the Therys formation, and the surface, the faults and the picks all follow.",
+            async () => {
+                await smoothMoveToLocator(page, dpfSetting(picksLayer, "surfaceName"));
                 await selectSettingOption(page, dpfSharedSetting(page, "surfaceName"), "surfaceName", "Therys Fm. Top");
                 await expect(dpfSetting(picksLayer, "surfaceName")).toContainText("Therys Fm. Top");
                 await waitForMap(page);
             },
         );
-        await say("Stepping through realizations updates the surface and the faults together.", async () => {
-            for (let i = 0; i < 2; i++) {
-                await browseSettingOption(page, sharedRealization, "realization");
-                await waitForMap(page);
-                await pace(page, "long");
-            }
-        });
+        await say(
+            "Note that the well data in Webviz currently comes from the official well database, S-M-D-A. Well data from F-M-U is not available yet, and getting it added is prioritized. We collapse the well picks to keep the panel tidy.",
+            async () => {
+                await smoothMoveToLocator(page, dpfSetting(picksLayer, "wellbores"));
+                await setItemExpanded(page, picksLayer, false);
+            },
+        );
 
         markStep("Depth map: color scale and contours");
         await say("Clicking a color scale opens the editor. We pick the Viridis palette...", async () => {

@@ -14,6 +14,14 @@ import { STORAGE_STATE_PATH } from "./setup/globalSetup";
  */
 const record = !!process.env.RECORD;
 
+/**
+ * Set E2E_GPU=1 to run Chromium headed so WebGL can use the GPU (e.g. under WSLg, through Mesa's
+ * D3D12 driver). Headless Chromium always falls back to software rendering (SwiftShader), where every
+ * map redraw in WebGL-heavy modules takes seconds, which makes recordings far slower than real use.
+ * Requires a display; not available on the CI runners.
+ */
+const gpu = !!process.env.E2E_GPU;
+
 /** Base URL the browser talks to. Assumes the full stack is already running on this port. */
 const BASE_URL = "http://localhost:8080";
 
@@ -67,9 +75,19 @@ export default defineConfig({
                 // flushing the full-HD video/trace at context teardown. Point it at /tmp instead.
                 launchOptions: {
                     args: ["--disable-dev-shm-usage"],
+                    ...(gpu
+                        ? {
+                              env: {
+                                  ...process.env,
+                                  GALLIUM_DRIVER: process.env.GALLIUM_DRIVER ?? "d3d12",
+                                  MESA_D3D12_DEFAULT_ADAPTER_NAME:
+                                      process.env.MESA_D3D12_DEFAULT_ADAPTER_NAME ?? "NVIDIA",
+                              },
+                          }
+                        : {}),
                 },
+                ...(gpu ? { headless: false } : {}),
             },
         },
     ],
-
 });

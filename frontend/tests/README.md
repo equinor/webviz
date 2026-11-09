@@ -100,6 +100,19 @@ expand/collapse, color scales), and keep module specifics in a small per-module 
 `tests/e2e/support/twoDViewerHelpers.ts`. For deck.gl based modules, call `suppressMapHover(page)`
 (see `walkthroughHelpers.ts`) to avoid slow hover picking while recording.
 
+#### Recording with GPU rendering
+
+Headless Chromium renders WebGL in software, so map updates in WebGL-heavy modules (2D/3D Viewer,
+Intersection) take seconds and recordings look much slower than real use. On a machine with a GPU
+and a display (e.g. WSL2 with WSLg), record with the GPU instead:
+
+```bash
+E2E_GPU=1 npm run test:e2e:record -- tests/e2e/stories/twoDViewer.test.ts
+```
+
+This runs Chromium headed with Mesa's D3D12 driver (`GALLIUM_DRIVER=d3d12`, NVIDIA adapter by default;
+override with `MESA_D3D12_DEFAULT_ADAPTER_NAME`). CI runners have no GPU, so this is local only.
+
 #### Running a single story
 
 While working on one story you usually don't want to run the whole suite. Pass a filter through to
