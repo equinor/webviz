@@ -42,32 +42,17 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
     const [description, setDescription] = React.useState<string>("");
     const [showConfirmationDialog, setShowConfirmationDialog] = React.useState<boolean>(false);
 
-    const [prevOriginalTitle, setPrevOriginalTitle] = React.useState<string>("");
-    const [prevOriginalDescription, setPrevOriginalDescription] = React.useState<string>("");
+    const [prevOpen, setPrevOpen] = React.useState<boolean>(false);
+    if (props.open !== prevOpen) {
+        setPrevOpen(props.open);
+        if (props.open) {
+            setTitle(truncateString(props.title, MAX_TITLE_LENGTH));
+            setDescription(truncateString(props.description ?? "", MAX_DESCRIPTION_LENGTH));
+        }
+    }
 
-    if (props.title !== prevOriginalTitle) {
-        setPrevOriginalTitle(props.title);
-        setTitle(`${truncateString(props.title, MAX_TITLE_LENGTH)}`);
-    }
-    if (props.description !== prevOriginalDescription) {
-        setPrevOriginalDescription(props.description ?? "");
-        setDescription(`${truncateString(props.description ?? "", MAX_DESCRIPTION_LENGTH)}`);
-    }
     const inputRef = React.useRef<HTMLInputElement>(null);
     const formId = React.useId();
-
-    const [prevTitle, setPrevTitle] = React.useState<string>(props.title);
-    const [prevDescription, setPrevDescription] = React.useState<string>(props.description ?? "");
-
-    if (prevTitle !== props.title) {
-        setPrevTitle(props.title);
-        setTitle(props.title);
-    }
-
-    if (prevDescription !== props.description) {
-        setPrevDescription(props.description ?? "");
-        setDescription(props.description ?? "");
-    }
 
     function handleSave(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -122,10 +107,6 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
     }
 
     function handleDiscardChanges() {
-        setTitle(props.title);
-        setDescription(props.description ?? "");
-        setPrevOriginalTitle("");
-        setPrevOriginalDescription("");
         props.onClose?.();
     }
 
