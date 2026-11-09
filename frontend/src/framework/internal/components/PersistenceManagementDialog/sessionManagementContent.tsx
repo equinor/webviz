@@ -29,6 +29,8 @@ import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 
 import { tableSortDirToApiSortDir, useInfiniteSessionMetadataQuery } from "./_utils";
 import { NEXT_PAGE_THRESHOLD, PENDING_PAGE, PENDING_ROW } from "./constants";
+import { Typography } from "@lib/components/Typography";
+import { Hidden } from "@lib/components/Hidden";
 
 export type SessionOverviewContentProps = {
     workbench: Workbench;
@@ -129,10 +131,18 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                         </Button>
                     </Tooltip>
                     <span className="grow" />
+                    <Hidden hidden={!selectedSessions.length}>
+                        <Typography tone="neutral" size="sm">
+                            {selectedSessions.length} selected session{selectedSessions.length !== 1 ? "s" : ""}
+                        </Typography>
+                        <Button onClick={handleDeselectClick} size="!">
+                            Deselect
+                        </Button>
+                    </Hidden>
                     <Tooltip
                         content={
                             selectedSessions.length > 1
-                                ? `Delete the ${selectedSessions.length} selected sessions`
+                                ? `Delete the ${selectedSessions.length} selected session${selectedSessions.length !== 1 ? "s" : ""}`
                                 : "Delete the selected session"
                         }
                     >
@@ -303,18 +313,7 @@ function SessionTable(props: SessionTableProps) {
             onChangeColumnSort={setTableSortState}
         >
             <Table.Head sticky>
-                <Table.Column colKey="select" width={60} sortable={false} noPadding>
-                    <div className="px-sm">
-                        <Checkbox
-                            size="small"
-                            aria-label="Select all sessions"
-                            checked={allLoadedSessionsSelected}
-                            indeterminate={someLoadedSessionsSelected}
-                            disabled={tableData.length === 0}
-                            onCheckedChange={handleToggleAllSelected}
-                        />
-                    </div>
-                </Table.Column>
+                <Table.Column colKey="select" width={60} sortable={false} noPadding></Table.Column>
                 <Table.Column colKey="title" widthInPercent={25}>
                     Title
                 </Table.Column>
