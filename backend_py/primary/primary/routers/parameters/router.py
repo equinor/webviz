@@ -28,5 +28,5 @@ async def get_parameters_and_sensitivities(
     return schemas.EnsembleParametersAndSensitivities(
         parameters=converters.to_api_parameters(parameters_and_sensitivities.parameters),
         sensitivities=converters.to_api_sensitivities(parameters_and_sensitivities.sensitivities),
-        nonStandardParametersWarning=parameters_and_sensitivities.non_standard_parameters_warning,
+        warnings=parameters_and_sensitivities.warnings,
     )

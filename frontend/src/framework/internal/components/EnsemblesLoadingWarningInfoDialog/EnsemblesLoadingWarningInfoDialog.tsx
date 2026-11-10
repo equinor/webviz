@@ -29,7 +29,9 @@ export function EnsemblesLoadingWarningInfoDialog(props: EnsemblesLoadingWarning
                                     {descriptionPrefix}: {warningInfo.displayName}
                                 </div>
                                 <ul className="list-inside list-disc">
-                                    <li>{warningInfo.warningMessage}</li>
+                                    {warningInfo.warningMessages.map((message) => (
+                                        <li key={message}>{message}</li>
+                                    ))}
                                 </ul>
                             </div>
                         );
