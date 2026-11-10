@@ -5,7 +5,7 @@ requires-python = "^3.11"
 dynamic = ["dependencies"]
 
 [tool.poetry]
-requires-poetry = ">=2.1"
+requires-poetry = ">=2.5"
 packages = [{ include = "webviz_server_schemas", from = "src" }]
 
 [tool.poetry.dependencies]

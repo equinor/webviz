@@ -168,6 +168,10 @@ export class SliderRangeSetting implements CustomSettingImplementation<
             const handleSliderChange = React.useCallback(
                 function handleSliderChange(value: number | readonly number[], eventDetails: { reason: string }) {
                     if (eventDetails.reason === "range-locked") return;
+                    // Bounds changes make the slider emit a clamped value; ignore it so a retained
+                    // out-of-range value stays visible (and invalid) until the user edits it.
+                    // Sentinels already follow the new bounds on their own.
+                    if (eventDetails.reason === "clamp-value") return;
                     setLocalValue((prev) => {
                         const val = Array.isArray(value) ? value : [value, value];
                         const keepMin = prev[0] === "min" && val[0] === min;

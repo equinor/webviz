@@ -8,7 +8,9 @@ import canonicalize from "canonicalize";
  */
 export const FINGERPRINT_ALGORITHM = "webviz-response-fingerprint/v1";
 
-const FINGERPRINT_LENGTH = 16;
+// 24 bits. Only a collision between versions of the same endpoint matters (the URL path tells endpoints apart),
+// and only with versions still in browser caches, so the chance per response change is ~1 in 16 million
+const FINGERPRINT_LENGTH = 6;
 
 // "200"–"299", OpenAPI's range key "2XX", and "default", which covers every status not declared otherwise,
 // including an undeclared 2xx
@@ -54,7 +56,7 @@ export type FingerprintInput = {
  *
  * @param operation The operation object from the OpenAPI document (`paths[path][method]`).
  * @param document The whole OpenAPI document, used to resolve `$ref`s.
- * @returns 16 lowercase hex characters.
+ * @returns 6 lowercase hex characters.
  */
 export function fingerprintResponse(operation: unknown, document: unknown, options?: FingerprintOptions): string {
     const input = collectFingerprintInput(operation, document, options);

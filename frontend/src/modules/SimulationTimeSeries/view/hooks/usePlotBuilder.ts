@@ -31,6 +31,8 @@ export function usePlotBuilder(
     vectorHexColorMap: VectorHexColorMap,
     subplotOwner: SubplotOwner,
     ensemblesParameterColoring: EnsemblesParameterColoring | null,
+    hoveredTimestampUtcMs: number | null = null,
+    isHoverExternal = false,
 ): PlotBuilder | null {
     const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
@@ -47,6 +49,7 @@ export function usePlotBuilder(
         loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     );
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
+    const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
@@ -58,7 +61,7 @@ export function usePlotBuilder(
 
     const scatterType =
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
-            visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
+        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
             ? "scattergl"
             : "scatter";
 
@@ -123,9 +126,11 @@ export function usePlotBuilder(
     }
 
     // Add time annotation if active timestamp is set
-    if (activeTimestampUtcMs) {
+    if (showTimestampMarker && activeTimestampUtcMs) {
         plotBuilder.addTimeAnnotation(activeTimestampUtcMs);
     }
+
+    plotBuilder.setHoveredTimestamp(hoveredTimestampUtcMs, isHoverExternal);
 
     plotBuilder.prepareLegendsAndTitles();
     plotBuilder.prepareAnnotations();

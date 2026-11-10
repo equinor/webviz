@@ -27,17 +27,25 @@ export function useVisualizationAssemblerProduct<
     const latestRevision = React.useSyncExternalStore(
         dataProviderManager
             .getPublishSubscribeDelegate()
-            .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION),
-        dataProviderManager.makeSnapshotGetter(DataProviderManagerTopic.DATA_REVISION),
+            .makeSubscriberFunction(DataProviderManagerTopic.GUI_STATE_REVISION),
+        dataProviderManager.makeSnapshotGetter(DataProviderManagerTopic.GUI_STATE_REVISION),
+    );
+    // GUI state revisions are held back while restoring a state - without this, the product made before would not
+    // tell that it is outdated
+    const isDeserializing = React.useSyncExternalStore(
+        dataProviderManager
+            .getPublishSubscribeDelegate()
+            .makeSubscriberFunction(DataProviderManagerTopic.IS_DESERIALIZING),
+        dataProviderManager.makeSnapshotGetter(DataProviderManagerTopic.IS_DESERIALIZING),
     );
 
     const memoizedProduct = React.useMemo(
         function memoizeVisualizationProduct() {
             return visualizationAssembler.make(dataProviderManager, options);
         },
-        // ! "latestRevision" is included in the array to trigger recomputes
+        // ! "latestRevision" and "isDeserializing" are included in the array to trigger recomputes
         // eslint-disable-next-line @eslint-react/exhaustive-deps
-        [latestRevision, dataProviderManager, visualizationAssembler, options],
+        [latestRevision, isDeserializing, dataProviderManager, visualizationAssembler, options],
     );
 
     return memoizedProduct;
