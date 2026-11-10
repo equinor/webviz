@@ -17,12 +17,14 @@ export type AlertDialogAction = {
     onClick: () => void;
     /** When true, clicking the button automatically closes the dialog. */
     closesDialog?: boolean;
+    /** Focus this action when the dialog opens. If no action sets it, the primary action is focused. */
+    autoFocus?: boolean;
 };
 
 export type AlertDialogProps = Omit<AlertDialogRootProps, "className" | "render" | "style" | "children"> & {
     /** Dialog heading text. */
     title: string;
-    /** The main call-to-action button, rendered with contained styling and auto-focused. */
+    /** The main call-to-action button, rendered with contained styling and auto-focused unless another action sets `autoFocus`. */
     primaryAction: AlertDialogAction;
     /** Additional action buttons rendered before the primary action. */
     secondaryActions?: AlertDialogAction[];
@@ -35,6 +37,8 @@ export type AlertDialogProps = Omit<AlertDialogRootProps, "className" | "render"
 export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(function AlertDialog(props, ref) {
     const { title, primaryAction, secondaryActions, children, open, finalFocus, ...rest } = props;
     const { increment, decrement } = React.useContext(AlertDialogNestingContext);
+
+    const focusPrimary = primaryAction.autoFocus ?? !secondaryActions?.some((action) => action.autoFocus);
 
     React.useEffect(
         function syncNestingCount() {
@@ -74,13 +78,24 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
                                     key={action.label}
                                     onClick={action.onClick}
                                     render={(htmlProps) => (
-                                        <Button variant="outlined" tone={action.tone} {...htmlProps}>
+                                        <Button
+                                            variant="outlined"
+                                            tone={action.tone}
+                                            {...htmlProps}
+                                            autoFocus={action.autoFocus}
+                                        >
                                             {action.label}
                                         </Button>
                                     )}
                                 />
                             ) : (
-                                <Button variant="ghost" key={action.label} tone={action.tone} onClick={action.onClick}>
+                                <Button
+                                    variant="ghost"
+                                    key={action.label}
+                                    tone={action.tone}
+                                    onClick={action.onClick}
+                                    autoFocus={action.autoFocus}
+                                >
                                     {action.label}
                                 </Button>
                             ),
@@ -89,7 +104,12 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
                             <AlertDialogBase.Close
                                 onClick={primaryAction.onClick}
                                 render={(htmlProps) => (
-                                    <Button variant="contained" tone={primaryAction.tone} {...htmlProps} autoFocus>
+                                    <Button
+                                        variant="contained"
+                                        tone={primaryAction.tone}
+                                        {...htmlProps}
+                                        autoFocus={focusPrimary}
+                                    >
                                         {primaryAction.label}
                                     </Button>
                                 )}
@@ -99,7 +119,7 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
                                 variant="contained"
                                 tone={primaryAction.tone}
                                 onClick={primaryAction.onClick}
-                                autoFocus
+                                autoFocus={focusPrimary}
                             >
                                 {primaryAction.label}
                             </Button>

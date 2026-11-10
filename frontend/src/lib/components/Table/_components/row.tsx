@@ -55,10 +55,10 @@ export const Row = React.forwardRef<HTMLTableRowElement, TableRowProps>(function
                 "group/row": isSelectable,
                 "font-normal": sectionContext === "body",
                 "font-extrabold": sectionContext !== "body",
-                "text-neutral-subtle": !isSelected,
+                "text-neutral-subtle": true,
                 "hover:bg-neutral-hover": isSelectable && !isSelected,
-                "bg-accent-strong text-accent-strong-on-emphasis!": isSelected,
-                "hover:bg-accent-strong-hover hover:text-accent-strong-on-emphasis!": isSelected,
+                // Follows the EDS Table pattern: selected rows get a muted fill and keep the regular text color
+                "bg-accent hover:bg-accent-hover": isSelected,
             })}
             onClick={(evt) => {
                 if (!isSelectable) return;

@@ -314,6 +314,7 @@ function EditSessionButton(props: EditSessionButtonProps): React.ReactNode {
                 description={activeWorkbenchSession!.getMetadata().description ?? ""}
                 open={editSessionDialogOpen}
                 onClose={() => setEditSessionDialogOpen(false)}
+                showPreview
             />
         </>
     );

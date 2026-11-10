@@ -249,7 +249,8 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                                             className={resolveClassNames(
                                                 "px-3xs py-4xs bg-canvas text-body-xs text-neutral-strong relative cursor-help rounded text-center",
                                                 {
-                                                    "bg-accent!": caseRow.numSelectedEnsembles > 0,
+                                                    "bg-accent-strong! text-accent-strong-on-emphasis!":
+                                                        caseRow.numSelectedEnsembles > 0,
                                                 },
                                             )}
                                         >
@@ -266,11 +267,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                                     </Tooltip>
                                 </Table.Cell>
                                 <Table.Cell>
-                                    <CaseNameAndIdCell
-                                        cellRowSelected={props.selectedCase === caseRow.uuid}
-                                        caseName={caseRow.name}
-                                        caseId={caseRow.uuid}
-                                    />
+                                    <CaseNameAndIdCell caseName={caseRow.name} caseId={caseRow.uuid} />
                                 </Table.Cell>
                                 <Table.Cell>
                                     <DescriptionCell description={caseRow.description} caseId={caseRow.uuid} />
