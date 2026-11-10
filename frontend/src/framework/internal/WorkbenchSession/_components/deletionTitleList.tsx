@@ -2,7 +2,7 @@ import React from "react";
 
 import { Button } from "@lib/components/Button";
 
-const NUM_COLLAPSED_TITLES = 5;
+const NUM_VISIBLE_TITLES_WHEN_COLLAPSED = 5;
 
 export type DeletionTitleListItem = {
     id: string;
@@ -16,8 +16,8 @@ export type DeletionTitleListProps = {
 export function DeletionTitleList(props: DeletionTitleListProps): React.ReactNode {
     const [expanded, setExpanded] = React.useState(false);
 
-    const canExpand = props.items.length > NUM_COLLAPSED_TITLES;
-    const visibleItems = expanded ? props.items : props.items.slice(0, NUM_COLLAPSED_TITLES);
+    const canExpand = props.items.length > NUM_VISIBLE_TITLES_WHEN_COLLAPSED;
+    const visibleItems = expanded ? props.items : props.items.slice(0, NUM_VISIBLE_TITLES_WHEN_COLLAPSED);
 
     return (
         <div className="gap-y-2xs flex flex-col items-start">

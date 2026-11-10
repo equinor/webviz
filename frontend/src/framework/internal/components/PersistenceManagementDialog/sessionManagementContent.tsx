@@ -165,7 +165,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                     <Tooltip
                         content={
                             selectedSessions.length > 1
-                                ? `Delete the ${selectedSessions.length} selected session${selectedSessions.length !== 1 ? "s" : ""}`
+                                ? `Delete the ${selectedSessions.length} selected sessions`
                                 : "Delete the selected session"
                         }
                     >
