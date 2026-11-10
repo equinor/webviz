@@ -13,6 +13,7 @@ import {
     selectedVectorTagsAtom,
     showHistoricalAtom,
     showObservationsAtom,
+    showTimestampMarkerAtom,
     statisticsSelectionAtom,
     subplotLimitDirectionAtom,
     subplotMaxDirectionElementsAtom,
@@ -28,6 +29,7 @@ export type SerializedSettings = {
     ensembleIdentStrings: string[] | null;
     showHistorical: boolean;
     showObservations: boolean;
+    showTimestampMarker?: boolean;
     selectedVectorTags: string[];
     colorRealizationsByParameter: boolean;
     selectedParameterIdentString: string | null;
@@ -52,6 +54,9 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         individualStatisticsSelection: { elements: { enum: Object.values(StatisticFunction_api) } },
         fanchartStatisticsSelection: { elements: { enum: Object.values(FanchartStatisticOption) } },
     },
+    optionalProperties: {
+        showTimestampMarker: { type: "boolean" },
+    },
 }));
 
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
@@ -68,6 +73,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         ensembleIdentStrings: selectedEnsembleIdentStrings,
         showHistorical: get(showHistoricalAtom),
         showObservations: get(showObservationsAtom),
+        showTimestampMarker: get(showTimestampMarkerAtom),
         selectedVectorTags: get(selectedVectorTagsAtom),
         visualizationMode: get(visualizationModeAtom),
         colorRealizationsByParameter: get(colorRealizationsByParameterAtom),
@@ -93,6 +99,7 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedEnsembleIdentsAtom, ensembleIdents);
     setIfDefined(set, showHistoricalAtom, raw.showHistorical);
     setIfDefined(set, showObservationsAtom, raw.showObservations);
+    setIfDefined(set, showTimestampMarkerAtom, raw.showTimestampMarker);
     setIfDefined(set, selectedVectorTagsAtom, raw.selectedVectorTags);
     setIfDefined(set, visualizationModeAtom, raw.visualizationMode);
     setIfDefined(set, colorRealizationsByParameterAtom, raw.colorRealizationsByParameter);

@@ -31,6 +31,10 @@ export class DataProviderRegistry {
         });
     }
 
+    static getRegisteredDataProviderTypes(): string[] {
+        return [...this._registeredDataProviders.keys()];
+    }
+
     static makeDataProvider(
         type: string,
         dataProviderManager: DataProviderManager,

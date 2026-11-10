@@ -26,6 +26,7 @@ from .parameter_types import (
 LOGGER = logging.getLogger(__name__)
 
 ERT_DESIGN_MATRIX_DOCS_URL = "https://ert.readthedocs.io/en/latest/getting_started/howto/design_matrix.html"
+ERT_RUN_TEMPLATE_DOCS_URL = "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#run-template"
 
 
 @dataclass
@@ -215,7 +216,13 @@ class ParameterAccess:
         realization_count = await parameter_realization_context.length_async()
         if realization_count == 0:
             raise NoDataError(
-                f"No parameters found for case {self._case_uuid} and ensemble {self._ensemble_name}",
+                f"Ensemble {self._ensemble_name} (case {self._case_uuid}) does not have any parameters stored in Sumo.\n\n"
+                "If this is a sensitivity (design matrix) ensemble, the likely cause is that the deprecated "
+                "DESIGN2PARAMS and DESIGN_KW are still used in the ERT configuration file, instead of "
+                "DESIGN_MATRIX and RUN_TEMPLATE.\n\n"
+                "See the ERT documentation on how to migrate:\n"
+                f"{ERT_DESIGN_MATRIX_DOCS_URL}\n"
+                f"{ERT_RUN_TEMPLATE_DOCS_URL}",
                 Service.SUMO,
             )
 

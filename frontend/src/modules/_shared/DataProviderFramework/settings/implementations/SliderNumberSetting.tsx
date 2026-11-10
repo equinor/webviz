@@ -134,7 +134,11 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
             );
 
             const handleSliderChange = React.useCallback(
-                function handleSliderChange(value: number | readonly number[]) {
+                function handleSliderChange(value: number | readonly number[], eventDetails: { reason: string }) {
+                    // Bounds changes make the slider emit a clamped value; ignore it so a retained
+                    // out-of-range value stays visible (and invalid) until the user edits it
+                    if (eventDetails.reason === "clamp-value") return;
+
                     setValue(Array.isArray(value) ? value[0] : value);
                 },
                 [setValue],

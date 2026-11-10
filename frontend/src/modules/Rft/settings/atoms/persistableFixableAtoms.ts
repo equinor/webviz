@@ -2,7 +2,8 @@ import type { Getter } from "jotai";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { persistableFixableAtom } from "@framework/utils/atomUtils";
+import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
+import { computeQueriesDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { fixupUserSelection } from "@lib/utils/fixupUserSelection";
@@ -53,7 +54,7 @@ export const selectedWellNameAtom = persistableFixableAtom<string | null, string
 
 export const selectedTimestampUtcMsAtom = persistableFixableAtom<number | null, number[]>({
     initialValue: null,
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: computeWellDatesDependenciesState,
     precomputeFunction: ({ get }) => get(availableTimestampsUtcMsAtom),
     isValidFunction: ({ value, precomputedValue: availableTimestamps }) => {
         return value !== null && availableTimestamps.includes(value);
@@ -64,16 +65,17 @@ export const selectedTimestampUtcMsAtom = persistableFixableAtom<number | null, 
     },
 });
 
-function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): "error" | "loading" | "loaded" {
-    const tableDefinitionQueries = get(rftTableDefinitionQueriesAtom);
+function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
+    return computeQueriesDependenciesState(get(rftTableDefinitionQueriesAtom));
+}
 
-    if (tableDefinitionQueries.some((query: { isFetching: boolean }) => query.isFetching)) {
-        return "loading";
+// The dates belong to the selected well. While it is invalid, there is no data to check the date against - so it waits
+// (and doesn't settle on the empty list) until a valid well is selected.
+function computeWellDatesDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
+    const tableDefinitionsQueryDependenciesState = computeTableDefinitionsQueryDependenciesState({ get });
+    if (tableDefinitionsQueryDependenciesState !== "loaded") {
+        return tableDefinitionsQueryDependenciesState;
     }
-    if (tableDefinitionQueries.some((query: { isError: boolean }) => query.isError)) {
-        return "error";
-    }
-
-    return "loaded";
+    return get(selectedWellNameAtom).isValidInContext ? "loaded" : "blocked";
 }
 

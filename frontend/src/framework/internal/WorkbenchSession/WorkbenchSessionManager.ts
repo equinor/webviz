@@ -416,7 +416,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             let additionalMessage = "and start fresh?";
             if (sessionId) {
-                additionalMessage = "and load the persisted session from the server?";
+                additionalMessage = "and load the saved session from the server?";
             }
 
             const result = await ConfirmationService.confirm({

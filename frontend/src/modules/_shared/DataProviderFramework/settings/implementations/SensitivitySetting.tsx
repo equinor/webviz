@@ -85,11 +85,6 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
                 .filter((sensitivity) => sensitivity.sensitivityName === currentSensitivityName)
                 .map((sensitivity) => sensitivity.sensitivityCase);
 
-            const currentSensitivityCase = fixupSensitivityCase(
-                props.value?.sensitivityCase || null,
-                availableSensitiveCases,
-            );
-
             const sensitivityNameItems = availableSensitivityNames.map((sensitivityName) => ({
                 value: sensitivityName,
                 label: sensitivityName,
@@ -99,15 +94,6 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
                 value: sensitivityCase,
                 label: sensitivityCase,
             }));
-
-            if (!currentSensitivityName || !currentSensitivityCase) {
-                props.onValueChange(null);
-            } else if (currentSensitivityCase !== props.value?.sensitivityCase) {
-                props.onValueChange({
-                    sensitivityName: currentSensitivityName,
-                    sensitivityCase: currentSensitivityCase,
-                });
-            }
 
             function handleSensitivityNameChange(selectedValue: string) {
                 const availableSensitiveCases = valueConstraints
@@ -140,12 +126,15 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
                         value={props.value?.sensitivityName ?? ""}
                         onValueChange={handleSensitivityNameChange}
                         disabled={props.disabled}
+                        layoutClassName="grow"
                     />
                     <ComboboxCompositions.WithBrowseButtons
                         items={sensitivityCaseItems}
-                        value={currentSensitivityCase ?? ""}
+                        // The kept case, even when invalid - the setting flags it, and only the user changes it
+                        value={props.value?.sensitivityCase ?? ""}
                         onValueChange={handleSensitivityCaseChange}
                         disabled={props.disabled}
+                        layoutClassName="grow"
                     />
                 </div>
             );

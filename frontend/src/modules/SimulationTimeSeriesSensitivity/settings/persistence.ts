@@ -9,6 +9,7 @@ import {
     showHistoricalAtom,
     showRealizationsAtom,
     showStatisticsAtom,
+    showTimestampMarkerAtom,
 } from "./atoms/baseAtoms";
 import {
     selectedRegularEnsembleIdentAtom,
@@ -25,6 +26,7 @@ export type SerializedSettings = {
     showStatistics: boolean;
     showRealizations: boolean;
     showHistorical: boolean;
+    showTimestampMarker?: boolean;
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
@@ -37,6 +39,9 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         showStatistics: { type: "boolean" },
         showRealizations: { type: "boolean" },
         showHistorical: { type: "boolean" },
+    },
+    optionalProperties: {
+        showTimestampMarker: { type: "boolean" },
     },
 }));
 
@@ -56,6 +61,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         showStatistics: get(showStatisticsAtom),
         showRealizations: get(showRealizationsAtom),
         showHistorical: get(showHistoricalAtom),
+        showTimestampMarker: get(showTimestampMarkerAtom),
     };
 };
 
@@ -79,4 +85,5 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, showStatisticsAtom, raw.showStatistics);
     setIfDefined(set, showRealizationsAtom, raw.showRealizations);
     setIfDefined(set, showHistoricalAtom, raw.showHistorical);
+    setIfDefined(set, showTimestampMarkerAtom, raw.showTimestampMarker);
 };

@@ -88,7 +88,7 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
                             <TimeAgo datetimeMs={sessionData.metadata.lastModifiedMs} />
                         </div>
                         <div className="gap-y-4xs flex flex-col">
-                            <strong className="text-body-xs text-neutral-subtle">Last persisted</strong>
+                            <strong className="text-body-xs text-neutral-subtle">Last saved</strong>
                             <TimeAgo datetimeMs={activeSession.getMetadata().lastModifiedMs} />
                         </div>
                     </div>

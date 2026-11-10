@@ -33,7 +33,7 @@ export function makeDrilledWellTrajectoriesLayer(
     >,
     options: DrilledWellTrajectoriesLayerOptions,
 ): WellsLayer | null {
-    const { id, isLoading, getData, getSetting } = args;
+    const { id, isLoading, getData, getSetting, memoize } = args;
 
     const wellboreTrajectoriesData = getData();
     const depthFilterType = getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE) ?? "none";
@@ -49,10 +49,14 @@ export function makeDrilledWellTrajectoriesLayer(
         return null;
     }
 
-    // 2D simplifies on XY distance only; 3D must use full 3D distance so near-vertical sections keep their shape.
-    const computeDistance = options.viewMode === "2D" ? trajectoryDistanceXY : trajectoryDistanceRadial;
+    // Only made anew when the data or the view mode changes - the filter settings only affect how the trajectories are
+    // drawn, and a new object would make the layer compare all of its data again
+    const wellGeoJson = memoize("wellGeoJson", [wellboreTrajectoriesData, options.viewMode], () => {
+        // 2D simplifies on XY distance only; 3D must use full 3D distance so near-vertical sections keep their shape.
+        const computeDistance = options.viewMode === "2D" ? trajectoryDistanceXY : trajectoryDistanceRadial;
 
-    const wellGeoJson = wellDataToGeoJson(wellboreTrajectoriesData, computeDistance);
+        return wellDataToGeoJson(wellboreTrajectoriesData, computeDistance);
+    });
 
     // Get filter settings (if enabled)
     let mdFilterRange: WellsLayerProps["mdFilterRange"] = [-1, -1];

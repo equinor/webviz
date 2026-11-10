@@ -59,7 +59,8 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             );
         }
 
-        if (relPermDataAccessorStatus.isError) {
+        const hasPartialData = (relPermDataAccessorStatus.dataAccessor?.getEntries().length ?? 0) > 0;
+        if (relPermDataAccessorStatus.isError && !hasPartialData) {
             return (
                 <ContentMessage type={ContentMessageType.ERROR}>
                     {propagatedErrorMessage ?? "Could not load relperm data."}
