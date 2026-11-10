@@ -2,9 +2,9 @@ from typing import List, Optional, TypeVar, Type
 from pydantic import ValidationError, BaseModel
 
 from webviz_services.service_exceptions import (
+    Service,
     InvalidDataError,
 )
-from webviz_services.services_enum import Service
 from ._ssdl_get_request import ssdl_get_request_async
 
 from . import types

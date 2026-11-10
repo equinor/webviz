@@ -6,9 +6,8 @@ from fastapi import HTTPException
 
 from webviz_core_utils.result_warning import ResultWarning
 from webviz_core_utils.result_with_warnings import ResultWithWarnings
-from webviz_services.service_exceptions import NoDataError
+from webviz_services.service_exceptions import NoDataError, Service
 from webviz_services.service_warnings import make_missing_realizations_warning
-from webviz_services.services_enum import Service
 
 from primary.middleware.add_warnings_middleware import _warnings_context, resolve_warnings
 

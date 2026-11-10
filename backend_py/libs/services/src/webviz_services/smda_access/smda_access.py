@@ -4,9 +4,9 @@ from typing import List, Optional
 import polars as pl
 
 from webviz_services.service_exceptions import (
+    Service,
     NoDataError,
 )
-from webviz_services.services_enum import Service
 
 from .types import (
     WellborePick,

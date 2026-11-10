@@ -5,8 +5,7 @@ from fastapi import APIRouter, Depends, Query, Path
 
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from webviz_services.graph_access.graph_access import GraphApiAccess
-from webviz_services.service_exceptions import AuthorizationError, ServiceRequestError
-from webviz_services.services_enum import Service
+from webviz_services.service_exceptions import Service, AuthorizationError, ServiceRequestError
 
 from primary.auth.auth_helper import AuthHelper
 from primary.middleware.cache_control_middleware import cache_time, CacheTime

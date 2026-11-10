@@ -21,9 +21,8 @@ from webviz_services.utils.authenticated_user import AuthenticatedUser
 from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
 from webviz_services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from webviz_services.surface_query_service.surface_query_service import RealizationSampleResult
-from webviz_services.service_exceptions import ServiceLayerException
+from webviz_services.service_exceptions import ServiceLayerException, Service
 from webviz_services.service_warnings import make_missing_realizations_warning
-from webviz_services.services_enum import Service
 from webviz_services.utils.surfaces_well_trajectory_formation_segments import (
     create_well_trajectory_formation_segments,
     validate_depth_surfaces_for_formation_segments,

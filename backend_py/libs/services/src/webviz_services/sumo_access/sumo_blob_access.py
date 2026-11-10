@@ -1,8 +1,7 @@
 import httpx
 
 from sumo.wrapper import SumoClient
-from webviz_services.service_exceptions import AuthorizationError
-from webviz_services.services_enum import Service
+from webviz_services.service_exceptions import AuthorizationError, Service
 
 
 async def get_sas_token_and_blob_base_uri_for_case_async(sumo_client: SumoClient, case_uuid: str) -> tuple[str, str]:

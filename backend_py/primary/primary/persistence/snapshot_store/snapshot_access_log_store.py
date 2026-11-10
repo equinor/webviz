@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 from typing import Callable, List, Optional, Tuple
-from webviz_services.service_exceptions import ServiceRequestError
-from webviz_services.services_enum import Service
+from webviz_services.service_exceptions import Service, ServiceRequestError
 
 
 from primary.persistence.snapshot_store.types import SnapshotAccessLogSortBy

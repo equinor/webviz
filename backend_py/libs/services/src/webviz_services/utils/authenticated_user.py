@@ -2,8 +2,7 @@
 
 from typing import Any, Optional, TypedDict
 
-from webviz_services.service_exceptions import AuthorizationError
-from webviz_services.services_enum import Service
+from webviz_services.service_exceptions import Service, AuthorizationError
 
 
 class AccessTokens(TypedDict):

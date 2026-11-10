@@ -8,10 +8,10 @@ from fmu.datamodels.standard_results.enums import StandardResultName
 
 from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_services.service_exceptions import (
+    Service,
     NoDataError,
     MultipleDataMatchesError,
 )
-from webviz_services.services_enum import Service
 
 from ._helpers import create_sumo_case_async
 from .sumo_client_factory import create_sumo_client

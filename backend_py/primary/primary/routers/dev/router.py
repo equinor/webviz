@@ -21,8 +21,7 @@ from webviz_services.user_grid3d_service.user_grid3d_service import (
     IJKIndexFilter,
     SinglePropertyTime,
 )
-from webviz_services.service_exceptions import ServiceUnavailableError, ServiceRequestError
-from webviz_services.services_enum import Service
+from webviz_services.service_exceptions import Service, ServiceUnavailableError, ServiceRequestError
 from webviz_services.utils.otel_span_tracing import start_otel_span_async
 from webviz_services.utils.task_meta_tracker import TaskState, get_task_meta_tracker_for_user
 from webviz_services.platform.message_bus import MessageBusSingleton, MessageBus

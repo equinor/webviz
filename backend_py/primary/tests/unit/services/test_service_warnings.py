@@ -1,7 +1,7 @@
 import pytest
 
 from webviz_core_utils.result_with_warnings import ResultWithWarnings, UncheckedResultWithWarningsError
-from webviz_services.services_enum import Service
+from webviz_services.service_exceptions import Service
 from webviz_services.service_warnings import make_missing_realizations_warning
 
 

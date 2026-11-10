@@ -21,8 +21,7 @@ from webviz_services.sumo_access.inplace_volumes_table_types import (
     TableColumnStatisticalData,
 )
 
-from webviz_services.service_exceptions import InvalidDataError
-from webviz_services.services_enum import Service
+from webviz_services.service_exceptions import Service, InvalidDataError
 
 from .conversion_utils import create_repeated_table_column_data_from_polars_column, get_fluid_from_string
 from .polars_column_utils import is_invalid_column

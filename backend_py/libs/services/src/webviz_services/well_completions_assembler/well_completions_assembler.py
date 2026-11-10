@@ -6,9 +6,8 @@ import polars as pl
 
 from webviz_core_utils.result_warning import ResultWarning
 from webviz_core_utils.result_with_warnings import ResultWithWarnings
-from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError
+from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError, Service
 from webviz_services.service_warnings import make_missing_realizations_warning
-from webviz_services.services_enum import Service
 from webviz_services.sumo_access.well_completions_access import WellCompletionsAccess
 
 from webviz_services.sumo_access.well_completions_types import (

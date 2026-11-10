@@ -10,7 +10,7 @@ from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_core_utils.result_warning import ResultWarning
 from webviz_core_utils.result_with_warnings import ResultWithWarnings
 from webviz_services.service_warnings import make_missing_realizations_warning
-from webviz_services.services_enum import Service
+from webviz_services.service_exceptions import Service
 
 from webviz_services.services_config import get_services_config
 from webviz_services.sumo_access.sumo_blob_access import get_sas_token_and_blob_base_uri_for_case_async

@@ -3,8 +3,7 @@ from typing import Sequence
 
 from webviz_core_utils.result_warning import ResultWarning
 
-from .service_exceptions import NoDataError, ServiceLayerException
-from .services_enum import Service
+from .service_exceptions import NoDataError, ServiceLayerException, Service
 
 # Max number of realizations listed in a warning message, to keep the response header small
 _MAX_REALS_IN_MESSAGE = 20

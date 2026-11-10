@@ -22,8 +22,7 @@ from webviz_services.sumo_access.deprecated_inplace_volumetrics_types import (
     InplaceVolumetricTableDataPerFluidSelection,
     InplaceStatisticalVolumetricTableDataPerFluidSelection,
 )
-from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError, NoDataError
-from webviz_services.services_enum import Service
+from webviz_services.service_exceptions import Service, InvalidDataError, InvalidParameterError, NoDataError
 from webviz_services.service_warnings import make_missing_realizations_warning
 from webviz_core_utils.result_warning import ResultWarning
 from webviz_core_utils.result_with_warnings import ResultWithWarnings

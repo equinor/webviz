@@ -15,12 +15,12 @@ from webviz_services.utils.arrow_helpers import (
     detect_missing_realizations,
 )
 from webviz_services.service_exceptions import (
+    Service,
     InvalidDataError,
     MultipleDataMatchesError,
     InvalidParameterError,
     NoDataError,
 )
-from webviz_services.services_enum import Service
 from webviz_core_utils.result_warning import ResultWarning
 from webviz_core_utils.result_with_warnings import ResultWithWarnings
 from webviz_services.service_warnings import (

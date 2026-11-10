@@ -9,11 +9,11 @@ from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_core_utils.result_warning import ResultWarning
 from webviz_core_utils.result_with_warnings import ResultWithWarnings
 from webviz_services.service_exceptions import (
+    Service,
     NoDataError,
     MultipleDataMatchesError,
 )
 from webviz_services.service_warnings import make_missing_realizations_warning
-from webviz_services.services_enum import Service
 
 from ._arrow_table_loader import ArrowTableLoader
 from .rft_types import RftTableDefinition, RftWellInfo, RftRealizationData

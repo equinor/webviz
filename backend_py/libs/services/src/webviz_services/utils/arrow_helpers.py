@@ -4,8 +4,7 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import numpy as np
 
-from webviz_services.service_exceptions import InvalidDataError
-from webviz_services.services_enum import Service
+from webviz_services.service_exceptions import InvalidDataError, Service
 
 
 def validate_summary_vector_table_pa(

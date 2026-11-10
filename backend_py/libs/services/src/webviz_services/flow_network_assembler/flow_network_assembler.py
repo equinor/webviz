@@ -8,8 +8,7 @@ import polars as pl
 
 from webviz_core_utils.perf_timer import PerfTimer
 
-from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError, NoDataError
-from webviz_services.services_enum import Service
+from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError, NoDataError, Service
 from webviz_services.sumo_access.summary_access import Frequency, SummaryAccess, VectorMetadata
 from webviz_services.sumo_access.group_tree_access import GroupTreeAccess
 

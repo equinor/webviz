@@ -4,8 +4,7 @@ import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 from webviz_core_utils.perf_timer import PerfTimer
-from webviz_services.service_exceptions import InvalidDataError, ServiceLayerException
-from webviz_services.services_enum import Service
+from webviz_services.service_exceptions import InvalidDataError, ServiceLayerException, Service
 
 from ._arrow_table_loader import ArrowTableLoader
 from .sumo_client_factory import create_sumo_client
