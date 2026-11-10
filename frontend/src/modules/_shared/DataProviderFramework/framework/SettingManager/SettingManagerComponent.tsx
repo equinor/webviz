@@ -123,7 +123,7 @@ export function SettingManagerComponent<
     const dashboardSettingIndicator = isDashboardControlled ? (
         <DashboardSettingIndicator
             dashboardSettingLabel={props.setting.getDashboardSettingLabel() ?? ""}
-            isValueValidHere={isValid || actuallyLoading}
+            isValueValidHere={isValid || actuallyLoading || isBlocked}
         />
     ) : null;
 
@@ -136,7 +136,9 @@ export function SettingManagerComponent<
                 </div>
                 <div className="gap-x-2xs py-4xs px-2xs flex w-full items-center">
                     <StatusWrapper isPending={actuallyLoading}>
-                        {isValid || actuallyLoading ? (
+                        {isBlocked ? (
+                            <i className="text-neutral-subtle">{makeBlockedMessage(blockedBy)}</i>
+                        ) : isValid || actuallyLoading ? (
                             props.setting.valueToRepresentation(
                                 value,
                                 props.manager.getWorkbenchSession(),

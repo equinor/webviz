@@ -24,9 +24,21 @@ export function DashboardTimeSlider(props: DashboardSettingComponentProps<number
     // Follows the slider right away, while the commit to the dashboard is debounced
     const [immediateValue, setImmediateValue, commitController] = useDebouncedOnChange<number | null>(
         props.value,
-        props.onValueChange,
+        commitIfStillOffered,
         COMMIT_DELAY_MS,
     );
+
+    // A debounced drag was made against the options shown at the time - they may have changed (or be
+    // recomputing) by the time it fires, so it is dropped rather than committing a stale time point.
+    function commitIfStillOffered(value: number | null) {
+        if (props.isSettling || (value !== null && !props.constraints.includes(value))) {
+            // Resetting goes through the debounced setter, so its own commit is cancelled right away
+            setImmediateValue(props.value);
+            commitController.cancel();
+            return;
+        }
+        props.onValueChange(value);
+    }
     const selectedIndex = immediateValue === null ? -1 : timestamps.indexOf(immediateValue);
     const displayedIndex = Math.max(selectedIndex, 0);
 
