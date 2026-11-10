@@ -211,12 +211,13 @@ class CacheControlMiddleware:
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
 
-                if message["status"] != 200:
-                    # Only successful responses may be cached by the browser
-                    headers["cache-control"] = "no-store, private"
                 # Only set cache-control if not already present so we don't overwrite settings done in router
-                elif headers.get("cache-control") is None:
-                    cache_control_str = self._build_cache_control_header()
+                if headers.get("cache-control") is None:
+                    if message["status"] == 200:
+                        # Only successful responses may be cached by the browser
+                        cache_control_str = self._build_cache_control_header()
+                    else:
+                        cache_control_str = "no-store, private"
                     headers.append("cache-control", cache_control_str)
 
             await send(message)

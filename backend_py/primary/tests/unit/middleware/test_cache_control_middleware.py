@@ -133,7 +133,7 @@ def _make_status_app() -> FastAPI:
         ("/error", 500, "no-store, private"),
         ("/uncached", 200, "no-store, private"),
         ("/ok_router_header", 200, "max-age=5"),
-        ("/error_router_header", 500, "no-store, private"),
+        ("/error_router_header", 500, "max-age=5"),
     ],
 )
 def test_cache_control_header_depends_on_status(path: str, expected_status: int, expected_header: str) -> None:
