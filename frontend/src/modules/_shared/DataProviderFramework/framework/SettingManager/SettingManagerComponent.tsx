@@ -145,7 +145,7 @@ export function SettingManagerComponent<
                                 props.manager.getWorkbenchSettings(),
                             )
                         ) : (
-                            <i className="text-warning-subtle">Dashboard value not available here</i>
+                            <i className="text-warning-subtle">Dashboard value not valid here</i>
                         )}
                     </StatusWrapper>
                 </div>
