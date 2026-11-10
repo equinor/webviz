@@ -260,11 +260,7 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                                 (i === 0 || i === sortedCompletionDates!.length - 1) && createValueLabelFormat(v)
                             }
                             valueLabelFormat={createValueLabelFormat}
-                            onValueChange={(value, eventDetails) => {
-                                // Bounds changes (e.g. while completion data loads) make the slider emit a
-                                // clamped value; ignore it so retained selections survive until the user edits them
-                                if (eventDetails.reason === "clamp-value") return;
-
+                            onValueChange={(value) => {
                                 if (isSingleTimeStepMode) {
                                     handleDateIndexSelectionChange(value);
                                 } else {
