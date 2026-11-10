@@ -3,7 +3,14 @@ import { describe, expect, test } from "vitest";
 import { InplaceVolumesStatistic_api } from "@api";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
-import type { InplaceVolumesStatisticalTableData } from "@modules/_shared/InplaceVolumes/types";
+import {
+    makeStatisticalTableColumnDataFromApiData,
+    makeTableFromApiData,
+} from "@modules/_shared/InplaceVolumes/tableUtils";
+import type {
+    InplaceVolumesStatisticalTableData,
+    InplaceVolumesTableData,
+} from "@modules/_shared/InplaceVolumes/types";
 import {
     collectLeafColumns,
     createStatisticalTableHeadingsAndRowsFromTablesData,
@@ -57,6 +64,100 @@ describe("createStatisticalTableHeadingsAndRowsFromTablesData", () => {
         expect(resultLeaves.map((leaf) => leaf.heading.label)).toEqual(["Mean", "P10", "Max"]);
         expect(resultLeaves.map((leaf) => leaf.key)).toEqual(["STOIIP-Mean", "STOIIP-P10", "STOIIP-Max"]);
         expect(rows[1]["STOIIP-Max"]).toBe(40);
+    });
+});
+
+const ENSEMBLE_IDENT = new RegularEnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1");
+
+describe("SENSITIVITY selector column", () => {
+    test("makeTableFromApiData types SENSITIVITY and places it after FLUID", () => {
+        const tablesData: InplaceVolumesTableData[] = [
+            {
+                ensembleIdent: ENSEMBLE_IDENT,
+                tableName: "geogrid",
+                data: {
+                    tableDataPerFluidSelection: [
+                        // A fluid selection without results is not injected, so it lacks SENSITIVITY.
+                        {
+                            fluidSelection: "gas",
+                            selectorColumns: [
+                                { columnName: "REAL", uniqueValues: [0], indices: [0] },
+                                { columnName: "ZONE", uniqueValues: ["A"], indices: [0] },
+                            ],
+                            resultColumns: [],
+                        },
+                        {
+                            fluidSelection: "oil",
+                            selectorColumns: [
+                                {
+                                    columnName: "SENSITIVITY",
+                                    uniqueValues: ["rms_seed", "faults:low"],
+                                    indices: [0, 1],
+                                },
+                                { columnName: "REAL", uniqueValues: [0, 3], indices: [0, 1] },
+                                { columnName: "ZONE", uniqueValues: ["A"], indices: [0, 0] },
+                            ],
+                            resultColumns: [{ columnName: "STOIIP", columnValues: [1, 2] }],
+                        },
+                    ],
+                },
+            },
+        ];
+
+        const columns = makeTableFromApiData(tablesData).getColumns();
+        expect(columns.map((column) => column.getName())).toEqual([
+            "ENSEMBLE",
+            "TABLE_NAME",
+            "FLUID",
+            "SENSITIVITY",
+            "REAL",
+            "ZONE",
+            "STOIIP",
+        ]);
+        expect(columns[3].getType()).toBe(ColumnType.SENSITIVITY);
+        expect(columns[3].getAllRowValues()).toEqual(["rms_seed", "faults:low"]);
+    });
+
+    test("makeStatisticalTableColumnDataFromApiData types SENSITIVITY and places it after FLUID", () => {
+        const tablesData: InplaceVolumesStatisticalTableData[] = [
+            {
+                ensembleIdent: ENSEMBLE_IDENT,
+                tableName: "geogrid",
+                data: {
+                    tableDataPerFluidSelection: [
+                        {
+                            fluidSelection: "oil",
+                            selectorColumns: [
+                                { columnName: "ZONE", uniqueValues: ["A"], indices: [0, 0] },
+                                {
+                                    columnName: "SENSITIVITY",
+                                    uniqueValues: ["rms_seed", "faults:low"],
+                                    indices: [0, 1],
+                                },
+                            ],
+                            resultColumnStatistics: [
+                                {
+                                    columnName: "STOIIP",
+                                    statisticValues: { [InplaceVolumesStatistic_api.MEAN]: [10, 20] },
+                                },
+                            ],
+                        },
+                    ],
+                },
+            },
+        ];
+
+        const { nonStatisticalColumns } = makeStatisticalTableColumnDataFromApiData(tablesData, [
+            InplaceVolumesStatistic_api.MEAN,
+        ]);
+        expect(nonStatisticalColumns.map((column) => column.getName())).toEqual([
+            "ENSEMBLE",
+            "TABLE_NAME",
+            "FLUID",
+            "SENSITIVITY",
+            "ZONE",
+        ]);
+        expect(nonStatisticalColumns[3].getType()).toBe(ColumnType.SENSITIVITY);
     });
 });
 

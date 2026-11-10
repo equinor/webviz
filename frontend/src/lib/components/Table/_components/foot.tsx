@@ -11,17 +11,19 @@ export type TableFootProps = {
     children?: React.ReactNode;
 };
 
-export const Foot = React.forwardRef<HTMLTableSectionElement, TableFootProps>(function Foot(props, ref): React.ReactNode {
-    return (
-        <TableSectionContext.Provider value="foot">
-            <tfoot
-                ref={ref}
-                className={resolveClassNames("bg-input text-neutral-strong border-neutral-subtle", {
-                    "z-elevated sticky bottom-0": props.sticky,
-                })}
-            >
-                {props.children}
-            </tfoot>
-        </TableSectionContext.Provider>
-    );
-});
+export const Foot = React.forwardRef<HTMLTableSectionElement, TableFootProps>(
+    function Foot(props, ref): React.ReactNode {
+        return (
+            <TableSectionContext.Provider value="foot">
+                <tfoot
+                    ref={ref}
+                    className={resolveClassNames("bg-input text-neutral-strong border-neutral-subtle", {
+                        "z-sticky sticky bottom-0": props.sticky,
+                    })}
+                >
+                    {props.children}
+                </tfoot>
+            </TableSectionContext.Provider>
+        );
+    },
+);
