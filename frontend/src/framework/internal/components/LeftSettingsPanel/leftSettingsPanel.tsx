@@ -10,12 +10,12 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useActiveDashboard } from "../ActiveDashboardBoundary";
 
+import { CollapseHeader } from "./private-components/collapseHeader";
 import { DashboardSettingsPanel } from "./private-components/dashboardSettingsPanel";
 import { EmptySettingsPlaceholder } from "./private-components/emptySettingsPlaceholder";
 import { ModuleSettingsHeader } from "./private-components/moduleSettingsHeader";
 import { ModuleSettingsStack } from "./private-components/moduleSettingsStack";
 import { ModuleSyncSettings } from "./private-components/moduleSyncSettings";
-import { CollapseHeader } from "./private-components/collapseHeader";
 
 enum DrawerContent {
     ModuleSettings = "ModuleSettings",

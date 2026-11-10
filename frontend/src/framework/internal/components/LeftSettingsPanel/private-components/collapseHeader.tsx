@@ -1,5 +1,6 @@
-import { Tooltip } from "@lib/components/Tooltip";
 import { KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight } from "@mui/icons-material";
+
+import { Tooltip } from "@lib/components/Tooltip";
 
 export type CollapseHeaderProps = {
     isCollapsed: boolean;

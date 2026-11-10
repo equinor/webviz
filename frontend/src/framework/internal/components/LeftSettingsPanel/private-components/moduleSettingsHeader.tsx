@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { ChevronLeft, ChevronRight, Settings, WarningRounded } from "@mui/icons-material";
+import { Settings, WarningRounded } from "@mui/icons-material";
 
 import { useModuleWarning } from "@framework/internal/components/LeftSettingsPanel/_hooks";
 import type { ModuleInstance } from "@framework/ModuleInstance";
