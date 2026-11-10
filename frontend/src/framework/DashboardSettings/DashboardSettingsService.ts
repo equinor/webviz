@@ -140,11 +140,10 @@ export class DashboardSettingsService implements PublishSubscribe<DashboardSetti
     // without one aggregates its sources' contributions again. Values are restored as-is - they are not fixed up if
     // they turn out to be invalid once the constraint sources have reported back.
     deserializeState(state: SerializedDashboardSettingsState): void {
-        for (const instance of this._activeSettings) {
-            if (!(instance.getDefinition().key in state)) {
-                this.removeSetting(instance.getDefinition());
-            }
-        }
+        const parsedSettings = new Map<
+            string,
+            { definition: DashboardSettingDefinition<any, any>; value: unknown; constraintOverride: unknown }
+        >();
 
         for (const [key, serializedSetting] of Object.entries(state)) {
             const definition = DashboardSettingRegistry.getRegisteredSetting(key);
@@ -165,8 +164,21 @@ export class DashboardSettingsService implements PublishSubscribe<DashboardSetti
                 continue;
             }
 
-            const constraintOverride = serializedSetting.constraintOverride ?? null;
+            parsedSettings.set(key, {
+                definition,
+                value,
+                constraintOverride: serializedSetting.constraintOverride ?? null,
+            });
+        }
 
+        // Skipped entries are treated like missing ones, so a setting never keeps its pre-restore state
+        for (const instance of this._activeSettings) {
+            if (!parsedSettings.has(instance.getDefinition().key)) {
+                this.removeSetting(instance.getDefinition());
+            }
+        }
+
+        for (const [key, { definition, value, constraintOverride }] of parsedSettings) {
             const instance = this._instances.get(key);
             if (instance) {
                 // Before the value, so a restored value is judged by the restored constraints

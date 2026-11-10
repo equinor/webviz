@@ -578,6 +578,18 @@ describe("DashboardSettingsService", () => {
         expect(instance.getConstraintOverride()).toBeNull();
     });
 
+    it("removes an already active setting whose persisted entry is skipped", () => {
+        const service = new DashboardSettingsService();
+        service.addSetting(FIRST, { constraintOverride: ["x"] }).setValue("x");
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+        service.deserializeState({ [FIRST.key]: {} as any });
+
+        expect(warn).toHaveBeenCalledOnce();
+        warn.mockRestore();
+        expect(service.hasSetting(FIRST)).toBe(false);
+    });
+
     it("bumps the state revision when a constraint override changes", () => {
         const service = new DashboardSettingsService();
         const instance = service.addSetting(FIRST);
