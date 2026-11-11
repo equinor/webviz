@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions, type UseQueryOptions } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 
 import type { Options } from "./autogen";
@@ -11,9 +11,7 @@ export type DataWithWarnings<TData> = {
     warnings: string[];
 };
 
-type SdkFunction<TOptions, TData> = (
-    options: TOptions & { throwOnError: true },
-) => PromiseLike<{ data: TData; headers: unknown }>;
+type SdkFunction<TData> = (options: any) => PromiseLike<{ data?: TData; headers?: unknown }>;
 
 /** Parses the warnings from the response headers of an SDK call */
 export function parseWarnings(headers: unknown): string[] {
@@ -32,28 +30,30 @@ export function parseWarnings(headers: unknown): string[] {
 }
 
 /**
- * Creates query options for a generated SDK function that tells the back-end that warnings are allowed,
- * and returns the data together with any warnings reported by the back-end.
+ * Creates query options that tell the back-end that warnings are allowed, and returns the data together
+ * with any warnings reported by the back-end.
  *
- * @param sdkFunction Generated SDK function, e.g. `getVectorList`
- * @param queryKeyFunction Generated query key function matching the SDK function, e.g. `getVectorListQueryKey`
- * @param options Options for the SDK function
+ * The generated options function only returns the data of the response, so the matching SDK function
+ * is also needed to get hold of the response headers.
+ *
+ * @param generatedOptions Result of a generated options function, e.g. `getVectorListOptions({ query: {...} })`
+ * @param sdkFunction Generated SDK function matching the options function, e.g. `getVectorList`
  */
-export function withWarnings<TOptions extends Options<any>, TData, TQueryKey extends readonly unknown[]>(
-    sdkFunction: SdkFunction<TOptions, TData>,
-    queryKeyFunction: (options: TOptions) => TQueryKey,
-    options: TOptions,
+export function withWarnings<TData, TQueryKey extends [Options<any>]>(
+    generatedOptions: UseQueryOptions<TData, any, any, TQueryKey>,
+    sdkFunction: SdkFunction<TData>,
 ) {
-    const optionsWithHeader = {
-        ...options,
-        headers: { ...options.headers, [ALLOW_WARNINGS_REQUEST_HEADER]: "true" },
-    } as TOptions;
+    const [keyParams] = generatedOptions.queryKey as unknown as TQueryKey;
+    const keyParamsWithHeader = {
+        ...keyParams,
+        headers: { ...keyParams.headers, [ALLOW_WARNINGS_REQUEST_HEADER]: "true" },
+    };
 
     return queryOptions<DataWithWarnings<TData>, AxiosError, DataWithWarnings<TData>, TQueryKey>({
-        queryKey: queryKeyFunction(optionsWithHeader),
+        queryKey: [keyParamsWithHeader] as unknown as TQueryKey,
         queryFn: async ({ signal }) => {
-            const result = await sdkFunction({ ...optionsWithHeader, signal, throwOnError: true });
-            return { value: result.data, warnings: parseWarnings(result.headers) };
+            const result = await sdkFunction({ ...keyParamsWithHeader, signal, throwOnError: true });
+            return { value: result.data as TData, warnings: parseWarnings(result.headers) };
         },
     });
 }

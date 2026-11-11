@@ -4,7 +4,8 @@ import type { Getter } from "jotai";
 
 import {
     getRelpermRealizationData,
-    getRelpermRealizationDataQueryKey,
+    getRelpermRealizationDataOptions,
+    type getRelpermRealizationDataQueryKey,
     getRelpermTableDefinitionOptions,
     type getRelpermTableDefinitionQueryKey,
     getRelpermTableNamesOptions,
@@ -140,18 +141,21 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
             const realizationsEncodedAsUintListStr = filteredRealizations
                 ? encodeAsUintListStr(filteredRealizations)
                 : null;
-            const options = withWarnings(getRelpermRealizationData, getRelpermRealizationDataQueryKey, {
-                query: {
-                    case_uuid: ensembleIdent.getCaseUuid(),
-                    ensemble_name: ensembleIdent.getEnsembleName(),
-                    table_name: selectedTableName ?? "",
-                    saturation_axis_name: selectedSaturationAxisName ?? "",
-                    curve_names: selectedCurveNames,
-                    satnums: selectedSatnums,
-                    realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-                    ...makeCacheBustingQueryParam(ensembleIdent),
-                },
-            });
+            const options = withWarnings(
+                getRelpermRealizationDataOptions({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                        table_name: selectedTableName ?? "",
+                        saturation_axis_name: selectedSaturationAxisName ?? "",
+                        curve_names: selectedCurveNames,
+                        satnums: selectedSatnums,
+                        realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                        ...makeCacheBustingQueryParam(ensembleIdent),
+                    },
+                }),
+                getRelpermRealizationData,
+            );
 
             return function getRelPermRealizationDataQueryOptions() {
                 return {

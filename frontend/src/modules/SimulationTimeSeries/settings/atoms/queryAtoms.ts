@@ -2,9 +2,9 @@ import { atom } from "jotai";
 
 import {
     getDeltaEnsembleVectorList,
-    getDeltaEnsembleVectorListQueryKey,
+    getDeltaEnsembleVectorListOptions,
     getVectorList,
-    getVectorListQueryKey,
+    getVectorListOptions,
     withWarnings,
 } from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
@@ -58,14 +58,17 @@ const regularEnsembleVectorListQueriesAtom = atomWithQueries((get) => {
     const { isValidInContext: ensembleIdentsValid } = get(selectedEnsembleIdentsAtom);
 
     const queries = regularEnsembleIdents.map(({ item }) => {
-        const options = withWarnings(getVectorList, getVectorListQueryKey, {
-            query: {
-                case_uuid: item.getCaseUuid(),
-                ensemble_name: item.getEnsembleName(),
-                include_derived_vectors: true,
-                ...makeCacheBustingQueryParam(item),
-            },
-        });
+        const options = withWarnings(
+            getVectorListOptions({
+                query: {
+                    case_uuid: item.getCaseUuid(),
+                    ensemble_name: item.getEnsembleName(),
+                    include_derived_vectors: true,
+                    ...makeCacheBustingQueryParam(item),
+                },
+            }),
+            getVectorList,
+        );
         return () => ({ ...options, enabled: ensembleIdentsValid });
     });
 
@@ -82,16 +85,19 @@ const deltaEnsembleVectorListQueriesAtom = atomWithQueries((get) => {
         const comparisonEnsembleIdent = item.getComparisonEnsembleIdent();
         const referenceEnsembleIdent = item.getReferenceEnsembleIdent();
 
-        const options = withWarnings(getDeltaEnsembleVectorList, getDeltaEnsembleVectorListQueryKey, {
-            query: {
-                comparison_case_uuid: comparisonEnsembleIdent.getCaseUuid(),
-                comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),
-                reference_case_uuid: referenceEnsembleIdent.getCaseUuid(),
-                reference_ensemble_name: referenceEnsembleIdent.getEnsembleName(),
-                include_derived_vectors: true,
-                ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
-            },
-        });
+        const options = withWarnings(
+            getDeltaEnsembleVectorListOptions({
+                query: {
+                    comparison_case_uuid: comparisonEnsembleIdent.getCaseUuid(),
+                    comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),
+                    reference_case_uuid: referenceEnsembleIdent.getCaseUuid(),
+                    reference_ensemble_name: referenceEnsembleIdent.getEnsembleName(),
+                    include_derived_vectors: true,
+                    ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
+                },
+            }),
+            getDeltaEnsembleVectorList,
+        );
 
         return () => ({ ...options, enabled: ensembleIdentsValid });
     });

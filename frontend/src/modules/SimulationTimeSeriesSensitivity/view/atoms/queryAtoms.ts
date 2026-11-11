@@ -8,9 +8,9 @@ import {
     type VectorStatisticSensitivityData_api,
     getHistoricalVectorDataOptions,
     getRealizationsVectorData,
-    getRealizationsVectorDataQueryKey,
+    getRealizationsVectorDataOptions,
     getStatisticalVectorDataPerSensitivity,
-    getStatisticalVectorDataPerSensitivityQueryKey,
+    getStatisticalVectorDataPerSensitivityOptions,
     getQueryResultWarnings,
     unwrapQueryResultWarnings,
     withWarnings,
@@ -35,16 +35,19 @@ const vectorDataWithWarningsQueryAtom = atomWithQuery((get) => {
         : null;
     const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
 
-    const queryOptions = withWarnings(getRealizationsVectorData, getRealizationsVectorDataQueryKey, {
-        query: {
-            case_uuid: vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
-            ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
-            vector_name: vectorSpecification?.vectorName ?? "",
-            resampling_frequency: resampleFrequency,
-            realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-            ...makeCacheBustingQueryParam(vectorSpecification?.ensembleIdent ?? null),
-        },
-    });
+    const queryOptions = withWarnings(
+        getRealizationsVectorDataOptions({
+            query: {
+                case_uuid: vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
+                ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
+                vector_name: vectorSpecification?.vectorName ?? "",
+                resampling_frequency: resampleFrequency,
+                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                ...makeCacheBustingQueryParam(vectorSpecification?.ensembleIdent ?? null),
+            },
+        }),
+        getRealizationsVectorData,
+    );
     return { ...queryOptions, enabled: !!vectorSpecification };
 });
 
@@ -62,9 +65,7 @@ const statisticalVectorSensitivityDataWithWarningsQueryAtom = atomWithQuery((get
     const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
 
     const queryOptions = withWarnings(
-        getStatisticalVectorDataPerSensitivity,
-        getStatisticalVectorDataPerSensitivityQueryKey,
-        {
+        getStatisticalVectorDataPerSensitivityOptions({
             query: {
                 case_uuid: vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
                 ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
@@ -74,7 +75,8 @@ const statisticalVectorSensitivityDataWithWarningsQueryAtom = atomWithQuery((get
                 realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
                 ...makeCacheBustingQueryParam(vectorSpecification?.ensembleIdent ?? null),
             },
-        },
+        }),
+        getStatisticalVectorDataPerSensitivity,
     );
     return { ...queryOptions, enabled: !!(showStatistics && vectorSpecification) };
 });

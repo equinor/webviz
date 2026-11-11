@@ -8,9 +8,9 @@ import type {
 } from "@api";
 import {
     postGetAggregatedPerRealizationInplaceTableData,
-    postGetAggregatedPerRealizationInplaceTableDataQueryKey,
+    postGetAggregatedPerRealizationInplaceTableDataOptions,
     postGetAggregatedStatisticalInplaceTableData,
-    postGetAggregatedStatisticalInplaceTableDataQueryKey,
+    postGetAggregatedStatisticalInplaceTableDataOptions,
     withWarnings,
 } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
@@ -130,9 +130,7 @@ export function makeAggregatedStatisticalTableDataQueryOptionsFromSources(
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
         const options = withWarnings(
-            postGetAggregatedStatisticalInplaceTableData,
-            postGetAggregatedStatisticalInplaceTableDataQueryKey,
-            {
+            postGetAggregatedStatisticalInplaceTableDataOptions({
                 query: {
                     ensemble_name: source.ensembleIdent.getEnsembleName(),
                     case_uuid: source.ensembleIdent.getCaseUuid(),
@@ -144,7 +142,8 @@ export function makeAggregatedStatisticalTableDataQueryOptionsFromSources(
                 body: {
                     indices_with_values: indicesWithValues,
                 },
-            },
+            }),
+            postGetAggregatedStatisticalInplaceTableData,
         );
         return () => ({
             ...options,
@@ -218,9 +217,7 @@ export function makeAggregatedPerRealizationTableDataQueryOptions(
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
         const options = withWarnings(
-            postGetAggregatedPerRealizationInplaceTableData,
-            postGetAggregatedPerRealizationInplaceTableDataQueryKey,
-            {
+            postGetAggregatedPerRealizationInplaceTableDataOptions({
                 query: {
                     ensemble_name: source.ensembleIdent.getEnsembleName(),
                     case_uuid: source.ensembleIdent.getCaseUuid(),
@@ -232,7 +229,8 @@ export function makeAggregatedPerRealizationTableDataQueryOptions(
                 body: {
                     indices_with_values: indicesWithValues,
                 },
-            },
+            }),
+            postGetAggregatedPerRealizationInplaceTableData,
         );
         return () => ({
             ...options,
@@ -337,9 +335,7 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
         const validRealizations = spec.realizations.length === 0 ? null : [...spec.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
         const options = withWarnings(
-            postGetAggregatedPerRealizationInplaceTableData,
-            postGetAggregatedPerRealizationInplaceTableDataQueryKey,
-            {
+            postGetAggregatedPerRealizationInplaceTableDataOptions({
                 query: {
                     ensemble_name: spec.ensembleName,
                     case_uuid: spec.caseUuid,
@@ -351,7 +347,8 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
                 body: {
                     indices_with_values: indicesWithValues,
                 },
-            },
+            }),
+            postGetAggregatedPerRealizationInplaceTableData,
         );
         return function getDeltaSourceQueryOptions() {
             return {

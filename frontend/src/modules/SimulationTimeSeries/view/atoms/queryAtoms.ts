@@ -10,15 +10,15 @@ import type {
 import {
     Frequency_api,
     getDeltaEnsembleRealizationsVectorData,
-    getDeltaEnsembleRealizationsVectorDataQueryKey,
+    getDeltaEnsembleRealizationsVectorDataOptions,
     getDeltaEnsembleStatisticalVectorData,
-    getDeltaEnsembleStatisticalVectorDataQueryKey,
+    getDeltaEnsembleStatisticalVectorDataOptions,
     getHistoricalVectorDataOptions,
     getSummaryObservationsOptions,
     getRealizationsVectorData,
-    getRealizationsVectorDataQueryKey,
+    getRealizationsVectorDataOptions,
     getStatisticalVectorData,
-    getStatisticalVectorDataQueryKey,
+    getStatisticalVectorDataOptions,
     getQueryResultWarnings,
     unwrapQueryResultWarnings,
     withWarnings,
@@ -301,16 +301,19 @@ const regularEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
         const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
         const [ensembleIdent, vectorName] = [item.ensembleIdent, item.vectorName];
 
-        const options = withWarnings(getRealizationsVectorData, getRealizationsVectorDataQueryKey, {
-            query: {
-                case_uuid: ensembleIdent.getCaseUuid(),
-                ensemble_name: ensembleIdent.getEnsembleName(),
-                vector_name: vectorName,
-                resampling_frequency: resampleFrequency,
-                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-                ...makeCacheBustingQueryParam(ensembleIdent),
-            },
-        });
+        const options = withWarnings(
+            getRealizationsVectorDataOptions({
+                query: {
+                    case_uuid: ensembleIdent.getCaseUuid(),
+                    ensemble_name: ensembleIdent.getEnsembleName(),
+                    vector_name: vectorName,
+                    resampling_frequency: resampleFrequency,
+                    realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                    ...makeCacheBustingQueryParam(ensembleIdent),
+                },
+            }),
+            getRealizationsVectorData,
+        );
 
         return () => ({
             ...options,
@@ -338,9 +341,7 @@ const deltaEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
         const referenceEnsembleIdent = item.ensembleIdent.getReferenceEnsembleIdent();
         const vectorName = item.vectorName;
         const options = withWarnings(
-            getDeltaEnsembleRealizationsVectorData,
-            getDeltaEnsembleRealizationsVectorDataQueryKey,
-            {
+            getDeltaEnsembleRealizationsVectorDataOptions({
                 query: {
                     comparison_case_uuid: comparisonEnsembleIdent.getCaseUuid(),
                     comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),
@@ -351,7 +352,8 @@ const deltaEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
                     realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
                     ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
                 },
-            },
+            }),
+            getDeltaEnsembleRealizationsVectorData,
         );
 
         return () => ({
@@ -399,16 +401,19 @@ const regularEnsembleStatisticsQueriesAtom = atomWithQueries((get) => {
         const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
         const [ensembleIdent, vectorName] = [item.ensembleIdent, item.vectorName];
 
-        const options = withWarnings(getStatisticalVectorData, getStatisticalVectorDataQueryKey, {
-            query: {
-                case_uuid: ensembleIdent.getCaseUuid(),
-                ensemble_name: ensembleIdent.getEnsembleName(),
-                vector_name: vectorName,
-                resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
-                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-                ...makeCacheBustingQueryParam(ensembleIdent),
-            },
-        });
+        const options = withWarnings(
+            getStatisticalVectorDataOptions({
+                query: {
+                    case_uuid: ensembleIdent.getCaseUuid(),
+                    ensemble_name: ensembleIdent.getEnsembleName(),
+                    vector_name: vectorName,
+                    resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
+                    realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                    ...makeCacheBustingQueryParam(ensembleIdent),
+                },
+            }),
+            getStatisticalVectorData,
+        );
 
         return () => ({
             ...options,
@@ -439,9 +444,7 @@ const deltaEnsembleStatisticsQueriesAtom = atomWithQueries((get) => {
         const vectorName = item.vectorName;
 
         const options = withWarnings(
-            getDeltaEnsembleStatisticalVectorData,
-            getDeltaEnsembleStatisticalVectorDataQueryKey,
-            {
+            getDeltaEnsembleStatisticalVectorDataOptions({
                 query: {
                     comparison_case_uuid: comparisonEnsembleIdent.getCaseUuid(),
                     comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),
@@ -452,7 +455,8 @@ const deltaEnsembleStatisticsQueriesAtom = atomWithQueries((get) => {
                     realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
                     ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
                 },
-            },
+            }),
+            getDeltaEnsembleStatisticalVectorData,
         );
 
         return () => ({

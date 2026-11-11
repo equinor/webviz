@@ -6,7 +6,7 @@ import type { WellCompletionsData_api } from "@api";
 import {
     getQueryResultWarnings,
     getWellCompletionsData,
-    getWellCompletionsDataQueryKey,
+    getWellCompletionsDataOptions,
     unwrapQueryResultWarnings,
     withWarnings,
 } from "@api";
@@ -42,14 +42,17 @@ const wellCompletionsWithWarningsQueryAtom = atomWithQuery((get) => {
 
     // Disable query if realization number is null or invalid for single realization request
     const query = {
-        ...withWarnings(getWellCompletionsData, getWellCompletionsDataQueryKey, {
-            query: {
-                case_uuid: caseUuid ?? "",
-                ensemble_name: ensembleName ?? "",
-                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-                ...makeCacheBustingQueryParam(selectedEnsembleIdent),
-            },
-        }),
+        ...withWarnings(
+            getWellCompletionsDataOptions({
+                query: {
+                    case_uuid: caseUuid ?? "",
+                    ensemble_name: ensembleName ?? "",
+                    realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                    ...makeCacheBustingQueryParam(selectedEnsembleIdent),
+                },
+            }),
+            getWellCompletionsData,
+        ),
         enabled: Boolean(caseUuid && ensembleName && hasValidRealizations) && ensembleIdentValid,
     };
 

@@ -4,7 +4,7 @@ import type { AxiosError } from "axios";
 import {
     getRftObservationsOptions,
     getRftRealizationData,
-    getRftRealizationDataQueryKey,
+    getRftRealizationDataOptions,
     getRftTableDefinitionOptions,
     type HTTPValidationError_api,
     type RftObservations_api,
@@ -66,17 +66,20 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
     const areSelectionsValid = ensembleIdentsValid && wellNameValid && responseNameValid && timestampValid;
 
     const queries = selectedEnsembleIdents.map(function makeRftRealizationDataQuery(ensembleIdent) {
-        const options = withWarnings(getRftRealizationData, getRftRealizationDataQueryKey, {
-            query: {
-                case_uuid: ensembleIdent.getCaseUuid(),
-                ensemble_name: ensembleIdent.getEnsembleName(),
-                well_name: selectedWellName ?? "",
-                response_name: selectedResponseName ?? "",
-                timestamps_utc_ms: selectedTimestampUtcMs !== null ? [selectedTimestampUtcMs] : null,
-                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-                ...makeCacheBustingQueryParam(ensembleIdent),
-            },
-        });
+        const options = withWarnings(
+            getRftRealizationDataOptions({
+                query: {
+                    case_uuid: ensembleIdent.getCaseUuid(),
+                    ensemble_name: ensembleIdent.getEnsembleName(),
+                    well_name: selectedWellName ?? "",
+                    response_name: selectedResponseName ?? "",
+                    timestamps_utc_ms: selectedTimestampUtcMs !== null ? [selectedTimestampUtcMs] : null,
+                    realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                    ...makeCacheBustingQueryParam(ensembleIdent),
+                },
+            }),
+            getRftRealizationData,
+        );
 
         return function getRftRealizationDataQueryOptions() {
             return {
