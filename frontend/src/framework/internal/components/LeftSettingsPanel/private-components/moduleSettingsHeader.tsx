@@ -15,8 +15,6 @@ type ModuleSettingsHeaderProps = {
     activeTab: string | null;
     availableTabs: Record<string, TabConfig>;
     isCollapsed: boolean;
-    onExpandClick: () => void;
-    onCollapseClick: () => void;
     onTabChange: (tabKey: string) => void;
 };
 

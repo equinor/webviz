@@ -14,13 +14,15 @@ export function CollapseHeader(props: CollapseHeaderProps) {
             delay="medium"
             side="right"
         >
-            <div
+            <button
+                type="button"
                 onClick={props.onCollapseChange}
-                className="bg-neutral fill-text-neutral-strong p-3xs hover:bg-neutral-hover active:bg-neutral-active flex cursor-pointer items-center justify-end"
+                className="bg-neutral fill-text-neutral-strong p-3xs hover:bg-neutral-hover active:bg-neutral-active focusable flex cursor-pointer items-center justify-end focus-visible:outline-0"
                 aria-label={props.isCollapsed ? "Expand settings panel" : "Collapse settings panel"}
+                aria-expanded={!props.isCollapsed}
             >
                 {props.isCollapsed ? <KeyboardDoubleArrowRight /> : <KeyboardDoubleArrowLeft />}
-            </div>
+            </button>
         </Tooltip>
     );
 }

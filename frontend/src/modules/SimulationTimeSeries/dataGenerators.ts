@@ -12,7 +12,8 @@ export function makeVectorGroupDataGenerator(
         vectorSpecification: VectorSpec;
         data: VectorRealizationData_api[];
     }[],
-    activeTimestampUtcMs: number,
+    // Realizations without a sample at this time are left out - there is no interpolation (yet)
+    activeTimestampUtcMs: number | null,
     makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => string,
     preferredColor: string,
 ): DataGenerator {
@@ -34,11 +35,12 @@ export function makeVectorGroupDataGenerator(
             let unit = "";
             vector.data.forEach((el) => {
                 unit = simulationUnitReformat(el.unit);
-                const indexOfTimestamp = el.timestampsUtcMs.indexOf(activeTimestampUtcMs);
-                data.push({
-                    key: el.realization,
-                    value: indexOfTimestamp === -1 ? el.values[0] : el.values[indexOfTimestamp],
-                });
+                const indexOfTimestamp =
+                    activeTimestampUtcMs === null ? -1 : el.timestampsUtcMs.indexOf(activeTimestampUtcMs);
+                if (indexOfTimestamp === -1) {
+                    return;
+                }
+                data.push({ key: el.realization, value: el.values[indexOfTimestamp] });
             });
             metaData = {
                 unit,

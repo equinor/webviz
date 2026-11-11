@@ -87,8 +87,6 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
                 }}
                 activeModuleInstance={activeModuleInstance}
                 isCollapsed={isCollapsed}
-                onExpandClick={handleExpandPanel}
-                onCollapseClick={handleCollapsePanel}
                 onTabChange={handleSetDrawerContent}
             />
             <>
