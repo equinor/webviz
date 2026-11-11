@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/experimental-ct-react";
 import { DashboardTimeSlider } from "@framework/DashboardSettings/components/DashboardTimeSlider";
 
 import { DashboardControlledSettingHarness } from "./support/DashboardControlledSettingHarness";
+import { DashboardSettingsPanelHarness } from "./support/DashboardSettingsPanelHarness";
 
 const T1 = Date.UTC(2018, 0, 1);
 const T2 = Date.UTC(2019, 0, 1);
@@ -108,5 +109,20 @@ test.describe("Dashboard-controlled DPF setting", () => {
         await expect(
             component.getByLabel('Controlled by the dashboard setting "Time", whose value is not available here'),
         ).toHaveCount(0);
+    });
+});
+
+test.describe("Dashboard settings panel", () => {
+    test("keeps a setting that never settles removable, while its value can't be changed", async ({ mount }) => {
+        const component = await mount(<DashboardSettingsPanelHarness />);
+
+        // The value is covered (and inert) while settling - it can't be focused
+        const slider = component.getByRole("slider");
+        await slider.focus();
+        await expect(slider).not.toBeFocused();
+
+        await component.getByRole("button", { name: "Remove Time" }).click();
+
+        await expect(component.getByText("No dashboard settings yet - add one with +")).toBeVisible();
     });
 });

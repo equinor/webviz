@@ -161,16 +161,25 @@ function DashboardSettingField(props: DashboardSettingFieldProps): React.ReactNo
     }
 
     return (
-        <Setting.Field label={definition.label} annotations={annotations} loadingOverlay={isSettling ?? false}>
+        <Setting.Field label={definition.label} annotations={annotations}>
             <div className="gap-x-2xs flex min-h-8 items-center">
-                <div className="min-w-0 grow">
-                    <definition.Component
-                        value={value}
-                        constraints={constraints}
-                        isValueValid={isValueValid ?? true}
-                        isSettling={isSettling ?? false}
-                        onValueChange={(newValue: unknown) => props.instance.setValue(newValue)}
-                    />
+                {/* Only the value is covered while settling - a source that never settles must not keep the setting
+                    from being removed */}
+                <div className="relative min-w-0 grow">
+                    <div
+                        ref={(el) => {
+                            if (el) el.inert = !!isSettling;
+                        }}
+                    >
+                        <definition.Component
+                            value={value}
+                            constraints={constraints}
+                            isValueValid={isValueValid ?? true}
+                            isSettling={isSettling ?? false}
+                            onValueChange={(newValue: unknown) => props.instance.setValue(newValue)}
+                        />
+                    </div>
+                    {isSettling && <Setting.Overlay type="loading" />}
                 </div>
                 <Tooltip content={`Remove "${definition.label}" from the dashboard settings`} side="right">
                     <Button
