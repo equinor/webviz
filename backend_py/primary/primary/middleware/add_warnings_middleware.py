@@ -11,6 +11,9 @@ from webviz_core_utils.result_with_warning import ResultWithWarning
 ALLOW_WARNINGS_REQUEST_HEADER = "Webviz-Allow-Warnings"
 WARNINGS_RESPONSE_HEADER = "Webviz-Content-Warnings"
 
+# Max length of the JSON encoded warnings header value, to stay well below typical proxy header size limits
+_MAX_WARNINGS_HEADER_LENGTH = 4096
+
 # Per-request state. A fresh dict is set by the middleware for every http request.
 _warnings_context: ContextVar[dict[str, Any] | None] = ContextVar("warnings_context", default=None)
 
@@ -26,6 +29,40 @@ def _warnings_to_exception(warnings: Sequence[TextWarning]) -> HTTPException:
     if not warnings:
         raise ValueError("Expect non-empty list of warnings")
     return HTTPException(status_code=500, detail="; ".join(str(w) for w in warnings))
+
+
+def _make_omitted_warnings_text(num_omitted: int) -> str:
+    if num_omitted < 0:
+        raise ValueError("Expect non-negative number of omitted warnings")
+
+    if num_omitted == 0:
+        return ""
+    if num_omitted == 1:
+        return f"... and {num_omitted} more warning not shown"
+    return f"... and {num_omitted} more warnings not shown"
+
+
+def _make_warnings_header_value(warnings: Sequence[str]) -> str:
+    """
+    JSON encode the warnings as an array, capped to _MAX_WARNINGS_HEADER_LENGTH. Warnings that do not fit
+    are replaced by a final entry stating how many were left out.
+    """
+    value = json.dumps(warnings, ensure_ascii=True)
+    if len(value) <= _MAX_WARNINGS_HEADER_LENGTH:
+        return value
+
+    # Reserve room for the "left out" entry
+    reserve = len(json.dumps(_make_omitted_warnings_text(len(warnings)), ensure_ascii=True)) + 2
+
+    kept: list[str] = []
+    for warning in warnings:
+        candidate = [*kept, warning]
+        if len(json.dumps(candidate, ensure_ascii=True)) + reserve > _MAX_WARNINGS_HEADER_LENGTH:
+            break
+        kept = candidate
+
+    kept.append(_make_omitted_warnings_text(len(warnings) - len(kept)))
+    return json.dumps(kept, ensure_ascii=True)
 
 
 def report_warnings(warnings: Sequence[TextWarning]) -> None:
@@ -82,7 +119,7 @@ class AddWarningsMiddleware:
         async def send_with_warnings_header(message: Message) -> None:
             if message["type"] == "http.response.start" and context["warnings"]:
                 headers = MutableHeaders(scope=message)
-                headers.append(WARNINGS_RESPONSE_HEADER, json.dumps(context["warnings"], ensure_ascii=True))
+                headers.append(WARNINGS_RESPONSE_HEADER, _make_warnings_header_value(context["warnings"]))
 
             await send(message)
 

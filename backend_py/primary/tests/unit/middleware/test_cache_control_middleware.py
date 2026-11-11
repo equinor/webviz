@@ -122,3 +122,23 @@ def test_cacheable_responses_vary_on_allow_warnings_header() -> None:
     assert "max-age" in cached["cache-control"]
     assert cached["vary"] == ALLOW_WARNINGS_REQUEST_HEADER
     assert "vary" not in asyncio.run(_get_response_headers(app, "/uncached"))
+
+
+def test_vary_is_merged_with_existing_vary_header() -> None:
+    from fastapi import Response
+
+    from primary.middleware.add_warnings_middleware import ALLOW_WARNINGS_REQUEST_HEADER
+    from primary.middleware.cache_control_middleware import CacheControlMiddleware
+
+    app = FastAPI()
+
+    @app.get("/cached")
+    @cache_time(CacheTime.LONG)
+    async def get_cached(response: Response) -> int:
+        response.headers["vary"] = "Accept-Encoding"
+        return 1
+
+    app.add_middleware(CacheControlMiddleware)
+
+    cached = asyncio.run(_get_response_headers(app, "/cached"))
+    assert cached["vary"] == f"Accept-Encoding, {ALLOW_WARNINGS_REQUEST_HEADER}"

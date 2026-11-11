@@ -77,3 +77,19 @@ def test_without_request_context_behaves_as_not_allowed() -> None:
     assert unwrap_and_report_warnings(ResultWithWarning(5)) == 5
     with pytest.raises(HTTPException):
         unwrap_and_report_warnings(ResultWithWarning(5, [_missing_reals_warning([1])]))
+
+
+def test_warnings_header_value_is_capped() -> None:
+    import json
+
+    from primary.middleware.add_warnings_middleware import _MAX_WARNINGS_HEADER_LENGTH, _make_warnings_header_value
+
+    few = ["a", "b"]
+    assert json.loads(_make_warnings_header_value(few)) == few
+
+    many = [f"warning number {i} " + "x" * 100 for i in range(200)]
+    value = _make_warnings_header_value(many)
+    parsed = json.loads(value)
+    assert len(value) <= _MAX_WARNINGS_HEADER_LENGTH
+    assert parsed[:-1] == many[: len(parsed) - 1]
+    assert parsed[-1] == f"... and {200 - (len(parsed) - 1)} more warnings not shown"
