@@ -9,6 +9,8 @@ from fastapi.routing import APIRoute
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Scope, Receive, Send, Message
 
+from primary.middleware.add_warnings_middleware import ALLOW_WARNINGS_REQUEST_HEADER
+
 # Name of the OpenAPI operation field that marks an endpoint whose responses browsers may cache
 BROWSER_CACHED_OPENAPI_FIELD = "x-browser-cached"
 
@@ -215,6 +217,11 @@ class CacheControlMiddleware:
                 if headers.get("cache-control") is None:
                     cache_control_str = self._build_cache_control_header()
                     headers.append("cache-control", cache_control_str)
+
+                # The response differs depending on whether the client allows warnings (data with warnings
+                # or an error), so a cached response must not be reused across the two variants
+                if "max-age" in (headers.get("cache-control") or ""):
+                    headers.append("vary", ALLOW_WARNINGS_REQUEST_HEADER)
 
             await send(message)
 
