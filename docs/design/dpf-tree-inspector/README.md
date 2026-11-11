@@ -30,7 +30,7 @@ Users of the current DPF panel struggle with:
 | Names | Provider names are **generated** from the type and its distinguishing settings; a custom name overrides (✎ marker, *↺ auto* to revert). One distinct icon per provider type. |
 | Actions | `⋯` menu per row: Add…, Rename / custom name, Colour, Expand/Collapse all, Select controlled items, Remove. |
 | Drag & drop | Drag anywhere on a row, multi-drag of the selection, drop line / outlined container, red indicator for invalid targets, auto-scroll near edges, settings rebind to the nearest reachable shared setting after a move (stopping at context boundaries). |
-| Sticky headers | The ancestor chain of the first row visible *below the overlay* stays pinned; underneath, one row per shared setting in effect whose own row has scrolled away, joined to its rail. Sections do not stick. |
+| Sticky headers | Stacked like CSS `position: sticky`, in tree order: an expanded container or a shared setting pins the moment its own row reaches the boundary, stays while its content (descendants, or the rail's extent) is below, and is pushed up/clipped as that content runs out. The rail gutter stays visible underneath; pinned shared settings carry their origin marker on their rail. Sections do not stick. |
 
 ## Mapping to the real DPF
 

@@ -15,13 +15,15 @@
   /* ---------- tree ---------- */
   .treewrap { flex: 1 1 auto; min-height: 80px; position: relative; display: flex; flex-direction: column; }
   .tree { flex: 1 1 auto; overflow: auto; background: #fff; min-height: 0; position: relative; }
-  .sticky { position: absolute; top: 0; left: 0; z-index: 6; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.08); border-bottom: 1px solid #e2e8f0; display: none; }
-  .sticky .row { cursor: pointer; background: #fafafa; }
-  .sticky .row:hover { background: #f1f5f9; }
+  .sticky { position: absolute; top: 0; left: 0; z-index: 6; display: none; pointer-events: none; }
+  .stickwrap { overflow: hidden; }
+  .stickinner { display: flex; align-items: stretch; }
+  .stickinner .gutter { position: relative; flex: 0 0 auto; }
+  .stickinner .row { flex: 1; min-width: 0; pointer-events: auto; background: #fafafa; border-bottom: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,.06); cursor: pointer; }
+  .stickinner .row:hover { background: #f1f5f9; }
   .sticky .row .guide::before, .sticky .row .guide::after { display: none; }
-  .sticky .row .plus, .sticky .row .acts, .sticky .row .eye, .sticky .row .notsel { display: none; }
-  .sticky .row.stuck-src { background: #fff; border-top: 1px dashed #e2e8f0; }
-  .sticky .row.stuck-src:hover { background: #f1f5f9; }
+  .sticky .row .plus, .sticky .row .acts, .sticky .row .eye { display: none; }
+  .sticky .row.stuck-src { background: #fff; }
   .treeinner { position: relative; display: flex; padding: 4px 0 40px; }
   .rails { position: relative; flex: 0 0 auto; }
   .rail { position: absolute; width: 2px; border-radius: 1px; background: color-mix(in srgb, var(--c) 50%, white); transition: background .12s; }
@@ -376,50 +378,59 @@ function updateSticky() {
   const scrollTop = tree.scrollTop;
   const rowH = (id) => rowEls[id].offsetHeight;
   const ancestors = (it) => { const c = []; for (let p = it.type === "addrow" ? it.container : it.parent; p; p = p.parent) c.unshift(p); return c; };
+  const inGroup = (it, g) => { for (let p = it.type === "addrow" ? it.container : it.parent; p; p = p.parent) if (p === g) return true; return false; };
+  const groupEnd = (g) => { let last = g.id; lastRows.forEach((r) => { if (inGroup(r.it, g)) last = r.it.id; }); return bottom(last); };
 
-  // Forward pass: the headers are decided by the first row that is actually visible *below the overlay* (groups + shared
-  // setting rows). Pop headers whose group ended above that row, push ancestors that start above it; a header popped or a
-  // source dropped in this pass is not re-added, so the pass terminates and is deterministic per scroll position.
-  let stack = [], sources = [];
-  const popped = new Set(), dropped = new Set();
-  const overlayH = () => stack.reduce((s, it) => s + rowH(it.id), 0) + sources.length * 26;
-  for (let i = 0; i < 30; i++) {
-    const H = overlayH(), edge = scrollTop + H;
-    const first = lastRows.find((r) => bottom(r.it.id) > edge);
-    if (!first) { stack = []; sources = []; break; }
-    const chain = ancestors(first.it);
-    let k = 0; while (k < stack.length && k < chain.length && stack[k] === chain[k]) k++;
-    if (k < stack.length) { stack.slice(k).forEach((it) => popped.add(it.id)); stack = stack.slice(0, k); continue; }
-    if (k < chain.length && !popped.has(chain[k].id) && top(chain[k].id) < edge) { stack.push(chain[k]); continue; }
-    const want = lastRows.map((r) => r.it).filter((it) => isSource(it) && !stack.includes(it) && !dropped.has(it.id) && railEnd[it.id] && bottom(it.id) <= edge && bottom(railEnd[it.id]) > edge);
-    const same = want.length === sources.length && want.every((it, j) => it === sources[j]);
-    if (!same) { sources.forEach((it) => { if (!want.includes(it)) dropped.add(it.id); }); sources = want; continue; }
-    break;
+  // Single forward pass in tree order, like stacked CSS position:sticky headers. A row is pinned as soon as its own top
+  // crosses the current boundary (top of the viewport + what is already pinned). It stays pinned, clipped from the top by
+  // the amount its content has scrolled past the boundary, until it is pushed away completely. Candidates: expanded
+  // containers (content = their descendants) and shared settings / settings-groups with a rail (content = the rail).
+  const pinned = []; let y = 0;
+  for (const r of lastRows) {
+    const it = r.it;
+    if (top(it.id) >= scrollTop + y) break; // rows are in order – nothing further up can be above the boundary
+    let contentEnd = null, height = rowH(it.id);
+    if (isContainer(it) && it.expanded && (it.children ?? []).length) contentEnd = groupEnd(it);
+    else if (isSource(it) && railEnd[it.id]) contentEnd = bottom(railEnd[it.id]);
+    if (contentEnd === null) continue;
+    const visible = Math.min(height, contentEnd - (scrollTop + y));
+    if (visible <= 0) continue; // fully pushed away
+    pinned.push({ it, height, visible, offset: y });
+    y += visible;
   }
-  const h = stack.reduce((s, it) => s + rowH(it.id), 0);
+  const stack = pinned.map((p) => p.it);
 
-  box.innerHTML = ""; box.style.display = stack.length || sources.length ? "block" : "none"; box.style.width = tree.clientWidth + "px";
+  box.innerHTML = ""; box.style.display = pinned.length ? "block" : "none"; box.style.width = tree.clientWidth + "px";
   const gutter = railsEl.offsetWidth;
-  stack.forEach((it) => {
-    const clone = rowEls[it.id].cloneNode(true);
-    clone.classList.remove("selected", "hot"); clone.style.paddingLeft = gutter + "px"; clone.style.position = "relative";
-    clone.title = "Scroll to " + nameOf(it);
-    clone.addEventListener("click", () => { const above = stack.slice(0, stack.indexOf(it)).reduce((s, x) => s + rowEls[x.id].offsetHeight, 0); tree.scrollTop = top(it.id) - above; });
-    box.appendChild(clone);
-  });
-  // one row per shared setting, in tree order, with its rail continuing through the row so it visibly connects to the rail below
-  sources.forEach((it) => {
-    const row = document.createElement("div"); row.className = "row " + it.type + " stuck-src"; row.style.paddingLeft = gutter + "px"; row.style.position = "relative";
-    const x = GUTTER_PAD + (railLane[it.id] ?? 0) * LANE_W;
-    const seg = document.createElement("div"); seg.className = "rail hot"; seg.style.cssText = `left:${x}px;top:0;height:100%;--c:${it.color}`;
-    const mark = document.createElement("div"); mark.className = "stop origin hot"; mark.style.cssText = `left:${x + 1 - 5}px;top:${26 / 2 - 5}px;--c:${it.color}`;
-    const val = it.type === "shared" ? it.setting.value : it.settings.map((s) => s.value).join(" · ");
-    row.innerHTML = `<span class="caret"></span><span class="typeicon" style="color:${it.color}">${it.type === "shared" ? "🔗" : "▤"}</span><span class="name src" style="color:${it.color}">${nameOf(it)}</span><span class="val">${val}</span>`;
-    row.prepend(seg, mark);
+  // Each pinned entry is [transparent gutter cell | row]: the real rails stay visible in the gutter underneath, and a
+  // shared setting carries its origin marker in the gutter cell so it visibly sits on its rail.
+  const place = (el, p, marker) => {
+    const wrap = document.createElement("div"); wrap.className = "stickwrap"; wrap.style.height = p.visible + "px";
+    const inner = document.createElement("div"); inner.className = "stickinner"; inner.style.transform = `translateY(${p.visible - p.height}px)`;
+    const cell = document.createElement("div"); cell.className = "gutter"; cell.style.width = gutter + "px";
+    if (marker) cell.appendChild(marker);
+    inner.append(cell, el); wrap.appendChild(inner); box.appendChild(wrap);
+  };
+  const originMarker = (it, height) => {
+    if (railLane[it.id] === undefined) return null;
+    const m = document.createElement("div"); m.className = "stop origin hot"; m.style.cssText = `left:${GUTTER_PAD + railLane[it.id] * LANE_W + 1 - 5}px;top:${height / 2 - 5}px;--c:${it.color}`; return m;
+  };
+  pinned.forEach((p) => {
+    const it = p.it;
+    if (isContainer(it)) {
+      const clone = rowEls[it.id].cloneNode(true);
+      clone.classList.remove("selected", "hot");
+      clone.title = "Scroll to " + nameOf(it);
+      clone.addEventListener("click", () => { tree.scrollTop = top(it.id) - p.offset; });
+      if (isSource(it)) { clone.addEventListener("mouseenter", () => setHover(it)); clone.addEventListener("mouseleave", () => setHover(null)); }
+      place(clone, p, isSource(it) ? originMarker(it, p.height) : null); return;
+    }
+    const row = document.createElement("div"); row.className = "row " + it.type + " stuck-src";
+    row.innerHTML = `<span class="caret"></span><span class="typeicon" style="color:${it.color}">🔗</span><span class="name src" style="color:${it.color}">${nameOf(it)}</span><span class="val">${it.setting.value}</span>`;
     row.title = `Shared setting in effect here – click to scroll to it (${pathOf(it)})`;
-    row.addEventListener("click", () => { tree.scrollTop = top(it.id) - stack.reduce((s, x) => s + rowH(x.id), 0); });
+    row.addEventListener("click", () => { tree.scrollTop = top(it.id) - p.offset; });
     row.addEventListener("mouseenter", () => setHover(it)); row.addEventListener("mouseleave", () => setHover(null));
-    box.appendChild(row);
+    place(row, p, originMarker(it, p.height));
   });
 }
 document.getElementById("tree").addEventListener("scroll", updateSticky);
