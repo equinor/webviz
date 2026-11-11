@@ -4,8 +4,8 @@ import pyarrow.compute as pc
 import polars as pl
 
 
-from webviz_core_utils.result_warning import ResultWarning
-from webviz_core_utils.result_with_warnings import ResultWithWarnings
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError, Service
 from webviz_services.service_warnings import make_missing_realizations_warning
 from webviz_services.sumo_access.well_completions_access import WellCompletionsAccess
@@ -41,7 +41,7 @@ class WellCompletionsAssembler:
         self._well_completions_access = well_completions_access
 
         self._well_completions_df = None
-        self._missing_real_warnings: list[ResultWarning] = []
+        self._missing_real_warnings: list[TextWarning] = []
         self._sorted_unique_dates = None
         self._zone_name_list = None
         self._well_attributes = None
@@ -95,7 +95,7 @@ class WellCompletionsAssembler:
             if missing_realizations:
                 self._missing_real_warnings.append(
                     make_missing_realizations_warning(
-                        sorted(missing_realizations), Service.SUMO, data_type="well completions data"
+                        sorted(missing_realizations), data_source="Sumo well completions data"
                     )
                 )
 
@@ -138,7 +138,7 @@ class WellCompletionsAssembler:
         )
         self._well_completions_df = self._well_completions_df.with_columns(date_index_column_expression)
 
-    def create_well_completions_data(self) -> ResultWithWarnings[WellCompletionsData]:
+    def create_well_completions_data(self) -> ResultWithWarning[WellCompletionsData]:
         """Creates well completions dataset for front-end, with warnings from fetching the data"""
         if self._well_completions_df is None:
             raise InvalidDataError("Well completions data is not initialized", Service.GENERAL)
@@ -154,7 +154,7 @@ class WellCompletionsAssembler:
             sorted_completion_dates=self._create_sorted_unique_dates_string_list(),
             wells=self._extract_wells(),
         )
-        return ResultWithWarnings(data, list(self._missing_real_warnings))
+        return ResultWithWarning(data, list(self._missing_real_warnings))
 
     def _create_sorted_unique_dates_string_list(self) -> list[str]:
         """Returns a list of sorted completion dates as string"""

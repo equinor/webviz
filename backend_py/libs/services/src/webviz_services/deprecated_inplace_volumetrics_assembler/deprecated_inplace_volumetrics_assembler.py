@@ -24,8 +24,8 @@ from webviz_services.sumo_access.deprecated_inplace_volumetrics_types import (
 )
 from webviz_services.service_exceptions import Service, InvalidDataError, InvalidParameterError, NoDataError
 from webviz_services.service_warnings import make_missing_realizations_warning
-from webviz_core_utils.result_warning import ResultWarning
-from webviz_core_utils.result_with_warnings import ResultWithWarnings
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 
 from ._conversion._conversion import (
     create_raw_volumetric_columns_from_volume_names_and_fluid_zones,
@@ -144,7 +144,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
         group_by_identifiers: list[InplaceVolumetricsIdentifier] | None,
         realizations: list[int] | None,
         accumulate_fluid_zones: bool = False,
-    ) -> ResultWithWarnings[InplaceVolumetricTableDataPerFluidSelection]:
+    ) -> ResultWithWarning[InplaceVolumetricTableDataPerFluidSelection]:
         if group_by_identifiers == []:
             raise InvalidParameterError("Group by identifiers must be non-empty list or None", Service.GENERAL)
         if realizations == []:
@@ -154,7 +154,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
         volume_dfs_result = await self._get_volume_df_per_fluid_selection_and_categorized_result_names_async(
             table_name, result_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
         )
-        warnings: list[ResultWarning] = []
+        warnings: list[TextWarning] = []
         (
             volume_df_per_fluid_selection,
             categorized_requested_result_names,
@@ -187,7 +187,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
                 )
             )
 
-        return ResultWithWarnings(
+        return ResultWithWarning(
             InplaceVolumetricTableDataPerFluidSelection(table_data_per_fluid_selection=table_data_per_fluid_selection),
             warnings,
         )
@@ -201,7 +201,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
         group_by_identifiers: list[InplaceVolumetricsIdentifier] | None,
         realizations: list[int] | None,
         accumulate_fluid_zones: bool = False,
-    ) -> ResultWithWarnings[InplaceStatisticalVolumetricTableDataPerFluidSelection]:
+    ) -> ResultWithWarning[InplaceStatisticalVolumetricTableDataPerFluidSelection]:
         if group_by_identifiers == []:
             raise InvalidParameterError("Group by identifiers must be non-empty list or None", Service.GENERAL)
         if realizations == []:
@@ -211,7 +211,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
         volume_dfs_result = await self._get_volume_df_per_fluid_selection_and_categorized_result_names_async(
             table_name, result_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
         )
-        warnings: list[ResultWarning] = []
+        warnings: list[TextWarning] = []
         (
             volume_df_per_fluid_selection,
             categorized_requested_result_names,
@@ -255,7 +255,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
                 )
             )
 
-        return ResultWithWarnings(
+        return ResultWithWarning(
             InplaceStatisticalVolumetricTableDataPerFluidSelection(
                 table_data_per_fluid_selection=statistical_table_data_per_fluid_selection
             ),
@@ -270,7 +270,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
         realizations: list[int] | None,
         identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues],
         accumulate_fluid_zones: bool,
-    ) -> ResultWithWarnings[tuple[dict[FluidSelection, pl.DataFrame], CategorizedResultNames]]:
+    ) -> ResultWithWarning[tuple[dict[FluidSelection, pl.DataFrame], CategorizedResultNames]]:
         """
         Utility function to get volume table data as pl.DataFrame per fluid selection, and a list of volume names and properties among the requested result names.
 
@@ -314,7 +314,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
         volume_dfs_result = await self._create_volume_df_per_fluid_selection_async(
             table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
         )
-        warnings: list[ResultWarning] = []
+        warnings: list[TextWarning] = []
         volume_df_per_fluid_selection = volume_dfs_result.get_value(propagate_warnings_to=warnings)
 
         # If accumulate_fluid_zones is True, exclude BO and BG from valid properties
@@ -322,7 +322,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
         if accumulate_fluid_zones:
             valid_properties = [prop for prop in properties if prop not in ["BO", "BG"]]
 
-        return ResultWithWarnings(
+        return ResultWithWarning(
             (
                 volume_df_per_fluid_selection,
                 CategorizedResultNames(
@@ -387,7 +387,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
         realizations: list[int] | None,
         identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues],
         accumulate_fluid_zones: bool = False,
-    ) -> ResultWithWarnings[dict[FluidSelection, pl.DataFrame]]:
+    ) -> ResultWithWarning[dict[FluidSelection, pl.DataFrame]]:
         """
         This function creates a volumetric DataFrame per fluid selection, together with warnings
         (e.g. requested realizations missing in the table)
@@ -414,7 +414,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
 
         if not raw_volumetric_column_names:
             # Combination of volume names and fluid zones did not result in any raw volumetric columns
-            return ResultWithWarnings({}, [])
+            return ResultWithWarning({}, [])
 
         timer = PerfTimer()
         # Get the raw volumetric table as DataFrame, filtered on identifiers and realizations
@@ -427,12 +427,12 @@ class DEPRECATED_InplaceVolumetricsAssembler:
             realizations=realizations,
             identifiers_with_values=identifiers_with_values,
         )
-        warnings: list[ResultWarning] = []
+        warnings: list[TextWarning] = []
         row_filtered_raw_volumetrics_df = row_filtered_result.get_value(propagate_warnings_to=warnings)
 
         if row_filtered_raw_volumetrics_df is None:
             # No data found for the given identifiers and realizations
-            return ResultWithWarnings({}, warnings)
+            return ResultWithWarning({}, warnings)
 
         timer_create_raw_df = timer.lap_ms()
         LOGGER.debug(f"Time creating raw DataFrame: {timer_create_raw_df}ms")
@@ -452,7 +452,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
             )
 
             volume_df_per_fluid_selection[FluidSelection.ACCUMULATED] = volumetric_summed_fluid_zones_df
-            return ResultWithWarnings(volume_df_per_fluid_selection, warnings)
+            return ResultWithWarning(volume_df_per_fluid_selection, warnings)
 
         # Handle each fluid zone separately
         volume_df_per_fluid_zone: dict[FluidZone, pl.DataFrame] = create_volumetric_df_per_fluid_zone(
@@ -464,7 +464,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
             fluid_selection = convert_fluid_zone_to_fluid_selection(fluid_zone)
             volume_df_per_fluid_selection[fluid_selection] = volume_df
 
-        return ResultWithWarnings(volume_df_per_fluid_selection, warnings)
+        return ResultWithWarning(volume_df_per_fluid_selection, warnings)
 
     @staticmethod
     def _create_row_filtered_volumetric_df(
@@ -472,7 +472,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
         inplace_volumetrics_df: pl.DataFrame,
         realizations: list[int] | None,
         identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues],
-    ) -> ResultWithWarnings[pl.DataFrame | None]:
+    ) -> ResultWithWarning[pl.DataFrame | None]:
         """
         Create DataFrame filtered on identifier values and realizations
 
@@ -481,7 +481,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
 
         Requested realizations missing in the 'REAL' column are left out and reported as a warning.
         """
-        warnings: list[ResultWarning] = []
+        warnings: list[TextWarning] = []
         if realizations is not None and len(realizations) == 0:
             raise InvalidParameterError("Realizations must be a non-empty list or None", Service.GENERAL)
 
@@ -520,7 +520,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
             if missing_realizations_set:
                 warnings.append(
                     make_missing_realizations_warning(
-                        sorted(missing_realizations_set), Service.SUMO, data_type="inplace volumes data"
+                        sorted(missing_realizations_set), data_source="Sumo inplace volumes data"
                     )
                 )
 
@@ -541,7 +541,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
         time_row_filtering = timer.lap_ms()
         LOGGER.debug(f"DATAFRAME row filtering (based on selectors): {time_row_filtering}ms")
 
-        return ResultWithWarnings(filtered_df, warnings)
+        return ResultWithWarning(filtered_df, warnings)
 
     async def _get_inplace_volumetrics_table_as_polars_df_async(
         self, table_name: str, volumetric_columns: set[str]

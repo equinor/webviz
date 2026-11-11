@@ -6,8 +6,8 @@ import pyarrow as pa
 import pyarrow.compute as pc
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
-from webviz_core_utils.result_warning import ResultWarning
-from webviz_core_utils.result_with_warnings import ResultWithWarnings
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 from webviz_services.summary_vector_statistics import compute_vector_statistics
 from webviz_services.sumo_access.parameter_access import ParameterAccess
 from webviz_services.sumo_access.summary_access import Frequency, SummaryAccess
@@ -30,7 +30,7 @@ from webviz_services.summary_derived_vectors import (
 )
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_warnings_middleware import resolve_warnings
+from primary.middleware.add_warnings_middleware import report_warnings
 from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.query_string_utils import decode_uint_list_str
@@ -169,7 +169,7 @@ async def get_realizations_vector_data(
     is_vector_derived = is_derived_vector(vector_name)
     vector_name_to_fetch = vector_name if not is_vector_derived else get_total_vector_name(vector_name)
 
-    warnings: list[ResultWarning] = []
+    warnings: list[TextWarning] = []
     ret_arr: list[schemas.VectorRealizationData] = []
     if not is_vector_derived:
         result = await access.get_vector_async(
@@ -207,8 +207,8 @@ async def get_realizations_vector_data(
 
     LOGGER.info(f"Loaded realization summary data in: {perf_metrics.to_string()}")
 
-    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
-    return resolve_warnings(ResultWithWarnings(ret_arr, warnings))
+    report_warnings(warnings)
+    return ret_arr
 
 
 @router.get("/delta_ensemble_realizations_vector_data/")
@@ -251,7 +251,7 @@ async def get_delta_ensemble_realizations_vector_data(
     vector_name_to_fetch = vector_name if not is_vector_derived else get_total_vector_name(vector_name)
 
     # Create delta ensemble table and metadata:
-    warnings: list[ResultWarning] = []
+    warnings: list[TextWarning] = []
     delta_result = await _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
         authenticated_user,
         comparison_case_uuid,
@@ -296,8 +296,8 @@ async def get_delta_ensemble_realizations_vector_data(
         )
 
     LOGGER.info(f"Loaded realization delta ensemble summary data in: {perf_metrics.to_string()}")
-    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
-    return resolve_warnings(ResultWithWarnings(ret_arr, warnings))
+    report_warnings(warnings)
+    return ret_arr
 
 
 @router.get("/historical_vector_data/")
@@ -360,7 +360,7 @@ async def get_statistical_vector_data(
     vector_name_to_fetch = vector_name if not is_vector_derived else get_total_vector_name(vector_name)
 
     # Get vector table
-    warnings: list[ResultWarning] = []
+    warnings: list[TextWarning] = []
     result = await access.get_vector_table_async(
         vector_name=vector_name_to_fetch,
         resampling_frequency=service_freq,
@@ -397,8 +397,8 @@ async def get_statistical_vector_data(
     perf_metrics.record_lap("calc-stat")
     LOGGER.info(f"Loaded and computed statistical summary data in: {perf_metrics.to_string()}")
 
-    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
-    return resolve_warnings(ResultWithWarnings(ret_data, warnings))
+    report_warnings(warnings)
+    return ret_data
 
 
 @router.get("/delta_ensemble_statistical_vector_data/")
@@ -456,7 +456,7 @@ async def get_delta_ensemble_statistical_vector_data(
         service_freq,
         perf_metrics,
     )
-    warnings: list[ResultWarning] = []
+    warnings: list[TextWarning] = []
     delta_vector_table_pa, delta_vector_metadata = delta_result.get_value(warnings)
 
     # Calculate statistics
@@ -490,8 +490,8 @@ async def get_delta_ensemble_statistical_vector_data(
     perf_metrics.record_lap("calc-delta-vector-stat")
     LOGGER.info(f"Loaded and computed statistical delta ensemble summary data in: {perf_metrics.to_string()}")
 
-    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
-    return resolve_warnings(ResultWithWarnings(ret_data, warnings))
+    report_warnings(warnings)
+    return ret_data
 
 
 @router.get("/statistical_vector_data_per_sensitivity/")
@@ -524,7 +524,7 @@ async def get_statistical_vector_data_per_sensitivity(
 
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
-    warnings: list[ResultWarning] = []
+    warnings: list[TextWarning] = []
     result = await summmary_access.get_vector_table_async(
         vector_name=vector_name, resampling_frequency=service_freq, realizations=realizations
     )
@@ -573,13 +573,13 @@ async def get_statistical_vector_data_per_sensitivity(
         )
 
         warnings.append(
-            ResultWarning(
+            TextWarning(
                 f"No valid realizations among the requested realizations for sensitivities: {details}",
             )
         )
 
-    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
-    return resolve_warnings(ResultWithWarnings(ret_data, warnings))
+    report_warnings(warnings)
+    return ret_data
 
 
 def _create_vector_descriptions_for_derived_vectors(
@@ -628,7 +628,7 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
     realizations: list[int] | None,
     resampling_frequency: Frequency,
     perf_metrics: ResponsePerfMetrics | None,
-) -> ResultWithWarnings[tuple[pa.Table, DeltaVectorMetadata]]:
+) -> ResultWithWarning[tuple[pa.Table, DeltaVectorMetadata]]:
     """
     Get vector tables for comparison and reference ensembles and create delta ensemble vector table and metadata
 
@@ -658,7 +658,7 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
         ),
     )
 
-    warnings: list[ResultWarning] = []
+    warnings: list[TextWarning] = []
     comparison_vector_table_pa, comparison_metadata = comparison_result.get_value(warnings)
     reference_vector_table_pa, reference_metadata = reference_result.get_value(warnings)
 
@@ -685,4 +685,4 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
     if perf_metrics:
         perf_metrics.record_lap("create-delta-vector-table")
 
-    return ResultWithWarnings((delta_vector_table_pa, delta_vector_metadata), warnings)
+    return ResultWithWarning((delta_vector_table_pa, delta_vector_metadata), warnings)

@@ -21,8 +21,8 @@ from webviz_services.service_exceptions import (
     InvalidParameterError,
     NoDataError,
 )
-from webviz_core_utils.result_warning import ResultWarning
-from webviz_core_utils.result_with_warnings import ResultWithWarnings
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 from webviz_services.service_warnings import (
     make_missing_realizations_warning,
 )
@@ -102,12 +102,12 @@ class SummaryAccess:
         vector_name: str,
         resampling_frequency: Optional[Frequency],
         realizations: Optional[Sequence[int]],
-    ) -> ResultWithWarnings[Tuple[pa.Table, VectorMetadata]]:
+    ) -> ResultWithWarning[Tuple[pa.Table, VectorMetadata]]:
         """
         Get pyarrow.Table containing values for the specified vector and the specified realizations.
         If realizations is None, data for all available realizations will be returned.
-        If data is missing for some of the requested realizations, a missing-realizations ServiceLayerWarning is added
-        to the returned ResultWithWarnings. The table then only contains data for the realizations that were found.
+        If data is missing for some of the requested realizations, a missing-realizations warning is added
+        to the returned ResultWithWarning. The table then only contains data for the realizations that were found.
         The returned table will always contain a 'DATE' and 'REAL' column in addition to the requested vector.
         The 'DATE' column will be of type timestamp[ms] and the 'REAL' column will be of type int16.
         The vector column will be of type float32.
@@ -122,7 +122,7 @@ class SummaryAccess:
         _validate_single_vector_table(table, vector_name)
         et_loading_ms = timer.lap_ms()
 
-        warnings: list[ResultWarning] = []
+        warnings: list[TextWarning] = []
         if realizations is not None:
             requested_reals_arr = pa.array(realizations)
             mask = pc.is_in(table["REAL"], value_set=requested_reals_arr)
@@ -132,7 +132,7 @@ class SummaryAccess:
 
             if reals_without_data:
                 warnings.append(
-                    make_missing_realizations_warning(reals_without_data, Service.SUMO, data_type="vector data")
+                    make_missing_realizations_warning(reals_without_data, data_source="Sumo vector data")
                 )
 
         # Our assumption is that the table is segmented on REAL and that within each segment,
@@ -162,7 +162,7 @@ class SummaryAccess:
             f"({vector_name=} {resampling_frequency=} {table.shape=})"
         )
 
-        return ResultWithWarnings((table, vector_metadata), warnings)
+        return ResultWithWarning((table, vector_metadata), warnings)
 
     @otel_span_decorator()
     async def get_vector_async(
@@ -170,9 +170,9 @@ class SummaryAccess:
         vector_name: str,
         resampling_frequency: Optional[Frequency],
         realizations: Optional[Sequence[int]],
-    ) -> ResultWithWarnings[List[RealizationVector]]:
+    ) -> ResultWithWarning[List[RealizationVector]]:
         result = await self.get_vector_table_async(vector_name, resampling_frequency, realizations)
-        warnings: list[ResultWarning] = []
+        warnings: list[TextWarning] = []
         table, vector_metadata = result.get_value(propagate_warnings_to=warnings)
 
         real_arr_np = table.column("REAL").to_numpy()
@@ -197,7 +197,7 @@ class SummaryAccess:
                 )
             )
 
-        return ResultWithWarnings(ret_arr, warnings)
+        return ResultWithWarning(ret_arr, warnings)
 
     @otel_span_decorator()
     async def get_single_real_vectors_table_async(
@@ -329,9 +329,9 @@ class SummaryAccess:
         vector_name: str,
         timestamp_utc_ms: int,
         realizations: Optional[Sequence[int]] = None,
-    ) -> ResultWithWarnings[EnsembleScalarResponse]:
+    ) -> ResultWithWarning[EnsembleScalarResponse]:
         result = await self.get_vector_table_async(vector_name, resampling_frequency=None, realizations=realizations)
-        warnings: list[ResultWarning] = []
+        warnings: list[TextWarning] = []
         table, _ = result.get_value(propagate_warnings_to=warnings)
 
         if realizations is not None:
@@ -340,7 +340,7 @@ class SummaryAccess:
         mask = pc.is_in(table["DATE"], value_set=pa.array([timestamp_utc_ms]))
         table = table.filter(mask)
 
-        return ResultWithWarnings(
+        return ResultWithWarning(
             value=EnsembleScalarResponse(
                 realizations=table["REAL"].to_numpy().astype(int).tolist(),
                 values=table[vector_name].to_numpy().tolist(),

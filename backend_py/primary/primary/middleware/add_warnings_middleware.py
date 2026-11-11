@@ -1,13 +1,12 @@
 import json
 from contextvars import ContextVar
-from typing import Any, TypeVar
+from typing import Any, Sequence, TypeVar
 
 from fastapi import HTTPException
 from starlette.datastructures import Headers, MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
-from webviz_core_utils.result_warning import ResultWarning
-from webviz_core_utils.result_with_warnings import ResultWithWarnings
-from webviz_services.service_warnings import ServiceLayerWarning, service_layer_warning_to_exception
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 
 ALLOW_WARNINGS_REQUEST_HEADER = "Webviz-Allow-Warnings"
 WARNINGS_RESPONSE_HEADER = "Webviz-Content-Warnings"
@@ -19,49 +18,50 @@ _warnings_context: ContextVar[dict[str, Any] | None] = ContextVar("warnings_cont
 _T = TypeVar("_T")
 
 
-def _warnings_to_exception(warnings: list[ResultWarning]) -> Exception:
+def _warnings_to_exception(warnings: Sequence[TextWarning]) -> HTTPException:
     """
-    Exception for a non-empty list of warnings. Only the first warning is converted, mirroring
-    the previous behavior where the first error raised, and avoiding huge messages for long warning
-    lists.
+    Exception for a non-empty list of warnings, with all warnings concatenated into
+    the detail.
     """
-    warning = warnings[0]
-    if isinstance(warning, ServiceLayerWarning):
-        return service_layer_warning_to_exception(warning)
-
-    # Generic warnings are not tied to the service layer, so they have no service exception
-    return HTTPException(status_code=500, detail=str(warning))
+    if not warnings:
+        raise ValueError("Expect non-empty list of warnings")
+    return HTTPException(status_code=500, detail="; ".join(str(w) for w in warnings))
 
 
-def resolve_warnings(result_with_warnings: ResultWithWarnings[_T]) -> _T:
+def report_warnings(warnings: Sequence[TextWarning]) -> None:
     """
-    Report all warnings to the client and return the result if the client allows warnings.
-    Otherwise raise the exception for the first warning: the service layer exception for a
-    ServiceLayerWarning, or an HTTPException for any other ResultWarning.
+    Report all warnings to the client if it allows warnings.
+    Otherwise raise an HTTPException with all warnings concatenated in the detail.
     """
+    if not warnings:
+        return
+
     context = _warnings_context.get()
-    warnings = result_with_warnings.get_warnings()
 
-    # If warnings are allowed, add them to the context and return the value.
     if context is not None and context["allow_warnings"]:
         context["warnings"].extend([str(w) for w in warnings])
-        return result_with_warnings.get_value()
+        return
 
-    # Raise exception if warnings are not allowed
-    if warnings:
-        raise _warnings_to_exception(warnings)
+    raise _warnings_to_exception(warnings)
 
-    return result_with_warnings.get_value()
+
+def unwrap_and_report_warnings(result_with_warning: ResultWithWarning[_T]) -> _T:
+    """
+    Same as report_warnings(), but for a ResultWithWarning, which is unwrapped
+    and its value returned.
+    """
+    report_warnings(result_with_warning.get_warnings())
+    return result_with_warning.get_value()
 
 
 class AddWarningsMiddleware:
     """
     Lets endpoints report warnings alongside successful data.
 
-    `resolve_warnings()` is the only entry point for reporting warnings. It takes a
-    `ResultWithWarnings` (holding `ResultWarning`s): warnings are reported to the client if it opted in,
-    otherwise the first warning is raised as an exception (service-layer exception for a `ServiceLayerWarning`). Free-form string warnings and endpoint-level
-    "soft" HTTP exceptions (`add_warning`, `soft_raise_exception`) were deliberately removed.
+    `unwrap_and_report_warnings()` (for a `ResultWithWarning`) and `report_warnings()` (for a list of
+    `TextWarning`) are the entry points for reporting warnings. Warnings are reported to the client if it opted in,
+    otherwise an `HTTPException` with all warnings concatenated is raised. Free-form string warnings and
+    endpoint-level "soft" HTTP exceptions (`add_warning`, `soft_raise_exception`) were deliberately removed.
 
     Clients opt in with the request header `Webviz-Allow-Warnings: true`. Warnings added during the
     request are returned as a JSON array in the `Webviz-Content-Warnings` response header.

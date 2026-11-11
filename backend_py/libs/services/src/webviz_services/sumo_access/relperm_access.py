@@ -10,8 +10,8 @@ import pyarrow.compute as pc
 from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_core_utils.perf_metrics import PerfMetrics
-from webviz_core_utils.result_warning import ResultWarning
-from webviz_core_utils.result_with_warnings import ResultWithWarnings
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 
 from webviz_services.service_exceptions import InvalidDataError, NoDataError, Service
 from webviz_services.service_warnings import make_missing_realizations_warning
@@ -91,12 +91,12 @@ class RelpermAccess:
         curve_names: Sequence[str],
         satnums: Sequence[int],
         realizations: Sequence[int] | None,
-    ) -> ResultWithWarnings[list[RelpermRealizationData]]:
+    ) -> ResultWithWarning[list[RelpermRealizationData]]:
         """
         Get relperm data per realization. Requested realizations not found for the table are left out and
         reported as a warning. NoDataError is raised if the table has no realizations at all.
         """
-        warnings: list[ResultWarning] = []
+        warnings: list[TextWarning] = []
         timer = PerfMetrics()
         if len(curve_names) == 0:
             raise InvalidDataError("At least one relperm curve name must be requested", Service.SUMO)
@@ -118,7 +118,7 @@ class RelpermAccess:
             if missing_realizations:
                 warnings.append(
                     make_missing_realizations_warning(
-                        sorted(missing_realizations), Service.SUMO, data_type="relperm data"
+                        sorted(missing_realizations), data_source="Sumo relperm data"
                     )
                 )
 
@@ -143,7 +143,7 @@ class RelpermAccess:
         LOGGER.debug(
             f"get_realization_data_async took: {timer.to_string()}, {self._case_uuid=}, {self._ensemble_name=}, {table_name=}, {saturation_axis_name=}, {curve_names=}, {satnums=}, {requested_realizations=}"
         )
-        return ResultWithWarnings(ret_arr, warnings)
+        return ResultWithWarning(ret_arr, warnings)
 
     async def _get_column_names_async(self, table_name: str) -> list[str]:
         table_context = self._ensemble_context.tables.filter(

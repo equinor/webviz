@@ -11,7 +11,7 @@ from opentelemetry import trace
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
 
-from webviz_core_utils.result_with_warnings import UncheckedResultWithWarningsError
+from webviz_core_utils.result_with_warning import UnhandledWarningError
 from webviz_services.service_exceptions import ServiceLayerException
 
 ROOT_LOGGER = logging.getLogger()
@@ -126,12 +126,12 @@ def service_layer_exception_handler(request: Request, exc: ServiceLayerException
     )
 
 
-def unchecked_warnings_error_handler(request: Request, exc: UncheckedResultWithWarningsError) -> JSONResponse:
-    # Coding error: a ResultWithWarnings value was accessed before its warnings were handled.
+def unhandled_warnings_error_handler(request: Request, exc: UnhandledWarningError) -> JSONResponse:
+    # Coding error: a ResultWithWarning value was accessed before its warnings were handled.
     # Report it with its own error type, rather than as a generic internal error, so it is easy to identify.
     route = _make_route_string(request)
     exc_name = _get_exception_name(exc)
-    ROOT_LOGGER.error(f"[EXC] Unchecked warnings in {route} -> {exc_name}: {str(exc)}", exc_info=exc)
+    ROOT_LOGGER.error(f"[EXC] Unhandled warnings in {route} -> {exc_name}: {str(exc)}", exc_info=exc)
 
     return JSONResponse(
         status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -204,4 +204,4 @@ def configure_service_level_exception_handlers(app: FastAPI) -> None:
     """
     # ! Type check is being ignored here because the function type doesn't recognize the extended exceptions.
     app.add_exception_handler(ServiceLayerException, service_layer_exception_handler)  # type: ignore
-    app.add_exception_handler(UncheckedResultWithWarningsError, unchecked_warnings_error_handler)  # type: ignore
+    app.add_exception_handler(UnhandledWarningError, unhandled_warnings_error_handler)  # type: ignore

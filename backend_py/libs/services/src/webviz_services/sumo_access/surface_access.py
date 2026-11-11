@@ -16,8 +16,8 @@ from fmu.sumo.explorer.objects import Surface
 
 from webviz_core_utils.exponential_backoff_timer import ExponentialBackoffTimer
 from webviz_core_utils.perf_metrics import PerfMetrics
-from webviz_core_utils.result_warning import ResultWarning
-from webviz_core_utils.result_with_warnings import ResultWithWarnings
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 from webviz_services.utils.otel_span_tracing import otel_span_decorator, start_otel_span, start_otel_span_async
 from webviz_services.utils.statistic_function import StatisticFunction
 from webviz_services.utils.surface_helpers import are_all_surface_values_undefined
@@ -302,7 +302,7 @@ class SurfaceAccess:
         attribute: SurfaceAttribute,
         realizations: Sequence[int] | None = None,
         time_or_interval_str: str | None = None,
-    ) -> ResultWithWarnings[xtgeo.RegularSurface]:
+    ) -> ResultWithWarning[xtgeo.RegularSurface]:
         """
         Compute statistic and return surface data
         If realizations is None this is interpreted as a wildcard and surfaces from all realizations will be included
@@ -366,7 +366,7 @@ class SurfaceAccess:
             f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, real count: {len(realizations_found)}] ({surf_str})"
         )
 
-        return ResultWithWarnings(xtgeo_surf, warnings)
+        return ResultWithWarning(xtgeo_surf, warnings)
 
     @otel_span_decorator()
     async def submit_statistical_surface_calculation_task_async(
@@ -436,7 +436,7 @@ class SurfaceAccess:
     @otel_span_decorator()
     async def poll_statistical_surface_calculation_task_async(
         self, sumo_task_id: str, timeout_s: float, requested_realizations: Sequence[int] | None = None
-    ) -> ResultWithWarnings[xtgeo.RegularSurface] | InProgress | ExpectedError:
+    ) -> ResultWithWarning[xtgeo.RegularSurface] | InProgress | ExpectedError:
         """
         Poll the specified Sumo task, waiting up to timeout_s seconds for it to complete.
 
@@ -499,7 +499,7 @@ class SurfaceAccess:
             )
 
             warnings = _make_missing_source_realizations_warnings(requested_realizations, source_realization_ids)
-            return ResultWithWarnings(xtgeo_surf, warnings)
+            return ResultWithWarning(xtgeo_surf, warnings)
 
         if task_state.status == "failed":
             LOGGER.error(f"Statistical surface job failed, {task_state.status=} ({sumo_task_id=})")
@@ -532,7 +532,7 @@ class SurfaceAccess:
 
 def _make_missing_source_realizations_warnings(
     requested_realizations: Sequence[int] | None, found_realizations: Sequence[int]
-) -> list[ResultWarning]:
+) -> list[TextWarning]:
     if requested_realizations is None:
         return []
 
@@ -540,7 +540,7 @@ def _make_missing_source_realizations_warnings(
     if not missing_realizations:
         return []
 
-    return [make_missing_realizations_warning(sorted(missing_realizations), Service.SUMO, data_type="surfaces")]
+    return [make_missing_realizations_warning(sorted(missing_realizations), data_source="Sumo surfaces")]
 
 
 async def _start_sumo_aggregation_task_async(search_context: SearchContext, sumo_stat_op_str: str) -> str:

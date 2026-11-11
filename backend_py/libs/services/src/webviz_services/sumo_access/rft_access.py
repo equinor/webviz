@@ -6,8 +6,8 @@ from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 from webviz_core_utils.perf_metrics import PerfMetrics
-from webviz_core_utils.result_warning import ResultWarning
-from webviz_core_utils.result_with_warnings import ResultWithWarnings
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 from webviz_services.service_exceptions import (
     Service,
     NoDataError,
@@ -91,13 +91,13 @@ class RftAccess:
         response_name: str,
         timestamps_utc_ms: Optional[Sequence[int]],
         realizations: Optional[Sequence[int]],
-    ) -> ResultWithWarnings[List[RftRealizationData]]:
+    ) -> ResultWithWarning[List[RftRealizationData]]:
         """
         Get RFT data per realization for a well and response.
 
         Requested realizations without RFT data in the ensemble are left out and reported as a warning.
         """
-        warnings: list[ResultWarning] = []
+        warnings: list[TextWarning] = []
         timer = PerfMetrics()
         column_names = [response_name, "DEPTH"]
 
@@ -114,9 +114,7 @@ class RftAccess:
             missing_realizations = set(realizations) - set(pl_df["REAL"].unique().to_list())
             if missing_realizations:
                 warnings.append(
-                    make_missing_realizations_warning(
-                        sorted(missing_realizations), Service.SUMO, data_type="RFT data"
-                    )
+                    make_missing_realizations_warning(sorted(missing_realizations), data_source="Sumo RFT data")
                 )
 
         pl_table = pl_df.lazy()
@@ -148,4 +146,4 @@ class RftAccess:
         ret_arr_rows = result_table.iter_rows(named=True)
         ret_arr = [RftRealizationData(**row) for row in ret_arr_rows]
         LOGGER.debug(f"{timer.to_string()}, {self._case_uuid=}, {self._ensemble_name=}, {well_name=}, {response_name=}")
-        return ResultWithWarnings(ret_arr, warnings)
+        return ResultWithWarning(ret_arr, warnings)

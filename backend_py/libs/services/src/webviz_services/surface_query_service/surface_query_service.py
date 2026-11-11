@@ -7,10 +7,9 @@ from fmu.sumo.explorer.objects import SearchContext
 from sumo.wrapper import SumoClient
 from pydantic import BaseModel
 from webviz_core_utils.perf_metrics import PerfMetrics
-from webviz_core_utils.result_warning import ResultWarning
-from webviz_core_utils.result_with_warnings import ResultWithWarnings
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 from webviz_services.service_warnings import make_missing_realizations_warning
-from webviz_services.service_exceptions import Service
 
 from webviz_services.services_config import get_services_config
 from webviz_services.sumo_access.sumo_blob_access import get_sas_token_and_blob_base_uri_for_case_async
@@ -55,13 +54,13 @@ async def batch_sample_surface_in_points_async(
     realizations: Optional[List[int]],
     x_coords: list[float],
     y_coords: list[float],
-) -> ResultWithWarnings[List[RealizationSampleResult]]:
+) -> ResultWithWarning[List[RealizationSampleResult]]:
     """
     Sample the surface in the points for each realization.
 
     Requested realizations without a surface are left out of the result and reported as a warning.
     """
-    warnings: list[ResultWarning] = []
+    warnings: list[TextWarning] = []
     perf_metrics = PerfMetrics()
 
     sumo_client = create_sumo_client(sumo_access_token)
@@ -81,7 +80,7 @@ async def batch_sample_surface_in_points_async(
         missing_realizations = set(realizations).difference(obj.realization for obj in realization_object_ids)
         if missing_realizations:
             warnings.append(
-                make_missing_realizations_warning(sorted(missing_realizations), Service.SUMO, data_type="surfaces")
+                make_missing_realizations_warning(sorted(missing_realizations), data_source="Sumo surfaces")
             )
 
     sas_token, blob_store_base_uri = await get_sas_token_and_blob_base_uri_for_case_async(sumo_client, case_uuid)
@@ -117,7 +116,7 @@ async def batch_sample_surface_in_points_async(
 
     LOGGER.debug(f"batch_sample_surface_in_points_async() took: {perf_metrics.to_string()}")
 
-    return ResultWithWarnings(response_body.sampleResultArr, warnings)
+    return ResultWithWarning(response_body.sampleResultArr, warnings)
 
 
 async def _get_object_uuids_for_surface_realizations_async(

@@ -3,13 +3,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from webviz_core_utils.result_warning import ResultWarning
-from webviz_core_utils.result_with_warnings import ResultWithWarnings
 from webviz_services.sumo_access.relperm_access import RelpermAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_warnings_middleware import resolve_warnings
+from primary.middleware.add_warnings_middleware import unwrap_and_report_warnings
 from primary.middleware.cache_control_middleware import CacheTime, cache_time
 from primary.utils.query_string_utils import decode_uint_list_str
 
@@ -74,10 +72,5 @@ async def get_relperm_realization_data(
         realizations=realizations,
     )
 
-    warnings: list[ResultWarning] = []
-    realization_data = result.get_value(propagate_warnings_to=warnings)
-
-    # Report warnings (e.g. missing realizations) to the client if it allows warnings, otherwise raise them as an exception
-    return resolve_warnings(
-        ResultWithWarnings(converters.to_api_realization_data_response(realization_data), warnings)
-    )
+    realization_data = unwrap_and_report_warnings(result)
+    return converters.to_api_realization_data_response(realization_data)

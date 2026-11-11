@@ -6,8 +6,8 @@ import xtgeo
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
 
 from webviz_core_utils.perf_metrics import PerfMetrics
-from webviz_core_utils.result_warning import ResultWarning
-from webviz_core_utils.result_with_warnings import ResultWithWarnings
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 from webviz_core_utils.type_utils import expect_type
 from webviz_services.sumo_access.case_inspector import CaseInspector
 from webviz_services.sumo_access.surface_access import SurfaceAccess
@@ -21,15 +21,14 @@ from webviz_services.utils.authenticated_user import AuthenticatedUser
 from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
 from webviz_services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from webviz_services.surface_query_service.surface_query_service import RealizationSampleResult
-from webviz_services.service_exceptions import ServiceLayerException, Service
-from webviz_services.service_warnings import make_missing_realizations_warning
+from webviz_services.service_exceptions import ServiceLayerException
 from webviz_services.utils.surfaces_well_trajectory_formation_segments import (
     create_well_trajectory_formation_segments,
     validate_depth_surfaces_for_formation_segments,
 )
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_warnings_middleware import resolve_warnings
+from primary.middleware.add_warnings_middleware import report_warnings
 from primary.middleware.cache_control_middleware import cache_time, set_cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
@@ -47,11 +46,6 @@ from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, 
 from .surface_address import decode_surf_addr_str
 
 LOGGER = logging.getLogger(__name__)
-
-# TEMP-DEBUG-WARNINGS: Remove before merging!
-_DEBUG_WARNING_CASE_UUID = "2622c673-c682-4981-8163-538fa8bb5e09"
-_DEBUG_WARNING_ENSEMBLE_NAME = "pred"
-_DEBUG_WARNING_REALIZATIONS = [5, 10]
 
 router = APIRouter()
 
@@ -207,7 +201,7 @@ async def get_surface_data(
 
     access_token = authenticated_user.get_sumo_access_token()
 
-    warnings: list[ResultWarning] = []
+    warnings: list[TextWarning] = []
     result = await _get_xtgeo_surface_from_sumo_async(
         access_token=access_token, surf_addr_str=surf_addr_str, perf_metrics=perf_metrics
     )
@@ -217,8 +211,8 @@ async def get_surface_data(
         xtgeo_surf=xtgeo_surf, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
     )
 
-    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
-    return resolve_warnings(ResultWithWarnings(surf_data_response, warnings))
+    report_warnings(warnings)
+    return surf_data_response
 
 
 @router.post("/get_well_trajectories_formation_segments")
@@ -259,7 +253,7 @@ async def post_get_well_trajectories_formation_segments(
     perf_metrics = ResponsePerfMetrics(response)
     access_token = authenticated_user.get_sumo_access_token()
 
-    warnings: list[ResultWarning] = []
+    warnings: list[TextWarning] = []
     top_result = await _get_xtgeo_surface_from_sumo_async(
         access_token=access_token, surf_addr_str=top_depth_surf_addr_str, perf_metrics=perf_metrics
     )
@@ -310,8 +304,8 @@ async def post_get_well_trajectories_formation_segments(
     perf_metrics.record_lap("Create segments for all wells")
     LOGGER.info(f"Got well trajectory formation segments in: {perf_metrics.to_string()}")
 
-    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
-    return resolve_warnings(ResultWithWarnings(per_well_trajectory_formation_segments, warnings))
+    report_warnings(warnings)
+    return per_well_trajectory_formation_segments
 
 
 @router.get("/statistical_surface_data_hybrid")
@@ -386,15 +380,9 @@ async def get_statistical_surface_data_hybrid(
             return task_helpers.make_lro_in_progress_resp(task_meta, new_sumo_task_was_submitted, maybe_xtgeo_surf)
 
         # We should now be left with a result with an xtgeo RegularSurface. Warnings are only part of the successful result
-        warnings: list[ResultWarning] = []
-        xtgeo_surf_result = expect_type(maybe_xtgeo_surf, ResultWithWarnings)
+        warnings: list[TextWarning] = []
+        xtgeo_surf_result = expect_type(maybe_xtgeo_surf, ResultWithWarning)
         xtgeo_surf: xtgeo.RegularSurface = xtgeo_surf_result.get_value(warnings)
-
-        # TEMP-DEBUG-WARNINGS: Fake warning for testing the warnings flow in front-end. Remove before merging!
-        if addr.case_uuid == _DEBUG_WARNING_CASE_UUID and addr.ensemble_name == _DEBUG_WARNING_ENSEMBLE_NAME:
-            warnings.append(
-                make_missing_realizations_warning(_DEBUG_WARNING_REALIZATIONS, Service.SUMO, data_type="surfaces")
-            )
 
         api_surf_data = _resample_and_convert_to_surface_data_response(
             xtgeo_surf=xtgeo_surf, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
@@ -404,8 +392,8 @@ async def get_statistical_surface_data_hybrid(
 
         set_cache_time(CacheTime.NORMAL)
 
-        # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
-        return resolve_warnings(ResultWithWarnings(LroSuccessResp(result=api_surf_data), warnings))
+        report_warnings(warnings)
+        return LroSuccessResp(result=api_surf_data)
 
     except Exception as _exc:
         # Must delete the fingerprint mapping so that the next call to this endpoint starts fresh.
@@ -434,7 +422,7 @@ async def post_get_surface_intersection(
     perf_metrics = ResponsePerfMetrics(response)
 
     addr = decode_surf_addr_str(surf_addr_str)
-    warnings: list[ResultWarning] = []
+    warnings: list[TextWarning] = []
     result = await _get_xtgeo_surface_from_sumo_async(
         access_token=authenticated_user.get_sumo_access_token(),
         surf_addr_str=surf_addr_str,
@@ -450,8 +438,8 @@ async def post_get_surface_intersection(
 
     surface_intersection_response = converters.to_api_surface_intersection(surface_intersection)
 
-    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
-    return resolve_warnings(ResultWithWarnings(surface_intersection_response, warnings))
+    report_warnings(warnings)
+    return surface_intersection_response
 
 
 @router.post("/get_sample_surface_in_points")
@@ -467,7 +455,7 @@ async def post_get_sample_surface_in_points(
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
 
-    warnings: list[ResultWarning] = []
+    warnings: list[TextWarning] = []
     sample_result = await batch_sample_surface_in_points_async(
         sumo_access_token=sumo_access_token,
         case_uuid=case_uuid,
@@ -489,8 +477,8 @@ async def post_get_sample_surface_in_points(
             )
         )
 
-    # Report the collected warnings to the client if it allows warnings, otherwise raise them as an exception
-    return resolve_warnings(ResultWithWarnings(intersections, warnings))
+    report_warnings(warnings)
+    return intersections
 
 
 @router.get("/delta_surface_data")
@@ -574,7 +562,7 @@ async def _get_xtgeo_surface_from_sumo_async(
     access_token: str,
     surf_addr_str: str,
     perf_metrics: ResponsePerfMetrics,
-) -> ResultWithWarnings[xtgeo.RegularSurface]:
+) -> ResultWithWarning[xtgeo.RegularSurface]:
     """
     Retrieve an xtgeo RegularSurface from SUMO based on the provided surface address string.
     Statistical surfaces can have warnings, e.g. for requested realizations without a source surface.
@@ -582,7 +570,7 @@ async def _get_xtgeo_surface_from_sumo_async(
 
     addr = decode_surf_addr_str(surf_addr_str)
 
-    warnings: list[ResultWarning] = []
+    warnings: list[TextWarning] = []
     xtgeo_surf: xtgeo.RegularSurface | None = None
     if isinstance(addr, RealizationSurfaceAddress):
         access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
@@ -622,4 +610,4 @@ async def _get_xtgeo_surface_from_sumo_async(
 
     LOGGER.info(f"Got {addr.address_type} surface in: {perf_metrics.to_string()}")
 
-    return ResultWithWarnings(xtgeo_surf, warnings)
+    return ResultWithWarning(xtgeo_surf, warnings)

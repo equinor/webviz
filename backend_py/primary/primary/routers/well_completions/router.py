@@ -2,14 +2,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from webviz_core_utils.result_warning import ResultWarning
-from webviz_core_utils.result_with_warnings import ResultWithWarnings
+from webviz_core_utils.text_warning import TextWarning
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from webviz_services.sumo_access.well_completions_access import WellCompletionsAccess
 from webviz_services.well_completions_assembler.well_completions_assembler import WellCompletionsAssembler
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_warnings_middleware import resolve_warnings
+from primary.middleware.add_warnings_middleware import report_warnings
 from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.query_string_utils import decode_uint_list_str
 
@@ -51,9 +50,9 @@ async def get_well_completions_data(
         )
 
     # Create well completions data object
-    warnings: list[ResultWarning] = []
+    warnings: list[TextWarning] = []
     result = well_completions_assembler.create_well_completions_data()
-    data = result.get_value(propagate_warnings_to=warnings)
+    data = result.get_value(warnings)
 
     if not data:
         raise HTTPException(status_code=404, detail="Well completions data not found")
@@ -66,5 +65,5 @@ async def get_well_completions_data(
         wells=[converters.convert_well_to_schema(well) for well in data.wells],
     )
 
-    # Report warnings (e.g. missing realizations) to the client if it allows warnings, otherwise raise them as an exception
-    return resolve_warnings(ResultWithWarnings(response, warnings))
+    report_warnings(warnings)
+    return response
