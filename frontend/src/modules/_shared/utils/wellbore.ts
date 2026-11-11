@@ -1,7 +1,6 @@
 import type { Color } from "@deck.gl/core";
 import type { Point3D } from "@webviz/subsurface-viewer";
 import type { LineString, Point } from "geojson";
-import { clamp, sortedIndex } from "lodash-es";
 import simplify from "simplify-js";
 
 import type { WellboreTrajectory_api } from "@api";
@@ -127,15 +126,29 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
     };
 }
 
-export function zipCoords(x_arr: number[], y_arr: number[], z_arr: number[], invertZAxis?: boolean): number[][] {
-    if (x_arr.length !== y_arr.length || y_arr.length !== z_arr.length)
-        throw Error(`Expected each coordinate array to be of equal length.`);
+export function zipTrajectoryCoord(
+    wellboreTrajectory: MinimalWellboreTrajectory,
+    index: number,
+    invertZAxis?: boolean,
+): Point3D {
+    if (index < 0 || index >= wellboreTrajectory.eastingArr.length) {
+        throw new Error(`Segment index ${index} is out of bounds.`);
+    }
 
     const zSign = invertZAxis ? -1 : 1;
 
-    const coords: number[][] = [];
-    for (let i = 0; i < x_arr.length; i++) {
-        coords.push([x_arr[i], y_arr[i], zSign * z_arr[i]]);
+    return [
+        wellboreTrajectory.eastingArr[index],
+        wellboreTrajectory.northingArr[index],
+        wellboreTrajectory.tvdMslArr[index] * zSign,
+    ];
+}
+
+export function zipTrajectoryCoords(wellboreTrajectory: MinimalWellboreTrajectory, invertZAxis?: boolean): Point3D[] {
+    const coords: Point3D[] = [];
+
+    for (let i = 0; i < wellboreTrajectory.eastingArr.length; i++) {
+        coords.push(zipTrajectoryCoord(wellboreTrajectory, i, invertZAxis));
     }
 
     return coords;
@@ -154,12 +167,7 @@ export function wellTrajectoryToGeojson(
 ): ExtendedWellFeature {
     const trajectoryLineString: LineString = {
         type: "LineString",
-        coordinates: zipCoords(
-            wellTrajectory.eastingArr,
-            wellTrajectory.northingArr,
-            wellTrajectory.tvdMslArr,
-            opts?.invertZAxis,
-        ),
+        coordinates: zipTrajectoryCoords(wellTrajectory, opts?.invertZAxis),
     };
 
     const wellHeadPoint: Point = {
@@ -198,25 +206,37 @@ export function wellTrajectoryToGeojson(
 }
 
 /**
- * Gets the trajectory array index for a given MD so that `mdArr[i-1] <= md <= mdArr[i]`.
- * @throws if the trajectory has no points.
- * @param md Measured Depth to find the trajectory index for.
- * @param wellboreTrajectory The wellbore trajectory to search within.
- * @returns an index in the range [1, mdArr.length - 1]
+ * Calculates the fractional length along a segment of a wellbore trajectory for a given measured depth (MD).
+ * @param wellboreTrajectory The wellbore trajectory to interpolate within.
+ * @param segmentStart The index of the start point of the segment.
+ * @param segmentEnd The index of the end point of the segment.
+ * @param md A measured depth value.
+ * @returns the fractional [0-1] length along whatever segment the MD is between.
  */
-export function getTrajectoryIndexForMd(md: number, wellboreTrajectory: MinimalWellboreTrajectory) {
-    const { mdArr } = wellboreTrajectory;
+export function getLengthAlongSegment(
+    wellboreTrajectory: MinimalWellboreTrajectory,
+    segmentStart: number,
+    segmentEnd: number,
+    md: number,
+): number {
+    const mdStart = wellboreTrajectory.mdArr[segmentStart];
+    const mdEnd = wellboreTrajectory.mdArr[segmentEnd];
 
-    if (!mdArr.length) throw Error(`Expected trajectory to be at least one point, got 0 points`);
+    if (mdStart === mdEnd) {
+        console.warn(`MD values for segment start and end are equal (${mdStart}). Returning 0.`);
+        return 0;
+    }
+    if (md < mdStart) {
+        console.warn(`MD value ${md} is outside the range of the segment [${mdStart}, ${mdEnd}]. Returning 0.`);
+        return 0;
+    }
 
-    // Ensure we only deal with valid MD values
-    md = clamp(md, 0, mdArr.at(-1)!);
+    if (md > mdEnd) {
+        console.warn(`MD value ${md} is outside the range of the segment [${mdStart}, ${mdEnd}]. Returning 1.`);
+        return 1;
+    }
 
-    // The mdArr is sorted, so we do a binary search to find the relevant trajectory indices
-    const index = sortedIndex(mdArr, md);
-
-    // sortedIndex will return 0 if md is exactly the same as the first element, but we want to avoid index-1 being undefined
-    return Math.max(index, 1);
+    return (md - mdStart) / (mdEnd - mdStart);
 }
 
 /**
@@ -233,54 +253,14 @@ export function interpolateSegmentPosition(
     segmentEnd: number,
     lengthAlongSegment: number,
 ): Point3D {
-    const startPoint = [
-        wellboreTrajectory.eastingArr[segmentStart],
-        wellboreTrajectory.northingArr[segmentStart],
-        -wellboreTrajectory.tvdMslArr[segmentStart],
-    ];
-    const endPoint = [
-        wellboreTrajectory.eastingArr[segmentEnd],
-        wellboreTrajectory.northingArr[segmentEnd],
-        -wellboreTrajectory.tvdMslArr[segmentEnd],
-    ];
+    const startPoint = zipTrajectoryCoord(wellboreTrajectory, segmentStart, true);
+    const endPoint = zipTrajectoryCoord(wellboreTrajectory, segmentEnd, true);
 
     return [
         startPoint[0] + lengthAlongSegment * (endPoint[0] - startPoint[0]),
         startPoint[1] + lengthAlongSegment * (endPoint[1] - startPoint[1]),
         startPoint[2] + lengthAlongSegment * (endPoint[2] - startPoint[2]),
     ];
-}
-
-/**
- * Interpolates the normal vector at a given MD value along the wellbore trajectory.
- * @param md Measured Depth to interpolate the normal for.
- * @param wellboreTrajectory The wellbore trajectory to interpolate within.
- * @param preComputedTrajectoryIndex (optional) If provided, this index will be used for interpolation instead of calculating it again.
- * @returns A normalized vector representing the direction of the wellbore at the given MD.
- */
-export function getInterpolatedNormalAtMd(
-    md: number,
-    wellboreTrajectory: MinimalWellboreTrajectory,
-    preComputedTrajectoryIndex?: number,
-): [number, number, number] {
-    const { eastingArr, northingArr, tvdMslArr } = wellboreTrajectory;
-    const trajectoryIndex = preComputedTrajectoryIndex ?? getTrajectoryIndexForMd(md, wellboreTrajectory);
-
-    const nextX = eastingArr[trajectoryIndex];
-    const nextY = northingArr[trajectoryIndex];
-    const nextZ = tvdMslArr[trajectoryIndex];
-
-    const prevX = eastingArr[trajectoryIndex - 1];
-    const prevY = northingArr[trajectoryIndex - 1];
-    const prevZ = tvdMslArr[trajectoryIndex - 1];
-
-    const dx = nextX - prevX;
-    const dy = nextY - prevY;
-    const dz = nextZ - prevZ;
-
-    const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-    return length === 0 ? [0, 0, 1] : [dx / length, dy / length, -dz / length];
 }
 
 export type MinimalWellboreTrajectory = Pick<
@@ -304,13 +284,18 @@ export function trajectoryDistanceXY(point1: TrajectoryPoint, point2: Trajectory
     );
 }
 
+/**
+ * Simplifies a wellbore trajectory by removing points that are closer than a specified distance threshold.
+ * @param trajectory A wellbore trajectory.
+ * @param threshold The distance threshold for the simplification.
+ * @param computeDistance A function to compute the distance between two points. Defaults to `trajectoryDistanceRadial`.
+ * @returns A simplified wellbore trajectory.
+ */
 export function simplifyWellTrajectory<TTrajectory extends MinimalWellboreTrajectory>(
     trajectory: TTrajectory,
     threshold: number,
     computeDistance = trajectoryDistanceRadial,
 ): TTrajectory {
-    const thresholdSquared = threshold * threshold;
-
     let prevPoint: TrajectoryPoint | null = null;
 
     const simplifiedTrajectory: TTrajectory = {
@@ -333,7 +318,7 @@ export function simplifyWellTrajectory<TTrajectory extends MinimalWellboreTrajec
             // Always include the first and last points
             !prevPoint ||
             index === trajectory.eastingArr.length - 1 ||
-            computeDistance(point, prevPoint) > thresholdSquared
+            computeDistance(point, prevPoint) > threshold
         ) {
             simplifiedTrajectory.eastingArr.push(point.easting);
             simplifiedTrajectory.northingArr.push(point.northing);

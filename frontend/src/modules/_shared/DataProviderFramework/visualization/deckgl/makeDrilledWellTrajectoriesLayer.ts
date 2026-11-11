@@ -19,7 +19,7 @@ import {
     getApplicableFlowDataSetting,
     setColorByFlowData,
     wellDataToGeoJson,
-} from "./drilledWellTrajectoriesUtils";
+} from "./wellTrajectoriesUtils";
 
 export type DrilledWellTrajectoriesLayerOptions = {
     viewMode: "2D" | "3D";

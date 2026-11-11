@@ -1,4 +1,3 @@
-import type { Position } from "@deck.gl/core";
 import { GeoJsonLayer } from "@deck.gl/layers";
 import { GL } from "@luma.gl/webgl/constants";
 import {
@@ -15,7 +14,13 @@ import type {
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ExtendedWellFeature } from "@modules/_shared/types/geojson";
-import { interpolateSegmentPosition, isInMdRange, wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
+import {
+    getLengthAlongSegment,
+    interpolateSegmentPosition,
+    isInMdRange,
+    wellTrajectoryToGeojson,
+    zipTrajectoryCoord,
+} from "@modules/_shared/utils/wellbore";
 
 function findWellboreTrajectory(uuid: string | null | undefined, trajectories: WellboreTrajectory_api[]) {
     if (!uuid) return undefined;
@@ -34,10 +39,11 @@ export function makeWellTrajectoriesHoverVisualizationFunctions(
     }
 
     return {
+        // ! Marker disc is transparent, so it needs to be rendered *before*
+        // ! the trajectory layer to make it clear where they intersect
         [HoverTopic.WELLBORE_MD]: (hoverData) => {
-            const wellboreTrajectory = wellboreTrajectories.find(
-                (wellTrajectory) => wellTrajectory.wellboreUuid === hoverData?.wellboreUuid,
-            );
+            const wellboreTrajectory = findWellboreTrajectory(hoverData?.wellboreUuid, wellboreTrajectories);
+
             if (!wellboreTrajectory || !hoverData || !isInMdRange(wellboreTrajectory, hoverData.md)) return [];
 
             const data = getMarkerDataAtMd(wellboreTrajectory, hoverData.md);
@@ -53,8 +59,6 @@ export function makeWellTrajectoriesHoverVisualizationFunctions(
                     sizeUnits: "meters",
 
                     getSize: 9,
-                    // ! Marker disc is transparent, so it needs to be rendered before the
-                    // ! trajectory layer to make it clear where they intersect
                     getColor: [255, 0, 0, 115],
                     getPosition: data.position,
                     getAzimuth: data.azimuth,
@@ -100,27 +104,15 @@ export function makeWellTrajectoriesHoverVisualizationFunctions(
 
 function getMarkerDataAtMd(trajectory: WellboreTrajectory_api, md: number) {
     const [startIdx, endIdx] = getSegmentIndicesForMd(trajectory.mdArr, md);
+    const lengthAlongSegment = getLengthAlongSegment(trajectory, startIdx, endIdx, md);
 
-    const mdStart = trajectory.mdArr[startIdx];
-    const mdEnd = trajectory.mdArr[endIdx];
-    const lengthAlongSegment = (md - mdStart) / (mdEnd - mdStart);
-
-    const segStartPoint: Position = [
-        trajectory.eastingArr[startIdx],
-        trajectory.northingArr[startIdx],
-        // ! The azi/incl interpolator needs z decreasing downwards
-        -trajectory.tvdMslArr[startIdx],
-    ];
-    const segEndPoint: Position = [
-        trajectory.eastingArr[endIdx],
-        trajectory.northingArr[endIdx],
-        // ! The azi/incl interpolator needs z decreasing downwards
-        -trajectory.tvdMslArr[endIdx],
-    ];
+    // ! The azi/incl interpolator needs z decreasing downwards
+    const segStartPoint = zipTrajectoryCoord(trajectory, startIdx, true);
+    const segEndPoint = zipTrajectoryCoord(trajectory, endIdx, true);
 
     // Interpolate values
     const position = interpolateSegmentPosition(trajectory, startIdx, endIdx, lengthAlongSegment);
-    const { azimuth, inclination } = getAziAndInclForSegment(segStartPoint as any, segEndPoint as any);
+    const { azimuth, inclination } = getAziAndInclForSegment(segStartPoint, segEndPoint);
 
     return { position, azimuth, inclination };
 }

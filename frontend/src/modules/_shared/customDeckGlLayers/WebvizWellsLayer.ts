@@ -13,7 +13,6 @@ import type { WellFeature } from "@webviz/subsurface-viewer/dist/layers/wells/ty
 import { GetBoundingBox } from "@webviz/subsurface-viewer/dist/layers/wells/utils/spline";
 import type { WellsLayerProps } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
 import { SubLayerId } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
-import { take } from "lodash-es";
 
 import type { FlowDataColors } from "@framework/types/wellbore";
 
@@ -110,9 +109,10 @@ export class WebvizWellsLayer extends WellsLayer {
     getPickingInfo({ info, sourceLayer }: GetPickingInfoParams): LayerPickInfoWithReadout<WellFeature> {
         const props = this.props as unknown as WebvizWellsLayerProps;
 
-        // Safety-hatch; some sub-layers have forgotten to account for position-format, which in turn makes picking behave inconsistent for 2D views. Manually dropping the z-value coordinate avoids
+        // Safety-hatch; some sub-layers have forgotten to account for position-format, which in turn makes picking
+        //  behave inconsistently for 2D views. We manually drop the z-index here to match the position format.
         if (props.positionFormat === "XY" && info.coordinate?.length === 3) {
-            info.coordinate = take(info.coordinate, 2);
+            info.coordinate = info.coordinate.slice(0, 2);
         }
 
         const superInfo = super.getPickingInfo({ info });

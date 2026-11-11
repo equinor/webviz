@@ -12,7 +12,7 @@ import {
 
 import type { TransformerArgs } from "../VisualizationAssembler";
 
-import { createSimplifiedTrajectory } from "./drilledWellTrajectoriesUtils";
+import { createSimplifiedTrajectory } from "./wellTrajectoriesUtils";
 
 export type PlannedWellTrajectoriesTransArgs = TransformerArgs<any, WellboreTrajectory_api[], any>;
 
@@ -45,14 +45,17 @@ export function makePlannedWellTrajectoriesLayer(
     });
 
     const wellLabel = { ...DEFAULT_WELLS_LAYER_PROPS_BY_VIEW_MODE[options.viewMode].wellLabel };
-    if (options.viewMode === "2D" && wellLayerDataFeatures.length < 200) {
-        wellLabel.orientation = LabelOrientation.TANGENT;
+
+    // Tangential orientation looks nice, but slows down significantly on larger sets, so we revert to horizontal if needed
+    if (options.viewMode === "2D" && wellLayerDataFeatures.length > 200) {
+        wellLabel.orientation = LabelOrientation.HORIZONTAL;
     }
 
     const wellsLayer = new WebvizWellsLayer({
         ...DEFAULT_WELLS_LAYER_PROPS_BY_VIEW_MODE[options.viewMode],
-        id,
-        name,
+        id: id,
+        name: name,
+        wellLabel: wellLabel,
         data: {
             type: "FeatureCollection",
             features: wellLayerDataFeatures,

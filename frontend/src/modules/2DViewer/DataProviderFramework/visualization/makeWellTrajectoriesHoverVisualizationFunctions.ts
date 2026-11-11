@@ -11,7 +11,12 @@ import type {
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ExtendedWellFeature } from "@modules/_shared/types/geojson";
-import { interpolateSegmentPosition, isInMdRange, wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
+import {
+    getLengthAlongSegment,
+    interpolateSegmentPosition,
+    isInMdRange,
+    wellTrajectoryToGeojson,
+} from "@modules/_shared/utils/wellbore";
 
 function findWellboreTrajectory(uuid: string | null | undefined, trajectories: WellboreTrajectory_api[]) {
     if (!uuid) return undefined;
@@ -94,9 +99,7 @@ export function makeWellTrajectoriesHoverVisualizationFunctions(
 function getPositionAtMd(trajectory: WellboreTrajectory_api, md: number) {
     const [startIdx, endIdx] = getSegmentIndicesForMd(trajectory.mdArr, md);
 
-    const mdStart = trajectory.mdArr[startIdx];
-    const mdEnd = trajectory.mdArr[endIdx];
-    const lengthAlongSegment = (md - mdStart) / (mdEnd - mdStart);
+    const lengthAlongSegment = getLengthAlongSegment(trajectory, startIdx, endIdx, md);
 
     return interpolateSegmentPosition(trajectory, startIdx, endIdx, lengthAlongSegment);
 }
