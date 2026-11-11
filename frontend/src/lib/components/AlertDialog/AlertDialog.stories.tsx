@@ -31,8 +31,8 @@ The primary action is rendered as a contained button; secondary actions are outl
     onOpenChange={setOpen}
     title="Discard changes?"
     description="Your unsaved changes will be permanently lost."
-    primaryAction={{ label: "Discard", tone: "danger", onClick: handleDiscard, closesDialog: true }}
-    secondaryActions={[{ label: "Keep editing", onClick: () => setOpen(false), closesDialog: true }]}
+    primaryAction={{ label: "Keep editing", onClick: () => setOpen(false), closesDialog: true }}
+    secondaryActions={[{ label: "Discard", tone: "danger", onClick: handleDiscard, closesDialog: true }]}
 />
 \`\`\`
 
@@ -77,17 +77,17 @@ function WithCancelConfirmationRender() {
                     onOpenChange={setAlertOpen}
                     title="Discard changes?"
                     primaryAction={{
-                        label: "Discard changes",
-                        tone: "danger",
-                        onClick: handleDiscardConfirmed,
+                        label: "Keep editing",
+                        onClick: () => setAlertOpen(false),
                         closesDialog: true,
+                        tone: "neutral",
                     }}
                     secondaryActions={[
                         {
-                            label: "Keep editing",
-                            onClick: () => setAlertOpen(false),
+                            label: "Discard changes",
+                            tone: "danger",
+                            onClick: handleDiscardConfirmed,
                             closesDialog: true,
-                            tone: "neutral",
                         },
                     ]}
                 >
