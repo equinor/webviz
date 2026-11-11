@@ -1,0 +1,736 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>DPF – tree view + rails + settings panel (v3)</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font: 13px/1.35 Inter, "Segoe UI", system-ui, sans-serif; color: #1f2937; background: #e5e7eb; margin: 0; padding: 24px; display: flex; gap: 24px; align-items: flex-start; }
+  .sidebar { width: 440px; height: 780px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; user-select: none; position: relative; }
+  .hdr { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: #f1f5f9; border-bottom: 1px solid #cbd5e1; font-weight: 600; font-size: 12px; }
+  .hdr .grow { flex: 1; }
+  .plus { display: inline-block; width: 18px; height: 18px; border: 1px solid #94a3b8; border-radius: 3px; text-align: center; line-height: 16px; font-size: 13px; color: #334155; background: #fff; cursor: pointer; }
+  .iconbtn { color: #64748b; font-size: 12px; padding: 0 3px; cursor: pointer; }
+
+  /* ---------- tree ---------- */
+  .treewrap { flex: 1 1 auto; min-height: 80px; position: relative; display: flex; flex-direction: column; }
+  .tree { flex: 1 1 auto; overflow: auto; background: #fff; min-height: 0; position: relative; }
+  .sticky { position: absolute; top: 0; left: 0; z-index: 6; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.08); border-bottom: 1px solid #e2e8f0; display: none; }
+  .sticky .row { cursor: pointer; background: #fafafa; }
+  .sticky .row:hover { background: #f1f5f9; }
+  .sticky .row .guide::before, .sticky .row .guide::after { display: none; }
+  .sticky .row .plus, .sticky .row .acts, .sticky .row .eye, .sticky .row .notsel { display: none; }
+  .sticky .row.stuck-src { background: #fff; border-top: 1px dashed #e2e8f0; }
+  .sticky .row.stuck-src:hover { background: #f1f5f9; }
+  .treeinner { position: relative; display: flex; padding: 4px 0 40px; }
+  .rails { position: relative; flex: 0 0 auto; }
+  .rail { position: absolute; width: 2px; border-radius: 1px; background: color-mix(in srgb, var(--c) 50%, white); transition: background .12s; }
+  .rail.hot { background: var(--c); }
+  .stop { position: absolute; z-index: 1; width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--c) 65%, white); transition: background .12s; border: 1.5px solid #fff; box-sizing: border-box; }
+  .stop.hot { background: var(--c); }
+  .stop.origin { width: 10px; height: 10px; border-radius: 2px; }
+  .rows { flex: 1; min-width: 0; position: relative; }
+  .row { display: flex; align-items: center; height: 26px; padding-right: 6px; font-size: 12px; cursor: default; position: relative; white-space: nowrap; }
+  .row.selectable { cursor: pointer; }
+  .row.selectable:hover { background: #f1f5f9; }
+  .row.selected { background: #dbeafe !important; }
+  .row.selected::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #2563eb; }
+  .row.hot { background: #f0fdfa; }
+  .row.dragging { opacity: .4; }
+  .row.dropinto { outline: 2px solid #2563eb; outline-offset: -2px; background: #eff6ff; }
+  .row.workbench { background: #f8fafc; border-bottom: 1px dashed #cbd5e1; color: #475569; }
+  .row.section { color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; height: 24px; margin-top: 6px; border-bottom: 1px solid #e2e8f0; }
+  .row.section .plus { opacity: 0; transition: opacity .1s; }
+  .row.section:hover .plus { opacity: 1; }
+  .guide { flex: 0 0 16px; height: 100%; position: relative; }
+  .guide.v::before { content: ""; position: absolute; left: 7px; top: 0; bottom: 0; border-left: 1px solid #cbd5e1; }
+  .guide.mid::before { content: ""; position: absolute; left: 7px; top: 0; bottom: 0; border-left: 1px solid #cbd5e1; }
+  .guide.mid::after, .guide.last::after { content: ""; position: absolute; left: 7px; top: 50%; width: 9px; border-top: 1px solid #cbd5e1; }
+  .guide.last::before { content: ""; position: absolute; left: 7px; top: 0; height: 50%; border-left: 1px solid #cbd5e1; }
+  .caret { flex: 0 0 14px; color: #64748b; font-size: 10px; cursor: pointer; text-align: center; }
+  .typeicon { flex: 0 0 18px; text-align: center; font-size: 12px; }
+  .name { flex: 1; overflow: hidden; text-overflow: ellipsis; margin-left: 4px; }
+  .row.view .name, .row.group .name, .row.boundary .name, .row.sgroup .name { font-weight: 600; }
+  .row.view .typeicon { color: #6d28d9; }
+  .row.group .typeicon, .row.sgroup .typeicon { color: #0369a1; }
+  .row.boundary .typeicon { color: #7c3aed; }
+  .row.shared .name, .row.sgroup .name.src { font-weight: 600; }
+  .row.provider .name.custom::after { content: "✎"; font-size: 9px; color: #94a3b8; margin-left: 5px; vertical-align: top; }
+  .inline { font: inherit; font-size: 11px; border: 1px solid #cbd5e1; border-radius: 3px; background: #fff; color: #1f2937; padding: 1px 2px; margin-right: 6px; max-width: 120px; cursor: pointer; }
+  .inline:hover { border-color: #94a3b8; }
+  .val { color: #475569; margin-right: 6px; font-size: 11px; }
+  .eye { color: #64748b; font-size: 11px; cursor: pointer; margin-right: 4px; }
+  .ok { color: #16a34a; font-size: 12px; margin-right: 4px; }
+  .acts { color: #94a3b8; letter-spacing: 2px; font-size: 11px; cursor: pointer; padding: 0 2px; border-radius: 3px; }
+  .acts:hover { background: #e2e8f0; color: #334155; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; border: 1px solid #0003; margin-right: 6px; }
+  .notsel { color: #94a3b8; font-size: 10px; font-style: italic; margin-right: 6px; }
+  .gchip { font-size: 10px; color: #64748b; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 5px; margin-right: 6px; }
+  .row.addrow { color: #64748b; font-style: italic; cursor: pointer; height: 24px; }
+  .row.addrow:hover { background: #f1f5f9; color: #1f2937; }
+  .row.addrow .plus { width: 14px; height: 14px; line-height: 12px; font-size: 11px; margin-right: 6px; border-style: dashed; }
+  .row.addrow.full { cursor: default; color: #94a3b8; }
+  .row.addrow.full:hover { background: transparent; color: #94a3b8; }
+  .row:not(.addrow):not(.section) .plus { opacity: 0; transition: opacity .1s; }
+  .row:not(.addrow):not(.section):hover .plus { opacity: 1; }
+  .dropline { position: absolute; left: 0; right: 0; height: 2px; background: #2563eb; pointer-events: none; display: none; z-index: 5; }
+  .dropline::before { content: ""; position: absolute; left: 0; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: inherit; }
+  .dropline.invalid { background: #dc2626; }
+  .row.dropinto { position: relative; z-index: 4; }
+  .ghost { position: fixed; pointer-events: none; z-index: 1000; background: #fff; border: 1px solid #94a3b8; border-radius: 4px; padding: 3px 8px; font-size: 12px; box-shadow: 0 4px 12px rgba(0,0,0,.15); opacity: .95; }
+  .ghost .n { background: #2563eb; color: #fff; border-radius: 8px; padding: 0 5px; font-size: 10px; margin-left: 6px; }
+
+  /* ---------- menu ---------- */
+  .menu { position: fixed; z-index: 1001; background: #fff; border: 1px solid #cbd5e1; border-radius: 5px; box-shadow: 0 6px 18px rgba(0,0,0,.15); min-width: 170px; padding: 4px 0; font-size: 12px; }
+  .menu .mi { padding: 5px 12px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+  .menu .mi:hover { background: #f1f5f9; }
+  .menu .mi.danger { color: #b91c1c; }
+  .menu .mi.disabled { color: #94a3b8; cursor: default; }
+  .menu .sep { height: 1px; background: #e2e8f0; margin: 4px 0; }
+  .menu .sub { font-size: 10px; color: #64748b; padding: 4px 12px 2px; text-transform: uppercase; letter-spacing: .04em; }
+
+  /* ---------- divider / panel ---------- */
+  .divider { height: 7px; background: #e2e8f0; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; cursor: row-resize; position: relative; }
+  .divider::after { content: ""; position: absolute; left: 50%; top: 2px; width: 32px; height: 2px; margin-left: -16px; background: #94a3b8; border-radius: 2px; }
+  .panel { height: 300px; display: flex; flex-direction: column; overflow: hidden; }
+  .panel .hdr { background: #f8fafc; }
+  .panel .hdr .path { color: #64748b; font-weight: normal; }
+  .panel .content { flex: 1; overflow: auto; padding: 6px 8px; }
+  .settings { display: grid; grid-template-columns: 100px 1fr; gap: 5px 8px; align-items: center; font-size: 12px; }
+  .settings .lbl { color: #475569; }
+  .settings .lbl.src { font-weight: 600; }
+  .field { display: inline-block; border: 1px solid #94a3b8; border-radius: 3px; background: #fff; padding: 2px 6px; min-width: 130px; }
+  .field::after { content: " ▾"; color: #64748b; float: right; }
+  .field.locked { background: #f8fafc; color: #64748b; border-style: dashed; }
+  .field.locked::after { content: ""; }
+  .field.ro { background: #f8fafc; border-style: dashed; color: #475569; }
+  .field.ro::after { content: ""; }
+  .ro { color: #334155; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .chip { display: inline-block; font-size: 10px; padding: 0 6px; border-radius: 10px; border: 1px solid #c7d2fe; background: #eef2ff; color: #3730a3; white-space: nowrap; }
+  .chip.src { border-color: currentColor; background: #fff; cursor: pointer; }
+  .chip.glob { border-color: #cbd5e1; background: #f8fafc; color: #475569; }
+  .chip.warn { border-color: #fed7aa; background: #fff7ed; color: #9a3412; }
+  .chip.mixed { border-color: #fcd34d; background: #fffbeb; color: #92400e; }
+  .btn { display: inline-block; border: 1px solid #94a3b8; background: #fff; border-radius: 4px; padding: 1px 8px; font-size: 11px; color: #334155; cursor: pointer; }
+  .hint { grid-column: 1 / -1; font-size: 11px; color: #64748b; }
+  .hint.warn { color: #9a3412; }
+  .empty { color: #64748b; font-style: italic; padding: 24px 8px; text-align: center; }
+  .sel-list { font-size: 11px; color: #475569; padding: 4px 8px; border-bottom: 1px dashed #e2e8f0; }
+
+  .notes { width: 430px; font-size: 12px; color: #334155; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 16px; }
+  .notes h3 { margin: 0 0 6px; font-size: 13px; }
+  .notes li { margin: 3px 0; }
+  kbd { font: 11px monospace; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 3px; padding: 0 4px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+  <div class="hdr"><span class="grow">Layers</span><span class="plus" id="root-add" title="Add…">+</span><span class="iconbtn" id="expand-all" title="Expand/collapse all">⇕</span></div>
+  <div class="treewrap"><div class="sticky" id="sticky"></div><div class="tree" id="tree"><div class="treeinner" id="treeinner"><div class="rails" id="rails"></div><div class="rows" id="rows"></div><div class="dropline" id="dropline"></div></div></div></div>
+  <div class="divider" id="divider" title="Drag to resize"></div>
+  <div class="panel" id="panel">
+    <div class="hdr"><span class="grow" id="panel-title">Settings</span><span class="path" id="panel-path"></span></div>
+    <div id="sel-list" class="sel-list" style="display:none"></div>
+    <div class="content" id="panel-content"></div>
+  </div>
+</div>
+
+<div class="notes">
+  <h3>v3 – all item kinds, add rows, menus, drag &amp; drop</h3>
+  <ul>
+    <li><b>Workbench</b> (pinned, top): the global settings set outside the DPF (Field, Ensembles, Realization filter…). Read-only here; settings that depend on them show a <span class="chip glob">global</span> chip. No rails – they apply to everything.</li>
+    <li><b>Root sections</b>: <i>Global settings</i> (shared settings that reach every view), <i>On top of all views</i> and <i>Beneath all views</i> (providers drawn above resp. below all view layers), <i>Views</i>. Each section only accepts its own kind of item. Global shared-setting rails span across the views. (Interleaving root providers <i>between</i> views is deliberately not supported.)</li>
+    <li><b>Sticky headers</b>: while scrolling, the ancestor chain of the first visible row (view → group …) stays pinned at the top; click a pinned row to scroll back to it. Below it, one row per <b>shared setting in effect</b> for the visible rows whose own row has scrolled away – name and current value, with its rail running through the row so it connects to the rail below (click to jump, hover to highlight). Sections don't stick.</li>
+    <li><b>Provider names are generated</b> from the type and its distinguishing settings (e.g. <i>Surface · Depth · real. 3</i>) and update when settings change. A custom name overrides it (✎ marker in the tree, <i>↺ auto</i> in the panel to revert). <b>One icon per provider type</b> (▲ surface, ⌇ wells, ⬠ polygons, ▦ grid, ◌ outline, ▣ base map); views use ⧉.</li>
+    <li><b>Adding</b>: every container and section ends with a muted <i>+ Add …</i> row – it sits exactly where the new item will land, so the target is never ambiguous. The header <b>+</b> is still there on hover (handy for collapsed groups). A full <i>Delta surface</i> shows a disabled note instead.</li>
+    <li><b>Shared setting</b> rows show the current value as text; editing happens in the panel (many setting components are too large for a row).</li>
+    <li><b>Group with settings</b> (<i>Delta surface</i>): selectable; its own settings act like shared settings for its children → it has a rail too.</li>
+    <li>Only items <b>with settings</b> are selectable (providers, shared settings, settings-groups like <i>Delta surface</i>). Plain views, groups and context boundaries are structure only.</li>
+    <li>Rail <b>colour is the identity of a source</b>: shared-setting / group name, rail, origin marker, and the label of each controlled setting in the panel share it.</li>
+    <li><b>⋯ menu</b>: Rename, Remove, Expand/collapse all, Colour (groups), Add… (containers).</li>
+    <li><b>Drag &amp; drop</b>: drag anywhere on a row. Drop line between rows, outlined row = drop inside. Dragging a selected row moves the whole selection. Invalid targets (shared setting below providers, view into view, into itself) show a red line.</li>
+    <li>Selection: click · <kbd>Ctrl</kbd>-click · <kbd>Shift</kbd>-click · <kbd>Esc</kbd>. Multi-select: common settings, <span class="chip mixed">Mixed</span> locked until <i>Override for all</i>.</li>
+  </ul>
+</div>
+
+<script>
+// ---------- data ----------
+const S = (key, label, value, options, source) => ({ key, label, value, options, source });
+const G = (key, label, value) => ({ key, label, value, global: true });
+/** Provider types: one distinct icon each, and which settings make up the automatic name. */
+const KINDS = {
+  surface:  { label: "Surface",           icon: "▲", nameKeys: ["attribute", "surface", "realization"] },
+  wells:    { label: "Well trajectories", icon: "⌇", nameKeys: ["wellfilter"] },
+  polygons: { label: "Polygons",          icon: "⬠", nameKeys: ["polyname"] },
+  faults:   { label: "Fault polygons",    icon: "⬠", nameKeys: ["realization"] },
+  grid:     { label: "Grid model",        icon: "▦", nameKeys: ["gridname"] },
+  outline:  { label: "Field outline",     icon: "◌", nameKeys: [] },
+  basemap:  { label: "Base map",          icon: "▣", nameKeys: ["style"] },
+};
+const fmtPart = (s) => s.key === "realization" ? `real. ${s.value}` : s.value;
+function autoName(it) {
+  const k = KINDS[it.kind]; const parts = k.nameKeys.map((key) => it.settings.find((s) => s.key === key)).filter(Boolean).map(fmtPart);
+  return [k.label, ...parts].join(" · ");
+}
+/** Display name: custom override if set, otherwise generated from the settings (providers) or the fixed name. */
+const nameOf = (it) => it.type === "provider" ? it.customName ?? autoName(it) : it.name;
+let nextId = 1;
+const items = [
+  { id: "wb", type: "workbench", name: "Workbench", pinned: true, globals: [
+    G("fieldId", "Field", "DROGON"), G("ensembles", "Ensembles", "Drogon / iter-0, Drogon / pred"), G("realizationFilter", "Realization filter", "All realizations"), G("wellbore", "Wellbore", "55/33-A-4"),
+  ]},
+  { id: "sec-global", type: "section", name: "Global settings", pinned: true },
+  { id: "ss-ens", type: "shared", name: "Ensemble", setting: S("ensemble", "Ensemble", "Drogon / iter-0", ["Drogon / iter-0", "Drogon / pred"]) },
+  { id: "sec-top", type: "section", name: "On top of all views", pinned: true },
+  { id: "outline", type: "provider", kind: "outline", status: "ok", settings: [ S("field", "Field", "DROGON", null, "global") ] },
+  { id: "sec-views", type: "section", name: "Views", pinned: true },
+  { id: "map1", type: "view", name: "Map 1", expanded: true, children: [
+    { id: "surfaces", type: "group", name: "Surfaces", color: "#f59e0b", expanded: true, children: [
+      { id: "ss-real", type: "shared", name: "Realization", setting: S("realization", "Realization", "3", ["0","1","2","3","4"]) },
+      { id: "depth", type: "provider", kind: "surface", status: "ok", settings: [
+        S("ensemble", "Ensemble", "Drogon / iter-0", null, "ss-ens"), S("realization", "Realization", "3", null, "ss-real"),
+        S("attribute", "Attribute", "Depth", ["Depth", "Time", "Thickness"]), S("colorscale", "Color scale", "Viridis", ["Viridis", "Magma", "Seismic"]),
+      ]},
+      { id: "top", type: "provider", kind: "surface", status: "ok", settings: [
+        S("ensemble", "Ensemble", "Drogon / iter-0", null, "ss-ens"), S("realization", "Realization", "3", null, "ss-real"),
+        S("attribute", "Attribute", "Time", ["Depth", "Time", "Porosity"]), S("colorscale", "Color scale", "Viridis", ["Viridis", "Magma", "Seismic", "Rainbow"]),
+      ]},
+    ]},
+    { id: "delta", type: "sgroup", name: "Delta surface", expanded: true, settings: [
+      S("surface", "Surface name", "TopReek", ["TopReek", "BaseReek", "Valysar"]), S("attribute", "Attribute", "Depth", ["Depth", "Time"]),
+    ], children: [
+      { id: "dA", type: "provider", kind: "surface", customName: "Reference case", status: "ok", settings: [
+        S("ensemble", "Ensemble", "Drogon / iter-0", null, "ss-ens"), S("surface", "Surface name", "TopReek", null, "delta"), S("attribute", "Attribute", "Depth", null, "delta"), S("realization", "Realization", "2", ["0","1","2","3","4"]),
+      ]},
+      { id: "dB", type: "provider", kind: "surface", status: "ok", settings: [
+        S("ensemble", "Ensemble", "Drogon / iter-0", null, "ss-ens"), S("surface", "Surface name", "TopReek", null, "delta"), S("attribute", "Attribute", "Depth", null, "delta"), S("realization", "Realization", "7", ["5","6","7","8"]),
+      ]},
+    ]},
+    { id: "poly", type: "provider", kind: "polygons", status: "ok", settings: [ S("ensemble", "Ensemble", "Drogon / iter-0", null, "ss-ens"), S("field", "Field", "DROGON", null, "global"), S("polyname", "Polygon set", "Main", ["Main", "North"]) ]},
+    { id: "cb-wells", type: "boundary", name: "Wells (static)", expanded: true, children: [
+      { id: "ss-ens2", type: "shared", name: "Ensemble", setting: S("ensemble", "Ensemble", "Drogon / pred", ["Drogon / iter-0", "Drogon / pred"]) },
+      { id: "wells", type: "provider", kind: "wells", status: "ok", settings: [ S("ensemble", "Ensemble", "Drogon / pred", null, "ss-ens2"), S("wellfilter", "Well filter", "All", ["All", "Producers", "Injectors"]) ]},
+    ]},
+  ]},
+  { id: "map2", type: "view", name: "Map 2", expanded: true, children: [
+    { id: "cb-iso", type: "boundary", name: "Isolated", expanded: true, children: [
+      { id: "faults", type: "provider", kind: "faults", status: "ok", settings: [ S("ensemble", "Ensemble", "Drogon / pred", ["Drogon / iter-0", "Drogon / pred"]), S("realization", "Realization", "0", ["0","1","2"]) ]},
+    ]},
+    { id: "grid", type: "provider", kind: "grid", status: "ok", settings: [ S("ensemble", "Ensemble", "Drogon / iter-0", null, "ss-ens"), S("field", "Field", "DROGON", null, "global"), S("gridname", "Grid", "Simgrid", ["Simgrid", "Geogrid"]) ]},
+  ]},
+  { id: "sec-bottom", type: "section", name: "Beneath all views", pinned: true },
+  { id: "basemap", type: "provider", kind: "basemap", status: "ok", settings: [ S("field", "Field", "DROGON", null, "global"), S("style", "Style", "Satellite", ["Satellite", "Topographic"]) ]},
+];
+
+const RAIL_COLORS = ["#0d9488", "#d97706", "#7c3aed", "#db2777", "#2563eb", "#65a30d"];
+let byId = {}, colorIdx = 0;
+function reindex() {
+  byId = {};
+  const walk = (list, parent) => list.forEach((it) => { it.parent = parent; byId[it.id] = it; if (it.children) walk(it.children, it); });
+  walk(items, null);
+  for (const it of Object.values(byId)) if (isSource(it) && !it.color) it.color = RAIL_COLORS[colorIdx++ % RAIL_COLORS.length];
+}
+const isSource = (it) => it.type === "shared" || it.type === "sgroup";
+const isContainer = (it) => ["view", "group", "sgroup", "boundary"].includes(it.type);
+const isSelectable = (it) => ["provider", "shared", "sgroup", "workbench"].includes(it.type);
+const isDraggable = (it) => !it.pinned;
+const pathOf = (it) => { const p = []; let c = it.parent; while (c) { p.unshift(c.name); c = c.parent; } return p.join(" › ") || rootSectionOf(it); };
+/** Name of the root section an item belongs to (nearest section row above it). */
+function rootSectionOf(it) { let name = "Root"; for (const x of items) { if (x.type === "section") name = x.name; if (x === it) return name; } return name; }
+const sourcesOf = (it) => it.type === "provider" ? [...new Set(it.settings.filter((s) => s.source && s.source !== "global").map((s) => s.source))] : [];
+const controlsOf = (src) => Object.values(byId).filter((it) => it.type === "provider" && sourcesOf(it).includes(src.id)).map((it) => it.id);
+const listOf = (it) => it.parent ? it.parent.children : items;
+const settingsOf = (it) => it.type === "shared" ? [it.setting] : it.type === "workbench" ? it.globals : it.settings ?? [];
+const LANE_W = 10, GUTTER_PAD = 6;
+
+// ---------- state ----------
+let selected = [], anchor = null, overridden = new Set();
+
+// ---------- tree ----------
+function flatten() {
+  const rows = [];
+  const walk = (list, depth, ancestorsLast, container) => {
+    list.forEach((it, i) => {
+      const last = i === list.length - 1 && !container; // with an add-row, the real last child is not the last row
+      rows.push({ it, depth, last, ancestorsLast });
+      if (it.children && it.expanded) walk(it.children, depth + 1, [...ancestorsLast, last], it);
+    });
+    if (container) rows.push({ it: addRowFor(container), depth, last: true, ancestorsLast });
+  };
+  walk(items, 0, [], null);
+  // root: an add-row at the end of each section
+  const out = [];
+  rows.forEach((r, i) => {
+    out.push(r);
+    const next = rows[i + 1];
+    if (r.depth === 0 && (!next || next.depth === 0 && next.it.type === "section") && r.it.type !== "workbench") {
+      let sec = null; for (let j = i; j >= 0; j--) if (rows[j].depth === 0 && rows[j].it.type === "section") { sec = rows[j].it; break; }
+      if (sec) out.push({ it: addRowFor(null, sec), depth: 0, last: true, ancestorsLast: [] });
+    }
+  });
+  return out;
+}
+/** Synthetic, non-selectable "+ Add …" row at the end of a container or root section. */
+function addRowFor(container, section) {
+  const full = container?.type === "sgroup" && (container.children ?? []).filter((c) => c.type === "provider").length >= 2;
+  const label = container ? (container.type === "sgroup" ? (full ? "Delta surface is complete (2 surfaces)" : "Add surface…") : "Add item…") : { "sec-global": "Add global shared setting…", "sec-views": "Add view…" }[section.id] ?? "Add layer…";
+  return { id: "add:" + (container ? container.id : section.id), type: "addrow", container, section, full, label, parent: container ?? null };
+}
+function visibleIndexOf(rows, id) {
+  let it = byId[id];
+  while (it) { const idx = rows.findIndex((r) => r.it.id === it.id); if (idx >= 0) return idx; it = it.parent; }
+  return -1;
+}
+
+let lastRows = [], railLane = {}, railEnd = {};
+const rowsById = (id) => lastRows.find((r) => r.it.id === id)?.it;
+function renderTree() {
+  reindex();
+  const rows = flatten(); lastRows = rows;
+  const rowsEl = document.getElementById("rows"), railsEl = document.getElementById("rails");
+  [...rowsEl.querySelectorAll(".row")].forEach((r) => r.remove());
+  railsEl.innerHTML = ""; railLane = {}; railEnd = {};
+
+  rows.forEach((r) => {
+    const it = r.it;
+    const row = document.createElement("div");
+    row.className = "row " + it.type + (isSelectable(it) ? " selectable" : "") + (selected.includes(it.id) ? " selected" : "");
+    row.dataset.id = it.id;
+    let guides = "";
+    r.ancestorsLast.forEach((l) => { guides += `<span class="guide${l ? "" : " v"}"></span>`; });
+    if (r.depth > 0) guides += `<span class="guide ${r.last ? "last" : "mid"}"></span>`;
+    if (it.type === "section") { row.innerHTML = `<span class="caret"></span><span class="name">${it.name}</span><span class="plus" style="width:16px;height:16px;line-height:14px;font-size:11px" data-addsec="${it.id}" title="Add to ${it.name}…">+</span>`; rowsEl.appendChild(row); return; }
+    if (it.type === "addrow") {
+      row.className += it.full ? " full" : "";
+      row.innerHTML = `${guides}<span class="caret"></span>${it.full ? "" : `<span class="plus">+</span>`}<span class="name">${it.label}</span>`;
+      if (!it.full) row.addEventListener("click", (e) => { e.stopPropagation(); openAddMenu(e, it.container, it.section?.id); });
+      rowsEl.appendChild(row); return;
+    }
+    const caret = it.children ? `<span class="caret" data-toggle="${it.id}">${it.expanded ? "▾" : "▸"}</span>` : `<span class="caret"></span>`;
+    const icon = it.type === "provider" ? KINDS[it.kind].icon : { workbench: "🌐", view: "⧉", group: "▤", sgroup: "▤", boundary: "⚙", shared: "🔗" }[it.type];
+    const iconEl = `<span class="typeicon" title="${it.type === "provider" ? KINDS[it.kind].label : it.type}" style="${isSource(it) ? `color:${it.color}` : it.type === "provider" ? "color:#64748b" : ""}">${icon}</span>`;
+    const nameStyle = isSource(it) ? `style="color:${it.color}"` : "";
+    const custom = it.type === "provider" && it.customName ? ` title="Custom name – automatic would be: ${autoName(it)}"` : "";
+    const name = `<span class="name${isSource(it) ? " src" : ""}${custom ? " custom" : ""}" ${nameStyle}${custom}>${nameOf(it)}</span>`;
+    let mid = "";
+    if (it.type === "shared") mid = `<span class="val">${it.setting.value}</span>`;
+    if (it.type === "sgroup") mid = `<span class="val">${it.settings.map((s) => s.value).join(" · ")}</span>`;
+    if (it.type === "workbench") mid = `<span class="val">${it.globals[0].value} · ${it.globals[1].value.split(",").length} ensembles</span>`;
+    const colorDot = it.color && it.type === "group" ? `<span class="dot" style="background:${it.color}"></span>` : "";
+    const eye = ["shared", "workbench"].includes(it.type) ? "" : `<span class="eye">👁</span>`;
+    const status = it.status === "ok" ? `<span class="ok">✔</span>` : "";
+    const plus = isContainer(it) ? `<span class="plus" style="width:16px;height:16px;line-height:14px;font-size:11px;margin-right:4px" data-add="${it.id}" title="Add to ${it.name}…">+</span>` : "";
+    const acts = it.type === "workbench" ? "" : `<span class="acts" data-menu="${it.id}">⋯</span>`;
+    row.innerHTML = `${guides}${caret}${iconEl}${name}${mid}${colorDot}${eye}${status}${plus}${acts}`;
+    row.addEventListener("click", (e) => onRowClick(e, it));
+    row.addEventListener("mouseenter", () => setHover(it));
+    row.addEventListener("mouseleave", () => setHover(null));
+    row.addEventListener("mousedown", (e) => onDragStart(e, it));
+    rowsEl.appendChild(row);
+  });
+
+  // rails – measured from the rendered rows so they are always aligned
+  const rowTop = {}; rows.forEach((r) => { const el = rowsEl.querySelector(`.row[data-id="${CSS.escape(r.it.id)}"]`); rowTop[r.it.id] = el.offsetTop + el.offsetHeight / 2; });
+  const rails = [];
+  rows.forEach((r, idx) => {
+    if (!isSource(r.it)) return;
+    const targets = controlsOf(r.it).map((id) => visibleIndexOf(rows, id)).filter((i) => i > idx);
+    if (targets.length === 0) return;
+    rails.push({ it: r.it, from: idx, to: Math.max(...targets), targets: [...new Set(targets)].map((i) => rows[i].it.id) });
+  });
+  rails.forEach((rail) => { let lane = 0; for (const o of rails) { if (o !== rail && o.from < rail.from && o.to >= rail.to && o.lane !== undefined) lane = Math.max(lane, o.lane + 1); } rail.lane = lane; railLane[rail.it.id] = lane; railEnd[rail.it.id] = rows[rail.to].it.id; });
+  const lanes = rails.length ? Math.max(...rails.map((r) => r.lane)) + 1 : 0;
+  railsEl.style.width = GUTTER_PAD + lanes * LANE_W + 6 + "px";
+  const stop = (rail, y, origin) => {
+    const s = document.createElement("div"); s.className = "stop" + (origin ? " origin" : ""); s.dataset.rail = rail.it.id;
+    const size = origin ? 10 : 8, cx = GUTTER_PAD + rail.lane * LANE_W + 1; // rail is 2px wide → its centre is left + 1
+    s.style.cssText = `left:${cx - size / 2}px;top:${y - size / 2}px;--c:${rail.it.color}`;
+    s.title = origin ? `${rail.it.name} controls ${controlsOf(rail.it).length} item(s)` : `${rail.it.name} from ${pathOf(rail.it)}`;
+    return s;
+  };
+  rails.forEach((rail) => {
+    const x = GUTTER_PAD + rail.lane * LANE_W, y0 = rowTop[rail.it.id], y1 = rowTop[rows[rail.to].it.id];
+    const el = document.createElement("div"); el.className = "rail"; el.dataset.rail = rail.it.id;
+    el.style.cssText = `left:${x}px;top:${y0}px;height:${y1 - y0}px;--c:${rail.it.color}`;
+    railsEl.appendChild(el); railsEl.appendChild(stop(rail, y0, true));
+    rail.targets.forEach((id) => railsEl.appendChild(stop(rail, rowTop[id], false)));
+  });
+
+  rowsEl.querySelectorAll("[data-toggle]").forEach((c) => c.addEventListener("click", (e) => { e.stopPropagation(); byId[c.dataset.toggle].expanded = !byId[c.dataset.toggle].expanded; renderTree(); }));
+  rowsEl.querySelectorAll("[data-menu]").forEach((m) => { m.addEventListener("mousedown", (e) => e.stopPropagation()); m.addEventListener("click", (e) => { e.stopPropagation(); openMenu(e, byId[m.dataset.menu]); }); });
+  rowsEl.querySelectorAll("[data-add]").forEach((m) => { m.addEventListener("mousedown", (e) => e.stopPropagation()); m.addEventListener("click", (e) => { e.stopPropagation(); openAddMenu(e, byId[m.dataset.add]); }); });
+  rowsEl.querySelectorAll("[data-addsec]").forEach((m) => { m.addEventListener("mousedown", (e) => e.stopPropagation()); m.addEventListener("click", (e) => { e.stopPropagation(); openAddMenu(e, null, m.dataset.addsec); }); });
+  rowsEl.querySelectorAll(".eye").forEach((c) => { c.addEventListener("mousedown", (e) => e.stopPropagation()); c.addEventListener("click", (e) => e.stopPropagation()); });
+  updateSticky();
+}
+
+/**
+ * Sticky headers: the ancestor chain (section → view → group …) of the first visible row, plus every shared
+ * setting / settings-group that is scrolled out above and controls a currently visible provider.
+ */
+function updateSticky() {
+  const tree = document.getElementById("tree"), rowsEl = document.getElementById("rows"), railsEl = document.getElementById("rails"), box = document.getElementById("sticky");
+  const rowEls = {}; lastRows.forEach((r) => { rowEls[r.it.id] = rowsEl.querySelector(`.row[data-id="${CSS.escape(r.it.id)}"]`); });
+  const top = (id) => rowsEl.offsetTop + rowEls[id].offsetTop, bottom = (id) => top(id) + rowEls[id].offsetHeight;
+  const scrollTop = tree.scrollTop;
+  const rowH = (id) => rowEls[id].offsetHeight;
+  const ancestors = (it) => { const c = []; for (let p = it.type === "addrow" ? it.container : it.parent; p; p = p.parent) c.unshift(p); return c; };
+
+  // Forward pass: the headers are decided by the first row that is actually visible *below the overlay* (groups + shared
+  // setting rows). Pop headers whose group ended above that row, push ancestors that start above it; a header popped or a
+  // source dropped in this pass is not re-added, so the pass terminates and is deterministic per scroll position.
+  let stack = [], sources = [];
+  const popped = new Set(), dropped = new Set();
+  const overlayH = () => stack.reduce((s, it) => s + rowH(it.id), 0) + sources.length * 26;
+  for (let i = 0; i < 30; i++) {
+    const H = overlayH(), edge = scrollTop + H;
+    const first = lastRows.find((r) => bottom(r.it.id) > edge);
+    if (!first) { stack = []; sources = []; break; }
+    const chain = ancestors(first.it);
+    let k = 0; while (k < stack.length && k < chain.length && stack[k] === chain[k]) k++;
+    if (k < stack.length) { stack.slice(k).forEach((it) => popped.add(it.id)); stack = stack.slice(0, k); continue; }
+    if (k < chain.length && !popped.has(chain[k].id) && top(chain[k].id) < edge) { stack.push(chain[k]); continue; }
+    const want = lastRows.map((r) => r.it).filter((it) => isSource(it) && !stack.includes(it) && !dropped.has(it.id) && railEnd[it.id] && bottom(it.id) <= edge && bottom(railEnd[it.id]) > edge);
+    const same = want.length === sources.length && want.every((it, j) => it === sources[j]);
+    if (!same) { sources.forEach((it) => { if (!want.includes(it)) dropped.add(it.id); }); sources = want; continue; }
+    break;
+  }
+  const h = stack.reduce((s, it) => s + rowH(it.id), 0);
+
+  box.innerHTML = ""; box.style.display = stack.length || sources.length ? "block" : "none"; box.style.width = tree.clientWidth + "px";
+  const gutter = railsEl.offsetWidth;
+  stack.forEach((it) => {
+    const clone = rowEls[it.id].cloneNode(true);
+    clone.classList.remove("selected", "hot"); clone.style.paddingLeft = gutter + "px"; clone.style.position = "relative";
+    clone.title = "Scroll to " + nameOf(it);
+    clone.addEventListener("click", () => { const above = stack.slice(0, stack.indexOf(it)).reduce((s, x) => s + rowEls[x.id].offsetHeight, 0); tree.scrollTop = top(it.id) - above; });
+    box.appendChild(clone);
+  });
+  // one row per shared setting, in tree order, with its rail continuing through the row so it visibly connects to the rail below
+  sources.forEach((it) => {
+    const row = document.createElement("div"); row.className = "row " + it.type + " stuck-src"; row.style.paddingLeft = gutter + "px"; row.style.position = "relative";
+    const x = GUTTER_PAD + (railLane[it.id] ?? 0) * LANE_W;
+    const seg = document.createElement("div"); seg.className = "rail hot"; seg.style.cssText = `left:${x}px;top:0;height:100%;--c:${it.color}`;
+    const mark = document.createElement("div"); mark.className = "stop origin hot"; mark.style.cssText = `left:${x + 1 - 5}px;top:${26 / 2 - 5}px;--c:${it.color}`;
+    const val = it.type === "shared" ? it.setting.value : it.settings.map((s) => s.value).join(" · ");
+    row.innerHTML = `<span class="caret"></span><span class="typeicon" style="color:${it.color}">${it.type === "shared" ? "🔗" : "▤"}</span><span class="name src" style="color:${it.color}">${nameOf(it)}</span><span class="val">${val}</span>`;
+    row.prepend(seg, mark);
+    row.title = `Shared setting in effect here – click to scroll to it (${pathOf(it)})`;
+    row.addEventListener("click", () => { tree.scrollTop = top(it.id) - stack.reduce((s, x) => s + rowH(x.id), 0); });
+    row.addEventListener("mouseenter", () => setHover(it)); row.addEventListener("mouseleave", () => setHover(null));
+    box.appendChild(row);
+  });
+}
+document.getElementById("tree").addEventListener("scroll", updateSticky);
+window.addEventListener("resize", updateSticky);
+
+function setSharedValue(src, value) {
+  src.setting.value = value;
+  controlsOf(src).forEach((id) => { const s = byId[id].settings.find((x) => x.source === src.id); if (s) s.value = value; });
+  renderTree(); renderPanel();
+}
+function setGroupSettingValue(grp, key, value) {
+  grp.settings.find((s) => s.key === key).value = value;
+  controlsOf(grp).forEach((id) => { const s = byId[id].settings.find((x) => x.source === grp.id && x.key === key); if (s) s.value = value; });
+  renderTree(); renderPanel();
+}
+
+function setHover(it) {
+  document.querySelectorAll(".rail.hot, .stop.hot, .row.hot").forEach((el) => el.classList.remove("hot"));
+  if (!it || !isSelectable(it) || it.type === "workbench") return;
+  const hotRails = isSource(it) ? [it.id] : sourcesOf(it);
+  const hotRows = isSource(it) ? [it.id, ...controlsOf(it)] : [it.id, ...sourcesOf(it)];
+  hotRails.forEach((id) => document.querySelectorAll(`[data-rail="${id}"]`).forEach((el) => el.classList.add("hot")));
+  hotRows.forEach((id) => document.querySelector(`.row[data-id="${id}"]`)?.classList.add("hot"));
+}
+
+function onRowClick(e, it) {
+  if (dragMoved) return;
+  if (!isSelectable(it)) return;
+  if (e.shiftKey && anchor) {
+    const vis = flatten().map((r) => r.it.id).filter((id) => isSelectable(byId[id]) && byId[id].type !== "workbench");
+    const a = vis.indexOf(anchor), b = vis.indexOf(it.id);
+    if (a >= 0 && b >= 0) { const [lo, hi] = a < b ? [a, b] : [b, a]; setSelection(vis.slice(lo, hi + 1)); return; }
+  }
+  if ((e.ctrlKey || e.metaKey) && it.type !== "workbench") { anchor = it.id; setSelection(selected.includes(it.id) ? selected.filter((x) => x !== it.id) : [...selected.filter((x) => x !== "wb"), it.id]); return; }
+  anchor = it.id; setSelection([it.id]);
+}
+function setSelection(ids) { selected = ids.filter((id) => byId[id]); overridden = new Set(); renderTree(); renderPanel(); }
+
+// ---------- menus ----------
+let menuEl = null;
+function closeMenu() { menuEl?.remove(); menuEl = null; }
+function showMenu(e, entries) {
+  closeMenu();
+  menuEl = document.createElement("div"); menuEl.className = "menu";
+  entries.forEach((en) => {
+    if (en === "-") { const s = document.createElement("div"); s.className = "sep"; menuEl.appendChild(s); return; }
+    if (en.sub) { const s = document.createElement("div"); s.className = "sub"; s.textContent = en.sub; menuEl.appendChild(s); return; }
+    const mi = document.createElement("div"); mi.className = "mi" + (en.danger ? " danger" : "") + (en.disabled ? " disabled" : "");
+    mi.innerHTML = `<span style="width:14px;text-align:center">${en.icon ?? ""}</span><span>${en.label}</span>`;
+    if (!en.disabled) mi.addEventListener("click", () => { closeMenu(); en.run(); });
+    menuEl.appendChild(mi);
+  });
+  document.body.appendChild(menuEl);
+  const r = menuEl.getBoundingClientRect();
+  menuEl.style.left = Math.min(e.clientX, window.innerWidth - r.width - 8) + "px";
+  menuEl.style.top = Math.min(e.clientY, window.innerHeight - r.height - 8) + "px";
+}
+document.addEventListener("mousedown", (e) => { if (menuEl && !menuEl.contains(e.target)) closeMenu(); });
+
+function openMenu(e, it) {
+  const entries = [];
+  if (isContainer(it)) entries.push({ icon: "＋", label: "Add…", run: () => openAddMenu(e, it) }, "-");
+  if (it.type === "provider") {
+    entries.push({ icon: "✎", label: it.customName ? "Rename…" : "Set custom name…", run: () => { const n = prompt("Custom name (empty = automatic)", it.customName ?? autoName(it)); if (n !== null) { it.customName = n.trim() || undefined; renderTree(); renderPanel(); } } });
+    if (it.customName) entries.push({ icon: "↺", label: "Use automatic name", run: () => { it.customName = undefined; renderTree(); renderPanel(); } });
+  } else {
+    entries.push({ icon: "✎", label: "Rename", run: () => { const n = prompt("Name", it.name); if (n) { it.name = n; renderTree(); renderPanel(); } } });
+  }
+  if (it.type === "group") entries.push({ icon: "●", label: "Colour…", run: () => { const c = ["#f59e0b", "#10b981", "#3b82f6", "#ef4444"]; it.color = c[(c.indexOf(it.color) + 1) % c.length]; renderTree(); } });
+  if (it.children) entries.push({ icon: "⇕", label: it.expanded ? "Collapse all" : "Expand all", run: () => { const set = (x, v) => { x.expanded = v; x.children?.forEach((c) => set(c, v)); }; set(it, !it.expanded); renderTree(); } });
+  if (isSource(it)) entries.push({ icon: "↘", label: `Select controlled items (${controlsOf(it).length})`, disabled: controlsOf(it).length === 0, run: () => setSelection(controlsOf(it)) });
+  entries.push("-", { icon: "🗑", label: "Remove", danger: true, run: () => removeItem(it) });
+  showMenu(e, entries);
+}
+function removeItem(it) {
+  const list = listOf(it); list.splice(list.indexOf(it), 1);
+  // consumers of a removed source fall back to a local value
+  Object.values(byId).forEach((x) => x.settings?.forEach((s) => { if (s.source === it.id) { s.source = undefined; s.options = s.options ?? [s.value]; } }));
+  setSelection(selected.filter((id) => id !== it.id));
+}
+function openAddMenu(e, container, section) {
+  const add = (child) => {
+    child.id = "new" + nextId++;
+    if (container) { const kids = (container.children ??= []); const nShared = kids.filter((k) => k.type === "shared").length; if (child.type === "shared") kids.splice(nShared, 0, child); else kids.push(child); container.expanded = true; }
+    else { // root: append to the section that holds this kind of item
+      const secId = child.type === "view" ? "sec-views" : child.type === "shared" ? "sec-global" : section ?? "sec-top";
+      let end = items.findIndex((x) => x.id === secId) + 1; while (end < items.length && items[end].type !== "section") end++;
+      items.splice(end, 0, child);
+    }
+    renderTree(); setSelection(isSelectable(child) ? [child.id] : selected);
+  };
+  const target = container ? container.name : section ? byId[section].name : "the layer list";
+  const inContainer = !!container;
+  const kind = section ? { "sec-global": "shared", "sec-top": "provider", "sec-views": "view", "sec-bottom": "provider" }[section] : null;
+  const show = (k) => inContainer || kind === k;
+  const sgroupOnly = container?.type === "sgroup";
+  const entries = [{ sub: `Add to ${target}` }];
+  if (!inContainer && !section) entries.push({ sub: "Use the + of a section or group to add there" });
+  if (show("view") && !inContainer) entries.push({ icon: "▦", label: "View", run: () => add({ type: "view", name: "New view", expanded: true, children: [] }) });
+  if (inContainer && !sgroupOnly) entries.push({ sub: "Groups" },
+    { icon: "⚙", label: "Context boundary", run: () => add({ type: "boundary", name: "New boundary", expanded: true, children: [] }) },
+    { icon: "▤", label: "Delta surface", run: () => add({ type: "sgroup", name: "Delta surface", expanded: true, settings: [S("surface", "Surface name", "TopReek", ["TopReek", "BaseReek"])], children: [] }) });
+  if (show("provider")) entries.push({ sub: "Layers" },
+    { icon: KINDS.surface.icon, label: "Depth surface", run: () => add({ type: "provider", kind: "surface", status: "ok", settings: [S("ensemble", "Ensemble", "Drogon / iter-0", null, findSource(container, "ensemble")), S("attribute", "Attribute", "Depth", ["Depth", "Time"])] }) },
+    ...(sgroupOnly ? [] : [{ icon: KINDS.wells.icon, label: "Well trajectories", run: () => add({ type: "provider", kind: "wells", status: "ok", settings: [S("ensemble", "Ensemble", "Drogon / iter-0", null, findSource(container, "ensemble")), S("wellfilter", "Well filter", "All", ["All"])] }) }]));
+  if (show("shared") && !sgroupOnly) entries.push({ sub: kind === "shared" ? "Global shared settings" : "Shared settings" },
+    { icon: "🔗", label: "Ensemble", run: () => add({ type: "shared", name: "Ensemble", setting: S("ensemble", "Ensemble", "Drogon / iter-0", ["Drogon / iter-0", "Drogon / pred"]) }) },
+    { icon: "🔗", label: "Realization", run: () => add({ type: "shared", name: "Realization", setting: S("realization", "Realization", "0", ["0","1","2","3"]) }) });
+  showMenu(e, entries);
+}
+/** Nearest shared setting of this key reachable from `container` (stops at a context boundary). */
+function findSource(container, key) {
+  let c = container;
+  while (true) {
+    const kids = c ? c.children ?? [] : items;
+    const ss = kids.find((k) => k.type === "shared" && k.setting.key === key);
+    if (ss) return ss.id;
+    if (!c || c.type === "boundary") return undefined;
+    c = c.parent;
+  }
+}
+document.getElementById("root-add").addEventListener("click", (e) => openAddMenu(e, null));
+document.getElementById("expand-all").addEventListener("click", () => { const any = Object.values(byId).some((x) => x.children && !x.expanded); Object.values(byId).forEach((x) => { if (x.children) x.expanded = any; }); renderTree(); });
+
+// ---------- drag & drop ----------
+let drag = null, dragMoved = false;
+function onDragStart(e, it) {
+  if (e.button !== 0 || !isDraggable(it) || it.type === "section" || it.type === "addrow") return;
+  const ids = selected.includes(it.id) ? selected.filter((id) => isDraggable(byId[id])) : [it.id];
+  drag = { ids, startX: e.clientX, startY: e.clientY, ghost: null, target: null };
+  dragMoved = false;
+  const mv = (ev) => onDragMove(ev), up = () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); onDragEnd(); };
+  document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up);
+}
+/** Position the drop line under/over `rowEl`, in `.treeinner` coordinates (spans gutter + rows). */
+function showDropLine(rowEl, after, valid) {
+  const line = document.getElementById("dropline"), rowsEl = document.getElementById("rows");
+  line.style.display = "block"; line.className = "dropline" + (valid ? "" : " invalid");
+  line.style.top = rowsEl.offsetTop + rowEl.offsetTop + (after ? rowEl.offsetHeight : 0) - 1 + "px";
+  line.style.left = rowsEl.offsetLeft + (rowEl.querySelector(".caret")?.offsetLeft ?? 0) + "px";
+}
+function onDragMove(e) {
+  if (!drag) return;
+  if (!dragMoved) { if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < 4) return; dragMoved = true;
+    drag.ghost = document.createElement("div"); drag.ghost.className = "ghost"; drag.ghost.innerHTML = nameOf(byId[drag.ids[0]]) + (drag.ids.length > 1 ? `<span class="n">${drag.ids.length}</span>` : ""); document.body.appendChild(drag.ghost);
+    drag.ids.forEach((id) => document.querySelector(`.row[data-id="${id}"]`)?.classList.add("dragging")); }
+  drag.ghost.style.left = e.clientX + 12 + "px"; drag.ghost.style.top = e.clientY + 8 + "px";
+  autoScroll(e.clientY);
+  const rowEl = document.elementFromPoint(e.clientX, e.clientY)?.closest(".tree .row");
+  document.querySelectorAll(".row.dropinto").forEach((r) => r.classList.remove("dropinto"));
+  const line = document.getElementById("dropline"); line.style.display = "none"; drag.target = null;
+  if (!rowEl) return;
+  const over = byId[rowEl.dataset.id] ?? rowsById(rowEl.dataset.id); if (!over) return;
+  if (over.type === "addrow") { // dropping on an add-row = end of that container / section
+    const list = over.container ? over.container.children ?? [] : items;
+    let index = list.length;
+    if (!over.container) { index = items.findIndex((x) => x.id === over.section.id) + 1; while (index < items.length && items[index].type !== "section") index++; }
+    drag.target = { parent: over.container ?? null, index, into: false, rowEl, after: false }; drag.target.valid = isDropValid(drag.target);
+    showDropLine(rowEl, false, drag.target.valid); return;
+  }
+  if (over.type === "section") { // dropping on a section header = first position inside that section
+    const i = items.indexOf(over); drag.target = { parent: null, index: i + 1, into: false, rowEl, after: true }; drag.target.valid = isDropValid(drag.target);
+    showDropLine(rowEl, true, drag.target.valid); return;
+  }
+  const rect = rowEl.getBoundingClientRect(), rel = (e.clientY - rect.top) / rect.height;
+  let target;
+  if (isContainer(over) && rel > 0.3 && rel < 0.7) target = { parent: over, index: (over.children ?? []).length, into: true };
+  else if (over.type === "workbench") return;
+  else { const list = listOf(over), i = list.indexOf(over); target = { parent: over.parent, index: rel < 0.5 ? i : i + 1, into: false, rowEl, after: rel >= 0.5 }; }
+  target.valid = isDropValid(target);
+  drag.target = target;
+  if (target.into) rowEl.classList.add("dropinto");
+  else showDropLine(rowEl, target.after, target.valid);
+  if (target.into && !target.valid) rowEl.style.outlineColor = "#dc2626"; else if (rowEl.style.outlineColor) rowEl.style.outlineColor = "";
+}
+/** Scroll the tree while the pointer is within 28px of its top/bottom edge during a drag. */
+let autoScrollTimer = null;
+function autoScroll(clientY) {
+  const tree = document.getElementById("tree"), r = tree.getBoundingClientRect(), zone = 28;
+  const dy = clientY < r.top + zone ? -(zone - (clientY - r.top)) / 4 : clientY > r.bottom - zone ? (zone - (r.bottom - clientY)) / 4 : 0;
+  clearInterval(autoScrollTimer); autoScrollTimer = null;
+  if (dy) autoScrollTimer = setInterval(() => { if (!drag) { clearInterval(autoScrollTimer); return; } tree.scrollTop += dy; }, 16);
+}
+function isDropValid(t) {
+  const parent = t.parent, list = parent ? parent.children ?? [] : items;
+  for (const id of drag.ids) {
+    const it = byId[id];
+    if (it.pinned) return false;
+    for (let p = parent; p; p = p.parent) if (p.id === id) return false; // into itself / descendant
+    if (it.type === "view" && parent) return false; // views live at root only
+    if (parent?.type === "sgroup" && it.type !== "provider") return false;
+    const others = list.filter((x) => !drag.ids.includes(x.id));
+    const idx = t.index - list.slice(0, t.index).filter((x) => drag.ids.includes(x.id)).length; // index among `others`
+    if (!parent) {
+      // root: the section rows partition the list; each section accepts exactly one kind of item
+      let section = null; others.slice(0, idx).forEach((x) => { if (x.type === "section") section = x.id; });
+      if (section === null) return false; // above the first section (Workbench row)
+      const allowed = { "sec-global": "shared", "sec-top": "provider", "sec-views": "view", "sec-bottom": "provider" }[section];
+      if (it.type !== allowed) return false;
+      continue;
+    }
+    const nShared = others.filter((x) => x.type === "shared").length;
+    if (it.type === "shared" && idx > nShared) return false;
+    if (it.type !== "shared" && idx < nShared) return false;
+  }
+  return true;
+}
+function onDragEnd() {
+  const t = drag?.target; const ids = drag?.ids ?? [];
+  drag?.ghost?.remove(); document.querySelectorAll(".row.dragging, .row.dropinto").forEach((r) => { r.classList.remove("dragging", "dropinto"); r.style.outlineColor = ""; });
+  document.getElementById("dropline").style.display = "none";
+  clearInterval(autoScrollTimer); autoScrollTimer = null;
+  drag = null;
+  if (!dragMoved || !t || !t.valid) { setTimeout(() => (dragMoved = false)); return; }
+  const moving = flatten().map((r) => r.it).filter((it) => ids.includes(it.id)); // keep visual order
+  const destList = t.parent ? (t.parent.children ??= []) : items;
+  let index = t.index - destList.slice(0, t.index).filter((x) => ids.includes(x.id)).length;
+  moving.forEach((it) => { const l = listOf(it); l.splice(l.indexOf(it), 1); });
+  destList.splice(index, 0, ...moving);
+  if (t.parent) t.parent.expanded = true;
+  // re-resolve shared-setting sources after the move
+  moving.forEach((it) => rebind(it));
+  renderTree(); renderPanel();
+  setTimeout(() => (dragMoved = false));
+}
+function rebind(it) {
+  reindex();
+  if (it.type === "provider") it.settings.forEach((s) => { if (s.source === "global") return; const src = findSource(it.parent, s.key); const wasBound = !!s.source; if (src && (isSource(byId[src]) )) { s.source = src; s.value = byId[src].setting.value; } else if (wasBound && byId[s.source]?.type === "sgroup" && byId[s.source] === it.parent) { /* keep group binding */ } else if (wasBound) { s.source = undefined; s.options = s.options ?? [s.value]; } });
+  it.children?.forEach(rebind);
+}
+
+// ---------- panel ----------
+const srcChip = (id) => `<span class="chip src" data-src="${id}" style="color:${byId[id].color}">● from ${byId[id].name} ↗</span>`;
+const lbl = (s) => s.source && s.source !== "global" ? `<span class="lbl src" style="color:${byId[s.source].color}">${s.label}</span>` : `<span class="lbl">${s.label}</span>`;
+
+function renderPanel() {
+  const title = document.getElementById("panel-title"), path = document.getElementById("panel-path");
+  const list = document.getElementById("sel-list"), content = document.getElementById("panel-content");
+  list.style.display = "none"; path.textContent = "";
+  if (selected.length === 0) { title.textContent = "Settings"; content.innerHTML = `<div class="empty">Select an item in the tree to edit its settings.<br><span style="font-size:11px">Ctrl-click to select several.</span></div>`; return; }
+  const sel = selected.map((id) => byId[id]);
+  if (sel.length === 1) {
+    const it = sel[0];
+    if (it.type === "workbench") {
+      title.textContent = "Workbench settings"; path.textContent = "global";
+      content.innerHTML = `<div class="settings">${it.globals.map((g) => `<span class="lbl">${g.label}</span><span class="ro"><span class="field ro">${g.value}</span><span class="chip glob">global</span></span>`).join("")}<span class="hint">Set in the workbench (top bar / module settings). Every data provider that needs them uses these values.</span></div>`;
+      return;
+    }
+    title.textContent = nameOf(it) + (it.type === "shared" ? " (shared setting)" : it.type === "sgroup" ? " (group settings)" : "");
+    path.textContent = pathOf(it);
+    content.innerHTML = `<div class="settings">${it.type === "provider" ? renderNameRow(it) : ""}${settingsOf(it).map((s) => renderSingle(it, s)).join("")}${isSource(it) ? renderControls(it) : ""}</div>`;
+    wirePanel(content, it); return;
+  }
+  title.textContent = `${sel.length} items selected`;
+  list.style.display = "block"; list.textContent = sel.map(nameOf).join(" · ");
+  const common = settingsOf(sel[0]).map((s) => s.key).filter((k) => sel.every((x) => settingsOf(x).some((s) => s.key === k)));
+  if (common.length === 0) { content.innerHTML = `<div class="empty">No settings in common.</div>`; return; }
+  const rows = common.map((k) => {
+    const ss = sel.map((x) => settingsOf(x).find((s) => s.key === k));
+    const label = ss[0].label, sources = ss.map((s) => s.source ?? null);
+    if (sources.some((s) => s)) {
+      const uniq = [...new Set(sources.map((s) => (s ? (s === "global" ? "global" : byId[s].name + " (" + pathOf(byId[s]) + ")") : "local")))];
+      if (uniq.length === 1 && sources.every((s) => s)) return sources[0] === "global" ? `<span class="lbl">${label}</span><span class="ro"><span class="field ro">${ss[0].value}</span><span class="chip glob">global</span></span>` : `${lbl(ss[0])}<span class="ro">${ss[0].value} ${srcChip(sources[0])}</span>`;
+      return `<span class="lbl">${label}</span><span class="ro"><span class="chip warn">Empty intersection</span></span><span class="hint warn">Controlled by different sources: ${uniq.join(", ")}.</span>`;
+    }
+    const opts = ss.map((s) => s.options).reduce((a, b) => a.filter((o) => b.includes(o)));
+    const values = [...new Set(ss.map((s) => s.value))];
+    if (opts.length === 0) return `<span class="lbl">${label}</span><span class="ro"><span class="chip warn">Empty intersection</span></span><span class="hint warn">No ${label.toLowerCase()} option in common.</span>`;
+    if (values.length > 1 && !overridden.has(k)) return `<span class="lbl">${label}</span><span class="ro"><span class="field locked">${values.join(" · ")}</span><span class="chip mixed">Mixed</span><span class="btn" data-override="${k}">Override for all</span></span>`;
+    const current = values.length === 1 ? values[0] : `Choose a value for ${sel.length} items…`;
+    return `<span class="lbl">${label}</span><span class="ro"><span class="field" title="Options: ${opts.join(", ")}">${current}</span>${values.length > 1 ? `<span class="chip mixed">writes to ${sel.length}</span>` : ""}</span><span class="hint">Options limited to those on all ${sel.length} items (${opts.join(", ")}).</span>`;
+  });
+  content.innerHTML = `<div class="settings">${rows.join("")}</div>`;
+  content.querySelectorAll("[data-override]").forEach((b) => b.addEventListener("click", () => { overridden.add(b.dataset.override); renderPanel(); }));
+  wirePanel(content, null);
+}
+function renderNameRow(it) {
+  const auto = autoName(it);
+  return `<span class="lbl">Name</span><span class="ro"><input class="inline" style="min-width:150px;font-size:12px;padding:2px 4px;font-style:${it.customName ? "normal" : "italic"}" data-name placeholder="${auto}" value="${it.customName ?? ""}" title="Automatic: ${auto}">${it.customName ? `<span class="btn" data-resetname title="Use the automatic name">↺ auto</span>` : `<span class="chip glob">automatic</span>`}</span>`;
+}
+function renderSingle(it, s) {
+  if (s.source === "global") return `<span class="lbl">${s.label}</span><span class="ro"><span class="field ro">${s.value}</span><span class="chip glob">global</span></span>`;
+  if (s.source) return `${lbl(s)}<span class="ro">${s.value} ${srcChip(s.source)}</span>`;
+  const editable = it.type === "shared" || it.type === "sgroup";
+  if (editable) return `<span class="lbl">${s.label}</span><span class="ro"><select class="inline" style="min-width:130px;font-size:12px;padding:2px 4px" data-edit="${s.key}">${s.options.map((o) => `<option${o === s.value ? " selected" : ""}>${o}</option>`).join("")}</select></span>`;
+  return `<span class="lbl">${s.label}</span><span class="ro"><span class="field" title="Options: ${s.options.join(", ")}">${s.value}</span></span>`;
+}
+function renderControls(it) {
+  const ids = controlsOf(it);
+  const names = ids.map((id) => `<span class="chip src" data-src="${id}" style="color:${it.color}">${nameOf(byId[id])} ↗</span>`).join(" ");
+  return `<span class="lbl" style="align-self:start;padding-top:3px">Controls</span><span class="ro">${names || "<i>nothing yet</i>"}</span><span class="hint">${ids.length ? "Items following this setting – the coloured rail in the tree." : "No item below uses this setting."}</span>`;
+}
+function wirePanel(root, it) {
+  root.querySelectorAll("[data-name]").forEach((i) => i.addEventListener("change", () => { it.customName = i.value.trim() || undefined; renderTree(); renderPanel(); }));
+  root.querySelectorAll("[data-resetname]").forEach((b) => b.addEventListener("click", () => { it.customName = undefined; renderTree(); renderPanel(); }));
+  root.querySelectorAll("[data-src]").forEach((c) => c.addEventListener("click", () => { anchor = c.dataset.src; setSelection([c.dataset.src]); }));
+  root.querySelectorAll("[data-edit]").forEach((s) => s.addEventListener("change", () => { if (it.type === "shared") setSharedValue(it, s.value); else setGroupSettingValue(it, s.dataset.edit, s.value); }));
+}
+
+// ---------- divider / misc ----------
+(function () {
+  const d = document.getElementById("divider"), p = document.getElementById("panel"), sb = document.getElementById("sidebar");
+  let startY = 0, startH = 0;
+  d.addEventListener("mousedown", (e) => { startY = e.clientY; startH = p.offsetHeight; document.body.style.cursor = "row-resize";
+    const mv = (e) => { p.style.height = Math.max(120, Math.min(sb.offsetHeight - 120, startH - (e.clientY - startY))) + "px"; updateSticky(); };
+    const up = () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); document.body.style.cursor = ""; };
+    document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up); });
+})();
+document.getElementById("tree").addEventListener("click", (e) => { if (e.target.id === "tree" || e.target.classList.contains("treeinner") || e.target.classList.contains("rows")) setSelection([]); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeMenu(); setSelection([]); } });
+renderTree(); renderPanel();
+</script>
+</body>
+</html>
