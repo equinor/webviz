@@ -354,10 +354,6 @@ export class SettingManager<
         return this._dashboardSettingConnection?.instance.getDefinition().label ?? null;
     }
 
-    keepsComponentEditableWhileDashboardControlled(): boolean {
-        return this._dashboardSettingAdapter?.keepsComponentEditableWhileControlled ?? false;
-    }
-
     getId(): string {
         return this._id;
     }

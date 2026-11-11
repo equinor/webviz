@@ -33,12 +33,6 @@ export type DpfDashboardSettingAdapter<TInternalValue, TValueConstraints, TDashb
         localValue: TInternalValue,
         valueConstraints: TValueConstraints | null,
     ) => boolean;
-
-    // Keeps the setting's own component editable while it is controlled, instead of showing a read-only
-    // representation. The component is told via `isControlledByDashboardSetting`, and must itself disable
-    // what the dashboard setting controls - e.g. so a controlled setting can still switch to a kind of value
-    // it doesn't follow.
-    keepsComponentEditableWhileControlled?: boolean;
 };
 
 // For settings whose internal value and constraints already have the dashboard setting's shape.

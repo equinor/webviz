@@ -127,7 +127,7 @@ export function SettingManagerComponent<
         />
     ) : null;
 
-    if (isDashboardControlled && !props.setting.keepsComponentEditableWhileDashboardControlled()) {
+    if (isDashboardControlled) {
         return (
             <React.Fragment key={props.setting.getId()}>
                 <div className="gap-x-2xs px-2xs py-4xs text-body-sm flex w-32 items-center">
@@ -160,10 +160,7 @@ export function SettingManagerComponent<
 
     return (
         <React.Fragment key={props.setting.getId()}>
-            <div className="gap-x-2xs px-2xs py-4xs text-body-sm flex w-32 items-center">
-                <span>{props.setting.getLabel()}</span>
-                {dashboardSettingIndicator}
-            </div>
+            <div className="px-2xs py-4xs text-body-sm flex w-32 items-center">{props.setting.getLabel()}</div>
             <div className="px-2xs py-4xs w-full min-w-0">
                 <StatusWrapper isPending={actuallyLoading}>
                     <div className="gap-y-3xs flex min-w-0 flex-col">
