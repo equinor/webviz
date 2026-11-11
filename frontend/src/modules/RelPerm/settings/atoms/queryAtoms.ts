@@ -14,7 +14,7 @@ import {
     type RelpermRealizationDataResponse_api,
     type RelpermTableDefinition_api,
     withWarnings,
-    type DataWithWarnings,
+    type ResultWithWarnings,
 } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
@@ -58,9 +58,9 @@ export const relPermTableDefinitionQueriesAtom = atomWithQueries<
 >(makeRelPermTableDefinitionQueryOptions);
 
 export const relPermRealizationDataQueriesAtom = atomWithQueries<
-    DataWithWarnings<RelpermRealizationDataResponse_api>,
+    ResultWithWarnings<RelpermRealizationDataResponse_api>,
     AxiosError,
-    DataWithWarnings<RelpermRealizationDataResponse_api>,
+    ResultWithWarnings<RelpermRealizationDataResponse_api>,
     RelPermRealizationDataQueryKey,
     RelPermDataAccessorStatus
 >(makeRelPermRealizationDataQueryOptions);
@@ -173,7 +173,7 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
             };
         }),
         combine: function combineRelPermRealizationDataQueryResults(
-            results: UseQueryResult<DataWithWarnings<RelpermRealizationDataResponse_api>, AxiosError>[],
+            results: UseQueryResult<ResultWithWarnings<RelpermRealizationDataResponse_api>, AxiosError>[],
         ): RelPermDataAccessorStatus {
             // A disabled query keeps its cached data and error, which may not match the current selections
             // (e.g. relative-permeability curves after switching to capillary pressure)

@@ -1,7 +1,7 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 
 import type {
-    DataWithWarnings,
+    ResultWithWarnings,
     InplaceVolumesStatisticalTableDataPerFluidSelection_api,
     InplaceVolumesIndexWithValues_api,
     InplaceVolumesTableDataPerFluidSelection_api,
@@ -160,7 +160,7 @@ export function makeAggregatedStatisticalTableDataQueryOptionsFromSources(
     });
 
     function combine(
-        results: UseQueryResult<DataWithWarnings<InplaceVolumesStatisticalTableDataPerFluidSelection_api>, Error>[],
+        results: UseQueryResult<ResultWithWarnings<InplaceVolumesStatisticalTableDataPerFluidSelection_api>, Error>[],
     ): AggregatedStatisticalTableDataResults {
         const tablesData: InplaceVolumesStatisticalTableData[] = [];
         const errors: Error[] = [];
@@ -247,7 +247,7 @@ export function makeAggregatedPerRealizationTableDataQueryOptions(
     });
 
     function combine(
-        results: UseQueryResult<DataWithWarnings<InplaceVolumesTableDataPerFluidSelection_api>, Error>[],
+        results: UseQueryResult<ResultWithWarnings<InplaceVolumesTableDataPerFluidSelection_api>, Error>[],
     ): AggregatedTableDataResults {
         const tablesData: InplaceVolumesTableData[] = [];
         const errors: Error[] = [];
@@ -368,7 +368,7 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
     });
 
     function combine(
-        results: UseQueryResult<DataWithWarnings<InplaceVolumesTableDataPerFluidSelection_api>, Error>[],
+        results: UseQueryResult<ResultWithWarnings<InplaceVolumesTableDataPerFluidSelection_api>, Error>[],
     ): AggregatedDeltaTableDataResults {
         const tablesData: InplaceVolumesTableData[] = [];
         const errors: Error[] = [];

@@ -1,6 +1,6 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 
-import { getQueryResultWarnings, type DataWithWarnings } from "@api";
+import { getQueryResultWarnings, type ResultWithWarnings } from "@api";
 import type { StatusWriter } from "@framework/types/statusWriter";
 
 type WarningStatusWriter = Pick<StatusWriter, "addWarning">;
@@ -20,11 +20,11 @@ export function propagateWarningsToStatusWriter(
     return uniqueWarnings;
 }
 
-type WithDataWarnings = { data: DataWithWarnings<unknown> | undefined };
+type QueryResultWithWarnings = { data: ResultWithWarnings<unknown> | undefined };
 
-/** Add the warnings of results carrying `DataWithWarnings` to the status writer. */
-export function propagateDataWarningsToStatusWriter(
-    resultsWithWarnings: readonly WithDataWarnings[],
+/** Add the warnings of results carrying `ResultWithWarnings` to the status writer. */
+export function propagateResultWarningsToStatusWriter(
+    resultsWithWarnings: readonly QueryResultWithWarnings[],
     statusWriter: WarningStatusWriter,
 ): string[] {
     return propagateWarningsToStatusWriter(

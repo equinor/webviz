@@ -1,6 +1,6 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 
-import type { DataWithWarnings, VectorDescription_api } from "@api";
+import type { ResultWithWarnings, VectorDescription_api } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
@@ -11,11 +11,11 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
  */
 export class EnsembleVectorListsHelper {
     private _ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
-    private _queries: UseQueryResult<DataWithWarnings<VectorDescription_api[]>>[];
+    private _queries: UseQueryResult<ResultWithWarnings<VectorDescription_api[]>>[];
 
     constructor(
         ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
-        vectorListQueryResults: UseQueryResult<DataWithWarnings<VectorDescription_api[]>>[],
+        vectorListQueryResults: UseQueryResult<ResultWithWarnings<VectorDescription_api[]>>[],
     ) {
         if (ensembleIdents.length !== vectorListQueryResults.length) {
             throw new Error("Number of ensembles and vector list query results must be equal");

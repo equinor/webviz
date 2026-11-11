@@ -5,9 +5,9 @@ import type { UseQueryOptions } from "@tanstack/react-query";
 import { hashKey } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 
-import { ALLOW_WARNINGS_REQUEST_HEADER, client, parseWarnings } from "@api";
+import { addAllowWarningsHeader, client, parseWarnings } from "@api";
 import type {
-    DataWithWarnings,
+    ResultWithWarnings,
     LroFailureResp_api,
     LroInProgressResp_api,
     HTTPValidationError_api,
@@ -42,44 +42,36 @@ export class LroError extends Error {
  * @returns
  */
 export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly unknown[]>(
-    args: WrapLongRunningQueryArgs<TArgs, TData> & { queryKey: TQueryKey },
-): UseQueryOptions<TData, Error, TData, TQueryKey> {
-    return createLongRunningQueryOptions<TArgs, TData, TData, TQueryKey>({ ...args, mapSuccess: (result) => result });
-}
-
+    args: WrapLongRunningQueryArgs<TArgs, TData> & { queryKey: TQueryKey; withWarnings?: false },
+): UseQueryOptions<TData, Error, TData, TQueryKey>;
 /**
- * Same as `wrapLongRunningQuery`, but opts in to warnings from the back-end. Tells the back-end that warnings are
- * allowed and returns the result together with the warnings reported by the back-end.
+ * With `withWarnings: true` the query opts in to warnings from the back-end. The back-end is told that warnings are
+ * allowed and the result is returned together with the warnings it reported.
  *
  * Only the response that completes the operation can carry warnings. Responses for in-progress polls never do.
- * The query key is made from the arguments including the warnings header, so it never collides with the key of
- * the same call made through `wrapLongRunningQuery`.
- *
- * @param options - Same as for `wrapLongRunningQuery`, except that the query key is given as a function. It must be the
- * generated query key function matching the query function, e.g. `getStatisticalSurfaceDataHybridQueryKey`.
+ * The warnings header is also added to the query key (the generated key `[options]`), so it never collides with the
+ * key of the same call made without warnings.
  */
-export function wrapLongRunningQueryWithWarnings<
+export function wrapLongRunningQuery<
     TArgs extends { headers?: unknown },
     TData,
-    TQueryKey extends readonly unknown[],
->({
-    queryFnArgs,
-    queryKeyFn,
-    ...rest
-}: Omit<WrapLongRunningQueryArgs<TArgs, TData>, "queryKey" | "queryFnArgs"> & {
-    queryFnArgs: TArgs;
-    queryKeyFn: (args: TArgs) => TQueryKey;
-}): UseQueryOptions<DataWithWarnings<TData>, Error, DataWithWarnings<TData>, TQueryKey> {
-    const argsWithHeader = {
-        ...queryFnArgs,
-        headers: { ...(queryFnArgs.headers as object | undefined), [ALLOW_WARNINGS_REQUEST_HEADER]: "true" },
-    };
+    TQueryKey extends readonly [{ headers?: unknown }],
+>(
+    args: WrapLongRunningQueryArgs<TArgs, TData> & { queryKey: TQueryKey; withWarnings: true },
+): UseQueryOptions<ResultWithWarnings<TData>, Error, ResultWithWarnings<TData>, TQueryKey>;
+export function wrapLongRunningQuery(args: any): any {
+    if (!args.withWarnings) {
+        return createLongRunningQueryOptions({ ...args, mapSuccess: (result: unknown) => result });
+    }
 
     return createLongRunningQueryOptions({
-        ...rest,
-        queryFnArgs: argsWithHeader,
-        queryKey: queryKeyFn(argsWithHeader),
-        mapSuccess: (result, response) => ({ value: result, warnings: parseWarnings(response.headers) }),
+        ...args,
+        queryFnArgs: addAllowWarningsHeader(args.queryFnArgs),
+        queryKey: [addAllowWarningsHeader(args.queryKey[0])],
+        mapSuccess: (result: unknown, response: { headers?: unknown }) => ({
+            value: result,
+            warnings: parseWarnings(response.headers),
+        }),
     });
 }
 

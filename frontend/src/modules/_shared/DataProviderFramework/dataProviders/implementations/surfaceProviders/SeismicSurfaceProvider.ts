@@ -13,7 +13,7 @@ import {
     getSurfaceDataOptions,
 } from "@api";
 import { lroProgressBus } from "@framework/LroProgressBus";
-import { wrapLongRunningQueryWithWarnings } from "@framework/utils/lro/longRunningApiCalls";
+import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import type {
@@ -505,10 +505,11 @@ export class SeismicSurfaceProvider implements CustomDataProviderImplementation<
         //  * backoff: none, linear, exponential
         //  * maxDelayS - maximum delay for linear or exponential backoff
         //  * jitter
-        const queryOptions = wrapLongRunningQueryWithWarnings({
+        const queryOptions = wrapLongRunningQuery({
             queryFn: getStatisticalSurfaceDataHybrid,
             queryFnArgs: apiFunctionArgs,
-            queryKeyFn: getStatisticalSurfaceDataHybridQueryKey,
+            queryKey: getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs),
+            withWarnings: true,
             delayBetweenPollsSecs: 1.0,
             maxTotalDurationSecs: 120,
         });

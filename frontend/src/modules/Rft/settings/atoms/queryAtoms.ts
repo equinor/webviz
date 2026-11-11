@@ -10,7 +10,7 @@ import {
     type RftObservations_api,
     type RftRealizationData_api,
     withWarnings,
-    type DataWithWarnings,
+    type ResultWithWarnings,
 } from "@api";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
@@ -92,7 +92,7 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
     });
 
     function combine(
-        results: UseQueryResult<DataWithWarnings<RftRealizationData_api[]>, AxiosError>[],
+        results: UseQueryResult<ResultWithWarnings<RftRealizationData_api[]>, AxiosError>[],
     ): RftRealizationDataResult {
         // A disabled query keeps its cached data and error, which must not be exposed for an invalid selection
         // (e.g. a removed ensemble whose query key is still cached)

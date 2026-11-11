@@ -12,7 +12,7 @@ import {
     type Options,
 } from "@api";
 import { lroProgressBus } from "@framework/LroProgressBus";
-import { wrapLongRunningQueryWithWarnings } from "@framework/utils/lro/longRunningApiCalls";
+import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
@@ -303,10 +303,11 @@ export class InitialFluidContactSurfaceProvider implements CustomDataProviderImp
                 resample_to_def_str: null,
             },
         };
-        const queryOptions = wrapLongRunningQueryWithWarnings({
+        const queryOptions = wrapLongRunningQuery({
             queryFn: getStatisticalSurfaceDataHybrid,
             queryFnArgs: apiFunctionArgs,
-            queryKeyFn: getStatisticalSurfaceDataHybridQueryKey,
+            queryKey: getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs),
+            withWarnings: true,
             delayBetweenPollsSecs: 1,
             maxTotalDurationSecs: 120,
         });

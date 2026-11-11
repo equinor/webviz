@@ -6,7 +6,7 @@ import type { Options } from "./autogen";
 export const ALLOW_WARNINGS_REQUEST_HEADER = "Webviz-Allow-Warnings";
 export const WARNINGS_RESPONSE_HEADER = "Webviz-Content-Warnings";
 
-export type DataWithWarnings<TData> = {
+export type ResultWithWarnings<TData> = {
     value: TData;
     warnings: string[];
 };
@@ -29,6 +29,14 @@ export function parseWarnings(headers: unknown): string[] {
     }
 }
 
+/** Returns the options with the header added that tells the back-end that warnings are allowed */
+export function addAllowWarningsHeader<T extends { headers?: unknown }>(options: T): T {
+    return {
+        ...options,
+        headers: { ...(options.headers as object | undefined), [ALLOW_WARNINGS_REQUEST_HEADER]: "true" },
+    };
+}
+
 /**
  * Creates query options that tell the back-end that warnings are allowed, and returns the data together
  * with any warnings reported by the back-end.
@@ -44,12 +52,9 @@ export function withWarnings<TData, TQueryKey extends [Options<any>]>(
     sdkFunction: SdkFunction<TData>,
 ) {
     const [keyParams] = generatedOptions.queryKey as unknown as TQueryKey;
-    const keyParamsWithHeader = {
-        ...keyParams,
-        headers: { ...keyParams.headers, [ALLOW_WARNINGS_REQUEST_HEADER]: "true" },
-    };
+    const keyParamsWithHeader = addAllowWarningsHeader(keyParams);
 
-    return queryOptions<DataWithWarnings<TData>, AxiosError, DataWithWarnings<TData>, TQueryKey>({
+    return queryOptions<ResultWithWarnings<TData>, AxiosError, ResultWithWarnings<TData>, TQueryKey>({
         queryKey: [keyParamsWithHeader] as unknown as TQueryKey,
         queryFn: async ({ signal }) => {
             const result = await sdkFunction({ ...keyParamsWithHeader, signal, throwOnError: true });
@@ -59,16 +64,16 @@ export function withWarnings<TData, TQueryKey extends [Options<any>]>(
 }
 
 /**
- * Replaces the `DataWithWarnings` wrapper in the data of a query result with its plain value,
+ * Replaces the `ResultWithWarnings` wrapper in the data of a query result with its plain value,
  * so consumers that are unaware of warnings can keep using the unwrapped data shape.
  */
-export function unwrapQueryResultWarnings<TData, TQueryResult extends { data: DataWithWarnings<TData> | undefined }>(
+export function unwrapQueryResultWarnings<TData, TQueryResult extends { data: ResultWithWarnings<TData> | undefined }>(
     query: TQueryResult,
 ): Omit<TQueryResult, "data"> & { data: TData | undefined } {
     return { ...query, data: query.data?.value };
 }
 
-/** Get the warnings of a query result carrying `DataWithWarnings`, or an empty list if there is no data yet */
-export function getQueryResultWarnings(query: { data: DataWithWarnings<unknown> | undefined }): string[] {
+/** Get the warnings of a query result carrying `ResultWithWarnings`, or an empty list if there is no data yet */
+export function getQueryResultWarnings(query: { data: ResultWithWarnings<unknown> | undefined }): string[] {
     return query.data?.warnings ?? [];
 }
