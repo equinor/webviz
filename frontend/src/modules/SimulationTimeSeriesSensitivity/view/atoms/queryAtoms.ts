@@ -1,18 +1,14 @@
-import type { UseQueryResult } from "@tanstack/react-query";
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import {
     Frequency_api,
-    type VectorRealizationData_api,
-    type VectorStatisticSensitivityData_api,
     getHistoricalVectorDataOptions,
     getRealizationsVectorData,
     getRealizationsVectorDataOptions,
     getStatisticalVectorDataPerSensitivity,
     getStatisticalVectorDataPerSensitivityOptions,
     getQueryResultWarnings,
-    unwrapQueryResultWarnings,
     withWarnings,
 } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
@@ -25,7 +21,7 @@ import {
     vectorSpecificationAtom,
 } from "@modules/SimulationTimeSeriesSensitivity/view/atoms/baseAtoms";
 
-const vectorDataWithWarningsQueryAtom = atomWithQuery((get) => {
+export const vectorDataQueryAtom = atomWithQuery((get) => {
     const vectorSpecification = get(vectorSpecificationAtom);
     const resampleFrequency = get(resamplingFrequencyAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
@@ -51,7 +47,7 @@ const vectorDataWithWarningsQueryAtom = atomWithQuery((get) => {
     return { ...queryOptions, enabled: !!vectorSpecification };
 });
 
-const statisticalVectorSensitivityDataWithWarningsQueryAtom = atomWithQuery((get) => {
+export const statisticalVectorSensitivityDataQueryAtom = atomWithQuery((get) => {
     const vectorSpecification = get(vectorSpecificationAtom);
     const resampleFrequency = get(resamplingFrequencyAtom);
     const showStatistics = get(showStatisticsAtom);
@@ -81,20 +77,9 @@ const statisticalVectorSensitivityDataWithWarningsQueryAtom = atomWithQuery((get
     return { ...queryOptions, enabled: !!(showStatistics && vectorSpecification) };
 });
 
-// Unwrap the data to keep the query result shape unchanged for consumers
-export const vectorDataQueryAtom = atom((get) => {
-    const query = get(vectorDataWithWarningsQueryAtom);
-    return unwrapQueryResultWarnings(query) as UseQueryResult<VectorRealizationData_api[]>;
-});
-
-export const statisticalVectorSensitivityDataQueryAtom = atom((get) => {
-    const query = get(statisticalVectorSensitivityDataWithWarningsQueryAtom);
-    return unwrapQueryResultWarnings(query) as UseQueryResult<VectorStatisticSensitivityData_api[]>;
-});
-
 export const vectorDataWarningsAtom = atom((get) => [
-    ...getQueryResultWarnings(get(vectorDataWithWarningsQueryAtom)),
-    ...getQueryResultWarnings(get(statisticalVectorSensitivityDataWithWarningsQueryAtom)),
+    ...getQueryResultWarnings(get(vectorDataQueryAtom)),
+    ...getQueryResultWarnings(get(statisticalVectorSensitivityDataQueryAtom)),
 ]);
 
 export const historicalVectorDataQueryAtom = atomWithQuery((get) => {

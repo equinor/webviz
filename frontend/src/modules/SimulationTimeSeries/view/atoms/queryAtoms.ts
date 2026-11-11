@@ -1,12 +1,7 @@
 import type { QueryObserverResult } from "@tanstack/react-query";
 import { atom } from "jotai";
 
-import type {
-    SummaryVectorObservations_api,
-    VectorHistoricalData_api,
-    VectorRealizationData_api,
-    VectorStatisticData_api,
-} from "@api";
+import type { SummaryVectorObservations_api, VectorHistoricalData_api } from "@api";
 import {
     Frequency_api,
     getDeltaEnsembleRealizationsVectorData,
@@ -20,7 +15,6 @@ import {
     getStatisticalVectorData,
     getStatisticalVectorDataOptions,
     getQueryResultWarnings,
-    unwrapQueryResultWarnings,
     withWarnings,
 } from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
@@ -54,13 +48,9 @@ export const vectorDataQueriesAtom = atom((get) => {
     const regularQueries = get(regularEnsembleVectorDataQueriesAtom);
     const deltaQueries = get(deltaEnsembleVectorDataQueriesAtom);
 
-    // Realization queries carry warnings alongside the data. Unwrap to keep the data shape unchanged downstream
-    const unwrapWarnings = (queries: (typeof regularQueries)[number][] | (typeof deltaQueries)[number][]) =>
-        queries.map(unwrapQueryResultWarnings) as QueryObserverResult<VectorRealizationData_api[]>[];
-
     return assembleQueryResultsInOriginalOrder(
-        unwrapWarnings(regularQueries),
-        unwrapWarnings(deltaQueries),
+        regularQueries,
+        deltaQueries,
         regularEnsembleVectorSpecifications,
         deltaEnsembleVectorSpecifications,
     );
@@ -97,13 +87,9 @@ export const vectorStatisticsQueriesAtom = atom((get) => {
     const regularQueries = get(regularEnsembleStatisticsQueriesAtom);
     const deltaQueries = get(deltaEnsembleStatisticsQueriesAtom);
 
-    // Statistics queries carry warnings alongside the data. Unwrap to keep the data shape unchanged downstream
-    const unwrapWarnings = (queries: (typeof regularQueries)[number][] | (typeof deltaQueries)[number][]) =>
-        queries.map(unwrapQueryResultWarnings) as QueryObserverResult<VectorStatisticData_api>[];
-
     return assembleQueryResultsInOriginalOrder(
-        unwrapWarnings(regularQueries),
-        unwrapWarnings(deltaQueries),
+        regularQueries,
+        deltaQueries,
         regularEnsembleVectorSpecifications,
         deltaEnsembleVectorSpecifications,
     );

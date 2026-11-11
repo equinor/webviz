@@ -1,15 +1,7 @@
-import type { UseQueryResult } from "@tanstack/react-query";
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 
-import type { WellCompletionsData_api } from "@api";
-import {
-    getQueryResultWarnings,
-    getWellCompletionsData,
-    getWellCompletionsDataOptions,
-    unwrapQueryResultWarnings,
-    withWarnings,
-} from "@api";
+import { getQueryResultWarnings, getWellCompletionsData, getWellCompletionsDataOptions, withWarnings } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import { RealizationMode } from "@modules/WellCompletions/typesAndEnums";
@@ -18,7 +10,7 @@ import { realizationModeAtom } from "./baseAtoms";
 import { availableRealizationsAtom } from "./derivedAtoms";
 import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./persistableFixableAtoms";
 
-const wellCompletionsWithWarningsQueryAtom = atomWithQuery((get) => {
+export const wellCompletionsQueryAtom = atomWithQuery((get) => {
     const { value: selectedEnsembleIdent, isValidInContext: ensembleIdentValid } = get(selectedEnsembleIdentAtom);
     const { value: selectedRealization, isValidInContext: realizationValid } = get(selectedRealizationAtom);
     const realizationMode = get(realizationModeAtom);
@@ -59,14 +51,7 @@ const wellCompletionsWithWarningsQueryAtom = atomWithQuery((get) => {
     return query;
 });
 
-/** The well completions query with the warnings wrapper removed from the data */
-export const wellCompletionsQueryAtom = atom((get) => {
-    return unwrapQueryResultWarnings(
-        get(wellCompletionsWithWarningsQueryAtom),
-    ) as UseQueryResult<WellCompletionsData_api>;
-});
-
 /** Warnings reported by the back-end alongside the well completions data, e.g. for missing realizations */
 export const wellCompletionsWarningsAtom = atom((get) => {
-    return getQueryResultWarnings(get(wellCompletionsWithWarningsQueryAtom));
+    return getQueryResultWarnings(get(wellCompletionsQueryAtom));
 });

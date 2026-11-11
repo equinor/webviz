@@ -63,16 +63,6 @@ export function withWarnings<TData, TQueryKey extends [Options<any>]>(
     });
 }
 
-/**
- * Replaces the `ResultWithWarnings` wrapper in the data of a query result with its plain value,
- * so consumers that are unaware of warnings can keep using the unwrapped data shape.
- */
-export function unwrapQueryResultWarnings<TData, TQueryResult extends { data: ResultWithWarnings<TData> | undefined }>(
-    query: TQueryResult,
-): Omit<TQueryResult, "data"> & { data: TData | undefined } {
-    return { ...query, data: query.data?.value };
-}
-
 /** Get the warnings of a query result carrying `ResultWithWarnings`, or an empty list if there is no data yet */
 export function getQueryResultWarnings(query: { data: ResultWithWarnings<unknown> | undefined }): string[] {
     return query.data?.warnings ?? [];

@@ -50,11 +50,11 @@ export const wellCompletionsDataAccessorAtom = atom<WellCompletionsDataAccessor 
     // A disabled query keeps its cached data, which may belong to a selection that is no longer valid
     // (e.g. a single realization excluded by the realization filter). Whether the query is enabled
     // already depends on the realization selection only in single-realization mode.
-    if (!wellCompletionsQuery.isEnabled || !wellCompletionsQuery.data || !selectedStratigraphyColorSet) {
+    if (!wellCompletionsQuery.isEnabled || !wellCompletionsQuery.data?.value || !selectedStratigraphyColorSet) {
         return null;
     }
 
-    return new WellCompletionsDataAccessor(wellCompletionsQuery.data, selectedStratigraphyColorSet);
+    return new WellCompletionsDataAccessor(wellCompletionsQuery.data.value, selectedStratigraphyColorSet);
 });
 
 export const sortedCompletionDatesAtom = atom<string[] | null>((get) => {

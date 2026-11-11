@@ -59,8 +59,8 @@ export function useTimeSeriesChartTracesDataArrayBuilder(colorSet: ColorSet): Ti
             const color = sensitivitiesColorMap[sensitivityName];
 
             // Add statistics traces
-            if (showStatistics && statisticsQuery.data) {
-                const matchingCases: VectorStatisticSensitivityData_api[] = statisticsQuery.data.filter(
+            if (showStatistics && statisticsQuery.data?.value) {
+                const matchingCases: VectorStatisticSensitivityData_api[] = statisticsQuery.data.value.filter(
                     (stat) => stat.sensitivityName === sensitivityName,
                 );
                 const traces = createStatisticalLineTraces(matchingCases, StatisticFunction_api.MEAN, color);
@@ -72,10 +72,10 @@ export function useTimeSeriesChartTracesDataArrayBuilder(colorSet: ColorSet): Ti
 
             // Add realization traces
             const sensitivity = ensemble.getSensitivities()?.getSensitivityByName(sensitivityName);
-            if (showRealizations && vectorDataQuery.data && sensitivity) {
+            if (showRealizations && vectorDataQuery.data?.value && sensitivity) {
                 for (const sensCase of sensitivity.cases) {
                     const realsToInclude = sensCase.realizations;
-                    const realizationData: VectorRealizationData_api[] = vectorDataQuery.data.filter((vec) =>
+                    const realizationData: VectorRealizationData_api[] = vectorDataQuery.data.value.filter((vec) =>
                         realsToInclude.includes(vec.realization),
                     );
                     if (realizationData.length > 0) {
