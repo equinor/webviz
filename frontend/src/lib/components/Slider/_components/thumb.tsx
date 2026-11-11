@@ -128,6 +128,7 @@ export function Thumb(props: {
                             render={
                                 <Typography
                                     as="div"
+                                    layoutClassName="flex items-center"
                                     variant="subtle"
                                     size={getNextTextSize(getTextSizeForSelectableSize(props.size), -1)}
                                 >
@@ -137,7 +138,7 @@ export function Thumb(props: {
 
                                     {isOutOfBounds && (
                                         <ErrorIcon
-                                            className="ml-2xs pointer-events-auto! inline align-sub"
+                                            className="ml-2xs pointer-events-auto!"
                                             titleAccess="The value is out range!"
                                         />
                                     )}
