@@ -147,4 +147,24 @@ describe("SettingsContextDelegate status with persisted values", () => {
         expect(context.getValues()[Setting.REALIZATION]).toBeUndefined();
         expect(setting.getLocalInternalValue()).toBe(3);
     });
+
+    test("persists the local value while the dashboard setting controls the setting, and returns to it once removed", () => {
+        const dashboardSettingsService = new DashboardSettingsService();
+        const { context, setting } = makeRealizationContext(dashboardSettingsService);
+        setting.setValueConstraints([1, 2, 3]);
+        setting.setValue(3);
+
+        const realization = dashboardSettingsService.addSetting(REALIZATION_DASHBOARD_SETTING);
+        realization.setValue(2);
+
+        expect(setting.isDashboardControlled()).toBe(true);
+        expect(context.getValues()[Setting.REALIZATION]).toBe(2);
+        expect(context.serializeSettings()[Setting.REALIZATION]).toBe(JSON.stringify(3));
+
+        dashboardSettingsService.removeSetting(REALIZATION_DASHBOARD_SETTING);
+
+        expect(setting.isDashboardControlled()).toBe(false);
+        expect(context.getValues()[Setting.REALIZATION]).toBe(3);
+        expect(context.serializeSettings()[Setting.REALIZATION]).toBe(JSON.stringify(3));
+    });
 });

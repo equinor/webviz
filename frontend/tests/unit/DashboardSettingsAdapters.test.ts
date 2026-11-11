@@ -117,6 +117,22 @@ describe("makeDashboardSettingAtoms", () => {
         expect(instance.getSourceCount()).toBe(0);
     });
 
+    it("withdraws its contribution once the module's atoms are unmounted", () => {
+        const service = new DashboardSettingsService();
+        const store = createStore();
+        store.set(DashboardSettingsServiceAtom, service);
+        const unsubscribeValue = store.sub(dashboardValueAtom, () => {});
+        const unsubscribeIsDashboardControlled = store.sub(isDashboardControlledAtom, () => {});
+        const instance = service.addSetting(DEFINITION);
+        expect(instance.getSourceCount()).toBe(1);
+
+        unsubscribeValue();
+        unsubscribeIsDashboardControlled();
+
+        expect(instance.getSourceCount()).toBe(0);
+        expect(instance.getConstraints()).toEqual([]);
+    });
+
     it("writes to the local value", () => {
         const service = new DashboardSettingsService();
         const store = makeModuleStore(service);
