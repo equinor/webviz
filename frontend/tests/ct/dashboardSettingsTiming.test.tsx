@@ -97,13 +97,13 @@ test.describe("Dashboard-controlled DPF setting", () => {
     test("reports an unavailable dashboard value", async ({ mount }) => {
         const component = await mount(<DashboardControlledSettingHarness blocked={false} />);
 
-        await expect(component.getByText("Dashboard value not available here")).toBeVisible();
+        await expect(component.getByText("Dashboard value not valid here")).toBeVisible();
     });
 
     test("shows why it is blocked instead of reporting the dashboard value as unavailable", async ({ mount }) => {
         const component = await mount(<DashboardControlledSettingHarness blocked />);
 
-        await expect(component.getByText("Dashboard value not available here")).toHaveCount(0);
+        await expect(component.getByText("Dashboard value not valid here")).toHaveCount(0);
         await expect(component.getByText(/Ensemble/)).toBeVisible();
         await expect(
             component.getByLabel('Controlled by the dashboard setting "Time", whose value is not available here'),
