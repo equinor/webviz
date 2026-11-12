@@ -30,12 +30,26 @@ export function ExpandCollapseAllButton(props: ExpandCollapseAllButtonProps): Re
     return (
         <>
             <Tooltip content="Expand all descendants" side="bottom">
-                <Button onClick={expandAllChildren} iconOnly variant="ghost" size="small" tone="neutral">
+                <Button
+                    onClick={expandAllChildren}
+                    aria-label="Expand all descendants"
+                    iconOnly
+                    variant="ghost"
+                    size="small"
+                    tone="neutral"
+                >
                     <UnfoldMoreDouble fontSize="inherit" />
                 </Button>
             </Tooltip>
             <Tooltip content="Collapse all descendants" side="bottom">
-                <Button onClick={collapseAllChildren} iconOnly variant="ghost" size="small" tone="neutral">
+                <Button
+                    onClick={collapseAllChildren}
+                    aria-label="Collapse all descendants"
+                    iconOnly
+                    variant="ghost"
+                    size="small"
+                    tone="neutral"
+                >
                     <UnfoldLessDouble fontSize="inherit" />
                 </Button>
             </Tooltip>

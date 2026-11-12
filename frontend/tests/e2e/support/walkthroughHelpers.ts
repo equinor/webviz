@@ -36,6 +36,16 @@ const CURSOR_PX_PER_STEP = 10;
 const CURSOR_MIN_STEPS = 6;
 const CURSOR_MAX_STEPS = 50;
 
+/**
+ * Nominal duration (ms) of one glide step: one frame at 60 fps. A glide is budgeted `steps` times this,
+ * so on heavy pages (e.g. WebGL maps, where every pointer move can cost ~80 ms in headless Chromium) the
+ * cursor still moves at a realistic speed instead of crawling through every planned step.
+ */
+const CURSOR_NOMINAL_STEP_MS = 16;
+
+/** Steps per chunk when gliding; the remaining step count is re-planned between chunks. */
+const CURSOR_CHUNK_STEPS = 5;
+
 /** Last known mouse position per page, used to size the glide by travel distance. */
 const lastMousePosition = new WeakMap<Page, { x: number; y: number }>();
 
@@ -43,13 +53,46 @@ const lastMousePosition = new WeakMap<Page, { x: number; y: number }>();
  * Move the real mouse to (x, y) at a roughly constant on-screen speed by sizing the number of
  * interpolation steps to the travel distance. Tracks the last position per page so the next glide
  * can measure how far it has to travel (Playwright's internal mouse starts at 0,0).
+ *
+ * The glide runs in short chunks against a wall-clock budget: if the page is slow to process pointer
+ * moves, the remaining distance is covered in fewer, larger steps so the glide still ends on time.
  */
 async function glideMouseTo(page: Page, x: number, y: number): Promise<void> {
     const from = lastMousePosition.get(page) ?? { x: 0, y: 0 };
     const distance = Math.hypot(x - from.x, y - from.y);
     const steps = Math.min(CURSOR_MAX_STEPS, Math.max(CURSOR_MIN_STEPS, Math.round(distance / CURSOR_PX_PER_STEP)));
-    await page.mouse.move(x, y, { steps });
+    const budgetMs = steps * CURSOR_NOMINAL_STEP_MS;
+    const start = Date.now();
+
+    let stepsDone = 0;
+    while (stepsDone < steps) {
+        const elapsedMs = Date.now() - start;
+        const msPerStep = stepsDone > 0 ? elapsedMs / stepsDone : CURSOR_NOMINAL_STEP_MS;
+        const affordableSteps = Math.floor((budgetMs - elapsedMs) / msPerStep);
+        if (affordableSteps < steps - stepsDone) {
+            // Over budget: finish the remaining distance in as many steps as there is time for.
+            await page.mouse.move(x, y, { steps: Math.max(2, Math.min(CURSOR_CHUNK_STEPS, affordableSteps)) });
+            break;
+        }
+        const chunkSteps = Math.min(CURSOR_CHUNK_STEPS, steps - stepsDone);
+        stepsDone += chunkSteps;
+        const fraction = stepsDone / steps;
+        await page.mouse.move(from.x + (x - from.x) * fraction, from.y + (y - from.y) * fraction, {
+            steps: chunkSteps,
+        });
+    }
     lastMousePosition.set(page, { x, y });
+}
+
+/**
+ * Glide the cursor to (x, y) like {@link smoothClick} does, for gestures that need explicit
+ * coordinates (e.g. moving sideways into a submenu). No-op unless RECORD=1.
+ */
+export async function smoothMoveTo(page: Page, x: number, y: number): Promise<void> {
+    if (!RECORDING) {
+        return;
+    }
+    await glideMouseTo(page, x, y);
 }
 
 /**
@@ -267,7 +310,38 @@ export async function hideDevOverlays(page: Page): Promise<void> {
     if (!RECORDING) {
         return;
     }
-    await injectRecordingStyle(page, "__pw_hide_dev_overlays_style__", `.tsqd-parent-container { display: none !important; }`);
+    await injectRecordingStyle(
+        page,
+        "__pw_hide_dev_overlays_style__",
+        `.tsqd-parent-container { display: none !important; }`,
+    );
+}
+
+/**
+ * Stop pointer/mouse move events from reaching deck.gl maps while recording.
+ *
+ * Every pointer move over a deck.gl map triggers a hover pick, which takes seconds per event in
+ * headless (software WebGL) Chromium. A cursor glide across the map then stalls for a minute or more,
+ * both slowing the run and freezing the recorded video. The fake cursor listens with window capture
+ * listeners registered earlier, so it still follows the pointer; only the map's hover readout is lost.
+ *
+ * No-op unless RECORD=1. Must be called AFTER `installFakeCursor` and BEFORE `page.goto(...)`.
+ */
+export async function suppressMapHover(page: Page): Promise<void> {
+    if (!RECORDING) {
+        return;
+    }
+    await page.addInitScript(() => {
+        // deck.gl listens on its `.deck-events-root` element, which holds the per-view event targets.
+        const stopOnMap = (event: Event) => {
+            if (event.target instanceof Element && event.target.closest(".deck-events-root")) {
+                event.stopPropagation();
+            }
+        };
+        for (const type of ["pointermove", "mousemove", "pointerover", "mouseover"]) {
+            window.addEventListener(type, stopOnMap, { capture: true });
+        }
+    });
 }
 
 /**
@@ -607,11 +681,7 @@ function moduleHeader(page: Page, moduleTitle: string | RegExp): Locator {
 }
 
 /** Maximize a module to fill the dashboard, or restore it, with the button in its header. */
-export async function setModuleMaximized(
-    page: Page,
-    moduleTitle: string | RegExp,
-    maximized: boolean,
-): Promise<void> {
+export async function setModuleMaximized(page: Page, moduleTitle: string | RegExp, maximized: boolean): Promise<void> {
     // The header buttons have no accessible name; MUI icons carry a data-testid.
     const [clickIcon, resultIcon] = maximized
         ? ["OpenInFullIcon", "CloseFullscreenIcon"]
@@ -921,9 +991,7 @@ export async function createSessionAndSelectEnsemble(
     await pace(page);
 
     markStep("Apply selected ensembles");
-    const applyNarration = narrate(
-        "We select the ensembles and apply them to load them into the session.",
-    );
+    const applyNarration = narrate("We select the ensembles and apply them to load them into the session.");
 
     await smoothClick(page, page.getByText(testCase.ensembleName).first());
 
@@ -975,8 +1043,13 @@ export async function connectDataChannel(
     await expect(async () => {
         // Clean up a content selector left open by a previous attempt.
         if (await selector.isVisible().catch(() => false)) {
-            await selector.getByRole("button", { name: "Cancel" }).click().catch(() => undefined);
-            await expect(selector).toBeHidden({ timeout: 2_000 }).catch(() => undefined);
+            await selector
+                .getByRole("button", { name: "Cancel" })
+                .click()
+                .catch(() => undefined);
+            await expect(selector)
+                .toBeHidden({ timeout: 2_000 })
+                .catch(() => undefined);
         }
 
         await smoothMoveToLocator(page, origin);
