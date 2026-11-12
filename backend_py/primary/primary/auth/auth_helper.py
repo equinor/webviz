@@ -132,7 +132,7 @@ class AuthHelper:
 
         return RedirectResponse(flow_dict["auth_uri"])
 
-    # pylint: disable-next=async-suffix
+    # pylint: disable-next=async-suffix, too-many-return-statements
     async def _authorized_callback_route(self, request: Request) -> Response:
         await starsessions.load_session(request)
 
@@ -387,6 +387,7 @@ def _acquire_refreshed_identity_and_tokens(
     # refresh on the graph scopes to get a new ID token. This means we don't get the benefit of the msal token cache,
     # so we try and avoid forcing a refresh of the ID token unless it is getting close to expiring.
     # Similar to msal we will consider it expired if it expires is less than 5 minutes.
+    new_auth_info: _UserAuthInfo | None
     time_now = time.time()
     identity_expires_in = curr_auth_info.user_identity_expires_at - time_now if curr_auth_info else 0
     if curr_auth_info and identity_expires_in >= 5 * 60:
