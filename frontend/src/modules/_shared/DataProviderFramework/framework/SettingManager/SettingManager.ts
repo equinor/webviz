@@ -18,6 +18,7 @@ import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunct
 
 import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingAttributes } from "../../interfacesAndTypes/customSettingsHandler";
+import type { Item } from "../../interfacesAndTypes/entities";
 import type { DpfDashboardSettingAdapter } from "../../settings/SettingRegistry/dashboardSettingAdapters";
 import type { Setting, SettingTypeDefinitions } from "../../settings/settingsDefinitions";
 import type { ExternalSettingController } from "../ExternalSettingController/ExternalSettingController";
@@ -511,6 +512,13 @@ export class SettingManager<
 
     isExternallyControlled(): boolean {
         return this._externalController !== null;
+    }
+
+    /**
+     * The item (shared setting or group) whose controller currently controls this setting, if any.
+     */
+    getExternalControllerItem(): Item | null {
+        return this._externalController?.getParentItem() ?? null;
     }
 
     isValueValid(): boolean {

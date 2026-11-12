@@ -16,6 +16,9 @@ export enum RightDrawerContent {
     ColorPaletteSettings = "ColorPaletteSettings",
 }
 
+export type DataProviderFrameworkGui = "classic" | "treeInspector";
+export type DataProviderFrameworkSettingsPlacement = "below" | "beside" | "floating";
+
 export enum GuiState {
     RightDrawerContent = "rightDrawerContent",
     LeftSettingsPanelIsCollapsed = "leftSettingsPanelIsCollapsed",
@@ -49,6 +52,8 @@ export enum GuiState {
     EnsembleLoadingWarningInfoDialogOpen = "ensembleLoadingWarningInfoDialogOpen",
     IsActionBarVisible = "isActionBarVisible",
     DashboardSettingsPanelVisible = "dashboardSettingsPanelVisible",
+    DataProviderFrameworkGui = "dataProviderFrameworkGui",
+    DataProviderFrameworkSettingsPlacement = "dataProviderFrameworkSettingsPlacement",
 }
 
 export enum GuiEvent {
@@ -148,6 +153,8 @@ type GuiStateValueTypes = {
     [GuiState.EnsembleLoadingWarningInfoDialogOpen]: boolean;
     [GuiState.IsActionBarVisible]: boolean;
     [GuiState.DashboardSettingsPanelVisible]: boolean;
+    [GuiState.DataProviderFrameworkGui]: DataProviderFrameworkGui;
+    [GuiState.DataProviderFrameworkSettingsPlacement]: DataProviderFrameworkSettingsPlacement;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -182,6 +189,8 @@ defaultStates.set(GuiState.EnsembleLoadingWarningInfoDialogOpen, false);
 defaultStates.set(GuiState.IsActionBarVisible, true);
 defaultStates.set(GuiState.DashboardSettingsPanelVisible, false);
 defaultStates.set(GuiState.IsSwitchingDashboard, false);
+defaultStates.set(GuiState.DataProviderFrameworkGui, "classic");
+defaultStates.set(GuiState.DataProviderFrameworkSettingsPlacement, "below");
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelIsCollapsed,
@@ -192,6 +201,8 @@ const persistentStates: GuiState[] = [
     GuiState.RightDrawerContent,
     GuiState.IsActionBarVisible,
     GuiState.DashboardSettingsPanelVisible,
+    GuiState.DataProviderFrameworkGui,
+    GuiState.DataProviderFrameworkSettingsPlacement,
 ];
 
 export class GuiMessageBroker {

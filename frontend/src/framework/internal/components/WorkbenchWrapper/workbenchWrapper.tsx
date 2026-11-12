@@ -3,6 +3,7 @@ import React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiMessageBrokerContext } from "@framework/GuiMessageBrokerContext";
 import { ActiveSessionBoundary } from "@framework/internal/components/ActiveSessionBoundary";
 import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
@@ -80,7 +81,7 @@ export function WorkbenchWrapper() {
     }
 
     return (
-        <>
+        <GuiMessageBrokerContext.Provider value={workbench.getGuiMessageBroker()}>
             <TopBar workbench={workbench} />
             <ActiveSessionBoundary workbench={workbench}>
                 <ActiveDashboardBoundary>
@@ -107,6 +108,6 @@ export function WorkbenchWrapper() {
             <MultiSessionsRecoveryDialog workbench={workbench} />
             <PersistenceManagementDialog workbench={workbench} />
             <SessionErrorDialog workbench={workbench} />
-        </>
+        </GuiMessageBrokerContext.Provider>
     );
 }

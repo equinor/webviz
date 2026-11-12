@@ -2,6 +2,7 @@ import React from "react";
 
 import { Add } from "@mui/icons-material";
 
+import { useGuiMessageBroker } from "@framework/GuiMessageBrokerContext";
 import { SortableList } from "@lib/components/SortableList";
 import type { IsMoveAllowedArgs } from "@lib/components/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -16,6 +17,13 @@ import { View } from "../../groups/implementations/View";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { instanceofItemGroup } from "../../interfacesAndTypes/entities";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
+import {
+    DpfGuiToggleButton,
+    DpfSettingsPlacementMenu,
+    useDataProviderFrameworkGui,
+    useDataProviderFrameworkSettingsPlacement,
+} from "../TreeInspector/DpfGuiToggleButton";
+import { TreeInspectorComponent } from "../TreeInspector/TreeInspectorComponent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
@@ -39,6 +47,10 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
 
     const groupDelegate = props.dataProviderManager.getGroupDelegate();
     const items = usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
+
+    const guiMessageBroker = useGuiMessageBroker();
+    const gui = useDataProviderFrameworkGui(guiMessageBroker);
+    const settingsPlacement = useDataProviderFrameworkSettingsPlacement(guiMessageBroker);
 
     function handleActionClick(identifier: string, group?: ItemGroup) {
         let groupDelegate = props.dataProviderManager.getGroupDelegate();
@@ -154,37 +166,53 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
                     <div className="font-bolder text-body-sm grow">{props.title}</div>
                     <Actions actionGroups={actions} onActionClick={handleActionClick} />
                     <ExpandCollapseAllButton group={props.dataProviderManager} />
+                    {guiMessageBroker && gui === "treeInspector" && (
+                        <DpfSettingsPlacementMenu guiMessageBroker={guiMessageBroker} />
+                    )}
+                    {guiMessageBroker && <DpfGuiToggleButton guiMessageBroker={guiMessageBroker} />}
                     {props.additionalHeaderComponents}
                 </div>
-                <div
-                    className="bg-canvas relative flex w-full grow flex-col"
-                    style={{ height: listSize.height - convertRemToPixels(12) }}
-                >
-                    <SortableList
-                        onItemMoved={handleItemMoved}
-                        isMoveAllowed={checkIfItemMoveAllowed}
-                        className="h-full"
+                {gui === "treeInspector" ? (
+                    <div className="flex min-h-0 w-full grow flex-col">
+                        <TreeInspectorComponent
+                            dataProviderManager={props.dataProviderManager}
+                            groupActions={groupActions}
+                            onAction={props.onAction}
+                            isMoveAllowed={props.isMoveAllowed}
+                            settingsPlacement={settingsPlacement}
+                        />
+                    </div>
+                ) : (
+                    <div
+                        className="bg-canvas relative flex w-full grow flex-col"
+                        style={{ height: listSize.height - convertRemToPixels(12) }}
                     >
-                        <SortableList.Content>
-                            <SortableList.ScrollContainer>
-                                <div className="relative h-full min-h-0 grow overflow-auto">
-                                    {items.length === 0 && (
-                                        <div className="gap-x-3xs -mt-3xs text-body-sm flex h-full items-center justify-center">
-                                            {props.emptyContentPlaceholder ?? (
-                                                <>
-                                                    Click on <Add fontSize="inherit" /> to add an item.
-                                                </>
-                                            )}
-                                        </div>
-                                    )}
-                                    {items.map((item: Item) =>
-                                        makeSortableListItemComponent(item, makeActionsForGroup, handleActionClick),
-                                    )}
-                                </div>
-                            </SortableList.ScrollContainer>
-                        </SortableList.Content>
-                    </SortableList>
-                </div>
+                        <SortableList
+                            onItemMoved={handleItemMoved}
+                            isMoveAllowed={checkIfItemMoveAllowed}
+                            className="h-full"
+                        >
+                            <SortableList.Content>
+                                <SortableList.ScrollContainer>
+                                    <div className="relative h-full min-h-0 grow overflow-auto">
+                                        {items.length === 0 && (
+                                            <div className="gap-x-3xs -mt-3xs text-body-sm flex h-full items-center justify-center">
+                                                {props.emptyContentPlaceholder ?? (
+                                                    <>
+                                                        Click on <Add fontSize="inherit" /> to add an item.
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+                                        {items.map((item: Item) =>
+                                            makeSortableListItemComponent(item, makeActionsForGroup, handleActionClick),
+                                        )}
+                                    </div>
+                                </SortableList.ScrollContainer>
+                            </SortableList.Content>
+                        </SortableList>
+                    </div>
+                )}
             </div>
         </div>
     );
