@@ -1,6 +1,6 @@
 import React from "react";
 
-import { cloneDeep, isEqual } from "lodash-es";
+import { cloneDeep, isEqual, omit } from "lodash-es";
 
 import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
@@ -20,6 +20,8 @@ import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { filterAndOrderSelectedIndexValues } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
+import type { SensitivityCaseOption, SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { makeSensitivityCaseKey } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
@@ -32,7 +34,10 @@ export type InplaceVolumesFilterComponentProps = {
     selectedTableNames: string[];
     selectedIndicesWithValues: InplaceVolumesIndexWithValues_api[];
     selectedAllowIndicesValuesIntersection: boolean;
-
+    availableSensitivityCases?: SensitivityCaseOption[];
+    selectedSensitivityCases?: SensitivityCaseIdent[];
+    sensitivityCasesAnnotations?: SettingAnnotation[];
+    dataAnnotations?: SettingAnnotation[];
     ensembleAnnotations?: SettingAnnotation[];
     tableNamesAnnotations?: SettingAnnotation[];
     selectionAnnotations?: SettingAnnotation[];
@@ -54,6 +59,9 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     const [indicesWithValues, setIndicesWithValues] = React.useState<InplaceVolumesIndexWithValues_api[]>(
         props.selectedIndicesWithValues,
     );
+    const [sensitivityCases, setSensitivityCases] = React.useState<SensitivityCaseIdent[]>(
+        props.selectedSensitivityCases ?? [],
+    );
 
     const [prevEnsembleIdents, setPrevEnsembleIdents] = React.useState<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>(
         props.selectedEnsembleIdents,
@@ -62,6 +70,9 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     const [prevIndicesWithValues, setPrevIndicesWithValues] = React.useState<InplaceVolumesIndexWithValues_api[]>(
         props.selectedIndicesWithValues,
     );
+    const [prevSelectedSensitivityCases, setPrevSelectedSensitivityCases] = React.useState<
+        SensitivityCaseIdent[] | undefined
+    >(props.selectedSensitivityCases);
     const [prevSyncedFilter, setPrevSyncedFilter] = React.useState<InplaceVolumesFilterSettings | null>(null);
 
     // const debounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -74,6 +85,11 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     if (!isEqual(props.selectedTableNames, prevTableNames)) {
         setTableNames(props.selectedTableNames);
         setPrevTableNames(props.selectedTableNames);
+    }
+
+    if (!isEqual(props.selectedSensitivityCases, prevSelectedSensitivityCases)) {
+        setSensitivityCases(props.selectedSensitivityCases ?? []);
+        setPrevSelectedSensitivityCases(props.selectedSensitivityCases);
     }
 
     if (!isEqual(props.selectedIndicesWithValues, prevIndicesWithValues)) {
@@ -107,11 +123,12 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
 
     if (!isEqual(syncedFilter, prevSyncedFilter)) {
         if (syncedFilter) {
-            const filter = {
+            const filter: InplaceVolumesFilterSettings = {
                 ensembleIdents,
                 tableNames,
                 indicesWithValues,
                 allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
+                sensitivityCases,
             };
 
             if (!isEqual(syncedFilter.ensembleIdents, ensembleIdents)) {
@@ -120,6 +137,15 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
 
             if (!isEqual(syncedFilter.tableNames, tableNames)) {
                 filter.tableNames = [...syncedFilter.tableNames];
+            }
+
+            // Only adopt cases when the publisher knows about them; validity is fixed up by the module's atom.
+            if (syncedFilter.sensitivityCases && !isEqual(syncedFilter.sensitivityCases, sensitivityCases)) {
+                const newSensitivityCases = syncedFilter.sensitivityCases.map((sensitivityCase) => ({
+                    ...sensitivityCase,
+                }));
+                setSensitivityCases(newSensitivityCases);
+                filter.sensitivityCases = newSensitivityCases;
             }
 
             if (syncedFilter.allowIndicesValuesIntersection !== props.selectedAllowIndicesValuesIntersection) {
@@ -154,12 +180,15 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     }
 
     function callOnChangeAndMaybePublish(filter: InplaceVolumesFilterSettings, publish: boolean): void {
-        props.onChange(filter);
+        // Modules without case selection must not publish cases, or synced modules would reset theirs.
+        const supportedFilter =
+            props.selectedSensitivityCases === undefined ? omit(filter, "sensitivityCases") : filter;
+        props.onChange(supportedFilter);
         if (publish) {
             syncHelper.publishValue(
                 SyncSettingKey.INPLACE_VOLUMES_FILTER,
                 "global.syncValue.inplaceVolumesFilterSettings",
-                filter,
+                supportedFilter,
             );
         }
     }
@@ -189,6 +218,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             tableNames,
             indicesWithValues,
             allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
+            sensitivityCases,
         };
         callOnChangeAndMaybePublish(filter, publish);
     }
@@ -200,6 +230,22 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             tableNames: newTableNames,
             indicesWithValues,
             allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
+            sensitivityCases,
+        };
+        callOnChangeAndMaybePublish(filter, publish);
+    }
+
+    function handleSensitivityCasesChange(newKeys: string[], publish = true): void {
+        const newSensitivityCases = (props.availableSensitivityCases ?? [])
+            .filter((option) => newKeys.includes(makeSensitivityCaseKey(option.caseIdent)))
+            .map((option) => option.caseIdent);
+        setSensitivityCases(newSensitivityCases);
+        const filter = {
+            ensembleIdents,
+            tableNames,
+            indicesWithValues,
+            allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
+            sensitivityCases: newSensitivityCases,
         };
         callOnChangeAndMaybePublish(filter, publish);
     }
@@ -210,6 +256,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             tableNames,
             indicesWithValues,
             allowIndicesValuesIntersection: checked,
+            sensitivityCases,
         };
         const doPublish = true;
         const dropDebounce = true;
@@ -233,11 +280,16 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             tableNames,
             indicesWithValues: newIndicesWithValues,
             allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
+            sensitivityCases,
         };
         maybeDebounceOnChange(filter, publish);
     }
 
     const tableSourceOptions = props.availableTableNames.map((source) => ({ value: source, label: source }));
+    const sensitivityCaseOptions = (props.availableSensitivityCases ?? []).map((option) => ({
+        value: makeSensitivityCaseKey(option.caseIdent),
+        label: option.label,
+    }));
 
     const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(props.workbenchSession);
 
@@ -258,6 +310,15 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     return (
         <>
             <Setting.Section title="Data" defaultOpen>
+                {props.dataAnnotations?.map((annotation) => (
+                    <Banner
+                        layoutClassName="col-span-3"
+                        key={annotation.message}
+                        tone={({ info: "info", warning: "warning", error: "danger" } as const)[annotation.type]}
+                    >
+                        {annotation.message}
+                    </Banner>
+                ))}
                 <Setting.Field label="Ensembles" annotations={props.ensembleAnnotations} stacked>
                     {props.allowDeltaEnsembles ? (
                         <EnsemblePicker
@@ -297,13 +358,25 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         size={3}
                     />
                 </Setting.Field>
+                {sensitivityCaseOptions.length > 0 && (
+                    <Setting.Field label="Sensitivity cases" stacked annotations={props.sensitivityCasesAnnotations}>
+                        <Select
+                            options={sensitivityCaseOptions}
+                            value={sensitivityCases.map(makeSensitivityCaseKey)}
+                            onValueChange={handleSensitivityCasesChange}
+                            multiple
+                            showQuickSelectButtons
+                            size={Math.max(Math.min(sensitivityCaseOptions.length, 10), 3)}
+                        />
+                    </Setting.Field>
+                )}
                 <Setting.Field
                     help={{
                         content: (
                             <>
-                                Tables with the same filters may contain different values, such as different zone
-                                names. Enable this setting to compare them using only the values available in every
-                                table. Values not shared by all tables are omitted.
+                                Tables with the same filters may contain different values, such as different zone names.
+                                Enable this setting to compare them using only the values available in every table.
+                                Values not shared by all tables are omitted.
                                 <br />
                                 Filters that are not available in every selected table are always omitted.
                             </>
@@ -333,7 +406,11 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                     <Banner
                         key={annotation.message}
                         layoutClassName="col-span-3"
-                        tone={({ info: "info", warning: "warning", error: "danger" } as const)[annotation.type]}
+                        tone={
+                            ({ info: "info", warning: "warning", error: "danger", invalid: "danger" } as const)[
+                                annotation.type
+                            ]
+                        }
                     >
                         {annotation.message}
                     </Banner>

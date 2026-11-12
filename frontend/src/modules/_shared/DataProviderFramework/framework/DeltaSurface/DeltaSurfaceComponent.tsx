@@ -13,6 +13,7 @@ import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { GroupErrorBadge } from "../utilityComponents/GroupErrorBadge";
+import { GroupInvalidSettingsBadge } from "../utilityComponents/GroupInvalidSettingsBadge";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
@@ -53,6 +54,7 @@ export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.
     function makeEndAdornment() {
         const adornments: React.ReactNode[] = [];
         adornments.push(<GroupErrorBadge key="error-badge" group={props.deltaSurface} />);
+        adornments.push(<GroupInvalidSettingsBadge key="invalid-settings-badge" group={props.deltaSurface} />);
         if (props.deltaSurface.getGroupDelegate().findChildren((item) => isDataProvider(item)).length < 2) {
             adornments.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
         }

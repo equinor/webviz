@@ -98,7 +98,8 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                 </Dialog.Header>
                 <Dialog.Body>
                     <Banner tone="warning" layoutClassName="mb-2xs">
-                        Sessions are not guaranteed to persist, as underlying data or module states may change.
+                        Saved sessions are not guaranteed to keep working, as underlying data or module states may
+                        change.
                     </Banner>
                     <form id={formId} className="gap-x-sm flex items-center" onSubmit={handleSave}>
                         <DashboardPreviewCarousel
@@ -173,16 +174,16 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                 onOpenChange={setShowConfirmationDialog}
                 title="Discard changes?"
                 primaryAction={{
-                    label: "Discard",
-                    onClick: handleDiscardChanges,
-                    tone: "danger",
+                    label: "Keep editing",
+                    onClick: () => setShowConfirmationDialog(false),
+                    tone: "neutral",
                     closesDialog: true,
                 }}
                 secondaryActions={[
                     {
-                        label: "Keep editing",
-                        onClick: () => setShowConfirmationDialog(false),
-                        tone: "neutral",
+                        label: "Discard",
+                        onClick: handleDiscardChanges,
+                        tone: "danger",
                         closesDialog: true,
                     },
                 ]}

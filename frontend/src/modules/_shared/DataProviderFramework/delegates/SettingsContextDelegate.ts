@@ -347,7 +347,7 @@ export class SettingsContextDelegate<
             // Temporary skip undefined settingsDelegate (await persistence versioning)
             // - Setting might have been removed since creation of the serialized state (e.g. session).
             if (settingDelegate === undefined) {
-                reportError(`Setting with key '${key}' does not exist anymore. Cannot apply persisted value.`);
+                reportError(`Setting with key '${key}' does not exist anymore. Cannot apply saved value.`);
                 continue;
             }
 

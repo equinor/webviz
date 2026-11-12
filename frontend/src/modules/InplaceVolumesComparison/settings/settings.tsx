@@ -3,17 +3,22 @@ import type React from "react";
 import { useAtom, useAtomValue } from "jotai";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import type { EnsembleSensitivities } from "@framework/EnsembleSensitivities";
 import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
+import { FIXUP } from "@framework/utils/atomUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Banner } from "@lib/components/Banner";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
 import { Select } from "@lib/components/Select";
 import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
+import { useAddErrorAnnotationsAsActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { getSensitivityCaseOptions, makeSensitivityCaseKey } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
@@ -30,18 +35,22 @@ import {
     availableReferenceTableNamesAtom,
     availableResultNamesAtom,
     commonIndicesWithValuesAtom,
+    comparisonSensitivitiesAtom,
     indexColumnDifferencesAtom,
     indexColumnsWithNoSelectedValuesAtom,
     isCrossTableComparisonAtom,
     isIndexValueIntersectionActiveAtom,
     isSingleEnsembleComparisonAtom,
+    referenceSensitivitiesAtom,
     waterfallFactorSpecAtom,
 } from "./atoms/derivedAtoms";
 import {
     selectedComparisonEnsembleIdentAtom,
+    selectedComparisonSensitivityCaseAtom,
     selectedComparisonTableNameAtom,
     selectedIndicesWithValuesAtom,
     selectedReferenceEnsembleIdentAtom,
+    selectedReferenceSensitivityCaseAtom,
     selectedReferenceTableNameAtom,
     selectedResultNameAtom,
     selectedSubplotByAtom,
@@ -58,9 +67,33 @@ function formatIndexValueList(values: string[]): string {
     return values.length > MAX_LISTED_INDEX_VALUES ? `${listed}, ... (${values.length} in total)` : listed;
 }
 
+function makeSensitivityCaseItems(sensitivities: EnsembleSensitivities | null): ComboboxItem<string>[] {
+    if (!sensitivities) {
+        return [];
+    }
+    return getSensitivityCaseOptions(sensitivities).map((option) => ({
+        label: option.label,
+        value: makeSensitivityCaseKey(option.caseIdent),
+    }));
+}
+
+function findSensitivityCaseByKey(
+    sensitivities: EnsembleSensitivities | null,
+    key: string | null,
+): SensitivityCaseIdent | null {
+    if (!sensitivities || key === null) {
+        return null;
+    }
+    return (
+        getSensitivityCaseOptions(sensitivities).find((option) => makeSensitivityCaseKey(option.caseIdent) === key)
+            ?.caseIdent ?? null
+    );
+}
+
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
+    const handlePanelAnnotationsChange = useAddErrorAnnotationsAsActionRequiredToStatusWriter(statusWriter);
     const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(props.workbenchSession);
 
     const tableDefinitionsQuery = useAtomValue(tableDefinitionsQueryAtom);
@@ -69,6 +102,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [comparisonEnsembleIdent, setComparisonEnsembleIdent] = useAtom(selectedComparisonEnsembleIdentAtom);
     const [selectedReferenceTableName, setSelectedReferenceTableName] = useAtom(selectedReferenceTableNameAtom);
     const [selectedComparisonTableName, setSelectedComparisonTableName] = useAtom(selectedComparisonTableNameAtom);
+    const [selectedReferenceSensitivityCase, setSelectedReferenceSensitivityCase] = useAtom(
+        selectedReferenceSensitivityCaseAtom,
+    );
+    const [selectedComparisonSensitivityCase, setSelectedComparisonSensitivityCase] = useAtom(
+        selectedComparisonSensitivityCaseAtom,
+    );
+    const referenceSensitivities = useAtomValue(referenceSensitivitiesAtom);
+    const comparisonSensitivities = useAtomValue(comparisonSensitivitiesAtom);
     const [selectedResultName, setSelectedResultName] = useAtom(selectedResultNameAtom);
     const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(selectedSubplotByAtom);
     const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
@@ -91,6 +132,17 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     propagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
 
+    // Cases belong to the ensemble: pick a default for a new one instead of keeping an empty or stale case.
+    function handleReferenceEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {
+        setReferenceEnsembleIdent(ensembleIdent);
+        setSelectedReferenceSensitivityCase(FIXUP);
+    }
+
+    function handleComparisonEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {
+        setComparisonEnsembleIdent(ensembleIdent);
+        setSelectedComparisonSensitivityCase(FIXUP);
+    }
+
     const persistedReferenceEnsembleAnnotations = useMakePersistableFixableAtomAnnotations(
         selectedReferenceEnsembleIdentAtom,
     );
@@ -99,6 +151,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     );
     const referenceTableNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedReferenceTableNameAtom);
     const comparisonTableNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedComparisonTableNameAtom);
+    const referenceSensitivityCaseAnnotations = useMakePersistableFixableAtomAnnotations(
+        selectedReferenceSensitivityCaseAtom,
+    );
+    const persistedComparisonSensitivityCaseAnnotations = useMakePersistableFixableAtomAnnotations(
+        selectedComparisonSensitivityCaseAtom,
+    );
     const resultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedResultNameAtom);
     const subplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
 
@@ -112,9 +170,18 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         !areSourcesDistinct,
     );
 
-    const comparisonEnsembleAnnotations: SettingAnnotation[] = isSameSourceSelectedTwice
-        ? [...persistedComparisonEnsembleAnnotations, { type: "error", message: "Must differ from the reference" }]
-        : persistedComparisonEnsembleAnnotations;
+    const duplicateSourceAnnotation: SettingAnnotation = {
+        type: "error",
+        message: "Must differ from the reference",
+    };
+    const comparisonEnsembleAnnotations: SettingAnnotation[] =
+        isSameSourceSelectedTwice && !comparisonSensitivities
+            ? [...persistedComparisonEnsembleAnnotations, duplicateSourceAnnotation]
+            : persistedComparisonEnsembleAnnotations;
+    const comparisonSensitivityCaseAnnotations: SettingAnnotation[] =
+        isSameSourceSelectedTwice && comparisonSensitivities
+            ? [...persistedComparisonSensitivityCaseAnnotations, duplicateSourceAnnotation]
+            : persistedComparisonSensitivityCaseAnnotations;
 
     if (areSourcesDistinct && !areSelectedTablesComparable) {
         statusWriter.addWarning("The selected table sources share no index columns and are not comparable.");
@@ -155,13 +222,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIndicesWithValues(newIndicesWithValues);
     }
 
+    const isResultNotDecomposable = selectedResultName.value !== null && waterfallFactorSpec === null;
+
     return (
         <Setting.ScrollArea>
-            <Setting.Panel>
+            <Setting.Panel onAnnotationsChange={handlePanelAnnotationsChange}>
                 <Setting.Section title="Sources" defaultOpen>
                     <Setting.Field
                         label="Reference ensemble"
-
                         help={{
                             title: "Reference and comparison",
                             content: (
@@ -175,6 +243,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                     <br />
                                     Each side has its own table source, so the same ensemble can be used on both sides
                                     to compare two table sources against each other.
+                                    <br />
+                                    <br />
+                                    For an ensemble with sensitivities, each side also selects a sensitivity case and
+                                    only that case&apos;s realizations are used, e.g. to compare a case against the base
+                                    case (rms_seed) of the same ensemble.
                                 </>
                             ),
                         }}
@@ -185,7 +258,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={referenceEnsembleIdent.value}
                             ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                            onValueChange={setReferenceEnsembleIdent}
+                            onValueChange={handleReferenceEnsembleChange}
                         />
                     </Setting.Field>
                     <Setting.Field
@@ -194,8 +267,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                                referenceEnsembleIdent.value &&
-                                referenceTableNameOptions.length === 0
+                            referenceEnsembleIdent.value &&
+                            referenceTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
@@ -207,6 +280,28 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             onValueChange={(v) => setSelectedReferenceTableName(v)}
                         />
                     </Setting.Field>
+                    {referenceSensitivities && (
+                        <Setting.Field
+                            label="Reference sensitivity case"
+                            annotations={referenceSensitivityCaseAnnotations}
+                        >
+                            <Combobox
+                                aria-label="Reference sensitivity case"
+                                placeholder="Sensitivity case"
+                                value={
+                                    selectedReferenceSensitivityCase.value
+                                        ? makeSensitivityCaseKey(selectedReferenceSensitivityCase.value)
+                                        : null
+                                }
+                                items={makeSensitivityCaseItems(referenceSensitivities)}
+                                onValueChange={(value) =>
+                                    setSelectedReferenceSensitivityCase(
+                                        findSensitivityCaseByKey(referenceSensitivities, value),
+                                    )
+                                }
+                            />
+                        </Setting.Field>
+                    )}
 
                     <Setting.Field label="Comparison ensemble" annotations={comparisonEnsembleAnnotations}>
                         <EnsembleDropdown
@@ -214,8 +309,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={comparisonEnsembleIdent.value}
                             ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                            onValueChange={setComparisonEnsembleIdent}
-
+                            onValueChange={handleComparisonEnsembleChange}
                         />
                     </Setting.Field>
                     <Setting.Field
@@ -224,8 +318,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                                comparisonEnsembleIdent.value &&
-                                comparisonTableNameOptions.length === 0
+                            comparisonEnsembleIdent.value &&
+                            comparisonTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
@@ -237,17 +331,37 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             onValueChange={(v) => setSelectedComparisonTableName(v)}
                         />
                     </Setting.Field>
+                    {comparisonSensitivities && (
+                        <Setting.Field
+                            label="Comparison sensitivity case"
+                            annotations={comparisonSensitivityCaseAnnotations}
+                        >
+                            <Combobox
+                                aria-label="Comparison sensitivity case"
+                                placeholder="Sensitivity case"
+                                value={
+                                    selectedComparisonSensitivityCase.value
+                                        ? makeSensitivityCaseKey(selectedComparisonSensitivityCase.value)
+                                        : null
+                                }
+                                items={makeSensitivityCaseItems(comparisonSensitivities)}
+                                onValueChange={(value) =>
+                                    setSelectedComparisonSensitivityCase(
+                                        findSensitivityCaseByKey(comparisonSensitivities, value),
+                                    )
+                                }
+                            />
+                        </Setting.Field>
+                    )}
 
                     {isCrossTableComparison && (
-                        <Banner tone="warning" layoutClassName="col-span-3">
-                            <strong>Comparing different table sources.</strong> Differences in BULK and PORO between
-                            table sources reflect gridding and upscaling as well as any reservoir change, so the factor
-                            contributions are not a like-for-like comparison.
+                        <Setting.Banner type="warning" title="Comparing different table sources" report>
+                            Differences in BULK and PORO between table sources reflect gridding and upscaling as well as
+                            any reservoir change, so the factor contributions are not a like-for-like comparison.
                             {isSingleEnsembleComparison && " Both sides use the same ensemble."}
-                        </Banner>
+                        </Setting.Banner>
                     )}
                 </Setting.Section>
-
                 <Setting.Section title="Data" defaultOpen>
                     <Setting.Field
                         label="Response"
@@ -273,11 +387,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         />
                     </Setting.Field>
 
-                    {selectedResultName.value !== null && waterfallFactorSpec === null && (
-                        <Banner tone="warning" layoutClassName="col-span-3">
-                            <strong>Note:</strong> {selectedResultName.value} cannot be decomposed for the selected
-                            table. The volume columns it is built from (BULK, PORV, HCPV) must all be available.
-                        </Banner>
+                    {isResultNotDecomposable && (
+                        <Setting.Banner
+                            type="warning"
+                            title={`${selectedResultName.value} cannot be decomposed for the selected table`}
+                            report
+                        >
+                            The volume columns it is built from (BULK, PORV, HCPV) must all be available.
+                        </Setting.Banner>
                     )}
 
                     <Setting.Field stacked>
@@ -292,9 +409,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
                 <Setting.Section title="Filters" defaultOpen>
                     {indexColumnDifferences.length > 0 && (
-                        <Banner tone="warning" layoutClassName="col-span-3">
-                            <strong>The two sources do not have the same indices.</strong>
-                            <ul className="mt-xs ml-md list-disc">
+                        <Setting.Banner type="warning" title="The two sources do not have the same indices" report>
+                            <ul className="ml-md list-disc">
                                 {indexColumnDifferences.map((difference) => (
                                     <li key={difference.indexColumn}>
                                         <strong>{difference.indexColumn}</strong>
@@ -331,7 +447,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                     ? "Only values present in both are compared, so the totals below are for that shared subset and will not match the full-field volumes."
                                     : "These indices are left unfiltered, so the full volume of both sources is compared and the difference in coverage shows up in the BULK contribution."}
                             </div>
-                        </Banner>
+                        </Setting.Banner>
                     )}
 
                     {commonIndicesWithValues.length > 0 && (

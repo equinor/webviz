@@ -4,10 +4,13 @@ import { Field as FieldPrimitive } from "@lib/components/Field";
 import { Heading } from "@lib/components/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { SectionStatusContext } from "../_contexts/SectionStatusContext";
+import { useReportFieldAnnotations } from "../_hooks/useReportFieldAnnotations";
+import { useReportFieldOverlay } from "../_hooks/useReportFieldOverlay";
+
 import { Annotations } from "./Annotations";
 import { Overlay, type OverlayProps } from "./Overlay";
 import { LayoutContext } from "./Panel";
-import { SectionAnnotationsContext } from "./SectionAnnotationsContext";
 
 export type SettingAnnotation = {
     /** The severity level that determines the icon and color of the annotation. */
@@ -69,7 +72,10 @@ export type SettingFieldProps = {
 ) &
     (
         | {
-              /** Overlay displayed over the input. Mutually exclusive with individual overlay props. */
+              /**
+               * Overlay displayed over the input, blocking interaction with it. Mutually
+               * exclusive with individual overlay props.
+               */
               overlay?: Overlay;
               errorOverlay?: never;
               warningOverlay?: never;
@@ -123,35 +129,40 @@ export function Field(props: SettingFieldProps) {
               (props.infoOverlay && { type: "info", message: props.infoOverlay }) ||
               undefined;
 
-    const isInvalid = annotations.some((a) => a.type === "error");
-    const isWarning = annotations.some((a) => a.type === "warning");
+    const hasErrorAnnotation = annotations.some((a) => a.type === "error");
+    const hasWarningAnnotation = annotations.some((a) => a.type === "warning");
+    const hasErrorOverlay = overlay?.type === "error";
+    const hasInfo = annotations.some((a) => a.type === "info") || overlay?.type === "info";
+    const hasWarning = hasWarningAnnotation || overlay?.type === "warning";
 
-    // The section summary also reflects overlays - e.g. a failed query reports through errorOverlay while
-    // its annotations stay empty
-    const sectionHasError = isInvalid || overlay?.type === "error";
-    const sectionHasWarning = isWarning || overlay?.type === "warning";
-
-    const sectionAnnotationsContext = React.useContext(SectionAnnotationsContext);
+    const sectionStatusContext = React.useContext(SectionStatusContext);
     React.useEffect(
-        function registerAnnotationsEffect() {
-            if (!sectionAnnotationsContext) {
+        function reportFieldStatus() {
+            if (!sectionStatusContext) {
                 return;
             }
-            sectionAnnotationsContext.reportField(generatedInputId, {
-                hasError: sectionHasError,
-                hasWarning: sectionHasWarning,
+            sectionStatusContext.reportField(generatedInputId, {
+                hasInvalidValue: hasErrorAnnotation,
+                hasError: hasErrorOverlay,
+                hasWarning,
+                hasInfo,
             });
             return () => {
-                sectionAnnotationsContext.unregisterField(generatedInputId);
+                sectionStatusContext.unregisterField(generatedInputId);
             };
         },
-        [sectionAnnotationsContext, generatedInputId, sectionHasError, sectionHasWarning],
+        [sectionStatusContext, generatedInputId, hasErrorAnnotation, hasErrorOverlay, hasWarning, hasInfo],
     );
 
-    if (!props.label) {
+    useReportFieldAnnotations(annotations);
+    useReportFieldOverlay(overlay ?? null);
+
+    const isStacked = props.stacked || groupContext === "stacked";
+
+    if (!props.label && !isStacked) {
         return (
             <div className="setting-row in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-group:px-xs in-data-in-group:py-2xs in-data-in-group:col-span-3 in-data-in-group:grid in-data-in-group:grid-cols-subgrid in-data-in-section:col-span-3 in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
-                <FieldPrimitive.Root inline invalid={isInvalid} warning={isWarning}>
+                <FieldPrimitive.Root inline invalid={hasErrorAnnotation} warning={hasWarningAnnotation}>
                     <div
                         className={resolveClassNames(props.contentClassName, "relative w-full items-center", {
                             "col-span-2": !!props.help,
@@ -191,12 +202,14 @@ export function Field(props: SettingFieldProps) {
         );
     }
 
-    const isStacked = props.stacked || groupContext === "stacked";
-
     if (isStacked) {
         return (
             <div className="setting-row in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-group:px-xs in-data-in-group:py-2xs in-data-in-group:col-span-3 in-data-in-group:grid in-data-in-group:grid-cols-subgrid in-data-in-section:col-span-3 in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
-                <FieldPrimitive.Root layoutClassName="w-full col-span-3" invalid={isInvalid} warning={isWarning}>
+                <FieldPrimitive.Root
+                    layoutClassName="w-full col-span-3"
+                    invalid={hasErrorAnnotation}
+                    warning={hasWarningAnnotation}
+                >
                     <div className="gap-x-2xs flex w-full items-center justify-between">
                         {props.label && (
                             <FieldPrimitive.Label {...(htmlFor && { htmlFor })}>{props.label}</FieldPrimitive.Label>
@@ -228,7 +241,7 @@ export function Field(props: SettingFieldProps) {
 
     return (
         <div className="setting-row in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-group:px-xs in-data-in-group:py-2xs in-data-in-group:col-span-3 in-data-in-group:grid in-data-in-group:grid-cols-subgrid in-data-in-section:col-span-3 in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
-            <FieldPrimitive.Root inline invalid={isInvalid} warning={isWarning}>
+            <FieldPrimitive.Root inline invalid={hasErrorAnnotation} warning={hasWarningAnnotation}>
                 <div className="gap-y-4xs flex flex-col justify-center">
                     <div className="gap-x-2xs flex items-center">
                         {props.label && (
