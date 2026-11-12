@@ -12,6 +12,7 @@ import type { DataProviderManager } from "../DataProviderManager/DataProviderMan
 import type { GroupActions, OnAction } from "./addItem";
 import { makeAddMenuItems, runAddAction } from "./addItem";
 import { FloatingSettingsFlyout } from "./FloatingSettingsFlyout";
+import { HistoryNavigationButtons } from "./HistoryNavigationButtons";
 import type { IsMoveAllowed } from "./moveRules";
 import { Rails } from "./Rails";
 import { SettingsPanel } from "./SettingsPanel";
@@ -19,6 +20,7 @@ import { StickyHeaders } from "./StickyHeaders";
 import type { AddRow, ItemRow } from "./treeModel";
 import { ROW_HEIGHT_PX, getGutterWidth, isSelectable } from "./treeModel";
 import { AddRowView, ItemRowView, SectionRowView } from "./TreeRowViews";
+import { useSelectionHistory } from "./useSelectionHistory";
 import { useTreeDragAndDrop } from "./useTreeDragAndDrop";
 import { useTreeModel } from "./useTreeModel";
 
@@ -43,6 +45,31 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
 
     const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
     const [anchorId, setAnchorId] = React.useState<string | null>(null);
+    const history = useSelectionHistory(relations.itemsById);
+
+    /** A selection made by the user - recorded in the history (which skips empty selections). */
+    function changeSelection(ids: string[], anchor: string | null) {
+        setSelectedIds(ids);
+        setAnchorId(anchor);
+        history.record(ids);
+    }
+
+    function navigateHistory(direction: "back" | "forward") {
+        const ids = direction === "back" ? history.goBack() : history.goForward();
+        if (ids) {
+            setSelectedIds(ids);
+            setAnchorId(ids[0]);
+        }
+    }
+
+    function handleHistoryKeyDown(event: React.KeyboardEvent) {
+        if (!event.altKey || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) {
+            return;
+        }
+        event.preventDefault();
+        navigateHistory(event.key === "ArrowLeft" ? "back" : "forward");
+    }
+
     const [hoveredId, setHoveredId] = React.useState<string | null>(null);
     const [panelHeight, setPanelHeight] = React.useState(DEFAULT_PANEL_HEIGHT_PX);
     const [panelWidthPercent, setPanelWidthPercent] = React.useState(DEFAULT_PANEL_WIDTH_PERCENT);
@@ -124,24 +151,62 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
             return;
         }
         if (event.ctrlKey || event.metaKey) {
-            setSelectedIds((prev) => (prev.includes(id) ? prev.filter((other) => other !== id) : [...prev, id]));
-            setAnchorId(id);
+            const ids = selectedIds.includes(id) ? selectedIds.filter((other) => other !== id) : [...selectedIds, id];
+            changeSelection(ids, id);
             return;
         }
         if (event.shiftKey && anchorId && selectableRowKeys.includes(anchorId)) {
             const from = selectableRowKeys.indexOf(anchorId);
             const to = selectableRowKeys.indexOf(id);
-            setSelectedIds(selectableRowKeys.slice(Math.min(from, to), Math.max(from, to) + 1));
+            changeSelection(selectableRowKeys.slice(Math.min(from, to), Math.max(from, to) + 1), anchorId);
             return;
         }
-        setSelectedIds([id]);
-        setAnchorId(id);
+        changeSelection([id], id);
     }
 
     function clearSelection() {
         setSelectedIds([]);
         setAnchorId(null);
     }
+
+    const [pendingRevealId, setPendingRevealId] = React.useState<string | null>(null);
+
+    /** Selects the item, expanding collapsed ancestors and scrolling it into view - used by the source chips. */
+    function selectAndReveal(itemId: string) {
+        const item = relations.itemsById.get(itemId);
+        if (!item) {
+            return;
+        }
+        const parent = item.getItemDelegate().getParentGroup();
+        for (const ancestor of parent?.getAncestors(() => true) ?? []) {
+            ancestor.getItemDelegate().setExpanded(true);
+        }
+        changeSelection([itemId], itemId);
+        setPendingRevealId(itemId);
+    }
+
+    React.useEffect(
+        function scrollRevealedItemIntoView() {
+            if (!pendingRevealId || !scrollElement) {
+                return;
+            }
+            const rowIndex = rows.findIndex((row) => row.type === "item" && row.key === pendingRevealId);
+            if (rowIndex === -1) {
+                // The rows for the expanded ancestors are not there yet
+                return;
+            }
+            const rowTop = rowIndex * ROW_HEIGHT_PX;
+            const isInView =
+                rowTop >= scrollElement.scrollTop &&
+                rowTop + ROW_HEIGHT_PX <= scrollElement.scrollTop + scrollElement.clientHeight;
+            if (!isInView) {
+                scrollElement.scrollTo({ top: rowTop - scrollElement.clientHeight / 3 });
+            }
+            // eslint-disable-next-line @eslint-react/set-state-in-effect -- the reveal is done once the row exists
+            setPendingRevealId(null);
+        },
+        [pendingRevealId, rows, scrollElement],
+    );
 
     // Rows and add rows stop their clicks, so only clicks on empty space and section headers get here
     function handleTreeBackgroundClick() {
@@ -204,8 +269,7 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
             const item = relations.itemsById.get(id);
             return item !== undefined && isSelectable(item);
         });
-        setSelectedIds(ids);
-        setAnchorId(ids[0] ?? null);
+        changeSelection(ids, ids[0] ?? null);
     }
 
     function handleAddActionClicked(identifier: string, row: AddRow) {
@@ -246,11 +310,23 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
 
     const dropTarget = dragState?.target ?? null;
 
+    const historyNavigation = (
+        <HistoryNavigationButtons
+            backTarget={history.backTarget}
+            forwardTarget={history.forwardTarget}
+            itemsById={relations.itemsById}
+            onBack={() => navigateHistory("back")}
+            onForward={() => navigateHistory("forward")}
+        />
+    );
+
     return (
         <div
             ref={setContainerElement}
             className={resolveClassNames("bg-canvas flex min-h-0 grow", isBeside ? "flex-row" : "flex-col")}
             onPointerDownCapture={markPointerDownInside}
+            // Also receives key presses in the floating settings, as React events bubble through portals
+            onKeyDown={handleHistoryKeyDown}
         >
             <div className="relative min-h-0 min-w-0 grow">
                 <div
@@ -281,7 +357,7 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
                                         <AddRowView
                                             key={row.key}
                                             row={row}
-                                            menuItems={makeAddMenuItems(groupActions, row.target.group)}
+                                            menuItems={makeAddMenuItems(groupActions, row.target)}
                                             onActionClicked={handleAddActionClicked}
                                         />
                                     );
@@ -349,6 +425,8 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
                             selectedItems={selectedItems}
                             relations={relations}
                             onHoverChange={setHoveredId}
+                            onSourceClick={selectAndReveal}
+                            navigation={historyNavigation}
                             headerAdornment={
                                 <Button
                                     variant="ghost"
@@ -393,6 +471,8 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
                             selectedItems={selectedItems}
                             relations={relations}
                             onHoverChange={setHoveredId}
+                            onSourceClick={selectAndReveal}
+                            navigation={historyNavigation}
                         />
                     </div>
                 </>

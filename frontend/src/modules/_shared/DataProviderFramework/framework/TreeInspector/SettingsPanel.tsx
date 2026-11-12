@@ -1,11 +1,11 @@
 import React from "react";
 
-import { cloneDeep, isEqual } from "lodash-es";
+import { isEqual } from "lodash-es";
 
+import { ComponentSizeContext } from "@lib/components/_shared/contexts/componentSizeContext";
 import { Button } from "@lib/components/Button";
 
 import type { Item } from "../../interfacesAndTypes/entities";
-import { SettingRegistry } from "../../settings/SettingRegistry";
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingTopic } from "../SettingManager/SettingManager";
@@ -13,6 +13,7 @@ import { SettingManagerComponent } from "../SettingManager/SettingManagerCompone
 import { isSharedSetting } from "../SharedSetting/SharedSetting";
 import { EditName } from "../utilityComponents/EditName";
 
+import { bindProxySetting, makeProxySetting } from "./proxySetting";
 import type { Relations } from "./treeModel";
 import { getItemId, getItemSettings, getRailColor } from "./treeModel";
 import { ItemIcon } from "./TreeRowViews";
@@ -34,28 +35,36 @@ function useSettingsTopics(settings: SettingManager<any>[], topics: SettingTopic
 
 const VALUE_TOPICS = [SettingTopic.INTERNAL_VALUE, SettingTopic.ATTRIBUTES, SettingTopic.IS_EXTERNALLY_CONTROLLED];
 
+/** Called with the id of the shared setting or settings-group whose chip was clicked */
+const SourceClickContext = React.createContext<(sourceId: string) => void>(() => {});
+
 type SourceChipProps = {
     source: Item;
     onHoverChange: (itemId: string | null) => void;
 };
 
 function SourceChip(props: SourceChipProps): React.ReactNode {
+    const onSourceClick = React.useContext(SourceClickContext);
     const sourceId = getItemId(props.source);
+    const name = props.source.getItemDelegate().getName();
     return (
-        <span
-            className="text-body-xs cursor-default whitespace-nowrap"
+        <button
+            type="button"
+            title={`Go to ${name}`}
+            className="text-body-xs shrink-0 cursor-pointer whitespace-nowrap hover:underline"
             style={{ color: getRailColor(sourceId) }}
+            onClick={() => onSourceClick(sourceId)}
             onMouseEnter={() => props.onHoverChange(sourceId)}
             onMouseLeave={() => props.onHoverChange(null)}
         >
-            ● from {props.source.getItemDelegate().getName()}
-        </span>
+            ● from {name}
+        </button>
     );
 }
 
 function LabelCell(props: { label: string; color?: string }): React.ReactNode {
     return (
-        <div className="py-4xs px-2xs flex w-32 items-center" style={{ color: props.color }}>
+        <div className="py-4xs px-2xs flex w-28 items-center" style={{ color: props.color }}>
             {props.label}
         </div>
     );
@@ -98,105 +107,20 @@ function ControlledSettingRow(props: ControlledSettingRowProps): React.ReactNode
     );
 }
 
-function reduceValueConstraints(proxy: SettingManager<any>, targets: SettingManager<any>[]): any {
-    const allConstraints = targets.map((target) => target.getValueConstraints());
-    if (allConstraints.some((constraints) => constraints === null)) {
-        return null;
-    }
-
-    const reducerDefinition = proxy.getValueConstraintsReducerDefinition();
-    if (!reducerDefinition) {
-        return allConstraints.every((constraints) => isEqual(constraints, allConstraints[0]))
-            ? allConstraints[0]
-            : null;
-    }
-
-    const { reducer, startingValue, isValid } = reducerDefinition;
-    let reduced = startingValue;
-    allConstraints.forEach((constraints, index) => {
-        reduced = reducer(reduced as any, constraints, index);
-    });
-    return isValid(reduced as any) ? reduced : null;
-}
-
 type ProxySettingProps = {
     targets: SettingManager<any>[];
     manager: DataProviderManager;
 };
 
-/*
- * A temporary setting standing in for the same setting of all selected items: its options are the intersection of
- * theirs, and a value chosen by the user is written to every one of them. Only user changes are written - selecting
- * never changes any setting.
- */
+/** Edits the same setting of all selected items at once - see proxySetting.ts. */
 function ProxySetting(props: ProxySettingProps): React.ReactNode {
     const { targets } = props;
 
-    const proxy = React.useMemo(
-        () => SettingRegistry.makeSetting(targets[0].getType(), cloneDeep(targets[0].getInternalValue())),
-        [targets],
-    );
-    const isSyncingFromTargetsRef = React.useRef(false);
+    const proxy = React.useMemo(() => makeProxySetting(targets), [targets]);
 
     React.useEffect(
-        function destroyProxy() {
-            return () => proxy.beforeDestroy();
-        },
-        [proxy],
-    );
-
-    React.useEffect(
-        function syncConstraintsAndValueFromTargets() {
-            function syncConstraints() {
-                if (proxy.isStatic()) {
-                    return;
-                }
-                if (targets.some((target) => target.isLoading())) {
-                    proxy.setLoading(true);
-                    return;
-                }
-                proxy.setValueConstraints(reduceValueConstraints(proxy, targets));
-            }
-
-            function syncValue() {
-                const value = targets[0].getInternalValue();
-                const allEqual = targets.every((target) => isEqual(target.getInternalValue(), value));
-                if (!allEqual || isEqual(proxy.getInternalValue(), value)) {
-                    return;
-                }
-                isSyncingFromTargetsRef.current = true;
-                proxy.setValue(cloneDeep(value));
-                isSyncingFromTargetsRef.current = false;
-            }
-
-            syncConstraints();
-            const unsubscribers = targets.flatMap((target) => {
-                const delegate = target.getPublishSubscribeDelegate();
-                return [
-                    delegate.subscribe(SettingTopic.VALUE_CONSTRAINTS, syncConstraints),
-                    delegate.subscribe(SettingTopic.IS_LOADING, syncConstraints),
-                    delegate.subscribe(SettingTopic.INTERNAL_VALUE, syncValue),
-                ];
-            });
-            return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
-        },
-        [proxy, targets],
-    );
-
-    React.useEffect(
-        function writeUserChangesToTargets() {
-            return proxy.getPublishSubscribeDelegate().subscribe(SettingTopic.VALUE_ABOUT_TO_BE_CHANGED, () => {
-                if (isSyncingFromTargetsRef.current) {
-                    return;
-                }
-                // Published before the new value is set - read it once the change is done
-                queueMicrotask(() => {
-                    const value = proxy.getInternalValue();
-                    for (const target of targets) {
-                        target.setValue(cloneDeep(value));
-                    }
-                });
-            });
+        function bindProxyToTargets() {
+            return bindProxySetting(proxy, targets);
         },
         [proxy, targets],
     );
@@ -286,7 +210,7 @@ function getCommonSettings(items: Item[]): SettingManager<any>[][] {
 }
 
 const SETTINGS_GRID_CLASSES =
-    "[&>*:nth-child(4n-2)]:bg-surface [&>*:nth-child(4n-3)]:bg-surface text-body-sm border-neutral-subtle grid auto-rows-[minmax(2rem,auto)] grid-cols-[auto_1fr] items-stretch border-t";
+    "[&>*:nth-child(4n-2)]:bg-surface [&>*:nth-child(4n-3)]:bg-surface [&>*:nth-child(odd)]:w-28! text-body-sm border-neutral-subtle grid auto-rows-[minmax(1.75rem,auto)] grid-cols-[auto_1fr] items-stretch border-t";
 
 export type SettingsPanelProps = {
     manager: DataProviderManager;
@@ -295,9 +219,24 @@ export type SettingsPanelProps = {
     onHoverChange: (itemId: string | null) => void;
     /** Rendered at the end of the panel header, e.g. a close button */
     headerAdornment?: React.ReactNode;
+    /** Rendered at the start of the panel header, also when nothing is selected - the history navigation */
+    navigation?: React.ReactNode;
+    /** Called when the chip of a controlled setting is clicked, with the id of its source */
+    onSourceClick: (sourceId: string) => void;
 };
 
+/** Shows the settings of the selected items, with all setting controls in their small size. */
 export function SettingsPanel(props: SettingsPanelProps): React.ReactNode {
+    return (
+        <ComponentSizeContext.Provider value="small">
+            <SourceClickContext.Provider value={props.onSourceClick}>
+                <SettingsPanelContent {...props} />
+            </SourceClickContext.Provider>
+        </ComponentSizeContext.Provider>
+    );
+}
+
+function SettingsPanelContent(props: SettingsPanelProps): React.ReactNode {
     const { selectedItems, manager, relations, onHoverChange } = props;
 
     // Stable per selection, so the proxies of a multi selection are only remade when the selection changes
@@ -307,8 +246,11 @@ export function SettingsPanel(props: SettingsPanelProps): React.ReactNode {
 
     if (selectedItems.length === 0) {
         return (
-            <div className="text-neutral-subtle text-body-sm flex h-full items-center justify-center p-2 text-center">
-                Select a data provider or shared setting to see its settings.
+            <div className="flex h-full flex-col">
+                {props.navigation && <div className="px-2xs flex h-8 shrink-0 items-center">{props.navigation}</div>}
+                <div className="text-neutral-subtle text-body-sm flex grow items-center justify-center p-2 text-center">
+                    Select a data provider or shared setting to see its settings.
+                </div>
             </div>
         );
     }
@@ -319,6 +261,7 @@ export function SettingsPanel(props: SettingsPanelProps): React.ReactNode {
         return (
             <div key={getItemId(item)} className="flex flex-col">
                 <div className="gap-x-2xs px-2xs bg-canvas sticky top-0 z-10 flex h-8 shrink-0 items-center shadow-sm">
+                    {props.navigation}
                     <ItemIcon item={item} />
                     <div className="min-w-0 grow">
                         <EditName item={item} />
@@ -355,7 +298,8 @@ export function SettingsPanel(props: SettingsPanelProps): React.ReactNode {
 
     return (
         <div key={selectionKey} className="flex flex-col">
-            <div className="text-body-sm font-bolder px-2xs bg-canvas sticky top-0 z-10 flex h-8 shrink-0 items-center shadow-sm">
+            <div className="text-body-sm font-bolder gap-x-2xs px-2xs bg-canvas sticky top-0 z-10 flex h-8 shrink-0 items-center shadow-sm">
+                {props.navigation}
                 <span className="min-w-0 grow truncate">{selectedItems.length} items selected</span>
                 {props.headerAdornment}
             </div>

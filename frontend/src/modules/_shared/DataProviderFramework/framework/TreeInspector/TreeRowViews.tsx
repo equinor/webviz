@@ -372,10 +372,12 @@ export function ItemRowView(props: ItemRowViewProps): React.ReactNode {
             onMouseLeave={() => onHoverChange(null)}
         >
             {props.isSelected && <div className="bg-accent-strong absolute top-0 bottom-0 left-0 w-[3px]" />}
-            {/* Starts after the branch guides, so it never crosses them */}
+            {/* Starts after the caret column, as the branch line down to a container's children runs through it */}
             <div
                 className="border-neutral-subtle pointer-events-none absolute right-0 bottom-0 border-b"
-                style={{ left: `calc(var(--eds-spacing-horizontal-xs) + ${row.guides.length * GUIDE_WIDTH_PX}px)` }}
+                style={{
+                    left: `calc(var(--eds-spacing-horizontal-xs) + ${(row.guides.length + 1) * GUIDE_WIDTH_PX}px)`,
+                }}
             />
             <span className="flex h-full shrink-0 items-center">
                 <BranchGuides guides={row.guides} />

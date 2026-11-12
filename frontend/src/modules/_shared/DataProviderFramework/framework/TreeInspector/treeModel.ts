@@ -2,6 +2,7 @@ import type { GroupDelegate } from "../../delegates/GroupDelegate";
 import { GroupType } from "../../groups/groupTypes";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { instanceofItemGroup } from "../../interfacesAndTypes/entities";
+import { isContextBoundary } from "../ContextBoundary/ContextBoundary";
 import { isDataProvider } from "../DataProvider/DataProvider";
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import { isGroup } from "../Group/Group";
@@ -49,7 +50,7 @@ export type ItemRow = {
     sectionId: SectionId | null;
     isContainer: boolean;
     isExpanded: boolean;
-    /** Index of the last row belonging to this container (its add row) - only for expanded containers */
+    /** Index of the last row belonging to this container - only for expanded containers */
     contentEndRowIndex: number | null;
 };
 
@@ -59,7 +60,7 @@ export type SectionRow = {
     sectionId: SectionId;
     label: string;
     depth: number;
-    /** Dropping on a section header lands at the first position in that section */
+    /** Dropping on a section header inserts at the first position in that section */
     firstPositionTarget: InsertTarget;
 };
 
@@ -76,6 +77,23 @@ export type TreeRow = ItemRow | SectionRow | AddRow;
 
 export function isView(item: Item): boolean {
     return isGroup(item) && item.getGroupType() === GroupType.VIEW;
+}
+
+/** A view, or a context boundary containing one. */
+export function isViewHolder(item: Item): boolean {
+    if (isView(item)) {
+        return true;
+    }
+    return isContextBoundary(item) && item.getGroupDelegate().getDescendantItems(isView).length > 0;
+}
+
+/** Whether the group is a view or lies inside one - views can't be nested. */
+export function isViewOrInsideView(group: ItemGroup): boolean {
+    if (isView(group)) {
+        return true;
+    }
+    const parent = group.getItemDelegate().getParentGroup();
+    return parent !== null && parent.getAncestors(isView).length > 0;
 }
 
 /** Items that make other items' settings controlled: shared settings and groups with their own settings. */
@@ -127,33 +145,65 @@ type RootPartition = {
     addIndex: Record<SectionId, number>;
 };
 
+function isEmptyContextBoundary(item: Item): boolean {
+    return isContextBoundary(item) && item.getGroupDelegate().getChildren().length === 0;
+}
+
 /*
- * Root items are sorted into sections by position: shared settings are global, items before the first view are drawn
- * on top of all views and the remaining non-view items beneath them. Interleaving providers between views is not
- * represented - those end up in "Beneath all views".
+ * Root items are sorted into sections by position: shared settings are global, view-holders (views, and context
+ * boundaries containing views) are in Views, together with context boundaries between them and empty ones right after
+ * them (or at the end, while there are no views) - so a boundary added to Views stays there until it gets content.
+ * Other items before the views are drawn on top of all views, the rest beneath them. Interleaving providers between
+ * views is not represented - those end up in "Beneath all views".
  */
 function partitionRoot(children: readonly Item[]): RootPartition {
     const sectionOf = new Map<Item, SectionId>();
-    const firstViewIndex = children.findIndex(isView);
-    let lastViewIndex = -1;
-    let numShared = 0;
+    const holderIndices = children.flatMap((child, index) => (isViewHolder(child) ? [index] : []));
+    const firstHolderIndex = holderIndices[0] ?? -1;
+    const lastHolderIndex = holderIndices[holderIndices.length - 1] ?? -1;
 
+    // The run of empty context boundaries right after the views, or at the end of the root while there are no views
+    let emptyRunStart: number;
+    let emptyRunEnd: number;
+    if (lastHolderIndex !== -1) {
+        emptyRunStart = lastHolderIndex + 1;
+        emptyRunEnd = lastHolderIndex;
+        while (emptyRunEnd + 1 < children.length && isEmptyContextBoundary(children[emptyRunEnd + 1])) {
+            emptyRunEnd++;
+        }
+    } else {
+        emptyRunEnd = children.length - 1;
+        emptyRunStart = children.length;
+        while (emptyRunStart - 1 >= 0 && isEmptyContextBoundary(children[emptyRunStart - 1])) {
+            emptyRunStart--;
+        }
+    }
+
+    const viewsIndices: number[] = [];
+    let numShared = 0;
     children.forEach((child, index) => {
         if (isSharedSetting(child)) {
             sectionOf.set(child, SectionId.GLOBAL);
             numShared++;
-        } else if (isView(child)) {
+            return;
+        }
+        const isBetweenHolders = index > firstHolderIndex && index < lastHolderIndex;
+        const isInEmptyRun = index >= emptyRunStart && index <= emptyRunEnd;
+        if (isViewHolder(child) || (isContextBoundary(child) && (isBetweenHolders || isInEmptyRun))) {
             sectionOf.set(child, SectionId.VIEWS);
-            lastViewIndex = index;
-        } else if (firstViewIndex === -1 || index < firstViewIndex) {
-            sectionOf.set(child, SectionId.ON_TOP);
-        } else {
-            sectionOf.set(child, SectionId.BENEATH);
+            viewsIndices.push(index);
         }
     });
 
-    const viewsStart = firstViewIndex === -1 ? children.length : firstViewIndex;
-    const viewsEnd = lastViewIndex === -1 ? children.length : lastViewIndex + 1;
+    const viewsStart = viewsIndices[0] ?? children.length;
+    const viewsEnd = viewsIndices.length > 0 ? viewsIndices[viewsIndices.length - 1] + 1 : children.length;
+
+    children.forEach((child, index) => {
+        if (sectionOf.has(child)) {
+            return;
+        }
+        sectionOf.set(child, viewsIndices.length === 0 || index < viewsStart ? SectionId.ON_TOP : SectionId.BENEATH);
+    });
 
     return {
         sectionOf,
@@ -163,11 +213,12 @@ function partitionRoot(children: readonly Item[]): RootPartition {
             [SectionId.VIEWS]: viewsStart,
             [SectionId.BENEATH]: viewsEnd,
         },
+        // Views are appended after the last item of the section, everything else is prepended
         addIndex: {
-            [SectionId.GLOBAL]: numShared,
-            [SectionId.ON_TOP]: viewsStart,
+            [SectionId.GLOBAL]: 0,
+            [SectionId.ON_TOP]: numShared,
             [SectionId.VIEWS]: viewsEnd,
-            [SectionId.BENEATH]: children.length,
+            [SectionId.BENEATH]: viewsEnd,
         },
     };
 }
@@ -184,8 +235,7 @@ export function flattenTree(manager: DataProviderManager): TreeRow[] {
 
     /*
      * `ancestorContinues` has one entry per level above the item's own (excluding the root): whether that ancestor has
-     * rows below it, so its branch line passes this row. Every container ends with its add row, so real children are
-     * never the last row of their container.
+     * rows below it, so its branch line passes this row.
      */
     function walk(
         item: Item,
@@ -215,16 +265,17 @@ export function flattenTree(manager: DataProviderManager): TreeRow[] {
 
         const childAncestorContinues = depth === 0 ? [] : [...ancestorContinues, !isLast];
         const children = item.getGroupDelegate().getChildren();
-        for (const child of children) {
-            walk(child, depth + 1, sectionId, childAncestorContinues, false);
-        }
+        // New items are prepended - clampInsertIndex keeps them after the container's shared settings
         rows.push({
             type: "add",
             key: `add-${getItemId(item)}`,
             depth: depth + 1,
-            guides: makeGuides(childAncestorContinues, true, depth + 1),
-            target: { group: item, index: children.length, sectionId: null },
+            guides: makeGuides(childAncestorContinues, children.length === 0, depth + 1),
+            target: { group: item, index: 0, sectionId: null },
             containerLabel: item.getItemDelegate().getName(),
+        });
+        children.forEach((child, index) => {
+            walk(child, depth + 1, sectionId, childAncestorContinues, index === children.length - 1);
         });
         row.contentEndRowIndex = rows.length - 1;
     }
@@ -241,19 +292,27 @@ export function flattenTree(manager: DataProviderManager): TreeRow[] {
             depth: 0,
             firstPositionTarget: { group: manager, index: partition.firstPositionIndex[sectionId], sectionId },
         });
-        for (const child of rootChildren) {
-            if (partition.sectionOf.get(child) === sectionId) {
-                walk(child, 0, sectionId, [], false);
-            }
-        }
-        rows.push({
+        const addRow: AddRow = {
             type: "add",
             key: `add-section-${sectionId}`,
             depth: 0,
             guides: [],
             target: { group: manager, index: partition.addIndex[sectionId], sectionId },
             containerLabel: SECTION_LABELS[sectionId],
-        });
+        };
+        // Views are appended, so their add row is at the end of the section - everything else is prepended
+        const isAddRowAtEnd = sectionId === SectionId.VIEWS;
+        if (!isAddRowAtEnd) {
+            rows.push(addRow);
+        }
+        for (const child of rootChildren) {
+            if (partition.sectionOf.get(child) === sectionId) {
+                walk(child, 0, sectionId, [], false);
+            }
+        }
+        if (isAddRowAtEnd) {
+            rows.push(addRow);
+        }
     }
 
     return rows;

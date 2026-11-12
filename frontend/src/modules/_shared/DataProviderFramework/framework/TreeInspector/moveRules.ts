@@ -1,9 +1,10 @@
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { instanceofItemGroup } from "../../interfacesAndTypes/entities";
+import { isContextBoundary } from "../ContextBoundary/ContextBoundary";
 import { isSharedSetting } from "../SharedSetting/SharedSetting";
 
 import type { InsertTarget } from "./treeModel";
-import { SectionId, isView } from "./treeModel";
+import { SectionId, isView, isViewHolder, isViewOrInsideView } from "./treeModel";
 
 export type IsMoveAllowed = (movedItem: Item, destinationGroup: ItemGroup) => boolean;
 
@@ -23,9 +24,14 @@ function isAllowedInSection(item: Item, sectionId: SectionId): boolean {
         return isSharedSetting(item);
     }
     if (sectionId === SectionId.VIEWS) {
-        return isView(item);
+        return isView(item) || isContextBoundary(item);
     }
-    return !isSharedSetting(item) && !isView(item);
+    return !isSharedSetting(item) && !isViewHolder(item);
+}
+
+/** Views (also inside a moved context boundary) can go to the root, or into a context boundary that isn't in a view. */
+function canHoldViews(destination: ItemGroup, isRoot: boolean): boolean {
+    return isRoot || (isContextBoundary(destination) && !isViewOrInsideView(destination));
 }
 
 /** Index in `target.group`'s children once all moved items have been taken out of it. */
@@ -35,8 +41,8 @@ function getIndexWithoutMovedItems(target: InsertTarget, movedItems: Item[]): nu
 }
 
 /*
- * Mirrors the rules of the classic DataProviderManagerComponent (shared settings always come first in a group, plus the
- * module's own isMoveAllowed), extended with the root sections and the rule that views only live at the root.
+ * Mirrors the rules of the classic DataProviderManagerComponent (shared settings always come first in a group, no views
+ * in views, plus the module's own isMoveAllowed), extended with the root sections.
  */
 export function isMoveValid(movedItems: Item[], target: InsertTarget, isMoveAllowed?: IsMoveAllowed): boolean {
     if (movedItems.length === 0) {
@@ -59,7 +65,7 @@ export function isMoveValid(movedItems: Item[], target: InsertTarget, isMoveAllo
         if (isRoot && target.sectionId !== null && !isAllowedInSection(item, target.sectionId)) {
             return false;
         }
-        if (!isRoot && isView(item)) {
+        if (isViewHolder(item) && !canHoldViews(destination, isRoot)) {
             return false;
         }
         if (isMoveAllowed && !isMoveAllowed(item, destination)) {
