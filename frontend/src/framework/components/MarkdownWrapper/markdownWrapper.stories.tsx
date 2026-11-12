@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { MarkdownWrapper } from "./MarkdownWrapper";
+import { MarkdownWrapper } from "./markdownWrapper";
 
 const meta: Meta<typeof MarkdownWrapper> = {
-    title: "Framework - Internal/MarkdownWrapper",
+    title: "Framework/MarkdownWrapper",
     component: MarkdownWrapper,
     tags: ["autodocs"],
     parameters: {

@@ -21,6 +21,10 @@ export type SectionProps = {
     adornment?: React.ReactNode;
     /** When true, the section starts in the open state. */
     defaultOpen?: boolean;
+    /** Controls the open state. When omitted, the section manages its own state, starting from `defaultOpen`. */
+    open?: boolean;
+    /** Called when the user opens or closes the section. */
+    onOpenChange?: (open: boolean) => void;
     /** When true, prevents the section from being opened or closed. */
     disabled?: boolean;
     /** The settings content rendered inside the collapsible panel. */
@@ -40,7 +44,19 @@ const TONE_TO_CLASSNAMES: Record<NonNullable<SectionProps["tone"] | "disabled">,
 export function Section(props: SectionProps) {
     const { tone = "neutral", disabled = false } = props;
 
-    const [isOpen, setIsOpen] = React.useState(props.defaultOpen ?? false);
+    const [internalIsOpen, setInternalIsOpen] = React.useState(props.defaultOpen ?? false);
+    const isOpen = props.open ?? internalIsOpen;
+    const isControlled = props.open !== undefined;
+    const { onOpenChange } = props;
+    const handleOpenChange = React.useCallback(
+        (open: boolean) => {
+            if (!isControlled) {
+                setInternalIsOpen(open);
+            }
+            onOpenChange?.(open);
+        },
+        [isControlled, onOpenChange],
+    );
     const [fieldAnnotations, setFieldAnnotations] = React.useState<Map<string, FieldStatusSummary>>(() => new Map());
 
     const contextValue = React.useMemo(
@@ -93,7 +109,7 @@ export function Section(props: SectionProps) {
     return (
         <Collapsible.Root
             open={isOpen}
-            onOpenChange={setIsOpen}
+            onOpenChange={handleOpenChange}
             disabled={disabled}
             className="group/settingsSection contents"
         >
@@ -116,7 +132,7 @@ export function Section(props: SectionProps) {
                     numErrors={errorCount}
                     numWarnings={warningCount}
                     numInfos={infoCount}
-                    onShowSection={() => setIsOpen(true)}
+                    onShowSection={() => handleOpenChange(true)}
                 />
                 {props.adornment && <span className="px-selectable py-selectable">{props.adornment}</span>}
             </div>

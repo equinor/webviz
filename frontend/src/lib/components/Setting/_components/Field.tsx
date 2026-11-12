@@ -158,6 +158,8 @@ export function Field(props: SettingFieldProps) {
     useReportFieldOverlay(overlay ?? null);
 
     const isStacked = props.stacked || groupContext === "stacked";
+    // Names the help button, so several help buttons in a panel can be told apart.
+    const helpTitle = typeof props.help?.title === "string" ? props.help.title : undefined;
 
     if (!props.label && !isStacked) {
         return (
@@ -181,7 +183,7 @@ export function Field(props: SettingFieldProps) {
                     </div>
                     {props.help && (
                         <div className="self-center">
-                            <FieldPrimitive.Info side="right">
+                            <FieldPrimitive.Info side="right" title={helpTitle}>
                                 {props.help.title && <Heading as="h6">{props.help.title}</Heading>}
                                 {props.help.content}
                             </FieldPrimitive.Info>
@@ -215,7 +217,7 @@ export function Field(props: SettingFieldProps) {
                             <FieldPrimitive.Label {...(htmlFor && { htmlFor })}>{props.label}</FieldPrimitive.Label>
                         )}
                         {props.help && (
-                            <FieldPrimitive.Info side="right">
+                            <FieldPrimitive.Info side="right" title={helpTitle}>
                                 {props.help.title && <Heading as="h6">{props.help.title}</Heading>}
                                 {props.help.content}
                             </FieldPrimitive.Info>
@@ -267,7 +269,7 @@ export function Field(props: SettingFieldProps) {
                 </div>
                 {props.help && (
                     <div className="self-center">
-                        <FieldPrimitive.Info side="right">
+                        <FieldPrimitive.Info side="right" title={helpTitle}>
                             {props.help.title && <Heading as="h6">{props.help.title}</Heading>}
                             {props.help.content}
                         </FieldPrimitive.Info>

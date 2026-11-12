@@ -28,11 +28,14 @@ export type NumberInputProps = ComponentWrapperProps<NumberFieldRootBaseProps> &
     scrubAreaPosition?: "start" | "end";
     /** Placeholder text shown when the input is empty. @default "Enter a number..." */
     placeholder?: NumberFieldInputBaseProps["placeholder"];
+    /** Whether the increment/decrement buttons are shown. @default true */
+    showStepButtons?: boolean;
 };
 
 const DEFAULT_PROPS = {
     scrubAreaPosition: "start",
     placeholder: "Enter a number...",
+    showStepButtons: true,
 } satisfies Partial<NumberInputProps>;
 
 export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(function NumberInput(props, ref) {
@@ -47,7 +50,13 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
         "scrubAreaPosition",
         "placeholder",
         "size",
+        "showStepButtons",
+        "aria-label",
+        "aria-labelledby",
     );
+    const ariaLabel = defaultedProps["aria-label"];
+    const ariaLabelledBy = defaultedProps["aria-labelledby"];
+    const hasExplicitName = ariaLabel !== undefined || ariaLabelledBy !== undefined;
 
     const wrappedScrubAdornment = makeScrubAdornment(defaultedProps.scrubAdornment);
 
@@ -72,19 +81,23 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
                         ref={ref}
                         className="py-3xs w-full min-w-0 grow self-stretch outline-0 data-disabled:cursor-not-allowed"
                         placeholder={defaultedProps.placeholder}
+                        // An explicit name must win over a surrounding field label.
+                        {...(hasExplicitName && { "aria-label": ariaLabel, "aria-labelledby": ariaLabelledBy })}
                     />
 
                     {defaultedProps.scrubAreaPosition === "end" && wrappedScrubAdornment}
                     {defaultedProps.endAdornment}
 
-                    <BrowseButtons
-                        size={size}
-                        disabled={defaultedProps.disabled || defaultedProps.readOnly}
-                        prevTitle="Increase"
-                        nextTitle="Decrease"
-                        renderPrev={<NumberFieldBase.Increment />}
-                        renderNext={<NumberFieldBase.Decrement />}
-                    />
+                    {defaultedProps.showStepButtons && (
+                        <BrowseButtons
+                            size={size}
+                            disabled={defaultedProps.disabled || defaultedProps.readOnly}
+                            prevTitle="Increase"
+                            nextTitle="Decrease"
+                            renderPrev={<NumberFieldBase.Increment />}
+                            renderNext={<NumberFieldBase.Decrement />}
+                        />
+                    )}
                 </NumberFieldBase.Group>
             }
         ></NumberFieldBase.Root>
