@@ -71,7 +71,7 @@ class AuthHelper:
         if redirect_target_after_login is not None:
             if not is_safe_redirect_target(redirect_target_after_login):
                 LOGGER.warning("Rejected unsafe post-login redirect path")
-                return _html_error_response("Invalid post-login redirect specified.", 400)
+                return _make_html_error_response("Invalid post-login redirect specified.", 400)
 
         await starsessions.load_session(request)
         request.session.clear()
@@ -108,16 +108,17 @@ class AuthHelper:
         flow_dict = request.session.get("flow")
         if not isinstance(flow_dict, dict):
             LOGGER.error("Login flow not found in session")
-            return _html_error_response("No login in progress. Please log in again.", 400)
+            return _make_html_error_response("No login in progress. Please log in again.", 400)
 
         # If the state parameter in the auth response does not match the one in the auth code flow dict, it could
         # indicate a CSRF attack or a simultaneous login attempt. Note that the test here is mainly to notify the user
         # and is not critical since the token acquisition below will fail if the state does not match.
         if auth_response_dict.get("state") != flow_dict.get("state"):
             LOGGER.error("Login response state value did not match the stored flow state value")
-            return _html_error_response("Login could not be verified. Close other login tabs and try again.", 400)
+            return _make_html_error_response("Login could not be verified. Close other login tabs and try again.", 400)
 
         try:
+            # Use a fresh token cache so this login doesn't reuse tokens from a previous session/account.
             new_token_cache = msal.SerializableTokenCache()
             cca = _create_msal_confidential_client_app(new_token_cache)
 
@@ -134,11 +135,11 @@ class AuthHelper:
                 error = token_dict.get("error")
                 error_description = token_dict.get("error_description")
                 LOGGER.error(f"Microsoft Entra sign-in failed ({error=}, {error_description=})")
-                return _html_error_response(f"Microsoft Entra sign-in failed. Please try again. ({error})", 400)
+                return _make_html_error_response(f"Microsoft Entra sign-in failed. Please try again. ({error})", 400)
 
         except ValueError as exc:
             LOGGER.error(f"Error processing auth response: {repr(exc)}")
-            return _html_error_response("Invalid login response. Please try again.", 400)
+            return _make_html_error_response("Invalid login response. Please try again.", 400)
 
         # !!!!!!!!
         # !!!!!!!!
@@ -151,7 +152,7 @@ class AuthHelper:
         new_user_auth_info = _acquire_refreshed_identity_and_tokens(cca, None)
         if not new_user_auth_info:
             LOGGER.error("Failed to acquire refreshed identity and tokens")
-            return _html_error_response("Login succeeded, but we could not get user details. Please try again.", 500)
+            return _make_html_error_response("Login succeeded, but we could not get user details. Please try again.", 500)
 
         # Issue a new session ID now that the session becomes authenticated to prevent session fixation attacks
         starsessions.regenerate_session_id(request)
@@ -453,6 +454,10 @@ def _save_user_auth_info_in_session(request_with_session: Request, user_auth_inf
 
 
 def _load_token_cache_from_session(request_with_session: Request) -> msal.SerializableTokenCache | None:
+    """
+    Load and return the token cache from the user's session if it exists, otherwise return None.
+    This function will no longer create and return a new token cache if one does not exist.
+    """
     serialized_token_cache = request_with_session.session.get("token_cache")
     if not serialized_token_cache:
         return None
@@ -468,7 +473,11 @@ def _save_token_cache_in_session(request_with_session: Request, token_cache: msa
         request_with_session.session["token_cache"] = token_cache.serialize()
 
 
-def _html_error_response(message: str, status_code: int) -> HTMLResponse:
+def _make_html_error_response(message: str, status_code: int) -> HTMLResponse:
+    """
+    Generate a simple HTML response displaying an error message for the user.
+    It also provides a link for the user to attempt signing in again.
+    """
     escaped_message = escape(message)
     content_str=dedent(f"""\
         <!doctype html>
