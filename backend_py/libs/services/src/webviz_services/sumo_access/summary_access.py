@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional, Sequence, Tuple, Set
+from typing import Dict, List, Optional, Sequence, Tuple, Set
 
 import numpy as np
 import pyarrow as pa
@@ -25,6 +25,12 @@ from webviz_services.service_exceptions import (
 from ._field_metadata import create_vector_metadata_from_field_meta
 from ._resampling import resample_segmented_multi_real_table, resample_single_real_table
 from .generic_types import EnsembleScalarResponse
+from .source_coverage import (
+    RawDateRange,
+    SourceCoverageUnsupportedError,
+    extract_raw_date_range_per_realization,
+    validate_sorted_raw_vector_table_for_source_coverage,
+)
 from .summary_types import Frequency, VectorInfo, RealizationVector, HistoricalVector, VectorMetadata
 from ._arrow_table_loader import ArrowTableLoader
 from .sumo_client_factory import create_sumo_client
@@ -156,6 +162,24 @@ class SummaryAccess:
         return table, vector_metadata
 
     @otel_span_decorator()
+    async def get_vector_table_with_raw_date_ranges_async(
+        self,
+        vector_name: str,
+        resampling_frequency: Optional[Frequency],
+        realizations: Optional[Sequence[int]],
+    ) -> Tuple[pa.Table, VectorMetadata, Dict[int, RawDateRange]]:
+        """
+        Same as `get_vector_table_async()`, but validates the raw samples strictly and also returns the first and last
+        raw sample timestamp per realization, captured from the same loaded table before resampling.
+        Raises `SourceCoverageUnsupportedError` for a vector that is not a cumulative total, before any validation
+        or resampling.
+        """
+        table, vector_metadata = await self.get_vector_table_async(vector_name, None, realizations)
+        raise_if_source_coverage_unsupported_for_metadata(vector_metadata)
+        table, raw_date_ranges = validate_and_resample_with_raw_date_ranges(table, vector_name, resampling_frequency)
+        return table, vector_metadata, raw_date_ranges
+
+    @otel_span_decorator()
     async def get_vector_async(
         self,
         vector_name: str,
@@ -163,30 +187,23 @@ class SummaryAccess:
         realizations: Optional[Sequence[int]],
     ) -> List[RealizationVector]:
         table, vector_metadata = await self.get_vector_table_async(vector_name, resampling_frequency, realizations)
+        return _create_realization_vector_list(table, vector_name, vector_metadata, None)
 
-        real_arr_np = table.column("REAL").to_numpy()
-        unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
-
-        whole_date_np_arr = table.column("DATE").to_numpy()
-        whole_value_np_arr = table.column(vector_name).to_numpy()
-
-        ret_arr: List[RealizationVector] = []
-        for i, real in enumerate(unique_reals):
-            start_row_idx = first_occurrence_idx[i]
-            row_count = real_counts[i]
-            date_np_arr = whole_date_np_arr[start_row_idx : start_row_idx + row_count]
-            value_np_arr = whole_value_np_arr[start_row_idx : start_row_idx + row_count]
-
-            ret_arr.append(
-                RealizationVector(
-                    realization=real,
-                    timestamps_utc_ms=date_np_arr.astype(int).tolist(),
-                    values=value_np_arr.tolist(),
-                    metadata=vector_metadata,
-                )
-            )
-
-        return ret_arr
+    @otel_span_decorator()
+    async def get_vector_with_source_coverage_async(
+        self,
+        vector_name: str,
+        resampling_frequency: Optional[Frequency],
+        realizations: Optional[Sequence[int]],
+    ) -> List[RealizationVector]:
+        """
+        Same values as `get_vector_async()`, with the raw date range attached to each realization vector.
+        Raises `SourceCoverageUnsupportedError` for a vector that is not a cumulative total.
+        """
+        table, vector_metadata, raw_date_ranges = await self.get_vector_table_with_raw_date_ranges_async(
+            vector_name, resampling_frequency, realizations
+        )
+        return _create_realization_vector_list(table, vector_name, vector_metadata, raw_date_ranges)
 
     @otel_span_decorator()
     async def get_single_real_vectors_table_async(
@@ -346,6 +363,68 @@ class SummaryAccess:
         )
 
         return pc.unique(table.column("DATE")).to_numpy().astype(int).tolist()
+
+
+def raise_if_source_coverage_unsupported_for_metadata(vector_metadata: VectorMetadata) -> None:
+    if vector_metadata.is_rate or not vector_metadata.is_total:
+        raise SourceCoverageUnsupportedError(
+            f"Source coverage is only supported for cumulative total vectors, but {vector_metadata.name} has "
+            f"is_total={vector_metadata.is_total} and is_rate={vector_metadata.is_rate}",
+            Service.SUMO,
+        )
+
+
+def validate_and_resample_with_raw_date_ranges(
+    table: pa.Table, vector_name: str, resampling_frequency: Optional[Frequency]
+) -> Tuple[pa.Table, Dict[int, RawDateRange]]:
+    """
+    Validates a raw single vector table sorted on REAL then DATE strictly, captures the first and last raw sample
+    timestamp per realization, and then resamples the table if a frequency is given.
+    """
+    validate_sorted_raw_vector_table_for_source_coverage(table, vector_name)
+    raw_date_ranges = extract_raw_date_range_per_realization(table)
+
+    # Resampling cannot handle an empty selection; an empty table already has the output columns
+    if resampling_frequency is not None and table.num_rows > 0:
+        table = resample_segmented_multi_real_table(table, resampling_frequency).combine_chunks()
+
+    return table, raw_date_ranges
+
+
+def _create_realization_vector_list(
+    table: pa.Table,
+    vector_name: str,
+    vector_metadata: VectorMetadata,
+    raw_date_ranges_per_real: Optional[Dict[int, RawDateRange]],
+) -> List[RealizationVector]:
+    real_arr_np = table.column("REAL").to_numpy()
+    unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
+
+    whole_date_np_arr = table.column("DATE").to_numpy()
+    whole_value_np_arr = table.column(vector_name).to_numpy()
+
+    ret_arr: List[RealizationVector] = []
+    for i, real in enumerate(unique_reals):
+        start_row_idx = first_occurrence_idx[i]
+        row_count = real_counts[i]
+        date_np_arr = whole_date_np_arr[start_row_idx : start_row_idx + row_count]
+        value_np_arr = whole_value_np_arr[start_row_idx : start_row_idx + row_count]
+
+        raw_date_range: Optional[RawDateRange] = None
+        if raw_date_ranges_per_real is not None:
+            raw_date_range = raw_date_ranges_per_real[int(real)]
+
+        ret_arr.append(
+            RealizationVector(
+                realization=real,
+                timestamps_utc_ms=date_np_arr.astype(int).tolist(),
+                values=value_np_arr.tolist(),
+                metadata=vector_metadata,
+                raw_date_range=raw_date_range,
+            )
+        )
+
+    return ret_arr
 
 
 def _validate_single_vector_table(arrow_table: pa.Table, vector_name: str) -> None:

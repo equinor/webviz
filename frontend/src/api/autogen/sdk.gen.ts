@@ -32,6 +32,9 @@ import type {
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleRealizationsVectorDataErrors_api,
     GetDeltaEnsembleRealizationsVectorDataResponses_api,
+    GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageData_api,
+    GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageErrors_api,
+    GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageResponses_api,
     GetDeltaEnsembleStatisticalVectorDataData_api,
     GetDeltaEnsembleStatisticalVectorDataErrors_api,
     GetDeltaEnsembleStatisticalVectorDataResponses_api,
@@ -123,6 +126,9 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataErrors_api,
     GetRealizationsVectorDataResponses_api,
+    GetRealizationsVectorDataWithSourceCoverageData_api,
+    GetRealizationsVectorDataWithSourceCoverageErrors_api,
+    GetRealizationsVectorDataWithSourceCoverageResponses_api,
     GetRelpermRealizationDataData_api,
     GetRelpermRealizationDataErrors_api,
     GetRelpermRealizationDataResponses_api,
@@ -425,6 +431,31 @@ export const getRealizationsVectorData = <ThrowOnError extends boolean = false>(
     });
 
 /**
+ * Get Realizations Vector Data With Source Coverage
+ *
+ * Get MONTHLY resampled vector data per realization, with the first and last raw sample date per realization
+ *
+ * Only supported for native cumulative total vectors (not rates or derived vectors).
+ */
+export const getRealizationsVectorDataWithSourceCoverage = <ThrowOnError extends boolean = false>(
+    options: Options<GetRealizationsVectorDataWithSourceCoverageData_api, ThrowOnError>,
+): RequestResult<
+    GetRealizationsVectorDataWithSourceCoverageResponses_api,
+    GetRealizationsVectorDataWithSourceCoverageErrors_api,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        GetRealizationsVectorDataWithSourceCoverageResponses_api,
+        GetRealizationsVectorDataWithSourceCoverageErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/timeseries/realizations_vector_data_with_source_coverage/",
+        ...options,
+        query: { ...options.query, _rv: "97ca42" },
+    });
+
+/**
  * Get Delta Ensemble Realizations Vector Data
  *
  * Get vector data per realization
@@ -448,7 +479,37 @@ export const getDeltaEnsembleRealizationsVectorData = <ThrowOnError extends bool
         responseType: "json",
         url: "/timeseries/delta_ensemble_realizations_vector_data/",
         ...options,
-        query: { ...options.query, _rv: "557d6b" },
+        query: { ...options.query, _rv: "547f8a" },
+    });
+
+/**
+ * Get Delta Ensemble Realizations Vector Data With Source Coverage
+ *
+ * Get MONTHLY resampled delta vector data per realization, with the first and last raw sample date per
+ * realization of both the comparison and the reference ensemble
+ *
+ * Only supported for native cumulative total vectors (not rates or derived vectors).
+ *
+ * Definition:
+ *
+ * delta_ensemble = comparison_ensemble - reference_ensemble
+ */
+export const getDeltaEnsembleRealizationsVectorDataWithSourceCoverage = <ThrowOnError extends boolean = false>(
+    options: Options<GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageData_api, ThrowOnError>,
+): RequestResult<
+    GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageResponses_api,
+    GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageErrors_api,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageResponses_api,
+        GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/timeseries/delta_ensemble_realizations_vector_data_with_source_coverage/",
+        ...options,
+        query: { ...options.query, _rv: "217be9" },
     });
 
 /**
