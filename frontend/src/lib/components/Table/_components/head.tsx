@@ -31,7 +31,7 @@ export const Head = React.forwardRef<HTMLTableSectionElement, TableHeadProps>(
                 <thead
                     ref={ref}
                     className={resolveClassNames("bg-neutral-canvas text-neutral-strong border-neutral-subtle", {
-                        "z-elevated sticky top-0": props.sticky,
+                        "z-sticky sticky top-0": props.sticky,
                     })}
                 >
                     {tableRows.map((row, rowIndex) => (

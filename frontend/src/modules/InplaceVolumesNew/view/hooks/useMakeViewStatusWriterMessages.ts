@@ -10,12 +10,17 @@ import {
     makeDroppedFluidSelectionWarnings,
     makeUnmatchedDeltaRowWarnings,
 } from "@modules/_shared/InplaceVolumes/deltaEnsembleWarnings";
+import {
+    makeDroppedSensitivityRowsWarning,
+    makeSensitivityCasesWithoutRealizationsWarning,
+    SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { FLUID_SPECIFIC_RESULT_NAMES, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 import { propagateWarningsToStatusWriter } from "@modules/_shared/utils/propagateWarningsToStatusWriter";
 
-import { filterAtom } from "../atoms/baseAtoms";
-import { indicesWithValuesAtom } from "../atoms/derivedAtoms";
+import { filterAtom, isSensitivityEnsembleSelectionBlockedAtom } from "../atoms/baseAtoms";
+import { indicesWithValuesAtom, sensitivityCasesWithoutRealizationsAtom } from "../atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "../atoms/queryAtoms";
 
 const FACIES_FRACTION_RESULT_NAME = "FACIES_FRACTION";
@@ -31,10 +36,24 @@ export function useMakeViewStatusWriterMessages(
     const queriesResult = useAtomValue(aggregatedTableDataQueriesAtom);
     const indicesWithValues = useAtomValue(indicesWithValuesAtom);
     const filter = useAtomValue(filterAtom);
+    const isSensitivityEnsembleSelectionBlocked = useAtomValue(isSensitivityEnsembleSelectionBlockedAtom);
+    const sensitivityCasesWithoutRealizations = useAtomValue(sensitivityCasesWithoutRealizationsAtom);
 
     propagateAllApiErrorsToStatusWriter(queriesResult.errors, statusWriter);
 
     propagateWarningsToStatusWriter(queriesResult.warnings, statusWriter);
+
+    if (isSensitivityEnsembleSelectionBlocked) {
+        statusWriter.addError(SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE);
+    }
+
+    if (queriesResult.numDroppedSensitivityRows > 0) {
+        statusWriter.addWarning(makeDroppedSensitivityRowsWarning(queriesResult.numDroppedSensitivityRows));
+    }
+
+    if (sensitivityCasesWithoutRealizations.length > 0) {
+        statusWriter.addWarning(makeSensitivityCasesWithoutRealizationsWarning(sensitivityCasesWithoutRealizations));
+    }
 
     for (const elm of indicesWithValues) {
         if (elm.values.length === 0) {

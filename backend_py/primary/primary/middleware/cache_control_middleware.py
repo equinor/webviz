@@ -215,7 +215,11 @@ class CacheControlMiddleware:
 
                 # Only set cache-control if not already present so we don't overwrite settings done in router
                 if headers.get("cache-control") is None:
-                    cache_control_str = self._build_cache_control_header()
+                    if message["status"] == 200:
+                        # Only successful responses may be cached by the browser
+                        cache_control_str = self._build_cache_control_header()
+                    else:
+                        cache_control_str = "no-store, private"
                     headers.append("cache-control", cache_control_str)
 
                 # The response differs depending on whether the client allows warnings (data with warnings

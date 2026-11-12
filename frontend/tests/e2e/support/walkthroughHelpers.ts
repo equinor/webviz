@@ -336,6 +336,26 @@ export async function installKeyOverlay(page: Page): Promise<void> {
 }
 
 /**
+ * Smooth-scroll `locator` into view and wait for the scroll to settle, so the viewer sees e.g. a
+ * settings panel scroll instead of an instant jump. With the default "nearest" this is a no-op when
+ * the element is already fully visible.
+ */
+async function smoothScrollIntoView(locator: Locator, block: ScrollLogicalPosition = "nearest"): Promise<void> {
+    await locator.evaluate(async (element, scrollBlock) => {
+        element.scrollIntoView({ behavior: "smooth", block: scrollBlock });
+        let lastTop = element.getBoundingClientRect().top;
+        let stableFrames = 0;
+        const start = performance.now();
+        while (stableFrames < 5 && performance.now() - start < 2_000) {
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            const top = element.getBoundingClientRect().top;
+            stableFrames = top === lastTop ? stableFrames + 1 : 0;
+            lastTop = top;
+        }
+    }, block);
+}
+
+/**
  * Glide the real Playwright mouse to the centre of `locator` in several small steps so the injected
  * fake cursor (which follows pointer/mouse move events) animates smoothly across the screen instead
  * of teleporting. Playwright interpolates from its last known pointer position, so the resulting
@@ -349,6 +369,7 @@ export async function smoothMoveToLocator(page: Page, locator: Locator): Promise
     if (!RECORDING) {
         return;
     }
+    await smoothScrollIntoView(locator);
     await locator.scrollIntoViewIfNeeded({ timeout: 5_000 });
     const box = await locator.boundingBox();
     if (!box) {
@@ -378,6 +399,9 @@ export async function smoothClick(
     locator: Locator,
     options?: Parameters<Locator["click"]>[0],
 ): Promise<void> {
+    // Ensure the target exists and fail fast with a clear locator error instead if not:
+    await locator.waitFor({ state: "visible", timeout: options?.timeout ?? 15_000 });
+
     await smoothMoveToLocator(page, locator);
     if (RECORDING) {
         // When the click holds a modifier (e.g. Ctrl for multi-select), pop a keycap badge so the
@@ -444,12 +468,19 @@ export async function smoothType(page: Page, locator: Locator, value: string): P
 export type ModuleDropPosition = "center" | "left" | "right" | "top" | "bottom";
 
 /**
- * How far (px) inside the layout edge to aim for the side drop positions. The layout's perimeter
- * drop zones are only ~50px wide, so a small fixed inset reliably lands in the edge zone (splitting
- * off the whole layout to that side) rather than nesting into a child box nearer the centre — which
- * is what a percentage-based target does once the canvas already holds a couple of modules.
+ * How far (px) inside the layout edge to aim for the side drop positions. The target must clear the
+ * layout's 25px box margin (`layoutBoxMargin`) — a single module's drop zones stop at
+ * `edge - margin`, so a smaller inset lands just outside the zone and the drop silently never
+ * commits — while staying within the ~50px edge band (`edgeWeight`) so it splits off the whole
+ * layout to that side rather than nesting into a child box nearer the centre.
  */
-const DROP_EDGE_INSET_PX = 24;
+const DROP_EDGE_INSET_PX = 45;
+
+/**
+ * The top/bottom edges need a touch more clearance than left/right: aiming ~15px further in lands
+ * reliably inside the bottom/top drop zone (a 45px inset still misses it and the drop never commits).
+ */
+const DROP_EDGE_INSET_VERTICAL_PX = 60;
 
 /** Resolve the absolute (x, y) drop target within `layoutBox` for a given drop position. */
 function resolveDropTarget(
@@ -458,15 +489,20 @@ function resolveDropTarget(
 ): { x: number; y: number } {
     const centerX = layoutBox.x + layoutBox.width / 2;
     const centerY = layoutBox.y + layoutBox.height / 2;
+    // For a side drop, aim the cross-axis at the centre of the first row/column rather than the layout
+    // centre: once the canvas holds stacked modules, the centre sits on the gutter between them, which
+    // resolves to the parent container (no side edge there) and nests the module instead of splitting.
+    const firstRowY = layoutBox.y + layoutBox.height / 4;
+    const firstColX = layoutBox.x + layoutBox.width / 4;
     switch (dropPosition) {
         case "left":
-            return { x: layoutBox.x + DROP_EDGE_INSET_PX, y: centerY };
+            return { x: layoutBox.x + DROP_EDGE_INSET_PX, y: firstRowY };
         case "right":
-            return { x: layoutBox.x + layoutBox.width - DROP_EDGE_INSET_PX, y: centerY };
+            return { x: layoutBox.x + layoutBox.width - DROP_EDGE_INSET_PX, y: firstRowY };
         case "top":
-            return { x: centerX, y: layoutBox.y + DROP_EDGE_INSET_PX };
+            return { x: firstColX, y: layoutBox.y + DROP_EDGE_INSET_VERTICAL_PX };
         case "bottom":
-            return { x: centerX, y: layoutBox.y + layoutBox.height - DROP_EDGE_INSET_PX };
+            return { x: firstColX, y: layoutBox.y + layoutBox.height - DROP_EDGE_INSET_VERTICAL_PX };
         default:
             return { x: centerX, y: centerY };
     }
@@ -498,17 +534,22 @@ export async function dragModuleOntoLayout(
     moduleDisplayName: string,
     dropPosition: ModuleDropPosition = "center",
 ): Promise<void> {
-    const layout = page.getByTestId("module-layout");
+    const layout = activeModuleLayout(page);
     await expect(layout).toBeVisible();
 
-    // The dropped module's header carries the module title; use it to confirm the drop committed.
-    const droppedModule = layout.getByTitle(moduleDisplayName).first();
+    // Confirm the drop via the header's stable data-module-title (the default title), which — unlike
+    // the visible `title` — never changes even if the module renames its instance title from data.
+    const droppedModule = layout.locator(`[data-module-title="${moduleDisplayName}"]`).first();
+    // List items are divs; module header titles are spans (possibly on hidden dashboards).
+    const moduleItem = page.locator(`div[title="${moduleDisplayName}"]`).filter({ visible: true }).first();
 
-    await smoothMoveToLocator(page, page.locator(`[title="${moduleDisplayName}"]`).first());
+    await smoothMoveToLocator(page, moduleItem);
 
     await expect(async () => {
-        const moduleItem = page.locator(`[title="${moduleDisplayName}"]`).first();
         await expect(moduleItem).toBeVisible();
+        // Centre the item: scrolled just into view it can sit under the list's sticky group header.
+        await smoothScrollIntoView(moduleItem, "center");
+        await moduleItem.scrollIntoViewIfNeeded();
 
         const itemBox = await moduleItem.boundingBox();
         const layoutBox = await layout.boundingBox();
@@ -548,6 +589,124 @@ export async function dragModuleOntoLayout(
 
         await expect(droppedModule).toBeVisible({ timeout: 5_000 });
     }).toPass({ timeout: 60_000, intervals: [1_000] });
+}
+
+/** The module layout of the active dashboard (inactive, kept-alive dashboards stay in the DOM, hidden). */
+export function activeModuleLayout(page: Page): Locator {
+    return page.getByTestId("module-layout").filter({ visible: true });
+}
+
+/** The header bar of the module instance whose header shows `moduleTitle` (modules may retitle themselves). */
+function moduleHeader(page: Page, moduleTitle: string | RegExp): Locator {
+    return activeModuleLayout(page)
+        .getByTitle(moduleTitle, { exact: true })
+        .first()
+        .locator(
+            "xpath=ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' shadow-elevation-raised ')][1]",
+        );
+}
+
+/** Maximize a module to fill the dashboard, or restore it, with the button in its header. */
+export async function setModuleMaximized(
+    page: Page,
+    moduleTitle: string | RegExp,
+    maximized: boolean,
+): Promise<void> {
+    // The header buttons have no accessible name; MUI icons carry a data-testid.
+    const [clickIcon, resultIcon] = maximized
+        ? ["OpenInFullIcon", "CloseFullscreenIcon"]
+        : ["CloseFullscreenIcon", "OpenInFullIcon"];
+    const header = moduleHeader(page, moduleTitle);
+    await smoothClick(page, header.locator(`button:has(svg[data-testid="${clickIcon}"])`));
+    await expect(header.locator(`svg[data-testid="${resultIcon}"]`)).toBeVisible();
+}
+
+function dashboardTabs(page: Page): Locator {
+    return page.getByRole("tablist", { name: "Dashboards" });
+}
+
+/** Rename the active dashboard via its tab's "Edit metadata" action. */
+export async function renameActiveDashboard(page: Page, name: string): Promise<void> {
+    const tabItem = dashboardTabs(page)
+        .locator("[data-dashboard-tab-item]")
+        .filter({ has: page.getByRole("tab", { selected: true }) });
+    await smoothClick(page, tabItem.getByRole("button", { name: /^Open actions for / }));
+    await smoothClick(page, page.getByRole("menuitem", { name: "Edit metadata" }));
+
+    const dialog = page.getByRole("dialog");
+    await smoothType(page, dialog.getByPlaceholder("Enter dashboard name"), name);
+    await smoothClick(page, dialog.getByRole("button", { name: "Apply", exact: true }));
+    await expect(dialog).toBeHidden();
+    await expect(dashboardTabs(page).getByRole("tab", { name, exact: true })).toHaveAttribute("aria-selected", "true");
+}
+
+/** Add a new (empty) dashboard, which becomes the active one, and give it a name. */
+export async function addDashboard(page: Page, name: string): Promise<void> {
+    const tabs = dashboardTabs(page).getByRole("tab");
+    const tabCount = await tabs.count();
+    await smoothClick(page, page.getByRole("button", { name: "Add new dashboard" }));
+    await expect(tabs).toHaveCount(tabCount + 1);
+    await expect(tabs.last()).toHaveAttribute("aria-selected", "true");
+    await renameActiveDashboard(page, name);
+}
+
+/** Switch to the dashboard named `name` by clicking its tab. */
+export async function switchToDashboard(page: Page, name: string): Promise<void> {
+    const tab = dashboardTabs(page).getByRole("tab", { name, exact: true });
+    await smoothClick(page, tab);
+    await expect(tab).toHaveAttribute("aria-selected", "true");
+}
+
+/**
+ * Connect a data channel by dragging from the sender module's channel button to the receiver node
+ * named `receiverName` (shown on the receiving module while dragging). If the channel selector opens
+ * (several channels or contents), `contentName` is checked, or the first channel when omitted.
+ */
+export async function connectDataChannelByName(
+    page: Page,
+    {
+        senderModuleTitle,
+        receiverName,
+        contentName,
+    }: { senderModuleTitle: string | RegExp; receiverName: string; contentName?: string },
+): Promise<void> {
+    const origin = moduleHeader(page, senderModuleTitle).locator('[id$="-data-channel-origin"]');
+    await expect(origin).toBeVisible();
+    const originBox = await origin.boundingBox();
+    if (!originBox) {
+        throw new Error(`Could not locate the data channel button of "${senderModuleTitle}"`);
+    }
+
+    await glideMouseTo(page, originBox.x + originBox.width / 2, originBox.y + originBox.height / 2);
+    await page.mouse.down();
+    try {
+        const receiverNode = page.locator("[data-channelconnector]").filter({ hasText: receiverName });
+        await expect(receiverNode).toBeVisible();
+        const receiverBox = await receiverNode.boundingBox();
+        if (!receiverBox) {
+            throw new Error(`Could not locate the "${receiverName}" receiver node`);
+        }
+        await glideMouseTo(page, receiverBox.x + receiverBox.width / 2, receiverBox.y + receiverBox.height / 2);
+        await pace(page, "medium");
+    } finally {
+        await page.mouse.up();
+    }
+
+    const channelSelector = page.locator("#channel-selector");
+    const selectorOpened = await channelSelector
+        .waitFor({ state: "visible", timeout: 2_000 })
+        .then(() => true)
+        .catch(() => false);
+    if (selectorOpened) {
+        const checkbox = contentName
+            ? channelSelector.getByText(contentName, { exact: true })
+            : channelSelector.getByRole("checkbox").first();
+        await smoothClick(page, checkbox);
+        await smoothClick(page, channelSelector.getByRole("button", { name: "OK" }));
+        await expect(channelSelector).toBeHidden();
+    }
+
+    await expect(origin).toHaveAttribute("title", /active connection/);
 }
 
 /**
@@ -615,13 +774,14 @@ export async function sweepSliderAcross(
 
 /**
  * Add a vector to the Simulation Time Series vector selector by typing its full name and confirming
- * with Enter, then asserting its tag appears. The vector tree may still be loading when the field is
- * first focused, so this retries the type-and-confirm until the tag shows up. `vectorName` uses the
+ * with Enter, then asserting its tag appears. Settings may still be importing after the module header
+ * appears. The vector tree may still be loading when the field is first focused, so this retries the
+ * type-and-confirm until the tag shows up. `vectorName` uses the
  * selector's colon-separated form for well vectors, e.g. "FOPR" or "WGOR:A1".
  */
 export async function addVectorToSelector(page: Page, vectorName: string): Promise<void> {
     const vectorSelectorContainer = page.getByTestId("vector-selector");
-    await expect(vectorSelectorContainer).toBeVisible();
+    await expect(vectorSelectorContainer).toBeVisible({ timeout: 60_000 });
     const vectorInput = vectorSelectorContainer.locator("input").last();
     const vectorTag = vectorSelectorContainer.locator(`li[title="${vectorName}"]`);
 
@@ -634,6 +794,19 @@ export async function addVectorToSelector(page: Page, vectorName: string): Promi
         }
         await expect(vectorTag).toHaveCount(1);
     }).toPass({ timeout: 60_000, intervals: [1_000] });
+}
+
+/**
+ * Remove a vector tag from the Simulation Time Series vector selector by clicking its remove button,
+ * then assert the tag is gone. Pairs with {@link addVectorToSelector} when a story needs to swap the
+ * plotted vectors rather than accumulate them.
+ */
+export async function removeVectorFromSelector(page: Page, vectorName: string): Promise<void> {
+    const vectorSelectorContainer = page.getByTestId("vector-selector");
+    await expect(vectorSelectorContainer).toBeVisible({ timeout: 60_000 });
+    const vectorTag = vectorSelectorContainer.locator(`li[title="${vectorName}"]`);
+    await smoothClick(page, vectorTag.getByRole("button", { name: "Remove" }));
+    await expect(vectorTag).toHaveCount(0, { timeout: 30_000 });
 }
 
 /** Friendly on-screen glyphs for the keys we demo; falls back to the raw key name. */
@@ -677,10 +850,12 @@ export type SessionAndEnsembleNarrationHooks = {
     markStep?: (title: string) => void;
     /** Further ensemble (iteration) names from the same Drogon case to add alongside the default one. */
     additionalEnsembleNames?: string[];
+    /** Case and ensemble to load; defaults to the Drogon AHM case. */
+    testCase?: { caseUuid: string; ensembleName: string };
 };
 
 /**
- * Create a new session, then add and apply the Drogon AHM ensemble to it — the common setup shared
+ * Create a new session, then add and apply the Drogon AHM ensemble (or `testCase`) to it — the common setup shared
  * by every story that needs an ensemble loaded before it can show off its own module.
  *
  * `narrate`/`markStep` are opt-in: callers that want this flow narrated as its own part of a
@@ -698,6 +873,7 @@ export async function createSessionAndSelectEnsemble(
         narrate = async () => undefined,
         markStep = () => undefined,
         additionalEnsembleNames = [],
+        testCase = DROGON_AHM,
     }: SessionAndEnsembleNarrationHooks = {},
 ): Promise<void> {
     const newSessionNarration = narrate("Let's start by creating a new session...");
@@ -726,9 +902,9 @@ export async function createSessionAndSelectEnsemble(
     // fill that lands in that window is dropped when the table re-renders. Retry until the typed
     // value sticks and the matching case row shows up.
     await expect(async () => {
-        await smoothFill(page, caseIdColumnFilter, DROGON_AHM.caseUuid);
-        await expect(caseIdColumnFilter).toHaveValue(DROGON_AHM.caseUuid);
-        await expect(page.getByText(DROGON_AHM.caseUuid)).toBeVisible({ timeout: 10_000 });
+        await smoothFill(page, caseIdColumnFilter, testCase.caseUuid);
+        await expect(caseIdColumnFilter).toHaveValue(testCase.caseUuid);
+        await expect(page.getByText(testCase.caseUuid)).toBeVisible({ timeout: 10_000 });
     }).toPass({ timeout: 60_000 });
     await pace(page);
 
@@ -736,11 +912,11 @@ export async function createSessionAndSelectEnsemble(
         page,
         page
             .locator("tbody")
-            .getByRole("row", { name: new RegExp(DROGON_AHM.caseUuid) })
+            .getByRole("row", { name: new RegExp(testCase.caseUuid) })
             .first(),
     );
 
-    await expect(page.getByText(DROGON_AHM.ensembleName).first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText(testCase.ensembleName).first()).toBeVisible({ timeout: 60_000 });
     await ensembleNarration;
     await pace(page);
 
@@ -749,7 +925,7 @@ export async function createSessionAndSelectEnsemble(
         "We select the ensembles and apply them to load them into the session.",
     );
 
-    await smoothClick(page, page.getByText(DROGON_AHM.ensembleName).first());
+    await smoothClick(page, page.getByText(testCase.ensembleName).first());
 
     // The "Ensembles in selected case" list is multi-select, so add any further iterations by
     // simply clicking their rows before applying.
@@ -763,4 +939,119 @@ export async function createSessionAndSelectEnsemble(
     await smoothClick(page, page.getByRole("button", { name: "Apply" }));
     await expect(page.getByText("Ensembles used in this session")).not.toBeVisible({ timeout: 120_000 });
     await applyNarration;
+}
+
+/**
+ * Connect a data channel by dragging from a publishing module's channel "output" button onto a
+ * receiver node on another module.
+ *
+ * Reproduces the framework's custom pointer gesture: pressing the channel-output button publishes an
+ * event that reveals the receiver nodes on compatible modules; gliding onto the wanted receiver node
+ * and releasing connects it. `receiverIdString` selects which receiver to drop on (e.g. the
+ * Distribution Plot's `channelX`).
+ *
+ * Options:
+ * - `origin`: the channel-output button to drag from. Defaults to the only one on the page; pass an
+ *   explicit locator when several modules publish channels (see `channelOutputForModule`).
+ * - `contentLabel`: when the source publishes more than one content (e.g. several vectors) the drop
+ *   opens a content selector — subscribe the receiver to the single content whose label contains
+ *   this text. If no selector appears (single-content source), the connection is accepted as-is.
+ * - `deselectContentLabel`: a content already selected on the receiver that must be unchecked first
+ *   (so re-pointing a multi-content receiver ends up with exactly the new content).
+ *
+ * The receiver nodes only mount once the drag starts, so the whole gesture is retried until it
+ * succeeds (an active outgoing connection on the origin button, or a dismissed content selector).
+ */
+export async function connectDataChannel(
+    page: Page,
+    receiverIdString: string,
+    options?: { contentLabel?: string; deselectContentLabel?: string; origin?: Locator },
+): Promise<void> {
+    const origin = options?.origin ?? page.locator('[id$="-data-channel-origin"]').first();
+    await expect(origin).toBeVisible();
+    const receiverNode = page.locator(`[id^="channel-connector-"][id$="-${receiverIdString}"]`).first();
+    const selector = page.locator("#channel-selector");
+
+    await expect(async () => {
+        // Clean up a content selector left open by a previous attempt.
+        if (await selector.isVisible().catch(() => false)) {
+            await selector.getByRole("button", { name: "Cancel" }).click().catch(() => undefined);
+            await expect(selector).toBeHidden({ timeout: 2_000 }).catch(() => undefined);
+        }
+
+        await smoothMoveToLocator(page, origin);
+        const originBox = await origin.boundingBox();
+        if (!originBox) {
+            throw new Error("Could not resolve the data channel origin button");
+        }
+
+        await page.mouse.move(originBox.x + originBox.width / 2, originBox.y + originBox.height / 2);
+        await page.mouse.down();
+        try {
+            // Pressing the origin reveals the receiver nodes; wait for the target one to show.
+            await expect(receiverNode).toBeVisible({ timeout: 3_000 });
+            const receiverBox = await receiverNode.boundingBox();
+            if (!receiverBox) {
+                throw new Error("Receiver node did not become visible");
+            }
+            const rx = receiverBox.x + receiverBox.width / 2;
+            const ry = receiverBox.y + receiverBox.height / 2;
+
+            // Glide onto the node so it registers a hover, nudge so a fresh pointermove fires, then
+            // release to commit the connection.
+            await page.mouse.move(rx, ry, { steps: RECORDING ? 30 : 15 });
+            await page.mouse.move(rx + 1, ry, { steps: 2 });
+            await page.waitForTimeout(150);
+            await page.mouse.up();
+            lastMousePosition.set(page, { x: rx, y: ry });
+        } catch (error) {
+            // Never leave the mouse button pressed between retries.
+            await page.mouse.up().catch(() => undefined);
+            throw error;
+        }
+
+        // The content selector only opens when the source publishes 2+ contents; give it a moment.
+        const selectorVisible = await selector
+            .waitFor({ state: "visible", timeout: 2_000 })
+            .then(() => true)
+            .catch(() => false);
+
+        if (selectorVisible && options?.contentLabel) {
+            // Deselect a whole-channel ("all") pre-selection so a single content can win.
+            const channelCheckbox = selector.getByRole("checkbox").first();
+            if (await channelCheckbox.isChecked().catch(() => false)) {
+                await smoothClick(page, channelCheckbox);
+            }
+            // Uncheck a specific content the receiver already carries (re-pointing case).
+            if (options.deselectContentLabel) {
+                const preSelected = selector.getByText(options.deselectContentLabel, { exact: false }).first();
+                if ((await preSelected.count()) > 0) {
+                    await smoothClick(page, preSelected);
+                }
+            }
+            await smoothClick(page, selector.getByText(options.contentLabel, { exact: false }).first());
+            await smoothClick(page, selector.getByRole("button", { name: "OK", exact: true }));
+            await expect(selector).toBeHidden({ timeout: 3_000 });
+        } else {
+            // Single-content (automatic) connect: the origin button's title gains a connection count.
+            await expect(origin).toHaveAttribute("title", /active connection/, { timeout: 3_000 });
+        }
+    }).toPass({ timeout: 30_000, intervals: [1_000] });
+}
+
+/**
+ * The channel-output ("origin") button belonging to the module whose header carries the stable
+ * `data-module-title` (the module's default title, e.g. "Inplace Volumes Plot"). This survives a
+ * module renaming its visible instance title from data. Use to disambiguate
+ * {@link connectDataChannel} when several modules publish channels. Resolves the nearest
+ * header/wrapper around the title that actually contains an output button.
+ */
+export function channelOutputForModule(page: Page, moduleTitle: string): Locator {
+    return page
+        .getByTestId("module-layout")
+        .locator(`[data-module-title="${moduleTitle}"]`)
+        .first()
+        .locator('xpath=ancestor::div[.//*[contains(@id, "-data-channel-origin")]][1]')
+        .locator('[id$="-data-channel-origin"]')
+        .first();
 }

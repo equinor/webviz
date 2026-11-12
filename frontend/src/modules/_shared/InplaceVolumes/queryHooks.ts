@@ -17,6 +17,7 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import { subtractPerRealizationTablesMemoized } from "@modules/_shared/InplaceVolumes/deltaTableUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import type {
     DeltaDroppedFluidSelections,
     DeltaUnmatchedRows,
@@ -63,6 +64,7 @@ export type InplaceVolumesSource = {
     ensembleIdent: RegularEnsembleIdent;
     realizations: readonly number[];
     tableName: string;
+    sensitivityCase?: SensitivityCaseIdent | null;
 };
 
 export type AggregatedDeltaTableDataResults = AggregatedTableDataResults & {
@@ -170,6 +172,7 @@ export function makeAggregatedStatisticalTableDataQueryOptionsFromSources(
                 tablesData.push({
                     ensembleIdent: sources[index].ensembleIdent,
                     tableName: sources[index].tableName,
+                    sensitivityCase: sources[index].sensitivityCase,
                     data: result.data.value,
                 });
                 warnings.push(...makeSourceWarnings(sources[index], result.data.warnings));

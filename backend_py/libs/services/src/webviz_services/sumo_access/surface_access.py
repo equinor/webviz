@@ -28,7 +28,6 @@ from webviz_services.service_exceptions import (
     InvalidParameterError,
     ServiceRequestError,
     InvalidDataError,
-    ServiceTimeoutError,
 )
 from webviz_services.service_warnings import make_missing_realizations_warning
 
@@ -50,6 +49,7 @@ from .generic_types import SumoContent
 from .queries.surface_queries import SurfTimeType, SurfInfo, TimePoint, TimeInterval
 from .queries.surface_queries import RealizationSurfQueries, ObservedSurfQueries
 from .sumo_client_factory import create_sumo_client
+from ._translate_sumo_exceptions import translate_sumo_exceptions
 
 LOGGER = logging.getLogger(__name__)
 
@@ -349,7 +349,10 @@ class SurfaceAccess:
         warnings = _make_missing_source_realizations_warnings(realizations, realizations_found)
 
         sumo_stat_op_str = _map_to_sumo_aggregation_operation(statistic_function)
-        sumo_surf_obj = await search_context.aggregate_async(operation=sumo_stat_op_str)
+
+        with translate_sumo_exceptions(operation="Calculate statistical surface"):
+            sumo_surf_obj = await search_context.aggregate_async(operation=sumo_stat_op_str)
+
         xtgeo_surf = await sumo_surf_obj.to_regular_surface_async() if isinstance(sumo_surf_obj, Surface) else None
         perf_metrics.record_lap("calc-stat")
 
@@ -544,12 +547,8 @@ def _make_missing_source_realizations_warnings(
 
 
 async def _start_sumo_aggregation_task_async(search_context: SearchContext, sumo_stat_op_str: str) -> str:
-    try:
+    with translate_sumo_exceptions(operation="Start Sumo aggregation task"):
         httpx_resp = await search_context.aggregate_async(operation=sumo_stat_op_str, no_wait=True)
-    except (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.HTTPStatusError) as exc:
-        if _should_treat_httpx_exception_as_timeout(exc):
-            raise ServiceTimeoutError("Submitting task to Sumo aggregation service timed out", Service.SUMO) from exc
-        raise ServiceRequestError("Error starting Sumo aggregation task", Service.SUMO) from exc
 
     # When we call aggregate_async() with no_wait=True, we expect the raw httpx.Response object
     # from the underlying POST request to be returned.
@@ -602,25 +601,6 @@ async def _poll_sumo_aggregation_task_state_async(sumo_client: SumoClient, sumo_
         status=status,
         result_url=result_url,
     )
-
-
-def _should_treat_httpx_exception_as_timeout(httpx_exception: httpx.HTTPError) -> bool:
-    """
-    Return True if the given httpx exception should be treated as an upstream timeout.
-
-    Covers:
-      * client-side timeouts: httpx.ConnectTimeout, httpx.ReadTimeout
-      * server-side timeout response: httpx.HTTPStatusError with status 504 Gateway Timeout
-
-    Note that for server-side timeouts to work, httpx.raise_for_status() must have been called on the response.
-    """
-    if isinstance(httpx_exception, (httpx.ConnectTimeout, httpx.ReadTimeout)):
-        return True
-
-    if isinstance(httpx_exception, httpx.HTTPStatusError) and httpx_exception.response is not None:
-        return httpx_exception.response.status_code == 504
-
-    return False
 
 
 def _initial_fluid_contact_surface_meta_from_bucket(bucket: dict) -> InitialFluidContactSurfaceMeta:

@@ -11,11 +11,20 @@ import {
     makeDroppedFluidSelectionWarnings,
     makeUnmatchedDeltaRowWarnings,
 } from "@modules/_shared/InplaceVolumes/deltaEnsembleWarnings";
+import {
+    makeDroppedSensitivityRowsWarning,
+    makeSensitivityCasesWithoutRealizationsWarning,
+    SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 import { propagateWarningsToStatusWriter } from "@modules/_shared/utils/propagateWarningsToStatusWriter";
 
-import { filterAtom, resultNamesAtom } from "../atoms/baseAtoms";
-import { activeQueriesResultAtom, indicesWithValuesAtom } from "../atoms/derivedAtoms";
+import { filterAtom, isSensitivityEnsembleSelectionBlockedAtom, resultNamesAtom } from "../atoms/baseAtoms";
+import {
+    activeQueriesResultAtom,
+    indicesWithValuesAtom,
+    sensitivityCasesWithoutRealizationsAtom,
+} from "../atoms/derivedAtoms";
 
 // Type guard for InplaceVolumesTableData
 function isInplaceVolumesTableData(
@@ -36,10 +45,24 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter, 
     const indicesValues = useAtomValue(indicesWithValuesAtom);
     const resultNames = useAtomValue(resultNamesAtom);
     const filter = useAtomValue(filterAtom);
+    const isSensitivityEnsembleSelectionBlocked = useAtomValue(isSensitivityEnsembleSelectionBlockedAtom);
+    const sensitivityCasesWithoutRealizations = useAtomValue(sensitivityCasesWithoutRealizationsAtom);
 
     propagateAllApiErrorsToStatusWriter(activeQueriesResult.errors, statusWriter);
 
     propagateWarningsToStatusWriter(activeQueriesResult.warnings, statusWriter);
+
+    if (isSensitivityEnsembleSelectionBlocked) {
+        statusWriter.addError(SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE);
+    }
+
+    if (activeQueriesResult.numDroppedSensitivityRows > 0) {
+        statusWriter.addWarning(makeDroppedSensitivityRowsWarning(activeQueriesResult.numDroppedSensitivityRows));
+    }
+
+    if (sensitivityCasesWithoutRealizations.length > 0) {
+        statusWriter.addWarning(makeSensitivityCasesWithoutRealizationsWarning(sensitivityCasesWithoutRealizations));
+    }
 
     for (const elm of indicesValues) {
         if (elm.values.length === 0) {
