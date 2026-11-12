@@ -39,7 +39,6 @@ type RelPermTableDefinitionQueryKey = ReturnType<typeof getRelpermTableDefinitio
 type RelPermRealizationDataQueryKey = ReturnType<typeof getRelpermRealizationDataQueryKey>;
 type RelPermRealizationDataQueryContext = {
     ensembleIdent: RegularEnsembleIdent;
-    filteredRealizations: number[] | null;
     tableDefinitionIsLoaded: boolean;
 };
 
@@ -118,12 +117,8 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
     const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
 
     function makeQueryContext(ensembleIdent: RegularEnsembleIdent, index: number): RelPermRealizationDataQueryContext {
-        const tableRealizations = tableDefinitionQueries[index]?.data?.realizations ?? [];
-        const filteredRealizations = filterRealizationsByTable(validRealizationNumbers, tableRealizations);
-
         return {
             ensembleIdent,
-            filteredRealizations,
             tableDefinitionIsLoaded: Boolean(tableDefinitionQueries[index]?.data),
         };
     }
@@ -135,11 +130,10 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
     return {
         queries: queryContexts.map(function makeRelPermRealizationDataQuery({
             ensembleIdent,
-            filteredRealizations,
             tableDefinitionIsLoaded,
         }) {
-            const realizationsEncodedAsUintListStr = filteredRealizations
-                ? encodeAsUintListStr(filteredRealizations)
+            const realizationsEncodedAsUintListStr = validRealizationNumbers
+                ? encodeAsUintListStr(validRealizationNumbers)
                 : null;
             const options = withWarnings(
                 getRelpermRealizationDataOptions({
@@ -166,7 +160,7 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
                         selectedCurveNames.length > 0 &&
                         selectedSatnums.length > 0 &&
                         tableDefinitionIsLoaded &&
-                        (filteredRealizations === null || filteredRealizations.length > 0) &&
+                        (validRealizationNumbers === null || validRealizationNumbers.length > 0) &&
                         areSelectionsValid,
                     ),
                 };
@@ -221,18 +215,4 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
             };
         },
     };
-}
-
-function filterRealizationsByTable(
-    validRealizationNumbers: number[] | null,
-    tableRealizations: number[],
-): number[] | null {
-    if (!validRealizationNumbers) {
-        return null;
-    }
-
-    const tableRealizationSet = new Set(tableRealizations);
-    return validRealizationNumbers.filter(function isRealizationInTable(realization) {
-        return tableRealizationSet.has(realization);
-    });
 }

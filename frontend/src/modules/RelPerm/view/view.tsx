@@ -9,7 +9,6 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
-import { propagateWarningsToStatusWriter } from "@modules/_shared/utils/propagateWarningsToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 
@@ -36,7 +35,6 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const instanceTitle = makeRelPermPlotTitle(curveType, curveNames, visualizationSettings.groupBy);
 
     statusWriter.setLoading(relPermDataAccessorStatus.isFetching);
-    propagateWarningsToStatusWriter(relPermDataAccessorStatus.warnings, statusWriter);
 
     React.useEffect(
         function updateInstanceTitle() {
