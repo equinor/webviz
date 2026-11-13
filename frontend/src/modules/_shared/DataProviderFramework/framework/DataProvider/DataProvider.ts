@@ -545,7 +545,12 @@ export class DataProvider<
                 ...accessors,
                 fetchQuery: <TQueryFnData, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
                     options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
-                ) => this._scopedQueryController.fetchQuery<TQueryFnData, TError, TData, TQueryKey>(options),
+                ) =>
+                    // Retry queries that failed earlier instead of re-rejecting with the cached error
+                    this._scopedQueryController.fetchQuery<TQueryFnData, TError, TData, TQueryKey>({
+                        refetchOnError: true,
+                        ...options,
+                    }),
                 onFetchCancelOrFinish,
                 setProgressMessage: (message) => {
                     if (isCurrent()) {
