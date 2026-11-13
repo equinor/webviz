@@ -37,50 +37,58 @@ const CURSOR_MIN_STEPS = 6;
 const CURSOR_MAX_STEPS = 50;
 
 /**
- * Nominal duration (ms) of one glide step: one frame at 60 fps. A glide is budgeted `steps` times this,
- * so on heavy pages the cursor still moves at a realistic speed instead of crawling through every planned
- * step. With a WebGL map on the page each pointer move can take ~100 ms even with GPU rendering, which
- * would otherwise stretch a 50-step glide to about 5 s.
+ * Duration (ms) of one glide step, i.e. per CURSOR_PX_PER_STEP pixels of travel (~450 px/s). Glides are
+ * paced to this on every page, so the cursor moves at the same speed in all recordings regardless of
+ * the machine: on fast pages the glide waits between chunks, and on slow pages (a WebGL map can make
+ * each pointer move take ~100 ms, even with GPU rendering) the remaining distance is covered in fewer,
+ * larger steps. Tune this one constant to change the cursor speed of every tutorial.
  */
-const CURSOR_NOMINAL_STEP_MS = 16;
+const CURSOR_STEP_MS = 22;
 
-/** Steps per chunk when gliding; the remaining step count is re-planned between chunks. */
+/** Steps per chunk when gliding; the glide is re-synced to its schedule between chunks. */
 const CURSOR_CHUNK_STEPS = 5;
 
 /** Last known mouse position per page, used to size the glide by travel distance. */
 const lastMousePosition = new WeakMap<Page, { x: number; y: number }>();
 
 /**
- * Move the real mouse to (x, y) at a roughly constant on-screen speed by sizing the number of
- * interpolation steps to the travel distance. Tracks the last position per page so the next glide
- * can measure how far it has to travel (Playwright's internal mouse starts at 0,0).
- *
- * The glide runs in short chunks against a wall-clock budget: if the page is slow to process pointer
- * moves, the remaining distance is covered in fewer, larger steps so the glide still ends on time.
+ * Move the real mouse to (x, y) at a constant on-screen speed: the number of interpolation steps
+ * follows the travel distance, and the glide is paced against the wall clock (see CURSOR_STEP_MS).
+ * Tracks the last position per page so the next glide can measure how far it has to travel
+ * (Playwright's internal mouse starts at 0,0).
  */
 async function glideMouseTo(page: Page, x: number, y: number): Promise<void> {
     const from = lastMousePosition.get(page) ?? { x: 0, y: 0 };
     const distance = Math.hypot(x - from.x, y - from.y);
     const steps = Math.min(CURSOR_MAX_STEPS, Math.max(CURSOR_MIN_STEPS, Math.round(distance / CURSOR_PX_PER_STEP)));
-    const budgetMs = steps * CURSOR_NOMINAL_STEP_MS;
+    const durationMs = steps * CURSOR_STEP_MS;
     const start = Date.now();
 
     let stepsDone = 0;
+    // Time spent in pointer moves only (excluding pacing waits), to estimate what each step costs.
+    let moveMs = 0;
     while (stepsDone < steps) {
         const elapsedMs = Date.now() - start;
-        const msPerStep = stepsDone > 0 ? elapsedMs / stepsDone : CURSOR_NOMINAL_STEP_MS;
-        const affordableSteps = Math.floor((budgetMs - elapsedMs) / msPerStep);
+        const msPerStep = stepsDone > 0 ? Math.max(1, moveMs / stepsDone) : 1;
+        const affordableSteps = Math.floor((durationMs - elapsedMs) / msPerStep);
         if (affordableSteps < steps - stepsDone) {
-            // Over budget: finish the remaining distance in as many steps as there is time for.
+            // Behind schedule: finish the remaining distance in as many steps as there is time for.
             await page.mouse.move(x, y, { steps: Math.max(2, Math.min(CURSOR_CHUNK_STEPS, affordableSteps)) });
             break;
         }
         const chunkSteps = Math.min(CURSOR_CHUNK_STEPS, steps - stepsDone);
         stepsDone += chunkSteps;
         const fraction = stepsDone / steps;
+        const moveStart = Date.now();
         await page.mouse.move(from.x + (x - from.x) * fraction, from.y + (y - from.y) * fraction, {
             steps: chunkSteps,
         });
+        moveMs += Date.now() - moveStart;
+        // Ahead of schedule: wait so the cursor doesn't outrun the target speed.
+        const aheadMs = start + stepsDone * CURSOR_STEP_MS - Date.now();
+        if (aheadMs > 0) {
+            await page.waitForTimeout(aheadMs);
+        }
     }
     lastMousePosition.set(page, { x, y });
 }
