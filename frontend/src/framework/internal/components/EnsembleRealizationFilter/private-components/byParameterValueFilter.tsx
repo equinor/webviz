@@ -260,10 +260,12 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         const parameterMinMax = ensembleParameters.getContinuousParameterMinMax(parameterIdent);
 
         const immediateValue = immediateSliderValues[parameterIdentString];
+
         return (
             <Slider
-                max={parameterMinMax.max}
-                min={parameterMinMax.min}
+                // Values are rounded on change, so min and max values must follow the same rounding.
+                max={roundContinuousValue(parameterMinMax.max)}
+                min={roundContinuousValue(parameterMinMax.min)}
                 step={createContinuousValueSliderStep(parameterMinMax.min, parameterMinMax.max)}
                 largeStep={createContinuousValueSliderStep(parameterMinMax.min, parameterMinMax.max) * 10}
                 value={immediateValue ?? [valueSelection.start, valueSelection.end]}
