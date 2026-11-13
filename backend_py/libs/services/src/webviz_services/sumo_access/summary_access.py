@@ -162,24 +162,6 @@ class SummaryAccess:
         return table, vector_metadata
 
     @otel_span_decorator()
-    async def get_vector_table_with_raw_date_ranges_async(
-        self,
-        vector_name: str,
-        resampling_frequency: Optional[Frequency],
-        realizations: Optional[Sequence[int]],
-    ) -> Tuple[pa.Table, VectorMetadata, Dict[int, RawDateRange]]:
-        """
-        Same as `get_vector_table_async()`, but validates the raw samples strictly and also returns the first and last
-        raw sample timestamp per realization, captured from the same loaded table before resampling.
-        Raises `SourceCoverageUnsupportedError` for a vector that is not a cumulative total, before any validation
-        or resampling.
-        """
-        table, vector_metadata = await self.get_vector_table_async(vector_name, None, realizations)
-        raise_if_source_coverage_unsupported_for_metadata(vector_metadata)
-        table, raw_date_ranges = validate_and_resample_with_raw_date_ranges(table, vector_name, resampling_frequency)
-        return table, vector_metadata, raw_date_ranges
-
-    @otel_span_decorator()
     async def get_vector_async(
         self,
         vector_name: str,
@@ -198,11 +180,13 @@ class SummaryAccess:
     ) -> List[RealizationVector]:
         """
         Same values as `get_vector_async()`, with the raw date range attached to each realization vector.
-        Raises `SourceCoverageUnsupportedError` for a vector that is not a cumulative total.
+        The raw samples are validated strictly, and the date ranges are captured from the same loaded table before
+        resampling. Raises `SourceCoverageUnsupportedError` for a vector that is not a cumulative total, before any
+        validation or resampling.
         """
-        table, vector_metadata, raw_date_ranges = await self.get_vector_table_with_raw_date_ranges_async(
-            vector_name, resampling_frequency, realizations
-        )
+        table, vector_metadata = await self.get_vector_table_async(vector_name, None, realizations)
+        raise_if_source_coverage_unsupported_for_metadata(vector_metadata)
+        table, raw_date_ranges = validate_and_resample_with_raw_date_ranges(table, vector_name, resampling_frequency)
         return _create_realization_vector_list(table, vector_name, vector_metadata, raw_date_ranges)
 
     @otel_span_decorator()
