@@ -9,7 +9,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from webviz_services.summary_vector_statistics import compute_vector_statistics
 from webviz_services.sumo_access.parameter_access import ParameterAccess
 from webviz_services.sumo_access.source_coverage import RawDateRange, SourceCoverageUnsupportedError
-from webviz_services.sumo_access.summary_access import Frequency, SummaryAccess
+from webviz_services.sumo_access.summary_access import (
+    Frequency,
+    SummaryAccess,
+    raise_if_source_coverage_unsupported_for_metadata,
+    validate_and_resample_with_raw_date_ranges,
+)
 from webviz_services.sumo_access.summary_types import VectorMetadata
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from webviz_services.summary_delta_vectors import (
@@ -774,7 +779,8 @@ async def _get_vector_tables_with_raw_date_ranges_and_create_delta_vector_table_
     """
     Same as `_get_vector_tables_and_create_delta_vector_table_and_metadata_async()`, but also returns the raw date
     ranges per realization of the comparison and reference ensembles, captured from the same single table load per
-    ensemble. A vector that is not a cumulative total is rejected with 400.
+    ensemble. A vector that is not a cumulative total in either ensemble is rejected with 400 before either raw table
+    is validated, so the error does not depend on which load finishes first.
     """
     comparison_ensemble_access = SummaryAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), comparison_case_uuid, comparison_ensemble_name
@@ -783,25 +789,30 @@ async def _get_vector_tables_with_raw_date_ranges_and_create_delta_vector_table_
         authenticated_user.get_sumo_access_token(), reference_case_uuid, reference_ensemble_name
     )
 
+    (comparison_raw_table_pa, comparison_metadata), (reference_raw_table_pa, reference_metadata) = await asyncio.gather(
+        comparison_ensemble_access.get_vector_table_async(
+            vector_name=vector_name, resampling_frequency=None, realizations=realizations
+        ),
+        reference_ensemble_access.get_vector_table_async(
+            vector_name=vector_name, resampling_frequency=None, realizations=realizations
+        ),
+    )
+    perf_metrics.record_lap("get-vector-tables-to-create-delta-vector-table")
+
     try:
-        (comparison_vector_table_pa, comparison_metadata, comparison_raw_date_ranges), (
-            reference_vector_table_pa,
-            reference_metadata,
-            reference_raw_date_ranges,
-        ) = await asyncio.gather(
-            comparison_ensemble_access.get_vector_table_with_raw_date_ranges_async(
-                vector_name=vector_name, resampling_frequency=resampling_frequency, realizations=realizations
-            ),
-            reference_ensemble_access.get_vector_table_with_raw_date_ranges_async(
-                vector_name=vector_name, resampling_frequency=resampling_frequency, realizations=realizations
-            ),
-        )
+        raise_if_source_coverage_unsupported_for_metadata(comparison_metadata)
+        raise_if_source_coverage_unsupported_for_metadata(reference_metadata)
     except SourceCoverageUnsupportedError as exc:
         raise HTTPException(status_code=400, detail=exc.message) from exc
 
-    perf_metrics.record_lap("get-vector-tables-to-create-delta-vector-table")
-
     delta_vector_metadata = _create_delta_vector_metadata(comparison_metadata, reference_metadata)
+
+    comparison_vector_table_pa, comparison_raw_date_ranges = validate_and_resample_with_raw_date_ranges(
+        comparison_raw_table_pa, vector_name, resampling_frequency
+    )
+    reference_vector_table_pa, reference_raw_date_ranges = validate_and_resample_with_raw_date_ranges(
+        reference_raw_table_pa, vector_name, resampling_frequency
+    )
 
     delta_vector_table_pa = create_delta_vector_table(
         comparison_vector_table_pa, reference_vector_table_pa, vector_name

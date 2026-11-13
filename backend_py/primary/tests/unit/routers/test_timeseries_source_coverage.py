@@ -314,6 +314,20 @@ def test_delta_unsupported_vector_is_rejected(client: TestClient, fake_source: F
     assert "Source coverage" in non_total.json()["error"]["message"]
 
 
+@pytest.mark.parametrize("malformed_case", [CMP_CASE, REF_CASE])
+def test_delta_unsupported_vector_in_one_ensemble_wins_over_malformed_data_in_the_other(
+    client: TestClient, fake_source: FakeSumoSource, malformed_case: str
+) -> None:
+    unsupported_case = REF_CASE if malformed_case == CMP_CASE else CMP_CASE
+    nan_rows = [("2020-01-01", 0, 0.0), ("2020-02-01", 0, float("nan"))]
+    fake_source.tables[(malformed_case, "FOPT")] = _raw_table("FOPT", nan_rows)
+    fake_source.tables[(unsupported_case, "FOPT")] = _raw_table("FOPT", DELTA_CMP_ROWS, is_rate=True, is_total=False)
+
+    resp = _get_delta(client)
+    assert resp.status_code == 400
+    assert "Source coverage" in resp.json()["error"]["message"]
+
+
 def test_delta_unit_mismatch_is_rejected(client: TestClient, fake_source: FakeSumoSource) -> None:
     _set_delta_tables(fake_source, unit="BBL")
     resp = _get_delta(client)
