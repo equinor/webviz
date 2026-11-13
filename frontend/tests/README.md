@@ -97,8 +97,7 @@ expose stable attributes for tests, so stories don't depend on display names tha
 
 Use the generic helpers in `tests/e2e/support/dpfHelpers.ts` (add menus, settings, renaming,
 expand/collapse, color scales), and keep module specifics in a small per-module file such as
-`tests/e2e/support/twoDViewerHelpers.ts`. For deck.gl based modules, call `suppressMapHover(page)`
-(see `walkthroughHelpers.ts`) to avoid slow hover picking while recording.
+`tests/e2e/support/twoDViewerHelpers.ts`.
 
 #### Recording with GPU rendering
 

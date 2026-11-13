@@ -38,8 +38,9 @@ const CURSOR_MAX_STEPS = 50;
 
 /**
  * Nominal duration (ms) of one glide step: one frame at 60 fps. A glide is budgeted `steps` times this,
- * so on heavy pages (e.g. WebGL maps, where every pointer move can cost ~80 ms in headless Chromium) the
- * cursor still moves at a realistic speed instead of crawling through every planned step.
+ * so on heavy pages the cursor still moves at a realistic speed instead of crawling through every planned
+ * step. With a WebGL map on the page each pointer move can take ~100 ms even with GPU rendering, which
+ * would otherwise stretch a 50-step glide to about 5 s.
  */
 const CURSOR_NOMINAL_STEP_MS = 16;
 
@@ -315,33 +316,6 @@ export async function hideDevOverlays(page: Page): Promise<void> {
         "__pw_hide_dev_overlays_style__",
         `.tsqd-parent-container { display: none !important; }`,
     );
-}
-
-/**
- * Stop pointer/mouse move events from reaching deck.gl maps while recording.
- *
- * Every pointer move over a deck.gl map triggers a hover pick, which takes seconds per event in
- * headless (software WebGL) Chromium. A cursor glide across the map then stalls for a minute or more,
- * both slowing the run and freezing the recorded video. The fake cursor listens with window capture
- * listeners registered earlier, so it still follows the pointer; only the map's hover readout is lost.
- *
- * No-op unless RECORD=1. Must be called AFTER `installFakeCursor` and BEFORE `page.goto(...)`.
- */
-export async function suppressMapHover(page: Page): Promise<void> {
-    if (!RECORDING) {
-        return;
-    }
-    await page.addInitScript(() => {
-        // deck.gl listens on its `.deck-events-root` element, which holds the per-view event targets.
-        const stopOnMap = (event: Event) => {
-            if (event.target instanceof Element && event.target.closest(".deck-events-root")) {
-                event.stopPropagation();
-            }
-        };
-        for (const type of ["pointermove", "mousemove", "pointerover", "mouseover"]) {
-            window.addEventListener(type, stopOnMap, { capture: true });
-        }
-    });
 }
 
 /**

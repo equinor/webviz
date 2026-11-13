@@ -28,7 +28,6 @@ import {
     renameActiveDashboard,
     smoothClick,
     smoothMoveToLocator,
-    suppressMapHover,
 } from "../support/walkthroughHelpers";
 
 import { meta } from "./twoDViewer.meta";
@@ -84,7 +83,6 @@ test.describe("2D Viewer", () => {
         }
 
         await installFakeCursor(page);
-        await suppressMapHover(page);
         await installCaseRowRedaction(page, [DROGON_AHM.caseUuid]);
         await hideDevOverlays(page);
 
@@ -93,7 +91,7 @@ test.describe("2D Viewer", () => {
 
         markStep("Introduction");
         await say(
-            "The 2D Viewer builds maps from layers. We will walk through three typical cases: a depth map with wells and faults, simulation maps side by side, and observed versus simulated four D seismic. First, we load the Drogon ensemble into a new session.",
+            "The 2D Viewer shows map data from your ensembles. We will walk through three typical use cases: a depth map with wells and faults, simulation maps side by side, and observed versus simulated four D seismic.",
             () => createSessionAndSelectEnsemble(page),
         );
 
@@ -101,13 +99,13 @@ test.describe("2D Viewer", () => {
         // 1. Depth map with well picks, faults and statistics
         // ==========================================================================================
         markStep("Depth map: views and layers");
-        await say("We give each case its own dashboard. This first one is for the depth map.", () =>
+        await say("We give each use case its own dashboard. This first one is for the depth map.", () =>
             renameActiveDashboard(page, "Depth map"),
         );
         await say("We add the 2D Viewer.", () => addTwoDViewer(page));
 
         await say(
-            "The 2D Viewer is set up in the layer panel on the left, as a hierarchy. At the top are views: each view is one map in the viewer. Inside each view are layers, such as surfaces, wells and polygons, drawn on top of each other. Settings can also be shared between layers, which we will come to shortly.",
+            "Maps are set up in the panel on the left. Each view is one map, and holds the layers drawn in it.",
             () => smoothMoveToLocator(page, dpfPanel(page)),
         );
         await say("Let's add our first view.", () =>
@@ -136,11 +134,15 @@ test.describe("2D Viewer", () => {
 
         markStep("Depth map: shared settings");
         await say(
-            "Notice that the fault polygons have their own surface name and realization, which must match the depth surface.",
+            "Notice that the fault polygons have their own surface name and realization, which in most use cases should match the depth surface.",
             () => smoothMoveToLocator(page, dpfSetting(faultLayer, "surfaceName")),
         );
         await say(
-            "Instead of keeping them in sync by hand, we add shared settings from the add menu at the top of the panel. A shared setting controls the same setting in every layer below it.",
+            "Instead of keeping them in sync by hand, we use shared settings. A shared setting controls the same setting in every layer below it.",
+            () => smoothMoveToLocator(page, dpfAddButton(dpfPanel(page))),
+        );
+        await say(
+            "We add a shared surface name and a shared realization from the add menu at the top of the panel.",
             async () => {
                 await addFromMenu(page, dpfAddButton(dpfPanel(page)), ["Shared Settings", "Surface Name"]);
                 await addFromMenu(page, dpfAddButton(dpfPanel(page)), ["Shared Settings", "Realization"]);
@@ -169,8 +171,9 @@ test.describe("2D Viewer", () => {
             },
         );
         const picksLayer = dpfLayer(depthView, "DRILLED_WELLBORE_PICKS");
+        await say("But no picks show up: there are no well picks for the selected surface.", () => pointAtMap(page));
         await say(
-            "But no picks show up: there are no well picks for the selected surface. So we change the shared surface name to the top of the Therys formation, and the surface, the faults and the picks all follow.",
+            "So we change the shared surface name to the top of the Therys formation, and the surface, the faults and the picks all follow.",
             async () => {
                 await smoothMoveToLocator(page, dpfSetting(picksLayer, "surfaceName"));
                 await selectSettingOption(page, dpfSharedSetting(page, "surfaceName"), "surfaceName", "Therys Fm. Top");
@@ -179,12 +182,11 @@ test.describe("2D Viewer", () => {
             },
         );
         await say(
-            "Note that the well data in Webviz currently comes from the official well database, S-M-D-A. Well data from F-M-U is not available yet, and getting it added is prioritized. We collapse the well picks to keep the panel tidy.",
-            async () => {
-                await smoothMoveToLocator(page, dpfSetting(picksLayer, "wellbores"));
-                await setItemExpanded(page, picksLayer, false);
-            },
+            "Note that the well data in Webviz currently comes from the official well database, S-M-D-A. Well data from F-M-U is not available yet.",
+            () => smoothMoveToLocator(page, dpfSetting(picksLayer, "wellbores")),
         );
+        await pace(page, "long");
+        await say("We collapse the well picks to keep the panel tidy.", () => setItemExpanded(page, picksLayer, false));
 
         markStep("Depth map: color scale and contours");
         await say("Clicking a color scale opens the editor. We pick the Viridis palette...", async () => {
@@ -233,13 +235,10 @@ test.describe("2D Viewer", () => {
         await say("We pick the average pressure...", () =>
             selectSettingOption(page, dpfLayer(pressureView, TIME_STEP_LAYER), "surfaceAttribute", "average_PRESSURE"),
         );
-        await say(
-            "...and rename the view by double-clicking its name. Naming views after their content will be automated later.",
-            async () => {
-                await renameItem(page, pressureView, "Pressure");
-                await setItemExpanded(page, pressureView, false);
-            },
-        );
+        await say("...and rename the view by double-clicking its name.", async () => {
+            await renameItem(page, pressureView, "Pressure");
+            await setItemExpanded(page, pressureView, false);
+        });
 
         markStep("Simulation maps: shared settings and well picks");
         await say(
@@ -297,7 +296,7 @@ test.describe("2D Viewer", () => {
         // ==========================================================================================
         markStep("4D seismic: observed");
         await say(
-            "Finally, we compare observed four D seismic with simulated four D seismic from the petro-elastic modelling workflow, on a third dashboard.",
+            "Finally, we compare observed four D seismic with simulated four D seismic on a third dashboard.",
             async () => {
                 await addDashboard(page, "4D seismic");
                 await addTwoDViewer(page);
@@ -333,7 +332,7 @@ test.describe("2D Viewer", () => {
 
         markStep("4D seismic: simulated");
         await say(
-            "The second view shows the mean of the simulated seismic across all realizations. It is computed on request, so we set up the rest while it loads.",
+            "The second view shows the mean of the simulated seismic across all realizations. It is computed on request.",
             async () => {
                 await addFromMenu(page, dpfAddButton(dpfPanel(page)), ["Groups", "View"]);
                 const simulatedView = twoDView(page, 1);
