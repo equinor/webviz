@@ -357,7 +357,10 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                         invalid={
                             !!props.value &&
                             !!props.valueConstraints &&
-                            !isPhaseValueValid(props.value.injection.water.value, props.valueConstraints.injection.water)
+                            !isPhaseValueValid(
+                                props.value.injection.water.value,
+                                props.valueConstraints.injection.water,
+                            )
                         }
                         onValueChange={(newValue) => handleValueChange("injection", "water", newValue)}
                         onColorChange={(newColor) => handleColorChange("injection", "water", newColor)}
@@ -416,11 +419,7 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
     const debouncedOnValueChange = useDebouncedFunction(onValueChange, 500);
 
     const handleSliderChange = React.useCallback(
-        function handleSliderChange(value: number | readonly number[], eventDetails: { reason: string }) {
-            // Bounds changes make the slider emit a clamped value; ignore it so a retained out-of-range
-            // threshold stays visible (and invalid) until the user edits it
-            if (eventDetails.reason === "clamp-value") return;
-
+        function handleSliderChange(value: number | readonly number[]) {
             const newValue = Array.isArray(value) ? value[0] : value;
             setLocalValue(newValue);
             debouncedOnValueChange(newValue);

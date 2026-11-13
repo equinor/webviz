@@ -316,6 +316,22 @@ export const ValueLabelFormatting: Story = {
     ),
 };
 
+export const EqualMinMaxFormattedLabels: Story = {
+    render: () => (
+        <div className="gap-y-lg flex flex-col">
+            <Slider defaultValue={50} min={50} max={50} markerLabels={(v) => `${v}%`} />
+            {/* Mirrors WellCompletions / FlowNetwork with a single time step */}
+            <Slider
+                defaultValue={0}
+                min={0}
+                max={0}
+                markers={[0]}
+                markerLabels={(v, i) => (i === 0 || i === 0 /* length - 1 */ ? `date #${v}` : null)}
+            />
+        </div>
+    ),
+};
+
 function SliderController(props: {
     initialValue: number | readonly number[];
     renderChildren: (props: SliderProps) => React.ReactNode;
@@ -332,3 +348,16 @@ function SliderController(props: {
         </div>
     );
 }
+
+export const OutOfRange: Story = {
+    args: { defaultValue: [0, 110], min: 0, max: 100, markerLabels: true, valueLabelSide: "bottom" },
+    parameters: {
+        docs: {
+            description: {
+                story: `
+When dealing with dynamically changing min and max values, the slider's value might end up outside of the allowed range. The slider will in these cases keep the invalid value, clamping it only when interacting with the slider. 
+`,
+            },
+        },
+    },
+};

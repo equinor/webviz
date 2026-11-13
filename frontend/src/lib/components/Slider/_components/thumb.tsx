@@ -1,6 +1,7 @@
 import React from "react";
 
 import { Slider as SliderBase, Tooltip as TooltipBase, type BaseUIEvent } from "@base-ui/react";
+import { Error as ErrorIcon } from "@mui/icons-material";
 import { Key } from "ts-key-enum";
 
 import { getNextTextSize, getTextSizeForSelectableSize, type SelectableSize } from "@lib/components/_shared/utils/size";
@@ -33,8 +34,12 @@ export function Thumb(props: {
         throw new Error("Thumb cannot be locked to both min and max");
     }
 
-    const thumbHidden = !isDualSliderValue(props.sliderValue) && props.index === 1;
+    // Base-ui hides the thumb off-screen when limits are equal
+    const thumbHidden = props.min === props.max || (!isDualSliderValue(props.sliderValue) && props.index === 1);
     const thumbValue = isDualSliderValue(props.sliderValue) ? props.sliderValue[props.index] : props.sliderValue;
+
+    const isOutOfBounds = thumbValue < props.min || thumbValue > props.max;
+    const shouldShowThumbLabel = props.showValue || isOutOfBounds;
 
     const anchorRef = React.useRef<HTMLDivElement>(null);
 
@@ -74,11 +79,20 @@ export function Thumb(props: {
     return (
         <>
             <SliderBase.Thumb
+                data-out-of-range={isOutOfBounds ? "" : undefined}
                 // Hiding via style to keep refs stable
                 hidden={thumbHidden}
                 disabled={thumbHidden}
                 // Note that z-index is forced to 2. Internal slider logic will attempt to set it to 1, so we force it to avoid layering issues with Dots
-                className="border-accent-strong data-disabled:border-disabled bg-surface not-data-disabled:hover:outline-focus focus-within:outline-focus z-2! box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent"
+                className={resolveClassNames(
+                    "bg-surface z-2! box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent",
+                    {
+                        "border-accent-strong": !isOutOfBounds && !props.disabled,
+                        "border-danger-strong": isOutOfBounds && !props.disabled,
+                        "hover:outline-focus focus-within:outline-focus": !props.disabled,
+                        "border-disabled": props.disabled,
+                    },
+                )}
                 index={props.index}
                 inputRef={props.inputRefs[props.index]}
                 getAriaLabel={props.getAriaLabel}
@@ -103,9 +117,10 @@ export function Thumb(props: {
                     );
                 }}
             />
-            <TooltipBase.Root open={props.showValue && !thumbHidden}>
+            <TooltipBase.Root open={shouldShowThumbLabel && !thumbHidden}>
                 <TooltipBase.Portal className="pointer-events-none">
                     <TooltipBase.Positioner
+                        className="data-anchor-hidden:hidden"
                         sideOffset={4}
                         anchor={anchorRef.current}
                         side={props.labelSide}
@@ -116,17 +131,27 @@ export function Thumb(props: {
                         }}
                     >
                         <TooltipBase.Popup
+                            data-out-of-range={isOutOfBounds ? "" : undefined}
                             data-slider-disabled={props.disabled ? "" : undefined}
-                            className="bg-accent-strong data-slider-disabled:bg-disabled px-2xs py-4xs text-info-strong-on-emphasis! pointer-events-none rounded"
+                            className={resolveClassNames("px-2xs py-4xs text-info-strong-on-emphasis! rounded", {
+                                "bg-accent-strong": !isOutOfBounds && !props.disabled,
+                                "bg-danger-strong": isOutOfBounds && !props.disabled,
+                                "bg-disabled": props.disabled,
+                            })}
                             render={
                                 <Typography
                                     as="div"
+                                    layoutClassName="flex items-center"
                                     variant="subtle"
                                     size={getNextTextSize(getTextSizeForSelectableSize(props.size), -1)}
                                 >
                                     {props.valueLabelFormat
                                         ? props.valueLabelFormat(thumbValue, props.index)
                                         : thumbValue}
+
+                                    {isOutOfBounds && (
+                                        <ErrorIcon className="ml-2xs" titleAccess="The value is out range!" />
+                                    )}
                                 </Typography>
                             }
                         />

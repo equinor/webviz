@@ -256,15 +256,14 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                             min={0}
                             max={sortedCompletionDates?.length ? sortedCompletionDates.length - 1 : 0}
                             markers={sortedCompletionDates?.map((_, index) => index) ?? undefined}
-                            markerLabels={(v, i) =>
-                                (i === 0 || i === sortedCompletionDates!.length - 1) && createValueLabelFormat(v)
-                            }
+                            markerLabels={(v, i) => {
+                                // Dates are null while data loads; return any string
+                                // to maintain slider height during loading
+                                if (!sortedCompletionDates) return "-";
+                                return (i === 0 || i === sortedCompletionDates.length - 1) && createValueLabelFormat(v);
+                            }}
                             valueLabelFormat={createValueLabelFormat}
-                            onValueChange={(value, eventDetails) => {
-                                // Bounds changes (e.g. while completion data loads) make the slider emit a
-                                // clamped value; ignore it so retained selections survive until the user edits them
-                                if (eventDetails.reason === "clamp-value") return;
-
+                            onValueChange={(value) => {
                                 if (isSingleTimeStepMode) {
                                     handleDateIndexSelectionChange(value);
                                 } else {
