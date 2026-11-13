@@ -47,6 +47,12 @@ export enum SubplotOwner {
     or per selected ensemble according to grouping selection.
 
  */
+export type TimeMarkers = {
+    activeTimestampUtcMs: number | null;
+    hoveredTimestampUtcMs: number | null;
+    isHoverExternal: boolean;
+};
+
 export class PlotBuilder {
     private _selectedVectorSpecifications: VectorSpec[] = [];
     private _numberOfSubplots = 0;
@@ -84,9 +90,7 @@ export class PlotBuilder {
 
     private _vectorNameSubplotTitleMap: VectorNameSubplotTitleMap = {};
 
-    private _timeAnnotationTimestamps: number[] = [];
-    private _hoveredTimestampUtcMs: number | null = null;
-    private _hoveredTimestampIsExternal = false;
+    private _cachedXExtent: [number, number] | null | undefined = undefined;
 
     private _figure: Figure;
     private _numRows = 1;
@@ -309,32 +313,57 @@ export class PlotBuilder {
         this.updateSubplotTitles();
     }
 
-    prepareAnnotations(): void {
-        // Add time annotations and shapes
-        const xExtent = getNumericXExtent(this._figure.makeData());
-        const timeShapes = this.createTimeShapes();
-        const badges = this.createTimeBadges(xExtent);
-        for (let index = 0; index < this._numberOfSubplots; index++) {
-            const { row, col } = this.getSubplotRowAndColFromIndex(index);
-            // Lines are added before badges, so the badges are drawn on top of the lines
-            for (const timeShape of timeShapes) {
-                this._figure.addShape(timeShape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
-            }
-            for (const badgeShape of badges.shapes) {
-                this._figure.addShape(badgeShape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
-            }
-            for (const badgeAnnotation of badges.annotations) {
-                this._figure.addAnnotation(badgeAnnotation, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
-            }
-        }
-    }
-
     makePlotData(): Data[] {
         return this._figure.makeData();
     }
 
-    makePlotLayout(): Partial<Layout> {
-        return this._figure.makeLayout();
+    /**
+     * Creates the plot layout. Time markers (active and hovered timestamp) are added as shapes and annotations
+     * to a copy of the layout, so they can change without rebuilding traces.
+     */
+    makePlotLayout(timeMarkers?: TimeMarkers): Partial<Layout> {
+        const layout = this._figure.makeLayout();
+        if (!timeMarkers || (timeMarkers.activeTimestampUtcMs === null && timeMarkers.hoveredTimestampUtcMs === null)) {
+            return layout;
+        }
+
+        const xExtent = this.getXExtent();
+        const timeShapes = this.createTimeShapes(timeMarkers);
+        const badges = this.createTimeBadges(timeMarkers, xExtent);
+        const shapes = [...(layout.shapes ?? [])];
+        const annotations = [...(layout.annotations ?? [])];
+
+        for (let index = 0; index < this._numberOfSubplots; index++) {
+            const { row, col } = this.getSubplotRowAndColFromIndex(index);
+            const addShape = (shape: Partial<Shape>) =>
+                shapes.push(
+                    this._figure.makeShapeForSubplot(shape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE),
+                );
+
+            // Lines first, so badges are drawn on top of them
+            timeShapes.forEach(addShape);
+            badges.shapes.forEach(addShape);
+            for (const badgeAnnotation of badges.annotations) {
+                annotations.push(
+                    this._figure.makeAnnotationForSubplot(
+                        badgeAnnotation,
+                        row,
+                        col,
+                        CoordinateDomain.DATA,
+                        CoordinateDomain.SCENE,
+                    ),
+                );
+            }
+        }
+
+        return { ...layout, shapes, annotations };
+    }
+
+    private getXExtent(): [number, number] | null {
+        if (this._cachedXExtent === undefined) {
+            this._cachedXExtent = getNumericXExtent(this._figure.makeData());
+        }
+        return this._cachedXExtent;
     }
 
     addRealizationTracesColoredByParameter(
@@ -660,38 +689,32 @@ export class PlotBuilder {
         }
     }
 
-    addTimeAnnotation(timestampUtcMs: number): void {
-        this._timeAnnotationTimestamps.push(timestampUtcMs);
-    }
-
-    setHoveredTimestamp(timestampUtcMs: number | null, isExternal = false): void {
-        this._hoveredTimestampUtcMs = timestampUtcMs;
-        this._hoveredTimestampIsExternal = isExternal;
-    }
-
-    private getHoverBadgeColors(): BadgeColors {
-        const color = this.getHoverColor();
-        return this._hoveredTimestampIsExternal
+    private getHoverBadgeColors(isExternal: boolean): BadgeColors {
+        const color = this.getHoverColor(isExternal);
+        return isExternal
             ? { bgColor: "white", textColor: color, borderColor: color }
             : { bgColor: color, textColor: "white", borderColor: color };
     }
 
-    private getHoverColor(): string {
-        return this._hoveredTimestampIsExternal ? "rgba(220, 38, 38, 0.9)" : "rgba(107, 114, 128, 0.8)";
+    private getHoverColor(isExternal: boolean): string {
+        return isExternal ? "rgba(220, 38, 38, 0.9)" : "rgba(107, 114, 128, 0.8)";
     }
 
-    private createTimeBadges(xExtent: [number, number] | null): {
+    private createTimeBadges(
+        { activeTimestampUtcMs, hoveredTimestampUtcMs, isHoverExternal }: TimeMarkers,
+        xExtent: [number, number] | null,
+    ): {
         shapes: Partial<Shape>[];
         annotations: Partial<Annotations>[];
     } {
         const shapes: Partial<Shape>[] = [];
         const annotations: Partial<Annotations>[] = [];
 
-        for (const timestampUtcMs of this._timeAnnotationTimestamps) {
+        if (activeTimestampUtcMs !== null) {
             // y is in domain coordinates [0, 1]
             const badge = makeRoundedBadge(
-                timestampUtcMsToCompactIsoString(timestampUtcMs),
-                timestampUtcMs,
+                timestampUtcMsToCompactIsoString(activeTimestampUtcMs),
+                activeTimestampUtcMs,
                 -0.02,
                 {
                     bgColor: "black",
@@ -704,15 +727,12 @@ export class PlotBuilder {
             annotations.push(badge.annotation);
         }
 
-        if (
-            this._hoveredTimestampUtcMs !== null &&
-            !this._timeAnnotationTimestamps.includes(this._hoveredTimestampUtcMs)
-        ) {
+        if (hoveredTimestampUtcMs !== null && hoveredTimestampUtcMs !== activeTimestampUtcMs) {
             const badge = makeRoundedBadge(
-                timestampUtcMsToCompactIsoString(this._hoveredTimestampUtcMs),
-                this._hoveredTimestampUtcMs,
+                timestampUtcMsToCompactIsoString(hoveredTimestampUtcMs),
+                hoveredTimestampUtcMs,
                 -0.02,
-                this.getHoverBadgeColors(),
+                this.getHoverBadgeColors(isHoverExternal),
                 xExtent,
             );
             shapes.push(badge.shape);
@@ -722,14 +742,18 @@ export class PlotBuilder {
         return { shapes, annotations };
     }
 
-    private createTimeShapes(): Partial<Shape>[] {
+    private createTimeShapes({
+        activeTimestampUtcMs,
+        hoveredTimestampUtcMs,
+        isHoverExternal,
+    }: TimeMarkers): Partial<Shape>[] {
         const timeShapes: Partial<Shape>[] = [];
 
-        for (const timestampUtcMs of this._timeAnnotationTimestamps) {
+        if (activeTimestampUtcMs !== null) {
             timeShapes.push({
                 type: "line",
-                x0: timestampUtcMs, // Data coordinate
-                x1: timestampUtcMs, // Data coordinate
+                x0: activeTimestampUtcMs, // Data coordinate
+                x1: activeTimestampUtcMs, // Data coordinate
                 y0: 0, // Domain coordinate
                 y1: 1, // Domain coordinate
                 line: {
@@ -740,15 +764,15 @@ export class PlotBuilder {
             });
         }
 
-        if (this._hoveredTimestampUtcMs !== null) {
+        if (hoveredTimestampUtcMs !== null) {
             timeShapes.push({
                 type: "line",
-                x0: this._hoveredTimestampUtcMs,
-                x1: this._hoveredTimestampUtcMs,
+                x0: hoveredTimestampUtcMs,
+                x1: hoveredTimestampUtcMs,
                 y0: 0,
                 y1: 1,
                 line: {
-                    color: this.getHoverColor(),
+                    color: this.getHoverColor(isHoverExternal),
                     width: 1,
                     dash: "dot",
                 },
