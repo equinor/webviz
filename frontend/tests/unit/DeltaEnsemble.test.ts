@@ -129,4 +129,63 @@ describe("DeltaEnsemble", () => {
     test("should return the correct reference ensemble ident", () => {
         expect(DELTA_ENSEMBLE.getReferenceEnsembleIdent().equals(REFERENCE_ENSEMBLE.getIdent())).toBe(true);
     });
+
+    describe("non-delta data source", () => {
+        function makeEnsemble(caseUuid: string, realizations: number[], values: number[]) {
+            return new RegularEnsemble(
+                "assetname",
+                ["field1"],
+                caseUuid,
+                "case",
+                "iter-0",
+                "stratigraphicColumn1",
+                realizations,
+                [
+                    {
+                        type: ParameterType.CONTINUOUS,
+                        name: "param1",
+                        groupName: null,
+                        description: null,
+                        isConstant: false,
+                        isLogarithmic: false,
+                        realizations,
+                        values,
+                    },
+                ],
+                null,
+                [],
+                "blue",
+                null,
+            );
+        }
+
+        const comparison = makeEnsemble("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", [1, 2, 3], [10, 20, 30]);
+        const reference = makeEnsemble("22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", [2, 3, 4], [200, 300, 400]);
+
+        test("should default to the comparison ensemble", () => {
+            const delta = new DeltaEnsemble(comparison, reference, "red");
+            expect(delta.getNonDeltaDataSource()).toBe("comparison");
+            expect(delta.getSourceEnsembleIdentForNonDeltaData().equals(comparison.getIdent())).toBe(true);
+        });
+
+        test("should take parameters from the comparison ensemble with intersected realizations", () => {
+            const delta = new DeltaEnsemble(comparison, reference, "red", null, "comparison");
+            const param = delta.getParameters().getParameterArr()[0];
+            expect(param.realizations).toEqual([2, 3]);
+            expect(param.values).toEqual([20, 30]);
+        });
+
+        test("should return the reference ensemble ident when source is reference", () => {
+            const delta = new DeltaEnsemble(comparison, reference, "red", null, "reference");
+            expect(delta.getNonDeltaDataSource()).toBe("reference");
+            expect(delta.getSourceEnsembleIdentForNonDeltaData().equals(reference.getIdent())).toBe(true);
+        });
+
+        test("should take parameters from the reference ensemble with intersected realizations", () => {
+            const delta = new DeltaEnsemble(comparison, reference, "red", null, "reference");
+            const param = delta.getParameters().getParameterArr()[0];
+            expect(param.realizations).toEqual([2, 3]);
+            expect(param.values).toEqual([200, 300]);
+        });
+    });
 });

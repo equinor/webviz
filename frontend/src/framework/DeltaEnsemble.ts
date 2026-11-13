@@ -4,6 +4,10 @@ import type { EnsembleSensitivities } from "./EnsembleSensitivities";
 import type { RegularEnsemble } from "./RegularEnsemble";
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 
+export type DeltaEnsembleNonDeltaDataSource = "comparison" | "reference";
+// Not user-selectable yet. Based on user feedback we can consider making this configurable by the user.
+export const DEFAULT_DELTA_ENSEMBLE_NON_DELTA_DATA_SOURCE: DeltaEnsembleNonDeltaDataSource = "comparison";
+
 /**
  * Delta ensemble class.
  *
@@ -20,6 +24,7 @@ export class DeltaEnsemble {
     private _referenceEnsemble: RegularEnsemble;
     private _color: string;
     private _customName: string | null;
+    private _nonDeltaDataSource: DeltaEnsembleNonDeltaDataSource;
 
     private _stratigraphicColumnIdentifier: string | null;
     private _realizationsArray: readonly number[];
@@ -31,6 +36,7 @@ export class DeltaEnsemble {
         referenceEnsemble: RegularEnsemble,
         color: string,
         customName: string | null = null,
+        nonDeltaDataSource: DeltaEnsembleNonDeltaDataSource = DEFAULT_DELTA_ENSEMBLE_NON_DELTA_DATA_SOURCE,
     ) {
         this._deltaEnsembleIdent = new DeltaEnsembleIdent(comparisonEnsemble.getIdent(), referenceEnsemble.getIdent());
 
@@ -38,6 +44,7 @@ export class DeltaEnsemble {
         this._referenceEnsemble = referenceEnsemble;
         this._color = color;
         this._customName = customName;
+        this._nonDeltaDataSource = nonDeltaDataSource;
 
         // Stratigraphic column identifiers must match, otherwise set to null.
         if (
@@ -57,9 +64,10 @@ export class DeltaEnsemble {
         );
         this._realizationsArray = Array.from(realizationIntersection).sort((a, b) => a - b);
 
-        // Parameters are taken from the comparison ensemble
+        // Parameters are taken from the source ensemble for non-delta data (comparison or reference)
         // and only realizations in the intersection are kept
-        const comparisonParamsIntersectedReals = comparisonEnsemble
+        const sourceEnsemble = nonDeltaDataSource === "reference" ? referenceEnsemble : comparisonEnsemble;
+        const sourceParamsIntersectedReals = sourceEnsemble
             .getParameters()
             .getParameterArr()
             .map((param) => {
@@ -79,7 +87,7 @@ export class DeltaEnsemble {
                     values: newValues,
                 };
             });
-        this._parameters = new EnsembleParameters(comparisonParamsIntersectedReals);
+        this._parameters = new EnsembleParameters(sourceParamsIntersectedReals);
 
         // Sensitivities are not supported for delta ensembles at this time
         this._sensitivities = null;
@@ -131,6 +139,16 @@ export class DeltaEnsemble {
 
     getSensitivities(): EnsembleSensitivities | null {
         return this._sensitivities;
+    }
+
+    getNonDeltaDataSource(): DeltaEnsembleNonDeltaDataSource {
+        return this._nonDeltaDataSource;
+    }
+
+    getSourceEnsembleIdentForNonDeltaData(): RegularEnsembleIdent {
+        return this._nonDeltaDataSource === "reference"
+            ? this._referenceEnsemble.getIdent()
+            : this._comparisonEnsemble.getIdent();
     }
 
     getComparisonEnsembleIdent(): RegularEnsembleIdent {
