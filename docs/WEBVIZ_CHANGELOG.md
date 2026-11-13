@@ -5,6 +5,20 @@
 
 # Changelog
 
+## November 2026
+
+### Added
+
+- **Session and snapshot management**: You can now select several sessions or snapshots with checkboxes and delete them in one go. When deleting your own snapshots, you can choose to delete them for everyone or only remove them from your list.
+
+### Changed
+
+- **Session and snapshot management**: The open, edit and delete buttons are now on each row of the session and snapshot tables instead of in the toolbar, and the tables have a new look. The dashboard preview is no longer shown when you edit a session from the session list, only when you edit it from the top bar.
+
+### Fixed
+
+- **Intersection**: Large grids no longer appear cut off partway along the intersection when "Show grid lines" is turned off.
+
 ## October 2026
 
 ### Added

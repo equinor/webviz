@@ -9,6 +9,7 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { FieldCompositions } from "@lib/components/Field/compositions";
+import { Hidden } from "@lib/components/Hidden";
 import { TextArea } from "@lib/components/TextArea";
 import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
@@ -26,6 +27,7 @@ export type EditSessionMetadataDialogProps = {
     description?: string;
     open: boolean;
     onClose?: () => void;
+    showPreview?: boolean;
 };
 
 export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps) {
@@ -40,32 +42,17 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
     const [description, setDescription] = React.useState<string>("");
     const [showConfirmationDialog, setShowConfirmationDialog] = React.useState<boolean>(false);
 
-    const [prevOriginalTitle, setPrevOriginalTitle] = React.useState<string>("");
-    const [prevOriginalDescription, setPrevOriginalDescription] = React.useState<string>("");
+    const [prevOpen, setPrevOpen] = React.useState<boolean>(false);
+    if (props.open !== prevOpen) {
+        setPrevOpen(props.open);
+        if (props.open) {
+            setTitle(truncateString(props.title, MAX_TITLE_LENGTH));
+            setDescription(truncateString(props.description ?? "", MAX_DESCRIPTION_LENGTH));
+        }
+    }
 
-    if (props.title !== prevOriginalTitle) {
-        setPrevOriginalTitle(props.title);
-        setTitle(`${truncateString(props.title, MAX_TITLE_LENGTH)}`);
-    }
-    if (props.description !== prevOriginalDescription) {
-        setPrevOriginalDescription(props.description ?? "");
-        setDescription(`${truncateString(props.description ?? "", MAX_DESCRIPTION_LENGTH)}`);
-    }
     const inputRef = React.useRef<HTMLInputElement>(null);
     const formId = React.useId();
-
-    const [prevTitle, setPrevTitle] = React.useState<string>(props.title);
-    const [prevDescription, setPrevDescription] = React.useState<string>(props.description ?? "");
-
-    if (prevTitle !== props.title) {
-        setPrevTitle(props.title);
-        setTitle(props.title);
-    }
-
-    if (prevDescription !== props.description) {
-        setPrevDescription(props.description ?? "");
-        setDescription(props.description ?? "");
-    }
 
     function handleSave(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -120,19 +107,13 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
     }
 
     function handleDiscardChanges() {
-        setTitle(props.title);
-        setDescription(props.description ?? "");
-        setPrevOriginalTitle("");
-        setPrevOriginalDescription("");
         props.onClose?.();
     }
 
     const activeWorkbenchSession = hasActiveSession ? props.workbench.getSessionManager().getActiveSession() : null;
     const isEditingActiveSession =
         activeWorkbenchSession !== null && (activeWorkbenchSession.getId() === props.id || props.id === null);
-    const dashboards = isEditingActiveSession
-        ? dashboardsToPreviewItems(activeWorkbenchSession.getDashboards())
-        : [];
+    const dashboards = isEditingActiveSession ? dashboardsToPreviewItems(activeWorkbenchSession.getDashboards()) : [];
 
     return (
         <>
@@ -142,7 +123,9 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                 </Dialog.Header>
                 <form id={formId} onSubmit={handleSave}>
                     <Dialog.Body layoutClassName="flex items-center gap-x-sm">
-                        <DashboardPreviewCarousel height={220} width={150} dashboards={dashboards} />
+                        <Hidden hidden={!props.showPreview}>
+                            <DashboardPreviewCarousel height={220} width={150} dashboards={dashboards} />
+                        </Hidden>
                         <div className="gap-y-sm flex min-w-0 grow flex-col">
                             <FieldCompositions.Default
                                 label="Title"
@@ -209,16 +192,16 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                 onOpenChange={setShowConfirmationDialog}
                 title="Discard changes?"
                 primaryAction={{
-                    label: "Discard",
-                    onClick: handleDiscardChanges,
-                    tone: "danger",
+                    label: "Keep editing",
+                    onClick: () => setShowConfirmationDialog(false),
+                    tone: "neutral",
                     closesDialog: true,
                 }}
                 secondaryActions={[
                     {
-                        label: "Keep editing",
-                        onClick: () => setShowConfirmationDialog(false),
-                        tone: "neutral",
+                        label: "Discard",
+                        onClick: handleDiscardChanges,
+                        tone: "danger",
                         closesDialog: true,
                     },
                 ]}

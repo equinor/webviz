@@ -3,7 +3,6 @@ import type React from "react";
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
 import { Avatar } from "@lib/components/Avatar";
 import { TableCompositions } from "@lib/components/Table/compositions";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 /**
  * Component to render the case name and ID cell with copy functionality
@@ -11,7 +10,6 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 type CaseNameAndIdCellProps = {
     caseName: string;
     caseId: string;
-    cellRowSelected: boolean;
 };
 export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNode {
     function handleCopyRequested() {
@@ -27,11 +25,7 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
             >
                 <div className="gap-x-2xs flex items-center overflow-hidden text-ellipsis whitespace-nowrap">
                     {props.caseName}
-                    <span
-                        className={resolveClassNames("text-body-xs text-neutral-subtle", {
-                            "text-neutral-subtle-on-emphasis": props.cellRowSelected,
-                        })}
-                    >
+                    <span className="text-body-xs text-neutral-subtle">
                         - <span className="inline-block">{props.caseId}</span>
                     </span>
                 </div>
