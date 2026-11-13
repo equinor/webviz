@@ -45,6 +45,8 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
         endAdornment?: React.ReactNode;
         /** Optional function to render an adornment alongside each item in the dropdown list. */
         renderItemAdornment?: (item: TValue) => React.ReactNode;
+        /** Optional function returning the chip tone per selected value. Only applies in chips selection mode. @default "neutral" */
+        getChipTone?: (value: TValue) => "accent" | "neutral" | "danger" | "warning";
         /** Size of the combobox input. @default "default" */
         size?: SelectableSize;
         /** Only applies when `multiple` is true. @default "chips" */
@@ -79,6 +81,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
     const baseProps = resolveWrapperProps(
         defaultedProps,
         "renderItemAdornment",
+        "getChipTone",
         "placeholder",
         "noMatchesText",
         "loadingText",
@@ -177,6 +180,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                     <ComboboxValueChipsInput
                         ref={ref}
                         getLabelForValue={getLabelForValue}
+                        getChipTone={defaultedProps.getChipTone}
                         renderItemAdornment={defaultedProps.renderItemAdornment}
                         placeholder={defaultedProps.placeholder}
                     />
