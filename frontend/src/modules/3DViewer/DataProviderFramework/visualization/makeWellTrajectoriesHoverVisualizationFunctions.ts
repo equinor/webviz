@@ -27,6 +27,8 @@ function findWellboreTrajectory(uuid: string | null | undefined, trajectories: W
     return trajectories.find(({ wellboreUuid }) => wellboreUuid === uuid);
 }
 
+const DUMMY_DATA = ["dummy"];
+
 export function makeWellTrajectoriesHoverVisualizationFunctions(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,
 ): HoverVisualizationFunctions<VisualizationTarget.DECK_GL> {
@@ -53,10 +55,11 @@ export function makeWellTrajectoriesHoverVisualizationFunctions(
                     id: `${id}-hovered-md-point`,
                     name: "Well Markers",
                     // ! Layer prepares the markers on init, data list length needs to be
-                    // ! consistent: if the data list starts empty, no markers will be shown
-                    data: ["dummy"],
+                    // ! consistent: if the data list starts empty, no markers will be shown.
+                    // Use consistent dummy data to avoid re-creating layer
+                    data: DUMMY_DATA,
                     shape: "circle",
-                    sizeUnits: "meters",
+                    sizeUnits: "pixels",
 
                     getSize: 9,
                     getColor: [255, 0, 0, 115],
