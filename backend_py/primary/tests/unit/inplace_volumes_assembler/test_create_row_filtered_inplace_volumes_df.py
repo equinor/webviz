@@ -1,4 +1,3 @@
-import re
 from typing import List
 import pytest
 import polars as pl
@@ -11,7 +10,7 @@ from webviz_services.sumo_access.inplace_volumes_table_types import (
     InplaceVolumesIndexWithValues,
 )
 from webviz_services.sumo_access.deprecated_inplace_volumetrics_access import IGNORED_IDENTIFIER_COLUMN_VALUES
-from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError, NoDataError
+from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError
 
 
 @pytest.fixture
@@ -30,17 +29,34 @@ def test_create_row_filtered_inplace_volumes_df_no_realizations(inplace_volumes_
         )
 
 
-def test_create_row_filtered_inplace_volumes_df_no_data_found(inplace_volumes_df: pl.DataFrame) -> None:
-    with pytest.raises(
-        NoDataError,
-        match=re.escape("Missing data error. The following realization values do not exist in 'REAL' column: [4, 5]"),
-    ):
-        InplaceVolumesTableAssembler._create_row_filtered_inplace_volumes_df(
-            table_name="test_table",
-            inplace_volumes_df=inplace_volumes_df,
-            realizations=[4, 5],
-            indices_with_values=[],
-        )
+def test_create_row_filtered_inplace_volumes_df_missing_realizations_gives_warning(
+    inplace_volumes_df: pl.DataFrame,
+) -> None:
+    result = InplaceVolumesTableAssembler._create_row_filtered_inplace_volumes_df(
+        table_name="test_table",
+        inplace_volumes_df=inplace_volumes_df,
+        realizations=[2, 4, 5],
+        indices_with_values=[],
+    )
+
+    warnings = result.get_warnings()
+    assert len(warnings) == 1
+    assert "[4, 5]" in warnings[0].message
+    assert result.get_value()["REAL"].to_list() == [2]
+
+
+def test_create_row_filtered_inplace_volumes_df_no_data_found_gives_empty_df_and_warning(
+    inplace_volumes_df: pl.DataFrame,
+) -> None:
+    result = InplaceVolumesTableAssembler._create_row_filtered_inplace_volumes_df(
+        table_name="test_table",
+        inplace_volumes_df=inplace_volumes_df,
+        realizations=[4, 5],
+        indices_with_values=[],
+    )
+
+    assert result.has_warnings()
+    assert result.get_value().is_empty()
 
 
 def test_create_row_filtered_inplace_volumes_df_with_realizations(inplace_volumes_df: pl.DataFrame) -> None:
@@ -50,7 +66,7 @@ def test_create_row_filtered_inplace_volumes_df_with_realizations(inplace_volume
         inplace_volumes_df=inplace_volumes_df,
         realizations=valid_realizations,
         indices_with_values=[],
-    )
+    ).get_value_ignore_warnings()
 
     expected_df = pl.DataFrame({"REAL": [1, 2], "ZONE": ["A", "B"], "VOLUME": [10, 20]})
 
@@ -67,7 +83,7 @@ def test_create_row_filtered_inplace_volumes_df_with_indices(inplace_volumes_df:
         inplace_volumes_df=inplace_volumes_df,
         realizations=None,
         indices_with_values=indices_with_values,
-    )
+    ).get_value_ignore_warnings()
 
     expected_df = pl.DataFrame({"REAL": [1, 3], "ZONE": ["A", "C"], "VOLUME": [10, 30]})
 
@@ -105,7 +121,7 @@ def test_create_row_filtered_inplace_volumes_df_with_ignored_index_values() -> N
         inplace_volumes_df=inplace_volumes_table_df,
         realizations=None,
         indices_with_values=indices_with_values,
-    )
+    ).get_value_ignore_warnings()
 
     expected_df = pl.DataFrame({"REAL": [1, 2], "ZONE": ["A", "B"], "VOLUME": [10, 20]})
 
@@ -136,7 +152,7 @@ def test_create_row_filtered_inplace_volumes_df_with_realizations_and_indices() 
         inplace_volumes_df=inplace_volumes_table_df,
         realizations=wanted_realizations,
         indices_with_values=indices_with_values,
-    )
+    ).get_value_ignore_warnings()
 
     assert filtered_df is not None
     assert filtered_df.sort("REAL").equals(expected_df)

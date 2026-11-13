@@ -5,6 +5,8 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 from webviz_core_utils.perf_timer import PerfTimer
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_services.utils.otel_span_tracing import otel_span_decorator
@@ -12,6 +14,7 @@ from webviz_services.utils.arrow_helpers import (
     find_first_non_increasing_date_pair,
     sort_table_on_real_then_date,
     is_date_column_monotonically_increasing,
+    detect_missing_realizations,
 )
 from webviz_services.service_exceptions import (
     Service,
@@ -20,7 +23,9 @@ from webviz_services.service_exceptions import (
     InvalidParameterError,
     NoDataError,
 )
-
+from webviz_services.service_warnings import (
+    make_missing_realizations_warning,
+)
 
 from ._field_metadata import create_vector_metadata_from_field_meta
 from ._resampling import resample_segmented_multi_real_table, resample_single_real_table
@@ -97,10 +102,12 @@ class SummaryAccess:
         vector_name: str,
         resampling_frequency: Optional[Frequency],
         realizations: Optional[Sequence[int]],
-    ) -> Tuple[pa.Table, VectorMetadata]:
+    ) -> ResultWithWarning[Tuple[pa.Table, VectorMetadata]]:
         """
         Get pyarrow.Table containing values for the specified vector and the specified realizations.
         If realizations is None, data for all available realizations will be returned.
+        If data is missing for some of the requested realizations, a missing-realizations warning is added
+        to the returned ResultWithWarning. The table then only contains data for the realizations that were found.
         The returned table will always contain a 'DATE' and 'REAL' column in addition to the requested vector.
         The 'DATE' column will be of type timestamp[ms] and the 'REAL' column will be of type int16.
         The vector column will be of type float32.
@@ -115,16 +122,16 @@ class SummaryAccess:
         _validate_single_vector_table(table, vector_name)
         et_loading_ms = timer.lap_ms()
 
+        warnings: list[TextWarning] = []
         if realizations is not None:
             requested_reals_arr = pa.array(realizations)
             mask = pc.is_in(table["REAL"], value_set=requested_reals_arr)
             table = table.filter(mask)
 
-            # Verify that we got data for all the requested realizations
-            # Wait a little before enabling this test until we have proper error propagation to client in place
-            # reals_without_data = detect_missing_realizations(table, requested_reals_arr)
-            # if reals_without_data:
-            #     raise NoDataError(f"No data in some requested realizations, {reals_without_data=}", Service.SUMO)
+            reals_without_data = detect_missing_realizations(table, requested_reals_arr)
+
+            if reals_without_data:
+                warnings.append(make_missing_realizations_warning(reals_without_data, data_source="Sumo vector data"))
 
         # Our assumption is that the table is segmented on REAL and that within each segment,
         # the DATE column is sorted. We may want to add some checks here to verify this assumption since the
@@ -153,16 +160,19 @@ class SummaryAccess:
             f"({vector_name=} {resampling_frequency=} {table.shape=})"
         )
 
-        return table, vector_metadata
+        return ResultWithWarning((table, vector_metadata), warnings)
 
     @otel_span_decorator()
+    # pylint: disable-next=too-many-locals
     async def get_vector_async(
         self,
         vector_name: str,
         resampling_frequency: Optional[Frequency],
         realizations: Optional[Sequence[int]],
-    ) -> List[RealizationVector]:
-        table, vector_metadata = await self.get_vector_table_async(vector_name, resampling_frequency, realizations)
+    ) -> ResultWithWarning[List[RealizationVector]]:
+        result = await self.get_vector_table_async(vector_name, resampling_frequency, realizations)
+        warnings: list[TextWarning] = []
+        table, vector_metadata = result.get_value(propagate_warnings_to=warnings)
 
         real_arr_np = table.column("REAL").to_numpy()
         unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
@@ -186,7 +196,7 @@ class SummaryAccess:
                 )
             )
 
-        return ret_arr
+        return ResultWithWarning(ret_arr, warnings)
 
     @otel_span_decorator()
     async def get_single_real_vectors_table_async(
@@ -318,8 +328,10 @@ class SummaryAccess:
         vector_name: str,
         timestamp_utc_ms: int,
         realizations: Optional[Sequence[int]] = None,
-    ) -> EnsembleScalarResponse:
-        table, _ = await self.get_vector_table_async(vector_name, resampling_frequency=None, realizations=realizations)
+    ) -> ResultWithWarning[EnsembleScalarResponse]:
+        result = await self.get_vector_table_async(vector_name, resampling_frequency=None, realizations=realizations)
+        warnings: list[TextWarning] = []
+        table, _ = result.get_value(propagate_warnings_to=warnings)
 
         if realizations is not None:
             mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
@@ -327,9 +339,12 @@ class SummaryAccess:
         mask = pc.is_in(table["DATE"], value_set=pa.array([timestamp_utc_ms]))
         table = table.filter(mask)
 
-        return EnsembleScalarResponse(
-            realizations=table["REAL"].to_numpy().astype(int).tolist(),
-            values=table[vector_name].to_numpy().tolist(),
+        return ResultWithWarning(
+            value=EnsembleScalarResponse(
+                realizations=table["REAL"].to_numpy().astype(int).tolist(),
+                values=table[vector_name].to_numpy().tolist(),
+            ),
+            warnings=warnings,
         )
 
     async def get_timestamps_async(
@@ -339,12 +354,13 @@ class SummaryAccess:
         """
         Get list of available timestamps in ms UTC
         """
-        table, _ = await self.get_vector_table_async(
-            (await self.get_available_vectors_async())[0].name,
-            resampling_frequency=resampling_frequency,
-            realizations=None,
-        )
-
+        table, _ = (
+            await self.get_vector_table_async(
+                (await self.get_available_vectors_async())[0].name,
+                resampling_frequency=resampling_frequency,
+                realizations=None,
+            )
+        ).get_value_ignore_warnings()
         return pc.unique(table.column("DATE")).to_numpy().astype(int).tolist()
 
 

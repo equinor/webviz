@@ -3,11 +3,14 @@ import type { AxiosError } from "axios";
 
 import {
     getRftObservationsOptions,
+    getRftRealizationData,
     getRftRealizationDataOptions,
     getRftTableDefinitionOptions,
     type HTTPValidationError_api,
     type RftObservations_api,
     type RftRealizationData_api,
+    withWarnings,
+    type ResultWithWarnings,
 } from "@api";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
@@ -63,17 +66,20 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
     const areSelectionsValid = ensembleIdentsValid && wellNameValid && responseNameValid && timestampValid;
 
     const queries = selectedEnsembleIdents.map(function makeRftRealizationDataQuery(ensembleIdent) {
-        const options = getRftRealizationDataOptions({
-            query: {
-                case_uuid: ensembleIdent.getCaseUuid(),
-                ensemble_name: ensembleIdent.getEnsembleName(),
-                well_name: selectedWellName ?? "",
-                response_name: selectedResponseName ?? "",
-                timestamps_utc_ms: selectedTimestampUtcMs !== null ? [selectedTimestampUtcMs] : null,
-                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-                ...makeCacheBustingQueryParam(ensembleIdent),
-            },
-        });
+        const options = withWarnings(
+            getRftRealizationDataOptions({
+                query: {
+                    case_uuid: ensembleIdent.getCaseUuid(),
+                    ensemble_name: ensembleIdent.getEnsembleName(),
+                    well_name: selectedWellName ?? "",
+                    response_name: selectedResponseName ?? "",
+                    timestamps_utc_ms: selectedTimestampUtcMs !== null ? [selectedTimestampUtcMs] : null,
+                    realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                    ...makeCacheBustingQueryParam(ensembleIdent),
+                },
+            }),
+            getRftRealizationData,
+        );
 
         return function getRftRealizationDataQueryOptions() {
             return {
@@ -85,20 +91,26 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
         };
     });
 
-    function combine(results: UseQueryResult<RftRealizationData_api[], RftApiError>[]): RftRealizationDataResult {
+    function combine(
+        results: UseQueryResult<ResultWithWarnings<RftRealizationData_api[]>, AxiosError>[],
+    ): RftRealizationDataResult {
         // A disabled query keeps its cached data and error, which must not be exposed for an invalid selection
         // (e.g. a removed ensemble whose query key is still cached)
         if (!areSelectionsValid) {
-            return { dataAccessor: null, isFetching: false, isError: false, errors: [] };
+            return { dataAccessor: null, isFetching: false, isError: false, errors: [], warnings: [] };
         }
 
         const ensembleData: RftEnsembleRealizationData[] = [];
+        const warnings: string[] = [];
 
         results.forEach(function collectEnsembleData(result, index) {
             if (!result.data) {
                 return;
             }
-            ensembleData.push({ ensembleIdent: selectedEnsembleIdents[index], data: result.data });
+            ensembleData.push({ ensembleIdent: selectedEnsembleIdents[index], data: result.data.value });
+            for (const warning of result.data.warnings) {
+                warnings.push(`${selectedEnsembleIdents[index].getEnsembleName()}: ${warning}`);
+            }
         });
 
         return {
@@ -116,6 +128,7 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
                 .filter(function isNonNullError(error): error is RftApiError {
                     return error !== null;
                 }),
+            warnings,
         };
     }
 

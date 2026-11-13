@@ -11,6 +11,7 @@ from opentelemetry import trace
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT, HTTP_500_INTERNAL_SERVER_ERROR
 
+from webviz_core_utils.result_with_warning import UnhandledWarningError
 from webviz_services.service_exceptions import ServiceLayerException
 
 # Setup a dedicated logger for exceptions in the primary module
@@ -132,6 +133,28 @@ def service_layer_exception_handler(request: Request, exc: ServiceLayerException
     )
 
 
+def unhandled_warnings_error_handler(request: Request, exc: UnhandledWarningError) -> JSONResponse:
+    # Coding error: a ResultWithWarning value was accessed before its warnings were handled.
+    # Report it with its own error type, rather than as a generic internal error, so it is easy to identify.
+    route = _make_route_string(request)
+    exc_name = _get_exception_name(exc)
+    curr_span = trace.get_current_span()
+    curr_span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
+    curr_span.record_exception(exc)
+    exc_traceback_str = _format_exception_for_log(exc)
+    EXCEPTIONS_LOGGER.error(f"[EXC] Unhandled warnings in {route} -> {exc_name}: {str(exc)}\n{exc_traceback_str}")
+
+    return JSONResponse(
+        status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": {
+                "type": exc.get_error_type_str(),
+                "message": exc.message,
+            }
+        },
+    )
+
+
 def catch_all_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     # Log error with the full exception traceback as a long string here
     # Note that we don't pass exc_info to the logger here, to avoid creating a duplicate exception entry in telemetry.
@@ -217,3 +240,4 @@ def configure_service_level_exception_handlers(app: FastAPI) -> None:
     """
     # ! Type check is being ignored here because the function type doesn't recognize the extended exceptions.
     app.add_exception_handler(ServiceLayerException, service_layer_exception_handler)  # type: ignore
+    app.add_exception_handler(UnhandledWarningError, unhandled_warnings_error_handler)  # type: ignore

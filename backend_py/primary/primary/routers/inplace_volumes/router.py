@@ -9,6 +9,7 @@ from webviz_services.inplace_volumes_table_assembler.inplace_volumes_table_assem
 from webviz_services.sumo_access.inplace_volumes_table_access import InplaceVolumesTableAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.add_warnings_middleware import unwrap_and_report_warnings
 from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.routers.inplace_volumes.converters import (
     convert_schema_to_indices,
@@ -112,7 +113,7 @@ async def post_get_aggregated_per_realization_inplace_table_data(
 
     assembler = InplaceVolumesTableAssembler(access)
 
-    data = await assembler.create_accumulated_by_selection_per_realization_volumes_table_data_async(
+    result = await assembler.create_accumulated_by_selection_per_realization_volumes_table_data_async(
         table_name=table_name,
         result_names=set(result_names),
         indices_with_values=convert_schema_to_indices_with_values(indices_with_values),
@@ -122,6 +123,8 @@ async def post_get_aggregated_per_realization_inplace_table_data(
 
     perf_metrics.record_lap("calculate-accumulated-data")
     LOGGER.info(f"Got aggregated inplace volumes data in: {perf_metrics.to_string()}")
+
+    data = unwrap_and_report_warnings(result)
 
     return convert_table_data_per_fluid_selection_to_schema(data)
 
@@ -182,7 +185,7 @@ async def post_get_aggregated_statistical_inplace_table_data(
 
     assembler = InplaceVolumesTableAssembler(access)
 
-    data = await assembler.create_accumulated_by_selection_statistical_volumes_table_data_async(
+    result = await assembler.create_accumulated_by_selection_statistical_volumes_table_data_async(
         table_name=table_name,
         result_names=set(result_names),
         indices_with_values=convert_schema_to_indices_with_values(indices_with_values),
@@ -192,5 +195,7 @@ async def post_get_aggregated_statistical_inplace_table_data(
 
     perf_metrics.record_lap("calculate-accumulated-data")
     LOGGER.info(f"Got aggregated statistical inplace volumes data in: {perf_metrics.to_string()}")
+
+    data = unwrap_and_report_warnings(result)
 
     return convert_statistical_table_data_per_fluid_selection_to_schema(data)

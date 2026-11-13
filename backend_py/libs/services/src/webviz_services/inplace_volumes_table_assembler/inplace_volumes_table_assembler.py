@@ -21,7 +21,10 @@ from webviz_services.sumo_access.inplace_volumes_table_types import (
     VolumeColumnsAndIndexUniqueValues,
 )
 from webviz_services.service_exceptions import Service, InvalidDataError, InvalidParameterError, NoDataError
+from webviz_services.service_warnings import make_missing_realizations_warning
 from webviz_core_utils.perf_timer import PerfTimer
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 
 
 from ._utils.conversion_utils import (
@@ -174,7 +177,7 @@ class InplaceVolumesTableAssembler:
         indices_with_values: list[InplaceVolumesIndexWithValues],
         group_by_indices: list[InplaceVolumes.TableIndexColumns] | None,
         realizations: list[int] | None,
-    ) -> InplaceVolumesTableDataPerFluidSelection:
+    ) -> ResultWithWarning[InplaceVolumesTableDataPerFluidSelection]:
         """
         Create result table realization data per fluid selection, i.e. a table per fluid or a single table with all selected fluids accumulated.
 
@@ -183,19 +186,27 @@ class InplaceVolumesTableAssembler:
         Get table from Sumo, with all requested volume columns, and all necessary columns to calculate properties and calculated volumes.
         Thereafter calculate the requested properties and calculated volumes, and sum the results by group_by_indices, before
         returning per realization data.
+
+        If some of the requested realizations do not exist in the table, a missing-realizations warning is added to the
+        returned result, and the data only contains the realizations that were found.
         """
+        warnings: list[TextWarning] = []
+
         # Accumulated inplace volumes realization DataFrame:
         # - Get all necessary volumes, filter on indices values and realizations, and sum the volumes by group_by_indices and realizations.
         # - Store DataFrame per unique fluid value in a dictionary.
         # - All necessary volumes: volume columns, and volumes needed to calculate properties and calculated volumes
         # - Fluid value: The unique fluid value for the DataFrame, e.g. "Oil", "Gas", "Water", or "Oil + Gas" (if fluids are accumulated)
+        accumulated_result = (
+            await self._create_accumulated_real_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
+                table_name, result_names, group_by_indices, indices_with_values, realizations
+            )
+        )
         (
             accumulated_inplace_volumes_real_df_per_fluid_value,
             categorized_result_names,
             deferred_facies_filter_values,
-        ) = await self._create_accumulated_real_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
-            table_name, result_names, group_by_indices, indices_with_values, realizations
-        )
+        ) = accumulated_result.get_value(propagate_warnings_to=warnings)
 
         # Create Results DataFrame from the Inplace Volumes DataFrame w/ all required volumes
         # - All necessary inplace volumes are retrieved, filtered by wanted index values and realizations, and accumulated per realization and selected index.
@@ -227,7 +238,10 @@ class InplaceVolumesTableAssembler:
                 create_inplace_volumes_table_data_from_fluid_results_df(accumulated_result_real_df, fluid_value)
             )
 
-        return InplaceVolumesTableDataPerFluidSelection(table_data_per_fluid_selection=table_data_per_fluid_value)
+        return ResultWithWarning(
+            InplaceVolumesTableDataPerFluidSelection(table_data_per_fluid_selection=table_data_per_fluid_value),
+            warnings,
+        )
 
     async def create_accumulated_by_selection_statistical_volumes_table_data_async(
         self,
@@ -236,7 +250,7 @@ class InplaceVolumesTableAssembler:
         indices_with_values: list[InplaceVolumesIndexWithValues],
         group_by_indices: list[InplaceVolumes.TableIndexColumns] | None,
         realizations: list[int] | None,
-    ) -> InplaceVolumesStatisticalTableDataPerFluidSelection:
+    ) -> ResultWithWarning[InplaceVolumesStatisticalTableDataPerFluidSelection]:
         """
         Create result table statistical data per fluid selection, i.e. a table per fluid or a single table with all selected fluids accumulated.
 
@@ -245,19 +259,27 @@ class InplaceVolumesTableAssembler:
         Get table from Sumo, with all requested volume columns, and all necessary columns to calculate properties and calculated volumes.
         Thereafter calculate the requested properties and calculated volumes, and accumulate the results by group_by_indices, before
         calculating statistics across realizations.
+
+        If some of the requested realizations do not exist in the table, a missing-realizations warning is added to the
+        returned result, and the statistics only use the realizations that were found.
         """
+        warnings: list[TextWarning] = []
+
         # Accumulated inplace volumes realization DataFrame:
         # - Get all necessary volumes, filter on indices values and realizations, and sum the volumes by group_by_indices and realizations.
         # - Store DataFrame per unique fluid value in a dictionary.
         # - All necessary volumes: volume columns, and volumes needed to calculate properties and calculated volumes
         # - Fluid value: The unique fluid value for the DataFrame, e.g. "Oil", "Gas", "Water", or "Oil + Gas" (if fluids are accumulated)
+        accumulated_result = (
+            await self._create_accumulated_real_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
+                table_name, result_names, group_by_indices, indices_with_values, realizations
+            )
+        )
         (
             accumulated_inplace_volumes_real_df_per_fluid_value,
             categorized_result_names,
             deferred_facies_filter_values,
-        ) = await self._create_accumulated_real_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
-            table_name, result_names, group_by_indices, indices_with_values, realizations
-        )
+        ) = accumulated_result.get_value(propagate_warnings_to=warnings)
 
         # Create Results DataFrame from the Inplace Volumes DataFrame w/ all required volumes
         # - All necessary inplace volumes are retrieved, filtered by wanted index values and realizations, and accumulated per realization and selected index.
@@ -299,10 +321,14 @@ class InplaceVolumesTableAssembler:
                 )
             )
 
-        return InplaceVolumesStatisticalTableDataPerFluidSelection(
-            table_data_per_fluid_selection=statistical_table_data_per_fluid_value
+        return ResultWithWarning(
+            InplaceVolumesStatisticalTableDataPerFluidSelection(
+                table_data_per_fluid_selection=statistical_table_data_per_fluid_value
+            ),
+            warnings,
         )
 
+    # pylint: disable-next=too-many-locals
     async def _create_accumulated_real_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
         self,
         table_name: str,
@@ -310,7 +336,7 @@ class InplaceVolumesTableAssembler:
         group_by_indices: list[InplaceVolumes.TableIndexColumns] | None,
         indices_with_values: list[InplaceVolumesIndexWithValues],
         realizations: list[int] | None,
-    ) -> tuple[dict[str, pl.DataFrame], CategorizedResultNames, list[str] | None]:
+    ) -> ResultWithWarning[tuple[dict[str, pl.DataFrame], CategorizedResultNames, list[str] | None]]:
         """
         Get a dictionary with accumulated Inplace Volumes DataFrame per unique fluid value, and categorized result names for the given DataFrame.
 
@@ -332,6 +358,8 @@ class InplaceVolumesTableAssembler:
           (so the BULK denominator spans all facies), and the deferred FACIES values are returned as the third tuple element so the caller can apply the filter after
           the fraction has been computed. If no FACIES filter is deferred the third element is `None`.
         """
+
+        warnings: list[TextWarning] = []
 
         if group_by_indices == []:
             raise InvalidParameterError("Group by indices must be non-empty list or None", Service.GENERAL)
@@ -359,14 +387,15 @@ class InplaceVolumesTableAssembler:
         )
 
         # Create volumes df filtered on indices values and realizations, for all necessary volumes
-        row_filtered_volumes_df = await self._get_row_filtered_inplace_volumes_df_async(
+        row_filtered_volumes_df_result = await self._get_row_filtered_inplace_volumes_df_async(
             table_name, all_necessary_volume_names, realizations, effective_indices_with_values
         )
+        row_filtered_volumes_df = row_filtered_volumes_df_result.get_value(propagate_warnings_to=warnings)
 
         if row_filtered_volumes_df.is_empty():
             # If no data is found for the given indices and realizations, return empty dictionary
             empty_dict: dict[str, pl.DataFrame] = {}
-            return (empty_dict, categorized_result_names, deferred_facies_filter_values)
+            return ResultWithWarning((empty_dict, categorized_result_names, deferred_facies_filter_values), warnings)
 
         # Ensure valid inplace volumes DataFrame (contains necessary index columns and realization column)
         validate_inplace_volumes_df_selector_columns(row_filtered_volumes_df)
@@ -406,10 +435,13 @@ class InplaceVolumesTableAssembler:
                 volume_sums_by_indices_and_real_df
             )
 
-        return (
-            accumulated_inplace_volumes_real_df_per_fluid_value_dict,
-            categorized_result_names,
-            deferred_facies_filter_values,
+        return ResultWithWarning(
+            (
+                accumulated_inplace_volumes_real_df_per_fluid_value_dict,
+                categorized_result_names,
+                deferred_facies_filter_values,
+            ),
+            warnings,
         )
 
     async def _get_row_filtered_inplace_volumes_df_async(
@@ -418,15 +450,16 @@ class InplaceVolumesTableAssembler:
         volume_names: set[str],
         realizations: list[int] | None,
         indices_with_values: list[InplaceVolumesIndexWithValues],
-    ) -> pl.DataFrame:
+    ) -> ResultWithWarning[pl.DataFrame]:
         """
         This function creates an inplace volumes DataFrame for requested volumes, filtered on the provided indices values and realizations.
+        A missing-realizations warning is added to the result if some requested realizations do not exist in the table.
 
         - The requested volume names: Set of volume columns, and necessary volume names to calculate properties and calculated volumes.
         - The calculation of properties and calculated volumes are handled outside this function.
 
         ### Returns:
-            - pl.DataFrame: A Polars DataFrame with selector (index + "REAL") and volume columns.
+            - ResultWithWarning[pl.DataFrame]: A Polars DataFrame with selector (index + "REAL") and volume columns, with warnings.
         """
         # Check for empty identifier selections
         has_empty_index_selection = any(not index_with_values.values for index_with_values in indices_with_values)
@@ -443,7 +476,7 @@ class InplaceVolumesTableAssembler:
         )
 
         # Create dataframe filtered on indices and realizations
-        row_filtered_volumes_table_df = InplaceVolumesTableAssembler._create_row_filtered_inplace_volumes_df(
+        row_filtered_volumes_df_result = InplaceVolumesTableAssembler._create_row_filtered_inplace_volumes_df(
             table_name=table_name,
             inplace_volumes_df=volumes_table_df,
             realizations=realizations,
@@ -453,7 +486,7 @@ class InplaceVolumesTableAssembler:
         timer_create_row_filtered_df = timer.lap_ms()
         LOGGER.debug(f"Time creating row filtered DataFrame: {timer_create_row_filtered_df}ms")
 
-        return row_filtered_volumes_table_df
+        return row_filtered_volumes_df_result
 
     async def _get_inplace_volumes_table_as_polars_df_async(
         self, table_name: str, volume_columns: set[str]
@@ -498,13 +531,17 @@ class InplaceVolumesTableAssembler:
         inplace_volumes_df: pl.DataFrame,
         realizations: list[int] | None,
         indices_with_values: list[InplaceVolumesIndexWithValues],
-    ) -> pl.DataFrame:
+    ) -> ResultWithWarning[pl.DataFrame]:
         """
         Create DataFrame filtered on indices values and realizations - i.e. selector column values.
 
         The function filters the provided inplace volumes table DataFrame based on the indices and realizations provided.
         If realizations is None, all realizations are included.
+        If some of the requested realizations do not exist in the table, they are left out of the filtered DataFrame,
+        and a missing-realizations warning is added to the returned result.
         """
+        warnings: list[TextWarning] = []
+
         if realizations is not None and len(realizations) == 0:
             raise InvalidParameterError("Realizations must be a non-empty list or None", Service.GENERAL)
 
@@ -539,9 +576,10 @@ class InplaceVolumesTableAssembler:
             missing_realizations_set = set(realizations) - real_values_set
 
             if missing_realizations_set:
-                raise NoDataError(
-                    f"Missing data error. The following realization values do not exist in 'REAL' column: {list(missing_realizations_set)}",
-                    Service.GENERAL,
+                warnings.append(
+                    make_missing_realizations_warning(
+                        sorted(missing_realizations_set), data_source="Sumo inplace volumes data"
+                    )
                 )
 
             realization_mask = inplace_volumes_df["REAL"].is_in(realizations)
@@ -561,4 +599,4 @@ class InplaceVolumesTableAssembler:
         time_row_filtering = timer.lap_ms()
         LOGGER.debug(f"DATAFRAME row filtering (based on selectors): {time_row_filtering}ms")
 
-        return filtered_df
+        return ResultWithWarning(filtered_df, warnings)

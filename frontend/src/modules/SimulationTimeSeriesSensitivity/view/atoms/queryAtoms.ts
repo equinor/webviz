@@ -1,10 +1,15 @@
+import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import {
     Frequency_api,
     getHistoricalVectorDataOptions,
+    getRealizationsVectorData,
     getRealizationsVectorDataOptions,
+    getStatisticalVectorDataPerSensitivity,
     getStatisticalVectorDataPerSensitivityOptions,
+    getQueryResultWarnings,
+    withWarnings,
 } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
@@ -26,16 +31,19 @@ export const vectorDataQueryAtom = atomWithQuery((get) => {
         : null;
     const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
 
-    const queryOptions = getRealizationsVectorDataOptions({
-        query: {
-            case_uuid: vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
-            ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
-            vector_name: vectorSpecification?.vectorName ?? "",
-            resampling_frequency: resampleFrequency,
-            realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-            ...makeCacheBustingQueryParam(vectorSpecification?.ensembleIdent ?? null),
-        },
-    });
+    const queryOptions = withWarnings(
+        getRealizationsVectorDataOptions({
+            query: {
+                case_uuid: vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
+                ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
+                vector_name: vectorSpecification?.vectorName ?? "",
+                resampling_frequency: resampleFrequency,
+                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                ...makeCacheBustingQueryParam(vectorSpecification?.ensembleIdent ?? null),
+            },
+        }),
+        getRealizationsVectorData,
+    );
     return { ...queryOptions, enabled: !!vectorSpecification };
 });
 
@@ -52,19 +60,27 @@ export const statisticalVectorSensitivityDataQueryAtom = atomWithQuery((get) => 
         : null;
     const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
 
-    const queryOptions = getStatisticalVectorDataPerSensitivityOptions({
-        query: {
-            case_uuid: vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
-            ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
-            vector_name: vectorSpecification?.vectorName ?? "",
-            resampling_frequency: fallbackStatisticsResampleFrequency,
-            statistic_functions: undefined,
-            realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-            ...makeCacheBustingQueryParam(vectorSpecification?.ensembleIdent ?? null),
-        },
-    });
+    const queryOptions = withWarnings(
+        getStatisticalVectorDataPerSensitivityOptions({
+            query: {
+                case_uuid: vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
+                ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
+                vector_name: vectorSpecification?.vectorName ?? "",
+                resampling_frequency: fallbackStatisticsResampleFrequency,
+                statistic_functions: undefined,
+                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                ...makeCacheBustingQueryParam(vectorSpecification?.ensembleIdent ?? null),
+            },
+        }),
+        getStatisticalVectorDataPerSensitivity,
+    );
     return { ...queryOptions, enabled: !!(showStatistics && vectorSpecification) };
 });
+
+export const vectorDataWarningsAtom = atom((get) => [
+    ...getQueryResultWarnings(get(vectorDataQueryAtom)),
+    ...getQueryResultWarnings(get(statisticalVectorSensitivityDataQueryAtom)),
+]);
 
 export const historicalVectorDataQueryAtom = atomWithQuery((get) => {
     const vectorSpecification = get(vectorSpecificationAtom);

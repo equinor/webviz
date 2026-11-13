@@ -16,6 +16,8 @@ from fmu.sumo.explorer.objects import Surface
 
 from webviz_core_utils.exponential_backoff_timer import ExponentialBackoffTimer
 from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 from webviz_services.utils.otel_span_tracing import otel_span_decorator, start_otel_span, start_otel_span_async
 from webviz_services.utils.statistic_function import StatisticFunction
 from webviz_services.utils.surface_helpers import are_all_surface_values_undefined
@@ -27,6 +29,7 @@ from webviz_services.service_exceptions import (
     ServiceRequestError,
     InvalidDataError,
 )
+from webviz_services.service_warnings import make_missing_realizations_warning
 
 from .surface_types import (
     InitialFluidContactSurfaceMeta,
@@ -299,11 +302,12 @@ class SurfaceAccess:
         attribute: SurfaceAttribute,
         realizations: Sequence[int] | None = None,
         time_or_interval_str: str | None = None,
-    ) -> xtgeo.RegularSurface:
+    ) -> ResultWithWarning[xtgeo.RegularSurface]:
         """
         Compute statistic and return surface data
         If realizations is None this is interpreted as a wildcard and surfaces from all realizations will be included
         in the statistics. The list of realizations cannon be empty.
+        Requested realizations without a source surface are left out of the statistics and reported as a warning.
         If time_or_interval_str is None, only surfaces with no time information will be considered.
         """
         if not self._ensemble_name:
@@ -342,13 +346,7 @@ class SurfaceAccess:
         # Ensure that we got data for all the requested realizations
         realizations_found = await search_context.get_field_values_async("fmu.realization.id")
         perf_metrics.record_lap("collect-reals")
-        if realizations is not None:
-            missing_reals = list(set(realizations) - set(realizations_found))
-            if len(missing_reals) > 0:
-                raise InvalidParameterError(
-                    f"Could not find source surfaces for realizations: {missing_reals} in Sumo for {surf_str}",
-                    Service.SUMO,
-                )
+        warnings = _make_missing_source_realizations_warnings(realizations, realizations_found)
 
         sumo_stat_op_str = _map_to_sumo_aggregation_operation(statistic_function)
 
@@ -371,7 +369,7 @@ class SurfaceAccess:
             f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, real count: {len(realizations_found)}] ({surf_str})"
         )
 
-        return xtgeo_surf
+        return ResultWithWarning(xtgeo_surf, warnings)
 
     @otel_span_decorator()
     async def submit_statistical_surface_calculation_task_async(
@@ -422,16 +420,10 @@ class SurfaceAccess:
                 f"Could not calculate statistical surface, only one source surface found for: {surf_str}", Service.SUMO
             )
 
-        # Ensure that we got data for all the requested realizations
+        # Requested realizations without a source surface are left out of the aggregation. The task result
+        # is compared with the requested realizations when polling, which is where the warning is created.
         realizations_found = await search_context.get_field_values_async("fmu.realization.id")
         perf_metrics.record_lap("collect-reals")
-        if realizations is not None:
-            missing_reals = list(set(realizations) - set(realizations_found))
-            if len(missing_reals) > 0:
-                raise InvalidParameterError(
-                    f"Could not find source surfaces for realizations: {missing_reals} in Sumo for: {surf_str}",
-                    Service.SUMO,
-                )
 
         sumo_stat_op_str = _map_to_sumo_aggregation_operation(statistic_function)
         sumo_task_uuid = await _start_sumo_aggregation_task_async(search_context, sumo_stat_op_str)
@@ -446,14 +438,16 @@ class SurfaceAccess:
 
     @otel_span_decorator()
     async def poll_statistical_surface_calculation_task_async(
-        self, sumo_task_id: str, timeout_s: float
-    ) -> xtgeo.RegularSurface | InProgress | ExpectedError:
+        self, sumo_task_id: str, timeout_s: float, requested_realizations: Sequence[int] | None = None
+    ) -> ResultWithWarning[xtgeo.RegularSurface] | InProgress | ExpectedError:
         """
         Poll the specified Sumo task, waiting up to timeout_s seconds for it to complete.
 
         Use a timeout_s of 0 to do a single poll.
 
-        If the task has completed successfully a statistical surface will be returned.
+        If the task has completed successfully a statistical surface will be returned, with a warning for
+        any of the requested_realizations that were not part of the aggregation. Only a successful result
+        carries warnings.
         Otherwise either an InProgress or ExpectedError object will be returned. Note that this method
         may also raise exceptions if something unexpected happens.
         """
@@ -507,7 +501,8 @@ class SurfaceAccess:
                 f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, real count: {num_source_surfaces}]"
             )
 
-            return xtgeo_surf
+            warnings = _make_missing_source_realizations_warnings(requested_realizations, source_realization_ids)
+            return ResultWithWarning(xtgeo_surf, warnings)
 
         if task_state.status == "failed":
             LOGGER.error(f"Statistical surface job failed, {task_state.status=} ({sumo_task_id=})")
@@ -536,6 +531,19 @@ class SurfaceAccess:
             f"C={self._case_uuid}, E={self._ensemble_name}"
         )
         return addr_str
+
+
+def _make_missing_source_realizations_warnings(
+    requested_realizations: Sequence[int] | None, found_realizations: Sequence[int]
+) -> list[TextWarning]:
+    if requested_realizations is None:
+        return []
+
+    missing_realizations = set(requested_realizations).difference(found_realizations)
+    if not missing_realizations:
+        return []
+
+    return [make_missing_realizations_warning(sorted(missing_realizations), data_source="Sumo surfaces")]
 
 
 async def _start_sumo_aggregation_task_async(search_context: SearchContext, sumo_stat_op_str: str) -> str:

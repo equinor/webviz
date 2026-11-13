@@ -3,6 +3,7 @@ import type { AxiosError } from "axios";
 import type { Getter } from "jotai";
 
 import {
+    getRelpermRealizationData,
     getRelpermRealizationDataOptions,
     type getRelpermRealizationDataQueryKey,
     getRelpermTableDefinitionOptions,
@@ -12,6 +13,8 @@ import {
     type HTTPValidationError_api,
     type RelpermRealizationDataResponse_api,
     type RelpermTableDefinition_api,
+    withWarnings,
+    type ResultWithWarnings,
 } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
@@ -36,7 +39,6 @@ type RelPermTableDefinitionQueryKey = ReturnType<typeof getRelpermTableDefinitio
 type RelPermRealizationDataQueryKey = ReturnType<typeof getRelpermRealizationDataQueryKey>;
 type RelPermRealizationDataQueryContext = {
     ensembleIdent: RegularEnsembleIdent;
-    filteredRealizations: number[] | null;
     tableDefinitionIsLoaded: boolean;
 };
 
@@ -55,9 +57,9 @@ export const relPermTableDefinitionQueriesAtom = atomWithQueries<
 >(makeRelPermTableDefinitionQueryOptions);
 
 export const relPermRealizationDataQueriesAtom = atomWithQueries<
-    RelpermRealizationDataResponse_api,
-    RelPermApiError,
-    RelpermRealizationDataResponse_api,
+    ResultWithWarnings<RelpermRealizationDataResponse_api>,
+    AxiosError,
+    ResultWithWarnings<RelpermRealizationDataResponse_api>,
     RelPermRealizationDataQueryKey,
     RelPermDataAccessorStatus
 >(makeRelPermRealizationDataQueryOptions);
@@ -115,12 +117,8 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
     const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
 
     function makeQueryContext(ensembleIdent: RegularEnsembleIdent, index: number): RelPermRealizationDataQueryContext {
-        const tableRealizations = tableDefinitionQueries[index]?.data?.realizations ?? [];
-        const filteredRealizations = filterRealizationsByTable(validRealizationNumbers, tableRealizations);
-
         return {
             ensembleIdent,
-            filteredRealizations,
             tableDefinitionIsLoaded: Boolean(tableDefinitionQueries[index]?.data),
         };
     }
@@ -132,24 +130,26 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
     return {
         queries: queryContexts.map(function makeRelPermRealizationDataQuery({
             ensembleIdent,
-            filteredRealizations,
             tableDefinitionIsLoaded,
         }) {
-            const realizationsEncodedAsUintListStr = filteredRealizations
-                ? encodeAsUintListStr(filteredRealizations)
+            const realizationsEncodedAsUintListStr = validRealizationNumbers
+                ? encodeAsUintListStr(validRealizationNumbers)
                 : null;
-            const options = getRelpermRealizationDataOptions({
-                query: {
-                    case_uuid: ensembleIdent.getCaseUuid(),
-                    ensemble_name: ensembleIdent.getEnsembleName(),
-                    table_name: selectedTableName ?? "",
-                    saturation_axis_name: selectedSaturationAxisName ?? "",
-                    curve_names: selectedCurveNames,
-                    satnums: selectedSatnums,
-                    realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-                    ...makeCacheBustingQueryParam(ensembleIdent),
-                },
-            });
+            const options = withWarnings(
+                getRelpermRealizationDataOptions({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                        table_name: selectedTableName ?? "",
+                        saturation_axis_name: selectedSaturationAxisName ?? "",
+                        curve_names: selectedCurveNames,
+                        satnums: selectedSatnums,
+                        realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                        ...makeCacheBustingQueryParam(ensembleIdent),
+                    },
+                }),
+                getRelpermRealizationData,
+            );
 
             return function getRelPermRealizationDataQueryOptions() {
                 return {
@@ -160,14 +160,14 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
                         selectedCurveNames.length > 0 &&
                         selectedSatnums.length > 0 &&
                         tableDefinitionIsLoaded &&
-                        (filteredRealizations === null || filteredRealizations.length > 0) &&
+                        (validRealizationNumbers === null || validRealizationNumbers.length > 0) &&
                         areSelectionsValid,
                     ),
                 };
             };
         }),
         combine: function combineRelPermRealizationDataQueryResults(
-            results: UseQueryResult<RelpermRealizationDataResponse_api, RelPermApiError>[],
+            results: UseQueryResult<ResultWithWarnings<RelpermRealizationDataResponse_api>, AxiosError>[],
         ): RelPermDataAccessorStatus {
             // A disabled query keeps its cached data and error, which may not match the current selections
             // (e.g. relative-permeability curves after switching to capillary pressure)
@@ -177,17 +177,23 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
                     isFetching: false,
                     isError: false,
                     errors: [],
+                    warnings: [],
                 };
             }
 
             const ensembleData: RelPermEnsembleRealizationData[] = [];
+            const warnings: string[] = [];
 
             results.forEach(function collectEnsembleData(result, index) {
                 const data = result.data;
                 if (!data) {
                     return;
                 }
-                ensembleData.push({ ensembleIdent: queryContexts[index].ensembleIdent, data });
+                const ensembleIdent = queryContexts[index].ensembleIdent;
+                ensembleData.push({ ensembleIdent, data: data.value });
+                for (const warning of data.warnings) {
+                    warnings.push(`${ensembleIdent.getEnsembleName()}: ${warning}`);
+                }
             });
 
             return {
@@ -205,21 +211,8 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
                     .filter(function isNonNullError(error) {
                         return error !== null;
                     }) as Error[],
+                warnings,
             };
         },
     };
-}
-
-function filterRealizationsByTable(
-    validRealizationNumbers: number[] | null,
-    tableRealizations: number[],
-): number[] | null {
-    if (!validRealizationNumbers) {
-        return null;
-    }
-
-    const tableRealizationSet = new Set(tableRealizations);
-    return validRealizationNumbers.filter(function isRealizationInTable(realization) {
-        return tableRealizationSet.has(realization);
-    });
 }

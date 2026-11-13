@@ -17,6 +17,7 @@ import {
     SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE,
 } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
+import { propagateWarningsToStatusWriter } from "@modules/_shared/utils/propagateWarningsToStatusWriter";
 
 import { filterAtom, isSensitivityEnsembleSelectionBlockedAtom, resultNamesAtom } from "../atoms/baseAtoms";
 import {
@@ -48,6 +49,8 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter, 
     const sensitivityCasesWithoutRealizations = useAtomValue(sensitivityCasesWithoutRealizationsAtom);
 
     propagateAllApiErrorsToStatusWriter(activeQueriesResult.errors, statusWriter);
+
+    propagateWarningsToStatusWriter(activeQueriesResult.warnings, statusWriter);
 
     if (isSensitivityEnsembleSelectionBlocked) {
         statusWriter.addError(SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE);

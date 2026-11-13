@@ -2,11 +2,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from webviz_core_utils.text_warning import TextWarning
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from webviz_services.sumo_access.well_completions_access import WellCompletionsAccess
 from webviz_services.well_completions_assembler.well_completions_assembler import WellCompletionsAssembler
 
 from primary.auth.auth_helper import AuthHelper
+from primary.middleware.add_warnings_middleware import report_warnings
 from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.query_string_utils import decode_uint_list_str
 
@@ -17,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("/well_completions_data/")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.LONG, result_version=1)
 async def get_well_completions_data(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -48,15 +50,20 @@ async def get_well_completions_data(
         )
 
     # Create well completions data object
-    data = well_completions_assembler.create_well_completions_data()
+    warnings: list[TextWarning] = []
+    result = well_completions_assembler.create_well_completions_data()
+    data = result.get_value(warnings)
 
     if not data:
         raise HTTPException(status_code=404, detail="Well completions data not found")
 
-    return schemas.WellCompletionsData(
+    response = schemas.WellCompletionsData(
         version=data.version,
         units=converters.convert_units_to_schema(data.units),
         zones=[converters.convert_zone_to_schema(zone) for zone in data.zones],
         sortedCompletionDates=data.sorted_completion_dates,
         wells=[converters.convert_well_to_schema(well) for well in data.wells],
     )
+
+    report_warnings(warnings)
+    return response

@@ -20,12 +20,16 @@ export function usePublishToDataChannels(viewContext: ViewContext<Interfaces>) {
 
     viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.REALIZATION_VALUE,
-        dependencies: [vectorSpecification, vectorDataQuery.data, ensemble, activeTimestampUtcMs],
+        dependencies: [vectorSpecification, vectorDataQuery.data?.value, ensemble, activeTimestampUtcMs],
         contents: [
             {
                 contentIdString: vectorSpecification?.vectorName ?? "",
                 displayName: vectorSpecification?.vectorName ?? "",
-                dataGenerator: makeVectorDataGenerator(ensemble, vectorDataQuery.data ?? null, activeTimestampUtcMs),
+                dataGenerator: makeVectorDataGenerator(
+                    ensemble,
+                    vectorDataQuery.data?.value ?? null,
+                    activeTimestampUtcMs,
+                ),
             },
         ],
     });

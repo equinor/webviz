@@ -89,6 +89,7 @@ export const aggregatedTableDataQueriesAtom = atom((get) => {
             isFetching: false,
             allQueriesFailed: false,
             errors: [],
+            warnings: [],
             droppedFluidSelections: [],
             unmatchedRows: [],
             numDroppedSensitivityRows: 0,
@@ -108,6 +109,7 @@ export const aggregatedTableDataQueriesAtom = atom((get) => {
         // Only surface an "all failed" state when there is genuinely no data to show.
         allQueriesFailed: (regular.allQueriesFailed || delta.allQueriesFailed) && tablesData.length === 0,
         errors: [...regular.errors, ...delta.errors],
+        warnings: [...regular.warnings, ...delta.warnings],
         droppedFluidSelections: delta.droppedFluidSelections,
         unmatchedRows: delta.unmatchedRows,
         numDroppedSensitivityRows,

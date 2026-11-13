@@ -31,6 +31,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const relPermDataAccessorStatus = viewContext.useSettingsToViewInterfaceValue("relPermDataAccessorStatus");
     const propagatedErrorMessages = propagateAllApiErrorsToStatusWriter(relPermDataAccessorStatus.errors, statusWriter);
     const propagatedErrorMessage = propagatedErrorMessages[0] ?? null;
+
     const instanceTitle = makeRelPermPlotTitle(curveType, curveNames, visualizationSettings.groupBy);
 
     statusWriter.setLoading(relPermDataAccessorStatus.isFetching);

@@ -106,6 +106,7 @@ export type VisualizationGroup<
     children: (VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
     annotations: Annotation[];
     aggregatedErrorMessages: (StatusMessage | string)[];
+    aggregatedWarningMessages: (StatusMessage | string)[];
     aggregatedActionRequiredMessages: (StatusMessage | string)[];
     allItemIds: Set<string>;
     combinedBoundingBox: bbox.BBox | null;
@@ -292,6 +293,7 @@ export class VisualizationAssembler<
         )[] = [];
         const annotations: Annotation[] = [];
         const aggregatedErrorMessages: (StatusMessage | string)[] = [];
+        const aggregatedWarningMessages: (StatusMessage | string)[] = [];
         const aggregatedActionRequiredMessages: (StatusMessage | string)[] = [];
         const allItemIds = new Set<string>();
         let hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget> = {};
@@ -325,6 +327,7 @@ export class VisualizationAssembler<
 
             accumulatedData = product.accumulatedData;
             aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
+            aggregatedWarningMessages.push(...product.aggregatedWarningMessages);
             aggregatedActionRequiredMessages.push(...product.aggregatedActionRequiredMessages);
 
             // Add all descendant item ids of the group to the set of all item ids
@@ -371,6 +374,9 @@ export class VisualizationAssembler<
                 continue;
             }
 
+            // Warnings reported while fetching the data, e.g. warnings sent by the back-end together with the data
+            aggregatedWarningMessages.push(...child.getWarningMessages());
+
             const transformers = this._transformerRegistry.getDataProviderTransformers(child.getType());
             const transformerArgs = makeTransformerArgs(child, injectedData, this._providerMemoStore);
             const dataProviderObjects = this.makeDataProviderObjects(
@@ -404,6 +410,7 @@ export class VisualizationAssembler<
             groupType: null,
             children,
             aggregatedErrorMessages,
+            aggregatedWarningMessages,
             aggregatedActionRequiredMessages,
             allItemIds,
             combinedBoundingBox,
@@ -466,6 +473,7 @@ export class VisualizationAssembler<
             children: product.children,
             annotations: product.annotations,
             aggregatedErrorMessages: product.aggregatedErrorMessages,
+            aggregatedWarningMessages: product.aggregatedWarningMessages,
             aggregatedActionRequiredMessages: product.aggregatedActionRequiredMessages,
             allItemIds: product.allItemIds,
             combinedBoundingBox: product.combinedBoundingBox,

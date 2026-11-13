@@ -114,11 +114,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         useMakePersistableFixableAtomAnnotations(selectedSaturationAxisNameAtom);
     const selectedCurveNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedCurveNamesAtom);
     const selectedSatnumsAnnotations = useMakePersistableFixableAtomAnnotations(selectedSatnumsAtom);
-    const { handlePanelAnnotationsChange } = useMakeSettingsStatusWriterMessages(
-        statusWriter,
-        ensembleSet,
-        filterEnsembleRealizationsFunc,
-    );
+    const { handlePanelAnnotationsChange } = useMakeSettingsStatusWriterMessages(statusWriter);
 
     const tableNameQueries = useAtomValue(relPermTableNamesQueriesAtom);
 

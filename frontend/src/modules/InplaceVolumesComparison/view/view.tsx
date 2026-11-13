@@ -8,10 +8,12 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
+import { propagateWarningsToStatusWriter } from "@modules/_shared/utils/propagateWarningsToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 
 import { showTableAtom } from "./atoms/baseAtoms";
+import { waterfallStatisticalDataQueriesAtom } from "./atoms/queryAtoms";
 import { WaterfallTable } from "./components/WaterfallTable";
 import { useBuildWaterfallPlot } from "./hooks/useBuildWaterfallPlot";
 
@@ -19,6 +21,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useViewStatusWriter(props.viewContext);
     const showTable = useAtomValue(showTableAtom);
+    const statisticalDataQueries = useAtomValue(waterfallStatisticalDataQueriesAtom);
 
     const plotDivRef = React.useRef<HTMLDivElement>(null);
     const plotDivBoundingRect = useElementBoundingRect(plotDivRef);
@@ -29,6 +32,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     for (const warning of waterfall.nonBlockingWarnings) {
         statusWriter.addWarning(warning);
     }
+
+    propagateWarningsToStatusWriter(statisticalDataQueries.warnings, statusWriter);
 
     const infoMessage = waterfall.message?.reason === "incomplete-selection" ? waterfall.message.text : null;
     const errorMessage = waterfall.message?.reason === "failure" ? waterfall.message.text : undefined;
