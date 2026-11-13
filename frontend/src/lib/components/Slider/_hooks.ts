@@ -76,7 +76,7 @@ export function useLockedValueUpdate(props: {
 
     const { onValueChange } = props;
 
-    React.useEffect(
+    React.useLayoutEffect(
         function clampToToggledLocksEffect() {
             const value = props.value as number | number[];
             const isDualValue = isDualSliderValue(value);

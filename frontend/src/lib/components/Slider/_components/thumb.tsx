@@ -84,7 +84,15 @@ export function Thumb(props: {
                 hidden={thumbHidden}
                 disabled={thumbHidden}
                 // Note that z-index is forced to 2. Internal slider logic will attempt to set it to 1, so we force it to avoid layering issues with Dots
-                className="border-accent-strong data-disabled:border-disabled data-out-of-range:border-danger-strong bg-surface not-data-disabled:hover:outline-focus focus-within:outline-focus z-2! box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent"
+                className={resolveClassNames(
+                    "bg-surface z-2! box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent",
+                    {
+                        "border-accent-strong": !isOutOfBounds && !props.disabled,
+                        "border-danger-strong": isOutOfBounds && !props.disabled,
+                        "hover:outline-focus focus-within:outline-focus": !props.disabled,
+                        "border-disabled": props.disabled,
+                    },
+                )}
                 index={props.index}
                 inputRef={props.inputRefs[props.index]}
                 getAriaLabel={props.getAriaLabel}
@@ -112,6 +120,7 @@ export function Thumb(props: {
             <TooltipBase.Root open={shouldShowThumbLabel && !thumbHidden}>
                 <TooltipBase.Portal className="pointer-events-none">
                     <TooltipBase.Positioner
+                        className="data-anchor-hidden:hidden"
                         sideOffset={4}
                         anchor={anchorRef.current}
                         side={props.labelSide}
@@ -124,7 +133,11 @@ export function Thumb(props: {
                         <TooltipBase.Popup
                             data-out-of-range={isOutOfBounds ? "" : undefined}
                             data-slider-disabled={props.disabled ? "" : undefined}
-                            className="bg-accent-strong data-slider-disabled:bg-disabled data-out-of-range:bg-danger-strong px-2xs py-4xs text-info-strong-on-emphasis! rounded"
+                            className={resolveClassNames("px-2xs py-4xs text-info-strong-on-emphasis! rounded", {
+                                "bg-accent-strong": !isOutOfBounds && !props.disabled,
+                                "bg-danger-strong": isOutOfBounds && !props.disabled,
+                                "bg-disabled": props.disabled,
+                            })}
                             render={
                                 <Typography
                                     as="div"
@@ -137,10 +150,7 @@ export function Thumb(props: {
                                         : thumbValue}
 
                                     {isOutOfBounds && (
-                                        <ErrorIcon
-                                            className="ml-2xs pointer-events-auto!"
-                                            titleAccess="The value is out range!"
-                                        />
+                                        <ErrorIcon className="ml-2xs" titleAccess="The value is out range!" />
                                     )}
                                 </Typography>
                             }

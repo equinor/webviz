@@ -2,7 +2,7 @@ import React from "react";
 
 import type { SliderRootProps as SliderRootBaseProps } from "@base-ui/react/slider";
 import { Slider as SliderBase } from "@base-ui/react/slider";
-import { chain, clamp, isEqual, minBy } from "lodash";
+import { chain, clamp, isEqual } from "lodash";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -19,7 +19,7 @@ import { SliderLockGutter } from "./_components/sliderLockGutter";
 import { Thumb } from "./_components/thumb";
 import { INDICATOR_CLASS_NAME, TRACK_CLASS_NAME, TRACK_HEIGHT_CLASS_NAMES } from "./_constants";
 import { useLockedValueUpdate, useLockState, useUnlockOnValueChange } from "./_hooks";
-import { getMarkerPercentage, getSnappedValue, isDualSliderValue } from "./_utils";
+import { getMarkerPercentage, getNearestThumbIndex, getSnappedValue, isDualSliderValue } from "./_utils";
 import type { SliderChangeEventDetails, SnapTarget } from "./types";
 
 export type SliderProps<TValue extends number | readonly number[] = number | readonly number[]> = ComponentWrapperProps<
@@ -569,6 +569,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                     disabled={state.disabled}
                                     index={1}
                                     numMarkers={2}
+                                    labelFormat={markerLabelFormatFunc}
                                     onClick={() => {}}
                                 />
                             )}

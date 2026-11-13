@@ -99,11 +99,14 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const createValueLabelFormat = React.useCallback(
         function createValueLabelFormat(value: number): string {
-            if (!availableDateTimes || value < 0 || value >= availableDateTimes.length) return "";
+            if (!availableDateTimes || value < 0 || value >= availableDateTimes.length) {
+                // When swapping between frequencies, the selected value might not be a valid option; render the selected value string, if any.
+                return selectedDateTime.value ?? "";
+            }
 
             return availableDateTimes[value];
         },
-        [availableDateTimes],
+        [availableDateTimes, selectedDateTime.value],
     );
 
     const selectedDateTimeIndex = selectedDateTime.value ? availableDateTimes.indexOf(selectedDateTime.value) : -1;

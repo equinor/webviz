@@ -316,6 +316,22 @@ export const ValueLabelFormatting: Story = {
     ),
 };
 
+export const EqualMinMaxFormattedLabels: Story = {
+    render: () => (
+        <div className="gap-y-lg flex flex-col">
+            <Slider defaultValue={50} min={50} max={50} markerLabels={(v) => `${v}%`} />
+            {/* Mirrors WellCompletions / FlowNetwork with a single time step */}
+            <Slider
+                defaultValue={0}
+                min={0}
+                max={0}
+                markers={[0]}
+                markerLabels={(v, i) => (i === 0 || i === 0 /* length - 1 */ ? `date #${v}` : null)}
+            />
+        </div>
+    ),
+};
+
 function SliderController(props: {
     initialValue: number | readonly number[];
     renderChildren: (props: SliderProps) => React.ReactNode;
