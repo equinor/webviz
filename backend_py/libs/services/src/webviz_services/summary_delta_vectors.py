@@ -38,7 +38,8 @@ def create_delta_vector_table(
     Performs "inner join". Only obtain matching index ["DATE", "REAL"] - i.e "DATE"-"REAL" combination
     present in only one vector is neglected.
 
-    Returns: A table with columns ["DATE", "REAL", vector_name] where vector_name contains the delta values.
+    Returns: A table with columns ["DATE", "REAL", vector_name] where vector_name contains the delta values, sorted on
+    REAL then DATE like the tables from `SummaryAccess.get_vector_table_async()`.
 
     `Note`: Pre-processing of DATE-columns, e.g. resampling, should be done before calling this function.
     """
@@ -60,19 +61,18 @@ def create_delta_vector_table(
         }
     )
 
-    return delta_table
+    # The join gives no guaranteed row order
+    return sort_table_on_real_then_date(delta_table)
 
 
 def create_realization_delta_vector_list(
     delta_vector_table: pa.Table, vector_name: str, is_rate: bool, unit: str
 ) -> list[RealizationDeltaVector]:
     """
-    Create a list of RealizationDeltaVector from the delta vector table.
+    Create a list of RealizationDeltaVector from a delta vector table sorted on REAL then DATE, as returned by
+    `create_delta_vector_table()`.
     """
     validate_summary_vector_table_pa(delta_vector_table, vector_name)
-
-    # Join/derived outputs have no guaranteed row order; slicing below requires contiguous, date-sorted REAL segments
-    delta_vector_table = sort_table_on_real_then_date(delta_vector_table)
 
     real_arr_np = delta_vector_table.column("REAL").to_numpy()
     unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)

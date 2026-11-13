@@ -572,7 +572,7 @@ export const getDeltaEnsembleStatisticalVectorData = <ThrowOnError extends boole
         responseType: "json",
         url: "/timeseries/delta_ensemble_statistical_vector_data/",
         ...options,
-        query: { ...options.query, _rv: "e5a22f" },
+        query: { ...options.query, _rv: "e95b9d" },
     });
 
 /**

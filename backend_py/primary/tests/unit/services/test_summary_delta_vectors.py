@@ -134,17 +134,22 @@ def test_create_realization_delta_vector_list_with_empty_table() -> None:
     assert result == expected_result
 
 
-def test_create_realization_delta_vector_list_with_interleaved_rows() -> None:
-    delta_data = {
+def test_create_delta_vector_table_sorts_interleaved_rows() -> None:
+    # Inputs as a join could leave them: realizations interleaved and dates out of order
+    comparison_data = {
         "DATE": [30, 10, 10, 30, 20, 20],
         "REAL": [2, 1, 2, 1, 2, 1],
         "vector": [300.0, 10.0, 100.0, 30.0, 200.0, 20.0],
     }
-    delta_vector_table = pa.table(delta_data, schema=VECTOR_TABLE_SCHEMA)
+    reference_data = {"DATE": [20, 10, 30, 30, 10, 20], "REAL": [1, 2, 2, 1, 1, 2], "vector": [0.0] * 6}
+    comparison_vector_table = pa.table(comparison_data, schema=VECTOR_TABLE_SCHEMA)
+    reference_vector_table = pa.table(reference_data, schema=VECTOR_TABLE_SCHEMA)
 
-    result = create_realization_delta_vector_list(delta_vector_table, "vector", is_rate=False, unit="unit")
+    delta_table = create_delta_vector_table(comparison_vector_table, reference_vector_table, "vector")
 
-    assert result == [
+    assert delta_table.column("REAL").to_pylist() == [1, 1, 1, 2, 2, 2]
+    assert delta_table.column("DATE").to_numpy().astype(int).tolist() == [10, 20, 30, 10, 20, 30]
+    assert create_realization_delta_vector_list(delta_table, "vector", is_rate=False, unit="unit") == [
         RealizationDeltaVector(
             realization=1, timestamps_utc_ms=[10, 20, 30], values=[10.0, 20.0, 30.0], is_rate=False, unit="unit"
         ),
@@ -251,9 +256,7 @@ def test_delta_realistic_multi_realization_with_and_without_coverage(scramble_jo
         reference_table = _scramble_rows(reference_table, chunk_size=2)
 
     delta_table = create_delta_vector_table(comparison_table, reference_table, "vector")
-    without_coverage = create_realization_delta_vector_list(
-        _scramble_rows(delta_table) if scramble_joined_inputs else delta_table, "vector", is_rate=False, unit="SM3"
-    )
+    without_coverage = create_realization_delta_vector_list(delta_table, "vector", is_rate=False, unit="SM3")
     with_coverage = add_raw_date_ranges_to_realization_delta_vectors(
         without_coverage, comparison_raw_date_ranges, reference_raw_date_ranges
     )

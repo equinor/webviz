@@ -506,7 +506,7 @@ async def get_statistical_vector_data(
 
 
 @router.get("/delta_ensemble_statistical_vector_data/")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.LONG, result_version=1)
 # pylint: disable=too-many-arguments
 # pylint: disable-next=too-many-locals
 async def get_delta_ensemble_statistical_vector_data(
