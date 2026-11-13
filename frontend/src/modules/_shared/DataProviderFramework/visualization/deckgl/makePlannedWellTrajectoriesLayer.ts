@@ -32,18 +32,22 @@ export function makePlannedWellTrajectoriesLayer(
         return null;
     }
 
-    // 2D simplifies on XY distance only; 3D must use full 3D distance so near-vertical sections keep their shape.
-    const computeDistance = options.viewMode === "2D" ? trajectoryDistanceXY : trajectoryDistanceRadial;
+    const wellLayerDataFeatures = args.memoize(
+        "plannedWellGeoJson",
+        [plannedWellboreTrajectoriesData, options.viewMode],
+        () => {
+            // 2D simplifies on XY distance only; 3D must use full 3D distance so near-vertical sections keep their shape.
+            const computeDistance = options.viewMode === "2D" ? trajectoryDistanceXY : trajectoryDistanceRadial;
 
-    const wellLayerDataFeatures = args.memoize("plannedWellGeoJson", [computeDistance], () =>
-        plannedWellboreTrajectoriesData.map((well) => {
-            const simplifiedWell = createSimplifiedTrajectory(well, computeDistance);
-            const feature = wellTrajectoryToGeojson(simplifiedWell);
-            feature.properties.color = PLANNED_WELL_COLOR;
-            // Suffix the name so the hover readout/label makes clear this is a planned (not drilled) well.
-            feature.properties.name = `${feature.properties.name} (planned)`;
-            return feature;
-        }),
+            return plannedWellboreTrajectoriesData.map((well) => {
+                const simplifiedWell = createSimplifiedTrajectory(well, computeDistance);
+                const feature = wellTrajectoryToGeojson(simplifiedWell);
+                feature.properties.color = PLANNED_WELL_COLOR;
+                // Suffix the name so the hover readout/label makes clear this is a planned (not drilled) well.
+                feature.properties.name = `${feature.properties.name} (planned)`;
+                return feature;
+            });
+        },
     );
 
     const wellLabel = { ...DEFAULT_WELLS_LAYER_PROPS_BY_VIEW_MODE[options.viewMode].wellLabel };
