@@ -850,6 +850,53 @@ export const postGetSampleSurfaceInPoints = <ThrowOnError extends boolean = fals
 
 /**
  * Get Delta Surface Data
+ *
+ * Get a delta surface for a selection of a comparison ensemble, an optional reference ensemble, a monitor time,
+ * an optional base time and a realization or statistic.
+ *
+ * The primary address (*REAL* or *STAT*) encodes the comparison ensemble, the surface, and the monitor time.
+ * A delta ensemble is requested by giving both `reference_case_uuid` and `reference_ensemble_name`. A time delta is
+ * requested by giving `base_iso_time_or_interval`, which requires the address to carry a monitor time.
+ * At least one of the two must be given.
+ *
+ * For realization *r* the result is, where omitted terms are not fetched:
+ *
+ * ```
+ * result[r] = (comparison[r] @ monitor - comparison[r] @ base) - (reference[r] @ monitor - reference[r] @ base)
+ * ```
+ *
+ * Cells that are undefined in any of the surfaces involved are undefined in the result.
+ * Statistics of delta surfaces (*STAT* address) are not implemented yet.
+ *
+ *
+ * ---
+ * *General description of the types of surface addresses that exist. The specific address types supported by this endpoint can be a subset of these.*
+ *
+ * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
+ * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
+ * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
+ *
+ * Structure of the different types of address strings:
+ *
+ * ```
+ * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
+ * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
+ * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
+ *
+ * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
+ * encoded as a `UintListStr` or "*" to include all realizations.
  */
 export const getDeltaSurfaceData = <ThrowOnError extends boolean = false>(
     options: Options<GetDeltaSurfaceDataData_api, ThrowOnError>,
