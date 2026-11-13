@@ -1,10 +1,11 @@
 import { Banner } from "./_components/Banner";
 import { Field } from "./_components/Field";
+import { Overlay } from "./_components/Overlay";
 import { Panel } from "./_components/Panel";
 import { ScrollArea } from "./_components/ScrollArea";
 import { Section } from "./_components/Section";
 
-export const Setting = { Banner, Field, Panel, ScrollArea, Section };
+export const Setting = { Banner, Field, Overlay, Panel, ScrollArea, Section };
 
 export type { SettingAnnotation, SettingFieldProps, Overlay as SettingOverlay } from "./_components/Field";
 export type { PanelProps as SettingPanelProps } from "./_components/Panel";

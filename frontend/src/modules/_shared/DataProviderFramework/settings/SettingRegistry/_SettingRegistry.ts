@@ -6,6 +6,8 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 import type { Setting, SettingTypeDefinitions } from "../settingsDefinitions";
 
+import type { DpfDashboardSettingAdapter } from "./dashboardSettingAdapters";
+
 export class SettingRegistry {
     private static _registeredSettings: Map<
         Setting,
@@ -17,6 +19,7 @@ export class SettingRegistry {
                 ): StaticSettingImplementation<any, any> | DynamicSettingImplementation<any, any, any>;
             };
             customConstructorParameters?: any;
+            dashboardSettingAdapter?: DpfDashboardSettingAdapter<any, any, any, any>;
         }
     > = new Map();
 
@@ -46,6 +49,13 @@ export class SettingRegistry {
         customSettingImplementation: TSettingImpl,
         options?: {
             customConstructorParameters?: ConstructorParameters<TSettingImpl>;
+            // Lets settings of this type follow a dashboard-wide setting while it is active.
+            dashboardSettingAdapter?: DpfDashboardSettingAdapter<
+                TSettingDef["internalValue"],
+                TSettingDef["valueConstraints"],
+                any,
+                any
+            >;
         },
     ): void {
         if (this._registeredSettings.has(type)) {
@@ -55,6 +65,7 @@ export class SettingRegistry {
             label,
             customSettingImplementation,
             customConstructorParameters: options?.customConstructorParameters,
+            dashboardSettingAdapter: options?.dashboardSettingAdapter,
         });
     }
 
@@ -77,6 +88,7 @@ export class SettingRegistry {
                 SettingTypeDefinitions[TSetting]["externalValue"] | null,
                 SettingTypeDefinitions[TSetting]["valueConstraints"]
             >,
+            dashboardSettingAdapter: stored.dashboardSettingAdapter,
         });
     }
 }

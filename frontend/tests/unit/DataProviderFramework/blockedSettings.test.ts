@@ -1,11 +1,16 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import { DashboardSettingsService } from "@framework/DashboardSettings/DashboardSettingsService";
+import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import { DataProviderStatus } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
+import { SettingManager } from "@modules/_shared/DataProviderFramework/framework/SettingManager/SettingManager";
 import type { SharedSetting } from "@modules/_shared/DataProviderFramework/framework/SharedSetting/SharedSetting";
 import type { CustomDataProviderImplementation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { SerializedDataProvider } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
+import { DropdownNumberSetting } from "@modules/_shared/DataProviderFramework/settings/implementations/DropdownNumberSetting";
+import { makeIdentityDpfDashboardSettingAdapter } from "@modules/_shared/DataProviderFramework/settings/SettingRegistry/dashboardSettingAdapters";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import {
@@ -106,6 +111,32 @@ async function restore(fieldId: string, ...items: Parameters<typeof managerState
  * requested for the selection that can't be used, and it keeps its value until it can be resolved again.
  */
 describe("Blocked settings", () => {
+    test("withdraw dashboard constraints while blocked and restore them when unblocked", () => {
+        const dashboardSettingsService = new DashboardSettingsService();
+        const realizationSetting = dashboardSettingsService.addSetting(REALIZATION_DASHBOARD_SETTING);
+        const setting = new SettingManager({
+            type: Setting.REALIZATION,
+            label: "Realization",
+            defaultValue: 1,
+            customSettingImplementation: new DropdownNumberSetting(),
+            dashboardSettingAdapter: makeIdentityDpfDashboardSettingAdapter(REALIZATION_DASHBOARD_SETTING),
+        });
+
+        setting.setValueConstraints([1, 2]);
+        setting.connectDashboardSettingsService(dashboardSettingsService);
+        expect(realizationSetting.getConstraints()).toEqual([1, 2]);
+
+        setting.setLoading(true);
+        setting.setBlocked(true, ["Surface"]);
+        expect(realizationSetting.getConstraints()).toEqual([]);
+
+        setting.setLoading(false);
+        expect(realizationSetting.getConstraints()).toEqual([]);
+
+        setting.setBlocked(false);
+        expect(realizationSetting.getConstraints()).toEqual([1, 2]);
+    });
+
     test("block every setting below an invalid one, naming what each waits for, and request nothing for it", async () => {
         const manager = await restore(
             "field-b",

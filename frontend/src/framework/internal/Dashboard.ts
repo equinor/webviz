@@ -2,6 +2,11 @@ import { cloneDeep } from "lodash-es";
 import { nanoid } from "nanoid";
 import { v4 } from "uuid";
 
+import {
+    DashboardSettingsService,
+    DashboardSettingsServiceTopic,
+} from "@framework/DashboardSettings/DashboardSettingsService";
+import { DashboardSettingsServiceAtom } from "@framework/DashboardSettings/DashboardSettingsServiceAtom";
 import { HoverService } from "@framework/HoverService";
 import { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { Template } from "@framework/TemplateRegistry";
@@ -65,12 +70,20 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     // kept mounted at once by the dashboard hot-cache.
     private _syncSettingsService = new SyncSettingsService();
     private _hoverService = new HoverService();
+    private _dashboardSettingsService = new DashboardSettingsService();
 
     constructor(atomStoreMaster: AtomStoreMaster, name?: string) {
         this._id = nanoid(DASHBOARD_ID_LENGTH);
         this._metadata = { name: name ?? DEFAULT_DASHBOARD_NAME };
 
         this._atomStoreMaster = atomStoreMaster;
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "dashboard-settings-service",
+            this._dashboardSettingsService
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(DashboardSettingsServiceTopic.STATE_REVISION)(() => this.handleStateChange()),
+        );
     }
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<DashboardTopicPayloads> {
@@ -111,6 +124,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     getHoverService(): HoverService {
         return this._hoverService;
+    }
+
+    getDashboardSettingsService(): DashboardSettingsService {
+        return this._dashboardSettingsService;
     }
 
     getMetadata(): DashboardMetadata {
@@ -157,12 +174,14 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     serializeState(): SerializedDashboardState {
         if (this._cachedState) {
-            // Destructuring the cached state and overriding the id, name, and description with the current values.
+            // Destructuring the cached state and overriding the id, name, description and dashboard settings
+            // (which stay live while module instances are unloaded) with the current values.
             return {
                 ...this._cachedState,
                 id: this._id,
                 name: this._metadata.name,
                 description: this._metadata.description,
+                dashboardSettings: this._dashboardSettingsService.serializeState(),
             };
         }
 
@@ -194,6 +213,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             description: this._metadata.description,
             activeModuleInstanceId: this._activeModuleInstanceId,
             moduleInstances,
+            dashboardSettings: this._dashboardSettingsService.serializeState(),
         };
     }
 
@@ -205,6 +225,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         };
 
         this.clearLayout();
+
+        // Restored right away, unlike the module instances - so the dashboard settings are already in
+        // place (and their values marked as restored) when the module instances connect on load().
+        this._dashboardSettingsService.deserializeState(serializedDashboard.dashboardSettings ?? {});
 
         // Stopping here since we don't want to initialize module instances for
         // inactive dashboards. The module instances will be initialized when the dashboard is activated.
@@ -305,6 +329,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         const id = predefinedId ?? Dashboard.makeModuleInstanceId();
 
         const atomStore = this._atomStoreMaster.makeAtomStoreForModuleInstance(id);
+        // Lets the module's atoms reach this dashboard's settings (see DashboardSettings/adapters/jotai)
+        atomStore.set(DashboardSettingsServiceAtom, this._dashboardSettingsService);
 
         let moduleInstance: ModuleInstance<any, any>;
         try {
@@ -422,6 +448,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
      */
     beforeDestroy(): void {
         this.clearLayout();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("dashboard-settings-service");
+        this._dashboardSettingsService.beforeDestroy();
     }
 
     static fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster, id?: string): Dashboard {
@@ -437,6 +465,11 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             name: template.name,
             description: template.description,
         };
+
+        // Before the module instances are created, so they connect to settings that are already in place.
+        for (const { definition, options } of template.dashboardSettings ?? []) {
+            dashboard._dashboardSettingsService.addSetting(definition, options);
+        }
 
         const layout: LayoutElement[] = [];
         const moduleInstances: ModuleInstance<any, any>[] = [];

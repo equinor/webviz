@@ -8,8 +8,8 @@ import { makeVectorGroupDataGenerator } from "@modules/SimulationTimeSeries/data
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 import type { VectorHexColorMap, VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
 
+import { effectiveActiveTimestampUtcMsAtom } from "../atoms/dashboardSettingAtoms";
 import { loadedVectorSpecificationsAndRealizationDataAtom, queryIsFetchingAtom } from "../atoms/derivedAtoms";
-import { activeTimestampUtcMsAtom } from "../atoms/persistableFixableAtoms";
 import type { SubplotOwner } from "../utils/PlotBuilder";
 import { getHexColorFromOwner } from "../utils/plotColoring";
 
@@ -21,7 +21,7 @@ export function usePublishToDataChannels(
     vectorHexColorMap: VectorHexColorMap,
 ): void {
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
-    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
+    const activeTimestampUtcMs = useAtomValue(effectiveActiveTimestampUtcMsAtom).value;
     const isQueryFetching = useAtomValue(queryIsFetchingAtom);
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
@@ -44,6 +44,15 @@ export function usePublishToDataChannels(
 
     const contents: ChannelContentDefinition[] = [];
     for (const elm of vectorSpecificationsAndRealizationData) {
+        // Without a sample at the selected time in any realization, the vector has nothing to publish - left out,
+        // so receivers show that there is no data rather than an empty plot
+        const hasSampleAtActiveTimestamp =
+            activeTimestampUtcMs !== null &&
+            elm.data.some((realizationData) => realizationData.timestampsUtcMs.includes(activeTimestampUtcMs));
+        if (!hasSampleAtActiveTimestamp) {
+            continue;
+        }
+
         const hexColor = getHexColorFromOwner(subplotOwner, elm.vectorSpecification, vectorHexColorMap);
         contents.push({
             contentIdString: `${elm.vectorSpecification.vectorName}-::-${elm.vectorSpecification.ensembleIdent}`,
@@ -53,7 +62,7 @@ export function usePublishToDataChannels(
             dataGenerator: makeVectorGroupDataGenerator(
                 elm.vectorSpecification,
                 vectorSpecificationsAndRealizationData,
-                activeTimestampUtcMs ?? 0,
+                activeTimestampUtcMs,
                 makeEnsembleDisplayName,
                 hexColor,
             ),

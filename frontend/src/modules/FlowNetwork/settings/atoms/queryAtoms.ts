@@ -4,11 +4,11 @@ import { getRealizationFlowNetworkOptions } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import { selectedNodeTypesAtom, selectedResamplingFrequencyAtom } from "./baseAtoms";
-import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./persistableFixableAtoms";
+import { effectiveRealizationAtom, selectedEnsembleIdentAtom } from "./persistableFixableAtoms";
 
 export const realizationFlowNetworkQueryAtom = atomWithQuery((get) => {
     const { value: selectedEnsembleIdent, isValidInContext: ensembleIdentValid } = get(selectedEnsembleIdentAtom);
-    const { value: selectedRealization, isValidInContext: realizationValid } = get(selectedRealizationAtom);
+    const { value: selectedRealization, isValidInContext: realizationValid } = get(effectiveRealizationAtom);
     const selectedResamplingFrequency = get(selectedResamplingFrequencyAtom);
     const selectedNodeTypesArray = [...get(selectedNodeTypesAtom)];
 

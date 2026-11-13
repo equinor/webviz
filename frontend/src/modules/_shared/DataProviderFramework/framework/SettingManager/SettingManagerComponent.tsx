@@ -2,6 +2,7 @@ import React from "react";
 
 import { Error, HourglassEmpty, Link } from "@mui/icons-material";
 
+import { DashboardSettingIndicator } from "@framework/DashboardSettings/components/DashboardSettingIndicator";
 import { Field } from "@lib/components/Field";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -37,6 +38,7 @@ export function SettingManagerComponent<
     const isValidPersistedValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED_VALUE_VALID);
     const valueConstraints = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE_CONSTRAINTS);
     const isExternallyControlled = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_EXTERNALLY_CONTROLLED);
+    const isDashboardControlled = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_DASHBOARD_CONTROLLED);
     const externalControllerProvider = usePublishSubscribeTopicValue(
         props.setting,
         SettingTopic.EXTERNAL_CONTROLLER_PROVIDER,
@@ -113,6 +115,39 @@ export function SettingManagerComponent<
                     ) : (
                         <i className="text-warning-subtle">No valid shared setting value</i>
                     )}
+                </div>
+            </React.Fragment>
+        );
+    }
+
+    const dashboardSettingIndicator = isDashboardControlled ? (
+        <DashboardSettingIndicator
+            dashboardSettingLabel={props.setting.getDashboardSettingLabel() ?? ""}
+            isValueValidHere={isValid || actuallyLoading || isBlocked}
+        />
+    ) : null;
+
+    if (isDashboardControlled) {
+        return (
+            <React.Fragment key={props.setting.getId()}>
+                <div className="gap-x-2xs px-2xs py-4xs text-body-sm flex w-32 items-center">
+                    <span>{props.setting.getLabel()}</span>
+                    {dashboardSettingIndicator}
+                </div>
+                <div className="gap-x-2xs py-4xs px-2xs flex w-full items-center">
+                    <StatusWrapper isPending={actuallyLoading}>
+                        {isBlocked ? (
+                            <i className="text-neutral-subtle">{makeBlockedMessage(blockedBy)}</i>
+                        ) : isValid || actuallyLoading ? (
+                            props.setting.valueToRepresentation(
+                                value,
+                                props.manager.getWorkbenchSession(),
+                                props.manager.getWorkbenchSettings(),
+                            )
+                        ) : (
+                            <i className="text-warning-subtle">Dashboard value not valid here</i>
+                        )}
+                    </StatusWrapper>
                 </div>
             </React.Fragment>
         );
