@@ -1,3 +1,7 @@
+import React from "react";
+
+import { ShowChart } from "@mui/icons-material";
+
 import type { WellboreLogCurveData_api } from "@api";
 import type { CustomDataProviderImplementation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { SetupBasicBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
@@ -34,5 +38,9 @@ export class LinearPlotProvider
 
     getDefaultName() {
         return "Linear plot";
+    }
+
+    getIcon() {
+        return React.createElement(ShowChart, { fontSize: "inherit" });
     }
 }

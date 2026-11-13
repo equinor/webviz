@@ -351,6 +351,10 @@ export class DataProvider<
         return this._type;
     }
 
+    getIcon(): React.ReactNode {
+        return this._customDataProviderImpl.getIcon?.() ?? null;
+    }
+
     getItemDelegate() {
         return this._itemDelegate;
     }

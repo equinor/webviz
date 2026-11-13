@@ -33,14 +33,28 @@ export enum SectionId {
     BENEATH = "beneath",
 }
 
-const SECTION_LABELS: Record<SectionId, string> = {
-    [SectionId.GLOBAL]: "Global settings",
-    [SectionId.ON_TOP]: "On top of all views",
-    [SectionId.VIEWS]: "Views",
-    [SectionId.BENEATH]: "Beneath all views",
+/** How a module's root is presented - what counts as a view, and which sections are shown under which names. */
+export type TreeInspectorLayout = {
+    /** Group types acting as views, e.g. tracks in the well log viewer */
+    viewGroupTypes: readonly GroupType[];
+    /** Identifiers of the add actions creating views */
+    viewActionIdentifiers: readonly string[];
+    /** The shown sections, in order - must include VIEWS. Root items of a hidden section go to a shown one. */
+    sections: readonly SectionId[];
+    sectionLabels: Readonly<Partial<Record<SectionId, string>>>;
 };
 
-const SECTION_ORDER = [SectionId.GLOBAL, SectionId.ON_TOP, SectionId.VIEWS, SectionId.BENEATH];
+export const DEFAULT_TREE_INSPECTOR_LAYOUT: TreeInspectorLayout = {
+    viewGroupTypes: [GroupType.VIEW],
+    viewActionIdentifiers: ["view"],
+    sections: [SectionId.GLOBAL, SectionId.ON_TOP, SectionId.VIEWS, SectionId.BENEATH],
+    sectionLabels: {
+        [SectionId.GLOBAL]: "Global settings",
+        [SectionId.ON_TOP]: "On top of all views",
+        [SectionId.VIEWS]: "Views",
+        [SectionId.BENEATH]: "Beneath all views",
+    },
+};
 
 /** Where a new or dropped item lands: `index` is a position in `group`'s current children. */
 export type InsertTarget = {
@@ -86,25 +100,28 @@ export type AddRow = {
 
 export type TreeRow = ItemRow | SectionRow | AddRow;
 
-export function isView(item: Item): boolean {
-    return isGroup(item) && item.getGroupType() === GroupType.VIEW;
+export function isView(item: Item, layout: TreeInspectorLayout): boolean {
+    return isGroup(item) && layout.viewGroupTypes.includes(item.getGroupType());
 }
 
 /** A view, or a context boundary containing one. */
-export function isViewHolder(item: Item): boolean {
-    if (isView(item)) {
+export function isViewHolder(item: Item, layout: TreeInspectorLayout): boolean {
+    if (isView(item, layout)) {
         return true;
     }
-    return isContextBoundary(item) && item.getGroupDelegate().getDescendantItems(isView).length > 0;
+    return (
+        isContextBoundary(item) &&
+        item.getGroupDelegate().getDescendantItems((descendant) => isView(descendant, layout)).length > 0
+    );
 }
 
 /** Whether the group is a view or lies inside one - views can't be nested. */
-export function isViewOrInsideView(group: ItemGroup): boolean {
-    if (isView(group)) {
+export function isViewOrInsideView(group: ItemGroup, layout: TreeInspectorLayout): boolean {
+    if (isView(group, layout)) {
         return true;
     }
     const parent = group.getItemDelegate().getParentGroup();
-    return parent !== null && parent.getAncestors(isView).length > 0;
+    return parent !== null && parent.getAncestors((ancestor) => isView(ancestor, layout)).length > 0;
 }
 
 /** Items that make other items' settings controlled: shared settings and groups with their own settings. */
@@ -184,6 +201,25 @@ function isEmptyContextBoundary(item: Item): boolean {
     return isContextBoundary(item) && item.getGroupDelegate().getChildren().length === 0;
 }
 
+const FALLBACK_SECTIONS: Record<SectionId, SectionId[]> = {
+    [SectionId.GLOBAL]: [SectionId.ON_TOP, SectionId.BENEATH],
+    [SectionId.ON_TOP]: [SectionId.BENEATH, SectionId.GLOBAL],
+    [SectionId.VIEWS]: [],
+    [SectionId.BENEATH]: [SectionId.ON_TOP, SectionId.GLOBAL],
+};
+
+/** The section showing the root items that belong in `sectionId` - itself, or a fallback when it isn't shown. */
+export function resolveShownSection(sectionId: SectionId, layout: TreeInspectorLayout): SectionId {
+    if (layout.sections.includes(sectionId)) {
+        return sectionId;
+    }
+    return FALLBACK_SECTIONS[sectionId].find((fallback) => layout.sections.includes(fallback)) ?? SectionId.VIEWS;
+}
+
+export function getSectionLabel(sectionId: SectionId, layout: TreeInspectorLayout): string {
+    return layout.sectionLabels[sectionId] ?? DEFAULT_TREE_INSPECTOR_LAYOUT.sectionLabels[sectionId] ?? sectionId;
+}
+
 /*
  * Root items are sorted into sections by position: shared settings are global, view-holders (views, and context
  * boundaries containing views) are in Views, together with context boundaries between them and empty ones right after
@@ -191,9 +227,9 @@ function isEmptyContextBoundary(item: Item): boolean {
  * Other items before the views are drawn on top of all views, the rest beneath them. Interleaving providers between
  * views is not represented - those end up in "Beneath all views".
  */
-function partitionRoot(children: readonly Item[]): RootPartition {
+function partitionRoot(children: readonly Item[], layout: TreeInspectorLayout): RootPartition {
     const sectionOf = new Map<Item, SectionId>();
-    const holderIndices = children.flatMap((child, index) => (isViewHolder(child) ? [index] : []));
+    const holderIndices = children.flatMap((child, index) => (isViewHolder(child, layout) ? [index] : []));
     const firstHolderIndex = holderIndices[0] ?? -1;
     const lastHolderIndex = holderIndices[holderIndices.length - 1] ?? -1;
 
@@ -224,7 +260,7 @@ function partitionRoot(children: readonly Item[]): RootPartition {
         }
         const isBetweenHolders = index > firstHolderIndex && index < lastHolderIndex;
         const isInEmptyRun = index >= emptyRunStart && index <= emptyRunEnd;
-        if (isViewHolder(child) || (isContextBoundary(child) && (isBetweenHolders || isInEmptyRun))) {
+        if (isViewHolder(child, layout) || (isContextBoundary(child) && (isBetweenHolders || isInEmptyRun))) {
             sectionOf.set(child, SectionId.VIEWS);
             viewsIndices.push(index);
         }
@@ -239,6 +275,10 @@ function partitionRoot(children: readonly Item[]): RootPartition {
         }
         sectionOf.set(child, viewsIndices.length === 0 || index < viewsStart ? SectionId.ON_TOP : SectionId.BENEATH);
     });
+
+    for (const [child, sectionId] of sectionOf) {
+        sectionOf.set(child, resolveShownSection(sectionId, layout));
+    }
 
     return {
         sectionOf,
@@ -258,7 +298,7 @@ function partitionRoot(children: readonly Item[]): RootPartition {
     };
 }
 
-export function flattenTree(manager: DataProviderManager): TreeRow[] {
+export function flattenTree(manager: DataProviderManager, layout: TreeInspectorLayout): TreeRow[] {
     const rows: TreeRow[] = [];
 
     function makeGuides(ancestorContinues: boolean[], isLast: boolean, depth: number): Guide[] {
@@ -316,14 +356,15 @@ export function flattenTree(manager: DataProviderManager): TreeRow[] {
     }
 
     const rootChildren = manager.getGroupDelegate().getChildren();
-    const partition = partitionRoot(rootChildren);
+    const partition = partitionRoot(rootChildren, layout);
 
-    for (const sectionId of SECTION_ORDER) {
+    for (const sectionId of layout.sections) {
+        const label = getSectionLabel(sectionId, layout);
         rows.push({
             type: "section",
             key: `section-${sectionId}`,
             sectionId,
-            label: SECTION_LABELS[sectionId],
+            label,
             depth: 0,
             firstPositionTarget: { group: manager, index: partition.firstPositionIndex[sectionId], sectionId },
         });
@@ -333,7 +374,7 @@ export function flattenTree(manager: DataProviderManager): TreeRow[] {
             depth: 0,
             guides: [],
             target: { group: manager, index: partition.addIndex[sectionId], sectionId },
-            containerLabel: SECTION_LABELS[sectionId],
+            containerLabel: label,
         };
         // Global settings and views are appended, so their add row is at the end of the section
         const isAddRowAtEnd = sectionId === SectionId.VIEWS || sectionId === SectionId.GLOBAL;

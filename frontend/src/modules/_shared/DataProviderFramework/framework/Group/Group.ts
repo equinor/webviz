@@ -84,6 +84,7 @@ export class Group<
         this._emptyContentMessage = customGroupImplementation.getEmptyContentMessage
             ? customGroupImplementation.getEmptyContentMessage()
             : null;
+        this._icon = customGroupImplementation.getIcon?.() ?? null;
     }
 
     handleSettingsChange() {

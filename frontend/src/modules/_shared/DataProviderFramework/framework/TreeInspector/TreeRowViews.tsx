@@ -36,6 +36,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
+import { GroupType } from "../../groups/groupTypes";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { instanceofItemGroup } from "../../interfacesAndTypes/entities";
 import { isContextBoundary } from "../ContextBoundary/ContextBoundary";
@@ -51,7 +52,7 @@ import type { SharedSetting } from "../SharedSetting/SharedSetting";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 
 import type { AddRow, Guide, ItemRow, SectionRow } from "./treeModel";
-import { ROW_HEIGHT_PX, isSource, isView } from "./treeModel";
+import { ROW_HEIGHT_PX, isSource } from "./treeModel";
 
 const GUIDE_WIDTH_PX = 16;
 
@@ -104,13 +105,17 @@ function ViewIcon(props: { view: Group<any, any> }): React.ReactNode {
 export function ItemIcon(props: { item: Item; color?: string }): React.ReactNode {
     const style = { fontSize: 16, color: props.color };
     const { item } = props;
-    if (isGroup(item) && isView(item)) {
+    if (isGroup(item) && item.getGroupType() === GroupType.VIEW) {
         return <ViewIcon view={item} />;
     }
     if (isErrorPlaceholder(item)) {
         return <ErrorOutline className="text-danger-subtle" style={style} />;
     }
     if (isDataProvider(item)) {
+        const ownIcon = item.getIcon();
+        if (ownIcon) {
+            return <span style={style}>{ownIcon}</span>;
+        }
         const iconData = getProviderIconData(item.getType());
         if (iconData) {
             return <Icon data={iconData} size={16} color={props.color} />;
@@ -175,7 +180,7 @@ export function SharedSettingValue(props: { sharedSetting: SharedSetting<any> })
 
     // Shrinks long before the name, which only truncates once the value is fully collapsed
     return (
-        <span className="text-neutral-subtle text-body-xs min-w-0 shrink-[999] truncate whitespace-nowrap">
+        <span className="text-neutral-subtle text-body-xs min-w-0 shrink-999 truncate whitespace-nowrap">
             {representation}
         </span>
     );

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { HorizontalRule, MultilineChart, ShowChart, ViewDay } from "@mui/icons-material";
+import { AreaChart, HorizontalRule, MultilineChart, ShowChart, ViewDay } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { get } from "lodash-es";
@@ -16,6 +16,8 @@ import { DataProvider } from "@modules/_shared/DataProviderFramework/framework/D
 import { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
 import { Group, isGroup } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
+import type { TreeInspectorLayout } from "@modules/_shared/DataProviderFramework/framework/TreeInspector/treeModel";
+import { SectionId } from "@modules/_shared/DataProviderFramework/framework/TreeInspector/treeModel";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import { usePersistedDataProviderManager } from "@modules/_shared/DataProviderFramework/hooks/usePersistedDataProviderManager";
@@ -41,6 +43,17 @@ enum PlotActionIdents {
     DIFF_CURVE = "diffCurve",
 }
 
+// Tracks take the place of views in the tree inspector; well picks are drawn across all tracks
+const TREE_INSPECTOR_LAYOUT: TreeInspectorLayout = {
+    viewGroupTypes: [GroupType.WELL_LOG_TRACK_CONT, GroupType.WELL_LOG_TRACK_DISC],
+    viewActionIdentifiers: [RootActionIdents.CONTINUOUS_TRACK, RootActionIdents.DISCRETE_TRACK],
+    sections: [SectionId.VIEWS, SectionId.BENEATH],
+    sectionLabels: {
+        [SectionId.VIEWS]: "Tracks",
+        [SectionId.BENEATH]: "Overlays",
+    },
+};
+
 function makeOptionsForGroup(group: ItemGroup): ActionGroup[] {
     switch (group instanceof Group && group.getGroupType()) {
         case GroupType.WELL_LOG_TRACK_CONT:
@@ -54,8 +67,7 @@ function makeOptionsForGroup(group: ItemGroup): ActionGroup[] {
                             identifier: PlotActionIdents.LINE,
                         },
                         {
-                            // TODO: Newer versions of MUI has a  "area chart" icon
-                            icon: <ShowChart fontSize="inherit" />,
+                            icon: <AreaChart fontSize="inherit" />,
                             label: "Area plot",
                             identifier: PlotActionIdents.AREA,
                         },
@@ -271,6 +283,7 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
             groupActions={makeOptionsForGroup}
             onAction={groupActionCallback}
             isMoveAllowed={checkManagerMove}
+            treeInspectorLayout={TREE_INSPECTOR_LAYOUT}
         />
     );
 }

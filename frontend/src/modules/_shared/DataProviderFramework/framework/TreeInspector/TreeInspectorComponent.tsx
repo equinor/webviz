@@ -17,8 +17,8 @@ import type { IsMoveAllowed } from "./moveRules";
 import { Rails } from "./Rails";
 import { SettingsPanel } from "./SettingsPanel";
 import { StickyHeaders } from "./StickyHeaders";
-import type { AddRow, ItemRow } from "./treeModel";
-import { ROW_HEIGHT_PX, getGutterWidth, isSelectable } from "./treeModel";
+import type { AddRow, ItemRow, TreeInspectorLayout } from "./treeModel";
+import { DEFAULT_TREE_INSPECTOR_LAYOUT, ROW_HEIGHT_PX, getGutterWidth, isSelectable } from "./treeModel";
 import { AddRowView, ItemRowView, SectionRowView } from "./TreeRowViews";
 import { useSelectionHistory } from "./useSelectionHistory";
 import { useTreeDragAndDrop } from "./useTreeDragAndDrop";
@@ -37,11 +37,14 @@ export type TreeInspectorComponentProps = {
     onAction: OnAction;
     isMoveAllowed?: IsMoveAllowed;
     settingsPlacement: DataProviderFrameworkSettingsPlacement;
+    /** Defaults to views of GroupType.VIEW with all sections - should be a stable reference */
+    layout?: TreeInspectorLayout;
 };
 
 export function TreeInspectorComponent(props: TreeInspectorComponentProps): React.ReactNode {
     const { dataProviderManager: manager, groupActions, onAction } = props;
-    const { rows, relations, railLayout } = useTreeModel(manager);
+    const layout = props.layout ?? DEFAULT_TREE_INSPECTOR_LAYOUT;
+    const { rows, relations, railLayout } = useTreeModel(manager, layout);
 
     const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
     const [anchorId, setAnchorId] = React.useState<string | null>(null);
@@ -130,6 +133,7 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
         manager,
         contentElement,
         scrollElement,
+        layout,
         isMoveAllowed: props.isMoveAllowed,
         getDraggedItems(row) {
             if (!selectedIdSet.has(row.key)) {
@@ -369,7 +373,7 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
                                         <AddRowView
                                             key={row.key}
                                             row={row}
-                                            menuItems={makeAddMenuItems(groupActions, row.target)}
+                                            menuItems={makeAddMenuItems(groupActions, row.target, layout)}
                                             onActionClicked={handleAddActionClicked}
                                         />
                                     );
@@ -473,8 +477,8 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
                             className={resolveClassNames(
                                 "bg-neutral-strong absolute rounded-sm",
                                 isBeside
-                                    ? "top-1/2 left-[2px] h-8 w-0.5 -translate-y-1/2"
-                                    : "top-[2px] left-1/2 h-0.5 w-8 -translate-x-1/2",
+                                    ? "left-4xs top-1/2 h-8 w-0.5 -translate-y-1/2"
+                                    : "top-4xs left-1/2 h-0.5 w-8 -translate-x-1/2",
                             )}
                         />
                     </div>
@@ -497,7 +501,7 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
             )}
             {dragState && (
                 <div
-                    className="bg-surface border-neutral text-body-sm px-xs py-4xs pointer-events-none fixed z-[1000] rounded border shadow-md"
+                    className="bg-surface border-neutral text-body-sm px-xs py-4xs pointer-events-none fixed z-1000 rounded border shadow-md"
                     style={{ left: dragState.clientX + 12, top: dragState.clientY + 8 }}
                 >
                     {dragState.items[0].getItemDelegate().getName()}

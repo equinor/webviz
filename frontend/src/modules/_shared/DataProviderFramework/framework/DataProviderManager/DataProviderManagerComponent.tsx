@@ -24,6 +24,7 @@ import {
     useDataProviderFrameworkSettingsPlacement,
 } from "../TreeInspector/DpfGuiToggleButton";
 import { TreeInspectorComponent } from "../TreeInspector/TreeInspectorComponent";
+import type { TreeInspectorLayout } from "../TreeInspector/treeModel";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
@@ -37,6 +38,8 @@ export type DataProviderManagerComponentProps = {
     onAction: (identifier: string, groupDelegate: GroupDelegate) => void;
     isMoveAllowed?: (movedItem: Item, destinationGroup: ItemGroup) => boolean;
     emptyContentPlaceholder?: React.ReactNode;
+    /** What counts as a view in the tree inspector GUI, and its sections - should be a stable reference */
+    treeInspectorLayout?: TreeInspectorLayout;
 };
 
 export function DataProviderManagerComponent(props: DataProviderManagerComponentProps): React.ReactNode {
@@ -180,6 +183,7 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
                             onAction={props.onAction}
                             isMoveAllowed={props.isMoveAllowed}
                             settingsPlacement={settingsPlacement}
+                            layout={props.treeInspectorLayout}
                         />
                     </div>
                 ) : (

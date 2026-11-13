@@ -1,3 +1,5 @@
+import type React from "react";
+
 import type { DefaultError, FetchQueryOptions, QueryKey } from "@tanstack/query-core";
 
 import type { StatusWriter } from "@framework/types/statusWriter";
@@ -145,6 +147,11 @@ export interface CustomDataProviderImplementation<
      * The default name of a provider of this type.
      */
     getDefaultName(): string;
+
+    /**
+     * @returns The icon representing a provider of this type - should use `fontSize="inherit"`.
+     */
+    getIcon?(): React.ReactNode;
 
     /**
      * This optional method is called when the settings of the provider are changed. It should return true if the new settings

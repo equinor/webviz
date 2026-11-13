@@ -1,3 +1,7 @@
+import React from "react";
+
+import { MultilineChart } from "@mui/icons-material";
+
 import type { WellboreLogCurveData_api } from "@api";
 import type { CustomDataProviderImplementation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 
@@ -23,5 +27,9 @@ export class DiffPlotProvider
 
     getDefaultName() {
         return "Differential plot";
+    }
+
+    getIcon() {
+        return React.createElement(MultilineChart, { fontSize: "inherit" });
     }
 }

@@ -5,7 +5,7 @@ import type { DataProviderManager } from "../DataProviderManager/DataProviderMan
 
 import type { IsMoveAllowed } from "./moveRules";
 import { isMoveValid, moveItems } from "./moveRules";
-import type { InsertTarget, ItemRow, TreeRow } from "./treeModel";
+import type { InsertTarget, ItemRow, TreeInspectorLayout, TreeRow } from "./treeModel";
 import { ROW_HEIGHT_PX, getGroupOwner } from "./treeModel";
 
 const DRAG_THRESHOLD_PX = 4;
@@ -32,6 +32,7 @@ export type UseTreeDragAndDropArgs = {
     contentElement: HTMLElement | null;
     scrollElement: HTMLElement | null;
     getDraggedItems: (row: ItemRow) => Item[];
+    layout: TreeInspectorLayout;
     isMoveAllowed?: IsMoveAllowed;
 };
 
@@ -51,7 +52,7 @@ export function useTreeDragAndDrop(args: UseTreeDragAndDropArgs): UseTreeDragAnd
     argsRef.current = args;
 
     function computeDropTarget(clientX: number, clientY: number, items: Item[]): DropTarget | null {
-        const { rows, manager, contentElement, isMoveAllowed } = argsRef.current;
+        const { rows, manager, contentElement, layout, isMoveAllowed } = argsRef.current;
         if (!contentElement) {
             return null;
         }
@@ -96,7 +97,7 @@ export function useTreeDragAndDrop(args: UseTreeDragAndDropArgs): UseTreeDragAnd
             mode = isAfter ? "after" : "before";
         }
 
-        return { insert, isValid: isMoveValid(items, insert, isMoveAllowed), rowIndex, mode, depth };
+        return { insert, isValid: isMoveValid(items, insert, layout, isMoveAllowed), rowIndex, mode, depth };
     }
 
     function handlePointerDown(event: React.PointerEvent, row: ItemRow) {

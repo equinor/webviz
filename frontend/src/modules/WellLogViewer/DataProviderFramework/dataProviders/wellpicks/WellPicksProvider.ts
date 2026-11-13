@@ -1,3 +1,6 @@
+import React from "react";
+
+import { HorizontalRule } from "@mui/icons-material";
 import { filter, groupBy, isEqual, keys, map } from "lodash-es";
 
 import type { WellborePick_api } from "@api";
@@ -105,6 +108,10 @@ export class WellborePicksProvider implements CustomDataProviderImplementation<
 
     getDefaultName() {
         return "Wellbore picks";
+    }
+
+    getIcon() {
+        return React.createElement(HorizontalRule, { fontSize: "inherit" });
     }
 
     areCurrentSettingsValid(accessor: DataProviderAccessors<WellPickSettingTypes, WellborePick_api[]>) {

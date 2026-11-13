@@ -1,3 +1,5 @@
+import type React from "react";
+
 import type { Settings } from "../settings/settingsDefinitions";
 
 import type { SetupBasicBindingsContext } from "./customSettingsHandler";
@@ -17,6 +19,11 @@ export interface CustomGroupImplementation {
      * @returns The empty content message of a group of this type.
      */
     getEmptyContentMessage?(): string;
+
+    /**
+     * @returns The icon representing a group of this type - should use `fontSize="inherit"`.
+     */
+    getIcon?(): React.ReactNode;
 }
 
 export interface CustomGroupImplementationWithSettings<

@@ -10,41 +10,48 @@ import type { ItemGroup } from "../../interfacesAndTypes/entities";
 import { isContextBoundary } from "../ContextBoundary/ContextBoundary";
 
 import { clampInsertIndex } from "./moveRules";
-import type { InsertTarget } from "./treeModel";
-import { SectionId, isViewOrInsideView } from "./treeModel";
+import type { InsertTarget, TreeInspectorLayout } from "./treeModel";
+import { SectionId, isViewOrInsideView, resolveShownSection } from "./treeModel";
 
 export type GroupActions = ActionGroup[] | ((group: ItemGroup) => ActionGroup[]);
 export type OnAction = (identifier: string, groupDelegate: GroupDelegate) => void;
 
 /*
- * Actions don't declare what they create, so they are classified by the conventions all modules follow: views and
- * context boundaries are added by the "view" and "context-boundary" actions, shared settings by the actions in a "Shared
- * Settings" group.
+ * Actions don't declare what they create, so they are classified by the conventions all modules follow: views are added
+ * by the layout's view actions, context boundaries by the "context-boundary" action, and shared settings by the actions
+ * in a "Shared Settings" group.
  */
-const VIEW_ACTION_IDENTIFIER = "view";
 const CONTEXT_BOUNDARY_ACTION_IDENTIFIER = "context-boundary";
 const SHARED_SETTINGS_GROUP_LABEL_PATTERN = /shared settings?/i;
 
 type KeepAction = (action: Action, isSharedSettingAction: boolean) => boolean;
 
-function makeKeepAction(target: InsertTarget): KeepAction {
-    switch (target.sectionId) {
+function makeKeepActionForSection(sectionId: SectionId, layout: TreeInspectorLayout): KeepAction {
+    const isViewAction = (action: Action) => layout.viewActionIdentifiers.includes(action.identifier);
+    switch (sectionId) {
         case SectionId.GLOBAL:
             return (_action, isSharedSettingAction) => isSharedSettingAction;
         case SectionId.VIEWS:
-            return (action) =>
-                action.identifier === VIEW_ACTION_IDENTIFIER ||
-                action.identifier === CONTEXT_BOUNDARY_ACTION_IDENTIFIER;
+            return (action) => isViewAction(action) || action.identifier === CONTEXT_BOUNDARY_ACTION_IDENTIFIER;
         case SectionId.ON_TOP:
         case SectionId.BENEATH:
-            return (action, isSharedSettingAction) =>
-                !isSharedSettingAction && action.identifier !== VIEW_ACTION_IDENTIFIER;
-        default: {
-            // Inside containers - views can also live in context boundaries, as long as they aren't nested in a view
-            const allowsViews = isContextBoundary(target.group) && !isViewOrInsideView(target.group);
-            return (action) => allowsViews || action.identifier !== VIEW_ACTION_IDENTIFIER;
-        }
+            return (action, isSharedSettingAction) => !isSharedSettingAction && !isViewAction(action);
     }
+}
+
+function makeKeepAction(target: InsertTarget, layout: TreeInspectorLayout): KeepAction {
+    const targetSectionId = target.sectionId;
+    if (targetSectionId === null) {
+        // Inside containers - views can also live in context boundaries, as long as they aren't nested in a view
+        const allowsViews = isContextBoundary(target.group) && !isViewOrInsideView(target.group, layout);
+        return (action) => allowsViews || !layout.viewActionIdentifiers.includes(action.identifier);
+    }
+
+    // A section also offers what belongs in the hidden sections it shows the items of
+    const keepActions = Object.values(SectionId)
+        .filter((sectionId) => resolveShownSection(sectionId, layout) === targetSectionId)
+        .map((sectionId) => makeKeepActionForSection(sectionId, layout));
+    return (action, isSharedSettingAction) => keepActions.some((keep) => keep(action, isSharedSettingAction));
 }
 
 /** Keeps the actions that pass, dropping groups that end up empty. */
@@ -94,9 +101,13 @@ function makeMenuItem(entry: Action | ActionGroup): MenuItem {
 }
 
 /** The module's add actions for the target's group, reduced to those that create items allowed at the target. */
-export function makeAddMenuItems(groupActions: GroupActions, target: InsertTarget): MenuItem[] {
+export function makeAddMenuItems(
+    groupActions: GroupActions,
+    target: InsertTarget,
+    layout: TreeInspectorLayout,
+): MenuItem[] {
     const actionGroups = typeof groupActions === "function" ? groupActions(target.group) : groupActions;
-    const filtered = filterEntries(actionGroups, makeKeepAction(target));
+    const filtered = filterEntries(actionGroups, makeKeepAction(target, layout));
     const [onlyEntry] = filtered;
     const entries = filtered.length === 1 && isActionGroup(onlyEntry) ? onlyEntry.children : filtered;
     return entries.map(makeMenuItem);

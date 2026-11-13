@@ -3,8 +3,8 @@ import { instanceofItemGroup } from "../../interfacesAndTypes/entities";
 import { isContextBoundary } from "../ContextBoundary/ContextBoundary";
 import { isSharedSetting } from "../SharedSetting/SharedSetting";
 
-import type { InsertTarget } from "./treeModel";
-import { SectionId, isView, isViewHolder, isViewOrInsideView } from "./treeModel";
+import type { InsertTarget, TreeInspectorLayout } from "./treeModel";
+import { SectionId, isView, isViewHolder, isViewOrInsideView, resolveShownSection } from "./treeModel";
 
 export type IsMoveAllowed = (movedItem: Item, destinationGroup: ItemGroup) => boolean;
 
@@ -19,19 +19,27 @@ function isAncestorOrSelf(candidate: Item, group: ItemGroup): boolean {
     return parent.getAncestors((ancestor) => ancestor === candidate).length > 0;
 }
 
-function isAllowedInSection(item: Item, sectionId: SectionId): boolean {
+function belongsInSection(item: Item, sectionId: SectionId, layout: TreeInspectorLayout): boolean {
     if (sectionId === SectionId.GLOBAL) {
         return isSharedSetting(item);
     }
     if (sectionId === SectionId.VIEWS) {
-        return isView(item) || isContextBoundary(item);
+        return isView(item, layout) || isContextBoundary(item);
     }
-    return !isSharedSetting(item) && !isViewHolder(item);
+    return !isSharedSetting(item) && !isViewHolder(item, layout);
+}
+
+/** Also accepts items whose own section is hidden and shown in `sectionId` instead. */
+function isAllowedInSection(item: Item, sectionId: SectionId, layout: TreeInspectorLayout): boolean {
+    return Object.values(SectionId).some(
+        (ownSectionId) =>
+            resolveShownSection(ownSectionId, layout) === sectionId && belongsInSection(item, ownSectionId, layout),
+    );
 }
 
 /** Views (also inside a moved context boundary) can go to the root, or into a context boundary that isn't in a view. */
-function canHoldViews(destination: ItemGroup, isRoot: boolean): boolean {
-    return isRoot || (isContextBoundary(destination) && !isViewOrInsideView(destination));
+function canHoldViews(destination: ItemGroup, isRoot: boolean, layout: TreeInspectorLayout): boolean {
+    return isRoot || (isContextBoundary(destination) && !isViewOrInsideView(destination, layout));
 }
 
 /** Index in `target.group`'s children once all moved items have been taken out of it. */
@@ -44,7 +52,12 @@ function getIndexWithoutMovedItems(target: InsertTarget, movedItems: Item[]): nu
  * Mirrors the rules of the classic DataProviderManagerComponent (shared settings always come first in a group, no views
  * in views, plus the module's own isMoveAllowed), extended with the root sections.
  */
-export function isMoveValid(movedItems: Item[], target: InsertTarget, isMoveAllowed?: IsMoveAllowed): boolean {
+export function isMoveValid(
+    movedItems: Item[],
+    target: InsertTarget,
+    layout: TreeInspectorLayout,
+    isMoveAllowed?: IsMoveAllowed,
+): boolean {
     if (movedItems.length === 0) {
         return false;
     }
@@ -62,10 +75,10 @@ export function isMoveValid(movedItems: Item[], target: InsertTarget, isMoveAllo
         if (instanceofItemGroup(item) && isAncestorOrSelf(item, destination)) {
             return false;
         }
-        if (isRoot && target.sectionId !== null && !isAllowedInSection(item, target.sectionId)) {
+        if (isRoot && target.sectionId !== null && !isAllowedInSection(item, target.sectionId, layout)) {
             return false;
         }
-        if (isViewHolder(item) && !canHoldViews(destination, isRoot)) {
+        if (isViewHolder(item, layout) && !canHoldViews(destination, isRoot, layout)) {
             return false;
         }
         if (isMoveAllowed && !isMoveAllowed(item, destination)) {

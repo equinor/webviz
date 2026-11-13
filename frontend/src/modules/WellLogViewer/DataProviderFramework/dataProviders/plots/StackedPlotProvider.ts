@@ -1,3 +1,7 @@
+import React from "react";
+
+import { ViewDay } from "@mui/icons-material";
+
 import type { WellboreLogCurveData_api, WellboreLogCurveHeader_api } from "@api";
 import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api, getWellboreLogCurveHeadersOptions } from "@api";
 import type { CustomDataProviderImplementation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
@@ -81,5 +85,9 @@ export class StackedPlotProvider implements CustomDataProviderImplementation<
 
     getDefaultName() {
         return "Stacked plot";
+    }
+
+    getIcon() {
+        return React.createElement(ViewDay, { fontSize: "inherit" });
     }
 }
