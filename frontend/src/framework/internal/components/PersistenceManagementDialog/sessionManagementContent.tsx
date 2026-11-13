@@ -10,9 +10,12 @@ import { edsDateRangeToIsoStringRange } from "@framework/utils/edsDateUtils";
 import type { EdsDateRange } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
+import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DateRangePicker } from "@lib/components/DateRangePicker";
 import { Field } from "@lib/components/Field";
+import { Hidden } from "@lib/components/Hidden";
+import { Separator } from "@lib/components/Separator";
 import { Table } from "@lib/components/Table";
 import { TableCompositions } from "@lib/components/Table/compositions";
 import { ROW_HEIGHT_PX } from "@lib/components/Table/constants";
@@ -20,6 +23,7 @@ import type { TableSortState } from "@lib/components/Table/typesAndEnums";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/typesAndEnums";
 import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
 import { Virtualization } from "@lib/components/Virtualization";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { formatDate } from "@lib/utils/dates";
@@ -37,7 +41,8 @@ export type SessionOverviewContentProps = {
 export function SessionManagementContent(props: SessionOverviewContentProps): React.ReactNode {
     const queryRefreshActionRef = React.useRef<UseRefreshQueryResult>(null);
 
-    const [selectedSession, setSelectedSession] = React.useState<SessionMetadata_api | null>(null);
+    const [selectedSessions, setSelectedSessions] = React.useState<SessionMetadata_api[]>([]);
+    const [editingSession, setEditingSession] = React.useState<SessionMetadata_api | null>(null);
     const [editSessionDialogOpen, setEditSessionDialogOpen] = React.useState<boolean>(false);
     const [deletePending, setDeletePending] = React.useState<boolean>(false);
 
@@ -50,39 +55,62 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         500,
     );
 
+    // Selected sessions hidden by a filter would otherwise still be targeted by bulk deletion. The title is tracked both
+    // as typed and once applied, since rows from the previous filter remain selectable during the debounce
+    const filterCriteria = [immediateTitleFilterValue, titleFilterValue, updatedAtRange];
+    const [prevFilterCriteria, setPrevFilterCriteria] = React.useState(filterCriteria);
+    if (filterCriteria.some((criterion, index) => criterion !== prevFilterCriteria[index])) {
+        setPrevFilterCriteria(filterCriteria);
+        setSelectedSessions([]);
+    }
+
     function handleClearTitleFilter() {
         setTitleFilterValue("");
     }
 
     async function handleDeleteClick() {
-        if (!selectedSession) return;
+        if (!selectedSessions.length) return;
 
         setDeletePending(true);
 
-        const success = await props.workbench.getSessionManager().deleteSession(selectedSession.id);
+        const deletedIds = await props.workbench
+            .getSessionManager()
+            .deleteSessions(selectedSessions.map((s) => ({ sessionId: s.id, title: s.title })));
         setDeletePending(false);
 
-        if (!success) {
-            return;
-        }
+        if (!deletedIds.length) return;
 
-        setSelectedSession(null);
+        setSelectedSessions((prev) => prev.filter((s) => !deletedIds.includes(s.id)));
     }
 
-    function handleEditClick() {
-        if (!selectedSession) return;
+    async function deleteSession(session: SessionMetadata_api) {
+        setDeletePending(true);
 
+        const deletedIds = await props.workbench
+            .getSessionManager()
+            .deleteSessions([{ sessionId: session.id, title: session.title }]);
+        setDeletePending(false);
+
+        if (!deletedIds.length) return;
+
+        setSelectedSessions((prev) => prev.filter((s) => !deletedIds.includes(s.id)));
+    }
+
+    function editSession(session: SessionMetadata_api) {
+        setEditingSession(session);
         setEditSessionDialogOpen(true);
     }
 
-    async function handleOpenSessionClick() {
-        if (!selectedSession) return;
-
-        await props.workbench.getSessionManager().openSession(selectedSession.id);
+    async function openSession(sessionId: string) {
+        await props.workbench.getSessionManager().openSession(sessionId);
     }
 
     function handleNewSessionClick() {
         props.workbench.getSessionManager().startNewSession();
+    }
+
+    function handleClearSelectionClick() {
+        setSelectedSessions([]);
     }
 
     return (
@@ -123,47 +151,34 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                         </Button>
                     </Tooltip>
                     <span className="grow" />
-                    <Tooltip content="Edit the selected session">
-                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
-                        <span>
-                            <Button
-                                tone="accent"
-                                variant="ghost"
-                                disabled={!selectedSession}
-                                onClick={handleEditClick}
-                                icon={<Edit />}
-                            >
-                                Edit
+                    <Hidden hidden={!selectedSessions.length}>
+                        <span className="gap-x-sm flex items-center">
+                            <Typography tone="neutral" size="sm">
+                                {selectedSessions.length} selected session{selectedSessions.length !== 1 ? "s" : ""}
+                            </Typography>
+                            <Button onClick={handleClearSelectionClick} size="small" variant="ghost">
+                                Clear
                             </Button>
                         </span>
-                    </Tooltip>
-                    <Tooltip content="Open the selected session">
-                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
-                        <span>
-                            <Button
-                                tone="accent"
-                                variant="ghost"
-                                disabled={!selectedSession}
-                                onClick={handleOpenSessionClick}
-                                icon={<FileOpen />}
-                            >
-                                Open
-                            </Button>
-                        </span>
-                    </Tooltip>
-                    <Tooltip content="Delete the selected session">
-                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
-                        <span>
-                            <Button
-                                tone="danger"
-                                disabled={!selectedSession || deletePending}
-                                onClick={handleDeleteClick}
-                                variant="ghost"
-                                icon={deletePending ? <CircularProgress /> : <Delete />}
-                            >
-                                Delete
-                            </Button>
-                        </span>
+                        <Separator orientation="vertical" />
+                    </Hidden>
+                    <Tooltip
+                        content={
+                            selectedSessions.length > 1
+                                ? `Delete the ${selectedSessions.length} selected sessions`
+                                : "Delete the selected session"
+                        }
+                    >
+                        <Button
+                            tone="danger"
+                            disabled={!selectedSessions.length || deletePending}
+                            focusableWhenDisabled
+                            onClick={handleDeleteClick}
+                            variant="ghost"
+                            icon={deletePending ? <CircularProgress /> : <Delete />}
+                        >
+                            Delete
+                        </Button>
                     </Tooltip>
 
                     <Tooltip content="Refresh list">
@@ -180,34 +195,44 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
             </div>
 
             <SessionTable
-                selectedSession={selectedSession}
+                selectedSessions={selectedSessions}
                 active={props.active}
                 titleFilter={titleFilterValue}
                 updatedAtFilter={updatedAtRange}
                 refreshActionRef={queryRefreshActionRef}
-                onSelectedSessionChange={setSelectedSession}
+                deletePending={deletePending}
+                onSelectedSessionsChange={setSelectedSessions}
+                onOpenSession={openSession}
+                onEditSession={editSession}
+                onDeleteSession={deleteSession}
             />
             <EditSessionMetadataDialog
                 workbench={props.workbench}
-                id={selectedSession?.id ?? null}
+                id={editingSession?.id ?? null}
                 open={editSessionDialogOpen}
-                title={selectedSession?.title || ""}
-                description={selectedSession?.description || ""}
+                title={editingSession?.title || ""}
+                description={editingSession?.description || ""}
                 onClose={() => setEditSessionDialogOpen(false)}
             />
         </div>
     );
 }
 type SessionTableProps = {
-    selectedSession: SessionMetadata_api | null;
+    selectedSessions: SessionMetadata_api[];
     active: boolean;
     titleFilter: string | null;
     updatedAtFilter: EdsDateRange | null;
     refreshActionRef: React.RefObject<UseRefreshQueryResult | null>;
-    onSelectedSessionChange: (session: SessionMetadata_api | null) => void;
+    deletePending: boolean;
+    onSelectedSessionsChange: (sessions: SessionMetadata_api[]) => void;
+    onOpenSession: (sessionId: string) => void;
+    onEditSession: (session: SessionMetadata_api) => void;
+    onDeleteSession: (session: SessionMetadata_api) => void;
 };
 
 function SessionTable(props: SessionTableProps) {
+    const { onSelectedSessionsChange } = props;
+
     const wrapperRef = React.useRef<HTMLDivElement>(null);
 
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
@@ -258,6 +283,43 @@ function SessionTable(props: SessionTableProps) {
         return [...tableData, ...PENDING_PAGE];
     }, [sessionsQuery.isFetchingNextPage, sessionsQuery.isLoading, tableData]);
 
+    const selectedSessionIds = React.useMemo(() => props.selectedSessions.map((s) => s.id), [props.selectedSessions]);
+
+    React.useEffect(
+        function maybeSyncSelectedSessionsEffect() {
+            const settled = sessionsQuery.isSuccess && !sessionsQuery.isFetching;
+            const synced = props.selectedSessions.flatMap((selected) => {
+                const fresh = tableData.find((s) => s.id === selected.id);
+                // Also drop entries that may exist on unloaded pages: rows the user can't see must not stay deletable
+                if (!fresh) return settled ? [] : [selected];
+                return [fresh];
+            });
+            const changed =
+                synced.length !== props.selectedSessions.length ||
+                synced.some((s, i) => s !== props.selectedSessions[i]);
+            if (changed) {
+                // Deliberately in an effect: entries can change or disappear on refetch without any user event to react to
+                onSelectedSessionsChange(synced);
+            }
+        },
+        [
+            onSelectedSessionsChange,
+            props.selectedSessions,
+            sessionsQuery.isSuccess,
+            sessionsQuery.isFetching,
+            tableData,
+        ],
+    );
+
+    function handleToggleSessionSelected(session: SessionMetadata_api, checked: boolean) {
+        const otherSessions = props.selectedSessions.filter((s) => s.id !== session.id);
+        props.onSelectedSessionsChange(checked ? [...otherSessions, session] : otherSessions);
+    }
+
+    function handleRowClick(session: SessionMetadata_api) {
+        props.onSelectedSessionsChange([session]);
+    }
+
     const onTableScrollIndexChange = React.useCallback((start: number, end: number) => {
         setVisibleRowRange({ start, end });
     }, []);
@@ -288,27 +350,29 @@ function SessionTable(props: SessionTableProps) {
             size="small"
             overflowWrapperRef={wrapperRef}
             sortable
-            selectable
+            // Selection is fully controlled here; the table's own toggle-on-click handler is intentionally not used
+            selectable="multiple"
             fixed
             columnSorting={tableSortState}
-            rowSelection={props.selectedSession?.id ?? null}
+            rowSelection={selectedSessionIds}
             onChangeColumnSort={setTableSortState}
-            onChangeRowSelection={(sessionId) =>
-                props.onSelectedSessionChange(tableData.find((s) => s.id === sessionId) ?? null)
-            }
         >
             <Table.Head sticky>
-                <Table.Column colKey="title" widthInPercent={20}>
+                <Table.Column colKey="select" width={60} sortable={false} />
+                <Table.Column colKey="title" widthInPercent={25}>
                     Title
                 </Table.Column>
-                <Table.Column colKey="description" sortable={false} widthInPercent={50}>
+                <Table.Column colKey="description" sortable={false}>
                     Description
                 </Table.Column>
-                <Table.Column colKey="updatedAt" widthInPercent={15}>
+                <Table.Column colKey="updatedAt" width={160}>
                     Updated at
                 </Table.Column>
-                <Table.Column colKey="createdAt" widthInPercent={15}>
+                <Table.Column colKey="createdAt" width={160}>
                     Created at
+                </Table.Column>
+                <Table.Column colKey="actions" sortable={false} width={100}>
+                    Actions
                 </Table.Column>
             </Table.Head>
             <Table.Body emptyMessage="No sessions found.">
@@ -323,7 +387,20 @@ function SessionTable(props: SessionTableProps) {
                         if (item === PENDING_ROW) {
                             return <TableCompositions.PendingRow key={`pending-row--${idx}`} />;
                         } else {
-                            return <SessionRow key={item.id} item={item} />;
+                            return (
+                                <SessionRow
+                                    key={item.id}
+                                    item={item}
+                                    selected={selectedSessionIds.includes(item.id)}
+                                    deletePending={props.deletePending}
+                                    onSelectedChange={handleToggleSessionSelected}
+                                    onClick={handleRowClick}
+                                    onDoubleClick={props.onOpenSession}
+                                    onOpen={props.onOpenSession}
+                                    onEdit={props.onEditSession}
+                                    onDelete={props.onDeleteSession}
+                                />
+                            );
                         }
                     }}
                     onScroll={onTableScrollIndexChange}
@@ -333,14 +410,91 @@ function SessionTable(props: SessionTableProps) {
     );
 }
 
-function SessionRow(props: { item: SessionMetadata_api }) {
+type SessionRowProps = {
+    item: SessionMetadata_api;
+    selected: boolean;
+    deletePending: boolean;
+    onSelectedChange: (session: SessionMetadata_api, selected: boolean) => void;
+    onClick: (session: SessionMetadata_api) => void;
+    onDoubleClick: (sessionId: string) => void;
+    onOpen: (sessionId: string) => void;
+    onEdit: (session: SessionMetadata_api) => void;
+    onDelete: (session: SessionMetadata_api) => void;
+};
+
+function SessionRow(props: SessionRowProps) {
     const { item } = props;
     return (
-        <Table.Row rowKey={item.id}>
+        <Table.Row
+            rowKey={item.id}
+            onClick={() => props.onClick(item)}
+            onDoubleClick={() => props.onDoubleClick(item.id)}
+        >
+            {/* Stop propagation on the cell, since the checkbox also dispatches a click on its hidden input */}
+            <Table.Cell
+                onClick={(evt) => evt.stopPropagation()}
+                onDoubleClick={(evt) => evt.stopPropagation()}
+                noPadding
+                layoutClassName="px-sm"
+            >
+                <Checkbox
+                    size="small"
+                    aria-label={`Select session ${item.title}`}
+                    checked={props.selected}
+                    onCheckedChange={(checked) => props.onSelectedChange(item, checked)}
+                />
+            </Table.Cell>
             <Table.Cell>{item.title} </Table.Cell>
             <Table.Cell>{item.description || <span className="text-current/50 italic">N/A</span>}</Table.Cell>
             <Table.Cell>{formatDate(new Date(item.updatedAt))}</Table.Cell>
             <Table.Cell>{formatDate(new Date(item.createdAt))}</Table.Cell>
+            <Table.Cell
+                noPadding
+                // Row actions should not change the selection or trigger the row double-click
+                onClick={(evt) => evt.stopPropagation()}
+                onDoubleClick={(evt) => evt.stopPropagation()}
+            >
+                <div className="px-sm gap-x-3xs flex items-center">
+                    <Tooltip content="Open session" side="top">
+                        <Button
+                            variant="ghost"
+                            tone="accent"
+                            size="small"
+                            iconOnly
+                            aria-label={`Open session ${item.title}`}
+                            onClick={() => props.onOpen(item.id)}
+                        >
+                            <FileOpen style={{ fontSize: 16 }} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip content="Edit title and description" side="top">
+                        <Button
+                            variant="ghost"
+                            tone="accent"
+                            size="small"
+                            iconOnly
+                            aria-label={`Edit session ${item.title}`}
+                            onClick={() => props.onEdit(item)}
+                        >
+                            <Edit style={{ fontSize: 16 }} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip content="Delete session" side="top">
+                        <Button
+                            variant="ghost"
+                            tone="danger"
+                            size="small"
+                            iconOnly
+                            aria-label={`Delete session ${item.title}`}
+                            disabled={props.deletePending}
+                            focusableWhenDisabled
+                            onClick={() => props.onDelete(item)}
+                        >
+                            <Delete style={{ fontSize: 16 }} />
+                        </Button>
+                    </Tooltip>
+                </div>
+            </Table.Cell>
         </Table.Row>
     );
 }

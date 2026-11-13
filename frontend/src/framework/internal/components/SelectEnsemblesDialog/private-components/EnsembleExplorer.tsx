@@ -381,10 +381,10 @@ function EnsembleRow(props: EnsembleRowProps) {
     return (
         <div
             className={resolveClassNames(
-                "selectable group/row px-2xs hover:bg-neutral focus-within:bg-accent focus-within:hover:bg-accent-hover active:bg-accent-active min-h-selectable-md col-span-3 grid grid-cols-subgrid items-center justify-items-center rounded-none!",
+                // Focus is only indicated by an inset ring (keyboard), so it is not mistaken for selection
+                "selectable group/row px-2xs hover:bg-neutral min-h-selectable-md col-span-3 grid grid-cols-subgrid items-center justify-items-center rounded-none! focus-visible:shadow-[inset_0_0_0_2px_var(--eds-color-border-focus)]!",
                 {
-                    "bg-accent-strong! text-accent-strong-on-emphasis! hover:bg-accent-strong-hover! active:bg-accent-strong-active!":
-                        props.selected,
+                    "bg-accent! hover:bg-accent-hover! active:bg-accent-active!": props.selected,
                 },
             )}
             ref={rowRef}
@@ -392,7 +392,7 @@ function EnsembleRow(props: EnsembleRowProps) {
             onKeyDown={handleKeyDown}
             onClick={handleClick}
         >
-            <span className="text-body-md flex w-full items-center justify-end">{makeIcon()}</span>
+            <span className="text-body-md text-accent-subtle flex w-full items-center justify-end">{makeIcon()}</span>
             <span className="flex w-full items-center">
                 {props.status !== "unchanged" && (
                     <HasChangesIndicator
