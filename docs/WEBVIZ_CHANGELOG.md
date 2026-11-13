@@ -18,6 +18,7 @@
 ### Fixed
 
 - **Intersection**: Large grids no longer appear cut off partway along the intersection when "Show grid lines" is turned off.
+- **3D Viewer**: Improved trajectory hovering in wellbore layers.
 
 ## October 2026
 

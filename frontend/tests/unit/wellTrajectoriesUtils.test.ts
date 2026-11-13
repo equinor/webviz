@@ -7,7 +7,7 @@ import {
     getApplicableFlowDataSetting,
     hexToRgb,
     wellDataToGeoJson,
-} from "@modules/_shared/DataProviderFramework/visualization/deckgl/drilledWellTrajectoriesUtils";
+} from "@modules/_shared/DataProviderFramework/visualization/deckgl/wellTrajectoriesUtils";
 
 function makeTrajectory(overrides: Partial<DrilledWellboreTrajectoryData> = {}): DrilledWellboreTrajectoryData {
     return {
@@ -35,7 +35,7 @@ function distanceXY(
     return Math.hypot(point1.easting - point2.easting, point1.northing - point2.northing);
 }
 
-describe("drilledWellTrajectoriesUtils", () => {
+describe("wellTrajectoriesUtils", () => {
     describe("wellDataToGeoJson", () => {
         test("maps formation segments to formations[] with FORMATION_FILTER_NAME", () => {
             const trajectory = makeTrajectory({
@@ -161,18 +161,16 @@ describe("drilledWellTrajectoriesUtils", () => {
         });
 
         test("falls back to injection water then gas when there is no applicable production", () => {
-            const waterResult = getApplicableFlowDataSetting(
-                flowFilterSettings,
-                null,
-                { waterInjection: 200, gasInjection: 200 } as any,
-            );
+            const waterResult = getApplicableFlowDataSetting(flowFilterSettings, null, {
+                waterInjection: 200,
+                gasInjection: 200,
+            } as any);
             expect(waterResult).toBe(flowFilterSettings.injection.water);
 
-            const gasResult = getApplicableFlowDataSetting(
-                flowFilterSettings,
-                null,
-                { waterInjection: 0, gasInjection: 200 } as any,
-            );
+            const gasResult = getApplicableFlowDataSetting(flowFilterSettings, null, {
+                waterInjection: 0,
+                gasInjection: 200,
+            } as any);
             expect(gasResult).toBe(flowFilterSettings.injection.gas);
         });
 
