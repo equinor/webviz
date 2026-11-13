@@ -550,9 +550,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                             updateValue(v, { reason: "marker-clicked" }, true);
                                             inputRefs[0].current?.focus();
                                         } else {
-                                            const nearestThumbIndex = minBy([0, 1], (idx) =>
-                                                Math.abs(activeValue[idx] - v),
-                                            )!;
+                                            const nearestThumbIndex = getNearestThumbIndex(activeValue, v);
 
                                             const newValue = [...activeValue];
                                             newValue[nearestThumbIndex] = v;
