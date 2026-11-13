@@ -9,6 +9,7 @@ import { ComboboxInput } from "./_input";
 export type ComboboxValueChipsInputProps<TValue> = {
     placeholder?: string;
     getLabelForValue: (value: TValue) => string;
+    getChipTone?: (value: TValue) => "accent" | "neutral" | "danger" | "warning";
     renderItemAdornment?: (item: TValue) => React.ReactNode;
     children?: React.ReactNode;
 };
@@ -33,7 +34,7 @@ export function ComboboxValueChipsInputComponent<TValue>(
                                         render={(htmlProps, chipState) => (
                                             <Chip
                                                 {...htmlProps}
-                                                tone="neutral"
+                                                tone={props.getChipTone?.(item as unknown as TValue) ?? "neutral"}
                                                 disabled={chipState.disabled}
                                                 startAdornment={props.renderItemAdornment?.(item)}
                                                 wrapRemoveButton={(btn) => <ComboboxBase.ChipRemove render={btn} />}
