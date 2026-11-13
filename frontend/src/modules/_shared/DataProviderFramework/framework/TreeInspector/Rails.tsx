@@ -56,7 +56,7 @@ export type RailsProps = {
 function RailTooltipContent(props: { source: Item; color: string }): React.ReactNode {
     return (
         <span className="gap-x-2xs inline-flex items-center whitespace-nowrap">
-            <span className="inline-block size-2 shrink-0 rounded-full" style={{ background: props.color }} />
+            <span className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: props.color }} />
             {props.source.getItemDelegate().getName()}
             {isSharedSetting(props.source) && <SharedSettingValueSuffix sharedSetting={props.source} />}
         </span>

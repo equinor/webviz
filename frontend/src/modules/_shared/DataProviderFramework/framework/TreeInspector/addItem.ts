@@ -1,3 +1,7 @@
+import React from "react";
+
+import { Add, Folder } from "@mui/icons-material";
+
 import type { MenuItem } from "@lib/components/Menu/compositions/types";
 
 import type { Action, ActionGroup } from "../../Actions";
@@ -69,19 +73,20 @@ function isActionGroup(entry: Action | ActionGroup): entry is ActionGroup {
     return (entry as ActionGroup).children !== undefined;
 }
 
+// Every menu entry gets an icon - modules don't always set one, e.g. on groups of actions
 function makeMenuItem(entry: Action | ActionGroup): MenuItem {
     if (isActionGroup(entry)) {
         return {
             id: entry.label,
             label: entry.label,
-            icon: entry.icon,
+            icon: entry.icon ?? React.createElement(Folder, { fontSize: "inherit" }),
             items: entry.children.map(makeMenuItem),
         };
     }
     return {
         id: entry.identifier,
         label: entry.label,
-        icon: entry.icon,
+        icon: entry.icon ?? React.createElement(Add, { fontSize: "inherit" }),
         description: entry.description,
         disabled: entry.disabled,
         tooltip: entry.disabledReason,

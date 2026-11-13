@@ -1,8 +1,10 @@
 import React from "react";
 
-import { PushPin, PushPinOutlined } from "@mui/icons-material";
+import { PushPin, PushPinOutlined, Tune } from "@mui/icons-material";
 import { isEqual } from "lodash-es";
 
+import { GuiState } from "@framework/GuiMessageBroker";
+import { useGuiMessageBroker } from "@framework/GuiMessageBrokerContext";
 import { ComponentSizeContext } from "@lib/components/_shared/contexts/componentSizeContext";
 import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
@@ -18,7 +20,7 @@ import { EditName } from "../utilityComponents/EditName";
 
 import { bindProxySetting, makeProxySetting } from "./proxySetting";
 import type { Relations } from "./treeModel";
-import { getItemId, getItemSettings, getRailColor } from "./treeModel";
+import { getItemId, getItemSettings } from "./treeModel";
 import { ItemIcon } from "./TreeRowViews";
 
 /** Re-renders whenever one of the given topics is published by any of the settings. */
@@ -43,6 +45,7 @@ const SourceClickContext = React.createContext<(sourceId: string) => void>(() =>
 
 type SourceChipProps = {
     source: Item;
+    color: string;
     onHoverChange: (itemId: string | null) => void;
 };
 
@@ -55,7 +58,7 @@ function SourceChip(props: SourceChipProps): React.ReactNode {
             type="button"
             title={`Go to ${name}`}
             className="text-body-xs shrink-0 cursor-pointer whitespace-nowrap hover:underline"
-            style={{ color: getRailColor(sourceId) }}
+            style={{ color: props.color }}
             onClick={() => onSourceClick(sourceId)}
             onMouseEnter={() => props.onHoverChange(sourceId)}
             onMouseLeave={() => props.onHoverChange(null)}
@@ -76,6 +79,8 @@ function LabelCell(props: { label: string; color?: string }): React.ReactNode {
 type ControlledSettingRowProps = {
     setting: SettingManager<any>;
     source: Item;
+    /** The source's rail colour */
+    color: string;
     manager: DataProviderManager;
     isMixed?: boolean;
     onHoverChange: (itemId: string | null) => void;
@@ -101,12 +106,125 @@ function ControlledSettingRow(props: ControlledSettingRowProps): React.ReactNode
 
     return (
         <>
-            <LabelCell label={props.setting.getLabel()} color={getRailColor(getItemId(props.source))} />
+            <LabelCell label={props.setting.getLabel()} color={props.color} />
             <div className="gap-x-2xs py-4xs px-2xs flex min-w-0 items-center justify-between">
                 <span className="min-w-0 truncate">{representation}</span>
-                <SourceChip source={props.source} onHoverChange={props.onHoverChange} />
+                <SourceChip source={props.source} color={props.color} onHoverChange={props.onHoverChange} />
             </div>
         </>
+    );
+}
+
+const DASHBOARD_TOPICS = [
+    SettingTopic.INTERNAL_VALUE,
+    SettingTopic.ATTRIBUTES,
+    SettingTopic.IS_VALID,
+    SettingTopic.IS_DASHBOARD_CONTROLLED,
+];
+
+type DashboardControlledSettingRowProps = {
+    setting: SettingManager<any>;
+    manager: DataProviderManager;
+};
+
+/** A setting following a dashboard setting - read-only here, marked like settings controlled by a shared setting. */
+function DashboardControlledSettingRow(props: DashboardControlledSettingRowProps): React.ReactNode {
+    const settings = React.useMemo(() => [props.setting], [props.setting]);
+    useSettingsTopics(settings, DASHBOARD_TOPICS);
+    const guiMessageBroker = useGuiMessageBroker();
+
+    if (!props.setting.getAttributes().visible) {
+        return null;
+    }
+
+    const dashboardSettingLabel = props.setting.getDashboardSettingLabel() ?? "";
+    const dashboardSettingKey = props.setting.getDashboardSettingKey();
+    const isValueValidHere = props.setting.isValueValid();
+    const tooltip = isValueValidHere
+        ? `Controlled by the dashboard setting "${dashboardSettingLabel}" - click to show it`
+        : `Controlled by the dashboard setting "${dashboardSettingLabel}", whose value is not available here - click to show it`;
+
+    function handleBadgeClick() {
+        if (!guiMessageBroker || !dashboardSettingKey) {
+            return;
+        }
+        guiMessageBroker.setState(GuiState.DashboardSettingsPanelVisible, true);
+        guiMessageBroker.setState(GuiState.LeftSettingsPanelIsCollapsed, false);
+        guiMessageBroker.setState(GuiState.DashboardSettingToFocus, dashboardSettingKey);
+    }
+
+    return (
+        <>
+            <LabelCell label={props.setting.getLabel()} color="var(--eds-color-text-accent-strong)" />
+            <div className="gap-x-2xs py-4xs px-2xs flex min-w-0 items-center justify-between">
+                <span className="min-w-0 truncate">
+                    {isValueValidHere ? (
+                        props.setting.valueToRepresentation(
+                            props.setting.getInternalValue(),
+                            props.manager.getWorkbenchSession(),
+                            props.manager.getWorkbenchSettings(),
+                        )
+                    ) : (
+                        <i className="text-warning-subtle">Dashboard value not valid here</i>
+                    )}
+                </span>
+                <Tooltip content={tooltip} side="left">
+                    <button
+                        type="button"
+                        aria-label={tooltip}
+                        onClick={handleBadgeClick}
+                        className={resolveClassNames(
+                            "text-body-xs gap-x-3xs px-2xs py-4xs inline-flex min-w-0 shrink cursor-pointer items-center rounded-full whitespace-nowrap hover:underline",
+                            isValueValidHere
+                                ? "bg-accent-canvas text-accent-strong"
+                                : "bg-warning-canvas text-warning-strong",
+                        )}
+                    >
+                        <Tune fontSize="inherit" className="shrink-0" />
+                        <span className="min-w-0 truncate">Dashboard: {dashboardSettingLabel}</span>
+                    </button>
+                </Tooltip>
+            </div>
+        </>
+    );
+}
+
+type SingleSettingRowProps = {
+    setting: SettingManager<any>;
+    item: Item;
+    manager: DataProviderManager;
+    relations: Relations;
+    onHoverChange: (itemId: string | null) => void;
+};
+
+const DASHBOARD_CONTROL_TOPICS = [SettingTopic.IS_DASHBOARD_CONTROLLED];
+
+/** One setting of a single item - controlled by a shared setting, by a dashboard setting, or editable. */
+function SingleSettingRow(props: SingleSettingRowProps): React.ReactNode {
+    const settings = React.useMemo(() => [props.setting], [props.setting]);
+    useSettingsTopics(settings, DASHBOARD_CONTROL_TOPICS);
+
+    const source = props.relations.controllerBySettingId.get(props.setting.getId());
+    if (source) {
+        return (
+            <ControlledSettingRow
+                setting={props.setting}
+                source={source}
+                color={props.relations.colorBySourceId.get(getItemId(source)) ?? ""}
+                manager={props.manager}
+                onHoverChange={props.onHoverChange}
+            />
+        );
+    }
+    if (props.setting.isDashboardControlled()) {
+        return <DashboardControlledSettingRow setting={props.setting} manager={props.manager} />;
+    }
+    return (
+        <SettingManagerComponent
+            setting={props.setting}
+            manager={props.manager}
+            sharedSetting={isSharedSetting(props.item)}
+        />
     );
 }
 
@@ -157,6 +275,7 @@ function MultiSettingRow(props: MultiSettingRowProps): React.ReactNode {
                 <ControlledSettingRow
                     setting={targets[0]}
                     source={sources[0]}
+                    color={props.relations.colorBySourceId.get(getItemId(sources[0])) ?? ""}
                     manager={props.manager}
                     isMixed={!allEqual}
                     onHoverChange={props.onHoverChange}
@@ -221,8 +340,8 @@ type SingleItemCardProps = {
     /** The selected item is pinned - its pinned card stands in for the selection's */
     isHighlighted: boolean;
     onTogglePin: (item: Item) => void;
-    navigation?: React.ReactNode;
-    headerAdornment?: React.ReactNode;
+    /** Where the header sticks - below the panel's toolbar, if there is one */
+    stickyTopClassName: string;
 };
 
 function SingleItemCard(props: SingleItemCardProps): React.ReactNode {
@@ -233,11 +352,16 @@ function SingleItemCard(props: SingleItemCardProps): React.ReactNode {
         <div className="flex flex-col">
             <div
                 className={resolveClassNames(
-                    "gap-x-2xs px-2xs sticky top-0 z-10 flex h-8 shrink-0 items-center shadow-sm",
-                    props.isHighlighted ? "bg-accent-canvas" : "bg-canvas",
+                    "gap-x-2xs px-2xs sticky z-10 flex h-8 shrink-0 items-center shadow-sm",
+                    props.stickyTopClassName,
+                    {
+                        "bg-canvas": !props.isPinned,
+                        "bg-info": props.isPinned && !props.isHighlighted,
+                        // The selected item is pinned - its pinned card stands in for the selection's
+                        "bg-info-active": props.isPinned && props.isHighlighted,
+                    },
                 )}
             >
-                {props.navigation}
                 <ItemIcon item={item} />
                 <div className="min-w-0 grow">
                     <EditName item={item} />
@@ -255,31 +379,18 @@ function SingleItemCard(props: SingleItemCardProps): React.ReactNode {
                         {props.isPinned ? <PushPin fontSize="inherit" /> : <PushPinOutlined fontSize="inherit" />}
                     </Button>
                 </Tooltip>
-                {props.headerAdornment}
             </div>
             <div className={SETTINGS_GRID_CLASSES}>
-                {getItemSettings(item).map((setting) => {
-                    const source = relations.controllerBySettingId.get(setting.getId());
-                    if (source) {
-                        return (
-                            <ControlledSettingRow
-                                key={setting.getId()}
-                                setting={setting}
-                                source={source}
-                                manager={manager}
-                                onHoverChange={onHoverChange}
-                            />
-                        );
-                    }
-                    return (
-                        <SettingManagerComponent
-                            key={setting.getId()}
-                            setting={setting}
-                            manager={manager}
-                            sharedSetting={isSharedSetting(item)}
-                        />
-                    );
-                })}
+                {getItemSettings(item).map((setting) => (
+                    <SingleSettingRow
+                        key={setting.getId()}
+                        setting={setting}
+                        item={item}
+                        manager={manager}
+                        relations={relations}
+                        onHoverChange={onHoverChange}
+                    />
+                ))}
             </div>
         </div>
     );
@@ -325,9 +436,10 @@ function SettingsPanelContent(props: SettingsPanelProps): React.ReactNode {
 
     const selectedSingleItem = selectedItems.length === 1 ? selectedItems[0] : null;
     const isSelectionPinned = selectedSingleItem !== null && pinnedItems.includes(selectedSingleItem);
-    // The navigation and the close button belong to the selection's card - in a bar of their own when there is none
-    const hasSelectionCard = selectedItems.length > 0 && !isSelectionPinned;
-    const hasToolbar = (props.navigation || props.headerAdornment) && !hasSelectionCard && pinnedItems.length > 0;
+    // The navigation and the close button live in a fixed toolbar, so they never move when the selection changes
+    const hasToolbar = Boolean(props.navigation || props.headerAdornment);
+    // Card headers stick below the toolbar
+    const stickyTopClassName = hasToolbar ? "top-8" : "top-0";
 
     function makeSelectionCard(): React.ReactNode {
         if (selectedItems.length === 0) {
@@ -335,13 +447,8 @@ function SettingsPanelContent(props: SettingsPanelProps): React.ReactNode {
                 return null;
             }
             return (
-                <div className="flex h-full flex-col">
-                    {props.navigation && (
-                        <div className="px-2xs flex h-8 shrink-0 items-center">{props.navigation}</div>
-                    )}
-                    <div className="text-neutral-subtle text-body-sm flex grow items-center justify-center p-2 text-center">
-                        Select a data provider or shared setting to see its settings.
-                    </div>
+                <div className="text-neutral-subtle text-body-sm p-xs flex grow items-center justify-center text-center">
+                    Select a data provider or shared setting to see its settings.
                 </div>
             );
         }
@@ -361,21 +468,23 @@ function SettingsPanelContent(props: SettingsPanelProps): React.ReactNode {
                     isPinned={false}
                     isHighlighted={false}
                     onTogglePin={props.onTogglePin}
-                    navigation={props.navigation}
-                    headerAdornment={props.headerAdornment}
+                    stickyTopClassName={stickyTopClassName}
                 />
             );
         }
 
         return (
             <div key={selectionKey} className="flex flex-col">
-                <div className="text-body-sm font-bolder gap-x-2xs px-2xs bg-canvas sticky top-0 z-10 flex h-8 shrink-0 items-center shadow-sm">
-                    {props.navigation}
+                <div
+                    className={resolveClassNames(
+                        "text-body-sm font-bolder gap-x-2xs px-2xs bg-canvas sticky z-10 flex h-8 shrink-0 items-center shadow-sm",
+                        stickyTopClassName,
+                    )}
+                >
                     <span className="min-w-0 grow truncate">{selectedItems.length} items selected</span>
-                    {props.headerAdornment}
                 </div>
                 {commonSettings.length === 0 ? (
-                    <div className="text-neutral-subtle text-body-sm p-2">
+                    <div className="text-neutral-subtle text-body-sm p-xs">
                         The selected items have no settings in common.
                     </div>
                 ) : (
@@ -398,25 +507,29 @@ function SettingsPanelContent(props: SettingsPanelProps): React.ReactNode {
     return (
         <div className="flex min-h-full flex-col">
             {hasToolbar && (
-                <div className="px-2xs bg-canvas flex h-8 shrink-0 items-center">
+                <div className="px-2xs bg-canvas border-neutral-subtle sticky top-0 z-20 flex h-8 shrink-0 items-center border-b">
                     {props.navigation}
                     <span className="grow" />
                     {props.headerAdornment}
                 </div>
             )}
-            {pinnedItems.map((item) => (
-                <SingleItemCard
-                    key={getItemId(item)}
-                    item={item}
-                    manager={manager}
-                    relations={relations}
-                    onHoverChange={onHoverChange}
-                    isPinned
-                    isHighlighted={item === selectedSingleItem}
-                    onTogglePin={props.onTogglePin}
-                />
-            ))}
-            {makeSelectionCard()}
+            {/* Separated only from each other - a single card has no border */}
+            <div className="[&>*+*]:border-neutral-strong flex grow flex-col [&>*+*]:border-t-2">
+                {pinnedItems.map((item) => (
+                    <SingleItemCard
+                        key={getItemId(item)}
+                        item={item}
+                        manager={manager}
+                        relations={relations}
+                        onHoverChange={onHoverChange}
+                        isPinned
+                        isHighlighted={item === selectedSingleItem}
+                        onTogglePin={props.onTogglePin}
+                        stickyTopClassName={stickyTopClassName}
+                    />
+                ))}
+                {makeSelectionCard()}
+            </div>
         </div>
     );
 }

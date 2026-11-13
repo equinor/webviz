@@ -52,6 +52,7 @@ export enum GuiState {
     EnsembleLoadingWarningInfoDialogOpen = "ensembleLoadingWarningInfoDialogOpen",
     IsActionBarVisible = "isActionBarVisible",
     DashboardSettingsPanelVisible = "dashboardSettingsPanelVisible",
+    DashboardSettingToFocus = "dashboardSettingToFocus",
     DataProviderFrameworkGui = "dataProviderFrameworkGui",
     DataProviderFrameworkSettingsPlacement = "dataProviderFrameworkSettingsPlacement",
 }
@@ -153,6 +154,8 @@ type GuiStateValueTypes = {
     [GuiState.EnsembleLoadingWarningInfoDialogOpen]: boolean;
     [GuiState.IsActionBarVisible]: boolean;
     [GuiState.DashboardSettingsPanelVisible]: boolean;
+    /** Key of a dashboard setting the dashboard settings panel should reveal and focus; cleared once handled */
+    [GuiState.DashboardSettingToFocus]: string | null;
     [GuiState.DataProviderFrameworkGui]: DataProviderFrameworkGui;
     [GuiState.DataProviderFrameworkSettingsPlacement]: DataProviderFrameworkSettingsPlacement;
 };
@@ -188,6 +191,7 @@ defaultStates.set(GuiState.EnsemblesLoadingWarningInfoMap, {});
 defaultStates.set(GuiState.EnsembleLoadingWarningInfoDialogOpen, false);
 defaultStates.set(GuiState.IsActionBarVisible, true);
 defaultStates.set(GuiState.DashboardSettingsPanelVisible, false);
+defaultStates.set(GuiState.DashboardSettingToFocus, null);
 defaultStates.set(GuiState.IsSwitchingDashboard, false);
 defaultStates.set(GuiState.DataProviderFrameworkGui, "classic");
 defaultStates.set(GuiState.DataProviderFrameworkSettingsPlacement, "below");

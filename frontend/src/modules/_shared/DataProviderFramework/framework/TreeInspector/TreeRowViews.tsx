@@ -7,7 +7,9 @@ import {
     Add,
     CheckCircle,
     ChevronRight,
+    Delete,
     Difference,
+    Edit,
     Error as ErrorIcon,
     ErrorOutline,
     ExpandMore,
@@ -16,7 +18,11 @@ import {
     Link,
     MoreHoriz,
     Panorama,
+    PushPin,
+    SelectAll,
     SettingsApplications,
+    UnfoldLessDouble,
+    UnfoldMoreDouble,
     Warning,
 } from "@mui/icons-material";
 
@@ -200,6 +206,16 @@ function InlineNameEditor(props: InlineNameEditorProps): React.ReactNode {
     const { item, onDone } = props;
     const [value, setValue] = React.useState(() => item.getItemDelegate().getName());
     const isDoneRef = React.useRef(false);
+    const inputRef = React.useRef<HTMLInputElement>(null);
+
+    React.useEffect(function focusInputAfterMenuClosed() {
+        // One frame later - a menu that just closed returns the focus to its trigger, which would end the edit at once
+        const frame = requestAnimationFrame(() => {
+            inputRef.current?.focus();
+            inputRef.current?.select();
+        });
+        return () => cancelAnimationFrame(frame);
+    }, []);
 
     function finish(save: boolean) {
         if (isDoneRef.current) {
@@ -229,12 +245,11 @@ function InlineNameEditor(props: InlineNameEditorProps): React.ReactNode {
 
     return (
         <input
+            ref={inputRef}
             type="text"
             aria-label="Item name"
-            className="border-neutral bg-surface text-body-sm min-w-0 grow rounded-sm border px-1"
+            className="border-neutral bg-surface text-body-sm px-3xs min-w-0 grow rounded-sm border"
             value={value}
-            autoFocus
-            onFocus={(event) => event.target.select()}
             onChange={(event) => setValue(event.target.value)}
             onBlur={() => finish(true)}
             onKeyDown={handleKeyDown}
@@ -263,22 +278,23 @@ function RowMenu(props: RowMenuProps): React.ReactNode {
     const isRenamePendingRef = React.useRef(false);
 
     const menuItems = React.useMemo(() => {
-        const entries: MenuItem[] = [{ id: MENU_RENAME, label: "Rename" }];
+        const entries: MenuItem[] = [{ id: MENU_RENAME, label: "Rename", icon: <Edit fontSize="inherit" /> }];
         if (instanceofItemGroup(item)) {
             entries.push(
-                { id: MENU_EXPAND_ALL, label: "Expand all" },
-                { id: MENU_COLLAPSE_ALL, label: "Collapse all" },
+                { id: MENU_EXPAND_ALL, label: "Expand all", icon: <UnfoldMoreDouble fontSize="inherit" /> },
+                { id: MENU_COLLAPSE_ALL, label: "Collapse all", icon: <UnfoldLessDouble fontSize="inherit" /> },
             );
         }
         if (isSource(item)) {
             entries.push({
                 id: MENU_SELECT_CONTROLLED,
                 label: "Select controlled items",
+                icon: <SelectAll fontSize="inherit" />,
                 disabled: !hasControlledItems,
             });
         }
         entries.push({ type: "divider" });
-        entries.push({ id: MENU_REMOVE, label: "Remove" });
+        entries.push({ id: MENU_REMOVE, label: "Remove", icon: <Delete fontSize="inherit" />, tone: "danger" });
         return entries;
     }, [item, hasControlledItems]);
 
@@ -316,6 +332,7 @@ function RowMenu(props: RowMenuProps): React.ReactNode {
         <MenuCompositions.Default
             side="bottom"
             align="end"
+            itemSize="small"
             items={menuItems}
             onActionClicked={handleActionClicked}
             onOpenChangeComplete={handleOpenChangeComplete}
@@ -336,6 +353,8 @@ export type ItemRowViewProps = {
     isDropIntoValid: boolean;
     sourceColor: string | null;
     hasControlledItems: boolean;
+    /** Its settings are pinned in the settings panel */
+    isPinned: boolean;
     onPointerDown: (event: React.PointerEvent, row: ItemRow) => void;
     onClick: (event: React.MouseEvent, row: ItemRow) => void;
     onHoverChange: (itemId: string | null) => void;
@@ -407,6 +426,13 @@ export function ItemRowView(props: ItemRowViewProps): React.ReactNode {
                         color={props.sourceColor ?? undefined}
                         onDoubleClick={() => setIsEditingName(true)}
                     />
+                    {props.isPinned && (
+                        <PushPin
+                            className="text-info-strong shrink-0"
+                            style={{ fontSize: 12 }}
+                            titleAccess="Settings pinned"
+                        />
+                    )}
                     <span className="min-w-0 grow" />
                 </>
             )}
@@ -439,7 +465,7 @@ export function SectionRowView(props: SectionRowViewProps): React.ReactNode {
     return (
         <div
             data-row-key={props.row.key}
-            className="border-neutral-subtle text-neutral-subtle px-xs flex items-end border-b pb-0.5 text-[11px] tracking-wide uppercase select-none"
+            className="border-neutral-subtle text-neutral-subtle px-xs pb-4xs flex items-end border-b text-[11px] tracking-wide uppercase select-none"
             style={{ height: ROW_HEIGHT_PX }}
         >
             {props.row.label}
@@ -475,6 +501,7 @@ export function AddRowView(props: AddRowViewProps): React.ReactNode {
                 <MenuCompositions.Default
                     side="bottom"
                     align="start"
+                    itemSize="small"
                     items={props.menuItems}
                     onActionClicked={(identifier) => onActionClicked(identifier, row)}
                 >

@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 const FLYOUT_WIDTH_PX = 360;
 const FLYOUT_GAP_PX = 8;
 const WINDOW_MARGIN_PX = 8;
+/** Width of the flyout's border (Tailwind `border`) */
+const FLYOUT_BORDER_PX = 1;
 
 type FlyoutPosition = {
     left: number;
@@ -13,8 +15,8 @@ type FlyoutPosition = {
 };
 
 export type FloatingSettingsFlyoutProps = {
-    /** Key of the row the flyout is aligned with - aligned with the top of the tree when null (only pinned settings) */
-    anchorRowKey: string | null;
+    /** Key of the row the flyout is aligned with */
+    anchorRowKey: string;
     /** The flyout opens to the right of this element - the tree inspector filling the settings sidebar */
     sidebarElement: HTMLElement | null;
     scrollElement: HTMLElement | null;
@@ -33,7 +35,7 @@ export type FloatingSettingsFlyoutProps = {
 export function FloatingSettingsFlyout(props: FloatingSettingsFlyoutProps): React.ReactNode {
     const { anchorRowKey, sidebarElement, scrollElement, contentElement, layoutRevision, onClose } = props;
     const [position, setPosition] = React.useState<FlyoutPosition | null>(null);
-    const [flyoutElement, setFlyoutElement] = React.useState<HTMLDivElement | null>(null);
+    const [flyoutContentElement, setFlyoutContentElement] = React.useState<HTMLDivElement | null>(null);
 
     React.useEffect(
         function trackAnchorRow() {
@@ -46,26 +48,28 @@ export function FloatingSettingsFlyout(props: FloatingSettingsFlyoutProps): Reac
                     return;
                 }
                 const sidebarRect = sidebarElement.getBoundingClientRect();
-                const row = anchorRowKey
-                    ? contentElement.querySelector(`[data-row-key="${CSS.escape(anchorRowKey)}"]`)
-                    : null;
+                const row = contentElement.querySelector(`[data-row-key="${CSS.escape(anchorRowKey)}"]`);
                 const viewportRect = scrollElement.getBoundingClientRect();
                 const rowRect = row?.getBoundingClientRect();
-                const isRowInView =
-                    rowRect !== undefined && rowRect.bottom > viewportRect.top && rowRect.top < viewportRect.bottom;
 
-                // Hidden while the sidebar is not shown (another module is active), or while the selected row is
-                // scrolled out of view - unless the flyout only shows pinned settings, which then stick to the tree's top
-                const isHidden = sidebarRect.width === 0 || (anchorRowKey !== null && !isRowInView);
+                // Hidden while the sidebar is not shown (another module is active) or the row is scrolled out of view
+                const isHidden =
+                    sidebarRect.width === 0 ||
+                    !rowRect ||
+                    rowRect.bottom <= viewportRect.top ||
+                    rowRect.top >= viewportRect.bottom;
                 if (isHidden) {
                     // eslint-disable-next-line @eslint-react/set-state-in-effect -- measured from the DOM
                     setPosition(null);
                     return;
                 }
-                const anchorTop = isRowInView ? rowRect.top : viewportRect.top;
+                const anchorTop = rowRect.top;
 
-                const flyoutHeight = flyoutElement?.offsetHeight ?? 0;
-                const lowestTop = window.innerHeight - WINDOW_MARGIN_PX - flyoutHeight;
+                // The content's own height - the flyout itself is limited to the window, so it can't be measured
+                const contentHeight = (flyoutContentElement?.offsetHeight ?? 0) + FLYOUT_BORDER_PX * 2;
+                const availableHeight = window.innerHeight - WINDOW_MARGIN_PX * 2;
+                // Moved up just enough to show everything - only taller content than the window has to scroll
+                const lowestTop = window.innerHeight - WINDOW_MARGIN_PX - Math.min(contentHeight, availableHeight);
                 const top = Math.max(WINDOW_MARGIN_PX, Math.min(anchorTop, lowestTop));
                 // eslint-disable-next-line @eslint-react/set-state-in-effect -- measured from the DOM
                 setPosition({
@@ -80,8 +84,8 @@ export function FloatingSettingsFlyout(props: FloatingSettingsFlyoutProps): Reac
             window.addEventListener("resize", update);
             const resizeObserver = new ResizeObserver(update);
             resizeObserver.observe(sidebarElement);
-            if (flyoutElement) {
-                resizeObserver.observe(flyoutElement);
+            if (flyoutContentElement) {
+                resizeObserver.observe(flyoutContentElement);
             }
             return () => {
                 scrollElement.removeEventListener("scroll", update);
@@ -89,7 +93,7 @@ export function FloatingSettingsFlyout(props: FloatingSettingsFlyoutProps): Reac
                 resizeObserver.disconnect();
             };
         },
-        [anchorRowKey, sidebarElement, scrollElement, contentElement, flyoutElement, layoutRevision],
+        [anchorRowKey, sidebarElement, scrollElement, contentElement, flyoutContentElement, layoutRevision],
     );
 
     function handleKeyDown(event: React.KeyboardEvent) {
@@ -106,7 +110,6 @@ export function FloatingSettingsFlyout(props: FloatingSettingsFlyoutProps): Reac
 
     return createPortal(
         <div
-            ref={setFlyoutElement}
             className="bg-canvas border-neutral-subtle z-overlay fixed flex flex-col overflow-auto rounded border shadow-lg"
             style={{
                 width: FLYOUT_WIDTH_PX,
@@ -119,7 +122,9 @@ export function FloatingSettingsFlyout(props: FloatingSettingsFlyoutProps): Reac
             onPointerDownCapture={props.onPointerDownCapture}
             onKeyDown={handleKeyDown}
         >
-            {props.children}
+            <div ref={setFlyoutContentElement} className="flex shrink-0 flex-col">
+                {props.children}
+            </div>
         </div>,
         document.body,
     );

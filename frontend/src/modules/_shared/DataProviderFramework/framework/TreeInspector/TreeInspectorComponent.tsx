@@ -386,6 +386,7 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
                                         isDropIntoValid={dropTarget?.isValid ?? false}
                                         sourceColor={railLayout.railsBySourceId.get(row.key)?.color ?? null}
                                         hasControlledItems={relations.controlledItemIdsBySourceId.has(row.key)}
+                                        isPinned={pinnedIds.includes(row.key)}
                                         onPointerDown={handlePointerDown}
                                         onClick={handleRowClick}
                                         onHoverChange={setHoveredId}
@@ -422,7 +423,8 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
                 />
             </div>
             {isFloating ? (
-                (anchorRowKey || pinnedItems.length > 0) && (
+                // Closing (Esc, ✕, clicking outside) clears the selection - pinned settings show again with the next one
+                anchorRowKey && (
                     <FloatingSettingsFlyout
                         anchorRowKey={anchorRowKey}
                         sidebarElement={containerElement}
@@ -495,12 +497,12 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
             )}
             {dragState && (
                 <div
-                    className="bg-surface border-neutral text-body-sm pointer-events-none fixed z-[1000] rounded border px-2 py-0.5 shadow-md"
+                    className="bg-surface border-neutral text-body-sm px-xs py-4xs pointer-events-none fixed z-[1000] rounded border shadow-md"
                     style={{ left: dragState.clientX + 12, top: dragState.clientY + 8 }}
                 >
                     {dragState.items[0].getItemDelegate().getName()}
                     {dragState.items.length > 1 && (
-                        <span className="bg-accent-strong ml-1.5 rounded-full px-1.5 text-[10px] text-white">
+                        <span className="bg-accent-strong ml-3xs px-3xs rounded-full text-[10px] text-white">
                             {dragState.items.length}
                         </span>
                     )}

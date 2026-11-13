@@ -71,7 +71,10 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
                 onCollapseChange={isCollapsed ? handleExpandPanel : handleCollapsePanel}
             />
             {isDashboardControlledSettingsPanelVisible && !isCollapsed && (
-                <DashboardSettingsPanel onClose={handleCloseDashboardSettingsPanel} />
+                <DashboardSettingsPanel
+                    guiMessageBroker={props.workbench.getGuiMessageBroker()}
+                    onClose={handleCloseDashboardSettingsPanel}
+                />
             )}
             <ModuleSettingsHeader
                 activeTab={drawerContent}

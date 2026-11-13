@@ -2,7 +2,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { isMoveValid } from "@modules/_shared/DataProviderFramework/framework/TreeInspector/moveRules";
-import { SectionId, flattenTree } from "@modules/_shared/DataProviderFramework/framework/TreeInspector/treeModel";
+import {
+    RailColorAllocator,
+    SectionId,
+    flattenTree,
+} from "@modules/_shared/DataProviderFramework/framework/TreeInspector/treeModel";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import {
@@ -85,6 +89,28 @@ describe("Tree inspector root sections", () => {
 
         expect(sectionsOf(manager)[SectionId.ON_TOP]).toEqual(["Provider"]);
         expect(sectionsOf(manager)[SectionId.VIEWS]).toEqual(["Empty boundary"]);
+    });
+});
+
+describe("Tree inspector rail colours", () => {
+    test("are distinct, and kept by a source while it exists", () => {
+        const allocator = new RailColorAllocator();
+        const first = allocator.assign(["a", "b", "c"]);
+        expect(new Set(first.values()).size).toBe(3);
+
+        // "b" is removed and "d" added - "a" and "c" keep theirs, "d" gets a colour no other source has
+        const second = allocator.assign(["a", "c", "d"]);
+        expect(second.get("a")).toBe(first.get("a"));
+        expect(second.get("c")).toBe(first.get("c"));
+        expect(new Set(second.values()).size).toBe(3);
+    });
+
+    test("repeat only once every colour is taken", () => {
+        const ids = Array.from({ length: 12 }, (_, index) => `source-${index}`);
+        const colors = [...new RailColorAllocator().assign(ids).values()];
+
+        expect(new Set(colors.slice(0, 10)).size).toBe(10);
+        expect(new Set(colors).size).toBe(10);
     });
 });
 

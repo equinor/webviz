@@ -355,6 +355,10 @@ export class SettingManager<
         return this._dashboardSettingConnection?.instance.getDefinition().label ?? null;
     }
 
+    getDashboardSettingKey(): string | null {
+        return this._dashboardSettingConnection?.instance.getDefinition().key ?? null;
+    }
+
     getId(): string {
         return this._id;
     }

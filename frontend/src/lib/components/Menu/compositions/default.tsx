@@ -110,6 +110,7 @@ function ActionItem(props: { action: Action }) {
                 disabled={props.action.disabled}
                 description={props.action.description}
                 icon={props.action.icon}
+                tone={props.action.tone}
                 onClick={onClick}
             >
                 {props.action.label}

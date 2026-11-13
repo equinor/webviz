@@ -79,7 +79,13 @@ export function DpfSettingsPlacementMenu(props: DpfSettingsPlacementMenuProps): 
     }
 
     return (
-        <MenuCompositions.Default side="bottom" align="end" items={menuItems} onActionClicked={handleActionClicked}>
+        <MenuCompositions.Default
+            side="bottom"
+            align="end"
+            itemSize="small"
+            items={menuItems}
+            onActionClicked={handleActionClicked}
+        >
             <Button
                 variant="ghost"
                 tone="neutral"

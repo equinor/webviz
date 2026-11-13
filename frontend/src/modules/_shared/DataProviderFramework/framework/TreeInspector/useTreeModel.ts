@@ -6,7 +6,7 @@ import type { DataProviderManager } from "../DataProviderManager/DataProviderMan
 import { SettingTopic } from "../SettingManager/SettingManager";
 
 import type { RailLayout, Relations, TreeRow } from "./treeModel";
-import { computeRelations, flattenTree, getItemSettings, layoutRails } from "./treeModel";
+import { RailColorAllocator, computeRelations, flattenTree, getItemSettings, layoutRails } from "./treeModel";
 
 /** A counter that changes whenever the tree structure, names, visibility or expansion states change. */
 function useTreeRevision(manager: DataProviderManager): number {
@@ -65,12 +65,17 @@ export type TreeModel = {
 export function useTreeModel(manager: DataProviderManager): TreeModel {
     const treeRevision = useTreeRevision(manager);
     const bindingRevision = useBindingRevision(manager, treeRevision);
+    // Kept for the lifetime of the tree inspector, so sources keep their colours
+    const [colorAllocator] = React.useState(() => new RailColorAllocator());
 
     // The revisions are the actual dependencies - the manager is mutable
     // eslint-disable-next-line @eslint-react/exhaustive-deps
     const rows = React.useMemo(() => flattenTree(manager), [manager, treeRevision]);
-    // eslint-disable-next-line @eslint-react/exhaustive-deps
-    const relations = React.useMemo(() => computeRelations(manager), [manager, treeRevision, bindingRevision]);
+    const relations = React.useMemo(
+        () => computeRelations(manager, colorAllocator),
+        // eslint-disable-next-line @eslint-react/exhaustive-deps
+        [manager, colorAllocator, treeRevision, bindingRevision],
+    );
     const railLayout = React.useMemo(() => layoutRails(rows, relations), [rows, relations]);
 
     return { rows, relations, railLayout };

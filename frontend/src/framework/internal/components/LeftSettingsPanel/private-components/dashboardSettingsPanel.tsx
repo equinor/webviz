@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import { Add, Close, Delete, Tune } from "@mui/icons-material";
 
@@ -13,6 +13,7 @@ import {
 } from "@framework/DashboardSettings/DashboardSettingInstance";
 import { DashboardSettingRegistry } from "@framework/DashboardSettings/DashboardSettingRegistry";
 import type { DashboardSettingsService } from "@framework/DashboardSettings/DashboardSettingsService";
+import { GuiState, useGuiState, type GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { Button } from "@lib/components/Button";
 import { Menu } from "@lib/components/Menu";
@@ -24,6 +25,7 @@ import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 import { useActiveSession } from "../../ActiveSessionBoundary";
 
 export type DashboardSettingsPanelProps = {
+    guiMessageBroker: GuiMessageBroker;
     onClose: () => void;
 };
 
@@ -34,6 +36,17 @@ export function DashboardSettingsPanel(props: DashboardSettingsPanelProps): Reac
 
     const dashboardSettingsService = dashboard.getDashboardSettingsService();
     const activeInstances = useDashboardSettingInstances(dashboardSettingsService);
+
+    const [settingKeyToFocus, setSettingKeyToFocus] = useGuiState(
+        props.guiMessageBroker,
+        GuiState.DashboardSettingToFocus,
+    );
+    const handleFocusRequestHandled = React.useCallback(
+        function handleFocusRequestHandled() {
+            setSettingKeyToFocus(null);
+        },
+        [setSettingKeyToFocus],
+    );
 
     return (
         <div className="border-accent-subtle shadow-elevation-raised flex max-h-[40%] min-h-0 shrink-0 flex-col border-b-2">
@@ -70,6 +83,8 @@ export function DashboardSettingsPanel(props: DashboardSettingsPanelProps): Reac
                                 instance={instance}
                                 onRemove={() => dashboardSettingsService.removeSetting(instance.getDefinition())}
                                 removeDisabled={isSnapshot}
+                                isFocusRequested={settingKeyToFocus === instance.getDefinition().key}
+                                onFocusRequestHandled={handleFocusRequestHandled}
                             />
                         ))}
                     </Setting.Panel>
@@ -135,10 +150,43 @@ type DashboardSettingFieldProps = {
     instance: DashboardSettingInstance<any, any>;
     onRemove: () => void;
     removeDisabled: boolean;
+    isFocusRequested: boolean;
+    onFocusRequestHandled: () => void;
 };
+
+const FOCUSABLE_SELECTOR = "input, select, textarea, button, [tabindex]:not([tabindex='-1'])";
 
 function DashboardSettingField(props: DashboardSettingFieldProps): React.ReactNode {
     const definition = props.instance.getDefinition();
+    const controlRef = React.useRef<HTMLDivElement>(null);
+
+    const { isFocusRequested, onFocusRequestHandled } = props;
+    React.useEffect(
+        function revealAndFocusWhenRequested() {
+            const control = controlRef.current;
+            if (!isFocusRequested || !control) {
+                return;
+            }
+
+            // Setting.Field doesn't take attributes, so the whole row is found from the control
+            const row = control.closest<HTMLElement>(".setting-row") ?? control;
+            row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            control.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)?.focus({ preventScroll: true });
+
+            const highlightColor = getComputedStyle(row).getPropertyValue("--eds-color-border-accent-strong");
+            row.animate(
+                [
+                    { outline: `2px solid ${highlightColor}`, offset: 0 },
+                    { outline: `2px solid ${highlightColor}`, offset: 0.6 },
+                    { outline: "2px solid transparent", offset: 1 },
+                ],
+                { duration: 1500, easing: "ease-in" },
+            );
+
+            onFocusRequestHandled();
+        },
+        [isFocusRequested, onFocusRequestHandled],
+    );
 
     const value = useDashboardSettingInstanceTopic(props.instance, DashboardSettingInstanceTopic.VALUE);
     const valueSource = useDashboardSettingInstanceTopic(props.instance, DashboardSettingInstanceTopic.VALUE_SOURCE);
@@ -165,7 +213,7 @@ function DashboardSettingField(props: DashboardSettingFieldProps): React.ReactNo
             <div className="gap-x-2xs flex min-h-8 items-center">
                 {/* Only the value is covered while settling - a source that never settles must not keep the setting
                     from being removed */}
-                <div className="relative min-w-0 grow">
+                <div ref={controlRef} className="relative min-w-0 grow">
                     <div
                         ref={(el) => {
                             if (el) el.inert = !!isSettling;

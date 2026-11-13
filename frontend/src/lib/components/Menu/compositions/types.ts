@@ -13,6 +13,8 @@ export type Action = {
     tooltip?: string;
     /** When provided, renders the item as a checkbox with this checked state. */
     checked?: boolean;
+    /** The item's color tone, e.g. "danger" for destructive actions. @default "neutral" */
+    tone?: "neutral" | "danger" | "warning";
 };
 
 export type SubMenu = {

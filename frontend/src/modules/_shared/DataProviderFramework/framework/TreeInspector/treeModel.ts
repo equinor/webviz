@@ -13,7 +13,18 @@ export const ROW_HEIGHT_PX = 28;
 export const LANE_WIDTH_PX = 10;
 export const GUTTER_PADDING_PX = 6;
 
-const RAIL_COLORS = ["#0d9488", "#d97706", "#7c3aed", "#db2777", "#2563eb", "#65a30d"];
+const RAIL_COLORS = [
+    "#0d9488",
+    "#d97706",
+    "#7c3aed",
+    "#db2777",
+    "#2563eb",
+    "#65a30d",
+    "#0891b2",
+    "#c026d3",
+    "#15803d",
+    "#92400e",
+];
 
 export enum SectionId {
     GLOBAL = "global",
@@ -122,12 +133,36 @@ export function getItemId(item: Item): string {
     return item.getItemDelegate().getId();
 }
 
-export function getRailColor(sourceId: string): string {
-    let hash = 0;
-    for (let i = 0; i < sourceId.length; i++) {
-        hash = (hash * 31 + sourceId.charCodeAt(i)) | 0;
+/*
+ * Hands out a rail colour per source (shared setting or settings-group): a new source gets the first palette colour no
+ * other source has, the least used one once all are taken. A source keeps its colour as long as it exists.
+ */
+export class RailColorAllocator {
+    private _colorBySourceId = new Map<string, string>();
+
+    /** Updates the assignments for the current sources, given in tree order. */
+    assign(sourceIds: string[]): Map<string, string> {
+        const current = new Set(sourceIds);
+        for (const id of [...this._colorBySourceId.keys()]) {
+            if (!current.has(id)) {
+                this._colorBySourceId.delete(id);
+            }
+        }
+
+        for (const id of sourceIds) {
+            if (this._colorBySourceId.has(id)) {
+                continue;
+            }
+            const usage = new Map(RAIL_COLORS.map((color) => [color, 0]));
+            for (const color of this._colorBySourceId.values()) {
+                usage.set(color, (usage.get(color) ?? 0) + 1);
+            }
+            const leastUsed = Math.min(...usage.values());
+            this._colorBySourceId.set(id, RAIL_COLORS.find((color) => usage.get(color) === leastUsed)!);
+        }
+
+        return new Map(this._colorBySourceId);
     }
-    return RAIL_COLORS[Math.abs(hash) % RAIL_COLORS.length];
 }
 
 /** The owning item of a group delegate - the manager for its root delegate. */
@@ -213,9 +248,9 @@ function partitionRoot(children: readonly Item[]): RootPartition {
             [SectionId.VIEWS]: viewsStart,
             [SectionId.BENEATH]: viewsEnd,
         },
-        // Views are appended after the last item of the section, everything else is prepended
+        // Global settings and views are appended after the last item of their section, everything else is prepended
         addIndex: {
-            [SectionId.GLOBAL]: 0,
+            [SectionId.GLOBAL]: numShared,
             [SectionId.ON_TOP]: numShared,
             [SectionId.VIEWS]: viewsEnd,
             [SectionId.BENEATH]: viewsEnd,
@@ -300,8 +335,8 @@ export function flattenTree(manager: DataProviderManager): TreeRow[] {
             target: { group: manager, index: partition.addIndex[sectionId], sectionId },
             containerLabel: SECTION_LABELS[sectionId],
         };
-        // Views are appended, so their add row is at the end of the section - everything else is prepended
-        const isAddRowAtEnd = sectionId === SectionId.VIEWS;
+        // Global settings and views are appended, so their add row is at the end of the section
+        const isAddRowAtEnd = sectionId === SectionId.VIEWS || sectionId === SectionId.GLOBAL;
         if (!isAddRowAtEnd) {
             rows.push(addRow);
         }
@@ -326,17 +361,21 @@ export type Relations = {
     /** item id -> ids of source items controlling its settings */
     sourceIdsByItemId: Map<string, Set<string>>;
     itemsById: Map<string, Item>;
+    /** source item id -> its rail colour, used wherever the source is referred to */
+    colorBySourceId: Map<string, string>;
 };
 
-export function computeRelations(manager: DataProviderManager): Relations {
+export function computeRelations(manager: DataProviderManager, colorAllocator: RailColorAllocator): Relations {
     const relations: Relations = {
         controllerBySettingId: new Map(),
         controlledItemIdsBySourceId: new Map(),
         sourceIdsByItemId: new Map(),
         itemsById: new Map(),
+        colorBySourceId: new Map(),
     };
 
     const items = manager.getGroupDelegate().getDescendantItems(() => true);
+    relations.colorBySourceId = colorAllocator.assign(items.filter(isSource).map(getItemId));
     for (const item of items) {
         const itemId = getItemId(item);
         relations.itemsById.set(itemId, item);
@@ -433,7 +472,7 @@ export function layoutRails(rows: TreeRow[], relations: Relations): RailLayout {
         const stopRowIndices = [...stops].sort((a, b) => a - b);
         rails.push({
             sourceId,
-            color: getRailColor(sourceId),
+            color: relations.colorBySourceId.get(sourceId) ?? RAIL_COLORS[0],
             lane: 0,
             sourceRowIndex,
             startRowIndex: Math.min(sourceRowIndex, stopRowIndices[0]),
