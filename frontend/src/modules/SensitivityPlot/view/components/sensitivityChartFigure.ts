@@ -4,29 +4,20 @@ import { SensitivityType } from "@framework/EnsembleSensitivities";
 import { makeSubplots, type Figure } from "@modules/_shared/Figure";
 import type { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
 import type { SensitivityResponseDataset, SensitivityResponse } from "@modules/_shared/SensitivityProcessing";
+import { formatWithLargeValuePrefixes, makeLargeValuePrefixAxisFormat } from "@modules/_shared/utils/numberFormatting";
 
+import { ColorBy } from "../../typesAndEnums";
 import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
+import { makeTornadoBarHoverTemplate } from "../utils/tornadoBarHover";
 import {
     createHighBarTrace,
     createHighRealizationPointsTrace,
     createLowBarTrace,
     createLowRealizationPointsTrace,
     createSensitivityMeanPointsTrace,
+    type SelectedBar,
 } from "../utils/traceUtils";
 
-export enum TraceGroup {
-    LOW = "Low",
-    HIGH = "High",
-}
-
-export type SelectedBar = {
-    group: TraceGroup;
-    index: number;
-};
-export enum ColorBy {
-    SENSITIVITY = "Sensitivity",
-    LOW_HIGH = "Low/High",
-}
 export class SensitivityChartFigure {
     private _figure: Figure;
     private _scaler: SensitivityDataScaler;
@@ -34,12 +25,9 @@ export class SensitivityChartFigure {
     private _selectedBar: SelectedBar | null;
     private _sensitivityResponses: SensitivityResponse[];
     private _referenceAverage: number;
-    private _formatter: Intl.NumberFormat = Intl.NumberFormat("en", {
-        notation: "compact",
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
     private _colorBy: ColorBy;
+    private _hasRealizationTraces = false;
+    private _hasMeanPointTrace = false;
     private readonly _lowBarOrMonteCarloColor = "#1f77b4";
     private readonly _highBarColor = "#ff7f0e";
 
@@ -87,7 +75,10 @@ export class SensitivityChartFigure {
     }
 
     private _updateLayout() {
-        const xAxisRange = this._scaler.calculateXAxisRange(this._sensitivityResponses);
+        const xAxisRange = this._scaler.calculateXAxisRange(this._sensitivityResponses, {
+            realizationPoints: this._hasRealizationTraces,
+            sensitivityMeanPoints: this._hasMeanPointTrace,
+        });
         const referencePosition = this._scaler.getXAxisReferencePosition();
 
         this._figure.updateLayout({
@@ -95,6 +86,7 @@ export class SensitivityChartFigure {
             uirevision: "do not touch",
             ["xaxis1"]: {
                 range: xAxisRange,
+                ...makeLargeValuePrefixAxisFormat(xAxisRange),
             },
             shapes: [
                 {
@@ -116,7 +108,7 @@ export class SensitivityChartFigure {
                 y: this._sensitivityResponses.length,
                 xref: "x",
                 yref: "paper",
-                text: `<b>${this._formatter.format(this._referenceAverage)}</b> (Ref avg)`,
+                text: `<b>${formatWithLargeValuePrefixes(this._referenceAverage)}</b> (Ref avg)`,
                 showarrow: false,
                 align: "center",
             },
@@ -130,6 +122,7 @@ export class SensitivityChartFigure {
         this._figure.addTrace(this._createHighTrace(showLabels, isTransparent));
     }
     public buildRealizationTraces() {
+        this._hasRealizationTraces = true;
         this._figure.addTrace(
             createHighRealizationPointsTrace(
                 this._createHighRealizationsValues(),
@@ -148,6 +141,7 @@ export class SensitivityChartFigure {
         );
     }
     public buildMeanPointTrace() {
+        this._hasMeanPointTrace = true;
         this._figure.addTrace(
             createSensitivityMeanPointsTrace(
                 this._createSensitivityMeanValues(),
@@ -208,11 +202,11 @@ export class SensitivityChartFigure {
     private _createLowLabel(): string[] {
         return this._sensitivityResponses.map((s) => this._computeLowLabel(s));
     }
-    private _createHighCustomData(): string[] {
-        return this._sensitivityResponses.map((s) => s.highCaseName);
+    private _createHighHoverTemplates(): string[] {
+        return this._sensitivityResponses.map((s) => makeTornadoBarHoverTemplate(s, "high", this._referenceAverage));
     }
-    private _createLowCustomData(): string[] {
-        return this._sensitivityResponses.map((s) => s.lowCaseName);
+    private _createLowHoverTemplates(): string[] {
+        return this._sensitivityResponses.map((s) => makeTornadoBarHoverTemplate(s, "low", this._referenceAverage));
     }
     private _createSensitivityNames(): string[] {
         return this._sensitivityResponses.map((s) => s.sensitivityName);
@@ -227,7 +221,7 @@ export class SensitivityChartFigure {
         return createHighBarTrace({
             xValues: this._calculateHighXValues(),
             yValues: this._createSensitivityNames(),
-            customdata: this._createHighCustomData(),
+            hoverTemplates: this._createHighHoverTemplates(),
             baseValues: this._createHighBase(),
             selectedBar: this._selectedBar,
             colors: this.createSensitivitiesHighCaseColors(),
@@ -240,7 +234,7 @@ export class SensitivityChartFigure {
         return createLowBarTrace({
             xValues: this._calculateLowXValues(),
             yValues: this._createSensitivityNames(),
-            customdata: this._createLowCustomData(),
+            hoverTemplates: this._createLowHoverTemplates(),
             baseValues: this._createLowBase(),
             selectedBar: this._selectedBar,
             colors: this.createSensitivitiesLowCaseColors(),
@@ -277,15 +271,15 @@ export class SensitivityChartFigure {
     }
     private _createSensitivityMeanHoverValues(): string[] {
         return this._getResponsesWithSensitivityAverage().map((sensitivity) =>
-            this._formatter.format(sensitivity.sensitivityAverage ?? 0),
+            formatWithLargeValuePrefixes(sensitivity.sensitivityAverage ?? 0),
         );
     }
     // Formatting utility methods
     private _numFormat(number: number): string {
         if (this._scaler.isRelativePercentage) {
-            return `${this._formatter.format(number)}%`;
+            return `${formatWithLargeValuePrefixes(number)}%`;
         }
-        return this._formatter.format(number);
+        return formatWithLargeValuePrefixes(number);
     }
 
     private _computeLowLabel(sensitivity: SensitivityResponse): string {

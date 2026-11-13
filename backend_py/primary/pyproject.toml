@@ -37,8 +37,7 @@ uvicorn = "~0.41.0"
 
 ### We have experienced unexpected behavioral changes in patch versions of 'azure-monitor-opentelemetry', so pin it.
 ### The 'opentelemetry-instrumentation-...' versions will be pinned by `azure-monitor-opentelemetry` 
-azure-monitor-opentelemetry = "1.8.6"
-opentelemetry-instrumentation-httpx = "*"
+azure-monitor-opentelemetry = "1.8.10"
 opentelemetry-instrumentation-redis = "*"
 
 [tool.poetry.group.dev.dependencies]

@@ -15,6 +15,8 @@ from webviz_services.service_exceptions import (
     ServiceLayerException,
 )
 
+from ._translate_sumo_exceptions import translate_sumo_exceptions
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -110,7 +112,10 @@ class ArrowTableLoader:
                 )
 
             # Does the aggregation and gets the blob (also writes the resulting aggregation back into Sumo)
-            new_agg_table_obj = await sc_agg_input_tables.aggregate_async(columns=[column_name], operation="collection")
+            with translate_sumo_exceptions(operation="Aggregate table column"):
+                new_agg_table_obj = await sc_agg_input_tables.aggregate_async(
+                    columns=[column_name], operation="collection"
+                )
             if not isinstance(new_agg_table_obj, Table):
                 raise InvalidDataError(
                     f"Failed to get aggregated object for: {column_name=}, {self._make_req_info_str()}", Service.SUMO

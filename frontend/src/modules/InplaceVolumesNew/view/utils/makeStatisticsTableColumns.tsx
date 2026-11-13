@@ -9,52 +9,34 @@ export type TableColumn = {
 /**
  * Creates the table columns for the statistics table with custom labels and color indicators.
  */
-export function makeStatisticsTableColumns(subplotByLabel: string, colorByLabel: string): TableColumn[] {
+export function makeStatisticsTableColumns(
+    subplotByLabel: string,
+    colorByLabel: string,
+    barCategoryLabel: string | null,
+): TableColumn[] {
+    const identifierSizeInPercent = barCategoryLabel ? 12 : 15;
+    const statisticSizeInPercent = barCategoryLabel ? 9 : 10;
+
+    const identifierColumns: TableColumn[] = [
+        { columnId: "subplotValue", label: subplotByLabel, sizeInPercent: identifierSizeInPercent },
+        { columnId: "colorByValue", label: colorByLabel, sizeInPercent: identifierSizeInPercent },
+    ];
+    if (barCategoryLabel) {
+        identifierColumns.push({ columnId: "barCategoryValue", label: barCategoryLabel, sizeInPercent: 13 });
+    }
+
+    const statisticColumns: Pick<TableColumn, "columnId" | "label">[] = [
+        { columnId: "mean", label: "Mean" },
+        { columnId: "p10", label: "P10" },
+        { columnId: "p90", label: "P90" },
+        { columnId: "p50", label: "P50" },
+        { columnId: "stdDev", label: "Std Dev" },
+        { columnId: "min", label: "Min" },
+        { columnId: "max", label: "Max" },
+    ];
+
     return [
-        {
-            columnId: "subplotValue",
-            label: subplotByLabel,
-            sizeInPercent: 15,
-        },
-        {
-            columnId: "colorByValue",
-            label: colorByLabel,
-            sizeInPercent: 15,
-        },
-        {
-            columnId: "mean",
-            label: "Mean",
-            sizeInPercent: 10,
-        },
-        {
-            columnId: "p10",
-            label: "P10",
-            sizeInPercent: 10,
-        },
-        {
-            columnId: "p90",
-            label: "P90",
-            sizeInPercent: 10,
-        },
-        {
-            columnId: "p50",
-            label: "P50",
-            sizeInPercent: 10,
-        },
-        {
-            columnId: "stdDev",
-            label: "Std Dev",
-            sizeInPercent: 10,
-        },
-        {
-            columnId: "min",
-            label: "Min",
-            sizeInPercent: 10,
-        },
-        {
-            columnId: "max",
-            label: "Max",
-            sizeInPercent: 10,
-        },
+        ...identifierColumns,
+        ...statisticColumns.map((column) => ({ ...column, sizeInPercent: statisticSizeInPercent })),
     ];
 }
