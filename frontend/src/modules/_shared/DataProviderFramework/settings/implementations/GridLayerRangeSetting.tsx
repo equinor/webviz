@@ -6,9 +6,11 @@ import type { Grid3dZone_api } from "@api";
 import { Button } from "@lib/components/Button";
 import { Combobox } from "@lib/components/Combobox";
 import { Field } from "@lib/components/Field";
+import type { NumberFieldChangeEventDetails } from "@lib/components/NumberInput";
 import { NumberInput } from "@lib/components/NumberInput";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { Slider } from "@lib/components/Slider";
+import type { SliderChangeEventDetails } from "@lib/components/Slider";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -320,14 +322,10 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
             function handleSliderChange(
                 key: keyof NonNullable<InternalValueType>,
                 val: readonly number[],
-                reason: string,
+                reason: SliderChangeEventDetails["reason"] | NumberFieldChangeEventDetails["reason"],
             ) {
                 // Lock callbacks handle sentinel updates when locking; skip to avoid overwriting them
                 if (reason === "range-locked") return;
-                // Bounds changes make the slider emit a clamped value; ignore it so a retained
-                // out-of-range draft stays visible (and invalid) until the user edits it. Sentinels
-                // already follow the new bounds on their own.
-                if (reason === "clamp-value") return;
 
                 const base = internalValue ?? defaultBase;
 
@@ -482,7 +480,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
 
                             function handleNumberInputChange(
                                 value: number | null,
-                                reason: string,
+                                reason: NumberFieldChangeEventDetails["reason"],
                                 thumbIndex: number,
                                 commit: boolean,
                             ) {

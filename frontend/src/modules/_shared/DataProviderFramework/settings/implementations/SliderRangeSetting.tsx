@@ -2,6 +2,7 @@ import React from "react";
 
 import { isEqual } from "lodash-es";
 
+import type { SliderChangeEventDetails } from "@lib/components/Slider";
 import { Slider } from "@lib/components/Slider";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 
@@ -166,12 +167,9 @@ export class SliderRangeSetting implements CustomSettingImplementation<
             const debouncedOnValueChange = useDebouncedFunction(onValueChange, 500);
 
             const handleSliderChange = React.useCallback(
-                function handleSliderChange(value: number | readonly number[], eventDetails: { reason: string }) {
+                function handleSliderChange(value: number | readonly number[], eventDetails: SliderChangeEventDetails) {
                     if (eventDetails.reason === "range-locked") return;
-                    // Bounds changes make the slider emit a clamped value; ignore it so a retained
-                    // out-of-range value stays visible (and invalid) until the user edits it.
-                    // Sentinels already follow the new bounds on their own.
-                    if (eventDetails.reason === "clamp-value") return;
+
                     setLocalValue((prev) => {
                         const val = Array.isArray(value) ? value : [value, value];
                         const keepMin = prev[0] === "min" && val[0] === min;

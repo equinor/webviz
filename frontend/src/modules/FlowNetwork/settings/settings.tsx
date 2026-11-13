@@ -83,11 +83,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         setSelectedEnsembleIdent(ensembleIdent);
     }
 
-    function handleSelectedTimeStepIndexChange(value: number | readonly number[], eventDetails: { reason: string }) {
-        // Bounds changes make the slider emit a clamped value; ignore it so a retained invalid time step stays until the
-        // user edits it
-        if (eventDetails.reason === "clamp-value") return;
-
+    function handleSelectedTimeStepIndexChange(value: number | readonly number[]) {
         const singleValue = typeof value === "number" ? value : value.length > 0 ? value[0] : 0;
         const validIndex = singleValue >= 0 && singleValue < availableDateTimes.length ? singleValue : null;
         const newDateTime = validIndex !== null ? availableDateTimes[validIndex] : null;
