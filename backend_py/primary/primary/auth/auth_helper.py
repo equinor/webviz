@@ -1,14 +1,16 @@
+from __future__ import annotations
 import logging
 import os
 import time
+from html import escape
+from textwrap import dedent
 from typing import Callable, Literal, Optional, TypeAlias, get_args
 from pathlib import Path
 
-import jwt
 import msal
 import starsessions
 from fastapi import APIRouter, Request, Response
-from fastapi.responses import PlainTextResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from pydantic import BaseModel, ValidationError
 
 from webviz_core_utils.perf_metrics import PerfMetrics
@@ -36,6 +38,40 @@ class _UserAuthInfo(BaseModel):
     user_identity_expires_at: int  # Unix timestamp when the user identity above (extracted from ID token) expires
     access_tokens: dict[_ResourceName, _TokenEntry]
     earliest_expiry_time: int  # Earliest expiry time for the user info and of all tokens
+
+    @classmethod
+    def from_id_token_claims(cls, id_token_claims_dict: dict[str, str]) -> _UserAuthInfo | None:
+        try:
+            # We use the 'oid' value here so that we tie persisted user items (such as sessions) to the profile.
+            # This does mean we need the 'profile' scope, but that should be injected by msal by default anyways
+
+            # See this page for info about available tokens:
+            # https://learn.microsoft.com/en-us/azure/active-directory/develop/id-tokens
+            # https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference
+
+            user_id = id_token_claims_dict["oid"]
+            user_name = id_token_claims_dict["preferred_username"]
+            id_token_expiry_time = int(id_token_claims_dict["exp"])
+        except (ValueError, KeyError, TypeError) as exc:
+            LOGGER.error(f"Missing or invalid required claims in MSAL ID token: {repr(exc)}")
+            return None
+
+        new_auth_info = _UserAuthInfo(
+            user_id=user_id,
+            user_name=user_name,
+            user_identity_expires_at=id_token_expiry_time,
+            access_tokens={},
+            earliest_expiry_time=id_token_expiry_time,
+        )
+
+        return new_auth_info
+
+    def calc_earliest_expiry_time(self) -> None:
+        min_expiry_time = self.user_identity_expires_at
+        for token_entry in self.access_tokens.values():
+            min_expiry_time = min(min_expiry_time, token_entry.expires_at)
+
+        self.earliest_expiry_time = max(min_expiry_time, 0)
 
     def to_authenticated_user(self) -> AuthenticatedUser:
         graph_token_entry = self.access_tokens.get("graph")
@@ -70,7 +106,7 @@ class AuthHelper:
         if redirect_target_after_login is not None:
             if not is_safe_redirect_target(redirect_target_after_login):
                 LOGGER.warning("Rejected unsafe post-login redirect path")
-                return PlainTextResponse("Invalid post-login redirect specified.", 400)
+                return _make_html_err_resp("Invalid post-login redirect specified.", 400)
 
         await starsessions.load_session(request)
         request.session.clear()
@@ -96,7 +132,7 @@ class AuthHelper:
 
         return RedirectResponse(flow_dict["auth_uri"])
 
-    # pylint: disable-next=async-suffix
+    # pylint: disable-next=async-suffix, too-many-return-statements
     async def _authorized_callback_route(self, request: Request) -> Response:
         await starsessions.load_session(request)
 
@@ -107,18 +143,19 @@ class AuthHelper:
         flow_dict = request.session.get("flow")
         if not isinstance(flow_dict, dict):
             LOGGER.error("Login flow not found in session")
-            return PlainTextResponse("No login in progress. Please log in again.", 400)
+            return _make_html_err_resp("No login in progress. Please log in again.", 400)
 
         # If the state parameter in the auth response does not match the one in the auth code flow dict, it could
         # indicate a CSRF attack or a simultaneous login attempt. Note that the test here is mainly to notify the user
         # and is not critical since the token acquisition below will fail if the state does not match.
         if auth_response_dict.get("state") != flow_dict.get("state"):
             LOGGER.error("Login response state value did not match the stored flow state value")
-            return PlainTextResponse("Login could not be verified. Close other login tabs and try again.", 400)
+            return _make_html_err_resp("Login could not be verified. Close other login tabs and try again.", 400)
 
         try:
-            token_cache = _load_token_cache_from_session(request)
-            cca = _create_msal_confidential_client_app(token_cache)
+            # Use a fresh token cache so this login doesn't reuse tokens from a previous session/account.
+            new_token_cache = msal.SerializableTokenCache()
+            cca = _create_msal_confidential_client_app(new_token_cache)
 
             # Ref msal.PublicClientApplication.acquire_token_by_auth_code_flow() docs, we can only get an access token
             # for ONE resource when redeeming the authorization code. Therefore, we simply get an access token for the
@@ -133,18 +170,39 @@ class AuthHelper:
                 error = token_dict.get("error")
                 error_description = token_dict.get("error_description")
                 LOGGER.error(f"Microsoft Entra sign-in failed ({error=}, {error_description=})")
-                return PlainTextResponse(f"Microsoft Entra sign-in failed. Please try again. ({error})", 400)
-
-            _save_token_cache_in_session(request, token_cache)
+                return _make_html_err_resp(f"Microsoft Entra sign-in failed. Please try again. ({error})", 400)
 
         except ValueError as exc:
             LOGGER.error(f"Error processing auth response: {repr(exc)}")
-            return PlainTextResponse("Invalid login response. Please try again.", 400)
+            return _make_html_err_resp("Invalid login response. Please try again.", 400)
 
-        redirect_target_after_login = request.session.get("redirect_target_after_login")
+        # Builds a fresh _UserAuthInfo object from the sign-in result dictionary and by trying to get access
+        # tokens for all our wanted resources.
+        new_user_auth_info = _build_initial_user_auth_info_from_result(cca, token_dict)
+        if not new_user_auth_info:
+            LOGGER.error("Failed to build initial user auth info from sign-in result")
+            return _make_html_err_resp("Could not get user details to complete sign-in. Please try again.", 500)
+
+        # Check that a SUMO access token was acquired, and report an error if not.
+        # No point in having a logged in user, but without SUMO access.
+        if not new_user_auth_info.access_tokens.get("sumo"):
+            LOGGER.error("Failed to acquire SUMO access token")
+            return _make_html_err_resp("Sign-in verified, but could not get SUMO access token. Please try again.", 500)
+
+        # Issue a new session ID now that the session becomes authenticated to prevent session fixation attacks
+        starsessions.regenerate_session_id(request)
+
+        _save_token_cache_in_session(request, new_token_cache)
+        _save_user_auth_info_in_session(request, new_user_auth_info)
+
+        # Clear (by popping) the auth flow and target URL from the session after handling login
+        request.session.pop("flow", None)
+
+        redirect_target_after_login = request.session.pop("redirect_target_after_login", None)
         if redirect_target_after_login is not None:
             return RedirectResponse(redirect_target_after_login)
 
+        # Consider redirecting to a default page or showing a more user-friendly message after login
         return PlainTextResponse("Login OK")
 
     @staticmethod
@@ -185,8 +243,11 @@ class AuthHelper:
             return None
         perf_metrics.record_lap("load-token-cache")
 
+        cca = _create_msal_confidential_client_app(token_cache)
+        perf_metrics.record_lap("create-cca")
+
         new_user_auth_info: _UserAuthInfo | None = _acquire_refreshed_identity_and_tokens(
-            token_cache, user_auth_info_from_session
+            cca, user_auth_info_from_session
         )
         if not new_user_auth_info:
             return None
@@ -234,23 +295,74 @@ def _acquire_access_token_for_resource_scopes(
         )
         return None
 
-    access_token = token_dict.get("access_token")
-    if not access_token:
-        return None
-
-    # Should we be validating the tokens here?
-    jwt_payload_dict = _decode_jwt(access_token)
+    # We expect the dict to contain both a valid access token and its remaining lifetime in seconds (expires_in)
     try:
-        expires_at = int(jwt_payload_dict["exp"])
-    except ValueError:
-        LOGGER.error(f"Error getting expiration time claim (exp) from access token ({resource_name=})")
+        access_token = token_dict["access_token"]
+        expires_in = int(token_dict["expires_in"])
+    except (ValueError, KeyError, TypeError) as exc:
+        LOGGER.error(f"Error extracting access token and lifetime ({resource_name=}, {scopes_list=}) {repr(exc)}")
         return None
 
-    return _TokenEntry(token=access_token, expires_at=expires_at)
+    # Approximate the expiration time of the access token
+    approx_expires_at = int(time.time()) + expires_in
+
+    return _TokenEntry(token=access_token, expires_at=approx_expires_at)
+
+
+def _build_initial_user_auth_info_from_result(
+    cca: msal.ConfidentialClientApplication, sign_in_result_dict: dict
+) -> _UserAuthInfo | None:
+    """
+    Build an initial _UserAuthInfo instance from the sign-in result that is returned from the authentication flow.
+
+    The assumption is that the sign-in result contains valid ID token claims under the "id_token_claims" key,
+    and that the MSAL token cache can be used to acquire access tokens for all required resource scopes.
+    It is also assumed that the sign_in_result_dict has already been checked for errors.
+    """
+    # Do some assertions before proceeding; these should already be done by the caller:
+    #  * It must be dict-like and not empty
+    #  * It must not contain any error
+    if not isinstance(sign_in_result_dict, dict):
+        LOGGER.error("Violation of precondition: Sign-in result is not a dict")
+        return None
+    if "error" in sign_in_result_dict:
+        LOGGER.error(f"Violation of precondition: Sign-in result contains error: {sign_in_result_dict['error']}")
+        return None
+
+    # We avoid forcing a full ID-token refresh by using the claims from the result already in hand.
+    # From these id token claims we create an initial _UserAuthInfo and then we loop over all the required
+    # resources and try and get access tokens for them
+    id_token_claims_dict = sign_in_result_dict.get("id_token_claims")
+    if not id_token_claims_dict:
+        LOGGER.error("Sign-in result did not include ID token claims")
+        return None
+
+    new_user_auth_info = _UserAuthInfo.from_id_token_claims(id_token_claims_dict)
+    if not new_user_auth_info:
+        LOGGER.error("Failed to create initial user auth info from ID token claims")
+        return None
+
+    account_list = cca.get_accounts()
+    account = account_list[0] if account_list else None
+    if not account:
+        # This should not happen; there should be at least one account in the cache after a successful sign-in.
+        LOGGER.error("No accounts found in MSAL token cache")
+        return None
+
+    # Iterate over the resource names and get the access tokens for each of them
+    resource_name: _ResourceName
+    for resource_name in get_args(_ResourceName):
+        token_entry = _acquire_access_token_for_resource_scopes(cca, resource_name, account)
+        if token_entry:
+            new_user_auth_info.access_tokens[resource_name] = token_entry
+
+    new_user_auth_info.calc_earliest_expiry_time()
+
+    return new_user_auth_info
 
 
 def _acquire_refreshed_identity_and_tokens(
-    token_cache: msal.TokenCache, curr_auth_info: _UserAuthInfo | None
+    cca: msal.ConfidentialClientApplication, curr_auth_info: _UserAuthInfo | None
 ) -> _UserAuthInfo | None:
     """
     This function will return up to date information on the user's identity as well as valid access tokens.
@@ -260,9 +372,6 @@ def _acquire_refreshed_identity_and_tokens(
     so it is probably easier just to acquire them all.
     """
     perf_metrics = PerfMetrics()
-
-    cca = _create_msal_confidential_client_app(token_cache)
-    perf_metrics.record_lap("create-cca")
 
     account_list = cca.get_accounts()
     if not account_list:
@@ -278,13 +387,18 @@ def _acquire_refreshed_identity_and_tokens(
     # refresh on the graph scopes to get a new ID token. This means we don't get the benefit of the msal token cache,
     # so we try and avoid forcing a refresh of the ID token unless it is getting close to expiring.
     # Similar to msal we will consider it expired if it expires is less than 5 minutes.
+    new_auth_info: _UserAuthInfo | None
     time_now = time.time()
     identity_expires_in = curr_auth_info.user_identity_expires_at - time_now if curr_auth_info else 0
     if curr_auth_info and identity_expires_in >= 5 * 60:
         # Still more than 5 minutes left on the ID token, so we can just re-use the values from the current auth info
-        user_id = curr_auth_info.user_id
-        user_name = curr_auth_info.user_name
-        id_token_expiry_time = curr_auth_info.user_identity_expires_at
+        new_auth_info = _UserAuthInfo(
+            user_id=curr_auth_info.user_id,
+            user_name=curr_auth_info.user_name,
+            user_identity_expires_at=curr_auth_info.user_identity_expires_at,
+            access_tokens={},
+            earliest_expiry_time=0,
+        )
     else:
         token_dict = cca.acquire_token_silent_with_error(
             scopes=config.GRAPH_SCOPES, account=account, force_refresh=True
@@ -299,40 +413,18 @@ def _acquire_refreshed_identity_and_tokens(
             )
             return None
 
-        id_token = token_dict.get("id_token")
-        if not id_token:
-            LOGGER.error("Error acquiring ID token")
+        # We ignore the actual ID token, but what we want is the decoded claims that MSAL returns
+        id_token_claims_dict = token_dict.get("id_token_claims")
+        if not id_token_claims_dict:
+            LOGGER.error("No ID token claims were available in the authentication result")
             return None
 
-        id_token_claims_dict = _decode_jwt(id_token)
-        try:
-
-            # We use the 'oid' value here so that we tie persisted user items (such as sessions) to the profile.
-            # This does mean we need the 'profile' scope, but that should be injected by msal by default anyways
-
-            # See this page for info about available tokens:
-            # https://learn.microsoft.com/en-us/azure/active-directory/develop/id-tokens
-            # https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference
-
-            user_id = id_token_claims_dict["oid"]
-            user_name = id_token_claims_dict["preferred_username"]
-            id_token_expiry_time = int(id_token_claims_dict["exp"])
-        except ValueError:
-            LOGGER.error("Error getting claims from ID token")
+        new_auth_info = _UserAuthInfo.from_id_token_claims(id_token_claims_dict)
+        if not new_auth_info:
+            LOGGER.error("Failed to create auth info from ID token claims")
             return None
 
         perf_metrics.record_lap("get-id-token")
-
-    # So we have the identity of an authenticated user
-    # This is the minimum requirement for returning info on the user so we can create the new object now.
-    # We'll then continue to populate it with access tokens further down.
-    new_auth_info = _UserAuthInfo(
-        user_id=user_id,
-        user_name=user_name,
-        user_identity_expires_at=id_token_expiry_time,
-        access_tokens={},
-        earliest_expiry_time=0,
-    )
 
     # Iterate over the resource names and get the access tokens for each of them
     resource_name: _ResourceName
@@ -343,11 +435,7 @@ def _acquire_refreshed_identity_and_tokens(
 
     # Determine the earliest expiry time of all the tokens and the identity and store it so we can use it to
     # easily check if any of the items in the _UserAuthInfo object needs to be refreshed/updated
-    earliest_expiry_time = new_auth_info.user_identity_expires_at
-    for token_entry in new_auth_info.access_tokens.values():
-        earliest_expiry_time = min(earliest_expiry_time, token_entry.expires_at)
-
-    new_auth_info.earliest_expiry_time = earliest_expiry_time
+    new_auth_info.calc_earliest_expiry_time()
 
     perf_metrics.record_lap("get-access_tokens")
 
@@ -419,12 +507,17 @@ def _save_user_auth_info_in_session(request_with_session: Request, user_auth_inf
     request_with_session.session["user_auth_info"] = user_auth_info.model_dump_json()
 
 
-def _load_token_cache_from_session(request_with_session: Request) -> msal.SerializableTokenCache:
-    token_cache = msal.SerializableTokenCache()
-
+def _load_token_cache_from_session(request_with_session: Request) -> msal.SerializableTokenCache | None:
+    """
+    Load and return the token cache from the user's session if it exists, otherwise return None.
+    This function will no longer create and return a new token cache if one does not exist.
+    """
     serialized_token_cache = request_with_session.session.get("token_cache")
-    if serialized_token_cache:
-        token_cache.deserialize(serialized_token_cache)
+    if not serialized_token_cache:
+        return None
+
+    token_cache = msal.SerializableTokenCache()
+    token_cache.deserialize(serialized_token_cache)
 
     return token_cache
 
@@ -434,5 +527,25 @@ def _save_token_cache_in_session(request_with_session: Request, token_cache: msa
         request_with_session.session["token_cache"] = token_cache.serialize()
 
 
-def _decode_jwt(jwt_str: str) -> dict:
-    return jwt.decode(jwt_str, algorithms=["RS256"], options={"verify_signature": False})
+def _make_html_err_resp(message: str, status_code: int) -> HTMLResponse:
+    """
+    Generate a simple HTML response displaying an error message for the user.
+    It also provides a link for the user to attempt signing in again.
+    """
+    escaped_message = escape(message)
+    content_str = dedent(f"""\
+        <!doctype html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <title>Webviz sign-in problem</title>
+        </head>
+        <body>
+            <h1>Webviz was unable to complete sign-in</h1>
+            <p>{escaped_message}</p>
+            <p><a href="/api/login?redirect_target_after_login=/">Sign in again</a></p>
+        </body>
+        </html>
+    """)
+
+    return HTMLResponse(content=content_str, status_code=status_code)
