@@ -131,9 +131,7 @@ class SummaryAccess:
             reals_without_data = detect_missing_realizations(table, requested_reals_arr)
 
             if reals_without_data:
-                warnings.append(
-                    make_missing_realizations_warning(reals_without_data, data_source="Sumo vector data")
-                )
+                warnings.append(make_missing_realizations_warning(reals_without_data, data_source="Sumo vector data"))
 
         # Our assumption is that the table is segmented on REAL and that within each segment,
         # the DATE column is sorted. We may want to add some checks here to verify this assumption since the

@@ -42,8 +42,10 @@ def test_create_row_filtered_volumetric_df_missing_realizations_gives_warning(
     warnings = result.get_warnings()
     assert len(warnings) == 1
     assert "4" in warnings[0].message and "5" in warnings[0].message
-    assert result.get_value_ignore_warnings().sort("REAL").equals(
-        pl.DataFrame({"REAL": [2], "ZONE": ["B"], "VOLUME": [20]})
+    assert (
+        result.get_value_ignore_warnings()
+        .sort("REAL")
+        .equals(pl.DataFrame({"REAL": [2], "ZONE": ["B"], "VOLUME": [20]}))
     )
 
 

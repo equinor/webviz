@@ -117,9 +117,7 @@ class RelpermAccess:
             missing_realizations = set(realizations).difference(available_realizations)
             if missing_realizations:
                 warnings.append(
-                    make_missing_realizations_warning(
-                        sorted(missing_realizations), data_source="Sumo relperm data"
-                    )
+                    make_missing_realizations_warning(sorted(missing_realizations), data_source="Sumo relperm data")
                 )
 
         column_names = await self._get_column_names_async(table_name)
