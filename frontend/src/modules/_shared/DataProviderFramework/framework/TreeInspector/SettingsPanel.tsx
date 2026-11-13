@@ -1,9 +1,12 @@
 import React from "react";
 
+import { PushPin, PushPinOutlined } from "@mui/icons-material";
 import { isEqual } from "lodash-es";
 
 import { ComponentSizeContext } from "@lib/components/_shared/contexts/componentSizeContext";
 import { Button } from "@lib/components/Button";
+import { Tooltip } from "@lib/components/Tooltip";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { Item } from "../../interfacesAndTypes/entities";
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
@@ -209,12 +212,88 @@ function getCommonSettings(items: Item[]): SettingManager<any>[][] {
     return common;
 }
 
+type SingleItemCardProps = {
+    item: Item;
+    manager: DataProviderManager;
+    relations: Relations;
+    onHoverChange: (itemId: string | null) => void;
+    isPinned: boolean;
+    /** The selected item is pinned - its pinned card stands in for the selection's */
+    isHighlighted: boolean;
+    onTogglePin: (item: Item) => void;
+    navigation?: React.ReactNode;
+    headerAdornment?: React.ReactNode;
+};
+
+function SingleItemCard(props: SingleItemCardProps): React.ReactNode {
+    const { item, manager, relations, onHoverChange } = props;
+    const pinLabel = props.isPinned ? "Unpin settings" : "Pin settings";
+
+    return (
+        <div className="flex flex-col">
+            <div
+                className={resolveClassNames(
+                    "gap-x-2xs px-2xs sticky top-0 z-10 flex h-8 shrink-0 items-center shadow-sm",
+                    props.isHighlighted ? "bg-accent-canvas" : "bg-canvas",
+                )}
+            >
+                {props.navigation}
+                <ItemIcon item={item} />
+                <div className="min-w-0 grow">
+                    <EditName item={item} />
+                </div>
+                <Tooltip content={pinLabel} side="bottom">
+                    <Button
+                        variant="ghost"
+                        tone={props.isPinned ? "accent" : "neutral"}
+                        size="small"
+                        iconOnly
+                        aria-label={pinLabel}
+                        aria-pressed={props.isPinned}
+                        onClick={() => props.onTogglePin(item)}
+                    >
+                        {props.isPinned ? <PushPin fontSize="inherit" /> : <PushPinOutlined fontSize="inherit" />}
+                    </Button>
+                </Tooltip>
+                {props.headerAdornment}
+            </div>
+            <div className={SETTINGS_GRID_CLASSES}>
+                {getItemSettings(item).map((setting) => {
+                    const source = relations.controllerBySettingId.get(setting.getId());
+                    if (source) {
+                        return (
+                            <ControlledSettingRow
+                                key={setting.getId()}
+                                setting={setting}
+                                source={source}
+                                manager={manager}
+                                onHoverChange={onHoverChange}
+                            />
+                        );
+                    }
+                    return (
+                        <SettingManagerComponent
+                            key={setting.getId()}
+                            setting={setting}
+                            manager={manager}
+                            sharedSetting={isSharedSetting(item)}
+                        />
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 const SETTINGS_GRID_CLASSES =
     "[&>*:nth-child(4n-2)]:bg-surface [&>*:nth-child(4n-3)]:bg-surface [&>*:nth-child(odd)]:w-28! text-body-sm border-neutral-subtle grid auto-rows-[minmax(1.75rem,auto)] grid-cols-[auto_1fr] items-stretch border-t";
 
 export type SettingsPanelProps = {
     manager: DataProviderManager;
     selectedItems: Item[];
+    /** Shown above the selection, in the order they were pinned */
+    pinnedItems: Item[];
+    onTogglePin: (item: Item) => void;
     relations: Relations;
     onHoverChange: (itemId: string | null) => void;
     /** Rendered at the end of the panel header, e.g. a close button */
@@ -237,89 +316,107 @@ export function SettingsPanel(props: SettingsPanelProps): React.ReactNode {
 }
 
 function SettingsPanelContent(props: SettingsPanelProps): React.ReactNode {
-    const { selectedItems, manager, relations, onHoverChange } = props;
+    const { selectedItems, pinnedItems, manager, relations, onHoverChange } = props;
 
     // Stable per selection, so the proxies of a multi selection are only remade when the selection changes
     const selectionKey = selectedItems.map(getItemId).join("|");
     // eslint-disable-next-line @eslint-react/exhaustive-deps -- the selection key identifies the selected items
     const commonSettings = React.useMemo(() => getCommonSettings(selectedItems), [selectionKey]);
 
-    if (selectedItems.length === 0) {
-        return (
-            <div className="flex h-full flex-col">
-                {props.navigation && <div className="px-2xs flex h-8 shrink-0 items-center">{props.navigation}</div>}
-                <div className="text-neutral-subtle text-body-sm flex grow items-center justify-center p-2 text-center">
-                    Select a data provider or shared setting to see its settings.
-                </div>
-            </div>
-        );
-    }
+    const selectedSingleItem = selectedItems.length === 1 ? selectedItems[0] : null;
+    const isSelectionPinned = selectedSingleItem !== null && pinnedItems.includes(selectedSingleItem);
+    // The navigation and the close button belong to the selection's card - in a bar of their own when there is none
+    const hasSelectionCard = selectedItems.length > 0 && !isSelectionPinned;
+    const hasToolbar = (props.navigation || props.headerAdornment) && !hasSelectionCard && pinnedItems.length > 0;
 
-    if (selectedItems.length === 1) {
-        const [item] = selectedItems;
-        // Keyed by item, so components holding local state (e.g. EditName) never carry it over to another item
-        return (
-            <div key={getItemId(item)} className="flex flex-col">
-                <div className="gap-x-2xs px-2xs bg-canvas sticky top-0 z-10 flex h-8 shrink-0 items-center shadow-sm">
-                    {props.navigation}
-                    <ItemIcon item={item} />
-                    <div className="min-w-0 grow">
-                        <EditName item={item} />
+    function makeSelectionCard(): React.ReactNode {
+        if (selectedItems.length === 0) {
+            if (pinnedItems.length > 0) {
+                return null;
+            }
+            return (
+                <div className="flex h-full flex-col">
+                    {props.navigation && (
+                        <div className="px-2xs flex h-8 shrink-0 items-center">{props.navigation}</div>
+                    )}
+                    <div className="text-neutral-subtle text-body-sm flex grow items-center justify-center p-2 text-center">
+                        Select a data provider or shared setting to see its settings.
                     </div>
+                </div>
+            );
+        }
+
+        if (selectedSingleItem) {
+            if (isSelectionPinned) {
+                return null;
+            }
+            // Keyed by item, so components holding local state (e.g. EditName) never carry it over to another item
+            return (
+                <SingleItemCard
+                    key={getItemId(selectedSingleItem)}
+                    item={selectedSingleItem}
+                    manager={manager}
+                    relations={relations}
+                    onHoverChange={onHoverChange}
+                    isPinned={false}
+                    isHighlighted={false}
+                    onTogglePin={props.onTogglePin}
+                    navigation={props.navigation}
+                    headerAdornment={props.headerAdornment}
+                />
+            );
+        }
+
+        return (
+            <div key={selectionKey} className="flex flex-col">
+                <div className="text-body-sm font-bolder gap-x-2xs px-2xs bg-canvas sticky top-0 z-10 flex h-8 shrink-0 items-center shadow-sm">
+                    {props.navigation}
+                    <span className="min-w-0 grow truncate">{selectedItems.length} items selected</span>
                     {props.headerAdornment}
                 </div>
-                <div className={SETTINGS_GRID_CLASSES}>
-                    {getItemSettings(item).map((setting) => {
-                        const source = relations.controllerBySettingId.get(setting.getId());
-                        if (source) {
-                            return (
-                                <ControlledSettingRow
-                                    key={setting.getId()}
-                                    setting={setting}
-                                    source={source}
-                                    manager={manager}
-                                    onHoverChange={onHoverChange}
-                                />
-                            );
-                        }
-                        return (
-                            <SettingManagerComponent
-                                key={setting.getId()}
-                                setting={setting}
+                {commonSettings.length === 0 ? (
+                    <div className="text-neutral-subtle text-body-sm p-2">
+                        The selected items have no settings in common.
+                    </div>
+                ) : (
+                    <div className={SETTINGS_GRID_CLASSES}>
+                        {commonSettings.map((targets) => (
+                            <MultiSettingRow
+                                key={targets[0].getType()}
+                                targets={targets}
                                 manager={manager}
-                                sharedSetting={isSharedSetting(item)}
+                                relations={relations}
+                                onHoverChange={onHoverChange}
                             />
-                        );
-                    })}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
         );
     }
 
     return (
-        <div key={selectionKey} className="flex flex-col">
-            <div className="text-body-sm font-bolder gap-x-2xs px-2xs bg-canvas sticky top-0 z-10 flex h-8 shrink-0 items-center shadow-sm">
-                {props.navigation}
-                <span className="min-w-0 grow truncate">{selectedItems.length} items selected</span>
-                {props.headerAdornment}
-            </div>
-            {commonSettings.length === 0 ? (
-                <div className="text-neutral-subtle text-body-sm p-2">
-                    The selected items have no settings in common.
-                </div>
-            ) : (
-                <div className={SETTINGS_GRID_CLASSES}>
-                    {commonSettings.map((targets) => (
-                        <MultiSettingRow
-                            key={targets[0].getType()}
-                            targets={targets}
-                            manager={manager}
-                            relations={relations}
-                            onHoverChange={onHoverChange}
-                        />
-                    ))}
+        <div className="flex min-h-full flex-col">
+            {hasToolbar && (
+                <div className="px-2xs bg-canvas flex h-8 shrink-0 items-center">
+                    {props.navigation}
+                    <span className="grow" />
+                    {props.headerAdornment}
                 </div>
             )}
+            {pinnedItems.map((item) => (
+                <SingleItemCard
+                    key={getItemId(item)}
+                    item={item}
+                    manager={manager}
+                    relations={relations}
+                    onHoverChange={onHoverChange}
+                    isPinned
+                    isHighlighted={item === selectedSingleItem}
+                    onTogglePin={props.onTogglePin}
+                />
+            ))}
+            {makeSelectionCard()}
         </div>
     );
 }

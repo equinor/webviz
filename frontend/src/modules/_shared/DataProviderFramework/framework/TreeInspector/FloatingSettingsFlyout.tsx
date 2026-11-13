@@ -13,8 +13,8 @@ type FlyoutPosition = {
 };
 
 export type FloatingSettingsFlyoutProps = {
-    /** Key of the row the flyout is aligned with */
-    anchorRowKey: string;
+    /** Key of the row the flyout is aligned with - aligned with the top of the tree when null (only pinned settings) */
+    anchorRowKey: string | null;
     /** The flyout opens to the right of this element - the tree inspector filling the settings sidebar */
     sidebarElement: HTMLElement | null;
     scrollElement: HTMLElement | null;
@@ -46,25 +46,27 @@ export function FloatingSettingsFlyout(props: FloatingSettingsFlyoutProps): Reac
                     return;
                 }
                 const sidebarRect = sidebarElement.getBoundingClientRect();
-                const row = contentElement.querySelector(`[data-row-key="${CSS.escape(anchorRowKey)}"]`);
+                const row = anchorRowKey
+                    ? contentElement.querySelector(`[data-row-key="${CSS.escape(anchorRowKey)}"]`)
+                    : null;
                 const viewportRect = scrollElement.getBoundingClientRect();
                 const rowRect = row?.getBoundingClientRect();
+                const isRowInView =
+                    rowRect !== undefined && rowRect.bottom > viewportRect.top && rowRect.top < viewportRect.bottom;
 
-                // Hidden while the sidebar is not shown (another module is active) or the row is scrolled out of view
-                const isHidden =
-                    sidebarRect.width === 0 ||
-                    !rowRect ||
-                    rowRect.bottom <= viewportRect.top ||
-                    rowRect.top >= viewportRect.bottom;
+                // Hidden while the sidebar is not shown (another module is active), or while the selected row is
+                // scrolled out of view - unless the flyout only shows pinned settings, which then stick to the tree's top
+                const isHidden = sidebarRect.width === 0 || (anchorRowKey !== null && !isRowInView);
                 if (isHidden) {
                     // eslint-disable-next-line @eslint-react/set-state-in-effect -- measured from the DOM
                     setPosition(null);
                     return;
                 }
+                const anchorTop = isRowInView ? rowRect.top : viewportRect.top;
 
                 const flyoutHeight = flyoutElement?.offsetHeight ?? 0;
                 const lowestTop = window.innerHeight - WINDOW_MARGIN_PX - flyoutHeight;
-                const top = Math.max(WINDOW_MARGIN_PX, Math.min(rowRect.top, lowestTop));
+                const top = Math.max(WINDOW_MARGIN_PX, Math.min(anchorTop, lowestTop));
                 // eslint-disable-next-line @eslint-react/set-state-in-effect -- measured from the DOM
                 setPosition({
                     left: sidebarRect.right + FLYOUT_GAP_PX,

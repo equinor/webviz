@@ -45,7 +45,19 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
 
     const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
     const [anchorId, setAnchorId] = React.useState<string | null>(null);
+    const [pinnedIds, setPinnedIds] = React.useState<string[]>([]);
     const history = useSelectionHistory(relations.itemsById);
+
+    // Pins of removed items drop out, as they are no longer in the tree
+    const pinnedItems = React.useMemo(
+        () => pinnedIds.map((id) => relations.itemsById.get(id)).filter((item): item is Item => item !== undefined),
+        [pinnedIds, relations],
+    );
+
+    function togglePin(item: Item) {
+        const id = item.getItemDelegate().getId();
+        setPinnedIds((prev) => (prev.includes(id) ? prev.filter((other) => other !== id) : [...prev, id]));
+    }
 
     /** A selection made by the user - recorded in the history (which skips empty selections). */
     function changeSelection(ids: string[], anchor: string | null) {
@@ -410,7 +422,7 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
                 />
             </div>
             {isFloating ? (
-                anchorRowKey && (
+                (anchorRowKey || pinnedItems.length > 0) && (
                     <FloatingSettingsFlyout
                         anchorRowKey={anchorRowKey}
                         sidebarElement={containerElement}
@@ -423,6 +435,8 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
                         <SettingsPanel
                             manager={manager}
                             selectedItems={selectedItems}
+                            pinnedItems={pinnedItems}
+                            onTogglePin={togglePin}
                             relations={relations}
                             onHoverChange={setHoveredId}
                             onSourceClick={selectAndReveal}
@@ -469,6 +483,8 @@ export function TreeInspectorComponent(props: TreeInspectorComponentProps): Reac
                         <SettingsPanel
                             manager={manager}
                             selectedItems={selectedItems}
+                            pinnedItems={pinnedItems}
+                            onTogglePin={togglePin}
                             relations={relations}
                             onHoverChange={setHoveredId}
                             onSourceClick={selectAndReveal}
