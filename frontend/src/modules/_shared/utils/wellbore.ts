@@ -338,6 +338,9 @@ export function simplifyWellTrajectory<TTrajectory extends MinimalWellboreTrajec
  * @returns `true` if the measured depth is within the range of the trajectory's measured depth array, otherwise `false`.
  */
 export function isInMdRange(trajectory: MinimalWellboreTrajectory, md: number): boolean {
+    // Segment lookup needs at least one segment
+    if (trajectory.mdArr.length < 2) return false;
+
     const minMd = trajectory.mdArr[0];
     const maxMd = trajectory.mdArr[trajectory.mdArr.length - 1];
 

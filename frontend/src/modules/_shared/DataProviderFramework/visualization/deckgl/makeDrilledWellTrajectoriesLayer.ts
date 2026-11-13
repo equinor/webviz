@@ -92,7 +92,7 @@ export function makeDrilledWellTrajectoriesLayer(
     const wellLabel = { ...DEFAULT_WELLS_LAYER_PROPS_BY_VIEW_MODE[options.viewMode].wellLabel };
 
     // Tangential orientation looks nice, but slows down significantly on larger sets, so we revert to horizontal if needed
-    if (options.viewMode === "2D" && wellGeoJson.features.length > 200) {
+    if (options.viewMode === "2D" && wellGeoJson.features.length >= 200) {
         wellLabel.orientation = LabelOrientation.HORIZONTAL;
     }
 

@@ -35,19 +35,21 @@ export function makePlannedWellTrajectoriesLayer(
     // 2D simplifies on XY distance only; 3D must use full 3D distance so near-vertical sections keep their shape.
     const computeDistance = options.viewMode === "2D" ? trajectoryDistanceXY : trajectoryDistanceRadial;
 
-    const wellLayerDataFeatures = plannedWellboreTrajectoriesData.map((well) => {
-        const simplifiedWell = createSimplifiedTrajectory(well, computeDistance);
-        const feature = wellTrajectoryToGeojson(simplifiedWell);
-        feature.properties.color = PLANNED_WELL_COLOR;
-        // Suffix the name so the hover readout/label makes clear this is a planned (not drilled) well.
-        feature.properties.name = `${feature.properties.name} (planned)`;
-        return feature;
-    });
+    const wellLayerDataFeatures = args.memoize("plannedWellGeoJson", [computeDistance], () =>
+        plannedWellboreTrajectoriesData.map((well) => {
+            const simplifiedWell = createSimplifiedTrajectory(well, computeDistance);
+            const feature = wellTrajectoryToGeojson(simplifiedWell);
+            feature.properties.color = PLANNED_WELL_COLOR;
+            // Suffix the name so the hover readout/label makes clear this is a planned (not drilled) well.
+            feature.properties.name = `${feature.properties.name} (planned)`;
+            return feature;
+        }),
+    );
 
     const wellLabel = { ...DEFAULT_WELLS_LAYER_PROPS_BY_VIEW_MODE[options.viewMode].wellLabel };
 
     // Tangential orientation looks nice, but slows down significantly on larger sets, so we revert to horizontal if needed
-    if (options.viewMode === "2D" && wellLayerDataFeatures.length > 200) {
+    if (options.viewMode === "2D" && wellLayerDataFeatures.length >= 200) {
         wellLabel.orientation = LabelOrientation.HORIZONTAL;
     }
 

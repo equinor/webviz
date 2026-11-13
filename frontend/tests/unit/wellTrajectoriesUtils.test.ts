@@ -35,7 +35,7 @@ function distanceXY(
     return Math.hypot(point1.easting - point2.easting, point1.northing - point2.northing);
 }
 
-describe("drilledWellTrajectoriesUtils", () => {
+describe("wellTrajectoriesUtils", () => {
     describe("wellDataToGeoJson", () => {
         test("maps formation segments to formations[] with FORMATION_FILTER_NAME", () => {
             const trajectory = makeTrajectory({
