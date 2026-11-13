@@ -32,36 +32,68 @@ import { StartPage } from "../StartPage/StartPage";
 import { TemplatesDialog } from "../TemplatesDialog/templatesDialog";
 import { TutorialsDialog } from "../TutorialsDialog/tutorialsDialog";
 
+/**
+ * Owns the workbench's lifecycle: a workbench is created when this component mounts and destroyed when it unmounts -
+ * e.g. after a logout, as the authentication boundary only renders it while logged in. Created in an effect rather
+ * than kept in state, so that every mount gets a workbench of its own - StrictMode mounts twice, unmounting in between.
+ */
 export function WorkbenchWrapper() {
-    // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
-    // Otherwise, the workbench will be reset on every code change. This would cause it to lose its state and will
-    // cause the app to crash.
     const queryClient = useQueryClient();
-    const { registerActiveWorkbench } = useGlobalErrorBoundaryContext();
+    const { registerActiveWorkbench, hasCrashed } = useGlobalErrorBoundaryContext();
 
-    const [workbench] = React.useState(() => new Workbench(queryClient));
-    const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
+    const [workbench, setWorkbench] = React.useState<Workbench | null>(null);
+    const [initializedWorkbench, setInitializedWorkbench] = React.useState<Workbench | null>(null);
+
+    React.useEffect(
+        function createWorkbench() {
+            const newWorkbench = new Workbench(queryClient);
+            let isDestroyed = false;
+
+            // Created here rather than during rendering, so that it is destroyed along with the mount that created it
+            // eslint-disable-next-line @eslint-react/set-state-in-effect
+            setWorkbench(newWorkbench);
+            registerActiveWorkbench(newWorkbench);
+
+            newWorkbench.initialize().then(() => {
+                if (!isDestroyed) {
+                    setInitializedWorkbench(newWorkbench);
+                }
+            });
+
+            return function destroyWorkbench() {
+                isDestroyed = true;
+                registerActiveWorkbench(null);
+
+                // After a crash, the error fallback still reads this workbench's session for the support documents
+                if (!hasCrashed()) {
+                    newWorkbench.beforeDestroy();
+                }
+            };
+        },
+        [queryClient, registerActiveWorkbench, hasCrashed],
+    );
+
+    if (!workbench) {
+        return null;
+    }
+
+    return <WorkbenchContent workbench={workbench} isInitialized={initializedWorkbench === workbench} />;
+}
+
+type WorkbenchContentProps = {
+    workbench: Workbench;
+    isInitialized: boolean;
+};
+
+function WorkbenchContent(props: WorkbenchContentProps) {
+    const { workbench, isInitialized } = props;
+
     const isSessionLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
     const isSnapshotLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSnapshot);
     const isEnsembleSetLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingEnsembleSet);
     const hasActiveSession = usePublishSubscribeTopicValue(
         workbench.getSessionManager(),
         WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION,
-    );
-
-    React.useEffect(
-        function initApp() {
-            registerActiveWorkbench(workbench);
-
-            workbench.initialize().then(() => {
-                setIsInitialized(true);
-            });
-
-            return () => {
-                registerActiveWorkbench(null);
-            };
-        },
-        [registerActiveWorkbench, workbench],
     );
 
     let content: React.ReactNode;

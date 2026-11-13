@@ -120,12 +120,17 @@ export class SessionStateTracker {
         return true;
     }
 
-    markPersisted() {
-        this._state.lastPersistedHash = this._state.currentHash;
+    /**
+     * @param contentHash Hash of the saved content
+     * @param metadata The saved title and description
+     * Both may be older than the session's current ones, if it was edited while saving.
+     */
+    markPersisted(contentHash: string, metadata: { title: string; description?: string }) {
+        this._state.lastPersistedHash = contentHash;
         this._state.lastPersistedMs = Date.now();
         this._state.lastPersistedMetadata = {
-            title: this._session.getMetadata().title,
-            description: this._session.getMetadata().description,
+            title: metadata.title,
+            description: metadata.description,
         };
         this.updateSnapshot();
     }

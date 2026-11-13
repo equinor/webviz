@@ -4,7 +4,7 @@ import type { Workbench } from "@framework/Workbench";
 import type { PrivateWorkbenchSession } from "../../WorkbenchSession/PrivateWorkbenchSession";
 import { MAX_CONTENT_SIZE_BYTES } from "../constants";
 
-import { BackendSyncManager } from "./BackendSyncManager";
+import { BackendSyncManager, type SessionSavePayload } from "./BackendSyncManager";
 
 export enum PersistFailureReason {
     SAVE_IN_PROGRESS = "SAVE_IN_PROGRESS", // A save is already in progress
@@ -24,18 +24,26 @@ export type PersistResult =
           message?: string;
       };
 
+/** What saving the session writes to the backend, as of now */
+export function makeSessionSavePayload(session: PrivateWorkbenchSession): SessionSavePayload {
+    const { title, description } = session.getMetadata();
+    return { title, description, content: objectToJsonString(session.serializeContentState()) };
+}
+
 /**
- * Writes the session's current content to the backend. A session that was never persisted is created
+ * Writes the session to the backend. A session that was never persisted is created
  * there, and gets the new id and is marked as persisted.
+ * @param payload What to write - the session's current state, if not given
  */
 export async function persistSessionToBackend(
     workbench: Workbench,
     session: PrivateWorkbenchSession,
+    payload?: SessionSavePayload,
 ): Promise<PersistResult> {
     try {
-        const contentToSave = objectToJsonString(session.serializeContentState());
+        const payloadToSave = payload ?? makeSessionSavePayload(session);
 
-        const size = new Blob([contentToSave]).size;
+        const size = new Blob([payloadToSave.content]).size;
         if (size > MAX_CONTENT_SIZE_BYTES) {
             return {
                 success: false,
@@ -44,7 +52,7 @@ export async function persistSessionToBackend(
             };
         }
 
-        const newId = await new BackendSyncManager(workbench).persist(session, contentToSave);
+        const newId = await new BackendSyncManager(workbench).persist(session, payloadToSave);
 
         if (newId && !session.getIsPersisted()) {
             session.setId(newId);

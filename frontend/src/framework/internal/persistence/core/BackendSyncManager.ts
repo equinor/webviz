@@ -13,6 +13,12 @@ import {
     createSnapshotWithCacheUpdate,
 } from "../../WorkbenchSession/utils/crudHelpers";
 
+/** What saving a session writes to the backend */
+export type SessionSavePayload = {
+    title: string;
+    description?: string;
+    content: string;
+};
 
 /**
  * Manages all backend persistence interactions (CRUD + metadata polling).
@@ -51,14 +57,13 @@ export class BackendSyncManager {
      * Creates a new session on the backend.
      * Returns the new session ID.
      */
-    async createSession(session: PrivateWorkbenchSession, content: string): Promise<string> {
+    async createSession(payload: SessionSavePayload): Promise<string> {
         const queryClient = this._workbench.getQueryClient();
-        const metadata = session.getMetadata();
 
         const newId = await createSessionWithCacheUpdate(queryClient, {
-            title: metadata.title,
-            description: metadata.description ?? null,
-            content,
+            title: payload.title,
+            description: payload.description ?? null,
+            content: payload.content,
         });
 
         // Reset relevant query caches
@@ -70,9 +75,8 @@ export class BackendSyncManager {
     /**
      * Updates an existing session on the backend.
      */
-    async updateSession(session: PrivateWorkbenchSession, content: string): Promise<void> {
+    async updateSession(session: PrivateWorkbenchSession, payload: SessionSavePayload): Promise<void> {
         const queryClient = this._workbench.getQueryClient();
-        const metadata = session.getMetadata();
         const id = session.getId();
 
         if (!id) {
@@ -80,9 +84,9 @@ export class BackendSyncManager {
         }
 
         await updateSessionAndCache(queryClient, id, {
-            title: metadata.title,
-            description: metadata.description ?? null,
-            content,
+            title: payload.title,
+            description: payload.description ?? null,
+            content: payload.content,
         });
 
         queryClient.resetQueries({ queryKey: getSessionsMetadataQueryKey() });
@@ -94,12 +98,12 @@ export class BackendSyncManager {
      * Persists a session — automatically creates or updates.
      * Returns a new ID if created, or `undefined` if updated.
      */
-    async persist(session: PrivateWorkbenchSession, content: string): Promise<string | undefined> {
+    async persist(session: PrivateWorkbenchSession, payload: SessionSavePayload): Promise<string | undefined> {
         if (session.getIsPersisted()) {
-            await this.updateSession(session, content);
+            await this.updateSession(session, payload);
             return undefined;
         } else {
-            const newId = await this.createSession(session, content);
+            const newId = await this.createSession(payload);
             return newId;
         }
     }
