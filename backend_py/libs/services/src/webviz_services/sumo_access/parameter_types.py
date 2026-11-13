@@ -2,6 +2,15 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 
+@dataclass(frozen=True)
+class ParameterSourceEnsemble:
+    """The restart ensemble a parameter was inherited from"""
+
+    case_uuid: str
+    case_name: str
+    ensemble_name: str
+
+
 @dataclass
 class EnsembleParameter:
     """Description/data for a single parameter in an ensemble"""
@@ -16,6 +25,7 @@ class EnsembleParameter:
     values: list[float] | list[int] | list[str]
     group_name: str | None = None
     descriptive_name: str | None = None
+    source_ensemble: ParameterSourceEnsemble | None = None  # None means the ensemble's own parameter
 
 
 class SensitivityType(StrEnum):
