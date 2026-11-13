@@ -328,6 +328,7 @@ class InplaceVolumesTableAssembler:
             warnings,
         )
 
+    # pylint: disable-next=too-many-locals
     async def _create_accumulated_real_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
         self,
         table_name: str,

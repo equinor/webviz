@@ -138,7 +138,11 @@ def unhandled_warnings_error_handler(request: Request, exc: UnhandledWarningErro
     # Report it with its own error type, rather than as a generic internal error, so it is easy to identify.
     route = _make_route_string(request)
     exc_name = _get_exception_name(exc)
-    ROOT_LOGGER.error(f"[EXC] Unhandled warnings in {route} -> {exc_name}: {str(exc)}", exc_info=exc)
+    curr_span = trace.get_current_span()
+    curr_span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
+    curr_span.record_exception(exc)
+    exc_traceback_str = _format_exception_for_log(exc)
+    EXCEPTIONS_LOGGER.error(f"[EXC] Unhandled warnings in {route} -> {exc_name}: {str(exc)}\n{exc_traceback_str}")
 
     return JSONResponse(
         status_code=HTTP_500_INTERNAL_SERVER_ERROR,

@@ -5,6 +5,8 @@ import pyarrow as pa
 import polars as pl
 
 from webviz_core_utils.perf_timer import PerfTimer
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 
 from webviz_services.sumo_access.deprecated_inplace_volumetrics_access import (
     DEPRECATED_InplaceVolumetricsAccess,
@@ -24,8 +26,6 @@ from webviz_services.sumo_access.deprecated_inplace_volumetrics_types import (
 )
 from webviz_services.service_exceptions import Service, InvalidDataError, InvalidParameterError, NoDataError
 from webviz_services.service_warnings import make_missing_realizations_warning
-from webviz_core_utils.text_warning import TextWarning
-from webviz_core_utils.result_with_warning import ResultWithWarning
 
 from ._conversion._conversion import (
     create_raw_volumetric_columns_from_volume_names_and_fluid_zones,

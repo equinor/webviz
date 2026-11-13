@@ -116,11 +116,11 @@ class AddWarningsMiddleware:
         context: dict[str, Any] = {"allow_warnings": allow_header.lower() == "true", "warnings": []}
         _warnings_context.set(context)
 
-        async def send_with_warnings_header(message: Message) -> None:
+        async def send_with_warnings_header_async(message: Message) -> None:
             if message["type"] == "http.response.start" and context["warnings"]:
                 headers = MutableHeaders(scope=message)
                 headers.append(WARNINGS_RESPONSE_HEADER, _make_warnings_header_value(context["warnings"]))
 
             await send(message)
 
-        await self.app(scope, receive, send_with_warnings_header)
+        await self.app(scope, receive, send_with_warnings_header_async)

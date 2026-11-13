@@ -309,6 +309,7 @@ async def post_get_well_trajectories_formation_segments(
 
 
 @router.get("/statistical_surface_data_hybrid")
+# pylint: disable-next=too-many-locals
 async def get_statistical_surface_data_hybrid(
     # fmt:off
     response: Response,

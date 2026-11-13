@@ -5,6 +5,8 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 from webviz_core_utils.perf_timer import PerfTimer
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_services.utils.otel_span_tracing import otel_span_decorator
@@ -21,8 +23,6 @@ from webviz_services.service_exceptions import (
     InvalidParameterError,
     NoDataError,
 )
-from webviz_core_utils.text_warning import TextWarning
-from webviz_core_utils.result_with_warning import ResultWithWarning
 from webviz_services.service_warnings import (
     make_missing_realizations_warning,
 )
@@ -163,6 +163,7 @@ class SummaryAccess:
         return ResultWithWarning((table, vector_metadata), warnings)
 
     @otel_span_decorator()
+    # pylint: disable-next=too-many-locals
     async def get_vector_async(
         self,
         vector_name: str,
