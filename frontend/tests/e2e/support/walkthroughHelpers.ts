@@ -45,6 +45,9 @@ const CURSOR_MAX_STEPS = 50;
  */
 const CURSOR_STEP_MS = 22;
 
+/** Largest distance (px) the cursor may travel in one step when a glide catches up, to avoid jumps. */
+const CURSOR_MAX_STEP_PX = 30;
+
 /** Steps per chunk when gliding; the glide is re-synced to its schedule between chunks. */
 const CURSOR_CHUNK_STEPS = 5;
 
@@ -72,8 +75,11 @@ async function glideMouseTo(page: Page, x: number, y: number): Promise<void> {
         const msPerStep = stepsDone > 0 ? Math.max(1, moveMs / stepsDone) : 1;
         const affordableSteps = Math.floor((durationMs - elapsedMs) / msPerStep);
         if (affordableSteps < steps - stepsDone) {
-            // Behind schedule: finish the remaining distance in as many steps as there is time for.
-            await page.mouse.move(x, y, { steps: Math.max(2, Math.min(CURSOR_CHUNK_STEPS, affordableSteps)) });
+            // Behind schedule: finish in fewer, larger steps, but never larger than CURSOR_MAX_STEP_PX, so a
+            // busy page makes the glide a little slower rather than making the cursor jump.
+            const remainingPx = distance * (1 - stepsDone / steps);
+            const minSteps = Math.ceil(remainingPx / CURSOR_MAX_STEP_PX);
+            await page.mouse.move(x, y, { steps: Math.max(2, minSteps, affordableSteps) });
             break;
         }
         const chunkSteps = Math.min(CURSOR_CHUNK_STEPS, steps - stepsDone);
