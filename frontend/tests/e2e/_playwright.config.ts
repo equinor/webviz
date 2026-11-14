@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+
 import { defineConfig, devices } from "@playwright/test";
 
 import { STORAGE_STATE_PATH } from "./setup/globalSetup";
@@ -15,12 +17,23 @@ import { STORAGE_STATE_PATH } from "./setup/globalSetup";
 const record = !!process.env.RECORD;
 
 /**
- * Set E2E_GPU=1 to run Chromium headed so WebGL can use the GPU (e.g. under WSLg, through Mesa's
- * D3D12 driver). Headless Chromium always falls back to software rendering (SwiftShader), where every
- * map redraw in WebGL-heavy modules takes seconds, which makes recordings far slower than real use.
- * Requires a display; not available on the CI runners.
+ * Stories assume a GPU, since software WebGL (SwiftShader) makes every map redraw in WebGL-heavy
+ * modules take seconds.
+ *
+ * Under WSL (detected by its GPU device, /dev/dxg) the GPU is only reachable through WSLg's display,
+ * via Mesa's D3D12 driver, so Chromium runs headed there with that driver selected. Headless Chromium
+ * on WSL always falls back to SwiftShader, whatever the flags. Elsewhere Chromium runs headless and
+ * reaches the GPU through the Linux graphics device (/dev/dri). MESA_D3D12_DEFAULT_ADAPTER_NAME picks
+ * the adapter on machines with more than one GPU.
  */
-const gpu = !!process.env.E2E_GPU;
+const isWsl = existsSync("/dev/dxg");
+
+/** Set E2E_HEADLESS=1 to force headless, e.g. to compare behaviour with the headed WSL runs. */
+const headed = isWsl && !process.env.E2E_HEADLESS;
+const wslGpuEnv = {
+    GALLIUM_DRIVER: process.env.GALLIUM_DRIVER ?? "d3d12",
+    MESA_D3D12_DEFAULT_ADAPTER_NAME: process.env.MESA_D3D12_DEFAULT_ADAPTER_NAME ?? "NVIDIA",
+};
 
 /** Base URL the browser talks to. Assumes the full stack is already running on this port. */
 const BASE_URL = "http://localhost:8080";
@@ -75,18 +88,9 @@ export default defineConfig({
                 // flushing the full-HD video/trace at context teardown. Point it at /tmp instead.
                 launchOptions: {
                     args: ["--disable-dev-shm-usage"],
-                    ...(gpu
-                        ? {
-                              env: {
-                                  ...process.env,
-                                  GALLIUM_DRIVER: process.env.GALLIUM_DRIVER ?? "d3d12",
-                                  MESA_D3D12_DEFAULT_ADAPTER_NAME:
-                                      process.env.MESA_D3D12_DEFAULT_ADAPTER_NAME ?? "NVIDIA",
-                              },
-                          }
-                        : {}),
+                    ...(isWsl ? { env: { ...process.env, ...wslGpuEnv } } : {}),
                 },
-                ...(gpu ? { headless: false } : {}),
+                ...(headed ? { headless: false } : {}),
             },
         },
     ],

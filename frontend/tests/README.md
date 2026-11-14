@@ -99,18 +99,14 @@ Use the generic helpers in `tests/e2e/support/dpfHelpers.ts` (add menus, setting
 expand/collapse, color scales), and keep module specifics in a small per-module file such as
 `tests/e2e/support/twoDViewerHelpers.ts`.
 
-#### Recording with GPU rendering
+#### GPU rendering
 
-Headless Chromium renders WebGL in software, so map updates in WebGL-heavy modules (2D/3D Viewer,
-Intersection) take seconds and recordings look much slower than real use. On a machine with a GPU
-and a display (e.g. WSL2 with WSLg), record with the GPU instead:
-
-```bash
-E2E_GPU=1 npm run test:e2e:record -- tests/e2e/stories/twoDViewer.test.ts
-```
-
-This runs Chromium headed with Mesa's D3D12 driver (`GALLIUM_DRIVER=d3d12`, NVIDIA adapter by default;
-override with `MESA_D3D12_DEFAULT_ADAPTER_NAME`). CI runners have no GPU, so this is local only.
+Stories assume a GPU: headless Chromium falls back to software WebGL, where map updates in
+WebGL-heavy modules (2D/3D Viewer, Intersection) take seconds. Under WSL2, the GPU is only reachable
+through WSLg's display, so Chromium runs headed there (a window opens during the run), with Mesa's
+D3D12 driver selected (NVIDIA adapter by default; override with `MESA_D3D12_DEFAULT_ADAPTER_NAME`).
+Elsewhere Chromium runs headless. The e2e recordings workflow is disabled until a GPU-enabled runner
+is available, so tutorial videos are currently recorded locally.
 
 #### Running a single story
 
