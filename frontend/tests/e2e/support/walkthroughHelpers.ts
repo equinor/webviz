@@ -545,11 +545,14 @@ function resolveDropTarget(
 ): { x: number; y: number } {
     const centerX = layoutBox.x + layoutBox.width / 2;
     const centerY = layoutBox.y + layoutBox.height / 2;
-    // For a side drop, aim the cross-axis at the centre of the first row/column rather than the layout
-    // centre: once the canvas holds stacked modules, the centre sits on the gutter between them, which
-    // resolves to the parent container (no side edge there) and nests the module instead of splitting.
-    const firstRowY = layoutBox.y + layoutBox.height / 4;
-    const firstColX = layoutBox.x + layoutBox.width / 4;
+    // For a side drop, aim the cross-axis into the first row/column rather than the layout centre: once
+    // the canvas holds stacked modules, the centre sits on the gutter between them, which resolves to the
+    // parent container (no side edge there) and nests the module instead of splitting.
+    // Aim at 30% rather than 25%: a single module's top/left quarter (inside its 25px margin) is its own
+    // top/left drop zone, which wins over the side zones where they overlap, so a quarter in would drop
+    // a "right" module above it instead.
+    const firstRowY = layoutBox.y + layoutBox.height * 0.3;
+    const firstColX = layoutBox.x + layoutBox.width * 0.3;
     switch (dropPosition) {
         case "left":
             return { x: layoutBox.x + DROP_EDGE_INSET_PX, y: firstRowY };
@@ -645,6 +648,39 @@ export async function dragModuleOntoLayout(
 
         await expect(droppedModule).toBeVisible({ timeout: 5_000 });
     }).toPass({ timeout: 60_000, intervals: [1_000] });
+
+    await expectModuleOnSide(layout, droppedModule, dropPosition);
+}
+
+/** Fail if a module dropped at a side of the layout ended up elsewhere (e.g. above instead of right). */
+async function expectModuleOnSide(
+    layout: Locator,
+    droppedModule: Locator,
+    dropPosition: ModuleDropPosition,
+): Promise<void> {
+    if (dropPosition === "center") {
+        return;
+    }
+    const layoutBox = await layout.boundingBox();
+    const moduleBox = await droppedModule.boundingBox();
+    if (!layoutBox || !moduleBox) {
+        throw new Error("Could not resolve bounding boxes to verify where the module was dropped");
+    }
+    // The module's header box: its centre is the module's horizontal centre, and lies in the module's
+    // half of the layout vertically.
+    const moduleX = moduleBox.x + moduleBox.width / 2;
+    const moduleY = moduleBox.y + moduleBox.height / 2;
+    const centerX = layoutBox.x + layoutBox.width / 2;
+    const centerY = layoutBox.y + layoutBox.height / 2;
+    const onSide = {
+        left: moduleX < centerX,
+        right: moduleX > centerX,
+        top: moduleY < centerY,
+        bottom: moduleY > centerY,
+    }[dropPosition];
+    if (!onSide) {
+        throw new Error(`Module was dropped, but not on the ${dropPosition} side of the layout`);
+    }
 }
 
 /** The module layout of the active dashboard (inactive, kept-alive dashboards stay in the DOM, hidden). */
