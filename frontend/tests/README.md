@@ -101,12 +101,14 @@ expand/collapse, color scales), and keep module specifics in a small per-module 
 
 #### GPU rendering
 
-Stories assume a GPU: headless Chromium falls back to software WebGL, where map updates in
-WebGL-heavy modules (2D/3D Viewer, Intersection) take seconds. Under WSL2, the GPU is only reachable
-through WSLg's display, so Chromium runs headed there (a window opens during the run), with Mesa's
-D3D12 driver selected (NVIDIA adapter by default; override with `MESA_D3D12_DEFAULT_ADAPTER_NAME`).
-Elsewhere Chromium runs headless. The e2e recordings workflow is disabled until a GPU-enabled runner
-is available, so tutorial videos are currently recorded locally.
+Stories run headless by default, with software WebGL, which is how the published videos were
+recorded. Stories with WebGL maps (2D/3D Viewer, Intersection) are far too slow that way, so they opt
+in to GPU rendering with `test.use(GPU_RENDERING)` from `tests/e2e/support/gpuRendering.ts`. Under
+WSL2, the GPU is only reachable through WSLg's display, so those stories run headed (a window opens
+during the run), with Mesa's D3D12 driver selected (NVIDIA adapter by default; override with
+`MESA_D3D12_DEFAULT_ADAPTER_NAME`). Headed mode changes timings, so only opt in where needed. The e2e
+recordings workflow is disabled until a GPU-enabled runner is available, so tutorial videos are
+currently recorded locally.
 
 #### Running a single story
 

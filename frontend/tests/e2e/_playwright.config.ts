@@ -17,19 +17,13 @@ import { STORAGE_STATE_PATH } from "./setup/globalSetup";
 const record = !!process.env.RECORD;
 
 /**
- * Stories assume a GPU, since software WebGL (SwiftShader) makes every map redraw in WebGL-heavy
- * modules take seconds.
- *
  * Under WSL (detected by its GPU device, /dev/dxg) the GPU is only reachable through WSLg's display,
- * via Mesa's D3D12 driver, so Chromium runs headed there with that driver selected. Headless Chromium
- * on WSL always falls back to SwiftShader, whatever the flags. Elsewhere Chromium runs headless and
- * reaches the GPU through the Linux graphics device (/dev/dri). MESA_D3D12_DEFAULT_ADAPTER_NAME picks
- * the adapter on machines with more than one GPU.
+ * via Mesa's D3D12 driver, so that driver is selected for any headed run. Stories run headless by
+ * default (software WebGL, as the published videos were recorded); stories that need the GPU opt in to
+ * headed mode with `test.use(GPU_RENDERING)` (see support/gpuRendering.ts).
+ * MESA_D3D12_DEFAULT_ADAPTER_NAME picks the adapter on machines with more than one GPU.
  */
 const isWsl = existsSync("/dev/dxg");
-
-/** Set E2E_HEADLESS=1 to force headless, e.g. to compare behaviour with the headed WSL runs. */
-const headed = isWsl && !process.env.E2E_HEADLESS;
 const wslGpuEnv = {
     GALLIUM_DRIVER: process.env.GALLIUM_DRIVER ?? "d3d12",
     MESA_D3D12_DEFAULT_ADAPTER_NAME: process.env.MESA_D3D12_DEFAULT_ADAPTER_NAME ?? "NVIDIA",
@@ -90,7 +84,6 @@ export default defineConfig({
                     args: ["--disable-dev-shm-usage"],
                     ...(isWsl ? { env: { ...process.env, ...wslGpuEnv } } : {}),
                 },
-                ...(headed ? { headless: false } : {}),
             },
         },
     ],
