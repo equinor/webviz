@@ -1,6 +1,10 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 
+import type { DataProviderType } from "../../../src/modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
+import type { GroupType } from "../../../src/modules/_shared/DataProviderFramework/groups/groupTypes";
+import type { Setting } from "../../../src/modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+
 import { RECORDING, activeModuleLayout, pace, smoothClick, smoothMoveTo, smoothType } from "./walkthroughHelpers";
 
 /**
@@ -35,28 +39,28 @@ export function dpfHeader(itemOrPanel: Locator): Locator {
     return itemOrPanel.locator("[data-dpf-header]").first();
 }
 
-/** All data providers (layers) of a type, e.g. `"DEPTH_SURFACE"`. */
-export function dpfLayers(scope: Scope, providerType: string): Locator {
+/** All data providers (layers) of a type, e.g. `DataProviderType.DEPTH_SURFACE`. */
+export function dpfLayers(scope: Scope, providerType: DataProviderType): Locator {
     return resolveScope(scope).locator(`[data-dpf-item="provider"][data-dpf-type="${providerType}"]`);
 }
 
 /** The first data provider (layer) of a type within `scope`. */
-export function dpfLayer(scope: Scope, providerType: string): Locator {
+export function dpfLayer(scope: Scope, providerType: DataProviderType): Locator {
     return dpfLayers(scope, providerType).first();
 }
 
-/** The `index`-th group of a type, e.g. `"VIEW"`, `"INTERSECTION_VIEW"` or `"WELL_LOG_TRACK_CONTINUOUS"`. */
-export function dpfGroup(scope: Scope, groupType: string, index = 0): Locator {
+/** The `index`-th group of a type, e.g. `GroupType.VIEW` or `GroupType.INTERSECTION_VIEW`. */
+export function dpfGroup(scope: Scope, groupType: GroupType, index = 0): Locator {
     return resolveScope(scope).locator(`[data-dpf-item="group"][data-dpf-type="${groupType}"]`).nth(index);
 }
 
-/** A shared setting item, identified by the setting it wraps (e.g. `"surfaceName"`). */
-export function dpfSharedSetting(scope: Scope, settingType: string): Locator {
+/** A shared setting item, identified by the setting it wraps (e.g. `Setting.SURFACE_NAME`). */
+export function dpfSharedSetting(scope: Scope, settingType: Setting): Locator {
     return resolveScope(scope).locator(`[data-dpf-item="shared-setting"][data-dpf-type="${settingType}"]`).first();
 }
 
 /** The value cell of a setting inside `item` (a layer, a shared setting or a group). */
-export function dpfSetting(item: Locator, settingType: string): Locator {
+export function dpfSetting(item: Locator, settingType: Setting): Locator {
     return item.locator(`[data-dpf-setting="${settingType}"]`).first();
 }
 
@@ -99,7 +103,7 @@ function comboboxOption(page: Page, optionLabel: string): Locator {
 export async function selectSettingOption(
     page: Page,
     item: Locator,
-    settingType: string,
+    settingType: Setting,
     optionLabel: string,
 ): Promise<void> {
     const combobox = dpfSetting(item, settingType).getByRole("combobox");
@@ -112,7 +116,7 @@ export async function selectSettingOption(
 export async function browseSettingOption(
     page: Page,
     item: Locator,
-    settingType: string,
+    settingType: Setting,
     direction: "next" | "previous" = "next",
 ): Promise<void> {
     const title = direction === "next" ? "Next option" : "Previous option";
@@ -145,7 +149,7 @@ export type ColorScaleOptions = {
 export async function editColorScale(
     page: Page,
     item: Locator,
-    settingType: string,
+    settingType: Setting,
     options: ColorScaleOptions,
 ): Promise<void> {
     // The value cell holds just the clickable color scale preview.

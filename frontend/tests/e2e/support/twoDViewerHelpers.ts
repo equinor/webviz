@@ -1,6 +1,8 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 
+import { GroupType } from "../../../src/modules/_shared/DataProviderFramework/groups/groupTypes";
+
 import { dpfGroup, waitForDpfData } from "./dpfHelpers";
 import {
     RECORDING,
@@ -16,7 +18,7 @@ export const TWO_D_VIEWER = "2D Viewer";
 
 /** The `index`-th view in the 2D Viewer's layer panel. */
 export function twoDView(page: Page, index: number): Locator {
-    return dpfGroup(page, "VIEW", index);
+    return dpfGroup(page, GroupType.VIEW, index);
 }
 
 /**

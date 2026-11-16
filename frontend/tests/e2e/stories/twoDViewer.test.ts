@@ -1,5 +1,7 @@
 import { expect } from "@playwright/test";
 
+import { DataProviderType } from "../../../src/modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
+import { Setting } from "../../../src/modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import {
     addFromMenu,
     browseSettingOption,
@@ -39,8 +41,8 @@ test.use(GPU_RENDERING);
 /** How long the voice leads each narrated action, so speech starts before the cursor moves. */
 const SPEECH_LEAD_MS = 800;
 
-const TIME_STEP_LAYER = "ATTRIBUTE_TIME_STEP_SURFACE";
-const SEISMIC_4D_LAYER = "SEISMIC_4D_SURFACE";
+const TIME_STEP_LAYER = DataProviderType.ATTRIBUTE_TIME_STEP_SURFACE;
+const SEISMIC_4D_LAYER = DataProviderType.SEISMIC_4D_SURFACE;
 
 type SimulationMapView = { name: string; attribute: string; palette?: string; narration: string };
 
@@ -120,9 +122,14 @@ test.describe("2D Viewer", () => {
         await say("From the view's add menu, we add a depth surface layer.", () =>
             addFromMenu(page, dpfAddButton(depthView), ["Layers", "Surfaces", "Depth"]),
         );
-        const depthLayer = dpfLayer(depthView, "DEPTH_SURFACE");
+        const depthLayer = dpfLayer(depthView, DataProviderType.DEPTH_SURFACE);
         await say("And switch the depth attribute to the structural depth surface.", async () => {
-            await selectSettingOption(page, depthLayer, "depthAttribute", "structure_depth_surface (standard result)");
+            await selectSettingOption(
+                page,
+                depthLayer,
+                Setting.DEPTH_ATTRIBUTE,
+                "structure_depth_surface (standard result)",
+            );
             await waitForMap(page);
         });
 
@@ -134,12 +141,12 @@ test.describe("2D Viewer", () => {
                 await waitForMap(page);
             },
         );
-        const faultLayer = dpfLayer(depthView, "FAULT_POLYGONS");
+        const faultLayer = dpfLayer(depthView, DataProviderType.FAULT_POLYGONS);
 
         markStep("Depth map: shared settings");
         await say(
             "Notice that the fault polygons have their own surface name and realization, which in most use cases should match the depth surface.",
-            () => smoothMoveToLocator(page, dpfSetting(faultLayer, "surfaceName")),
+            () => smoothMoveToLocator(page, dpfSetting(faultLayer, Setting.SURFACE_NAME)),
         );
         await say(
             "Instead of keeping them in sync by hand, we use shared settings. A shared setting controls the same setting in every layer below it.",
@@ -152,14 +159,14 @@ test.describe("2D Viewer", () => {
                 await addFromMenu(page, dpfAddButton(dpfPanel(page)), ["Shared Settings", "Realization"]);
             },
         );
-        const sharedRealization = dpfSharedSetting(page, "realization");
-        await expect(dpfSetting(depthLayer, "realization").getByRole("combobox")).toHaveCount(0);
+        const sharedRealization = dpfSharedSetting(page, Setting.REALIZATION);
+        await expect(dpfSetting(depthLayer, Setting.REALIZATION).getByRole("combobox")).toHaveCount(0);
         await say(
             "The controlled settings now show a link icon. Stepping through realizations updates the surface and the faults together.",
             async () => {
-                await smoothMoveToLocator(page, dpfSetting(depthLayer, "realization"));
+                await smoothMoveToLocator(page, dpfSetting(depthLayer, Setting.REALIZATION));
                 for (let i = 0; i < 2; i++) {
-                    await browseSettingOption(page, sharedRealization, "realization");
+                    await browseSettingOption(page, sharedRealization, Setting.REALIZATION);
                     await waitForMap(page);
                     await pace(page, "long");
                 }
@@ -174,31 +181,36 @@ test.describe("2D Viewer", () => {
                 await waitForMap(page);
             },
         );
-        const picksLayer = dpfLayer(depthView, "DRILLED_WELLBORE_PICKS");
+        const picksLayer = dpfLayer(depthView, DataProviderType.DRILLED_WELLBORE_PICKS);
         await say("But no picks show up: there are no well picks for the selected surface.", () => pointAtMap(page));
         await say(
             "So we change the shared surface name to the top of the Therys formation, and the surface, the faults and the picks all follow.",
             async () => {
-                await smoothMoveToLocator(page, dpfSetting(picksLayer, "surfaceName"));
-                await selectSettingOption(page, dpfSharedSetting(page, "surfaceName"), "surfaceName", "Therys Fm. Top");
-                await expect(dpfSetting(picksLayer, "surfaceName")).toContainText("Therys Fm. Top");
+                await smoothMoveToLocator(page, dpfSetting(picksLayer, Setting.SURFACE_NAME));
+                await selectSettingOption(
+                    page,
+                    dpfSharedSetting(page, Setting.SURFACE_NAME),
+                    Setting.SURFACE_NAME,
+                    "Therys Fm. Top",
+                );
+                await expect(dpfSetting(picksLayer, Setting.SURFACE_NAME)).toContainText("Therys Fm. Top");
                 await waitForMap(page);
             },
         );
         await say(
             "Note that the well data in Webviz currently comes from the official well database, S-M-D-A. Well data from F-M-U is not available yet.",
-            () => smoothMoveToLocator(page, dpfSetting(picksLayer, "wellbores")),
+            () => smoothMoveToLocator(page, dpfSetting(picksLayer, Setting.WELLBORES)),
         );
         await pace(page, "long");
         await say("We collapse the well picks to keep the panel tidy.", () => setItemExpanded(page, picksLayer, false));
 
         markStep("Depth map: color scale and contours");
         await say("Clicking a color scale opens the editor. We pick the Viridis palette...", async () => {
-            await editColorScale(page, depthLayer, "depthColorScale", { palette: "Viridis" });
+            await editColorScale(page, depthLayer, Setting.DEPTH_COLOR_SCALE, { palette: "Viridis" });
             await waitForMap(page);
         });
         await say("...and switch on contour lines.", async () => {
-            await smoothClick(page, dpfSetting(depthLayer, "contours").getByRole("switch"));
+            await smoothClick(page, dpfSetting(depthLayer, Setting.CONTOURS).getByRole("switch"));
             await waitForMap(page);
         });
 
@@ -206,14 +218,14 @@ test.describe("2D Viewer", () => {
         await say(
             "Switching the representation to ensemble statistics computes a statistical surface across all realizations. This takes a moment the first time.",
             async () => {
-                await selectSettingOption(page, depthLayer, "representation", "Ensemble Statistics");
+                await selectSettingOption(page, depthLayer, Setting.REPRESENTATION, "Ensemble Statistics");
                 await waitForMap(page);
             },
         );
         await say(
             "Now the standard deviation. Look at the bullseyes: the uncertainty drops towards zero at the wells, where every realization is conditioned to the well picks, and grows away from them.",
             async () => {
-                await selectSettingOption(page, depthLayer, "statisticFunction", "Std");
+                await selectSettingOption(page, depthLayer, Setting.STATISTIC_FUNCTION, "Std");
                 await waitForMap(page);
                 await pointAtMap(page);
             },
@@ -237,7 +249,12 @@ test.describe("2D Viewer", () => {
             () => addFromMenu(page, dpfAddButton(pressureView), ["Layers", "Surfaces", "Uncategorized (Time Step)"]),
         );
         await say("We pick the average pressure...", () =>
-            selectSettingOption(page, dpfLayer(pressureView, TIME_STEP_LAYER), "surfaceAttribute", "average_PRESSURE"),
+            selectSettingOption(
+                page,
+                dpfLayer(pressureView, TIME_STEP_LAYER),
+                Setting.SURFACE_ATTRIBUTE,
+                "average_PRESSURE",
+            ),
         );
         await say("...and rename the view by double-clicking its name.", async () => {
             await renameItem(page, pressureView, "Pressure");
@@ -250,7 +267,12 @@ test.describe("2D Viewer", () => {
             async () => {
                 await addFromMenu(page, dpfAddButton(dpfPanel(page)), ["Shared Settings", "Formation Name"]);
                 await addFromMenu(page, dpfAddButton(dpfPanel(page)), ["Shared Settings", "Time point"]);
-                await selectSettingOption(page, dpfSharedSetting(page, "formationName"), "formationName", "Therys Fm.");
+                await selectSettingOption(
+                    page,
+                    dpfSharedSetting(page, Setting.FORMATION_NAME),
+                    Setting.FORMATION_NAME,
+                    "Therys Fm.",
+                );
             },
         );
         await say(
@@ -258,8 +280,13 @@ test.describe("2D Viewer", () => {
             async () => {
                 await addFromMenu(page, dpfAddButton(dpfPanel(page)), ["Shared Settings", "Surface Name"]);
                 await addFromMenu(page, dpfAddButton(dpfPanel(page)), ["Layers", "Wells", "Picks (Official)"]);
-                await selectSettingOption(page, dpfSharedSetting(page, "surfaceName"), "surfaceName", "Therys Fm. Top");
-                await setItemExpanded(page, dpfLayer(page, "DRILLED_WELLBORE_PICKS"), false);
+                await selectSettingOption(
+                    page,
+                    dpfSharedSetting(page, Setting.SURFACE_NAME),
+                    Setting.SURFACE_NAME,
+                    "Therys Fm. Top",
+                );
+                await setItemExpanded(page, dpfLayer(page, DataProviderType.DRILLED_WELLBORE_PICKS), false);
                 await waitForMap(page);
             },
         );
@@ -271,9 +298,9 @@ test.describe("2D Viewer", () => {
                 const view = twoDView(page, i + 1);
                 await addFromMenu(page, dpfAddButton(view), ["Layers", "Surfaces", "Uncategorized (Time Step)"]);
                 const layer = dpfLayer(view, TIME_STEP_LAYER);
-                await selectSettingOption(page, layer, "surfaceAttribute", spec.attribute);
+                await selectSettingOption(page, layer, Setting.SURFACE_ATTRIBUTE, spec.attribute);
                 if (spec.palette) {
-                    await editColorScale(page, layer, "colorScale", { palette: spec.palette });
+                    await editColorScale(page, layer, Setting.COLOR_SCALE, { palette: spec.palette });
                 }
                 await renameItem(page, view, spec.name);
                 await setItemExpanded(page, view, false);
@@ -286,7 +313,7 @@ test.describe("2D Viewer", () => {
             async () => {
                 await waitForMap(page);
                 for (let i = 0; i < 3; i++) {
-                    await browseSettingOption(page, dpfSharedSetting(page, "timePoint"), "timePoint");
+                    await browseSettingOption(page, dpfSharedSetting(page, Setting.TIME_POINT), Setting.TIME_POINT);
                     await waitForMap(page);
                     await pace(page, "long");
                 }
@@ -326,10 +353,15 @@ test.describe("2D Viewer", () => {
                 await selectSettingOption(
                     page,
                     dpfLayer(observedView, SEISMIC_4D_LAYER),
-                    "representation",
+                    Setting.REPRESENTATION,
                     "Observation",
                 );
-                await selectSettingOption(page, dpfSharedSetting(page, "formationName"), "formationName", "Therys Fm.");
+                await selectSettingOption(
+                    page,
+                    dpfSharedSetting(page, Setting.FORMATION_NAME),
+                    Setting.FORMATION_NAME,
+                    "Therys Fm.",
+                );
                 await setItemExpanded(page, observedView, false);
             },
         );
@@ -344,7 +376,7 @@ test.describe("2D Viewer", () => {
                 await selectSettingOption(
                     page,
                     dpfLayer(simulatedView, SEISMIC_4D_LAYER),
-                    "representation",
+                    Setting.REPRESENTATION,
                     "Ensemble Statistics",
                 );
                 await renameItem(page, simulatedView, "Simulated mean");
@@ -356,7 +388,7 @@ test.describe("2D Viewer", () => {
         await say(
             "Four D differences are centered around zero, so we use a diverging red to blue palette, fixed from minus to plus zero point zero two with the midpoint at zero. Now the same color means the same change in both maps.",
             () =>
-                editColorScale(page, dpfSharedSetting(page, "seismicColorScale"), "seismicColorScale", {
+                editColorScale(page, dpfSharedSetting(page, Setting.SEISMIC_COLOR_SCALE), Setting.SEISMIC_COLOR_SCALE, {
                     gradient: "Diverging",
                     palette: "RdYlBu",
                     range: { min: -0.02, mid: 0, max: 0.02 },
@@ -364,7 +396,7 @@ test.describe("2D Viewer", () => {
         );
         await say("Fault polygons at the top level help us orient ourselves in both maps.", async () => {
             await addFromMenu(page, dpfAddButton(dpfPanel(page)), ["Layers", "Polygons", "Fault Polygons"]);
-            await setItemExpanded(page, dpfLayer(page, "FAULT_POLYGONS"), false);
+            await setItemExpanded(page, dpfLayer(page, DataProviderType.FAULT_POLYGONS), false);
             await waitForMap(page);
         });
 
@@ -373,7 +405,11 @@ test.describe("2D Viewer", () => {
             "Now we step through the time intervals. Where observed and simulated changes line up, the model explains the production response. Where they differ, there is room to improve the history match.",
             async () => {
                 for (let i = 0; i < 2; i++) {
-                    await browseSettingOption(page, dpfSharedSetting(page, "timeInterval"), "timeInterval");
+                    await browseSettingOption(
+                        page,
+                        dpfSharedSetting(page, Setting.TIME_INTERVAL),
+                        Setting.TIME_INTERVAL,
+                    );
                     await waitForMap(page);
                     await pace(page, "long");
                 }
