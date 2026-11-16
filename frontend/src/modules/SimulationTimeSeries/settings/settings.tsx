@@ -66,12 +66,12 @@ import {
     vectorSelectorDataAtom,
 } from "./atoms/derivedAtoms";
 import { selectedEnsembleIdentsAtom, selectedParameterIdentStringAtom } from "./atoms/persistableFixableAtoms";
-import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import {
+    useInvalidVectorsAnnotation,
     useResampleFrequencyWarningAnnotation,
     useSelectedEnsembleIdentsAnnotations,
     useSelectedParameterIdentStringAnnotations,
-    useVectorListQueriesErrorAnnotation,
+    useVectorListQueriesFieldStatus,
 } from "./hooks/settingAnnotationHooks";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
@@ -92,18 +92,20 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const [statisticsSelection, setStatisticsSelection] = useAtom(statisticsSelectionAtom);
     const [selectedVectorTags, setSelectedVectorTags] = useAtom(selectedVectorTagsAtom);
     const [selectedVectorNames, setSelectedVectorNames] = useAtom(selectedVectorNamesAtom);
+    const [invalidVectorTags, setInvalidVectorTags] = React.useState<string[]>([]);
     const vectorSelectorData = useAtomValue(vectorSelectorDataAtom);
     const customVectorDefinitions = useAtomValue(customVectorDefinitionsAtom);
     const statisticsType = useAtomValue(statisticsTypeAtom);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = useAtom(filteredParameterIdentListAtom);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
     const numericAndNonConstantParametersUnion = useAtomValue(numericAndNonConstantParametersUnionAtom);
-    const vectorListQueries = useAtomValue(vectorListQueriesAtom);
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
     const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useAtom(selectedParameterIdentStringAtom);
 
     const vectorSelectorRef = React.useRef<HTMLInputElement>(null);
+
+    const { handlePanelAnnotationsChange } = useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
     // Receive global parameter string and update local state if different
     useSyncSetting({
@@ -114,8 +116,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         value: selectedParameterIdentStr.value,
         setValue: setSelectedParameterIdentStr,
     });
-
-    useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
     function handleSubplotLimitDirectionChange(newLimitDirection: SubplotLimitDirection | null) {
         if (newLimitDirection === null) {
@@ -153,6 +153,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     }
 
     function handleVectorSelectionChange(selection: SmartNodeSelectorSelection) {
+        setInvalidVectorTags(selection.selectedTags.filter((tag) => !tag.isValid).map((tag) => tag.text));
         setSelectedVectorNames(selection.selectedNodes);
         setSelectedVectorTags(selection.selectedTags.map((tag) => tag.text));
     }
@@ -268,12 +269,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
 
     const selectedEnsembleIdentsAnnotations = useSelectedEnsembleIdentsAnnotations();
     const selectedParameterIdentStringAnnotations = useSelectedParameterIdentStringAnnotations();
+    const parameterIdentStringAnnotations = colorRealizationsByParameter ? selectedParameterIdentStringAnnotations : [];
     const resampleFrequencyWarningAnnotation = useResampleFrequencyWarningAnnotation();
-    const vectorListQueriesErrorAnnotation = useVectorListQueriesErrorAnnotation();
+    const vectorListQueriesFieldStatus = useVectorListQueriesFieldStatus(ensembleSet);
+    const invalidVectorsAnnotation = useInvalidVectorsAnnotation(invalidVectorTags);
 
     return (
         <Setting.ScrollArea>
-            <Setting.Panel>
+            <Setting.Panel onAnnotationsChange={handlePanelAnnotationsChange}>
                 <Setting.Section title="Data" defaultOpen>
                     <Setting.Field label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
                         <EnsemblePicker
@@ -284,6 +287,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             onValueChange={handleEnsembleSelectChange}
                         />
                     </Setting.Field>
+                    {vectorListQueriesFieldStatus.warningMessage && (
+                        <Setting.Banner type="warning" title={vectorListQueriesFieldStatus.warningMessage} report />
+                    )}
                     <Setting.Field
                         label={
                             <span className="gap-x-2xs flex items-center">
@@ -293,12 +299,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 </span>
                             </span>
                         }
-                        overlay={
-                            isVectorListQueriesFetching || vectorListQueries.some((query) => query.isFetching)
-                                ? { type: "loading", message: "Loading vectors..." }
-                                : undefined
-                        }
-                        errorAnnotation={vectorListQueriesErrorAnnotation}
+                        overlay={vectorListQueriesFieldStatus.overlay}
+                        annotations={invalidVectorsAnnotation}
                         contentClassName="flex flex-col gap-y-3xs"
                         stacked
                         labelFor={vectorSelectorRef}
@@ -398,7 +400,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                         <Setting.Field
                             label="Color realizations by parameter"
                             stacked
-                            annotations={selectedParameterIdentStringAnnotations}
+                            annotations={parameterIdentStringAnnotations}
                         >
                             <div className="gap-y-xs flex flex-col">
                                 <SwitchCompositions.WithLabel

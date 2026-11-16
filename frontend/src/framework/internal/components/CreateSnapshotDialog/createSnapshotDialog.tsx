@@ -60,7 +60,9 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                 if (!snapshotId) {
                     return;
                 }
-                setSnapshotUrl(buildWorkbenchUrl({ kind: "snapshot", snapshotId, dashboardId: activeDashboardId ?? null }));
+                setSnapshotUrl(
+                    buildWorkbenchUrl({ kind: "snapshot", snapshotId, dashboardId: activeDashboardId ?? null }),
+                );
             })
             .catch((error) => {
                 console.error("Failed to save session:", error);
@@ -148,16 +150,16 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                 onOpenChange={setShowConfirmationDialog}
                 title="Discard changes?"
                 primaryAction={{
-                    label: "Discard",
-                    onClick: handleDiscardChanges,
-                    tone: "danger",
+                    label: "Keep editing",
+                    onClick: () => setShowConfirmationDialog(false),
+                    tone: "neutral",
                     closesDialog: true,
                 }}
                 secondaryActions={[
                     {
-                        label: "Keep editing",
-                        onClick: () => setShowConfirmationDialog(false),
-                        tone: "neutral",
+                        label: "Discard",
+                        onClick: handleDiscardChanges,
+                        tone: "danger",
                         closesDialog: true,
                     },
                 ]}

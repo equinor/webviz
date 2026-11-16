@@ -1,5 +1,6 @@
 import type { InplaceVolumesStatistic_api } from "@api";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { SensitivitySelection } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import type { TableType } from "@modules/_shared/InplaceVolumes/types";
 
 import {
@@ -10,7 +11,9 @@ import {
 import {
     areSelectedTablesComparableAtom,
     areTableDefinitionSelectionsValidAtom,
+    isSensitivityEnsembleSelectionBlockedAtom,
     offeredSelectedIndicesWithValuesAtom,
+    sensitivitySelectionAtom,
 } from "./settings/atoms/derivedAtoms";
 import {
     selectedGroupByIndicesAtom,
@@ -28,6 +31,8 @@ export type SettingsToViewInterface = {
     statisticOptions: InplaceVolumesStatistic_api[];
     statisticsLayout: StatisticsLayout;
     areTableDefinitionSelectionsValid: boolean;
+    sensitivitySelection: SensitivitySelection | null;
+    isSensitivityEnsembleSelectionBlocked: boolean;
 };
 
 export type Interfaces = {
@@ -50,4 +55,6 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     statisticOptions: (get) => get(selectedStatisticOptionsAtom),
     statisticsLayout: (get) => get(selectedStatisticsLayoutAtom),
     areTableDefinitionSelectionsValid: (get) => get(areTableDefinitionSelectionsValidAtom),
+    sensitivitySelection: (get) => get(sensitivitySelectionAtom),
+    isSensitivityEnsembleSelectionBlocked: (get) => get(isSensitivityEnsembleSelectionBlockedAtom),
 };

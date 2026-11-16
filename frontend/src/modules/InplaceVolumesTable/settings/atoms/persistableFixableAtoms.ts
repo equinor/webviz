@@ -13,10 +13,15 @@ import {
     getSelectionForOfferedIndexColumns,
     isSelectedIndicesWithValuesValidSubset,
 } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import {
+    fixupSensitivityCaseSelection,
+    isValidSensitivityCaseSelection,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { makeUniqueTableNamesIntersection } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { isFluidSpecificResultName, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
-import { tableDefinitionsAccessorAtom } from "./derivedAtoms";
+import { availableSensitivityCasesAtom, tableDefinitionsAccessorAtom } from "./derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
 export const selectedEnsembleIdentsAtom = persistableFixableAtom<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>({
@@ -130,6 +135,15 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
     fixupFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
         return fixupUserSelectedIndexValues(value ?? [], availableIndicesWithValues, FixupSelection.SELECT_ALL);
     },
+});
+
+export const selectedSensitivityCasesAtom = persistableFixableAtom<SensitivityCaseIdent[], SensitivityCaseIdent[]>({
+    initialValue: [],
+    // The available cases follow from the ensemble selection, so don't settle on them while it is invalid.
+    computeDependenciesState: ({ get }) => (get(selectedEnsembleIdentsAtom).isValidInContext ? "loaded" : "blocked"),
+    precomputeFunction: ({ get }) => get(availableSensitivityCasesAtom),
+    isValidFunction: ({ value, precomputedValue }) => isValidSensitivityCaseSelection(value, precomputedValue),
+    fixupFunction: ({ value, precomputedValue }) => fixupSensitivityCaseSelection(value, precomputedValue),
 });
 
 // The table definitions are filtered by the selected table names. While they are invalid, there are no options to check

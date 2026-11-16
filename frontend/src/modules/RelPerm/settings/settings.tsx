@@ -10,15 +10,11 @@ import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/Wor
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
-import { Hidden } from "@lib/components/Hidden";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
 import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
-import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { propagateQueryErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -54,7 +50,10 @@ import {
     selectedSatnumsAtom,
     selectedTableNameAtom,
 } from "./atoms/persistableFixableAtoms";
-import { relPermTableDefinitionQueriesAtom, relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
+import { relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
+import { useSelectedTableNameAnnotations } from "./hooks/settingAnnotationHooks";
+import { useEnsemblesWarningMessage } from "./hooks/useEnsemblesWarningMessage";
+import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
 const CURVE_TYPE_LABELS: Record<CurveType, string> = {
     [CurveType.RELPERM]: "Relative permeability",
@@ -91,16 +90,6 @@ const SATURATION_AXIS_HELP = {
 
 const SATNUM_QUERY_DEBOUNCE_MS = 500;
 
-function arraysHaveSameValues(left: string[], right: string[]): boolean {
-    if (left.length !== right.length) {
-        return false;
-    }
-
-    const sortedLeft = [...left].sort();
-    const sortedRight = [...right].sort();
-    return sortedLeft.every((value, index) => value === sortedRight[index]);
-}
-
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
@@ -120,16 +109,20 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [selectedYAxisScale, setSelectedYAxisScale] = useAtom(selectedYAxisScaleAtom);
 
     const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
-    const selectedTableNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedTableNameAtom);
+    const selectedTableNameAnnotations = useSelectedTableNameAnnotations();
     const selectedSaturationAxisNameAnnotations =
         useMakePersistableFixableAtomAnnotations(selectedSaturationAxisNameAtom);
     const selectedCurveNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedCurveNamesAtom);
     const selectedSatnumsAnnotations = useMakePersistableFixableAtomAnnotations(selectedSatnumsAtom);
+    const { handlePanelAnnotationsChange } = useMakeSettingsStatusWriterMessages(
+        statusWriter,
+        ensembleSet,
+        filterEnsembleRealizationsFunc,
+    );
 
     const tableNameQueries = useAtomValue(relPermTableNamesQueriesAtom);
-    const tableDefinitionQueries = useAtomValue(relPermTableDefinitionQueriesAtom);
-    propagateQueryErrorsToStatusWriter(tableNameQueries, statusWriter);
-    propagateQueryErrorsToStatusWriter(tableDefinitionQueries, statusWriter);
+
+    const ensemblesWarningMessage = useEnsemblesWarningMessage(ensembleSet);
 
     const availableTableNames = useAtomValue(availableTableNamesAtom);
     const selectedTableName = useAtomValue(selectedTableNameAtom).value;
@@ -165,8 +158,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         setSelectedEnsembleIdents(ensembleIdents);
     }
 
-    function handleTableNameChange(tableNames: string[]) {
-        setSelectedTableName(tableNames[0] ?? null);
+    function handleTableNameChange(tableName: string | null) {
+        setSelectedTableName(tableName);
     }
 
     function handleSaturationAxisChange(saturationAxisName: string) {
@@ -187,7 +180,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             setSelectedColorBy(ColorBy.SATNUM);
         }
     }
-    const handleSatnumsChangeDebounced = useDebouncedFunction(handleSatnumsChange, SATNUM_QUERY_DEBOUNCE_MS);
+    const [immediateSatnums, setImmediateSatnums] = useDebouncedOnChange(
+        selectedSatnums,
+        handleSatnumsChange,
+        SATNUM_QUERY_DEBOUNCE_MS,
+    );
 
     function handleColorByChange(colorBy: ColorBy | null) {
         if (colorBy === null) {
@@ -215,63 +212,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const tableNamesErrorMessage = tableNameQueries.every((query) => query.isError)
         ? "Could not load tables"
         : undefined;
-    const loadedTableNameSets = tableNameQueries.flatMap((query) => (query.data ? [query.data] : []));
-    const tableNameSetsDiffer =
-        loadedTableNameSets.length > 1 &&
-        loadedTableNameSets.some((tableNames) => !arraysHaveSameValues(tableNames, loadedTableNameSets[0]));
-    const allTableNameQueriesLoaded =
-        selectedEnsembleIdents.length > 0 && loadedTableNameSets.length === selectedEnsembleIdents.length;
-    const commonTableNamesAreMissing = allTableNameQueriesLoaded && availableTableNames.length === 0;
-    // Also show it when a retained table name doesn't match the only available table, so the user can
-    // pick that table - nothing replaces the invalid selection automatically
-    const showTableSelector =
-        availableTableNames.length > 1 ||
-        commonTableNamesAreMissing ||
-        (availableTableNames.length === 1 && selectedTableName !== availableTableNames[0]);
-    const showTableSetting = showTableSelector || Boolean(tableNamesErrorMessage);
-    const tableNameAnnotations = [
-        ...selectedTableNameAnnotations,
-        commonTableNamesAreMissing && {
-            type: "error" as const,
-            message: "Selected ensembles have no common relperm table names.",
-        },
-        tableNameSetsDiffer &&
-            !commonTableNamesAreMissing && {
-                type: "warning" as const,
-                message: "Selected ensembles have different relperm table names. Only common names are available.",
-            },
-    ].filter(Boolean) as SettingAnnotation[];
-    const tableDefinitionsArePending = tableDefinitionQueries.some((query) => query.isFetching);
-    const tableDefinitionsErrorMessage = tableDefinitionQueries.every((query) => query.isError)
-        ? "Could not load table definitions"
-        : undefined;
-
-    for (const [index, query] of tableDefinitionQueries.entries()) {
-        const tableDefinition = query.data;
-        const ensembleIdent = selectedEnsembleIdents[index];
-        if (!tableDefinition || !ensembleIdent) {
-            continue;
-        }
-
-        const tableRealizations = new Set(tableDefinition.realizations);
-        const missingRealizations = filterEnsembleRealizationsFunc(ensembleIdent).filter(
-            function isMissingFromTable(realization) {
-                return !tableRealizations.has(realization);
-            },
-        );
-        if (missingRealizations.length === 0) {
-            continue;
-        }
-
-        const ensembleName = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
-        statusWriter.addWarning(
-            `RelPerm table ${selectedTableName ?? ""} has no data for ${missingRealizations.length} filtered realizations in ${ensembleName}: ${formatRealizationList(missingRealizations)}.`,
-        );
-    }
 
     return (
         <Setting.ScrollArea>
-            <Setting.Panel>
+            <Setting.Panel onAnnotationsChange={handlePanelAnnotationsChange}>
                 <Setting.Section title="Data" defaultOpen>
                     <Setting.Field label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
                         <EnsemblePicker
@@ -282,34 +226,29 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             onValueChange={handleEnsembleSelectionChange}
                         />
                     </Setting.Field>
-                    <Hidden hidden={!showTableSetting}>
-                        <Setting.Field
-                            label="Table"
-                            annotations={tableNameAnnotations}
-                            overlay={
-                                tableNamesArePending ? { type: "loading", message: "Loading vectors..." } : undefined
-                            }
-                        >
-                            <Select
-                                options={makeStringItems(availableTableNames)}
-                                value={selectedTableName ? [selectedTableName] : []}
-                                onValueChange={handleTableNameChange}
-                                filter={availableTableNames.length > 6}
-                                size={1}
-                            />
-                        </Setting.Field>
-                    </Hidden>
+                    {ensemblesWarningMessage && (
+                        <Setting.Banner type="warning" title={ensemblesWarningMessage} report />
+                    )}
+                    <Setting.Field
+                        label="Table"
+                        annotations={selectedTableNameAnnotations}
+                        overlay={
+                            tableNamesArePending
+                                ? { type: "loading", message: "Loading tables..." }
+                                : tableNameQueries.length > 0 && tableNamesErrorMessage
+                                  ? { type: "error", message: tableNamesErrorMessage }
+                                  : undefined
+                        }
+                    >
+                        <Combobox
+                            items={makeStringItems(availableTableNames)}
+                            value={selectedTableName}
+                            onValueChange={handleTableNameChange}
+                            placeholder="Select table..."
+                        />
+                    </Setting.Field>
                 </Setting.Section>
                 <Setting.Section title="Selection">
-                    {(tableDefinitionsArePending || tableDefinitionsErrorMessage) && (
-                        // TODO - Waiting for section overlay. Temp workaround
-                        <Setting.Field
-                            loadingOverlay={tableDefinitionsArePending}
-                            errorOverlay={tableDefinitionsErrorMessage}
-                        >
-                            <div className="h-20" />
-                        </Setting.Field>
-                    )}
                     <Setting.Field label="Curve type">
                         <RadioCompositions.GroupWithLabels
                             options={makeEnumOptions(CURVE_TYPE_LABELS)}
@@ -337,8 +276,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     <Setting.Field label="SatNum" help={SATURATION_AXIS_HELP} annotations={selectedSatnumsAnnotations}>
                         <Combobox
                             items={makeNumberItems(availableSatnums)}
-                            value={selectedSatnums}
-                            onValueChange={handleSatnumsChangeDebounced}
+                            value={immediateSatnums}
+                            onValueChange={setImmediateSatnums}
                             placeholder="Select SATNUMs..."
                             multiple
                         />
@@ -426,12 +365,4 @@ function makeEnumItems<T extends string>(labels: Record<T, string>): ComboboxIte
     return Object.entries(labels).map(function makeEnumItem([value, label]) {
         return { label: label as string, value: value as T };
     });
-}
-
-function formatRealizationList(realizations: number[]): string {
-    const sortedRealizations = [...realizations].sort((left, right) => left - right);
-    const visibleRealizations = sortedRealizations.slice(0, 20);
-    const suffix = sortedRealizations.length > visibleRealizations.length ? ", ..." : "";
-
-    return `${visibleRealizations.join(", ")}${suffix}`;
 }

@@ -29,6 +29,16 @@ export class ViewStatusWriter {
         this._statusController.addMessage(StatusSource.View, { type: StatusMessageType.Warning, ...warning });
     }
 
+    flagActionRequired(actionRequired: StatusMessage | string): void {
+        if (typeof actionRequired === "string") {
+            actionRequired = { message: actionRequired, origin: Origin.MODULE };
+        }
+        this._statusController.addMessage(StatusSource.View, {
+            type: StatusMessageType.ActionRequired,
+            ...actionRequired,
+        });
+    }
+
     setDebugMessage(message: string): void {
         this._statusController.setDebugMessage(StatusSource.View, message);
     }
@@ -53,6 +63,16 @@ export class SettingsStatusWriter {
             warning = { message: warning, origin: Origin.MODULE };
         }
         this._statusController.addMessage(StatusSource.Settings, { type: StatusMessageType.Warning, ...warning });
+    }
+
+    flagActionRequired(actionRequired: StatusMessage | string): void {
+        if (typeof actionRequired === "string") {
+            actionRequired = { message: actionRequired, origin: Origin.MODULE };
+        }
+        this._statusController.addMessage(StatusSource.Settings, {
+            type: StatusMessageType.ActionRequired,
+            ...actionRequired,
+        });
     }
 
     setDebugMessage(message: string): void {

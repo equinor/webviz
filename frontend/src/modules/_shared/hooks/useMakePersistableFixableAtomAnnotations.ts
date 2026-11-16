@@ -21,7 +21,7 @@ export function useMakePersistableFixableAtomAnnotations(atom: PersistableFixabl
                 return [
                     {
                         type: "error",
-                        message: "The persisted value is invalid. Please choose a valid value.",
+                        message: "The saved value is invalid. Please choose a valid value.",
                     },
                 ];
             case Source.TEMPLATE:
