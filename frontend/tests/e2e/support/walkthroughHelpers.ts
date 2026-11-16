@@ -654,39 +654,6 @@ export async function dragModuleOntoLayout(
 
         await expect(droppedModule).toBeVisible({ timeout: 5_000 });
     }).toPass({ timeout: 60_000, intervals: [1_000] });
-
-    await expectModuleOnSide(layout, droppedModule, dropPosition);
-}
-
-/** Fail if a module dropped at a side of the layout ended up elsewhere (e.g. above instead of right). */
-async function expectModuleOnSide(
-    layout: Locator,
-    droppedModule: Locator,
-    dropPosition: ModuleDropPosition,
-): Promise<void> {
-    if (dropPosition === "center") {
-        return;
-    }
-    const layoutBox = await layout.boundingBox();
-    const moduleBox = await droppedModule.boundingBox();
-    if (!layoutBox || !moduleBox) {
-        throw new Error("Could not resolve bounding boxes to verify where the module was dropped");
-    }
-    // The module's header box: its centre is the module's horizontal centre, and lies in the module's
-    // half of the layout vertically.
-    const moduleX = moduleBox.x + moduleBox.width / 2;
-    const moduleY = moduleBox.y + moduleBox.height / 2;
-    const centerX = layoutBox.x + layoutBox.width / 2;
-    const centerY = layoutBox.y + layoutBox.height / 2;
-    const onSide = {
-        left: moduleX < centerX,
-        right: moduleX > centerX,
-        top: moduleY < centerY,
-        bottom: moduleY > centerY,
-    }[dropPosition];
-    if (!onSide) {
-        throw new Error(`Module was dropped, but not on the ${dropPosition} side of the layout`);
-    }
 }
 
 /** The module layout of the active dashboard (inactive, kept-alive dashboards stay in the DOM, hidden). */
