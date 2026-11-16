@@ -12,14 +12,14 @@ import {
     createTextLabelData,
     LabelPositionType,
     type PolygonFeatureProperties,
-    type PolygonVisualizationSettings,
+    type PolygonVisualizationSpec,
     type TextLabelData,
 } from "../DataProviderFramework/visualization/deckgl/polygonUtils";
 
 export type PolygonsLayerProps = {
     id: string;
     data: PolygonData_api[];
-    visualizationSettings?: PolygonVisualizationSettings | null;
+    visualizationSettings?: PolygonVisualizationSpec | null;
 };
 
 export class PolygonsLayer extends CompositeLayer<PolygonsLayerProps> {
@@ -52,18 +52,22 @@ export class PolygonsLayer extends CompositeLayer<PolygonsLayerProps> {
 
     renderLayers(): Layer[] {
         const { visualizationSettings } = this.props;
-        const rgbColor = visualizationSettings?.color ? (parseHex(visualizationSettings.color) as Rgb) : undefined;
+        const strokeRgb = visualizationSettings?.strokeColor
+            ? (parseHex(visualizationSettings.strokeColor) as Rgb)
+            : undefined;
+        const fillRgb = visualizationSettings?.fillColor
+            ? (parseHex(visualizationSettings.fillColor) as Rgb)
+            : strokeRgb;
 
-        // Calculate colors with opacity
-        const lineOpacity = Math.round((visualizationSettings?.lineOpacity ?? 1) * 255);
+        const lineOpacity = Math.round((visualizationSettings?.strokeOpacity ?? 1) * 255);
         const fillOpacity = Math.round((visualizationSettings?.fillOpacity ?? 0.5) * 255);
 
-        const lineColor = rgbColor
-            ? [rgbColor.r * 255, rgbColor.g * 255, rgbColor.b * 255, lineOpacity]
+        const lineColor = strokeRgb
+            ? [strokeRgb.r * 255, strokeRgb.g * 255, strokeRgb.b * 255, lineOpacity]
             : [0, 0, 0, lineOpacity];
 
-        const fillColor = rgbColor
-            ? [rgbColor.r * 255, rgbColor.g * 255, rgbColor.b * 255, fillOpacity]
+        const fillColor = fillRgb
+            ? [fillRgb.r * 255, fillRgb.g * 255, fillRgb.b * 255, fillOpacity]
             : [0, 0, 0, fillOpacity];
 
         const layers: Layer[] = [];
@@ -75,10 +79,10 @@ export class PolygonsLayer extends CompositeLayer<PolygonsLayerProps> {
                     this.getSubLayerProps({
                         id: "polygons",
                         data: this._polygonData,
-                        filled: visualizationSettings?.fill ?? false,
+                        filled: visualizationSettings?.hasFill ?? false,
                         getLineColor: lineColor,
                         getFillColor: fillColor,
-                        lineWidthMinPixels: visualizationSettings?.lineThickness ?? 1,
+                        lineWidthMinPixels: visualizationSettings?.strokeWeight ?? 1,
                         parameters: {
                             depthTest: false,
                         },

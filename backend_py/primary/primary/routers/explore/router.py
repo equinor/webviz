@@ -97,9 +97,6 @@ async def get_ensemble_details(
     stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     standard_results = await case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
 
-    if len(field_identifiers) != 1:
-        raise NotImplementedError("Multiple field identifiers not supported")
-
     fip_regions: List[schemas.FipRegion] = []
     fip_regions_mapping = await case_inspector.get_fip_regions_mapping_async(ensemble_name)
 

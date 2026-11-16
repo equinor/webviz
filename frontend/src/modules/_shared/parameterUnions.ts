@@ -1,9 +1,17 @@
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-export function getContinuousAndNonConstantParameterIdentsInEnsembles(
+import { isVaryingNumericParameter } from "./parameterUtils";
+
+/**
+ * Gets the union of parameters that can be used as numeric axes or correlation inputs.
+ *
+ * Includes varying continuous parameters and varying discrete parameters with numeric values.
+ * String-based discrete parameters and constant parameters are excluded.
+ */
+export function getVaryingNumericParametersIdentsInEnsembles(
     ensembleSet: EnsembleSet,
     selectedEnsembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
 ): ParameterIdent[] {
@@ -14,13 +22,12 @@ export function getContinuousAndNonConstantParameterIdentsInEnsembles(
         if (!ensemble) {
             continue;
         }
-        const continuousAndNonConstantParameters = ensemble
+        const numericAndNonConstantParameters = ensemble
             .getParameters()
             .getParameterArr()
-            .filter((parameter) => parameter.type === ParameterType.CONTINUOUS && !parameter.isConstant);
-        // Add non-duplicate parameters to list - verified by ParameterIdent
+            .filter(isVaryingNumericParameter);
 
-        for (const parameter of continuousAndNonConstantParameters) {
+        for (const parameter of numericAndNonConstantParameters) {
             const parameterIdent = ParameterIdent.fromNameAndGroup(parameter.name, parameter.groupName);
             const isParameterIdentInUnion = parameterIdentsUnion.some((elm) => parameterIdent.equals(elm));
 

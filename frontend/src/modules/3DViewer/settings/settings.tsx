@@ -6,8 +6,9 @@ import { useAtom } from "jotai";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Setting } from "@lib/components/Setting";
 import { usePersistedDataProviderManager } from "@modules/_shared/DataProviderFramework/hooks/usePersistedDataProviderManager";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import { dataProviderManagerAtom, dataProviderStateAtom } from "./atoms/baseAtoms";
 import { fieldIdentifierAtom } from "./atoms/persistableFixableAtoms";
@@ -36,24 +37,29 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             if (!dataProviderManager) {
                 return;
             }
-            dataProviderManager.updateGlobalSetting("fieldId", fieldIdentifier.value);
+            dataProviderManager.updateGlobalSetting("fieldId", fieldIdentifier.value, fieldIdentifier.isValidInContext);
         },
         [fieldIdentifier, dataProviderManager],
     );
 
+    // The effect above passes the field on to the data provider manager, with its validity
     function handleFieldChange(fieldId: string | null) {
         setFieldIdentifier(fieldId);
-        if (!dataProviderManager) {
-            return;
-        }
-        dataProviderManager.updateGlobalSetting("fieldId", fieldId);
     }
 
+    const fieldIdentifierAnnotations = useMakePersistableFixableAtomAnnotations(fieldIdentifierAtom);
+
     return (
-        <div className="h-full flex flex-col gap-1">
-            <CollapsibleGroup title="Field" expanded>
-                <FieldDropdown ensembleSet={ensembleSet} onChange={handleFieldChange} value={fieldIdentifier.value} />
-            </CollapsibleGroup>
+        <div className="gap-y-xs px-xs py-xs flex h-full flex-col">
+            <Setting.Panel>
+                <Setting.Field label="Field" annotations={fieldIdentifierAnnotations}>
+                    <FieldDropdown
+                        ensembleSet={ensembleSet}
+                        onChange={handleFieldChange}
+                        value={fieldIdentifier.value}
+                    />
+                </Setting.Field>
+            </Setting.Panel>
             {dataProviderManager && (
                 <DataProviderManagerWrapper
                     dataProviderManager={dataProviderManager}

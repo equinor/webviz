@@ -16,7 +16,7 @@ export interface TornadoChartTraceData extends Partial<PlotData> {
 export type TornadoBarTraceProps = {
     xValues: number[];
     yValues: string[];
-    customdata: string[];
+    hoverTemplates: string[];
     baseValues: number[];
     selectedBar: SelectedBar | null;
     colors: string[];
@@ -25,11 +25,11 @@ export type TornadoBarTraceProps = {
 };
 
 export const createLowBarTrace = (props: TornadoBarTraceProps): TornadoChartTraceData => {
-    const { xValues, yValues, customdata, baseValues, selectedBar, colors, label, transparency } = props;
+    const { xValues, yValues, hoverTemplates, baseValues, selectedBar, colors, label, transparency } = props;
     return {
         x: xValues,
         y: yValues,
-        customdata: customdata,
+        hovertemplate: hoverTemplates,
 
         base: baseValues,
         text: label,
@@ -53,15 +53,14 @@ export const createLowBarTrace = (props: TornadoBarTraceProps): TornadoChartTrac
             },
             width: 1,
         },
-        hoverinfo: "none",
     };
 };
 export const createHighBarTrace = (props: TornadoBarTraceProps): TornadoChartTraceData => {
-    const { xValues, yValues, customdata, baseValues, selectedBar, colors, label, transparency } = props;
+    const { xValues, yValues, hoverTemplates, baseValues, selectedBar, colors, label, transparency } = props;
     return {
         x: xValues,
         y: yValues,
-        customdata: customdata,
+        hovertemplate: hoverTemplates,
 
         base: baseValues,
         text: label,
@@ -84,7 +83,6 @@ export const createHighBarTrace = (props: TornadoBarTraceProps): TornadoChartTra
             },
             width: 1,
         },
-        hoverinfo: "none",
     };
 };
 
@@ -137,6 +135,36 @@ export const createHighRealizationPointsTrace = (
         },
         hovertemplate:
             "Realization = <b>%{customdata}</b><br>Value=<b>%{x}</b><br>Sensitivity = <b>%{y}</b><extra></extra>",
+        hoverlabel: {
+            bgcolor: "white",
+            font: { size: 12, color: "black" },
+        },
+    };
+};
+
+export const createSensitivityMeanPointsTrace = (
+    xValues: number[],
+    yLabels: string[],
+    meanValues: string[],
+): Partial<PlotData> => {
+    return {
+        x: xValues,
+        y: yLabels,
+        type: "scatter",
+        customdata: meanValues,
+        mode: "markers",
+        name: "Sensitivity Means",
+        showlegend: false,
+        marker: {
+            color: "#111827",
+            size: 10,
+            symbol: "diamond",
+            line: {
+                color: "white",
+                width: 2,
+            },
+        },
+        hovertemplate: "Mean = <b>%{customdata}</b><br>Value = <b>%{x}</b><br>Sensitivity = <b>%{y}</b><extra></extra>",
         hoverlabel: {
             bgcolor: "white",
             font: { size: 12, color: "black" },

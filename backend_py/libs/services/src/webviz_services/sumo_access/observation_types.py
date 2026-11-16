@@ -1,21 +1,12 @@
 from typing import List, Optional
-from enum import Enum
 
 from pydantic import BaseModel
-
-
-class ObservationType(str, Enum):
-    """The observation file in Sumo is a dictionary with these datatypes as keys."""
-
-    SUMMARY = "summary"
-    RFT = "rft"
 
 
 class SummaryVectorDateObservation(BaseModel):
     """A single observation of a summary vector at a specific date."""
 
-    date: str
-    comment: Optional[str] = None
+    timestamp_utc_ms: int
     value: float
     error: float
     label: str
@@ -25,7 +16,6 @@ class SummaryVectorObservations(BaseModel):
     """A collection of observations of a summary vector."""
 
     vector_name: str
-    comment: Optional[str] = None
     observations: List[SummaryVectorDateObservation]
 
 
@@ -33,24 +23,24 @@ class RftObservation(BaseModel):
     """A specific RFT (Repeat Formation Tester) observation.
 
     Attributes:
-        value (float): The measured value of the observation.
-        comment (Optional[str]): An optional comment associated with the observation.
-        error (float): The measurement error associated with the observation.
-        zone (str): The zone or region associated with the observation.
-        md_msl (float): Measured depth from mean sea level.
-        x (float): X utm coordinate of the observation.
-        y (float): Y utm coordinate of the observation.
-        z (float): Z utm coordinate of the observation.
+        value (float): The measured observation value.
+        error (float): The observation error in std.
+        property (str): The property this observation represents, e.g. 'PRESSURE' or 'SWAT'.
+        east (float): East utm coordinate of the observation.
+        north (float): North utm coordinate of the observation.
+        tvd (float): True vertical depth of the observation.
+        md (Optional[float]): Measured depth along the well. Optional.
+        zone (Optional[str]): The zone associated with the observation. Optional.
     """
 
     value: float
-    comment: Optional[str] = None
     error: float
-    zone: str
-    md_msl: float
-    x: float
-    y: float
-    z: float
+    property: str
+    east: float
+    north: float
+    tvd: float
+    md: Optional[float] = None
+    zone: Optional[str] = None
 
 
 class RftObservations(BaseModel):
@@ -59,18 +49,9 @@ class RftObservations(BaseModel):
     Attributes:
         well (str): Unique well identifier
         date (str): Observation date
-        comment (Optional[str]): An optional comment associated with the collection of observations.
         observations (List[RftObservation]): A list of RFT observations associated with this collection.
     """
 
     well: str
     date: str
-    comment: Optional[str] = None
     observations: List[RftObservation]
-
-
-class Observations(BaseModel):
-    """A collection of observations associated with a field/case/ensemble"""
-
-    summary: List[SummaryVectorObservations] = []
-    rft: List[RftObservations] = []

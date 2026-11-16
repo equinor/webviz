@@ -2,27 +2,30 @@
 import type { IntersectedItem, IntersectionCalculator } from "../types/types";
 import { IntersectionItemShape } from "../types/types";
 
-import { BoundingSphere2D } from "./BoundingSphere2D";
-
 export interface PointIntersectedItem extends IntersectedItem {
     shape: IntersectionItemShape.POINT;
 }
 
 export class PointIntersectionCalculator implements IntersectionCalculator {
-    private _boundingSphere: BoundingSphere2D;
+    private _point: number[];
+    private _getMargin: () => number;
 
-    constructor(point: number[], margin: number = 10) {
-        this._boundingSphere = new BoundingSphere2D(point, margin);
+    constructor(point: number[], getMargin: () => number = () => 10) {
+        this._point = point;
+        this._getMargin = getMargin;
     }
 
     calcIntersection(point: number[]): PointIntersectedItem | null {
-        if (!this._boundingSphere.contains(point)) {
+        const margin = this._getMargin();
+        const dx = point[0] - this._point[0];
+        const dy = point[1] - this._point[1];
+        if (dx * dx + dy * dy > margin * margin) {
             return null;
         }
 
         return {
             shape: IntersectionItemShape.POINT,
-            point: this._boundingSphere.getCenter(),
+            point: this._point,
         };
     }
 }

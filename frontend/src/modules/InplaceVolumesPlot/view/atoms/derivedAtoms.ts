@@ -1,6 +1,8 @@
 import { atom } from "jotai";
 
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import type { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumes/queryHooks";
 import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
@@ -38,8 +40,13 @@ export const groupByIndicesAtom = atom((get) => {
         groupByIndices.push(colorBy);
     }
 
-    // Only request selectorColumns when plotting bar plots
-    if (selectorColumn !== null && plotType === PlotType.BAR && validIndexColumns.includes(selectorColumn)) {
+    // Only request selectorColumns when plotting bar plots - and only once, as it may also be the subplot or color column
+    if (
+        selectorColumn !== null &&
+        plotType === PlotType.BAR &&
+        validIndexColumns.includes(selectorColumn) &&
+        !groupByIndices.includes(selectorColumn)
+    ) {
         groupByIndices.push(selectorColumn);
     }
     return groupByIndices;
@@ -47,11 +54,13 @@ export const groupByIndicesAtom = atom((get) => {
 
 export const ensembleIdentsWithRealizationsAtom = atom((get) => {
     const filter = get(filterAtom);
-    const ensemblIdents = filter?.ensembleIdents ?? [];
+    const ensembleIdents = filter?.ensembleIdents ?? [];
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
+    const regularEnsembleIdents = filterEnsembleIdentsByType(ensembleIdents, RegularEnsembleIdent);
+
     const ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[] = [];
-    for (const ensembleIdent of ensemblIdents) {
+    for (const ensembleIdent of regularEnsembleIdents) {
         ensembleIdentsWithRealizations.push({
             ensembleIdent,
             realizations: [...validEnsembleRealizationsFunction(ensembleIdent)],

@@ -1,9 +1,10 @@
 import React from "react";
 
-import { clamp } from "lodash";
+import { clamp } from "lodash-es";
 
 import { ColorSelect } from "@lib/components/ColorSelect";
-import { Input } from "@lib/components/Input";
+import { Field } from "@lib/components/Field";
+import { NumberInput } from "@lib/components/NumberInput";
 import { Slider } from "@lib/components/Slider";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -21,9 +22,15 @@ type InternalValueType = SettingTypeDefinitions[Setting.FLOW_FILTER]["internalVa
 type ExternalValueType = SettingTypeDefinitions[Setting.FLOW_FILTER]["externalValue"];
 type ValueRangeType = SettingTypeDefinitions[Setting.FLOW_FILTER]["valueConstraints"];
 
-export class FlowFilterSetting
-    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
-{
+function isPhaseValueValid(value: number, maxValue: number): boolean {
+    return value === clamp(value, 0, maxValue);
+}
+
+export class FlowFilterSetting implements CustomSettingImplementation<
+    InternalValueType,
+    ExternalValueType,
+    ValueRangeType
+> {
     valueConstraintsIntersectionReducerDefinition = {
         reducer: (accumulator: ValueRangeType, valueConstraints: ValueRangeType, index: number) => {
             if (index === 0) {
@@ -113,12 +120,11 @@ export class FlowFilterSetting
         }
 
         return (
-            value.production.oil.value === clamp(value.production.oil.value, 0, valueConstraints.production.oil) &&
-            value.production.gas.value === clamp(value.production.gas.value, 0, valueConstraints.production.gas) &&
-            value.production.water.value ===
-                clamp(value.production.water.value, 0, valueConstraints.production.water) &&
-            value.injection.gas.value === clamp(value.injection.gas.value, 0, valueConstraints.injection.gas) &&
-            value.injection.water.value === clamp(value.injection.water.value, 0, valueConstraints.injection.water)
+            isPhaseValueValid(value.production.oil.value, valueConstraints.production.oil) &&
+            isPhaseValueValid(value.production.gas.value, valueConstraints.production.gas) &&
+            isPhaseValueValid(value.production.water.value, valueConstraints.production.water) &&
+            isPhaseValueValid(value.injection.gas.value, valueConstraints.injection.gas) &&
+            isPhaseValueValid(value.injection.water.value, valueConstraints.injection.water)
         );
     }
 
@@ -186,7 +192,7 @@ export class FlowFilterSetting
             const divRef = React.useRef<HTMLDivElement>(null);
             const divSize = useElementSize(divRef);
 
-            const MIN_DIV_WIDTH = 250;
+            const MIN_DIV_WIDTH = 350;
             const inputVisible = divSize.width >= MIN_DIV_WIDTH;
 
             function makeDefaultValue() {
@@ -275,9 +281,9 @@ export class FlowFilterSetting
 
             return (
                 <div
-                    className="grid gap-y-1 gap-x-2 items-center"
+                    className="gap-x-2xs gap-y-3xs grid items-center"
                     ref={divRef}
-                    style={{ gridTemplateColumns: inputVisible ? "24px 40px 3fr 1fr" : "24px 40px auto" }}
+                    style={{ gridTemplateColumns: inputVisible ? "24px 40px 1fr 6rem " : "24px 40px auto" }}
                 >
                     <div
                         className={resolveClassNames("font-semibold", {
@@ -292,30 +298,51 @@ export class FlowFilterSetting
                         maxValue={props.valueConstraints ? props.valueConstraints.production.oil : 0}
                         value={props.value ? props.value.production.oil.value : 0}
                         color={props.value ? props.value.production.oil.color : FLOW_COLORS.oil_production}
+                        invalid={
+                            !!props.value &&
+                            !!props.valueConstraints &&
+                            !isPhaseValueValid(props.value.production.oil.value, props.valueConstraints.production.oil)
+                        }
                         onValueChange={(newValue) => handleValueChange("production", "oil", newValue)}
                         onColorChange={(newColor) => handleColorChange("production", "oil", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                     <SliderNumberSettingComponent
                         label="Gas"
                         maxValue={props.valueConstraints ? props.valueConstraints.production.gas : 0}
                         value={props.value ? props.value.production.gas.value : 0}
                         color={props.value ? props.value.production.gas.color : FLOW_COLORS.gas_production}
+                        invalid={
+                            !!props.value &&
+                            !!props.valueConstraints &&
+                            !isPhaseValueValid(props.value.production.gas.value, props.valueConstraints.production.gas)
+                        }
                         onValueChange={(newValue) => handleValueChange("production", "gas", newValue)}
                         onColorChange={(newColor) => handleColorChange("production", "gas", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                     <SliderNumberSettingComponent
                         label="Water"
                         maxValue={props.valueConstraints ? props.valueConstraints.production.water : 0}
                         value={props.value ? props.value.production.water.value : 0}
                         color={props.value ? props.value.production.water.color : FLOW_COLORS.water_production}
+                        invalid={
+                            !!props.value &&
+                            !!props.valueConstraints &&
+                            !isPhaseValueValid(
+                                props.value.production.water.value,
+                                props.valueConstraints.production.water,
+                            )
+                        }
                         onValueChange={(newValue) => handleValueChange("production", "water", newValue)}
                         onColorChange={(newColor) => handleColorChange("production", "water", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                     <div
-                        className={resolveClassNames("font-semibold mt-2", {
+                        className={resolveClassNames("mt-3xs font-semibold", {
                             "col-span-4": inputVisible,
                             "col-span-3": !inputVisible,
                         })}
@@ -327,18 +354,30 @@ export class FlowFilterSetting
                         maxValue={props.valueConstraints ? props.valueConstraints.injection.water : 0}
                         value={props.value ? props.value.injection.water.value : 0}
                         color={props.value ? props.value.injection.water.color : FLOW_COLORS.water_injection}
+                        invalid={
+                            !!props.value &&
+                            !!props.valueConstraints &&
+                            !isPhaseValueValid(props.value.injection.water.value, props.valueConstraints.injection.water)
+                        }
                         onValueChange={(newValue) => handleValueChange("injection", "water", newValue)}
                         onColorChange={(newColor) => handleColorChange("injection", "water", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                     <SliderNumberSettingComponent
                         label="Gas"
                         maxValue={props.valueConstraints ? props.valueConstraints.injection.gas : 0}
                         value={props.value ? props.value.injection.gas.value : 0}
                         color={props.value ? props.value.injection.gas.color : FLOW_COLORS.gas_injection}
+                        invalid={
+                            !!props.value &&
+                            !!props.valueConstraints &&
+                            !isPhaseValueValid(props.value.injection.gas.value, props.valueConstraints.injection.gas)
+                        }
                         onValueChange={(newValue) => handleValueChange("injection", "gas", newValue)}
                         onColorChange={(newColor) => handleColorChange("injection", "gas", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                 </div>
             );
@@ -351,9 +390,11 @@ type SliderNumberSettingProps = {
     maxValue: number;
     value: number;
     color: string;
+    invalid?: boolean;
     onValueChange: (newValue: number) => void;
     onColorChange: (newColor: string) => void;
     inputVisible: boolean;
+    disabled?: boolean;
 };
 
 function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
@@ -375,7 +416,11 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
     const debouncedOnValueChange = useDebouncedFunction(onValueChange, 500);
 
     const handleSliderChange = React.useCallback(
-        function handleSliderChange(_: any, value: number | number[]) {
+        function handleSliderChange(value: number | readonly number[], eventDetails: { reason: string }) {
+            // Bounds changes make the slider emit a clamped value; ignore it so a retained out-of-range
+            // threshold stays visible (and invalid) until the user edits it
+            if (eventDetails.reason === "clamp-value") return;
+
             const newValue = Array.isArray(value) ? value[0] : value;
             setLocalValue(newValue);
             debouncedOnValueChange(newValue);
@@ -384,8 +429,8 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
     );
 
     const handleInputChange = React.useCallback(
-        function handleInputChange(value: string) {
-            let numericValue = Number(value) * 1000;
+        function handleInputChange(value: number | null) {
+            let numericValue = (value ?? 0) * 1000;
             const allowedValues = Array.from({ length: Math.floor((max - min) / step) + 1 }, (_, i) => min + i * step);
             numericValue = allowedValues.reduce((prev, curr) =>
                 Math.abs(curr - numericValue) < Math.abs(prev - numericValue) ? curr : prev,
@@ -399,29 +444,40 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
 
     return (
         <>
-            <ColorSelect value={props.color} onChange={props.onColorChange} dense />
-            <div className="text-sm">{props.label}</div>
+            <ColorSelect
+                value={props.color}
+                onValueChange={props.onColorChange}
+                size="small"
+                compact
+                variant="ghost"
+                disabled={props.disabled}
+            />
+            <div className="text-body-sm">{props.label}</div>
             <Slider
+                layoutClassName="grow"
+                size="small"
                 min={min}
                 max={max}
-                onChange={handleSliderChange}
+                onValueChange={handleSliderChange}
                 value={localValue}
                 valueLabelDisplay="auto"
-                valueLabelFormat={(val) => formatNumber(val)}
+                valueLabelFormat={(val: number) => formatNumber(val)}
                 step={step}
-                track="inverted"
-                color=""
+                inverted
+                disabled={props.disabled}
             />
             {props.inputVisible && (
-                <Input
-                    type="number"
-                    value={localValue / 1000}
-                    min={min / 1000}
-                    max={max / 1000}
-                    onValueChange={handleInputChange}
-                    endAdornment="K"
-                    className="min-w-20"
-                />
+                <Field.Root inline invalid={props.invalid}>
+                    <NumberInput
+                        size="small"
+                        value={localValue / 1000}
+                        min={min / 1000}
+                        max={max / 1000}
+                        onValueChange={handleInputChange}
+                        endAdornment="K"
+                        disabled={props.disabled}
+                    />
+                </Field.Root>
             )}
         </>
     );

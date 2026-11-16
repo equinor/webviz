@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("/seismic_cube_meta_list/")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.LONG, result_version=1)
 async def get_seismic_cube_meta_list(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),

@@ -2,7 +2,7 @@ import { atom } from "jotai";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { getEnsembleIdentsFromStrings } from "@framework/utils/ensembleIdentUtils";
-import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
+import { getVaryingNumericParametersIdentsInEnsembles } from "@modules/_shared/parameterUnions";
 
 import { receivedChannelAtom } from "./baseAtoms";
 
@@ -20,8 +20,8 @@ export const availableParameterIdentsAtom = atom((get) => {
         (content) => content.metaData.ensembleIdentString,
     );
 
-    // Get parameters that are continuous and non-constant across the identified ensembles
+    // Get parameters that are numeric and non-constant across the identified ensembles
     const ensembleSet = get(EnsembleSetAtom);
     const ensembleIdents = getEnsembleIdentsFromStrings(ensembleIdentStrings);
-    return getContinuousAndNonConstantParameterIdentsInEnsembles(ensembleSet, ensembleIdents);
+    return getVaryingNumericParametersIdentsInEnsembles(ensembleSet, ensembleIdents);
 });

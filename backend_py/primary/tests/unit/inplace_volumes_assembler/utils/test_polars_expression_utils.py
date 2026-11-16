@@ -2,6 +2,7 @@ import numpy as np
 import polars as pl
 from webviz_services.inplace_volumes_table_assembler._utils.polars_expression_utils import (
     create_calculated_volume_column_expressions,
+    create_facies_fraction_expression,
     create_property_column_expressions,
     create_named_expression_with_nan_for_inf,
 )
@@ -189,3 +190,59 @@ def test_create_calculated_volume_column_expressions_partial_columns() -> None:
 
     assert len(expressions) == 1
     assert str(expressions[0]) == str(expected_expression)
+
+
+def test_create_facies_fraction_expression_basic() -> None:
+    """FACIES_FRACTION = BULK / sum(BULK).over(partition_columns)"""
+    df = pl.DataFrame(
+        {
+            "REAL": [0, 0, 0, 0, 1, 1, 1, 1],
+            "ZONE": ["A", "A", "B", "B", "A", "A", "B", "B"],
+            "FACIES": ["f1", "f2", "f1", "f2", "f1", "f2", "f1", "f2"],
+            "BULK": [10.0, 30.0, 40.0, 60.0, 20.0, 20.0, 25.0, 75.0],
+        }
+    )
+
+    expr = create_facies_fraction_expression(df.columns, ["REAL", "ZONE"])
+    assert expr is not None
+
+    result = df.with_columns(expr)
+    fractions = result["FACIES_FRACTION"].to_list()
+
+    # Per-partition denominators:
+    # (REAL=0, ZONE=A) -> 10+30=40; (REAL=0, ZONE=B) -> 100
+    # (REAL=1, ZONE=A) -> 40;       (REAL=1, ZONE=B) -> 100
+    assert fractions == [10 / 40, 30 / 40, 40 / 100, 60 / 100, 20 / 40, 20 / 40, 25 / 100, 75 / 100]
+
+
+def test_create_facies_fraction_expression_missing_bulk() -> None:
+    expr = create_facies_fraction_expression(["REAL", "ZONE", "FACIES"], ["REAL", "ZONE"])
+    assert expr is None
+
+
+def test_create_facies_fraction_expression_missing_facies() -> None:
+    expr = create_facies_fraction_expression(["REAL", "ZONE", "BULK"], ["REAL", "ZONE"])
+    assert expr is None
+
+
+def test_create_facies_fraction_expression_empty_partition() -> None:
+    expr = create_facies_fraction_expression(["REAL", "FACIES", "BULK"], [])
+    assert expr is None
+
+
+def test_create_facies_fraction_expression_handles_zero_denominator() -> None:
+    df = pl.DataFrame(
+        {
+            "REAL": [0, 0],
+            "FACIES": ["f1", "f2"],
+            "BULK": [0.0, 0.0],
+        }
+    )
+    expr = create_facies_fraction_expression(df.columns, ["REAL"])
+    assert expr is not None
+
+    result = df.with_columns(expr)
+    fractions = result["FACIES_FRACTION"].to_list()
+
+    # 0/0 -> NaN (division), inf guarded by create_named_expression_with_nan_for_inf
+    assert all(np.isnan(v) for v in fractions)

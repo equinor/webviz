@@ -11,8 +11,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useActiveDashboard } from "../ActiveDashboardBoundary";
 
 import { EmptySettingsPlaceholder } from "./private-components/emptySettingsPlaceholder";
-import { ModuleSettings } from "./private-components/moduleSettings";
 import { ModuleSettingsHeader } from "./private-components/moduleSettingsHeader";
+import { ModuleSettingsStack } from "./private-components/moduleSettingsStack";
 import { ModuleSyncSettings } from "./private-components/moduleSyncSettings";
 
 enum DrawerContent {
@@ -32,7 +32,6 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
     const [drawerContent, setDrawerContent] = React.useState<DrawerContent>(DrawerContent.ModuleSettings);
 
     const dashboard = useActiveDashboard();
-    const moduleInstances = dashboard.getModuleInstances();
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
     const activeModuleInstance = activeModuleInstanceId ? dashboard.getModuleInstance(activeModuleInstanceId) : null;
 
@@ -53,10 +52,7 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
     }
 
     return (
-        <div
-            className={resolveClassNames("h-full", isCollapsed ? "bg-slate-100" : "bg-white")}
-            style={{ boxShadow: "4px 0px 4px 1px rgba(0, 0, 0, 0.05)" }}
-        >
+        <div className="bg-surface flex h-full flex-col overflow-hidden">
             <ModuleSettingsHeader
                 activeTab={drawerContent}
                 availableTabs={{
@@ -83,13 +79,11 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
                 <div
                     className={resolveClassNames(
                         !isCollapsed && drawerContent === DrawerContent.ModuleSettings ? "flex flex-col" : "hidden",
-                        "h-full",
+                        "min-h-0 flex-1",
                         "w-full",
                     )}
                 >
-                    {moduleInstances.map((instance) => (
-                        <ModuleSettings key={instance.getId()} workbench={props.workbench} moduleInstance={instance} />
-                    ))}
+                    <ModuleSettingsStack workbench={props.workbench} />
                     {!activeModuleInstanceId && <EmptySettingsPlaceholder text="No module selected" />}
                 </div>
             </>

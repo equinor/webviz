@@ -18,9 +18,9 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 import { useActiveSession } from "../../ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
+import { useDashboard } from "../../DashboardContext";
 import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
@@ -32,9 +32,10 @@ type ModuleSettingsProps = {
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     const workbenchSession = useActiveSession();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
-    const dashboard = useActiveDashboard();
+    const { dashboard, isActive: isActiveDashboard } = useDashboard();
 
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
+    const isVisible = isActiveDashboard && activeModuleInstanceId === props.moduleInstance.getId();
 
     const moduleInstanceLifecycleState = useModuleInstanceTopicValue(
         props.moduleInstance,
@@ -59,9 +60,12 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                 ? "Initializing..."
                 : "Resetting...";
         return (
-            <div className="h-full w-full flex flex-col justify-center items-center m-2">
+            <div
+                className="mx-2xs my-2xs h-full w-full flex-col items-center justify-center"
+                style={{ display: isVisible ? "flex" : "none" }}
+            >
                 <CircularProgress />
-                <div className="mt-4">{text}</div>
+                <div className="mt-xs">{text}</div>
             </div>
         );
     }
@@ -71,9 +75,9 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         if (errorObject) {
             return (
                 <div
-                    className="text-red-600 m-2"
+                    className="mx-2xs my-2xs text-danger-subtle"
                     style={{
-                        display: activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
+                        display: isVisible ? "flex" : "none",
                     }}
                 >
                     This module instance has encountered an error. Please see its view for more details.
@@ -85,11 +89,11 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     function makeContent() {
         if (moduleInstanceSettingsStateInvalid) {
             return (
-                <div className="flex flex-col gap-4 h-full w-full justify-center items-center">
-                    <div className="text-red-600 m-2 text-center">
-                        The persisted settings for this module&apos;s settings are invalid and could not be applied.
-                        They have most likely been outdated by a module update. You can reset the module to its default
-                        values to continue using it.
+                <div className="gap-x-xs flex h-full w-full flex-col items-center justify-center">
+                    <div className="my-2xs text-danger-subtle text-center">
+                        The saved settings state for this module is invalid and could not be applied. It has most likely
+                        been outdated by a module update. You can reset the module to its default values to continue
+                        using it.
                     </div>
                     <Button onClick={() => props.moduleInstance.resetInvalidPersistedFlags()} variant="contained">
                         Reset module
@@ -116,10 +120,11 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                 <Provider store={atomStore}>
                     <HydrateQueryClientAtom>
                         <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
+                            {/* eslint-disable-next-line @eslint-react/static-components -- Legacy */}
                             <Settings
                                 settingsContext={props.moduleInstance.getContext()}
                                 workbenchSession={props.workbench.getSessionManager().getActiveSession()}
-                                workbenchServices={props.workbench.getWorkbenchServices()}
+                                syncSettingsService={dashboard.getSyncSettingsService()}
                                 workbenchSettings={props.workbench
                                     .getSessionManager()
                                     .getActiveSession()
@@ -133,20 +138,16 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         );
     }
 
+    // eslint-disable-next-line @eslint-react/static-components -- Legacy
     const Settings = props.moduleInstance.getSettingsFC();
     return (
         <div
             key={props.moduleInstance.getId()}
-            className={resolveClassNames(
-                activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
-                "flex-col h-full w-full relative grow",
-            )}
+            className={resolveClassNames(isVisible ? "flex flex-col" : "hidden", "relative h-full min-h-0 w-full grow")}
             style={{ contain: "content" }}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
-                <div className="flex flex-col gap-4 overflow-auto grow">
-                    <div className="p-2 grow">{makeContent()}</div>
-                </div>
+                <div className="flex min-h-0 grow flex-col">{makeContent()}</div>
             </ErrorBoundary>
         </div>
     );

@@ -1,5 +1,5 @@
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { zipWith } from "lodash";
+import { zipWith } from "lodash-es";
 
 import type { WellboreTrajectory_api } from "@api";
 

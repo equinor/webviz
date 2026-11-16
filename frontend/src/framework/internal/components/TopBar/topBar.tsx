@@ -1,43 +1,59 @@
 import React from "react";
 
-import { Icon, Typography } from "@equinor/eds-core-react";
+import { Icon } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
-import { Dropdown, MenuButton } from "@mui/base";
 import {
     AddLink,
+    Apps,
     ArrowDropDown,
-    Category,
-    Close,
+    ChevronRight,
+    DarkMode,
+    DensitySmall,
+    DeveloperMode,
     Edit,
     Fullscreen,
     FullscreenExit,
+    Home,
+    Info,
     Link,
     Lock,
+    MoreVert,
+    OpenInNew,
     Refresh,
     Save,
     SaveAs,
 } from "@mui/icons-material";
 
-import FmuLogo from "@assets/fmu.svg";
+import { FmuLogo } from "@assets/FmuLogo";
+import SumoLogo from "@assets/sumo.svg";
 
-import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, useGuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
 import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/core/PersistenceOrchestrator";
+import { useUserSettings } from "@framework/internal/providers/UserSettingsProvider";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import type { ButtonProps } from "@lib/components/Button/button";
+import { Button, type ButtonProps } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
-import { Menu } from "@lib/components/Menu";
-import { MenuItem } from "@lib/components/MenuItem";
+import { HasChangesIndicator } from "@lib/components/HasChangesIndicator";
+import { MenuCompositions } from "@lib/components/Menu/compositions";
+import type { MenuItem } from "@lib/components/Menu/compositions/types";
+import { Popover } from "@lib/components/Popover";
+import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
+import { Heading, Paragraph } from "@lib/components/Typography/compositions";
+import { isDevMode } from "@lib/utils/devMode";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { DarkModeButton } from "../DarkModeButton";
+import { DensityModeToggle } from "../DensityModeToggle/densityModeToggle";
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 import { LoginButton } from "../LoginButton";
+import { FeedbackDialog } from "../StartPage/private-components/feedbackModal";
+import { ToggleDevToolsButton } from "../ToggleDevToolsButton";
 
 export type TopBarProps = {
     workbench: Workbench;
@@ -55,42 +71,184 @@ export function TopBar(props: TopBarProps): React.ReactNode {
         <>
             <div
                 className={resolveClassNames(
-                    "p-0.5 border-b-2 border-slate-200 z-50 shadow-lg flex flex-row gap-12 px-4 pl-6 items-center min-h-16",
+                    "border-neutral-subtle shadow-elevation-raised gap-x-sm py-2xs px-xs flex flex-row items-center border-b-2",
                     {
-                        "bg-white": hasActiveSession,
+                        "bg-surface": hasActiveSession,
                         "bg-transparent": !hasActiveSession,
                     },
                 )}
             >
+                <FmuAppsButton />
                 <LogoWithText />
-                <div className="flex gap-2 items-center grow min-w-0">
+                <Separator orientation="vertical" />
+                <div className="gap-x-xs flex min-w-0 grow items-center">
+                    <ReturnToStartPageButton workbench={props.workbench} />
                     {hasActiveSession ? (
                         <>
+                            <ChevronRight />
                             <Title workbench={props.workbench} />
                             <TopBarButtons workbench={props.workbench} />
                         </>
                     ) : (
                         <div className="grow" />
                     )}
-                    <TopBarDivider />
+                    <Separator orientation="vertical" />
+                    <DisplayOptions workbench={props.workbench} />
+                    <Separator orientation="vertical" />
+                    <FullscreenToggleButton />
+                    <Separator orientation="vertical" />
+                    <FeedbackDialog iconOnly workbench={props.workbench} />
                     <LoginButton showText={false} />
                 </div>
             </div>
         </>
     );
 }
+
+function FmuAppsButton(): React.ReactNode {
+    return (
+        <Popover.Root>
+            <Tooltip content="FMU Apps" side="bottom">
+                <Popover.Trigger variant="ghost" tone="accent" iconOnly>
+                    <Apps fontSize="small" />
+                </Popover.Trigger>
+            </Tooltip>
+            <Popover.Popup side="bottom">
+                <Popover.Content as="div">
+                    <Button.AsLink variant="ghost" tone="accent" target="_blank" href="https://sumo.fmu.equinor.com/">
+                        <div className="gap-2xs flex flex-col items-center">
+                            <img src={SumoLogo} className="h-5 w-5" />
+                            <span>
+                                Sumo <OpenInNew />
+                            </span>
+                        </div>
+                    </Button.AsLink>
+                    <Button.AsLink variant="ghost" tone="accent" target="_blank" href="https://fmu.equinor.com/">
+                        <div className="gap-2xs flex flex-col items-center">
+                            <FmuLogo className="h-5 w-5" />
+                            <span>
+                                FMU Hub <OpenInNew />
+                            </span>
+                        </div>
+                    </Button.AsLink>
+                </Popover.Content>
+            </Popover.Popup>
+        </Popover.Root>
+    );
+}
+
 function LogoWithText(): React.ReactNode {
     return (
-        <div className="flex flex-row items-center gap-4">
-            <img src={FmuLogo} alt="FMU Analysis logo" className="w-8 h-8" />
-            <h1 className="text-md text-slate-800 whitespace-nowrap">FMU Analysis</h1>
-            <div
-                className="bg-orange-600 text-white p-1 rounded-sm text-xs text-center cursor-help shadow-sm"
-                title="NOTE: This application is still under heavy development and bugs are to be expected. Please help us improve Webviz by reporting any undesired behaviour either on Slack or Yammer."
-            >
-                BETA
-            </div>
+        <div className="gap-x-sm flex flex-nowrap items-center">
+            <Tooltip content="Reload and go to start page" side="bottom" delay="long">
+                <a
+                    href="/"
+                    aria-label="Reload and go to start page"
+                    className="gap-x-sm flex cursor-pointer flex-nowrap items-center"
+                >
+                    <FmuLogo className="h-8 w-8" />
+                    <Heading as="h6" weight="bolder" layoutClassName="whitespace-nowrap hidden lg:block">
+                        FMU Analysis
+                    </Heading>
+                </a>
+            </Tooltip>
         </div>
+    );
+}
+
+function FullscreenToggleButton(): React.ReactNode {
+    const [isFullscreen, toggleFullscreen] = useBrowserFullscreen();
+
+    const fullscreenButtonTitle = isFullscreen ? "Exit fullscreen (F11)" : "Enter fullscreen (F11)";
+
+    return (
+        <Tooltip content={fullscreenButtonTitle} side="bottom">
+            <TopBarButton title={fullscreenButtonTitle} onClick={toggleFullscreen}>
+                {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
+            </TopBarButton>
+        </Tooltip>
+    );
+}
+
+type DisplayOptionsProps = {
+    workbench: Workbench;
+};
+
+/**
+ * Dark mode, dense mode and (in dev builds) the dev tools toggle. Shown as individual buttons on wide
+ * viewports; below the `xl` breakpoint they collapse into a single dropdown menu.
+ */
+function DisplayOptions(props: DisplayOptionsProps): React.ReactNode {
+    const { settings, setColorScheme, setDensity } = useUserSettings();
+    const [devToolsVisible, setDevToolsVisible] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.DevToolsVisible,
+    );
+
+    const isDarkMode = settings.colorScheme === "dark";
+    const isDenseMode = settings.density === "comfortable";
+    const showDevTools = isDevMode();
+
+    function toggleDarkMode() {
+        setColorScheme(isDarkMode ? "light" : "dark");
+    }
+
+    function toggleDenseMode() {
+        setDensity(isDenseMode ? "spacious" : "comfortable");
+    }
+
+    function handleMenuAction(actionId: string) {
+        if (actionId === "dark-mode") {
+            toggleDarkMode();
+        } else if (actionId === "dense-mode") {
+            toggleDenseMode();
+        } else if (actionId === "dev-tools") {
+            setDevToolsVisible(!devToolsVisible);
+        }
+    }
+
+    const menuItems: MenuItem[] = [
+        {
+            id: "dark-mode",
+            label: "Dark mode",
+            icon: <DarkMode />,
+            checked: isDarkMode,
+        },
+        {
+            id: "dense-mode",
+            label: "Dense mode",
+            icon: <DensitySmall />,
+            checked: isDenseMode,
+        },
+    ];
+
+    if (showDevTools) {
+        menuItems.push(
+            { type: "divider" },
+            {
+                id: "dev-tools",
+                label: "Dev tools",
+                icon: <DeveloperMode />,
+                checked: devToolsVisible,
+            },
+        );
+    }
+
+    return (
+        <>
+            <div className="gap-x-xs hidden items-center xl:flex">
+                <DarkModeButton />
+                <DensityModeToggle />
+                <ToggleDevToolsButton guiMessageBroker={props.workbench.getGuiMessageBroker()} />
+            </div>
+            <div className="xl:hidden">
+                <MenuCompositions.Default onActionClicked={handleMenuAction} items={menuItems}>
+                    <Button variant="ghost" tone="accent" iconOnly title="Display options">
+                        <MoreVert fontSize="small" />
+                    </Button>
+                </MenuCompositions.Default>
+            </div>
+        </>
     );
 }
 
@@ -99,18 +257,10 @@ type TopBarButtonsProps = {
 };
 
 function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
-    const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
     const isSnapshot = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
     );
-
-    function handleCloseSessionClick() {
-        props.workbench.getSessionManager().maybeCloseCurrentSession();
-    }
-
-    const fullscreenButtonTitle = isFullscreen ? "Exit fullscreen (F11)" : "Enter fullscreen (F11)";
-    const closeButtonTitle = isSnapshot ? "Close snapshot" : "Close session";
 
     return (
         <>
@@ -119,23 +269,12 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
             ) : (
                 <>
                     <EditSessionButton workbench={props.workbench} />
-                    <TopBarDivider />
+                    <Separator orientation="vertical" />
                     <RefreshSessionButton workbench={props.workbench} />
                     <SessionSaveButton workbench={props.workbench} />
                     <SnapshotButton workbench={props.workbench} />
-                    <TopBarDivider />
                 </>
             )}
-            <Tooltip title={fullscreenButtonTitle} placement="bottom">
-                <TopBarButton title={fullscreenButtonTitle} onClick={toggleFullScreen}>
-                    {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
-                </TopBarButton>
-            </Tooltip>
-            <Tooltip title={closeButtonTitle} placement="bottom">
-                <TopBarButton onClick={handleCloseSessionClick} title={closeButtonTitle}>
-                    <Close fontSize="small" />
-                </TopBarButton>
-            </Tooltip>
         </>
     );
 }
@@ -175,8 +314,42 @@ function EditSessionButton(props: EditSessionButtonProps): React.ReactNode {
                 description={activeWorkbenchSession!.getMetadata().description ?? ""}
                 open={editSessionDialogOpen}
                 onClose={() => setEditSessionDialogOpen(false)}
+                showPreview
             />
         </>
+    );
+}
+
+type ReturnToStartPageButtonProps = {
+    workbench: Workbench;
+};
+
+function ReturnToStartPageButton(props: ReturnToStartPageButtonProps): React.ReactNode {
+    const activeSession = usePublishSubscribeTopicValue(
+        props.workbench.getSessionManager(),
+        WorkbenchSessionManagerTopic.ACTIVE_SESSION,
+    );
+
+    if (!activeSession) {
+        return (
+            <Typography size="md" layoutClassName="px-md inline-flex gap-x-2xs items-center">
+                <Home style={{ fontSize: 16 }} />
+                Start
+            </Typography>
+        );
+    }
+
+    function handleReturnToStartPageClick() {
+        props.workbench.getSessionManager().maybeCloseCurrentSession();
+    }
+
+    return (
+        <Tooltip content="Return to start page" side="bottom">
+            <Button size="default" variant="ghost" tone="neutral" onClick={handleReturnToStartPageClick}>
+                <Home style={{ fontSize: 16 }} />
+                Start
+            </Button>
+        </Tooltip>
     );
 }
 
@@ -189,6 +362,7 @@ function Title(props: TitleProps): React.ReactNode {
         props.workbench.getSessionManager(),
         WorkbenchSessionManagerTopic.ACTIVE_SESSION,
     );
+
     const isSnapshot = usePublishSubscribeTopicValue(activeSession!, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     let content = <SessionTitle workbench={props.workbench} />;
@@ -197,7 +371,7 @@ function Title(props: TitleProps): React.ReactNode {
         content = <SnapshotTitle workbench={props.workbench} />;
     }
 
-    return <div className="grow flex gap-2 overflow-hidden items-center">{content}</div>;
+    return <div className="gap-x-sm flex grow items-center overflow-hidden">{content}</div>;
 }
 
 type SnapshotTitleProps = {
@@ -213,30 +387,36 @@ function SnapshotTitle(props: SnapshotTitleProps): React.ReactNode {
 
     return (
         <>
-            <Link fontSize="inherit" className="mr-1" />
-            <Tooltip
-                title={
-                    <div className="whitespace-normal text-base">
-                        <h3 className="text-lg">{metadata.title}</h3>
-                        {metadata.description && (
-                            <>
-                                <hr className="h-px mb-2 bg-white/25" />
-                                <p className="text-sm whitespace-pre-wrap">{metadata.description}</p>
-                            </>
-                        )}
-                    </div>
-                }
-                placement="bottom"
-                enterDelay="medium"
-            >
-                <Typography variant="h5" className="min-w-0 truncate">
-                    {metadata.title}
-                </Typography>
-            </Tooltip>
-            <Typography variant="body_short" className="font-light">
+            <Popover.Root>
+                <Popover.Trigger size="small" variant="ghost" iconOnly>
+                    <Info style={{ fontSize: 16 }} />
+                </Popover.Trigger>
+                <Popover.Popup side="bottom">
+                    <Popover.Content>
+                        <div className="whitespace-normal">
+                            <Heading as="h6" variant="strong" weight="bolder">
+                                {metadata.title}
+                            </Heading>
+                            {metadata.description && (
+                                <>
+                                    <Separator orientation="horizontal" />
+                                    <Paragraph size="sm" layoutClassName="whitespace-pre-wrap">
+                                        {metadata.description}
+                                    </Paragraph>
+                                </>
+                            )}
+                        </div>
+                    </Popover.Content>
+                </Popover.Popup>
+            </Popover.Root>
+            <Link fontSize="inherit" className="mr-2xs" />
+            <Heading as="h5" layoutClassName="truncate">
+                {metadata.title}
+            </Heading>
+            <Typography family="body" size="sm" as="span">
                 (snapshot)
             </Typography>
-            <Tooltip title="This session is a snapshot and cannot be edited.">
+            <Tooltip content="This session is a snapshot and cannot be edited.">
                 <Lock fontSize="inherit" />
             </Tooltip>
         </>
@@ -264,32 +444,43 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
 
     return (
         <>
-            <Category fontSize="inherit" className="mr-1" />
-            <Typography
-                variant="h5"
-                className={resolveClassNames("overflow-ellipsis min-w-0 whitespace-nowrap flex items-center gap-4", {
-                    italic: !isPersisted,
-                })}
-            >
-                <Tooltip
-                    title={
-                        <div className="whitespace-normal text-base">
-                            <h3 className="text-lg">{metadata.title}</h3>
-                            {metadata.description && (
-                                <>
-                                    <hr className="h-px mb-2 bg-white/25" />
-                                    <p className="text-sm whitespace-pre-wrap">{metadata.description}</p>
-                                </>
-                            )}
+            <Popover.Root>
+                <Popover.Trigger size="small" variant="ghost" iconOnly>
+                    <Info style={{ fontSize: 16 }} />
+                </Popover.Trigger>
+                <Popover.Popup side="bottom">
+                    <Popover.Content>
+                        <div className="gap-4xs flex flex-col whitespace-normal">
+                            <Heading as="h6" variant="strong" weight="bolder">
+                                {metadata.title}
+                            </Heading>
+                            <Separator orientation="horizontal" />
+                            <Paragraph
+                                size="sm"
+                                tone="neutral"
+                                layoutClassName="whitespace-pre-wrap"
+                                italic={!metadata.description}
+                            >
+                                {metadata.description ?? "No description provided."}
+                            </Paragraph>
+                            <Separator orientation="horizontal" />
+                            <Typography size="xs" tone="neutral">
+                                {isPersisted
+                                    ? `Last saved: ${
+                                          persistenceInfo.lastPersistedMs
+                                              ? new Date(persistenceInfo.lastPersistedMs).toLocaleString()
+                                              : "unknown"
+                                      }`
+                                    : "Not saved yet"}
+                            </Typography>
                         </div>
-                    }
-                    placement="bottom"
-                    enterDelay="medium"
-                >
-                    <span className="truncate">{metadata.title}</span>
-                </Tooltip>
-                <HasChangesIndicator visible={hasChanges} />
-            </Typography>
+                    </Popover.Content>
+                </Popover.Popup>
+            </Popover.Root>
+            <Heading as="h6" layoutClassName="truncate">
+                {metadata.title}
+            </Heading>
+            <HasChangesIndicator visible={hasChanges} />
         </>
     );
 }
@@ -304,11 +495,14 @@ function SessionFromSnapshotButton(props: SessionFromSnapshotButtonProps): React
     };
 
     return (
-        <div className="p-2 flex items-center text-sm gap-4">
-            <TopBarButton onClick={handleClick} title="Make a new session of the current snapshot" variant="contained">
-                Make session
-            </TopBarButton>
-        </div>
+        <TopBarButton
+            onClick={handleClick}
+            title="Make a new session of the current snapshot"
+            variant="contained"
+            iconOnly={false}
+        >
+            Make session
+        </TopBarButton>
     );
 }
 
@@ -324,11 +518,9 @@ function SnapshotButton(props: SnapshotButtonProps): React.ReactNode {
     };
 
     return (
-        <div className="p-2 flex items-center text-sm gap-4">
-            <TopBarButton onClick={handleClick} title="Make a snapshot of the current session">
-                <AddLink fontSize="small" />
-            </TopBarButton>
-        </div>
+        <TopBarButton onClick={handleClick} title="Make a snapshot of the current session">
+            <AddLink fontSize="small" />
+        </TopBarButton>
     );
 }
 
@@ -356,43 +548,69 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
 
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
 
-    const handleSaveClick = () => {
+    const saveEnabled = persistenceInfo.hasChanges || !isPersisted;
+
+    function handleSaveClick() {
+        if (!isPersisted) {
+            setSaveSessionDialogOpen(true);
+            return;
+        }
         // The save button is disabled on new sessions, so the "maybe"
         // is technically unnecessary, but we'll use it for brevity
         props.workbench.getSessionManager().maybeSaveSession();
-    };
+    }
 
-    const handleSaveAsClick = () => {
+    function handleSaveAsClick() {
         setSaveSessionDialogOpen(true);
-    };
+    }
 
-    const saveEnabled = persistenceInfo.hasChanges && isPersisted;
+    function handleSaveMenuAction(actionId: string) {
+        if (actionId === "save") {
+            handleSaveClick();
+        } else if (actionId === "save-as") {
+            handleSaveAsClick();
+        }
+    }
 
     return (
-        <div className={resolveClassNames("p-2 flex items-center justify-center text-sm gap-4 w-14")}>
-            {isSaving ? (
-                <CircularProgress size="medium-small" className="text-amber-600" />
-            ) : (
-                <Dropdown>
-                    <Tooltip title="Save session options">
-                        <MenuButton className="flex items-center gap-2 hover:bg-indigo-100 p-2 font-medium rounded-md">
-                            <Save fontSize="small" />
-                            <ArrowDropDown fontSize="small" />
-                        </MenuButton>
-                    </Tooltip>
-                    <Menu anchorOrigin="bottom-start">
-                        <MenuItem onClick={handleSaveClick} disabled={!saveEnabled}>
-                            <Save fontSize="small" className="mr-2" />
-                            Save session
-                        </MenuItem>
-                        <MenuItem onClick={handleSaveAsClick}>
-                            <SaveAs fontSize="small" className="mr-2" />
-                            Save session as ...
-                        </MenuItem>
-                    </Menu>
-                </Dropdown>
-            )}
-        </div>
+        <Button.Group split>
+            <Button
+                variant="contained"
+                tone="accent"
+                disabled={!saveEnabled}
+                onClick={handleSaveClick}
+                iconOnly
+                aria-label="Save session"
+            >
+                {isSaving ? (
+                    // Margin is explicitly added to make the spinner's position width match the save icon
+                    <CircularProgress size={16} layoutClassName="mx-[2px]" />
+                ) : (
+                    <Save style={{ fontSize: 16 }} />
+                )}
+            </Button>
+            <MenuCompositions.Default
+                onActionClicked={handleSaveMenuAction}
+                items={[
+                    {
+                        id: "save",
+                        label: "Save session",
+                        icon: <Save fontSize="small" />,
+                        disabled: !isPersisted || !persistenceInfo.hasChanges,
+                    },
+                    {
+                        id: "save-as",
+                        label: "Save session as ...",
+                        icon: <SaveAs fontSize="small" />,
+                    },
+                ]}
+            >
+                {/* TODO: Pressed state when menu is open */}
+                <Button {...props} variant="contained" tone="accent" iconOnly compact aria-label="More save options">
+                    <ArrowDropDown style={{ fontSize: 16 }} />
+                </Button>
+            </MenuCompositions.Default>
+        </Button.Group>
     );
 }
 
@@ -404,27 +622,31 @@ type TopBarButtonProps = {
     disabled?: boolean;
 } & ButtonProps;
 
-function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
+function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef<HTMLButtonElement>): React.ReactNode {
     const { active, title, onClick, disabled, ...baseProps } = props;
     return (
-        <Tooltip title={title} placement="bottom">
-            <Button
-                {...baseProps}
-                ref={ref}
-                className={resolveClassNames("w-full h-10 text-center px-3!", {
-                    "text-cyan-600": active,
-                    "!text-slate-800": props.variant === "text" || props.variant === undefined,
-                })}
-                onClick={onClick}
-                disabled={disabled}
-            >
-                {props.children}
-            </Button>
+        <Tooltip content={title} side="bottom">
+            {/* ! Workaround required to deal with EDS tooltip overwriting refs */}
+            <span>
+                <Button
+                    ref={ref}
+                    variant="ghost"
+                    tone="accent"
+                    iconOnly
+                    aria-label={title}
+                    pressed={active}
+                    onClick={onClick}
+                    disabled={disabled}
+                    {...baseProps}
+                >
+                    {props.children}
+                </Button>
+            </span>
         </Tooltip>
     );
 }
 
-const TopBarButton = React.forwardRef(TopBarButtonComponent);
+export const TopBarButton = React.forwardRef(TopBarButtonComponent);
 
 type RefreshSessionButtonProps = {
     workbench: Workbench;
@@ -448,15 +670,22 @@ function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode
     }
 
     return (
-        <div className={"p-1 px-3 flex items-center text-sm gap-4 bg-amber-100"}>
+        <div
+            className={
+                "gap-xs bg-warning-canvas text-warning-subtle py-2xs px-sm text-body-sm flex items-center rounded"
+            }
+        >
             Out of sync with server.
-            <TopBarButton onClick={handleRefreshClick} title="Reload session from server">
-                <Refresh fontSize="small" />
-            </TopBarButton>
+            <Button
+                onClick={handleRefreshClick}
+                title="Reload session from server"
+                size="small"
+                variant="ghost"
+                tone="warning"
+                iconOnly
+            >
+                <Refresh style={{ fontSize: 16 }} />
+            </Button>
         </div>
     );
-}
-
-function TopBarDivider(): React.ReactNode {
-    return <div className="bg-slate-200 w-px h-10 mx-2" />;
 }

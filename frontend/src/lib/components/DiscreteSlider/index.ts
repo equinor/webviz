@@ -1,1 +1,0 @@
-export { DiscreteSlider } from "./discreteSlider";

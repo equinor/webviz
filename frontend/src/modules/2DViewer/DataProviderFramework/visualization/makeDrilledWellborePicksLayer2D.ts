@@ -1,4 +1,4 @@
-import { GL } from "@luma.gl/constants";
+import { GL } from "@luma.gl/webgl/constants";
 
 import type { WellborePick_api } from "@api";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";

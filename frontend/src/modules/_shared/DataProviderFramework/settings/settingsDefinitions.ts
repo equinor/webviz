@@ -9,12 +9,15 @@ import type {
 } from "@api";
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ProductionPhase, InjectionPhase } from "@framework/types/wellbore";
 import type { ColorSet } from "@lib/utils/ColorSet";
+import type { SurfaceAttribute } from "@modules/_shared/Surface";
 
-import type { IntersectionSettingValue } from "./implementations/IntersectionSetting";
+import type { IntersectionSettingOption, IntersectionSettingValue } from "./implementations/IntersectionSetting";
 import type { PolygonVisualizationSpec } from "./implementations/PolygonVisualizationSetting";
 import type { Representation } from "./implementations/RepresentationSetting";
 import type { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
+import type { TimeType } from "./implementations/TimeTypeSetting";
 
 export enum Setting {
     // Assorted styling visual settings
@@ -29,6 +32,7 @@ export enum Setting {
     DEPTH_ATTRIBUTE = "depthAttribute",
     SEISMIC_ATTRIBUTE = "seismicAttribute",
     ATTRIBUTE = "attribute",
+    SURFACE_ATTRIBUTE = "surfaceAttribute",
     WELLBORE_DEPTH_FILTER_ATTRIBUTE = "wellboreDepthFilterAttribute",
     ENSEMBLE = "ensemble",
     COLOR_SCALE = "colorScale",
@@ -40,6 +44,7 @@ export enum Setting {
     GRID_LAYER_RANGE = "gridLayerRange",
     GRID_LAYER_K = "gridLayerK",
     GRID_NAME = "gridName",
+    FLUID_CONTACT = "fluidContact",
     INTERSECTION = "intersection",
     MD_RANGE = "mdRange",
     OPACITY_PERCENT = "opacityPercent",
@@ -59,30 +64,20 @@ export enum Setting {
     SURFACE_NAME = "surfaceName",
     FORMATION_NAME = "formationName",
     SURFACE_NAMES = "surfaceNames",
+    TIME_TYPE = "timeType",
     TIME_OR_INTERVAL = "timeOrInterval",
     TIME_POINT = "timePoint",
     TIME_INTERVAL = "timeInterval",
+    TIME_POINT_PAIR = "timePointPair",
     TIME_RANGE_WITH_POINTS = "timeRangeWithPoints",
     TVD_RANGE = "tvdRange",
     WELLBORE_DEPTH_FORMATION_FILTER = "wellboreDepthFormationFilter",
     WELLBORE_DEPTH_FILTER_TYPE = "wellboreDepthFilterType",
-    WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
     WELLBORE_PICKS = "wellborePicks",
     WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
     REPRESENTATION = "representation",
     FLOW_FILTER_TYPE = "flowFilterType",
     FLOW_FILTER = "flowFilter",
-}
-
-enum ProductionPhase {
-    OIL = "oil",
-    GAS = "gas",
-    WATER = "water",
-}
-
-enum InjectionPhase {
-    WATER = "water",
-    GAS = "gas",
 }
 
 /**
@@ -125,11 +120,6 @@ export type SettingTypeDefinitions = {
         externalValue: number | null;
         valueConstraints: [number, number];
     };
-    [Setting.WELLBORE_EXTENSION_LENGTH]: {
-        internalValue: number | null;
-        externalValue: number | null;
-        valueConstraints: [number, number];
-    };
 
     // Number with step settings (NUMBER_WITH_STEP category) - valueConstraints is [min, max, step]
     [Setting.LABEL_ROTATION]: {
@@ -165,22 +155,32 @@ export type SettingTypeDefinitions = {
         externalValue: string | null;
         valueConstraints: string[];
     };
+    [Setting.SURFACE_ATTRIBUTE]: {
+        internalValue: SurfaceAttribute | null;
+        externalValue: SurfaceAttribute | null;
+        valueConstraints: SurfaceAttribute[];
+    };
     [Setting.DEPTH_ATTRIBUTE]: {
-        internalValue: string | null;
-        externalValue: string | null;
-        valueConstraints: string[];
+        internalValue: SurfaceAttribute | null;
+        externalValue: SurfaceAttribute | null;
+        valueConstraints: SurfaceAttribute[];
     };
     [Setting.SEISMIC_ATTRIBUTE]: {
-        internalValue: string | null;
-        externalValue: string | null;
-        valueConstraints: string[];
+        internalValue: SurfaceAttribute | null;
+        externalValue: SurfaceAttribute | null;
+        valueConstraints: SurfaceAttribute[];
     };
     [Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE]: {
+        internalValue: SurfaceAttribute | null;
+        externalValue: SurfaceAttribute | null;
+        valueConstraints: SurfaceAttribute[];
+    };
+    [Setting.GRID_NAME]: {
         internalValue: string | null;
         externalValue: string | null;
         valueConstraints: string[];
     };
-    [Setting.GRID_NAME]: {
+    [Setting.FLUID_CONTACT]: {
         internalValue: string | null;
         externalValue: string | null;
         valueConstraints: string[];
@@ -230,6 +230,16 @@ export type SettingTypeDefinitions = {
         externalValue: string | null;
         valueConstraints: string[];
     };
+    [Setting.TIME_POINT_PAIR]: {
+        internalValue: [string, string] | null;
+        externalValue: [string, string] | null;
+        valueConstraints: string[];
+    };
+    [Setting.TIME_TYPE]: {
+        internalValue: TimeType | null;
+        externalValue: TimeType | null;
+        valueConstraints: TimeType[];
+    };
     [Setting.TIME_RANGE_WITH_POINTS]: {
         internalValue: string[] | null;
         externalValue: string[] | null;
@@ -275,7 +285,7 @@ export type SettingTypeDefinitions = {
     [Setting.INTERSECTION]: {
         internalValue: IntersectionSettingValue | null;
         externalValue: IntersectionSettingValue | null;
-        valueConstraints: IntersectionSettingValue[];
+        valueConstraints: IntersectionSettingOption[];
     };
     [Setting.SENSITIVITY]: {
         internalValue: SensitivityNameCasePair | null;
@@ -302,7 +312,7 @@ export type SettingTypeDefinitions = {
         valueConstraints: number[];
     };
     [Setting.WELLBORES]: {
-        internalValue: string[] | null;
+        internalValue: string[] | "all" | null;
         externalValue: WellboreHeader_api[] | null;
         valueConstraints: WellboreHeader_api[];
     };
@@ -364,9 +374,11 @@ export type SettingTypeDefinitions = {
     // XYZ range settings (XYZ_RANGE category) - demonstrates all three types being different
     [Setting.GRID_LAYER_RANGE]: {
         internalValue: {
-            i: [number, number];
-            j: [number, number];
-            k: { type: "range"; range: [number, number] } | { type: "zone"; range: [number, number]; name: string };
+            i: [number | "min", number | "max"];
+            j: [number | "min", number | "max"];
+            k:
+                | { type: "range"; range: [number | "min", number | "max"] }
+                | { type: "zone"; range: [number, number]; name: string };
         } | null;
         externalValue: [[number, number], [number, number], [number, number]] | null;
         valueConstraints: {

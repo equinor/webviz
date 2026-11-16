@@ -1,6 +1,6 @@
 import { getPicksData, transformFormationData } from "@equinor/esv-intersection";
 
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
+import { CalloutCanvasLayer } from "@modules/_shared/components/EsvIntersection";
 import type {
     EsvLayerItemsMaker,
     TransformerArgs,
@@ -25,18 +25,17 @@ export function createWellborePicksLayerItemsMaker({
     const pickData = transformFormationData(selectedWellborePicks, emptyUnitList);
 
     const wellborePicksLayerItemsMaker: EsvLayerItemsMaker = {
-        makeLayerItems: (intersectionReferenceSystem) => {
+        makeLayerItems: (intersectionReferenceSystem, order) => {
             return [
-                {
-                    id: `${id}-wellbore-picks-layer`,
-                    name,
-                    type: LayerType.CALLOUT_CANVAS,
-                    hoverable: false,
-                    options: {
+                new CalloutCanvasLayer(
+                    `${id}-wellbore-picks-layer`,
+                    {
+                        order,
                         data: getPicksData(pickData),
                         referenceSystem: intersectionReferenceSystem ?? undefined,
                     },
-                },
+                    { name },
+                ),
             ];
         },
     };

@@ -1,14 +1,19 @@
 import React from "react";
 
-import { IntersectionType } from "@framework/types/intersection";
-import type { DropdownOption } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
-import { RadioGroup } from "@lib/components/RadioGroup";
+import { IntersectionType, isWellboreIntersectionType } from "@framework/types/intersection";
+import { Combobox } from "@lib/components/Combobox";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
+import { Field } from "@lib/components/Field";
+import { NumberInput } from "@lib/components/NumberInput";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 
 import type {
     CustomSettingImplementation,
+    OverriddenValueRepresentationArgs,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 import {
     fixupValue,
@@ -16,20 +21,70 @@ import {
     makeValueConstraintsIntersectionReducerDefinition,
 } from "./_shared/arraySingleSelect";
 
-export type IntersectionSettingValue = {
+export type IntersectionSettingOption = {
     type: IntersectionType;
     name: string;
     uuid: string;
 };
+
+export type PolylineIntersectionSettingValue = IntersectionSettingOption & {
+    type: IntersectionType.CUSTOM_POLYLINE;
+};
+
+// Drilled and planned wellbores share the same value shape (both carry an extension length and are
+// backed by a wellbore trajectory); they only differ by the discriminating `type`.
+export type WellboreIntersectionSettingValue = IntersectionSettingOption & {
+    type: IntersectionType.WELLBORE | IntersectionType.PLANNED_WELLBORE;
+    extensionLength: number;
+};
+
+export type IntersectionSettingValue = PolylineIntersectionSettingValue | WellboreIntersectionSettingValue;
+
+function isWellboreIntersectionSettingValue(
+    value: IntersectionSettingValue | null,
+): value is WellboreIntersectionSettingValue {
+    return isWellboreIntersectionType(value?.type);
+}
+
+type ExtensionLengthConfig = {
+    min: number;
+    max: number;
+    defaultValue?: number;
+};
+
 type ValueType = IntersectionSettingValue | null;
-type ValueConstraintsType = IntersectionSettingValue[];
+type ValueConstraintsType = IntersectionSettingOption[];
+
+const INTERSECTION_TYPE_OPTIONS: ComboboxItem<IntersectionType>[] = [
+    {
+        label: "Drilled well trajectory (SMDA)",
+        value: IntersectionType.WELLBORE,
+        description: "Official drilled well trajectories from SMDA",
+    },
+    {
+        label: "Planned well trajectory (SMDA)",
+        value: IntersectionType.PLANNED_WELLBORE,
+        description: "Planned well trajectories from SMDA",
+    },
+    {
+        label: "User-defined polyline",
+        value: IntersectionType.CUSTOM_POLYLINE,
+        description: "Custom intersection path created in Webviz",
+    },
+];
 
 export class IntersectionSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     private _activeIntersectionType = IntersectionType.WELLBORE;
     private _cachedValueByIntersectionType: Record<IntersectionType, ValueType> = {
         [IntersectionType.WELLBORE]: null,
+        [IntersectionType.PLANNED_WELLBORE]: null,
         [IntersectionType.CUSTOM_POLYLINE]: null,
     };
+    private _extensionLengthConfig: ExtensionLengthConfig | null;
+
+    constructor(options?: { extensionLengthConfig?: ExtensionLengthConfig }) {
+        this._extensionLengthConfig = options?.extensionLengthConfig ?? null;
+    }
 
     valueConstraintsIntersectionReducerDefinition =
         makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
@@ -60,11 +115,21 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
             throw new Error("Expected object with string properties: type, name, uuid");
         }
 
+        // Discard values with an unknown intersection type (e.g. from an outdated serialized state)
+        if (!Object.values(IntersectionType).includes(v.type as IntersectionType)) {
+            return null;
+        }
+
+        // For wellbore types, default extensionLength to 0 if not present (backward compat)
+        if (isWellboreIntersectionType(v.type as IntersectionType) && typeof v.extensionLength !== "number") {
+            v.extensionLength = 0;
+        }
+
         return parsed as ValueType;
     }
 
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
-        return isValueValid<ValueType, IntersectionSettingValue>(
+        return isValueValid<IntersectionSettingOption, IntersectionSettingOption>(
             value,
             valueConstraints,
             (v) => v,
@@ -73,14 +138,33 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
     }
 
     fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
+        const defaultExtensionLength = this._extensionLengthConfig?.defaultValue ?? 0;
         const valueConstraintsForActiveType = valueConstraints.filter((v) => v.type === this._activeIntersectionType);
         if (valueConstraintsForActiveType.length > 0) {
-            return fixupValue<ValueType, IntersectionSettingValue>(
+            const fixed = fixupValue<IntersectionSettingOption, IntersectionSettingOption>(
                 currentValue,
                 valueConstraintsForActiveType,
                 (v) => v,
                 (a, b) => a?.type === b?.type && a?.uuid === b?.uuid,
             );
+            if (fixed && isWellboreIntersectionType(fixed.type)) {
+                const prevExtension =
+                    currentValue &&
+                    (currentValue.type === IntersectionType.WELLBORE ||
+                        currentValue.type === IntersectionType.PLANNED_WELLBORE)
+                        ? currentValue.extensionLength
+                        : defaultExtensionLength;
+                return {
+                    type: fixed.type,
+                    name: fixed.name,
+                    uuid: fixed.uuid,
+                    extensionLength: prevExtension,
+                };
+            }
+            if (fixed) {
+                return { type: IntersectionType.CUSTOM_POLYLINE, name: fixed.name, uuid: fixed.uuid };
+            }
+            return null;
         }
 
         // No items of preferred type available yet — defer fixup
@@ -96,6 +180,8 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
         const setCachedValueForIntersectionType = (type: IntersectionType, value: ValueType) => {
             this._cachedValueByIntersectionType[type] = value;
         };
+        const extensionLengthConfig = this._extensionLengthConfig;
+        const defaultExtensionLength = this._extensionLengthConfig?.defaultValue ?? 0;
 
         return function IntersectionSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             const availableValues = props.valueConstraints ?? [];
@@ -104,11 +190,11 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
             );
 
             // Initialize cached value for the current type on mount
-            const hasInitialized = React.useRef(false);
+            const hasInitializedRef = React.useRef(false);
             React.useEffect(
                 function initializeCachedValueOnMount() {
-                    if (!hasInitialized.current) {
-                        hasInitialized.current = true;
+                    if (!hasInitializedRef.current) {
+                        hasInitializedRef.current = true;
                         setCachedValueForIntersectionType(type, props.value);
                     }
                 },
@@ -122,29 +208,89 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 [type],
             );
 
-            function handleSelectionChange(selectedValue: string) {
-                const newValue = availableValues.find((v) => v.uuid === selectedValue) ?? null;
+            const enableExtensionLength = extensionLengthConfig !== null && isWellboreIntersectionType(type);
+            const settledExtensionLength = createValidExtensionLength(props.value, defaultExtensionLength);
+
+            const [immediateExtensionLength, setExtensionLength, extensionLengthController] = useDebouncedOnChange<
+                number | null
+            >(
+                settledExtensionLength,
+                function handleExtensionLengthSettle(numValue: number | null) {
+                    if (numValue === null) {
+                        return;
+                    }
+                    if (props.value && isWellboreIntersectionType(props.value.type)) {
+                        const newValue = { ...props.value, extensionLength: numValue };
+                        setCachedValueForIntersectionType(type, newValue);
+                        props.onValueChange(newValue);
+                    }
+                },
+                600,
+            );
+
+            function handleSelectionChange(selectedValue: string | null) {
+                extensionLengthController.cancel();
+                const selected = availableValues.find((v) => v.uuid === selectedValue) ?? null;
+                if (!selected) {
+                    setCachedValueForIntersectionType(type, null);
+                    props.onValueChange(null);
+                    return;
+                }
+                const newValue: IntersectionSettingValue = isWellboreIntersectionType(selected.type)
+                    ? {
+                          type: selected.type,
+                          name: selected.name,
+                          uuid: selected.uuid,
+                          extensionLength: createValidExtensionLength(props.value, defaultExtensionLength),
+                      }
+                    : {
+                          type: IntersectionType.CUSTOM_POLYLINE,
+                          name: selected.name,
+                          uuid: selected.uuid,
+                      };
                 setCachedValueForIntersectionType(type, newValue);
                 props.onValueChange(newValue);
             }
 
-            function handleCategoryChange(_: any, value: IntersectionSettingValue["type"]) {
+            function handleCategoryChange(value: IntersectionSettingValue["type"] | null) {
+                if (value === null) {
+                    return;
+                }
+
+                extensionLengthController.cancel();
                 setType(value);
 
-                // Use cached value if valid, or pick first available value of the new type
+                // Use cached value if still valid for current constraints, otherwise pick first available
                 const candidateValue = cachedValueByIntersectionType[value];
-                const newValue = candidateValue ?? availableValues.find((v) => v.type === value);
-                if (newValue) {
-                    props.onValueChange({
-                        ...newValue,
-                    });
+                const isCandidateValid =
+                    candidateValue !== null &&
+                    availableValues.some((v) => v.type === candidateValue.type && v.uuid === candidateValue.uuid);
+                const validCandidate = isCandidateValid ? candidateValue : null;
+                const fallback = availableValues.find((v) => v.type === value) ?? null;
+                const base = validCandidate ?? fallback;
+                if (base) {
+                    const newValue: IntersectionSettingValue = isWellboreIntersectionType(base.type)
+                        ? {
+                              type: base.type,
+                              name: base.name,
+                              uuid: base.uuid,
+                              extensionLength: isWellboreIntersectionSettingValue(validCandidate)
+                                  ? validCandidate.extensionLength
+                                  : defaultExtensionLength,
+                          }
+                        : {
+                              type: IntersectionType.CUSTOM_POLYLINE,
+                              name: base.name,
+                              uuid: base.uuid,
+                          };
+                    props.onValueChange(newValue);
                     return;
                 }
 
                 props.onValueChange(null);
             }
 
-            const options: DropdownOption<string>[] = availableValues
+            const options: ComboboxItem<string>[] = availableValues
                 .filter((value) => value.type === type)
                 .map((value) => {
                     return {
@@ -153,35 +299,62 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                     };
                 });
 
+            // Only the source can make the value invalid, so the type and extension inputs opt out of the
+            // invalid state that SettingManagerComponent's Field.Root wrap applies to the whole setting
             return (
-                <div className="flex flex-col gap-2 my-1">
-                    <RadioGroup
-                        direction="horizontal"
-                        options={[
-                            {
-                                label: "Wellbore",
-                                value: IntersectionType.WELLBORE,
-                            },
-                            {
-                                label: "Polyline",
-                                value: IntersectionType.CUSTOM_POLYLINE,
-                            },
-                        ]}
-                        value={type}
-                        onChange={handleCategoryChange}
-                    />
-                    <Dropdown<string>
-                        options={options}
+                <div className="gap-x-3xs gap-y-2xs grid grid-cols-[max-content_minmax(0,1fr)] items-center">
+                    <span>Type</span>
+                    <Field.Root inline invalid={false}>
+                        <Combobox
+                            items={INTERSECTION_TYPE_OPTIONS}
+                            value={type}
+                            onValueChange={handleCategoryChange}
+                            size="small"
+                        />
+                    </Field.Root>
+                    <span>Source</span>
+                    <ComboboxCompositions.WithBrowseButtons
+                        items={options}
                         placeholder={
-                            type === IntersectionType.CUSTOM_POLYLINE ? "Select polyline..." : "Select wellbore..."
+                            type === IntersectionType.CUSTOM_POLYLINE
+                                ? "Select polyline..."
+                                : type === IntersectionType.PLANNED_WELLBORE
+                                  ? "Select planned wellbore..."
+                                  : "Select wellbore..."
                         }
-                        value={!props.isOverridden ? props.value?.uuid : props.overriddenValue?.uuid}
-                        onChange={handleSelectionChange}
-                        disabled={props.isOverridden}
-                        showArrows
+                        value={props.value?.uuid}
+                        onValueChange={handleSelectionChange}
+                        disabled={props.disabled}
                     />
+                    <span>Extension</span>
+                    <Field.Root inline invalid={false}>
+                        <NumberInput
+                            disabled={props.disabled || !enableExtensionLength}
+                            value={immediateExtensionLength}
+                            min={extensionLengthConfig?.min}
+                            max={extensionLengthConfig?.max}
+                            onValueChange={setExtensionLength}
+                            scrubAdornment="m"
+                            scrubAreaPosition="end"
+                            allowWheelScrub
+                        />
+                    </Field.Root>
                 </div>
             );
         };
+    }
+
+    overriddenValueRepresentation(args: OverriddenValueRepresentationArgs<ValueType>): React.ReactNode {
+        const { value } = args;
+        if (value === null) {
+            return "-";
+        }
+        const typeLabel =
+            value.type === IntersectionType.CUSTOM_POLYLINE
+                ? "Polyline"
+                : value.type === IntersectionType.PLANNED_WELLBORE
+                  ? "Planned (SMDA)"
+                  : "Drilled (SMDA)";
+        return `${typeLabel}: "${value.name}"`;
     }
 }

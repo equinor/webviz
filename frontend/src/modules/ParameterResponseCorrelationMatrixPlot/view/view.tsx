@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Input, Warning } from "@mui/icons-material";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { EnsembleSet } from "@framework/EnsembleSet";
@@ -16,7 +16,7 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
-import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils";
+import { getVaryingNumericParameters } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import type { CorrelationDataItem } from "@modules/_shared/utils/math/correlationMatrix";
 import {
@@ -35,7 +35,7 @@ const MAX_NUM_PLOTS = 12;
 function MaxNumberPlotsExceededMessage() {
     return (
         <ContentWarning>
-            <Warning fontSize="large" className="mb-2" />
+            <Warning fontSize="large" className="mb-sm" />
             Too many plots to display. Due to performance limitations, the number of plots is limited to {MAX_NUM_PLOTS}
             .
         </ContentWarning>
@@ -49,7 +49,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const [prevShowLabels, setPrevShowLabels] = React.useState<boolean | null>(null);
     const [prevSize, setPrevSize] = React.useState<Size2D | null>(null);
     const [prevParameterIdents, setPrevParameterIdents] = React.useState<ParameterIdent[]>([]);
-    const [prevUseFixedColorRange, setPrevUseFixedColorRange] = React.useState<boolean>(true);
+    const [prevFixedColorRange, setPrevFixedColorRange] = React.useState<boolean>(true);
     const [prevColorScaleWithGradient, setPrevColorScaleWithGradient] = React.useState<[number, string][]>([]);
     const [prevPlotType, setPrevPlotType] = React.useState<PlotType>(PlotType.ParameterResponseMatrix);
     const [prevCorrelationThreshold, setPrevCorrelationThreshold] = React.useState<number | null>(null);
@@ -60,7 +60,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const parameterIdents = viewContext.useSettingsToViewInterfaceValue("parameterIdents");
     const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
-    const useFixedColorRange = viewContext.useSettingsToViewInterfaceValue("useFixedColorRange");
+    const fixedColorRange = viewContext.useSettingsToViewInterfaceValue("fixedColorRangeEnabled");
     const correlationThreshold = viewContext.useSettingsToViewInterfaceValue("correlationThreshold");
     const hideIndividualCells = viewContext.useSettingsToViewInterfaceValue("hideIndividualCells");
     const filterColumns = viewContext.useSettingsToViewInterfaceValue("filterColumns");
@@ -101,7 +101,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         hasParameterIdentsChanged ||
         showLabels !== prevShowLabels ||
         wrapperDivSize !== prevSize ||
-        useFixedColorRange !== prevUseFixedColorRange ||
+        fixedColorRange !== prevFixedColorRange ||
         !isEqual(colorScaleWithGradient, prevColorScaleWithGradient) ||
         plotType !== prevPlotType ||
         correlationThreshold !== prevCorrelationThreshold ||
@@ -114,7 +114,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         setPrevParameterIdents(parameterIdents);
         setPrevShowLabels(showLabels);
         setPrevSize(wrapperDivSize);
-        setPrevUseFixedColorRange(useFixedColorRange);
+        setPrevFixedColorRange(fixedColorRange);
         setPrevColorScaleWithGradient(colorScaleWithGradient);
         setPrevPlotType(plotType);
         setPrevCorrelationThreshold(correlationThreshold);
@@ -128,15 +128,15 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             if (receiverResponses.every((response) => !response.channel)) {
                 setContent(
                     <ContentWarning>
-                        <div className="space-y-3 text-sm">
+                        <div className="text-body-sm gap-sm flex flex-col">
                             <p className="font-medium">Data channel required for use.</p>
                             <p>Add a module supporting data channels to the dashboard and connect it to this module.</p>
                             <p>
-                                Modules supporting data channels have an <Input fontSize="small" /> icon on their
-                                toolbar.
+                                Modules supporting data channels have an <Input fontSize="small" className="mx-xs" />{" "}
+                                icon on their toolbar.
                             </p>
                             <p>Drag from this icon to a response below:</p>
-                            <div className="flex gap-2 flex-wrap">
+                            <div className="gap-sm flex flex-wrap items-center justify-center">
                                 <Tag label="Response" />
                                 <Tag label="Response" />
                                 <Tag label="Response" />
@@ -149,9 +149,9 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             if (parameterIdents.length === 0) {
                 setContent(
                     <ContentWarning>
-                        <Warning fontSize="large" className="mb-2" />
+                        <Warning fontSize="large" className="mb-sm" />
                         No parameters selected or available. Please select parameters in the settings pane. If no
-                        parameters are available, ensure that the connected ensembles have continuous and varying
+                        parameters are available, ensure that the connected ensembles have numeric and varying
                         parameters.
                     </ContentWarning>,
                 );
@@ -160,7 +160,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             if (parameterIdents.length > MAX_NUMBER_OF_PARAMETERS_IN_MATRIX) {
                 setContent(
                     <ContentWarning>
-                        <Warning fontSize="large" className="mb-2" />
+                        <Warning fontSize="large" className="mb-sm" />
                         {`Too many parameters selected. Please select ${MAX_NUMBER_OF_PARAMETERS_IN_MATRIX} or fewer parameters to display the correlation
                         matrix.`}
                     </ContentWarning>,
@@ -208,10 +208,10 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             if (parameterIdents.length === 0) {
                 setContent(
                     <ContentWarning>
-                        <Warning fontSize="large" className="mb-2" />
+                        <Warning fontSize="large" className="mb-sm" />
                         No parameters selected or available. Please select parameters in the settings pane. If
-                        parameters are selected but not available, ensure that the connected ensembles have continuous
-                        and varying parameters.
+                        parameters are selected but not available, ensure that the connected ensembles have numeric and
+                        varying parameters.
                     </ContentWarning>,
                 );
                 return;
@@ -231,7 +231,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 numCols,
                 numRows,
                 showLabels,
-                useFixedColorRange,
+                fixedColorRange,
             });
             for (const ensembleIdentString of receiveResponsesPerEnsembleIdent.keys()) {
                 const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
@@ -255,17 +255,13 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 plotType,
                 { threshold: correlationThreshold, hideIndividualCells, filterColumns, filterRows },
             );
-            setContent(
-                <>
-                    <Plot layout={figure.makePlotLayout()} data={figure.makePlotData()} />;
-                </>,
-            );
+            setContent(<Plot layout={figure.makePlotLayout()} data={figure.makePlotData()} />);
             return;
         });
     }
 
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        <div className="h-full w-full" ref={wrapperDivRef}>
             {content}
         </div>
     );
@@ -307,7 +303,7 @@ function fillParameterCorrelationMatrixFigure(
             if (!ensemble) {
                 continue;
             }
-            const fullParameterArr = getVaryingContinuousParameters(ensemble);
+            const fullParameterArr = getVaryingNumericParameters(ensemble);
             if (!fullParameterArr) {
                 continue;
             }

@@ -2,72 +2,82 @@ import React from "react";
 
 import { useAtomValue } from "jotai";
 
+import type { HoverData } from "@framework/HoverService";
+import { HoverTopic, usePublishHoverValues } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
-import { TableDeprecated as TableComponent } from "@lib/components/TableDeprecated";
-import type { TableHeading, TableRow } from "@lib/components/TableDeprecated/table";
-import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
+import { SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 import type { Interfaces } from "../interfaces";
 
+import { isSensitivityEnsembleSelectionBlockedAtom } from "./atoms/baseAtoms";
 import { areSelectedTablesComparableAtom, haveAllQueriesFailedAtom, isQueryFetchingAtom } from "./atoms/derivedAtoms";
+import { InplaceVolumesTable } from "./components/inplaceVolumesTable";
+import { useDownloadCsv } from "./hooks/useDownloadCsv";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useTableBuilder } from "./hooks/useTableBuilder";
+import type { TableColumnsConfig, TableRow } from "./types";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
-    const divRef = React.useRef<HTMLDivElement>(null);
-    const divBoundingRect = useElementBoundingRect(divRef);
-
     const haveAllQueriesFailed = useAtomValue(haveAllQueriesFailedAtom);
     const isQueryFetching = useAtomValue(isQueryFetchingAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
+    const isSensitivityEnsembleSelectionBlocked = useAtomValue(isSensitivityEnsembleSelectionBlockedAtom);
 
-    useMakeViewStatusWriterMessages(statusWriter);
+    useMakeViewStatusWriterMessages(statusWriter, ensembleSet);
     statusWriter.setLoading(isQueryFetching);
 
     // Build table headings and rows
-    const { headings, tableRows } = useTableBuilder(ensembleSet);
+    const { headings: tableColumnConfig, tableRows, sortScopeColumnKey } = useTableBuilder();
+
+    const handleDownloadCsv = useDownloadCsv(tableColumnConfig, ensembleSet);
+    const publishHoverValues = usePublishHoverValues(props.hoverService, props.viewContext.getInstanceIdString());
 
     const handleTableHover = React.useCallback(
-        function handleTableHover(row: TableRow<TableHeading> | null) {
+        function handleTableHover(row: TableRow<TableColumnsConfig> | null) {
             if (!row) {
-                props.workbenchServices.publishGlobalData("global.hoverRegion", null);
-                props.workbenchServices.publishGlobalData("global.hoverZone", null);
-                props.workbenchServices.publishGlobalData("global.hoverFacies", null);
+                publishHoverValues({});
                 return;
             }
+
+            const updates: Partial<HoverData> = {};
 
             const regionColumnKey = Object.keys(row).find((key) => key.toUpperCase() === "REGION");
             if (regionColumnKey) {
                 const regionName = row[regionColumnKey]?.toString();
                 if (regionName) {
-                    props.workbenchServices.publishGlobalData("global.hoverRegion", { regionName });
+                    updates[HoverTopic.REGION] = regionName;
                 }
             }
             const zoneColumnKey = Object.keys(row).find((key) => key.toUpperCase() === "ZONE");
             if (zoneColumnKey) {
                 const zoneName = row[zoneColumnKey]?.toString();
                 if (zoneName) {
-                    props.workbenchServices.publishGlobalData("global.hoverZone", { zoneName });
+                    updates[HoverTopic.ZONE] = zoneName;
                 }
             }
             const faciesColumnKey = Object.keys(row).find((key) => key.toUpperCase() === "FACIES");
             if (faciesColumnKey) {
                 const faciesName = row[faciesColumnKey]?.toString();
                 if (faciesName) {
-                    props.workbenchServices.publishGlobalData("global.hoverFacies", { faciesName });
+                    updates[HoverTopic.FACIES] = faciesName;
                 }
             }
+
+            publishHoverValues(updates);
         },
-        [props.workbenchServices],
+        [publishHoverValues],
     );
 
     function createErrorMessage(): string | null {
+        if (isSensitivityEnsembleSelectionBlocked) {
+            return SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE;
+        }
         if (haveAllQueriesFailed) {
             return "Failed to load inplace volumes table data";
         }
@@ -84,16 +94,15 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const isPending = isQueryFetching && areSelectedTablesComparable;
 
     return (
-        <div ref={divRef} className="w-full h-full relative">
-            <PendingWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
-                <TableComponent
-                    headings={headings}
-                    data={tableRows}
-                    height={divBoundingRect.height}
-                    onHover={handleTableHover}
-                    alternatingColumnColors
-                />
-            </PendingWrapper>
-        </div>
+        <StatusWrapper className="h-full" isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
+            <InplaceVolumesTable
+                columnsConfig={tableColumnConfig}
+                rows={tableRows}
+                sortScopeColumnKey={sortScopeColumnKey}
+                onHover={handleTableHover}
+                onDownload={handleDownloadCsv}
+                ensembleSet={ensembleSet}
+            />
+        </StatusWrapper>
     );
 }

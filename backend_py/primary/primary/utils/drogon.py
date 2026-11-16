@@ -11,7 +11,7 @@ def is_drogon_identifier(
     """
     if field_identifier == "DROGON":
         return True
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
+    if wellbore_uuid is not None and wellbore_uuid.startswith("drogon_"):
         return True
     if strat_column_identifier == "DROGON_HAS_NO_STRATCOLUMN":
         return True

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Check, Close, Error, Refresh } from "@mui/icons-material";
+import { Check, Error as ErrorIcon, Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import { getAliveOptions } from "@api";
@@ -9,7 +9,9 @@ import { SessionPersistenceAction } from "@framework/internal/WorkbenchSession/W
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { ErrorDialog } from "@lib/components/Dialog";
+import { Dialog } from "@lib/components/Dialog";
+
+import { ReportIssueButton } from "../ReportIssueButton";
 
 export type SessionErrorDialogProps = {
     workbench: Workbench;
@@ -77,37 +79,41 @@ export function SessionErrorDialog(props: SessionErrorDialogProps): React.ReactN
     useRegisterGuiEventSubscriber(guiMessageBroker, GuiEvent.SessionPersistenceError, handleSessionSaveError);
 
     return (
-        <ErrorDialog
-            error={errorEventPayload?.error ?? null}
-            open={isOpen}
-            title={title}
-            width={700}
-            zIndex={100}
-            modal
-            showCloseCross
-            onClose={onCloseModal}
-            actions={
-                <Button onClick={onTryAgain} startIcon={<Refresh fontSize="small" />}>
-                    Try again
-                </Button>
-            }
-        >
-            <p>{body}</p>
-            <p className="bg-slate-200 p-4 my-2 whitespace-nowrap font-mono text-sm overflow-x-scroll rounded">
-                <strong>{errorEventPayload?.error?.name}</strong>: {errorEventPayload?.error?.message}
-            </p>
-            <p>
-                Make sure that you have a stable internet connection and try again. If the problem persists, please
-                report the issue using the link below
-            </p>
+        <Dialog.Popup open={isOpen} width={700} modal onOpenChange={onCloseModal}>
+            <Dialog.Header closeIconVisible>
+                <Dialog.Title>
+                    <ErrorIcon className="text-danger-subtle inline-block" fontSize="inherit" /> {title}
+                </Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body layoutClassName="flex flex-col gap-y-2xs">
+                <p>{body}</p>
+                <p className="bg-canvas p-sm text-body-sm overflow-x-scroll rounded font-mono whitespace-nowrap">
+                    <strong>{errorEventPayload?.error?.name}</strong>: {errorEventPayload?.error?.message}
+                </p>
+                <p>
+                    Make sure that you have a stable internet connection and try again. If the problem persists, please
+                    report the issue using the link below
+                </p>
 
-            {isOpen && (
-                <ul className="mt-4">
-                    <InternetConnectedChecker />
-                    <BackendAliveChecker />
-                </ul>
-            )}
-        </ErrorDialog>
+                {isOpen && (
+                    <ul className="leading-body-lg">
+                        <InternetConnectedChecker />
+                        <BackendAliveChecker />
+                    </ul>
+                )}
+            </Dialog.Body>
+            <Dialog.Actions>
+                <ReportIssueButton
+                    dialogStacked
+                    error={errorEventPayload?.error ?? null}
+                    session={props.workbench.getSessionManager().getActiveSessionOrNull()}
+                    componentStack={null}
+                />
+                <Button onClick={onTryAgain}>
+                    <Refresh style={{ fontSize: 16 }} /> Try again
+                </Button>
+            </Dialog.Actions>
+        </Dialog.Popup>
     );
 }
 
@@ -129,14 +135,14 @@ function InternetConnectedChecker(): React.ReactNode {
     if (isOnline) {
         return (
             <li>
-                <Check className="inline-block sizeClass text-green-700" fontSize="inherit" /> You are connected to the
+                <Check className="text-success-subtle inline-block" fontSize="inherit" /> You are connected to the
                 internet
             </li>
         );
     } else {
         return (
             <li>
-                <Error className="inline-block sizeClass text-red-700" fontSize="inherit" /> You are not connected to
+                <ErrorIcon className="text-danger-subtle inline-block" fontSize="inherit" /> You are not connected to
                 the internet
             </li>
         );
@@ -151,21 +157,21 @@ function BackendAliveChecker(): React.ReactNode {
     if (aliveQuery.isFetching) {
         return (
             <li>
-                <CircularProgress className="inline-block align-middle" size="small" /> Testing connection to backend
+                <CircularProgress layoutClassName="inline-block align-middle" size={16} /> Testing connection to backend
                 service...
             </li>
         );
     } else if (aliveQuery.isError) {
         return (
             <li>
-                <Close className="inline-block sizeClass text-red-700" fontSize="inherit" /> Unable to connect to the
+                <ErrorIcon className="text-danger-subtle inline-block" fontSize="inherit" /> Unable to connect to the
                 Webviz backend
             </li>
         );
     } else if (isAlive) {
         return (
             <li>
-                <Check className="inline-block sizeClass text-green-700" fontSize="inherit" /> Backend is running
+                <Check className="text-success-subtle inline-block" fontSize="inherit" /> Backend is running
             </li>
         );
     }

@@ -1,13 +1,13 @@
 import type { Dash, PlotData } from "plotly.js";
 
 import { makeHistogramTrace } from "@modules/_shared/histogram";
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
-
-import { computeStatistics } from "../statistics";
+import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
+import { computeStatistics } from "@modules/_shared/utils/math/statistics";
 
 export type PlotlyHistogramTracesOptions = {
     title: string;
     values: number[];
+    realizations: number[];
     resultName: string;
     color: string;
     numBins: number;
@@ -19,6 +19,7 @@ export type PlotlyHistogramTracesOptions = {
 export function makePlotlyHistogramTraces({
     title,
     values,
+    realizations,
     resultName,
     color,
     numBins,
@@ -27,10 +28,14 @@ export function makePlotlyHistogramTraces({
     showStatisticalLabels,
     showPercentageInBar,
 }: PlotlyHistogramTracesOptions): Partial<PlotData>[] {
+    const finiteValues = values.filter(Number.isFinite);
+    if (finiteValues.length === 0) {
+        return [];
+    }
     const data: Partial<PlotData>[] = [];
 
     const histogram = makeHistogramTrace({
-        xValues: values,
+        xValues: finiteValues,
         numBins: numBins,
         color,
         showPercentageInBar,
@@ -38,12 +43,12 @@ export function makePlotlyHistogramTraces({
     });
 
     histogram.name = title;
-    histogram.legendgroup = title;
     histogram.showlegend = true;
+    histogram.hovertemplate = `<b>${title}</b><br>Range: %{x}<br>Percentage: %{y:.2f}%<extra></extra>`;
 
     if (showStatisticalMarkers) {
         const statisticLines = createStatisticLinesForHistogram(
-            values,
+            finiteValues,
             title,
             color,
             numBins,
@@ -54,7 +59,7 @@ export function makePlotlyHistogramTraces({
     }
     data.push(histogram);
     if (showRealizationPoints) {
-        const rugTrace = createRugTraceForHistogram(values, title, color);
+        const rugTrace = createRugTraceForHistogram(values, realizations, title, color);
         data.push(rugTrace);
     }
 
@@ -82,8 +87,8 @@ function createStatisticLinesForHistogram(
     const binSize = range / numBins;
 
     const binCounts = new Array(numBins).fill(0);
-    xValues.forEach((value) => {
-        const binIndex = Math.min(Math.floor((value - xMin) / binSize), numBins - 1);
+    xValues.forEach(function countValueInBin(value) {
+        const binIndex = binSize === 0 ? 0 : Math.min(Math.floor((value - xMin) / binSize), numBins - 1);
         binCounts[binIndex]++;
     });
 
@@ -101,12 +106,11 @@ function createStatisticLinesForHistogram(
             line: { color, width: 4, dash },
             showlegend: false,
             name: label,
-            legendgroup: title,
-            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${value ? formatNumber(value) : ""}<extra></extra>`,
+            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatInplaceVolumesValue(value)}<extra></extra>`,
         };
 
         if (showLabels) {
-            trace.text = ["", `${label}: ${formatNumber(value)}`];
+            trace.text = ["", `${label}: ${formatInplaceVolumesValue(value)}`];
             trace.textposition = "top center";
             trace.textfont = { color: "black", size: 11 };
         }
@@ -119,7 +123,12 @@ function createStatisticLinesForHistogram(
 /**
  * Creates a rug trace showing individual realization points
  */
-function createRugTraceForHistogram(xValues: number[], title: string, color: string): Partial<PlotData> {
+function createRugTraceForHistogram(
+    xValues: number[],
+    realizations: number[],
+    title: string,
+    color: string,
+): Partial<PlotData> {
     return {
         x: xValues,
         y: new Array(xValues.length).fill(-2),
@@ -134,7 +143,7 @@ function createRugTraceForHistogram(xValues: number[], title: string, color: str
         },
         showlegend: false,
         name: "Realizations",
-        legendgroup: title,
-        hovertemplate: `<b>${title}</b><br>Value: %{x}<br>Realization: %{pointNumber}<extra></extra>`,
+        customdata: realizations,
+        hovertemplate: `<b>${title}</b><br>Value: %{x}<br>Realization: %{customdata}<extra></extra>`,
     };
 }

@@ -1,7 +1,8 @@
 import type React from "react";
 
-import type { DropdownOptionOrGroup } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
+import { Combobox } from "@lib/components/Combobox";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 
 import type {
     CustomSettingImplementation,
@@ -9,20 +10,36 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { assertStringOrNull } from "../utils/structureValidation";
 
-import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
+import {
+    fixupValue,
+    isValueValid,
+    makeValueConstraintsIntersectionReducerDefinition,
+} from "./_shared/arraySingleSelect";
 
 type ValueType = string | null;
 type ValueConstraintsType = string[];
 
 export class DropdownStringSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
-    private _staticOptions: DropdownOptionOrGroup<ValueType>[] | null = null;
+    private _staticOptions: ComboboxItem<ValueType>[] | null = null;
+    private _showBrowseButtons: boolean = false;
+    private _valueLabel: (value: string) => string;
     valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<string[]>();
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
     }
 
-    constructor(props?: { options?: ValueType[] | DropdownOptionOrGroup<ValueType>[] }) {
+    constructor(props?: {
+        options?: ValueType[] | ComboboxItem<ValueType>[];
+        showBrowseButtons?: boolean;
+        valueLabel?: (value: string) => string;
+    }) {
+        this._valueLabel = props?.valueLabel ?? ((value) => value);
+
+        if (props?.showBrowseButtons) {
+            this._showBrowseButtons = true;
+        }
+
         if (!props?.options) return;
 
         const options = props.options;
@@ -59,28 +76,34 @@ export class DropdownStringSetting implements CustomSettingImplementation<ValueT
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
         const isStatic = this.getIsStatic();
         const staticOptions = this._staticOptions;
+        const valueLabel = this._valueLabel;
+
+        let Component: typeof Combobox | typeof ComboboxCompositions.WithBrowseButtons =
+            ComboboxCompositions.WithBrowseButtons;
+        if (!this._showBrowseButtons) {
+            Component = Combobox;
+        }
 
         return function DropdownStringSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
-            let options: DropdownOptionOrGroup<ValueType>[];
+            let options: ComboboxItem<ValueType>[];
 
             if (isStatic && staticOptions) {
                 options = staticOptions;
             } else if (!isStatic && props.valueConstraints) {
                 options = props.valueConstraints.map((value) => ({
                     value: value,
-                    label: value === null ? "None" : value,
+                    label: value === null ? "None" : valueLabel(value),
                 }));
             } else {
                 options = [];
             }
 
             return (
-                <Dropdown
-                    options={options}
-                    value={!props.isOverridden ? props.value : props.overriddenValue}
-                    onChange={props.onValueChange}
-                    disabled={props.isOverridden}
-                    showArrows
+                <Component
+                    items={options}
+                    value={props.value}
+                    onValueChange={props.onValueChange}
+                    disabled={props.disabled}
                 />
             );
         };

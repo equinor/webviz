@@ -30,6 +30,10 @@ export function makeSurfacesBoundingBox({
         return null;
     }
 
+    return makeSurfaceIntersectionBoundingBox(data);
+}
+
+export function makeSurfaceIntersectionBoundingBox(data: RealizationSurfacesData): BBox | null {
     // If no surfaces are selected
     if (data.length === 0) {
         return null;
@@ -56,6 +60,10 @@ export function makeSurfacesBoundingBox({
             minY = Math.min(minY, point);
             maxY = Math.max(maxY, point);
         }
+    }
+
+    if (minX === Number.MAX_VALUE) {
+        return null;
     }
 
     return fromNumArray([minX, minY, 0, maxX, maxY, 0]);

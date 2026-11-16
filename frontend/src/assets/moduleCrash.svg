@@ -1,0 +1,22 @@
+<svg width="220" height="170" viewBox="0 0 220 170" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Module crashed">
+  <g transform="translate(110 90) rotate(-6) translate(-110 -90)">
+    <rect x="32" y="28" width="156" height="112" rx="6" fill="#FFFFFF" stroke="#243746" stroke-width="2"/>
+    <path d="M32 48 H188" stroke="#243746" stroke-width="2"/>
+    <circle cx="44" cy="38" r="2.5" fill="#243746"/>
+    <circle cx="54" cy="38" r="2.5" fill="#243746"/>
+    <circle cx="64" cy="38" r="2.5" fill="#243746"/>
+
+    <rect x="46" y="64" width="60" height="6" rx="2" fill="#DCDCDC"/>
+    <rect x="46" y="78" width="92" height="6" rx="2" fill="#ECECEC"/>
+    <rect x="46" y="92" width="78" height="6" rx="2" fill="#ECECEC"/>
+    <rect x="46" y="106" width="48" height="6" rx="2" fill="#ECECEC"/>
+
+    <path d="M118 28 L104 70 L138 84 L116 116 L140 140" stroke="#FF1243" stroke-width="2.5" stroke-linejoin="round" fill="none"/>
+  </g>
+
+  <g transform="translate(150 96)">
+    <path d="M0 -22 L22 16 H-22 Z" fill="#FF1243" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>
+    <rect x="-1.6" y="-12" width="3.2" height="14" rx="1.6" fill="#FFFFFF"/>
+    <circle cx="0" cy="9" r="1.8" fill="#FFFFFF"/>
+  </g>
+</svg>

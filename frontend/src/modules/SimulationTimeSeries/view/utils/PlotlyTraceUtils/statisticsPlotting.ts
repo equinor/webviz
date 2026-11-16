@@ -153,6 +153,10 @@ export function createStatisticsTraces({
     function getDefaultTrace(statisticsName: string, values: number[]): Partial<TimeSeriesPlotData> {
         const trace: Partial<TimeSeriesPlotData> = {
             name: name ?? legendGroup,
+            // Tag the trace with the statistic it represents (unique within a statistics plot). The
+            // optional min/max/percentile lines make array position unstable when they are toggled,
+            // so a caller assigning Plotly uids must key them off this rather than the index.
+            uid: statisticsName,
             x: data.samples,
             y: values,
             xaxis: xaxis,

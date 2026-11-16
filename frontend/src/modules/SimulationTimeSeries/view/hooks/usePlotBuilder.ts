@@ -15,7 +15,7 @@ import {
     loadedVectorSpecificationsAndStatisticsDataAtom,
 } from "../atoms/derivedAtoms";
 import { activeTimestampUtcMsAtom } from "../atoms/persistableFixableAtoms";
-import type { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
+import type { EnsemblesParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { PlotBuilder } from "../utils/PlotBuilder";
 import type { SubplotOwner } from "../utils/PlotBuilder";
 import {
@@ -30,7 +30,9 @@ export function usePlotBuilder(
     wrapperDivSize: Size2D,
     vectorHexColorMap: VectorHexColorMap,
     subplotOwner: SubplotOwner,
-    ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null,
+    ensemblesParameterColoring: EnsemblesParameterColoring | null,
+    hoveredTimestampUtcMs: number | null = null,
+    isHoverExternal = false,
 ): PlotBuilder | null {
     const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
@@ -47,6 +49,7 @@ export function usePlotBuilder(
         loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     );
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
+    const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
@@ -123,9 +126,11 @@ export function usePlotBuilder(
     }
 
     // Add time annotation if active timestamp is set
-    if (activeTimestampUtcMs) {
+    if (showTimestampMarker && activeTimestampUtcMs) {
         plotBuilder.addTimeAnnotation(activeTimestampUtcMs);
     }
+
+    plotBuilder.setHoveredTimestamp(hoveredTimestampUtcMs, isHoverExternal);
 
     plotBuilder.prepareLegendsAndTitles();
     plotBuilder.prepareAnnotations();

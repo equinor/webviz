@@ -1,0 +1,55 @@
+import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import { atomWithQueries } from "@framework/utils/atomUtils";
+import type { InplaceVolumesSource } from "@modules/_shared/InplaceVolumes/queryHooks";
+import { makeAggregatedStatisticalTableDataQueryOptionsFromSources } from "@modules/_shared/InplaceVolumes/queryHooks";
+import { restrictRealizationsToSensitivityCases } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+
+import { FLUID_INDEX_COLUMN } from "../utils/computeVolumeChangeDecomposition";
+
+import { indicesWithValuesAtom, subplotByAtom, waterfallFactorSpecAtom, waterfallSourcesAtom } from "./baseAtoms";
+import { isWaterfallComputableAtom } from "./derivedAtoms";
+
+/**
+ * Statistical (mean and percentile) inplace volumes data for the reference and comparison sources,
+ * for the result names required by the decomposition.
+ */
+export const waterfallStatisticalDataQueriesAtom = atomWithQueries((get) => {
+    const waterfallSources = get(waterfallSourcesAtom);
+    const factorSpec = get(waterfallFactorSpecAtom);
+    const subplotBy = get(subplotByAtom);
+    const indicesWithValues = get(indicesWithValuesAtom);
+    const isEnabled = get(isWaterfallComputableAtom);
+    const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+    const ensembleSet = get(EnsembleSetAtom);
+
+    const sources: InplaceVolumesSource[] = waterfallSources
+        ? [waterfallSources.reference, waterfallSources.comparison].map((source) => {
+              let realizations = [...validEnsembleRealizationsFunction(source.ensembleIdent)];
+              const sensitivities = ensembleSet.findEnsemble(source.ensembleIdent)?.getSensitivities() ?? null;
+              if (source.sensitivityCase && sensitivities) {
+                  realizations = restrictRealizationsToSensitivityCases(realizations, sensitivities, [
+                      source.sensitivityCase,
+                  ]);
+              }
+              return {
+                  ensembleIdent: source.ensembleIdent,
+                  tableName: source.tableName,
+                  sensitivityCase: source.sensitivityCase,
+                  realizations,
+              };
+          })
+        : [];
+
+    // Group by FLUID so the volumes belong to a single fluid zone. Summing fluids would mix the oil
+    // and gas pore volumes, and HCPV/PORV and HCPV/STOIIP would no longer be that zone's saturation
+    // and FVF. A selected "Subplot by" index is added to produce one waterfall per value.
+    const groupByIndices = subplotBy ? [FLUID_INDEX_COLUMN, subplotBy] : [FLUID_INDEX_COLUMN];
+
+    return makeAggregatedStatisticalTableDataQueryOptionsFromSources(
+        sources,
+        factorSpec?.requiredResultNames ?? [],
+        groupByIndices,
+        indicesWithValues,
+        isEnabled,
+    );
+});

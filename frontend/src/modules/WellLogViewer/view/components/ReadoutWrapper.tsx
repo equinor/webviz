@@ -1,7 +1,7 @@
 import type React from "react";
 
 import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
-import { chain, maxBy } from "lodash";
+import { entries, groupBy, maxBy, sortBy } from "lodash-es";
 
 import type { InfoItem, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
@@ -26,27 +26,36 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 }
 
 function parseWellLogReadout(wellLogInfo: Info[], templateTracks: TemplateTrack[]): ReadoutItem[] {
-    return chain(wellLogInfo)
-        .filter(({ type }) => type !== "separator")
-        .groupBy("iTrack")
-        .entries()
-        .sortBy(0)
-        .map(([iTrack, infos]) => infoToReadoutItem(infos, Number(iTrack), templateTracks))
-        .value();
+    const nonSeparatorInfos = wellLogInfo.filter(({ type }) => type !== "separator");
+    const infosByTrack = groupBy(nonSeparatorInfos, "iTrack");
+    const sortedEntries = sortBy(entries(infosByTrack), ([iTrack]) => Number(iTrack));
+
+    return sortedEntries.map(([iTrack, infos]) => infoToReadoutItem(infos, Number(iTrack), templateTracks));
 }
 
 function infoToReadoutItem(infos: Info[], iTrack: number, templateTracks: TemplateTrack[]): ReadoutItem {
-    // The axis curves are printes with index -1
+    // The axis curves are given as index -1
     if (iTrack === -1) {
         return {
+            id: "depth",
             label: "Depth",
-            info: infos.map(curveInfoToReadoutInfo),
+            info: infos.map((info) => ({
+                ...curveInfoToReadoutInfo(info),
+                id: info.name ?? "N/A",
+            })),
         };
     } else {
         const trackTemplate = templateTracks[iTrack];
+        const trackLabel = trackTemplate.title ?? trackTemplate.plots[0]?.name ?? "";
+
         return {
-            label: trackTemplate.title ?? trackTemplate.plots[0]?.name ?? "",
-            info: infos.map(curveInfoToReadoutInfo),
+            id: trackTemplate.id,
+            label: trackLabel,
+            info: infos.map((info, idx) => ({
+                ...curveInfoToReadoutInfo(info),
+                // ! esv-intersection doesn't return data that let's us distinguish these properly, so we're forced to use the index
+                id: `${trackTemplate.id}-${info.trackId}-${idx}`,
+            })),
         };
     }
 }
@@ -56,14 +65,14 @@ const CURVE_NAME_OVERRIDES: Record<string, string> = {
     MSL: "TVD (MSL)",
 };
 
-function curveInfoToReadoutInfo(info: Info): InfoItem {
+function curveInfoToReadoutInfo(info: Info): Omit<InfoItem, "id"> {
     let name = info.name ?? "";
     name = CURVE_NAME_OVERRIDES[name] ?? name;
 
     return {
+        name,
         value: info.discrete ?? info.value,
         unit: info.units ?? "",
-        adornment: <div className="w-2 h-2 rounded-full" style={{ background: info.color }} />,
-        name,
+        adornment: <div className="size-icon-xs rounded-full" style={{ background: info.color }} />,
     };
 }

@@ -19,9 +19,9 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/vfp_table_names/")
+@router.get("/vfp_tables/")
 @cache_time(CacheTime.LONG)
-async def get_vfp_table_names(
+async def get_vfp_tables(
     # fmt:off
     response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -29,17 +29,17 @@ async def get_vfp_table_names(
     ensemble_name: str = Query(description="Ensemble name"),
     realization: int = Query(description="Realization"),
     # fmt:on
-) -> list[str]:
-    """Get the available VFP table names for a given ensemble and realization."""
+) -> list[schemas.VfpTableInfo]:
+    """Get the available VFP tables (type and number) for a given ensemble and realization."""
     perf_metrics = ResponsePerfMetrics(response)
 
     vfp_access = VfpAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     perf_metrics.record_lap("get-access")
-    vfp_table_names = await vfp_access.get_all_vfp_table_names_for_realization_async(realization=realization)
-    perf_metrics.record_lap("get-available-vfp-table-names")
-    LOGGER.info(f"All Vfp table names loaded in: {perf_metrics.to_string()}")
+    vfp_table_infos = await vfp_access.get_all_vfp_tables_for_realization_async(realization=realization)
+    perf_metrics.record_lap("get-available-vfp-tables")
+    LOGGER.info(f"All Vfp tables loaded in: {perf_metrics.to_string()}")
 
-    return vfp_table_names
+    return [converters.to_api_table_info(table_info) for table_info in vfp_table_infos]
 
 
 @router.get("/vfp_table/")
@@ -51,19 +51,20 @@ async def get_vfp_table(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     realization: int = Query(description="Realization"),
-    vfp_table_name: str = Query(description="VFP table name")
+    vfp_type: schemas.VfpType = Query(description="VFP table type"),
+    vfp_table_number: int = Query(description="VFP table number")
     # fmt:on
 ) -> schemas.VfpProdTable | schemas.VfpInjTable:
     """
-    Get the VFP table for a given ensemble, realization and table name.
+    Get the VFP table for a given ensemble, realization, type and table number.
     """
     perf_metrics = ResponsePerfMetrics(response)
 
     vfp_access = VfpAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     perf_metrics.record_lap("get-access")
 
-    vfp_table: VfpProdTable | VfpInjTable = await vfp_access.get_vfp_table_from_tagname_async(
-        tagname=vfp_table_name, realization=realization
+    vfp_table: VfpProdTable | VfpInjTable = await vfp_access.get_vfp_table_from_type_and_number_async(
+        vfp_type=converters.to_sumo_vfp_type(vfp_type), table_number=vfp_table_number, realization=realization
     )
 
     perf_metrics.record_lap("get-vfp-table")

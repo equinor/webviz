@@ -1,4 +1,5 @@
-import { RadioGroup } from "@lib/components/RadioGroup";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
     CustomSettingImplementation,
@@ -11,6 +12,7 @@ type ValueRangeType = { value: string; label: string }[] | null;
 export class RadioGroupSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     private _staticOptions: ValueRangeType;
     private _layout: "horizontal" | "vertical";
+    defaultValue: ValueType;
 
     valueConstraintsIntersectionReducerDefinition = {
         reducer: (accumulator: ValueRangeType, valueConstraints: ValueRangeType, index: number) => {
@@ -33,6 +35,7 @@ export class RadioGroupSetting implements CustomSettingImplementation<ValueType,
     constructor(props: { staticOptions?: { value: string; label: string }[]; layout?: "horizontal" | "vertical" }) {
         this._staticOptions = props.staticOptions ?? null;
         this._layout = props.layout ?? "vertical";
+        this.defaultValue = props.staticOptions?.[0]?.value ?? null;
     }
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
@@ -70,11 +73,16 @@ export class RadioGroupSetting implements CustomSettingImplementation<ValueType,
 
             return (
                 <div className="flex h-8 items-center">
-                    <RadioGroup
+                    <RadioCompositions.GroupWithLabels
+                        value={props.value}
+                        onValueChange={(v) => props.onValueChange(v)}
+                        layoutClassName={resolveClassNames("flex items-center", {
+                            "flex-col": layout === "vertical",
+                        })}
                         options={options ?? []}
-                        value={props.value ?? options![0].value}
-                        onChange={(_, v) => props.onValueChange(v)}
-                        direction={layout}
+                        layout="horizontal"
+                        size="small"
+                        disabled={props.disabled}
                     />
                 </div>
             );

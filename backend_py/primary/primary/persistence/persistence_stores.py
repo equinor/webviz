@@ -126,14 +126,14 @@ class PersistenceStoresSingleton:
         cls._instance = PersistenceStores(cosmos_client)
 
     @classmethod
-    def initialize_with_emulator(cls) -> None:
+    def initialize_with_emulator(cls, uri: str) -> None:
         if cls._instance is not None:
             raise RuntimeError("PersistenceStoresSingleton is already initialized")
 
-        # Cosmos DB Emulator defaults
-        uri = "https://cosmos-db-emulator:8081"
+        # Cosmos DB Emulator well-known default key
         key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
-        cosmos_client = CosmosClient(uri, key, connection_verify=False)
+
+        cosmos_client = CosmosClient(uri, key, enable_endpoint_discovery=False)
         maybe_setup_local_database(uri, key)
         cls._instance = PersistenceStores(cosmos_client)
 

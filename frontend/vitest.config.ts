@@ -8,7 +8,7 @@ import aliases from "./aliases.json";
 export default defineConfig({
     test: {
         coverage: {
-            include: ["src/**/**.{ts}"],
+            include: ["src/**/*.ts"],
             provider: "istanbul", // or 'v8'
             reportsDirectory: "./coverage/unit/",
             exclude: ["**/api/**", "**/assets/**", "**/templates/**"],
@@ -21,7 +21,10 @@ export default defineConfig({
                 ...prev,
                 [current.replace("/*", "")]: path.resolve(
                     __dirname,
-                    aliases.compilerOptions.paths[current][0].replace("/*", ""),
+                    aliases.compilerOptions.paths[current as keyof typeof aliases.compilerOptions.paths][0].replace(
+                        "/*",
+                        "",
+                    ),
                 ),
             }),
             {},

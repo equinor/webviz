@@ -1,5 +1,4 @@
-import { getDrilledWellboreHeadersOptions } from "@api";
-import { IntersectionType } from "@framework/types/intersection";
+import { getDrilledWellboreHeadersOptions, getPlannedWellboreHeadersOptions } from "@api";
 
 import { Setting } from "../..//settings/settingsDefinitions";
 import { getAvailableIntersectionOptions } from "../../dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
@@ -7,7 +6,7 @@ import type { CustomGroupImplementationWithSettings } from "../../interfacesAndT
 import type { SetupBasicBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
-const intersectionViewSettings = [Setting.INTERSECTION, Setting.WELLBORE_EXTENSION_LENGTH] as const;
+const intersectionViewSettings = [Setting.INTERSECTION] as const;
 export type IntersectionViewSettings = typeof intersectionViewSettings;
 type SettingTypes = MakeSettingTypesMap<IntersectionViewSettings>;
 
@@ -23,18 +22,6 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
         makeSharedResult,
         queryClient,
     }: SetupBasicBindingsContext<IntersectionViewSettings, SettingTypes>): void {
-        setting(Setting.WELLBORE_EXTENSION_LENGTH).bindAttributes({
-            read(read) {
-                return {
-                    intersection: read.localSetting(Setting.INTERSECTION),
-                };
-            },
-            resolve({ intersection }) {
-                const enableExtensionLength = intersection?.type === IntersectionType.WELLBORE;
-                return { enabled: enableExtensionLength };
-            },
-        });
-
         const wellboreHeaders = makeSharedResult({
             debugName: "wellboreHeaders",
             read(read) {
@@ -56,20 +43,46 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
             },
         });
 
+        const plannedWellboreHeaders = makeSharedResult({
+            debugName: "plannedWellboreHeaders",
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                };
+            },
+            async resolve({ fieldIdentifier }, { abortSignal }) {
+                if (!fieldIdentifier) {
+                    return null;
+                }
+
+                return await queryClient.fetchQuery({
+                    ...getPlannedWellboreHeadersOptions({
+                        query: { field_identifier: fieldIdentifier },
+                        signal: abortSignal,
+                    }),
+                });
+            },
+        });
+
         setting(Setting.INTERSECTION).bindValueConstraints({
             read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     intersectionPolylines: read.globalSetting("intersectionPolylines"),
                     wellboreHeaders: read.sharedResult(wellboreHeaders),
+                    plannedWellboreHeaders: read.sharedResult(plannedWellboreHeaders),
                 };
             },
-            resolve({ fieldIdentifier, intersectionPolylines, wellboreHeaders }) {
+            resolve({ fieldIdentifier, intersectionPolylines, wellboreHeaders, plannedWellboreHeaders }) {
                 const fieldIntersectionPolylines = intersectionPolylines.filter(
                     (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
                 );
 
-                return getAvailableIntersectionOptions(wellboreHeaders ?? [], fieldIntersectionPolylines);
+                return getAvailableIntersectionOptions(
+                    wellboreHeaders ?? [],
+                    fieldIntersectionPolylines,
+                    plannedWellboreHeaders ?? [],
+                );
             },
         });
     }
@@ -77,7 +90,6 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
     getDefaultSettingsValues() {
         return {
             intersection: null,
-            wellboreExtensionLength: 500.0,
         };
     }
 }

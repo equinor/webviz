@@ -1,12 +1,14 @@
-import type { SurfaceStatisticFunction_api } from "@api";
+import type { StdResAttribute_api, SurfaceStandardResult_api, SurfaceStatisticFunction_api, TagNameAttribute_api } from "@api";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
+
+export type SurfaceAttribute = TagNameAttribute_api | StdResAttribute_api;
 
 export interface RealizationSurfaceAddress {
     addressType: "REAL";
     caseUuid: string;
     ensemble: string;
     name: string;
-    attribute: string;
+    attribute: SurfaceAttribute;
     realizationNum: number;
     isoTimeOrInterval: string | null;
 }
@@ -15,7 +17,7 @@ export interface ObservedSurfaceAddress {
     addressType: "OBS";
     caseUuid: string;
     name: string;
-    attribute: string;
+    attribute: SurfaceAttribute;
     isoTimeOrInterval: string;
 }
 
@@ -24,56 +26,69 @@ export interface StatisticalSurfaceAddress {
     caseUuid: string;
     ensemble: string;
     name: string;
-    attribute: string;
+    attribute: SurfaceAttribute;
     statFunction: SurfaceStatisticFunction_api;
     statRealizations: number[] | null;
     isoTimeOrInterval: string | null;
 }
 
-export interface PartialSurfaceAddress {
-    addressType: "PARTIAL";
-    caseUuid: string;
-    ensemble: string;
-    name: string;
-    attribute: string;
-    isoTimeOrInterval: string | null;
-}
+export type AnySurfaceAddress = RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress;
 
-export type FullSurfaceAddress = RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress;
-
-export type AnySurfaceAddress =
-    | RealizationSurfaceAddress
-    | ObservedSurfaceAddress
-    | StatisticalSurfaceAddress
-    | PartialSurfaceAddress;
-
-const SurfaceAddressTypeValues = ["REAL", "OBS", "STAT", "PARTIAL"] as const;
+const SurfaceAddressTypeValues = ["REAL", "OBS", "STAT"] as const;
 export type SurfaceAddressType = (typeof SurfaceAddressTypeValues)[number];
 
 const ADDR_COMP_DELIMITER = "~~";
 
+export function makeTagNameAttribute(tagName: string): TagNameAttribute_api {
+    return { kind: "TAGNAME", tag_name: tagName };
+}
+
+export function makeStdResAttribute(
+    stdResName: SurfaceStandardResult_api,
+    subName: string | null = null,
+): StdResAttribute_api {
+    return { kind: "STDRES", std_res_name: stdResName, sub_name: subName };
+}
+
+// The attribute always spans three components so the fields after it sit at fixed positions
+function attributeToComponents(attr: SurfaceAttribute): string[] {
+    if (attr.kind === "TAGNAME") {
+        return ["TAGNAME", attr.tag_name, ""];
+    }
+
+    return ["STDRES", attr.std_res_name, attr.sub_name ?? ""];
+}
+
 export function encodeRealizationSurfAddrStr(addr: Omit<RealizationSurfaceAddress, "addressType">): string {
-    const componentArr = ["REAL", addr.caseUuid, addr.ensemble, addr.name, addr.attribute, addr.realizationNum];
+    const componentArr = [
+        "REAL",
+        addr.caseUuid,
+        addr.ensemble,
+        addr.name,
+        ...attributeToComponents(addr.attribute),
+        addr.realizationNum,
+    ];
     if (addr.isoTimeOrInterval !== null) {
         componentArr.push(addr.isoTimeOrInterval);
     }
 
     assertThatNoComponentsContainDelimiter(componentArr);
 
-    const addrStr = componentArr.join(ADDR_COMP_DELIMITER);
-    return addrStr;
+    return componentArr.join(ADDR_COMP_DELIMITER);
 }
 
 export function encodeObservedSurfAddrStr(addr: Omit<ObservedSurfaceAddress, "addressType">): string {
-    const componentArr = ["OBS", addr.caseUuid, addr.name, addr.attribute];
-    if (addr.isoTimeOrInterval !== null) {
-        componentArr.push(addr.isoTimeOrInterval);
-    }
+    const componentArr = [
+        "OBS",
+        addr.caseUuid,
+        addr.name,
+        ...attributeToComponents(addr.attribute),
+        addr.isoTimeOrInterval,
+    ];
 
     assertThatNoComponentsContainDelimiter(componentArr);
 
-    const addrStr = componentArr.join(ADDR_COMP_DELIMITER);
-    return addrStr;
+    return componentArr.join(ADDR_COMP_DELIMITER);
 }
 
 export function encodeStatisticalSurfAddrStr(addr: Omit<StatisticalSurfaceAddress, "addressType">): string {
@@ -82,27 +97,22 @@ export function encodeStatisticalSurfAddrStr(addr: Omit<StatisticalSurfaceAddres
         realStr = encodeAsUintListStr(addr.statRealizations);
     }
 
-    const componentArr = ["STAT", addr.caseUuid, addr.ensemble, addr.name, addr.attribute, addr.statFunction, realStr];
+    const componentArr = [
+        "STAT",
+        addr.caseUuid,
+        addr.ensemble,
+        addr.name,
+        ...attributeToComponents(addr.attribute),
+        addr.statFunction,
+        realStr,
+    ];
     if (addr.isoTimeOrInterval !== null) {
         componentArr.push(addr.isoTimeOrInterval);
     }
 
     assertThatNoComponentsContainDelimiter(componentArr);
 
-    const addrStr = componentArr.join(ADDR_COMP_DELIMITER);
-    return addrStr;
-}
-
-export function encodePartialSurfAddrStr(addr: Omit<PartialSurfaceAddress, "addressType">): string {
-    const componentArr = ["PARTIAL", addr.caseUuid, addr.ensemble, addr.name, addr.attribute];
-    if (addr.isoTimeOrInterval !== null) {
-        componentArr.push(addr.isoTimeOrInterval);
-    }
-
-    assertThatNoComponentsContainDelimiter(componentArr);
-
-    const addrStr = componentArr.join(ADDR_COMP_DELIMITER);
-    return addrStr;
+    return componentArr.join(ADDR_COMP_DELIMITER);
 }
 
 export function encodeSurfAddrStr(addr: AnySurfaceAddress): string {
@@ -113,8 +123,6 @@ export function encodeSurfAddrStr(addr: AnySurfaceAddress): string {
             return encodeObservedSurfAddrStr(addr);
         case "STAT":
             return encodeStatisticalSurfAddrStr(addr);
-        case "PARTIAL":
-            return encodePartialSurfAddrStr(addr);
         default:
             throw new Error("Invalid address type");
     }
@@ -147,11 +155,7 @@ export function peekSurfaceEnsemble(surfAddrStr: string): string | null {
         return null;
     }
 
-    if (addrType === "REAL" || addrType === "STAT" || addrType === "PARTIAL") {
-        return components[2];
-    }
-
-    return null;
+    return components[2];
 }
 
 function assertThatNoComponentsContainDelimiter(componentArr: Array<string | number>): void {

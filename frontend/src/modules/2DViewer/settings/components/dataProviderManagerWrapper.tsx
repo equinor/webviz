@@ -2,26 +2,14 @@ import type React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
 import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } from "@equinor/eds-icons";
-import { Dropdown } from "@mui/base";
-import {
-    Check,
-    Panorama,
-    SettingsApplications,
-    Settings as SettingsIcon,
-    TableRowsOutlined,
-    ViewColumnOutlined,
-} from "@mui/icons-material";
+import { Add, Panorama, SettingsApplications } from "@mui/icons-material";
 import { useAtom } from "jotai";
 
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useColorSet, type WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { Menu } from "@lib/components/Menu";
-import { MenuButton } from "@lib/components/MenuButton";
-import { MenuHeading } from "@lib/components/MenuHeading";
-import { MenuItem } from "@lib/components/MenuItem";
+import { Button } from "@lib/components/Button";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
-import { PreferredViewLayout } from "@modules/_shared/components/SubsurfaceViewer/typesAndEnums";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
@@ -42,6 +30,7 @@ import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTy
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { ViewportLayoutMenu } from "@modules/_shared/DataProviderFramework/ViewportLayoutMenu";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
@@ -58,23 +47,41 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
     const groupDelegate = props.dataProviderManager.getGroupDelegate();
     usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
+    function handleAddView(groupDelegate: GroupDelegate) {
+        const color = colorSet.getNextColor();
+        const view = GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, color);
+        groupDelegate.appendChild(view);
+    }
+
     function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
         switch (identifier) {
-            case "view":
-                groupDelegate.appendChild(
-                    GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, colorSet.getNextColor()),
-                );
+            case "view": {
+                handleAddView(groupDelegate);
                 return;
+            }
+
             case "delta-surface":
                 groupDelegate.prependChild(new DeltaSurface("Delta surface", props.dataProviderManager));
                 return;
-            case "context-boundary":
-                groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager));
+            case "context-boundary": {
+                const ctxBoundary = new ContextBoundary("Context boundary", props.dataProviderManager);
+                groupDelegate.prependChild(ctxBoundary);
+
                 return;
+            }
 
             case "depth-surface":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(DataProviderType.DEPTH_SURFACE, props.dataProviderManager),
+                );
+                return;
+
+            case "initial-fluid-contact-surface":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.INITIAL_FLUID_CONTACT_SURFACE,
+                        props.dataProviderManager,
+                    ),
                 );
                 return;
 
@@ -140,6 +147,14 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     ),
                 );
                 return;
+            case "planned-wellbore-trajectories":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.PLANNED_WELL_TRAJECTORIES,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
             case "drilled-wellbore-picks":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
@@ -171,6 +186,11 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "attribute":
                 groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.dataProviderManager));
                 return;
+            case "surface-attribute":
+                groupDelegate.appendChild(
+                    new SharedSetting(Setting.SURFACE_ATTRIBUTE, null, props.dataProviderManager),
+                );
+                return;
             case "seismic-attribute":
                 groupDelegate.appendChild(
                     new SharedSetting(Setting.SEISMIC_ATTRIBUTE, null, props.dataProviderManager),
@@ -184,6 +204,12 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 return;
             case "time-interval":
                 groupDelegate.appendChild(new SharedSetting(Setting.TIME_INTERVAL, null, props.dataProviderManager));
+                return;
+            case "time-type":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_TYPE, null, props.dataProviderManager));
+                return;
+            case "time-point-pair":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_POINT_PAIR, null, props.dataProviderManager));
                 return;
             case "color-scale":
                 groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
@@ -268,49 +294,18 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
         <DataProviderManagerComponent
             title={"Layers"}
             dataProviderManager={props.dataProviderManager}
-            additionalHeaderComponents={
-                <Dropdown>
-                    <MenuButton label="Settings">
-                        <SettingsIcon fontSize="inherit" />
-                    </MenuButton>
-                    <Menu>
-                        <MenuHeading>Preferred view layout</MenuHeading>
-                        <ViewLayoutMenuItem
-                            checked={preferredViewLayout === PreferredViewLayout.HORIZONTAL}
-                            onClick={() => setPreferredViewLayout(PreferredViewLayout.HORIZONTAL)}
-                        >
-                            <ViewColumnOutlined fontSize="inherit" /> Horizontal
-                        </ViewLayoutMenuItem>
-                        <ViewLayoutMenuItem
-                            checked={preferredViewLayout === PreferredViewLayout.VERTICAL}
-                            onClick={() => setPreferredViewLayout(PreferredViewLayout.VERTICAL)}
-                        >
-                            <TableRowsOutlined fontSize="inherit" /> Vertical
-                        </ViewLayoutMenuItem>
-                    </Menu>
-                </Dropdown>
-            }
             groupActions={makeActionsForGroup}
             onAction={handleLayerAction}
             isMoveAllowed={checkIfItemMoveAllowed}
+            additionalHeaderComponents={
+                <ViewportLayoutMenu value={preferredViewLayout} onValueChange={setPreferredViewLayout} />
+            }
+            emptyContentPlaceholder={
+                <Button tone="accent" onClick={() => handleAddView(groupDelegate)}>
+                    <Add style={{ fontSize: 16 }} /> Add first view
+                </Button>
+            }
         />
-    );
-}
-
-type ViewLayoutMenuItemProps = {
-    checked: boolean;
-    onClick: () => void;
-    children: React.ReactNode;
-};
-
-function ViewLayoutMenuItem(props: ViewLayoutMenuItemProps): React.ReactNode {
-    return (
-        <MenuItem onClick={props.onClick}>
-            <div className="flex items-center gap-4">
-                <div className="w-4">{props.checked && <Check fontSize="small" />}</div>
-                <div className="flex gap-2 items-center">{props.children}</div>
-            </div>
-        </MenuItem>
     );
 }
 
@@ -322,11 +317,13 @@ const INITIAL_ACTIONS: ActionGroup[] = [
                 identifier: "view",
                 icon: <Panorama fontSize="small" />,
                 label: "View",
+                description: "Visualizes one or more layers",
             },
             {
                 identifier: "context-boundary",
                 icon: <SettingsApplications fontSize="small" />,
                 label: "Context boundary",
+                description: "Share settings between a set of items",
             },
         ],
     },
@@ -343,6 +340,11 @@ const ACTIONS: ActionGroup[] = [
                         identifier: "depth-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Depth",
+                    },
+                    {
+                        identifier: "initial-fluid-contact-surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Initial Fluid Contact",
                     },
                     {
                         identifier: "seismic-3d-surface",
@@ -378,6 +380,11 @@ const ACTIONS: ActionGroup[] = [
                         identifier: "drilled-wellbore-trajectories",
                         icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Trajectories (Official)",
+                    },
+                    {
+                        identifier: "planned-wellbore-trajectories",
+                        icon: <Icon data={wellbore} fontSize="small" />,
+                        label: "Trajectories (Planned)",
                     },
                     {
                         identifier: "drilled-wellbore-picks",
@@ -442,6 +449,11 @@ const ACTIONS: ActionGroup[] = [
                 label: "Unsorted Attribute",
             },
             {
+                identifier: "surface-attribute",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Surface Attribute",
+            },
+            {
                 identifier: "seismic-attribute",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Seismic Attribute",
@@ -460,6 +472,16 @@ const ACTIONS: ActionGroup[] = [
                 identifier: "time-interval",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Time interval",
+            },
+            {
+                identifier: "time-type",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Time type",
+            },
+            {
+                identifier: "time-point-pair",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Time steps (difference)",
             },
             {
                 identifier: "color-scale",

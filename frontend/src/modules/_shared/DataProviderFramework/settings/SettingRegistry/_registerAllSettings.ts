@@ -1,7 +1,5 @@
-import {
-    defaultContinuousDivergingColorPalettes,
-    defaultContinuousSequentialColorPalettes,
-} from "@framework/utils/colorPalettes";
+import { InitialFluidContactType_api } from "@api";
+import { defaultContinuousDivergingColorPalettes, defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import { BooleanNumberSetting } from "../implementations/BooleanNumberSetting";
@@ -31,12 +29,23 @@ import { SliderNumberSetting } from "../implementations/SliderNumberSetting";
 import { SliderRangeSetting } from "../implementations/SliderRangeSetting";
 import { StaticRotationSetting } from "../implementations/StaticRotationSetting";
 import { StatisticFunctionSetting } from "../implementations/StatisticFunctionSetting";
+import { SurfaceAttributeSetting } from "../implementations/SurfaceAttributeSetting";
 import { TimeOrIntervalSetting } from "../implementations/TimeOrIntervalSetting";
+import { TimePointPairSetting } from "../implementations/TimePointPairSetting";
+import { TimeTypeSetting } from "../implementations/TimeTypeSetting";
 import { WellboreDepthFilterAttributeSetting } from "../implementations/WellboreDepthFilterAttributeSetting";
 import { WellboreDepthFilterSetting } from "../implementations/WellboreDepthFilterSetting";
 import { Setting } from "../settingsDefinitions";
 
 import { SettingRegistry } from "./_SettingRegistry";
+
+const FLUID_CONTACT_LABELS: Record<InitialFluidContactType_api, string> = {
+    [InitialFluidContactType_api.FGL]: "Free gas level",
+    [InitialFluidContactType_api.FWL]: "Free water level",
+    [InitialFluidContactType_api.GOC]: "Gas-oil contact",
+    [InitialFluidContactType_api.GWC]: "Gas-water contact",
+    [InitialFluidContactType_api.OWC]: "Oil-water contact",
+};
 
 SettingRegistry.registerSetting(Setting.TRACK_WIDTH, "Track width", InputNumberSetting, {
     customConstructorParameters: [{ min: 1, max: 6 }],
@@ -62,8 +71,9 @@ SettingRegistry.registerSetting(Setting.LABEL_ROTATION, "Label rotation", Static
 SettingRegistry.registerSetting(Setting.SHOW_LINES, "Show lines", BooleanSetting);
 
 SettingRegistry.registerSetting(Setting.ATTRIBUTE, "Attribute", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.SEISMIC_ATTRIBUTE, "Seismic Attribute", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.DEPTH_ATTRIBUTE, "Depth Attribute", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.SURFACE_ATTRIBUTE, "Surface Attribute", SurfaceAttributeSetting);
+SettingRegistry.registerSetting(Setting.SEISMIC_ATTRIBUTE, "Seismic Attribute", SurfaceAttributeSetting);
+SettingRegistry.registerSetting(Setting.DEPTH_ATTRIBUTE, "Depth Attribute", SurfaceAttributeSetting);
 SettingRegistry.registerSetting(Setting.ENSEMBLE, "Ensemble", EnsembleSetting);
 SettingRegistry.registerSetting(Setting.COLOR_SCALE, "Color Scale", ColorScaleSetting);
 SettingRegistry.registerSetting(Setting.DEPTH_COLOR_SCALE, "Depth Color Scale", ColorScaleSetting, {
@@ -104,8 +114,17 @@ SettingRegistry.registerSetting(Setting.CONTOURS, "Contours", BooleanNumberSetti
 SettingRegistry.registerSetting(Setting.GRID_LAYER_K, "Grid Layer K", NumberRangeDropdownSetting);
 SettingRegistry.registerSetting(Setting.GRID_LAYER_RANGE, "Grid Ranges", GridLayerRangeSetting);
 SettingRegistry.registerSetting(Setting.GRID_NAME, "Grid Name", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.INTERSECTION, "Intersection", IntersectionSetting);
-SettingRegistry.registerSetting(Setting.OPACITY_PERCENT, "Color Opacity [%]", SliderNumberSetting, {
+SettingRegistry.registerSetting(Setting.FLUID_CONTACT, "Fluid Contact", DropdownStringSetting, {
+    customConstructorParameters: [
+        {
+            valueLabel: (value) => FLUID_CONTACT_LABELS[value as InitialFluidContactType_api] ?? value,
+        },
+    ],
+});
+SettingRegistry.registerSetting(Setting.INTERSECTION, "Intersection", IntersectionSetting, {
+    customConstructorParameters: [{ extensionLengthConfig: { min: 0, max: 5000, defaultValue: 500 } }],
+});
+SettingRegistry.registerSetting(Setting.OPACITY_PERCENT, "Color Opacity", SliderNumberSetting, {
     customConstructorParameters: [{ minMax: { min: 0, max: 100 }, step: 1 }],
 });
 SettingRegistry.registerSetting(Setting.POLYGONS_ATTRIBUTE, "Polygons Attribute", DropdownStringSetting);
@@ -120,16 +139,19 @@ SettingRegistry.registerSetting(Setting.SMDA_INTERPRETER, "SMDA Interpreter", Dr
 SettingRegistry.registerSetting(Setting.WELLBORES, "Wellbores", DrilledWellboresSetting);
 SettingRegistry.registerSetting(Setting.STATISTIC_FUNCTION, "Statistic Function", StatisticFunctionSetting);
 SettingRegistry.registerSetting(Setting.STRAT_COLUMN, "Stratigraphic Column", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.SURFACE_NAME, "Surface Name", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.FORMATION_NAME, "Formation Name", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.SURFACE_NAME, "Surface Name", DropdownStringSetting, {
+    customConstructorParameters: [{ showBrowseButtons: true }],
+});
+SettingRegistry.registerSetting(Setting.FORMATION_NAME, "Formation Name", DropdownStringSetting, {
+    customConstructorParameters: [{ showBrowseButtons: true }],
+});
 SettingRegistry.registerSetting(Setting.SURFACE_NAMES, "Surface Names", SelectStringSetting);
+SettingRegistry.registerSetting(Setting.TIME_TYPE, "Time Type", TimeTypeSetting);
 SettingRegistry.registerSetting(Setting.TIME_OR_INTERVAL, "Time or Interval", TimeOrIntervalSetting);
 SettingRegistry.registerSetting(Setting.TIME_POINT, "Time Point", TimeOrIntervalSetting);
 SettingRegistry.registerSetting(Setting.TIME_INTERVAL, "Time Interval", TimeOrIntervalSetting);
+SettingRegistry.registerSetting(Setting.TIME_POINT_PAIR, "Time Steps", TimePointPairSetting);
 
-SettingRegistry.registerSetting(Setting.WELLBORE_EXTENSION_LENGTH, "Wellbore Extension Length", InputNumberSetting, {
-    customConstructorParameters: [{ min: 0.0, max: 5000.0 }],
-});
 SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Wellbore Picks", DrilledWellborePicksSetting);
 SettingRegistry.registerSetting(Setting.REPRESENTATION, "Representation", RepresentationSetting);
 SettingRegistry.registerSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE, "Depth Filter", RadioGroupSetting, {

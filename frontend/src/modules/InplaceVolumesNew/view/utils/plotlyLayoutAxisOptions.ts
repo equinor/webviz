@@ -1,6 +1,7 @@
-import type { Axis } from "plotly.js";
+import type { Axis, LayoutAxis } from "plotly.js";
 
 import type { HistogramType } from "@modules/_shared/histogram";
+import { makeInplaceVolumesAxisFormat } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
 import type { PlotBuilder } from "./PlotBuilder";
@@ -10,9 +11,13 @@ export interface PlotConfigurerOptions {
     plotType: PlotType;
     resultName: string;
     barSelectorColumn: string | null;
+    subplotBy: string;
     colorBy: string;
     histogramType: HistogramType;
     barSelectorLength: number;
+    // Box rows shared by all subplots, top-down; null lets each subplot list its own rows.
+    boxRowLabels: string[] | null;
+    numSubplots: number;
 }
 
 /**
@@ -21,24 +26,42 @@ export interface PlotConfigurerOptions {
  * configuration logic.
  */
 export function configurePlotlyLayoutAxisByPlotType(plotBuilder: PlotBuilder, options: PlotConfigurerOptions): void {
-    const { plotType, resultName, barSelectorColumn, colorBy, histogramType, barSelectorLength } = options;
+    const {
+        plotType,
+        resultName,
+        barSelectorColumn,
+        subplotBy,
+        colorBy,
+        histogramType,
+        barSelectorLength,
+        boxRowLabels,
+        numSubplots,
+    } = options;
+
+    const responseAxisFormat = makeInplaceVolumesAxisFormat(resultName);
 
     if (plotType === PlotType.CONVERGENCE) {
+        plotBuilder.setYAxisNumberFormatOptions(responseAxisFormat);
         configureConvergencePlot(plotBuilder, resultName);
     } else if (plotType === PlotType.BOX) {
-        configureBoxPlot(plotBuilder);
+        plotBuilder.setXAxisNumberFormatOptions(responseAxisFormat);
+        configureBoxPlot(plotBuilder, resultName, boxRowLabels, numSubplots);
     } else if (plotType === PlotType.HISTOGRAM) {
-        configureHistogramPlot(plotBuilder, histogramType);
+        plotBuilder.setXAxisNumberFormatOptions(responseAxisFormat);
+        configureHistogramPlot(plotBuilder, resultName, histogramType);
     } else if (plotType === PlotType.BAR) {
-        configureBarPlot(plotBuilder, barSelectorColumn, colorBy, barSelectorLength);
+        plotBuilder.setYAxisNumberFormatOptions(responseAxisFormat);
+        configureBarPlot(plotBuilder, barSelectorColumn, subplotBy, colorBy, barSelectorLength);
     } else if (plotType === PlotType.DISTRIBUTION) {
-        configureDistributionPlot(plotBuilder);
+        plotBuilder.setXAxisNumberFormatOptions(responseAxisFormat);
+        configureDistributionPlot(plotBuilder, resultName);
     }
 }
 
-function configureDistributionPlot(plotBuilder: PlotBuilder): void {
-    plotBuilder.setYAxisOptions({ visible: false });
-    plotBuilder.setXAxisOptions({ zeroline: false });
+function configureDistributionPlot(plotBuilder: PlotBuilder, resultName: string): void {
+    // The density axis is hidden, so zooming it only stretches the curves.
+    plotBuilder.setYAxisOptions({ visible: false, fixedrange: true });
+    plotBuilder.setXAxisOptions({ zeroline: false, title: { text: resultName } });
 }
 
 function configureConvergencePlot(plotBuilder: PlotBuilder, resultName: string): void {
@@ -50,11 +73,44 @@ function configureConvergencePlot(plotBuilder: PlotBuilder, resultName: string):
     });
 }
 
-function configureBoxPlot(plotBuilder: PlotBuilder): void {
-    plotBuilder.setYAxisOptions({ showticklabels: false });
+/**
+ * A single subplot names its rows on the y axis, which makes the legend redundant. With several subplots,
+ * labelled first columns would be narrower than the rest, so the legend names the rows instead.
+ */
+export function makeBoxPlotLayoutOptions(
+    rowLabels: string[] | null,
+    numSubplots: number,
+): { yAxis: Partial<LayoutAxis>; showLegend: boolean } {
+    const showRowLabels = numSubplots <= 1;
+    // Zooming the rows only stretches the boxes; scroll zoom then scales them out of the subplot until Plotly redraws.
+    const yAxis: Partial<LayoutAxis> = {
+        type: "category",
+        showticklabels: showRowLabels,
+        automargin: showRowLabels,
+        fixedrange: true,
+    };
+    if (rowLabels) {
+        // Plotly lists categories bottom-up.
+        yAxis.categoryorder = "array";
+        yAxis.categoryarray = rowLabels.toReversed();
+    }
+    return { yAxis, showLegend: !showRowLabels };
 }
 
-function configureHistogramPlot(plotBuilder: PlotBuilder, histogramType: HistogramType): void {
+function configureBoxPlot(
+    plotBuilder: PlotBuilder,
+    resultName: string,
+    rowLabels: string[] | null,
+    numSubplots: number,
+): void {
+    const { yAxis, showLegend } = makeBoxPlotLayoutOptions(rowLabels, numSubplots);
+    plotBuilder.setXAxisOptions({ title: { text: resultName } });
+    plotBuilder.setYAxisOptions(yAxis);
+    plotBuilder.setShowLegend(showLegend);
+}
+
+function configureHistogramPlot(plotBuilder: PlotBuilder, resultName: string, histogramType: HistogramType): void {
+    plotBuilder.setXAxisOptions({ title: { text: resultName } });
     plotBuilder.setYAxisOptions({
         title: { text: "Percentage (%)" },
     });
@@ -64,6 +120,7 @@ function configureHistogramPlot(plotBuilder: PlotBuilder, histogramType: Histogr
 function configureBarPlot(
     plotBuilder: PlotBuilder,
     selectorColumn: string | null,
+    subplotBy: string,
     colorBy: string,
     selectorLength: number,
 ): void {
@@ -78,7 +135,10 @@ function configureBarPlot(
         categoryorder: selectorColumn === colorBy ? "total descending" : undefined,
     };
 
-    if (selectorLength >= MAX_LABELS_FOR_BARS) {
+    if (selectorColumn === subplotBy) {
+        // Each subplot holds a single category, already named by the subplot title.
+        plotBuilder.setXAxisOptions({ ...baseOptions, showticklabels: false });
+    } else if (selectorLength >= MAX_LABELS_FOR_BARS) {
         plotBuilder.setXAxisOptions({
             ...baseOptions,
             showticklabels: false,

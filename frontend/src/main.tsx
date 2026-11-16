@@ -1,11 +1,13 @@
 import React from "react";
 
 import { createRoot } from "react-dom/client";
-import { ToastContainer } from "react-toastify";
 
 import { client } from "@api";
-import { AuthProvider } from "@framework/internal/providers/AuthProvider";
+import { installAuthInterceptors } from "@framework/internal/auth/authInterceptors";
+import { AuthState, AuthStateStore } from "@framework/internal/auth/AuthStateStore";
 import { CustomQueryClientProvider } from "@framework/internal/providers/QueryClientProvider";
+import { toastManager } from "@framework/toastManager";
+import { Toast } from "@lib/components/Toast";
 
 import App from "./App";
 import { GlobalErrorBoundary } from "./GlobalErrorBoundary";
@@ -32,6 +34,13 @@ client.setConfig({
     baseURL: "/api",
 });
 
+const authStateStore = AuthStateStore.getInstance();
+installAuthInterceptors(client.instance, {
+    isLoggedIn: () => authStateStore.isLoggedIn(),
+    onUnauthorized: () => authStateStore.setAuthState(AuthState.NotLoggedIn),
+});
+authStateStore.fetchLoggedInUser();
+
 // --------------------------------------------------------------------
 
 /*
@@ -48,15 +57,12 @@ const root = createRoot(container);
 
 root.render(
     <React.StrictMode>
+        {/* Toast might be used in the error boundary fallback. We assume that the toast comp is very unlikely to crash, so we keep it outside */}
+        <Toast toastManager={toastManager} />
         <GlobalErrorBoundary>
-            <AuthProvider>
-                <CustomQueryClientProvider>
-                    <>
-                        <ToastContainer limit={3} position="bottom-right" />
-                        <App />
-                    </>
-                </CustomQueryClientProvider>
-            </AuthProvider>
+            <CustomQueryClientProvider>
+                <App />
+            </CustomQueryClientProvider>
         </GlobalErrorBoundary>
     </React.StrictMode>,
 );

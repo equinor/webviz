@@ -1,12 +1,12 @@
 import type { PlotData } from "plotly.js";
 
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
-
-import { computeStatistics } from "../statistics";
+import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
+import { computeStatistics } from "@modules/_shared/utils/math/statistics";
 
 export type PlotlyDensityTracesOptions = {
     title: string;
     values: number[];
+    realizations: number[];
     color: string;
     resultName: string;
     showRealizationPoints: boolean;
@@ -16,6 +16,7 @@ export type PlotlyDensityTracesOptions = {
 export function makePlotlyDensityTraces({
     title,
     values,
+    realizations,
     color,
     resultName,
     showRealizationPoints,
@@ -27,7 +28,6 @@ export function makePlotlyDensityTraces({
     data.push({
         x: values,
         name: title,
-        legendgroup: title,
         type: "violin",
         marker: { color },
         side: "positive",
@@ -35,10 +35,13 @@ export function makePlotlyDensityTraces({
         orientation: "h",
         spanmode: "hard",
         meanline: { visible: !showStatisticalMarkers },
-        hovertemplate: `<b>${title}</b><br>Value: %{x}<br>Realization: %{pointNumber}<extra></extra>`,
-        hoverinfo: "x",
-        // @ts-expect-error - arguments in the plotly types
+        customdata: realizations,
+        hovertemplate: `<b>${title}</b><br>Value: %{x}<br>Realization: %{customdata}<extra></extra>`,
+        // KDE hovers ignore the template; they name the trace via hoverinfo, uncut for long case names.
+        // @ts-expect-error - violin attributes are missing in the plotly types
         hoveron: "points+kde",
+        hoverinfo: "x+name",
+        hoverlabel: { namelength: -1 },
         points: showRealizationPoints ? "all" : false,
         pointpos: -0.3,
         jitter: 0.1,
@@ -75,13 +78,12 @@ function createStatisticMarkersForDistribution(
         mode: showLabels ? "text+markers" : "markers",
         marker: { color, size: 10, symbol: "x" },
         showlegend: false,
-        legendgroup: title,
-        text: labels.map((label, i) => `${label}: ${formatNumber(xValues[i])}`),
+        text: labels.map((label, i) => `${label}: ${formatInplaceVolumesValue(xValues[i])}`),
         textposition: "top center",
         textfont: showLabels ? { color: "black", size: 11 } : undefined,
         hovertemplate: xValues.map(
             (_, i) =>
-                `<b>${title}</b><br><b>${labels[i]}</b><br>${resultName}: ${formatNumber(xValues[i])}<extra></extra>`,
+                `<b>${title}</b><br><b>${labels[i]}</b><br>${resultName}: ${formatInplaceVolumesValue(xValues[i])}<extra></extra>`,
         ),
     };
 }

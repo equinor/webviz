@@ -4,19 +4,19 @@ import { useAtom, useAtomValue } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
+import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import type { DropdownOption } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Combobox } from "@lib/components/Combobox";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
+import { Setting } from "@lib/components/Setting";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
@@ -35,6 +35,8 @@ import {
 } from "./atoms/persistableFixableAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 import { makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
+
+const DEBOUNCE_TIME_MS = 1500;
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -61,7 +63,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedPlotType, setSelectedPlotType] = useAtom(selectedPlotTypeAtom);
     const [selectedIndexValueCriteria, setSelectedIndexValueCriteria] = useAtom(selectedIndexValueCriteriaAtom);
 
-    usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQueryResult.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(tableDefinitionsQueryResult.errors, statusWriter);
 
     useApplyInitialSettingsToState(
         props.initialSettings,
@@ -70,7 +72,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIndexValueCriteria,
     );
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
-        setSelectedEnsembleIdents(newFilter.ensembleIdents);
+        setSelectedEnsembleIdents(filterEnsembleIdentsByType(newFilter.ensembleIdents, RegularEnsembleIdent));
         setSelectedTableNames(newFilter.tableNames);
         setSelectedIndicesWithValues(newFilter.indicesWithValues);
         setSelectedIndexValueCriteria(
@@ -80,12 +82,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         );
     }
 
-    const resultNameOptions: DropdownOption<string>[] = tableDefinitionsAccessor
+    const resultNameOptions: ComboboxItem<string>[] = tableDefinitionsAccessor
         .getResultNamesIntersection()
-        .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
+        .map((name) => ({ label: name, value: name, description: createHoverTextForVolume(name) }));
 
     // Create selector options
-    const selectorOptions: DropdownOption<string>[] = [
+    const selectorOptions: ComboboxItem<string>[] = [
         ...tableDefinitionsAccessor.getCommonSelectorColumns().map((name) => ({ label: name, value: name })),
     ];
 
@@ -95,7 +97,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         selectedSubplotBy.value,
         selectedTableNames.value,
     );
-    const plotTypeOptions: DropdownOption<PlotType>[] = [];
+    const plotTypeOptions: ComboboxItem<PlotType>[] = [];
     for (const [type, label] of Object.entries(plotTypeToStringMapping)) {
         plotTypeOptions.push({ label, value: type as PlotType });
     }
@@ -105,75 +107,92 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectedSelectorColumnAnnotations = useMakePersistableFixableAtomAnnotations(selectedSelectorColumnAtom);
     const selectedSubplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
+    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
+    const selectedTableNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedTableNamesAtom);
+    const selectedIndicesWithValuesAnnotations =
+        useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
 
     const plotSettings = (
-        <CollapsibleGroup title="Plot settings" expanded>
-            <div className="flex flex-col gap-2">
-                <Label text="Plot type">
-                    <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
-                </Label>
-                <SettingWrapper label="First Result" annotations={selectedFirstResultNameAnnotations}>
-                    <Dropdown
-                        value={selectedFirstResultName.value}
-                        options={resultNameOptions}
-                        onChange={setSelectedFirstResultName}
+        <Setting.Section title="Plot settings" defaultOpen>
+            <Setting.Field label="Plot type">
+                <Combobox
+                    value={selectedPlotType}
+                    items={plotTypeOptions}
+                    onValueChange={(v) => v && setSelectedPlotType(v)}
+                />
+            </Setting.Field>
+            <Setting.Field label="First response" annotations={selectedFirstResultNameAnnotations}>
+                <Combobox
+                    value={selectedFirstResultName.value}
+                    items={resultNameOptions}
+                    onValueChange={setSelectedFirstResultName}
+                />
+            </Setting.Field>
+
+            {selectedPlotType === PlotType.BAR && (
+                <Setting.Field label="Selector" annotations={selectedSelectorColumnAnnotations}>
+                    <Combobox
+                        value={selectedSelectorColumn.value}
+                        items={selectorOptions}
+                        disabled={selectedPlotType !== PlotType.BAR}
+                        onValueChange={setSelectedSelectorColumn}
                     />
-                </SettingWrapper>
-                {selectedPlotType !== PlotType.BAR ? (
-                    <SettingWrapper
-                        label={`Second Result ${selectedPlotType !== PlotType.SCATTER ? "(only for scatter plot)" : ""}`}
-                        annotations={selectedSecondResultNameAnnotations}
-                    >
-                        <Dropdown
-                            value={selectedSecondResultName.value}
-                            options={resultNameOptions}
-                            onChange={setSelectedSecondResultName}
-                            disabled={selectedPlotType !== PlotType.SCATTER}
-                        />
-                    </SettingWrapper>
-                ) : (
-                    <SettingWrapper label="Selector" annotations={selectedSelectorColumnAnnotations}>
-                        <Dropdown
-                            value={selectedSelectorColumn.value}
-                            options={selectorOptions}
-                            onChange={setSelectedSelectorColumn}
-                            disabled={selectedPlotType !== PlotType.BAR}
-                        />
-                    </SettingWrapper>
-                )}
-                <SettingWrapper label="Subplot by" annotations={selectedSubplotByAnnotations}>
-                    <Dropdown
-                        value={selectedSubplotBy.value}
-                        options={subplotOptions}
-                        onChange={setSelectedSubplotBy}
+                </Setting.Field>
+            )}
+
+            {selectedPlotType === PlotType.SCATTER && (
+                <Setting.Field label="Second response" annotations={selectedSecondResultNameAnnotations}>
+                    <Combobox
+                        value={selectedSecondResultName.value}
+                        items={resultNameOptions}
+                        disabled={selectedPlotType !== PlotType.SCATTER}
+                        onValueChange={setSelectedSecondResultName}
                     />
-                </SettingWrapper>
-                <SettingWrapper label="Color by" annotations={selectedColorByAnnotations}>
-                    <Dropdown value={selectedColorBy.value} options={colorByOptions} onChange={setSelectedColorBy} />
-                </SettingWrapper>
-            </div>
-        </CollapsibleGroup>
+                </Setting.Field>
+            )}
+            <Setting.Field label="Subplot by" annotations={selectedSubplotByAnnotations}>
+                <Combobox
+                    value={selectedSubplotBy.value}
+                    items={subplotOptions}
+                    onValueChange={(v) => v && setSelectedSubplotBy(v)}
+                />
+            </Setting.Field>
+            <Setting.Field label="Color by" annotations={selectedColorByAnnotations}>
+                <Combobox
+                    value={selectedColorBy.value}
+                    items={colorByOptions}
+                    onValueChange={(v) => v && setSelectedColorBy(v)}
+                />
+            </Setting.Field>
+        </Setting.Section>
     );
 
     return (
-        <InplaceVolumesFilterComponent
-            ensembleSet={ensembleSet}
-            settingsContext={props.settingsContext}
-            workbenchSession={props.workbenchSession}
-            workbenchServices={props.workbenchServices}
-            isPending={tableDefinitionsQueryResult.isLoading}
-            availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
-            availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
-            selectedEnsembleIdents={selectedEnsembleIdents.value}
-            selectedIndicesWithValues={selectedIndicesWithValues.value}
-            selectedTableNames={selectedTableNames.value}
-            selectedAllowIndicesValuesIntersection={
-                selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
-            }
-            onChange={handleFilterChange}
-            additionalSettings={plotSettings}
-            areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
-            debounceMs={1500}
-        />
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <InplaceVolumesFilterComponent
+                    debounceMs={DEBOUNCE_TIME_MS}
+                    ensembleSet={ensembleSet}
+                    settingsContext={props.settingsContext}
+                    workbenchSession={props.workbenchSession}
+                    syncSettingsService={props.syncSettingsService}
+                    isPending={tableDefinitionsQueryResult.isLoading}
+                    availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
+                    availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
+                    selectedEnsembleIdents={selectedEnsembleIdents.value}
+                    selectedIndicesWithValues={selectedIndicesWithValues.value}
+                    selectedTableNames={selectedTableNames.value}
+                    selectedAllowIndicesValuesIntersection={
+                        selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
+                    }
+                    additionalSettings={plotSettings}
+                    ensembleAnnotations={selectedEnsembleIdentsAnnotations}
+                    tableNamesAnnotations={selectedTableNamesAnnotations}
+                    selectionAnnotations={selectedIndicesWithValuesAnnotations}
+                    areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
+                    onChange={handleFilterChange}
+                />
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

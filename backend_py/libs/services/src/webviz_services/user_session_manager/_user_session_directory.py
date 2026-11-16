@@ -108,7 +108,7 @@ class UserSessionDirectory:
         self._user_id = user_id
 
         services_config = get_services_config()
-        self._redis_client = redis.Redis.from_url(services_config.redis_user_session_url, decode_responses=True)
+        self._redis_client = redis.Redis.from_url(services_config.redis_cache_url, decode_responses=True)
 
     def get_session_info(self, job_component_name: str, instance_str: str) -> SessionInfo | None:
         addr = JobAddress(user_id=self._user_id, job_component_name=job_component_name, instance_str=instance_str)

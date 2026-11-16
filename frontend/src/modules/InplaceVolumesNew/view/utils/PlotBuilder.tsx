@@ -1,24 +1,41 @@
 import type React from "react";
 
-import type { Axis, PlotData } from "plotly.js";
+import type { Axis, LayoutAxis, PlotData } from "plotly.js";
 
 import { Plot } from "@modules/_shared/components/Plot";
 import type { Figure, MakeSubplotOptions } from "@modules/_shared/Figure";
-import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
+import { calcNumRowsAndCols, CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import type { HistogramType } from "@modules/_shared/histogram";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
 import type { ColorEntry, GroupedTableData } from "./GroupedTableData";
+import { hideRepeatedLegendEntries } from "./plotComponentUtils";
+import { computeSubplotXAxisSpacing } from "./subplotSpacing";
 
-export type PlotFunction = (colorEntries: ColorEntry[]) => Partial<PlotData>[];
+export type PlotFunction = (colorEntries: ColorEntry[], subplotLabel: string) => Partial<PlotData>[];
+
+export type PlotBuilderOptions = Pick<
+    MakeSubplotOptions,
+    "horizontalSpacing" | "showGrid" | "margin" | "sharedXAxes" | "sharedYAxes"
+>;
+
+const LEGEND_MAX_HEIGHT_FRACTION = 0.15;
+const X_TICK_ANGLE = 35;
+const DEFAULT_TICK_FONT_SIZE = 12;
+// Plotly's axis title font is 1.2x the layout font (12px).
+const AXIS_TITLE_FONT_SIZE = 14;
+const DEFAULT_AXIS_TITLE_STANDOFF = 10;
 
 export class PlotBuilder {
     private _groupedData: GroupedTableData;
     private _plotFunction: PlotFunction;
     private _axesOptions: { x: Partial<Axis> | null; y: Partial<Axis> | null } = { x: null, y: null };
+    private _numberFormatAxisOptions: { x: Partial<Axis>; y: Partial<Axis> } = { x: {}, y: {} };
     private _highlightedSubPlotNames: string[] = [];
     private _histogramType: HistogramType | null = null;
     private _plotType: PlotType | null = null;
+    private _showLegend = true;
+    private _uiRevision: string | null = null;
 
     constructor(groupedData: GroupedTableData, plotFunction: PlotFunction) {
         this._groupedData = groupedData;
@@ -33,6 +50,14 @@ export class PlotBuilder {
         this._axesOptions.y = options;
     }
 
+    setXAxisNumberFormatOptions(options: Partial<Axis>): void {
+        this._numberFormatAxisOptions.x = options;
+    }
+
+    setYAxisNumberFormatOptions(options: Partial<Axis>): void {
+        this._numberFormatAxisOptions.y = options;
+    }
+
     setHistogramType(histogramType: HistogramType): void {
         this._histogramType = histogramType;
     }
@@ -41,23 +66,34 @@ export class PlotBuilder {
         this._plotType = plotType;
     }
 
+    setShowLegend(showLegend: boolean): void {
+        this._showLegend = showLegend;
+    }
+
     setHighlightedSubPlots(subPlotNames: string[]): void {
         this._highlightedSubPlotNames = subPlotNames;
     }
 
-    private calcNumRowsAndCols(numSubplots: number): { numRows: number; numCols: number } {
-        if (numSubplots < 1) {
-            return { numRows: 1, numCols: 1 };
-        }
-
-        const numRows = Math.ceil(Math.sqrt(numSubplots));
-        const numCols = Math.ceil(numSubplots / numRows);
-        return { numRows, numCols };
+    /** Zoom and pan are kept while this stays the same, and reset when it changes. */
+    setUiRevision(uiRevision: string): void {
+        this._uiRevision = uiRevision;
     }
 
-    private updateLayout(figure: Figure) {
+    private updateLayout(figure: Figure, hideXTickLabels: boolean) {
         const numRows = figure.getNumRows();
         const numCols = figure.getNumColumns();
+        const numSubplots = this._groupedData.getNumSubplots();
+        // Numeric tick labels at a subplot's side would push the side margins and shift all subplots on every zoom step.
+        // Rotated category labels need the side margins. The types lack Plotly's flag-list form.
+        const automargin = this._axesOptions.x?.type === "category" ? true : ("height" as unknown as boolean);
+        const xAxisOverrides: Partial<LayoutAxis> = { automargin };
+        if (hideXTickLabels) {
+            xAxisOverrides.showticklabels = false;
+            const title = this._axesOptions.x?.title;
+            if (title?.text) {
+                xAxisOverrides.title = { ...title, text: `${title.text}<br>(hover to see values)` };
+            }
+        }
 
         for (let row = 1; row <= numRows; row++) {
             for (let col = 1; col <= numCols; col++) {
@@ -66,12 +102,30 @@ export class PlotBuilder {
                 const xAxisKey = `xaxis${axisIndex}`;
 
                 const oldLayout = figure.makeLayout();
+                // @ts-expect-error - Ignore string type of xAxisKey for oldLayout[xAxisKey]
+                const oldXAxis = oldLayout[xAxisKey];
+                // @ts-expect-error - Ignore string type of yAxisKey for oldLayout[yAxisKey]
+                const oldYAxis = oldLayout[yAxisKey];
+
+                const xAxis: Partial<LayoutAxis> = {
+                    ...oldXAxis,
+                    ...this._numberFormatAxisOptions.x,
+                    ...this._axesOptions.x,
+                    ...xAxisOverrides,
+                };
+                // A title between two subplot rows runs into the subplot below.
+                const hasSubplotBelow = row * numCols + col - 1 < numSubplots;
+                if (hasSubplotBelow) {
+                    delete xAxis.title;
+                }
 
                 figure.updateLayout({
-                    // @ts-expect-error - Ignore string type of xAxisKey for oldLayout[xAxisKey]
-                    [xAxisKey]: { ...oldLayout[xAxisKey], ...this._axesOptions.x },
-                    // @ts-expect-error - Ignore string type of yAxisKey for oldLayout[yAxisKey]
-                    [yAxisKey]: { ...oldLayout[yAxisKey], ...this._axesOptions.y },
+                    [xAxisKey]: xAxis,
+                    [yAxisKey]: {
+                        ...oldYAxis,
+                        ...this._numberFormatAxisOptions.y,
+                        ...this._axesOptions.y,
+                    },
                 });
             }
         }
@@ -79,6 +133,18 @@ export class PlotBuilder {
             figure.updateLayout({
                 barmode: this._histogramType,
             });
+        }
+        // Anchored to the figure bottom, the legend reserves its own margin below the x axes.
+        // Long legends (e.g. many sensitivity cases) scroll instead of shrinking the plots.
+        figure.updateLayout({
+            // @ts-expect-error - maxheight is missing in the plotly types
+            legend: { yref: "container", y: 0, yanchor: "bottom", maxheight: LEGEND_MAX_HEIGHT_FRACTION },
+        });
+        if (!this._showLegend) {
+            figure.updateLayout({ showlegend: false });
+        }
+        if (this._uiRevision !== null) {
+            figure.updateLayout({ uirevision: this._uiRevision });
         }
         if (this._plotType === PlotType.BAR) {
             // Force normal legend order for the bar plot.
@@ -89,47 +155,37 @@ export class PlotBuilder {
         }
     }
 
-    build(
-        height: number,
-        width: number,
-        options?: Pick<
-            MakeSubplotOptions,
-            "horizontalSpacing" | "verticalSpacing" | "showGrid" | "margin" | "sharedXAxes" | "sharedYAxes"
-        >,
-    ): React.ReactNode {
-        const figure = this.buildSubplots(height, width, options ?? {});
-        this.updateLayout(figure);
+    /**
+     * The x axes' automargin and the legend reserve the space below the bottom row, so `options.margin.b`
+     * only needs to add some air.
+     */
+    build(height: number, width: number, options?: PlotBuilderOptions): React.ReactNode {
+        const figure = this.buildFigure(height, width, options ?? {});
         return <Plot layout={figure.makeLayout()} data={figure.makeData()} />;
     }
 
-    private buildSubplots(
-        height: number,
-        width: number,
-        options: Pick<
-            MakeSubplotOptions,
-            "horizontalSpacing" | "verticalSpacing" | "showGrid" | "margin" | "sharedXAxes" | "sharedYAxes"
-        >,
-    ): Figure {
+    private buildFigure(height: number, width: number, options: PlotBuilderOptions): Figure {
         const subplotGroups = this._groupedData.getSubplotGroups();
         const numSubplots = subplotGroups.length;
 
         if (numSubplots === 0) {
-            return makeSubplots({
+            const figure = makeSubplots({
                 numRows: 1,
                 numCols: 1,
                 height,
                 width,
                 ...options,
             });
+            this.updateLayout(figure, false);
+            return figure;
         }
 
-        const { numRows, numCols } = this.calcNumRowsAndCols(numSubplots);
+        const { numRows, numCols } = calcNumRowsAndCols(numSubplots);
 
         const traces: { row: number; col: number; trace: Partial<PlotData> }[] = [];
         const subplotTitles: string[] = Array(numRows * numCols).fill("");
         const highlightedSubplots: { row: number; col: number }[] = [];
 
-        let legendAdded = false;
         for (let row = 1; row <= numRows; row++) {
             for (let col = 1; col <= numCols; col++) {
                 const index = (row - 1) * numCols + col - 1;
@@ -144,16 +200,41 @@ export class PlotBuilder {
                     highlightedSubplots.push({ row, col });
                 }
 
-                const plotDataArr = this._plotFunction(subplotGroup.colorEntries);
+                const plotDataArr = this._plotFunction(subplotGroup.colorEntries, subplotGroup.subplotLabel);
                 for (const plotData of plotDataArr) {
-                    if (legendAdded) {
-                        plotData.showlegend = false;
-                    }
                     traces.push({ row, col, trace: plotData });
                 }
-                legendAdded = true;
             }
         }
+        hideRepeatedLegendEntries(traces.map(({ trace }) => trace));
+
+        const xAxisOptions = this._axesOptions.x ?? {};
+        const xAxisTitle = xAxisOptions.title;
+        const categoryLabels =
+            xAxisOptions.type === "category"
+                ? traces.flatMap(({ trace }) => ((trace.x ?? []) as unknown[]).map((value) => String(value)))
+                : null;
+        // Upper bound: the legend shrinks the plot area by at most its max height.
+        const numLegendEntries = traces.filter(({ trace }) => trace.showlegend !== false).length;
+        const legendHeight = this._showLegend && numLegendEntries > 0 ? LEGEND_MAX_HEIGHT_FRACTION * height : 0;
+        // Only category labels are rotated; numeric ticks stay horizontal so the one-line estimate holds.
+        const xTickAngle = categoryLabels ? X_TICK_ANGLE : 0;
+
+        const spacing = computeSubplotXAxisSpacing({
+            numRows,
+            availableHeight: height - (options.margin?.t ?? 0) - (options.margin?.b ?? 0) - legendHeight,
+            rowDomainSize: (1 - ((options.margin?.t ?? 0) + (options.margin?.b ?? 0)) / height) / numRows,
+            showTickLabels: xAxisOptions.showticklabels !== false,
+            categoryLabels,
+            tickAngle: xTickAngle,
+            tickFontSize: xAxisOptions.tickfont?.size ?? DEFAULT_TICK_FONT_SIZE,
+            axisTitle: xAxisTitle?.text
+                ? {
+                      standoff: xAxisTitle.standoff ?? DEFAULT_AXIS_TITLE_STANDOFF,
+                      fontSize: xAxisTitle.font?.size ?? AXIS_TITLE_FONT_SIZE,
+                  }
+                : null,
+        });
 
         const figure = makeSubplots({
             numRows,
@@ -161,7 +242,8 @@ export class PlotBuilder {
             height,
             width,
             subplotTitles,
-            xAxisTickAngle: 35,
+            xAxisTickAngle: xTickAngle,
+            verticalSpacing: spacing.verticalSpacing,
             ...options,
         });
 
@@ -189,6 +271,7 @@ export class PlotBuilder {
             );
         }
 
+        this.updateLayout(figure, !spacing.showTickLabels && xAxisOptions.showticklabels !== false);
         return figure;
     }
 }

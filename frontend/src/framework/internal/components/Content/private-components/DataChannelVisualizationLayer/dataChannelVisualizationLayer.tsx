@@ -51,6 +51,30 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
+    // A dashboard switch ends any data channel interaction. The listener effect further down only
+    // unsubscribes on a switch, so a drag or edit started on the previous dashboard would stay drawn.
+    // Hence, the state is reset here whenever the dashboard changes.
+    const [prevDashboard, setPrevDashboard] = React.useState(dashboard);
+    if (dashboard !== prevDashboard) {
+        setPrevDashboard(dashboard);
+        setVisible(false);
+        setHighlightedDataChannelConnection(null);
+        setEditDataChannelConnectionsForModuleInstanceId(null);
+    }
+
+    const prevDashboardRef = React.useRef(dashboard);
+    React.useEffect(
+        function resetGlobalDataChannelStateOnDashboardSwitch() {
+            if (prevDashboardRef.current === dashboard) {
+                return;
+            }
+            prevDashboardRef.current = dashboard;
+            guiMessageBroker.setState(GuiState.DataChannelConnectionLayerVisible, false);
+            guiMessageBroker.setState(GuiState.EditDataChannelConnections, false);
+        },
+        [dashboard, guiMessageBroker],
+    );
+
     React.useEffect(() => {
         let localMousePressed = false;
         let localCurrentOriginPoint: Vec2 = { x: 0, y: 0 };
@@ -165,10 +189,12 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         }
 
         function addDraggingEventListeners() {
+            /* eslint-disable @eslint-react/web-api-no-leaked-event-listener -- false positive; removed in removeDraggingEventListeners */
             document.addEventListener("pointerup", handlePointerUp);
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("pointercancel", handlePointerUp);
             document.addEventListener("blur-sm", handlePointerUp);
+            /* eslint-enable @eslint-react/web-api-no-leaked-event-listener */
         }
 
         function removeDraggingEventListeners() {
@@ -375,17 +401,20 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
     return createPortal(
         <svg
             ref={ref}
-            className={resolveClassNames("absolute bg-slate-50/70 left-0 top-0 h-full w-full z-40", {
-                invisible: !visible && !showDataChannelConnections,
-            })}
+            className={resolveClassNames(
+                "bg-backdrop/50 z-modal text-neutral-strong absolute top-0 left-0 h-full w-full",
+                {
+                    invisible: !visible && !showDataChannelConnections,
+                },
+            )}
         >
             <defs>
                 <marker id="arrowhead-right" markerWidth="20" markerHeight="14" refX="0" refY="7" orient="auto">
-                    <polygon points="0 0, 20 7, 0 14" />
+                    <polygon points="0 0, 20 7, 0 14" fill="var(--eds-color-text-neutral-subtle)" />
                 </marker>
                 <marker
                     id="arrowhead-right-active"
-                    fill="blue"
+                    fill="var(--eds-color-bg-accent-fill-emphasis-default)"
                     markerWidth="20"
                     markerHeight="14"
                     refX="0"
@@ -396,7 +425,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 </marker>
                 <marker
                     id="arrowhead-right-remove"
-                    fill="red"
+                    fill="var(--eds-color-bg-danger-fill-emphasis-default)"
                     markerWidth="20"
                     markerHeight="14"
                     refX="0"
@@ -407,7 +436,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 </marker>
                 <marker
                     id="arrowhead-right-add"
-                    fill="green"
+                    fill="var(--eds-color-bg-success-fill-emphasis-default)"
                     markerWidth="20"
                     markerHeight="14"
                     refX="0"
@@ -417,11 +446,11 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     <polygon points="0 0, 20 7, 0 14" />
                 </marker>
                 <marker id="arrowhead-left" markerWidth="20" markerHeight="14" refX="20" refY="7" orient="auto">
-                    <polygon points="20 0, 0 7, 20 14" />
+                    <polygon points="20 0, 0 7, 20 14" fill="var(--eds-color-text-neutral-subtle)" />
                 </marker>
                 <marker
                     id="arrowhead-left-active"
-                    fill="blue"
+                    fill="var(--eds-color-bg-accent-fill-emphasis-default)"
                     markerWidth="20"
                     markerHeight="14"
                     refX="20"
@@ -432,7 +461,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 </marker>
                 <marker
                     id="arrowhead-left-remove"
-                    fill="red"
+                    fill="var(--eds-color-bg-danger-fill-emphasis-default)"
                     markerWidth="20"
                     markerHeight="14"
                     refX="20"
@@ -443,7 +472,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 </marker>
                 <marker
                     id="arrowhead-left-add"
-                    fill="green"
+                    fill="var(--eds-color-bg-success-fill-emphasis-default)"
                     markerWidth="20"
                     markerHeight="14"
                     refX="20"
@@ -454,7 +483,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 </marker>
             </defs>
             {dataChannelPaths.map((dataChannelPath) => {
-                let color = "#aaa";
+                let color = "var(--eds-color-text-neutral-subtle)";
                 let path = `M ${dataChannelPath.origin.x} ${dataChannelPath.origin.y} C ${dataChannelPath.midPoint1.x} ${dataChannelPath.midPoint1.y} ${dataChannelPath.midPoint2.x} ${dataChannelPath.midPoint2.y} ${dataChannelPath.destination.x} ${dataChannelPath.destination.y}`;
                 let arrowHeadUrl = "#arrowhead-right";
                 let markerEnd = true;
@@ -465,10 +494,10 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 }
                 if (dataChannelPath.highlighted) {
                     if (visible) {
-                        color = "red";
+                        color = "var(--eds-color-bg-danger-fill-emphasis-default)";
                         arrowHeadUrl = `${arrowHeadUrl}-remove`;
                     } else {
-                        color = "blue";
+                        color = "var(--eds-color-bg-accent-fill-emphasis-default)";
                         arrowHeadUrl = `${arrowHeadUrl}-active`;
                     }
                 }
@@ -485,7 +514,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                             }}
                         />
                         {dataChannelPath.highlighted && !visible && (
-                            <text>
+                            <text fill="currentColor">
                                 <textPath
                                     href={`#${dataChannelPath.key}`}
                                     startOffset="50%"
@@ -507,7 +536,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                             d={`M ${originPoint.x} ${originPoint.y} C ${midPoint1.x} ${midPoint1.y} ${midPoint2.x} ${
                                 midPoint2.y
                             } ${currentPointerPosition.x} ${currentPointerPosition.y - 20}`}
-                            stroke="green"
+                            stroke="var(--eds-color-bg-success-fill-emphasis-default)"
                             fill="transparent"
                             className={resolveClassNames({ invisible: !visible })}
                             markerEnd="url(#arrowhead-right-add)"
@@ -518,14 +547,14 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                             d={`M ${currentPointerPosition.x} ${currentPointerPosition.y - 20} C ${midPoint2.x} ${
                                 midPoint2.y
                             } ${midPoint1.x} ${midPoint1.y} ${originPoint.x} ${originPoint.y}`}
-                            stroke="green"
+                            stroke="var(--eds-color-bg-success-fill-emphasis-default)"
                             fill="transparent"
                             className={resolveClassNames({ invisible: !visible })}
                             markerStart="url(#arrowhead-left-add)"
                         />
                     )}
                     {currentChannelName && (
-                        <text>
+                        <text fill="currentColor">
                             <textPath
                                 href={`#current-data-channel-path`}
                                 startOffset="50%"

@@ -1,14 +1,14 @@
 import type { Color } from "@deck.gl/core";
 import type { Point3D } from "@webviz/subsurface-viewer";
 import type { LineString, Point } from "geojson";
-import { clamp, sortedIndex } from "lodash";
+import { clamp, sortedIndex } from "lodash-es";
 import simplify from "simplify-js";
 
 import type { WellboreTrajectory_api } from "@api";
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
 import { distance, fromArray } from "@lib/utils/vec3";
 
-import type { ExtendedWellFeature } from "../types/geojson";
+import type { ExtendedWellFeature } from "./subsurfaceViewerLayers";
 
 function normalizeVector(vector: number[]): number[] {
     const vectorLength = Math.sqrt(vector[0] ** 2 + vector[1] ** 2);
@@ -168,7 +168,7 @@ export function wellTrajectoryToGeojson(
     };
 
     let color = [150, 150, 150] as Color;
-    let lineWidth = 2;
+    let lineWidth = 3;
     let wellHeadSize = 1;
 
     if (wellTrajectory.wellboreUuid === opts?.selectedWellboreUuid) {

@@ -25,6 +25,8 @@ export function DropIndicatorOverlay(props: DropIndicatorOverlayProps): React.Re
             const hoveredArea = props.hovered?.area;
 
             if (!containerEl || !scrollEl || !hoveredId || !hoveredArea) {
+                // Safety hatch  needed for missing values.
+                // eslint-disable-next-line @eslint-react/set-state-in-effect
                 setGeometry(null);
                 prevGeometryRef.current = null;
                 return;
@@ -119,7 +121,7 @@ export function DropIndicatorOverlay(props: DropIndicatorOverlayProps): React.Re
     return createPortal(
         <div
             data-sl-indicator
-            className="absolute top-0 left-0 bg-blue-600 pointer-events-none z-10"
+            className="bg-accent-strong z-elevated pointer-events-none absolute top-0 left-0"
             style={{
                 transform: `translate3d(${geometry.x}px, ${geometry.y}px, 0)`,
                 width: geometry.width,

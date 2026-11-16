@@ -10,7 +10,7 @@ export type ViewWrapperPlaceholderProps = {
 export const ViewWrapperPlaceholder: React.FC<ViewWrapperPlaceholderProps> = (props) => {
     return (
         <div
-            className="absolute box-border p-2"
+            className="absolute box-border p-0"
             style={{
                 width: props.width,
                 height: props.height,
@@ -18,7 +18,7 @@ export const ViewWrapperPlaceholder: React.FC<ViewWrapperPlaceholderProps> = (pr
                 top: props.y,
             }}
         >
-            <div className="bg-blue-300 h-full w-full" />
+            <div className="bg-accent-canvas h-full w-full" />
         </div>
     );
 };

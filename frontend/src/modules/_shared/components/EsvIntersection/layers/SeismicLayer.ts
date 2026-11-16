@@ -28,6 +28,7 @@ export type SeismicSliceImageOptions = {
 // Note: This type does not extend SeismicCanvasData because we want to generate the image and seismic info
 // inside this render due to async seismic slice image generation
 export type SeismicLayerData = {
+    source: { id: string; name: string };
     minFenceDepth: number;
     maxFenceDepth: number;
     numTraces: number;
@@ -43,6 +44,9 @@ export type SeismicLayerData = {
 export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
     // The image is generated in preRender and updated in onUpdate/onRescale
     private _image: ImageBitmap | null = null;
+
+    // Hash of the current data to detect actual changes
+    private _dataHash: string | null = null;
 
     // The data options and info for generating the seismic slice image
     private _isPreRendered = false;
@@ -104,7 +108,23 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
     }
 
     override onUpdate(event: OnUpdateEvent<SeismicLayerData>): void {
+        // Sets this.data from event.data (base Layer class)
         super.onUpdate(event);
+
+        if (!this.data) {
+            return;
+        }
+
+        // Check if data has actually changed using hash comparison
+        const newHash = this.computeDataHash(this.data);
+        if (newHash === this._dataHash && this._image && this._canvasDataOptions) {
+            // Data unchanged and image already exists — just re-render
+            this.render();
+            return;
+        }
+
+        // Data has changed — update hash and proceed with full update
+        this._dataHash = newHash;
 
         // Clear the internal image and canvas data options
         this.clearImageAndInternalData();
@@ -160,6 +180,29 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
             this._canvasDataOptions.height,
         );
     }
+
+    private computeDataHash(data: SeismicLayerData): string {
+        // Fast hash of Float32Array using raw IEEE 754 bit patterns (MurmurHash2-inspired)
+        const arr = data.fenceTracesArray;
+        const intView = new Int32Array(arr.buffer, arr.byteOffset, arr.length);
+        let h = arr.length | 0;
+        for (let i = 0; i < intView.length; i++) {
+            h = Math.imul(h ^ intView[i], 0x5bd1e995);
+            h ^= h >>> 15;
+        }
+
+        return (
+            `${data.minFenceDepth}|${data.maxFenceDepth}|` +
+            `${data.numTraces}|${data.numSamplesPerTrace}|` +
+            `${data.propertyName}|${data.propertyUnit}|${data.opacityPercent}|` +
+            `${h}|` +
+            `${JSON.stringify(data.trajectoryFenceProjection)}|` +
+            `${data.colorScale.getMin()}|${data.colorScale.getMax()}|` +
+            `${data.colorScale.getType()}|${data.colorScale.getGradientType()}|` +
+            `${data.colorScale.getDivMidPoint()}|${data.colorScale.getNumSteps()}`
+        );
+    }
+
     private async generateImage(seismicSliceImageOptions: SeismicSliceImageOptions): Promise<ImageBitmap | null> {
         const image = await this.generateSeismicSliceImage(
             { ...seismicSliceImageOptions },
@@ -201,21 +244,13 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
         // Generate image
         const imageDataUint8Arr = new Uint8ClampedArray(width * height * 4);
 
-        let offset = 0;
-
         let pos = options?.isLeftToRight ? trajectory[0][0] : trajectory[trajectory.length - 1][0];
 
         const step = (length / width) * (options?.isLeftToRight ? -1 : 1);
 
-        let val1: number;
-        let val2: number;
-        let val: number;
-        let color: [number, number, number];
         const black: [number, number, number] = [0, 0, 0];
-        let opacity: number;
 
         for (let x = 0; x < width; x++) {
-            offset = x * 4;
             const index = findIndexOfSample(trajectory, pos);
             const x1 = trajectory[index][0];
             const x2 = trajectory[index + 1][0];
@@ -227,6 +262,14 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
             const span = x2 - x1;
             const dx = pos - x1;
             const ratio = dx / span;
+
+            let val1: number;
+            let val2: number;
+            let val: number;
+            let color: [number, number, number];
+            let opacity: number;
+
+            let offset = x * 4;
 
             for (let y = 0; y < height; y++) {
                 val1 = dp[y]?.[index];

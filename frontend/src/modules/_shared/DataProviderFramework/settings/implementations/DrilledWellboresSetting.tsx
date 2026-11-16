@@ -1,6 +1,7 @@
 import type React from "react";
 
 import type { WellboreHeader_api } from "@api";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 
@@ -8,7 +9,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { assertStringArrayOrNull } from "../utils/structureValidation";
+import { assertStringArrayOrAllOrNull } from "../utils/structureValidation";
 
 import {
     fixupValue,
@@ -16,13 +17,18 @@ import {
     makeValueConstraintsIntersectionReducerDefinition,
 } from "./_shared/arrayMultiSelect";
 
-type InternalValueType = string[] | null;
+// "all" means "every currently available wellbore" - unlike a snapshot of uuids, it automatically
+// tracks the available-options list as it changes (e.g. across ensemble/context switches) instead of
+// being fixed to whichever wellbores existed when it was selected.
+type InternalValueType = string[] | "all" | null;
 type ExternalValueType = WellboreHeader_api[] | null;
 type ValueConstraintsType = WellboreHeader_api[];
 
-export class DrilledWellboresSetting
-    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueConstraintsType>
-{
+export class DrilledWellboresSetting implements CustomSettingImplementation<
+    InternalValueType,
+    ExternalValueType,
+    ValueConstraintsType
+> {
     defaultValue: InternalValueType = null;
     valueConstraintsIntersectionReducerDefinition =
         makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
@@ -36,6 +42,9 @@ export class DrilledWellboresSetting
         if (internalValue === null) {
             return null;
         }
+        if (internalValue === "all") {
+            return valueConstraints;
+        }
 
         const externalValues = valueConstraints.filter((wellbore) => internalValue.includes(wellbore.wellboreUuid));
         return externalValues;
@@ -47,11 +56,15 @@ export class DrilledWellboresSetting
 
     deserializeValue(serializedValue: string): InternalValueType {
         const parsed = JSON.parse(serializedValue);
-        assertStringArrayOrNull(parsed);
+        assertStringArrayOrAllOrNull(parsed);
         return parsed;
     }
 
     fixupValue(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): InternalValueType {
+        if (currentValue === "all") {
+            return "all";
+        }
+
         const fixedValue = fixupValue<string, WellboreHeader_api>(
             currentValue,
             valueConstraints,
@@ -67,12 +80,17 @@ export class DrilledWellboresSetting
     }
 
     isValueValid(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): boolean {
+        if (currentValue === "all") {
+            return true;
+        }
         return isValueValid<string, WellboreHeader_api>(currentValue, valueConstraints, mappingFunc);
     }
 
     makeComponent(): (props: SettingComponentProps<InternalValueType, ValueConstraintsType>) => React.ReactNode {
         return function DrilledWellbores(props: SettingComponentProps<InternalValueType, ValueConstraintsType>) {
             const valueConstraints = props.valueConstraints ?? [];
+            const allUuids = valueConstraints.map(mappingFunc);
+            const isAllSelected = props.value === "all";
 
             const options: SelectOption[] = valueConstraints?.map((ident) => ({
                 value: ident.wellboreUuid,
@@ -83,18 +101,34 @@ export class DrilledWellboresSetting
                 props.onValueChange(selectedUuids);
             }
 
+            function handleSelectAllChange(checked: boolean) {
+                props.onValueChange(checked ? "all" : allUuids);
+            }
+
             return (
-                <div className="flex flex-col gap-1 mt-1">
-                    <Select
-                        filter
-                        options={options}
-                        value={props.value ?? []}
-                        onChange={handleChange}
-                        showQuickSelectButtons={true}
-                        disabled={props.isOverridden}
-                        multiple={true}
-                        size={5}
+                <div className="gap-3xs py-2xs flex flex-col justify-center">
+                    <RadioCompositions.GroupWithLabels
+                        value={isAllSelected ? "all" : "custom"}
+                        onValueChange={(value) => handleSelectAllChange(value === "all")}
+                        options={[
+                            { value: "all", label: "Show all" },
+                            { value: "custom", label: "Select custom" },
+                        ]}
+                        layout="horizontal"
+                        size="small"
+                        disabled={props.disabled}
                     />
+                    {!isAllSelected && (
+                        <Select
+                            filter
+                            options={options}
+                            value={props.value === "all" ? allUuids : (props.value ?? [])}
+                            onValueChange={handleChange}
+                            disabled={props.disabled || isAllSelected}
+                            multiple={true}
+                            size={5}
+                        />
+                    )}
                 </div>
             );
         };

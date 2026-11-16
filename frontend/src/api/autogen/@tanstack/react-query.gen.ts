@@ -32,16 +32,20 @@ import {
     getFieldScreens,
     getGridModelsInfo,
     getGridParameter,
+    getGridParameterTimeDiff,
     getGridSurface,
     getHistoricalVectorData,
+    getInitialFluidContactSurfacesMetadata,
     getInjectionData,
     getInplaceTableDefinitions,
     getLogCurveData,
     getLoggedInUser,
+    getMediaSasToken,
     getMisfitSurfaceData,
-    getObservations,
     getObservedSurfacesMetadata,
     getParametersAndSensitivities,
+    getPlannedWellboreHeaders,
+    getPlannedWellTrajectories,
     getPolygonsData,
     getPolygonsDirectory,
     getProductionData,
@@ -49,6 +53,10 @@ import {
     getRealizationFlowNetwork,
     getRealizationSurfacesMetadata,
     getRealizationsVectorData,
+    getRelpermRealizationData,
+    getRelpermTableDefinition,
+    getRelpermTableNames,
+    getRftObservations,
     getRftRealizationData,
     getRftTableDefinition,
     getSeismicCubeMetaList,
@@ -62,12 +70,13 @@ import {
     getStatisticalSurfaceDataHybrid,
     getStatisticalVectorData,
     getStatisticalVectorDataPerSensitivity,
+    getSummaryObservations,
     getSurfaceData,
     getUserInfo,
     getUserPhoto,
     getVectorList,
     getVfpTable,
-    getVfpTableNames,
+    getVfpTables,
     getWellboreCasings,
     getWellboreCompletions,
     getWellboreLogCurveHeaders,
@@ -83,6 +92,7 @@ import {
     postGetAggregatedPerRealizationInplaceTableData,
     postGetAggregatedStatisticalInplaceTableData,
     postGetPolylineIntersection,
+    postGetPolylineIntersectionTimeDiff,
     postGetSampleSurfaceInPoints,
     postGetSeismicFence,
     postGetSurfaceIntersection,
@@ -147,12 +157,18 @@ import type {
     GetGridParameterData_api,
     GetGridParameterError_api,
     GetGridParameterResponse_api,
+    GetGridParameterTimeDiffData_api,
+    GetGridParameterTimeDiffError_api,
+    GetGridParameterTimeDiffResponse_api,
     GetGridSurfaceData_api,
     GetGridSurfaceError_api,
     GetGridSurfaceResponse_api,
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataError_api,
     GetHistoricalVectorDataResponse_api,
+    GetInitialFluidContactSurfacesMetadataData_api,
+    GetInitialFluidContactSurfacesMetadataError_api,
+    GetInitialFluidContactSurfacesMetadataResponse_api,
     GetInjectionDataData_api,
     GetInjectionDataError_api,
     GetInjectionDataResponse_api,
@@ -165,18 +181,23 @@ import type {
     GetLoggedInUserData_api,
     GetLoggedInUserError_api,
     GetLoggedInUserResponse_api,
+    GetMediaSasTokenData_api,
+    GetMediaSasTokenResponse_api,
     GetMisfitSurfaceDataData_api,
     GetMisfitSurfaceDataError_api,
     GetMisfitSurfaceDataResponse_api,
-    GetObservationsData_api,
-    GetObservationsError_api,
-    GetObservationsResponse_api,
     GetObservedSurfacesMetadataData_api,
     GetObservedSurfacesMetadataError_api,
     GetObservedSurfacesMetadataResponse_api,
     GetParametersAndSensitivitiesData_api,
     GetParametersAndSensitivitiesError_api,
     GetParametersAndSensitivitiesResponse_api,
+    GetPlannedWellboreHeadersData_api,
+    GetPlannedWellboreHeadersError_api,
+    GetPlannedWellboreHeadersResponse_api,
+    GetPlannedWellTrajectoriesData_api,
+    GetPlannedWellTrajectoriesError_api,
+    GetPlannedWellTrajectoriesResponse_api,
     GetPolygonsDataData_api,
     GetPolygonsDataError_api,
     GetPolygonsDataResponse_api,
@@ -198,6 +219,18 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataError_api,
     GetRealizationsVectorDataResponse_api,
+    GetRelpermRealizationDataData_api,
+    GetRelpermRealizationDataError_api,
+    GetRelpermRealizationDataResponse_api,
+    GetRelpermTableDefinitionData_api,
+    GetRelpermTableDefinitionError_api,
+    GetRelpermTableDefinitionResponse_api,
+    GetRelpermTableNamesData_api,
+    GetRelpermTableNamesError_api,
+    GetRelpermTableNamesResponse_api,
+    GetRftObservationsData_api,
+    GetRftObservationsError_api,
+    GetRftObservationsResponse_api,
     GetRftRealizationDataData_api,
     GetRftRealizationDataError_api,
     GetRftRealizationDataResponse_api,
@@ -237,6 +270,9 @@ import type {
     GetStatisticalVectorDataPerSensitivityError_api,
     GetStatisticalVectorDataPerSensitivityResponse_api,
     GetStatisticalVectorDataResponse_api,
+    GetSummaryObservationsData_api,
+    GetSummaryObservationsError_api,
+    GetSummaryObservationsResponse_api,
     GetSurfaceDataData_api,
     GetSurfaceDataError_api,
     GetSurfaceDataResponse_api,
@@ -251,10 +287,10 @@ import type {
     GetVectorListResponse_api,
     GetVfpTableData_api,
     GetVfpTableError_api,
-    GetVfpTableNamesData_api,
-    GetVfpTableNamesError_api,
-    GetVfpTableNamesResponse_api,
     GetVfpTableResponse_api,
+    GetVfpTablesData_api,
+    GetVfpTablesError_api,
+    GetVfpTablesResponse_api,
     GetWellboreCasingsData_api,
     GetWellboreCasingsError_api,
     GetWellboreCasingsResponse_api,
@@ -296,6 +332,9 @@ import type {
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionError_api,
     PostGetPolylineIntersectionResponse_api,
+    PostGetPolylineIntersectionTimeDiffData_api,
+    PostGetPolylineIntersectionTimeDiffError_api,
+    PostGetPolylineIntersectionTimeDiffResponse_api,
     PostGetSampleSurfaceInPointsData_api,
     PostGetSampleSurfaceInPointsError_api,
     PostGetSampleSurfaceInPointsResponse_api,
@@ -973,6 +1012,36 @@ export const getObservedSurfacesMetadataOptions = (options: Options<GetObservedS
         queryKey: getObservedSurfacesMetadataQueryKey(options),
     });
 
+export const getInitialFluidContactSurfacesMetadataQueryKey = (
+    options: Options<GetInitialFluidContactSurfacesMetadataData_api>,
+) => createQueryKey("getInitialFluidContactSurfacesMetadata", options);
+
+/**
+ * Get Initial Fluid Contact Surfaces Metadata
+ *
+ * Get metadata for the initial fluid contact surfaces in a Sumo ensemble
+ */
+export const getInitialFluidContactSurfacesMetadataOptions = (
+    options: Options<GetInitialFluidContactSurfacesMetadataData_api>,
+) =>
+    queryOptions<
+        GetInitialFluidContactSurfacesMetadataResponse_api,
+        AxiosError<GetInitialFluidContactSurfacesMetadataError_api>,
+        GetInitialFluidContactSurfacesMetadataResponse_api,
+        ReturnType<typeof getInitialFluidContactSurfacesMetadataQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getInitialFluidContactSurfacesMetadata({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getInitialFluidContactSurfacesMetadataQueryKey(options),
+    });
+
 export const getSurfaceDataQueryKey = (options: Options<GetSurfaceDataData_api>) =>
     createQueryKey("getSurfaceData", options);
 
@@ -987,7 +1056,6 @@ export const getSurfaceDataQueryKey = (options: Options<GetSurfaceDataData_api>)
  * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
  * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
  * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
- * - *PARTIAL* - Partial surface address. Similar to a realization surface address, but does not include a specific realization number.
  *
  * Structure of the different types of address strings:
  *
@@ -995,8 +1063,18 @@ export const getSurfaceDataQueryKey = (options: Options<GetSurfaceDataData_api>)
  * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
  * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
  * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
- * PARTIAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>[~~<iso_date_or_interval>]
  * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
  *
  * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
  * encoded as a `UintListStr` or "*" to include all realizations.
@@ -1134,10 +1212,36 @@ export const postGetSurfaceIntersectionQueryKey = (options: Options<PostGetSurfa
 /**
  * Post Get Surface Intersection
  *
- * Get surface intersection data for requested surface name.
+ * Get surface intersection data for the specified surface.
  *
- * The surface intersection data for surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
- * and cumulative lengths, the accumulated length at each z-point in the array.
+ * ---
+ * *General description of the types of surface addresses that exist. The specific address types supported by this endpoint can be a subset of these.*
+ *
+ * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
+ * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
+ * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
+ *
+ * Structure of the different types of address strings:
+ *
+ * ```
+ * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
+ * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
+ * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
+ *
+ * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
+ * encoded as a `UintListStr` or "*" to include all realizations.
  */
 export const postGetSurfaceIntersectionOptions = (options: Options<PostGetSurfaceIntersectionData_api>) =>
     queryOptions<
@@ -1161,10 +1265,36 @@ export const postGetSurfaceIntersectionOptions = (options: Options<PostGetSurfac
 /**
  * Post Get Surface Intersection
  *
- * Get surface intersection data for requested surface name.
+ * Get surface intersection data for the specified surface.
  *
- * The surface intersection data for surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
- * and cumulative lengths, the accumulated length at each z-point in the array.
+ * ---
+ * *General description of the types of surface addresses that exist. The specific address types supported by this endpoint can be a subset of these.*
+ *
+ * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
+ * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
+ * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
+ *
+ * Structure of the different types of address strings:
+ *
+ * ```
+ * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
+ * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
+ * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
+ *
+ * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
+ * encoded as a `UintListStr` or "*" to include all realizations.
  */
 export const postGetSurfaceIntersectionMutation = (
     options?: Partial<Options<PostGetSurfaceIntersectionData_api>>,
@@ -1398,6 +1528,33 @@ export const getGridParameterOptions = (options: Options<GetGridParameterData_ap
         queryKey: getGridParameterQueryKey(options),
     });
 
+export const getGridParameterTimeDiffQueryKey = (options: Options<GetGridParameterTimeDiffData_api>) =>
+    createQueryKey("getGridParameterTimeDiff", options);
+
+/**
+ * Get Grid Parameter Time Diff
+ *
+ * Get the difference between two time steps of a grid parameter, monitor minus base
+ */
+export const getGridParameterTimeDiffOptions = (options: Options<GetGridParameterTimeDiffData_api>) =>
+    queryOptions<
+        GetGridParameterTimeDiffResponse_api,
+        AxiosError<GetGridParameterTimeDiffError_api>,
+        GetGridParameterTimeDiffResponse_api,
+        ReturnType<typeof getGridParameterTimeDiffQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getGridParameterTimeDiff({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getGridParameterTimeDiffQueryKey(options),
+    });
+
 export const postGetPolylineIntersectionQueryKey = (options: Options<PostGetPolylineIntersectionData_api>) =>
     createQueryKey("postGetPolylineIntersection", options);
 
@@ -1444,6 +1601,67 @@ export const postGetPolylineIntersectionMutation = (
     > = {
         mutationFn: async (fnOptions) => {
             const { data } = await postGetPolylineIntersection({
+                ...options,
+                ...fnOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
+};
+
+export const postGetPolylineIntersectionTimeDiffQueryKey = (
+    options: Options<PostGetPolylineIntersectionTimeDiffData_api>,
+) => createQueryKey("postGetPolylineIntersectionTimeDiff", options);
+
+/**
+ * Post Get Polyline Intersection Time Diff
+ *
+ * Get the intersection of a polyline with the grid, where the parameter values are the difference
+ * between two time steps, monitor minus base
+ */
+export const postGetPolylineIntersectionTimeDiffOptions = (
+    options: Options<PostGetPolylineIntersectionTimeDiffData_api>,
+) =>
+    queryOptions<
+        PostGetPolylineIntersectionTimeDiffResponse_api,
+        AxiosError<PostGetPolylineIntersectionTimeDiffError_api>,
+        PostGetPolylineIntersectionTimeDiffResponse_api,
+        ReturnType<typeof postGetPolylineIntersectionTimeDiffQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await postGetPolylineIntersectionTimeDiff({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: postGetPolylineIntersectionTimeDiffQueryKey(options),
+    });
+
+/**
+ * Post Get Polyline Intersection Time Diff
+ *
+ * Get the intersection of a polyline with the grid, where the parameter values are the difference
+ * between two time steps, monitor minus base
+ */
+export const postGetPolylineIntersectionTimeDiffMutation = (
+    options?: Partial<Options<PostGetPolylineIntersectionTimeDiffData_api>>,
+): UseMutationOptions<
+    PostGetPolylineIntersectionTimeDiffResponse_api,
+    AxiosError<PostGetPolylineIntersectionTimeDiffError_api>,
+    Options<PostGetPolylineIntersectionTimeDiffData_api>
+> => {
+    const mutationOptions: UseMutationOptions<
+        PostGetPolylineIntersectionTimeDiffResponse_api,
+        AxiosError<PostGetPolylineIntersectionTimeDiffError_api>,
+        Options<PostGetPolylineIntersectionTimeDiffData_api>
+    > = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postGetPolylineIntersectionTimeDiff({
                 ...options,
                 ...fnOptions,
                 throwOnError: true,
@@ -1614,6 +1832,33 @@ export const getDrilledWellboreHeadersOptions = (options: Options<GetDrilledWell
         queryKey: getDrilledWellboreHeadersQueryKey(options),
     });
 
+export const getPlannedWellboreHeadersQueryKey = (options: Options<GetPlannedWellboreHeadersData_api>) =>
+    createQueryKey("getPlannedWellboreHeaders", options);
+
+/**
+ * Get Planned Wellbore Headers
+ *
+ * Get planned wellbore headers for all planned wells in a given field
+ */
+export const getPlannedWellboreHeadersOptions = (options: Options<GetPlannedWellboreHeadersData_api>) =>
+    queryOptions<
+        GetPlannedWellboreHeadersResponse_api,
+        AxiosError<GetPlannedWellboreHeadersError_api>,
+        GetPlannedWellboreHeadersResponse_api,
+        ReturnType<typeof getPlannedWellboreHeadersQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getPlannedWellboreHeaders({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getPlannedWellboreHeadersQueryKey(options),
+    });
+
 export const getFieldPerforationsQueryKey = (options: Options<GetFieldPerforationsData_api>) =>
     createQueryKey("getFieldPerforations", options);
 
@@ -1694,6 +1939,33 @@ export const getWellTrajectoriesOptions = (options: Options<GetWellTrajectoriesD
             return data;
         },
         queryKey: getWellTrajectoriesQueryKey(options),
+    });
+
+export const getPlannedWellTrajectoriesQueryKey = (options: Options<GetPlannedWellTrajectoriesData_api>) =>
+    createQueryKey("getPlannedWellTrajectories", options);
+
+/**
+ * Get Planned Well Trajectories
+ *
+ * Get planned trajectories for wellbores in a given field. Can optionally return only a subset if a list of uuids are given
+ */
+export const getPlannedWellTrajectoriesOptions = (options: Options<GetPlannedWellTrajectoriesData_api>) =>
+    queryOptions<
+        GetPlannedWellTrajectoriesResponse_api,
+        AxiosError<GetPlannedWellTrajectoriesError_api>,
+        GetPlannedWellTrajectoriesResponse_api,
+        ReturnType<typeof getPlannedWellTrajectoriesQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getPlannedWellTrajectories({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getPlannedWellTrajectoriesQueryKey(options),
     });
 
 export const getWellborePickIdentifiersQueryKey = (options: Options<GetWellborePickIdentifiersData_api>) =>
@@ -2168,23 +2440,23 @@ export const getUserPhotoOptions = (options: Options<GetUserPhotoData_api>) =>
         queryKey: getUserPhotoQueryKey(options),
     });
 
-export const getObservationsQueryKey = (options: Options<GetObservationsData_api>) =>
-    createQueryKey("getObservations", options);
+export const getSummaryObservationsQueryKey = (options: Options<GetSummaryObservationsData_api>) =>
+    createQueryKey("getSummaryObservations", options);
 
 /**
- * Get Observations
+ * Get Summary Observations
  *
- * Retrieve all observations found in sumo case
+ * Retrieve all summary observations found in ensemble
  */
-export const getObservationsOptions = (options: Options<GetObservationsData_api>) =>
+export const getSummaryObservationsOptions = (options: Options<GetSummaryObservationsData_api>) =>
     queryOptions<
-        GetObservationsResponse_api,
-        AxiosError<GetObservationsError_api>,
-        GetObservationsResponse_api,
-        ReturnType<typeof getObservationsQueryKey>
+        GetSummaryObservationsResponse_api,
+        AxiosError<GetSummaryObservationsError_api>,
+        GetSummaryObservationsResponse_api,
+        ReturnType<typeof getSummaryObservationsQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getObservations({
+            const { data } = await getSummaryObservations({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -2192,7 +2464,82 @@ export const getObservationsOptions = (options: Options<GetObservationsData_api>
             });
             return data;
         },
-        queryKey: getObservationsQueryKey(options),
+        queryKey: getSummaryObservationsQueryKey(options),
+    });
+
+export const getRelpermTableNamesQueryKey = (options: Options<GetRelpermTableNamesData_api>) =>
+    createQueryKey("getRelpermTableNames", options);
+
+/**
+ * Get Relperm Table Names
+ */
+export const getRelpermTableNamesOptions = (options: Options<GetRelpermTableNamesData_api>) =>
+    queryOptions<
+        GetRelpermTableNamesResponse_api,
+        AxiosError<GetRelpermTableNamesError_api>,
+        GetRelpermTableNamesResponse_api,
+        ReturnType<typeof getRelpermTableNamesQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getRelpermTableNames({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getRelpermTableNamesQueryKey(options),
+    });
+
+export const getRelpermTableDefinitionQueryKey = (options: Options<GetRelpermTableDefinitionData_api>) =>
+    createQueryKey("getRelpermTableDefinition", options);
+
+/**
+ * Get Relperm Table Definition
+ */
+export const getRelpermTableDefinitionOptions = (options: Options<GetRelpermTableDefinitionData_api>) =>
+    queryOptions<
+        GetRelpermTableDefinitionResponse_api,
+        AxiosError<GetRelpermTableDefinitionError_api>,
+        GetRelpermTableDefinitionResponse_api,
+        ReturnType<typeof getRelpermTableDefinitionQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getRelpermTableDefinition({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getRelpermTableDefinitionQueryKey(options),
+    });
+
+export const getRelpermRealizationDataQueryKey = (options: Options<GetRelpermRealizationDataData_api>) =>
+    createQueryKey("getRelpermRealizationData", options);
+
+/**
+ * Get Relperm Realization Data
+ */
+export const getRelpermRealizationDataOptions = (options: Options<GetRelpermRealizationDataData_api>) =>
+    queryOptions<
+        GetRelpermRealizationDataResponse_api,
+        AxiosError<GetRelpermRealizationDataError_api>,
+        GetRelpermRealizationDataResponse_api,
+        ReturnType<typeof getRelpermRealizationDataQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getRelpermRealizationData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getRelpermRealizationDataQueryKey(options),
     });
 
 export const getRftTableDefinitionQueryKey = (options: Options<GetRftTableDefinitionData_api>) =>
@@ -2249,23 +2596,23 @@ export const getRftRealizationDataOptions = (options: Options<GetRftRealizationD
         queryKey: getRftRealizationDataQueryKey(options),
     });
 
-export const getVfpTableNamesQueryKey = (options: Options<GetVfpTableNamesData_api>) =>
-    createQueryKey("getVfpTableNames", options);
+export const getRftObservationsQueryKey = (options: Options<GetRftObservationsData_api>) =>
+    createQueryKey("getRftObservations", options);
 
 /**
- * Get Vfp Table Names
+ * Get Rft Observations
  *
- * Get the available VFP table names for a given ensemble and realization.
+ * Get RFT observations per well and date for a given ensemble.
  */
-export const getVfpTableNamesOptions = (options: Options<GetVfpTableNamesData_api>) =>
+export const getRftObservationsOptions = (options: Options<GetRftObservationsData_api>) =>
     queryOptions<
-        GetVfpTableNamesResponse_api,
-        AxiosError<GetVfpTableNamesError_api>,
-        GetVfpTableNamesResponse_api,
-        ReturnType<typeof getVfpTableNamesQueryKey>
+        GetRftObservationsResponse_api,
+        AxiosError<GetRftObservationsError_api>,
+        GetRftObservationsResponse_api,
+        ReturnType<typeof getRftObservationsQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getVfpTableNames({
+            const { data } = await getRftObservations({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -2273,7 +2620,33 @@ export const getVfpTableNamesOptions = (options: Options<GetVfpTableNamesData_ap
             });
             return data;
         },
-        queryKey: getVfpTableNamesQueryKey(options),
+        queryKey: getRftObservationsQueryKey(options),
+    });
+
+export const getVfpTablesQueryKey = (options: Options<GetVfpTablesData_api>) => createQueryKey("getVfpTables", options);
+
+/**
+ * Get Vfp Tables
+ *
+ * Get the available VFP tables (type and number) for a given ensemble and realization.
+ */
+export const getVfpTablesOptions = (options: Options<GetVfpTablesData_api>) =>
+    queryOptions<
+        GetVfpTablesResponse_api,
+        AxiosError<GetVfpTablesError_api>,
+        GetVfpTablesResponse_api,
+        ReturnType<typeof getVfpTablesQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getVfpTables({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getVfpTablesQueryKey(options),
     });
 
 export const getVfpTableQueryKey = (options: Options<GetVfpTableData_api>) => createQueryKey("getVfpTable", options);
@@ -2281,7 +2654,7 @@ export const getVfpTableQueryKey = (options: Options<GetVfpTableData_api>) => cr
 /**
  * Get Vfp Table
  *
- * Get the VFP table for a given ensemble, realization and table name.
+ * Get the VFP table for a given ensemble, realization, type and table number.
  */
 export const getVfpTableOptions = (options: Options<GetVfpTableData_api>) =>
     queryOptions<
@@ -2386,8 +2759,8 @@ export const getSessionsMetadataInfiniteQueryKey = (
  *
  * The response includes a continuation token for fetching the next page of results.
  */
-export const getSessionsMetadataInfiniteOptions = (options?: Options<GetSessionsMetadataData_api>) =>
-    infiniteQueryOptions<
+export const getSessionsMetadataInfiniteOptions = (options?: Options<GetSessionsMetadataData_api>) => {
+    const opts = infiniteQueryOptions<
         GetSessionsMetadataResponse_api,
         AxiosError<GetSessionsMetadataError_api>,
         InfiniteData<GetSessionsMetadataResponse_api>,
@@ -2421,6 +2794,8 @@ export const getSessionsMetadataInfiniteOptions = (options?: Options<GetSessions
             queryKey: getSessionsMetadataInfiniteQueryKey(options),
         },
     );
+    return opts as Omit<typeof opts, "initialData">;
+};
 
 export const createSessionQueryKey = (options: Options<CreateSessionData_api>) =>
     createQueryKey("createSession", options);
@@ -2718,8 +3093,8 @@ export const getSnapshotAccessLogsInfiniteQueryKey = (
  * - Creation date range
  * - Last visited date range
  */
-export const getSnapshotAccessLogsInfiniteOptions = (options?: Options<GetSnapshotAccessLogsData_api>) =>
-    infiniteQueryOptions<
+export const getSnapshotAccessLogsInfiniteOptions = (options?: Options<GetSnapshotAccessLogsData_api>) => {
+    const opts = infiniteQueryOptions<
         GetSnapshotAccessLogsResponse_api,
         AxiosError<GetSnapshotAccessLogsError_api>,
         InfiniteData<GetSnapshotAccessLogsResponse_api>,
@@ -2753,6 +3128,8 @@ export const getSnapshotAccessLogsInfiniteOptions = (options?: Options<GetSnapsh
             queryKey: getSnapshotAccessLogsInfiniteQueryKey(options),
         },
     );
+    return opts as Omit<typeof opts, "initialData">;
+};
 
 export const getSnapshotsMetadataQueryKey = (options?: Options<GetSnapshotsMetadataData_api>) =>
     createQueryKey("getSnapshotsMetadata", options);
@@ -2810,8 +3187,8 @@ export const getSnapshotsMetadataInfiniteQueryKey = (
  *
  * Note: Consider using `/persistence/snapshot_access_logs` to see both your snapshots and ones shared with you.
  */
-export const getSnapshotsMetadataInfiniteOptions = (options?: Options<GetSnapshotsMetadataData_api>) =>
-    infiniteQueryOptions<
+export const getSnapshotsMetadataInfiniteOptions = (options?: Options<GetSnapshotsMetadataData_api>) => {
+    const opts = infiniteQueryOptions<
         GetSnapshotsMetadataResponse_api,
         AxiosError<GetSnapshotsMetadataError_api>,
         InfiniteData<GetSnapshotsMetadataResponse_api>,
@@ -2845,6 +3222,8 @@ export const getSnapshotsMetadataInfiniteOptions = (options?: Options<GetSnapsho
             queryKey: getSnapshotsMetadataInfiniteQueryKey(options),
         },
     );
+    return opts as Omit<typeof opts, "initialData">;
+};
 
 export const createSnapshotQueryKey = (options: Options<CreateSnapshotData_api>) =>
     createQueryKey("createSnapshot", options);
@@ -3043,6 +3422,33 @@ export const deleteSnapshotAccessLogMutation = (
     };
     return mutationOptions;
 };
+
+export const getMediaSasTokenQueryKey = (options?: Options<GetMediaSasTokenData_api>) =>
+    createQueryKey("getMediaSasToken", options);
+
+/**
+ * Get Media Sas Token
+ *
+ * Return a short-lived, read-only container SAS token for fetching tutorial media.
+ */
+export const getMediaSasTokenOptions = (options?: Options<GetMediaSasTokenData_api>) =>
+    queryOptions<
+        GetMediaSasTokenResponse_api,
+        AxiosError<DefaultError>,
+        GetMediaSasTokenResponse_api,
+        ReturnType<typeof getMediaSasTokenQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getMediaSasToken({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getMediaSasTokenQueryKey(options),
+    });
 
 export const loginRouteQueryKey = (options?: Options<LoginRouteData_api>) => createQueryKey("loginRoute", options);
 

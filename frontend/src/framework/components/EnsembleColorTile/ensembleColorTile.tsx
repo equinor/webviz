@@ -10,6 +10,7 @@ export type EnsembleColorTileProps = {
     isRealizationFilterEffective?: boolean;
     wrapperClassName?: string;
     badgeClassName?: string;
+    size?: "small" | "default" | "large";
 };
 
 export function EnsembleColorTile(props: EnsembleColorTileProps): React.ReactNode {
@@ -17,8 +18,8 @@ export function EnsembleColorTile(props: EnsembleColorTileProps): React.ReactNod
 
     return (
         <Tooltip
-            title={props.isRealizationFilterEffective ? "Some realizations are being filtered out" : undefined}
-            enterDelay="medium"
+            content={props.isRealizationFilterEffective ? "Some realizations are being filtered out" : undefined}
+            delay="medium"
         >
             <span className={`flex items-center ${props.wrapperClassName}`}>
                 <ColorTileWithBadge
@@ -26,6 +27,7 @@ export function EnsembleColorTile(props: EnsembleColorTileProps): React.ReactNod
                     showBadge={props.isRealizationFilterEffective ?? false}
                     badgeIcon={FilterAlt}
                     badgeClassName={badgeClassName}
+                    size={props.size}
                 />
             </span>
         </Tooltip>

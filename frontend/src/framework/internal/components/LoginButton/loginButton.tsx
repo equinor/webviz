@@ -1,31 +1,16 @@
 import React from "react";
 
-import { Dropdown, MenuButton } from "@mui/base";
-import { AccountCircle, Login, Logout } from "@mui/icons-material";
+import { Login, Logout } from "@mui/icons-material";
 
 import { postLogout } from "@api";
-import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
+import { AuthState } from "@framework/internal/auth/AuthStateStore";
+import { useAuthState, useUserInfo } from "@framework/internal/auth/hooks";
+import { Avatar } from "@lib/components/Avatar";
+import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Menu } from "@lib/components/Menu";
-import { MenuDivider } from "@lib/components/MenuDivider";
-import { MenuItem } from "@lib/components/MenuItem";
-import { MenuText } from "@lib/components/MenuText/menuText";
-import { Tooltip } from "@lib/components/Tooltip";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Popover } from "@lib/components/Popover";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
-
-function makeInitials(name: string): string | null {
-    const regExp = new RegExp(/([^()]+)(\([\w ]+\))/);
-    const match = regExp.exec(name);
-
-    if (match) {
-        const names = match[1].trim().split(" ");
-        if (names.length > 1) {
-            return names[0].charAt(0) + names[names.length - 1].charAt(0);
-        }
-    }
-    return null;
-}
+import { makeInitials } from "@lib/utils/userNames";
 
 export type LoginButtonProps = {
     className?: string;
@@ -36,7 +21,8 @@ export type LoginButtonProps = {
 export const LoginButton: React.FC<LoginButtonProps> = (props) => {
     const textRef = React.useRef<HTMLSpanElement>(null);
 
-    const { authState, userInfo } = useAuthProvider();
+    const authState = useAuthState();
+    const userInfo = useUserInfo();
 
     async function handleLogout() {
         console.debug("Logging out...");
@@ -47,30 +33,21 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     function makeIcon() {
         if (authState === AuthState.LoggedIn) {
-            if (userInfo?.avatar_b64str) {
-                return (
-                    <img
-                        src={`data:image/png;base64,${userInfo.avatar_b64str}`}
-                        alt="Avatar"
-                        className="w-5 h-5 rounded-full mr-1"
-                    />
-                );
-            }
-            if (userInfo?.display_name) {
-                const initials = makeInitials(userInfo.display_name);
-                if (initials) {
-                    return (
-                        <div className="w-5 h-5 rounded-full bg-slate-300 text-[0.5em] flex items-center justify-center mr-1">
-                            {initials}
-                        </div>
-                    );
-                }
-            }
-            return <AccountCircle className="w-5 h-5 mr-1" />;
+            return (
+                <Avatar
+                    size={24}
+                    userData={{
+                        imageSrc: `data:image/png;base64,${userInfo?.avatar_b64str}`,
+                        initials: userInfo?.display_name
+                            ? (makeInitials(userInfo?.display_name ?? "") ?? undefined)
+                            : undefined,
+                    }}
+                />
+            );
         } else if (authState === AuthState.NotLoggedIn) {
-            return <Login fontSize="small" className=" mr-1" />;
+            return <Login fontSize="small" />;
         } else {
-            return <CircularProgress size="medium-small" className="mr-1" />;
+            return <CircularProgress size={16} />;
         }
     }
 
@@ -99,25 +76,21 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
     }
 
     return (
-        <Dropdown>
-            <Tooltip title={makeText()} placement="bottom">
-                <MenuButton
-                    className={resolveClassNames(
-                        props.className ?? "",
-                        "items-center p-2 font-medium rounded-md hover:bg-indigo-100",
-                    )}
-                >
-                    {makeIcon()}
-                </MenuButton>
-            </Tooltip>
-            <Menu anchorOrigin="bottom-start">
-                <MenuText>{text}</MenuText>
-                <MenuDivider />
-                <MenuItem onClick={handleLogout}>
-                    <Logout fontSize="small" className="mr-2" />
-                    Sign out
-                </MenuItem>
-            </Menu>
-        </Dropdown>
+        <Popover.Root>
+            <Popover.Trigger variant="ghost" tone="neutral" iconOnly>
+                {makeIcon()}
+            </Popover.Trigger>
+            <Popover.Popup>
+                <div className="flex flex-col">
+                    <Popover.Title fontSize="sm" hideCloseButton>
+                        {text}
+                    </Popover.Title>
+                    <Button variant="ghost" tone="neutral" onClick={handleLogout}>
+                        <Logout fontSize="inherit" />
+                        Sign out
+                    </Button>
+                </div>
+            </Popover.Popup>
+        </Popover.Root>
     );
 };

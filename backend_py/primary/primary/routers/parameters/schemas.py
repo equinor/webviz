@@ -8,8 +8,9 @@ class EnsembleParameter(BaseModel):
 
     name: str
     isLogarithmic: bool
-    isDiscrete: bool  # values are string or integer
+    isDiscrete: bool  # values are from a discrete distribution derrf/dunif/raw
     isConstant: bool  # all values are equal
+    isNumerical: bool  # values are numerical (int or float)
     groupName: str | None = None
     descriptiveName: str | None = None
     realizations: list[int]
@@ -41,3 +42,4 @@ class EnsembleParametersAndSensitivities(BaseModel):
 
     parameters: list[EnsembleParameter]
     sensitivities: list[EnsembleSensitivity]
+    nonStandardParametersWarning: str | None = None

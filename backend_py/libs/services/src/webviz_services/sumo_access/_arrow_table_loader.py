@@ -15,6 +15,8 @@ from webviz_services.service_exceptions import (
     ServiceLayerException,
 )
 
+from ._translate_sumo_exceptions import translate_sumo_exceptions
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -110,7 +112,10 @@ class ArrowTableLoader:
                 )
 
             # Does the aggregation and gets the blob (also writes the resulting aggregation back into Sumo)
-            new_agg_table_obj = await sc_agg_input_tables.aggregate_async(columns=[column_name], operation="collection")
+            with translate_sumo_exceptions(operation="Aggregate table column"):
+                new_agg_table_obj = await sc_agg_input_tables.aggregate_async(
+                    columns=[column_name], operation="collection"
+                )
             if not isinstance(new_agg_table_obj, Table):
                 raise InvalidDataError(
                     f"Failed to get aggregated object for: {column_name=}, {self._make_req_info_str()}", Service.SUMO
@@ -163,20 +168,31 @@ class ArrowTableLoader:
         # (the columns that are not in column_names) are equal across all tables.
         first_column_name, first_aggregated_table = column_name_and_aggregated_table_pairs[0]
         shared_columns_first_table = first_aggregated_table.drop(first_column_name)
+
+        # NOTE: The merge below appends value columns positionally, so it relies on all tables having
+        # identical row ordering. We assume the aggregated tables are returned with a stable, matching
+        # row order. If that assumption ever breaks, the equals() check below will fail. Sorting would
+        # probably require all shared key columns (e.g. REAL, WELL, DATE) to produce a deterministic total order;
+        # but sorting on REAL alone might be sufficient since each realization spans many rows.
+
         for i in range(1, len(column_name_and_aggregated_table_pairs)):
             this_column_name, this_aggregated_table = column_name_and_aggregated_table_pairs[i]
             shared_columns_this_table = this_aggregated_table.drop(this_column_name)
+
+            if set(shared_columns_first_table.column_names) != set(shared_columns_this_table.column_names):
+                raise InvalidDataError(
+                    f"The shared columns are not equal: Aggregated table for {first_column_name} has shared columns {shared_columns_first_table.column_names}, and aggregated table for {this_column_name} has shared columns {shared_columns_this_table.column_names}",
+                    Service.SUMO,
+                )
+
+            # Reorder so the column ordering matches before comparing the contents
+            shared_columns_this_table = shared_columns_this_table.select(shared_columns_first_table.column_names)
+
             if not shared_columns_first_table.equals(shared_columns_this_table):
-                if shared_columns_first_table.column_names != shared_columns_this_table.column_names:
-                    raise InvalidDataError(
-                        f"The shared columns are not equal: Aggregated table for {first_column_name} has shared columns {shared_columns_first_table.column_names}, and aggregated table for {this_column_name} has shared columns {shared_columns_this_table.column_names}",
-                        Service.SUMO,
-                    )
                 raise InvalidDataError(
                     f"The shared columns are not equal: Aggregated table for {first_column_name} and aggregated table for {this_column_name} has same shared columns {shared_columns_this_table.column_names}. Although the column names match, their contents (values or order) differ.",
                     Service.SUMO,
                 )
-
         # Now we can merge the tables by appending the "value" columns
         merged_aggregated_table = first_aggregated_table
         for i in range(1, len(column_name_and_aggregated_table_pairs)):
@@ -197,6 +213,7 @@ class ArrowTableLoader:
             name=self._req_table_name,
             content=self._req_content_types,
             tagname=self._req_tagname,
+            standard_result=self._req_standard_result,
         )
 
         table_count = await sc_tables.length_async()
@@ -221,7 +238,10 @@ class ArrowTableLoader:
         return arrow_table
 
     def _make_req_info_str(self) -> str:
-        info_str = f"table_name={self._req_table_name}, content_type={self._req_content_types}"
+        info_str = (
+            f"table_name={self._req_table_name}, content_type={self._req_content_types}, "
+            f"standard_result={self._req_standard_result}"
+        )
         if self._req_tagname is not None:
             info_str += f", tagname={self._req_tagname}"
         return info_str

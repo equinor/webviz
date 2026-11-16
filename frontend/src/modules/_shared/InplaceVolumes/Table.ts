@@ -6,6 +6,7 @@ export enum ColumnType {
     ENSEMBLE = "ensemble",
     TABLE = "table",
     FLUID = "fluid",
+    SENSITIVITY = "sensitivity",
     REAL = "real",
     INDEX = "index",
     RESULT = "result",
@@ -184,7 +185,6 @@ export class Table {
 
     splitByColumn(columnName: string, keepColumn: boolean = false): TableCollection {
         const columnIndex = this._columns.findIndex((column) => column.getName() === columnName);
-
         if (columnIndex === -1) {
             throw new Error(`Column not found: ${columnName}`);
         }

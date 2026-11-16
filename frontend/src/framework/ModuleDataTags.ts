@@ -12,6 +12,7 @@ export enum ModuleDataTagId {
     SEISMIC = "seismic",
     WELL_COMPLETIONS = "well-completions",
     VFP = "vfp",
+    RELPERM = "relperm",
     POLYGONS = "polygons",
 }
 
@@ -86,5 +87,10 @@ export const ModuleDataTags: ModuleDataTag[] = [
         id: ModuleDataTagId.WELL_COMPLETIONS,
         name: "Well completions",
         description: "Well completions",
+    },
+    {
+        id: ModuleDataTagId.RELPERM,
+        name: "RelPerm",
+        description: "Relative permeability and capillary pressure data",
     },
 ];

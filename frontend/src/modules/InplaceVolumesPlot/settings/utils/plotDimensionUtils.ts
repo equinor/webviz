@@ -1,15 +1,15 @@
-import type { DropdownOption } from "@lib/components/Dropdown";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 import type { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
 export function makeSubplotByOptions(
     tableDefinitionsAccessor: TableDefinitionsAccessor,
     selectedTableNames: string[],
-): DropdownOption<string>[] {
+): ComboboxItem<string>[] {
     const numEnsembleIdents = tableDefinitionsAccessor.getUniqueEnsembleIdents().length;
     const numTableNames = selectedTableNames.length;
 
-    const options: DropdownOption<string>[] = [
+    const options: ComboboxItem<string>[] = [
         {
             value: TableOriginKey.ENSEMBLE,
             label: "ENSEMBLE",
@@ -38,11 +38,11 @@ export function makeColorByOptions(
     tableDefinitionsAccessor: TableDefinitionsAccessor,
     selectedSubplotBy: string,
     selectedTableNames: string[],
-): DropdownOption<string>[] {
+): ComboboxItem<string>[] {
     const numEnsembleIdents = tableDefinitionsAccessor.getUniqueEnsembleIdents().length;
     const numTableNames = selectedTableNames.length;
 
-    const options: DropdownOption<string>[] = [];
+    const options: ComboboxItem<string>[] = [];
 
     if (numEnsembleIdents > 1 && selectedSubplotBy !== TableOriginKey.ENSEMBLE) {
         options.push({

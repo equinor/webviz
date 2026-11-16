@@ -34,6 +34,9 @@ export function useElementSize(ref: React.RefObject<HTMLElement>): Size2D {
 
                     currentSize = newSize;
                 }
+
+                // State is tracking DOM size, so we accept set-state here
+                // eslint-disable-next-line @eslint-react/set-state-in-effect
                 setSize(newSize);
             };
 

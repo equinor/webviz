@@ -1,5 +1,6 @@
-import { MapLayer } from "@webviz/subsurface-viewer/dist/layers";
+import type { MapLayer } from "@webviz/subsurface-viewer/dist/layers";
 
+import { AttributeSurfaceLayer } from "@modules/_shared/customDeckGlLayers/AttributeSurfaceLayer";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -29,7 +30,7 @@ export function makeAttributeSurfaceLayer({
         return null;
     }
 
-    return new MapLayer({
+    return new AttributeSurfaceLayer({
         id,
         name,
         meshData:

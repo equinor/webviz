@@ -1,9 +1,11 @@
-import { DropdownStringSetting } from "./DropdownStringSetting";
+import type { SurfaceAttribute } from "@modules/_shared/Surface";
 
-type ValueType = string | null;
-type ValueConstraintsType = string[];
+import { SurfaceAttributeSetting } from "./SurfaceAttributeSetting";
 
-export class WellboreDepthFilterAttributeSetting extends DropdownStringSetting {
+type ValueType = SurfaceAttribute | null;
+type ValueConstraintsType = SurfaceAttribute[];
+
+export class WellboreDepthFilterAttributeSetting extends SurfaceAttributeSetting {
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
         if (valueConstraints.length === 0) {
             return value === null;

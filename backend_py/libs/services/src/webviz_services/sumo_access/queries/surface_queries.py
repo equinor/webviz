@@ -89,7 +89,7 @@ def _build_realization_surfs_query_dict(case_uuid: str, ensemble_name: str, time
     must_not_arr: list[dict] = []
 
     must_arr.append({"term": {"class.keyword": "surface"}})
-    must_arr.append({"term": {"_sumo.parent_object.keyword": case_uuid}})
+    must_arr.append({"term": {"fmu.case.uuid.keyword": case_uuid}})
     must_arr.append({"term": {"fmu.ensemble.name.keyword": ensemble_name}})
     must_arr.append({"term": {"data.is_observation": False}})
     must_arr.append({"term": {"data.format": "irap_binary"}})
@@ -128,7 +128,7 @@ def _build_observed_surfs_query_dict(case_uuid: str, time_type: SurfTimeType) ->
     must_not_arr: list[dict] = []
 
     must_arr.append({"term": {"class.keyword": "surface"}})
-    must_arr.append({"term": {"_sumo.parent_object.keyword": case_uuid}})
+    must_arr.append({"term": {"fmu.case.uuid.keyword": case_uuid}})
     must_arr.append({"term": {"fmu.context.stage.keyword": "case"}})
     must_arr.append({"term": {"data.is_observation": True}})
     must_arr.append({"term": {"data.format": "irap_binary"}})
@@ -190,7 +190,6 @@ async def _run_query_and_aggregate_surf_info_async(sumo_client: SumoClient, quer
                 },
             },
         },
-        "_source": True,
         "size": 0,
     }
 
@@ -232,7 +231,6 @@ async def _run_query_and_aggregate_time_intervals_async(
                 },
             },
         },
-        "_source": True,
         "size": 0,
     }
 
@@ -265,7 +263,6 @@ async def _run_query_and_aggregate_time_points_async(sumo_client: SumoClient, qu
                 },
             },
         },
-        "_source": True,
         "size": 0,
     }
 

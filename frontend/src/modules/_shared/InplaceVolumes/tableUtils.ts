@@ -9,11 +9,23 @@ import type {
 } from "./types";
 import { InplaceVolumesStatisticEnumToStringMapping, TableOriginKey } from "./types";
 
+function hasSensitivitySelectorColumn(data: (InplaceVolumesTableData | InplaceVolumesStatisticalTableData)[]): boolean {
+    return data.some((tableSet) =>
+        tableSet.data.tableDataPerFluidSelection.some((perFluidTableData) =>
+            perFluidTableData.selectorColumns.some((column) => column.columnName === TableOriginKey.SENSITIVITY),
+        ),
+    );
+}
+
 export function makeTableFromApiData(data: InplaceVolumesTableData[]): Table {
     const columns: Map<string, Column<any>> = new Map();
     columns.set("ensemble", new Column<string>(TableOriginKey.ENSEMBLE, ColumnType.ENSEMBLE));
     columns.set("table", new Column<string>(TableOriginKey.TABLE_NAME, ColumnType.TABLE));
     columns.set("fluid", new Column<string>(TableOriginKey.FLUID, ColumnType.FLUID));
+    // Registered up front so it follows FLUID even if the first fluid selection lacks it.
+    if (hasSensitivitySelectorColumn(data)) {
+        columns.set(TableOriginKey.SENSITIVITY, new Column<string>(TableOriginKey.SENSITIVITY, ColumnType.SENSITIVITY));
+    }
 
     // First, collect all columns
     for (const tableSet of data) {
@@ -38,6 +50,12 @@ export function makeTableFromApiData(data: InplaceVolumesTableData[]): Table {
     // Then, add the values to the columns
     for (const tableSet of data) {
         for (const perFluidTable of tableSet.data.tableDataPerFluidSelection) {
+            // A fluid selection can lack the requested result (e.g. BO is only defined for oil). Adding
+            // its selector rows would leave the result columns shorter than the selector columns.
+            if (perFluidTable.resultColumns.length === 0) {
+                continue;
+            }
+
             let mainColumnsAdded = false;
             for (const selectorColumn of perFluidTable.selectorColumns) {
                 for (let i = 0; i < selectorColumn.indices.length; i++) {
@@ -111,6 +129,12 @@ export function makeStatisticalTableColumnDataFromApiData(
     nonStatisticalColumns.set("ensemble", new Column<string>(TableOriginKey.ENSEMBLE, ColumnType.ENSEMBLE));
     nonStatisticalColumns.set("table", new Column<string>(TableOriginKey.TABLE_NAME, ColumnType.TABLE));
     nonStatisticalColumns.set("fluid", new Column<string>(TableOriginKey.FLUID, ColumnType.FLUID));
+    if (hasSensitivitySelectorColumn(data)) {
+        nonStatisticalColumns.set(
+            TableOriginKey.SENSITIVITY,
+            new Column<string>(TableOriginKey.SENSITIVITY, ColumnType.SENSITIVITY),
+        );
+    }
 
     // Find union of selector columns and result columns
     for (const tableSet of data) {
@@ -119,11 +143,13 @@ export function makeStatisticalTableColumnDataFromApiData(
             for (const selectorColumn of perFluidTableData.selectorColumns) {
                 allSelectorColumns.add(selectorColumn.columnName);
                 if (!nonStatisticalColumns.has(selectorColumn.columnName)) {
-                    const type = ColumnType.INDEX;
                     if (selectorColumn.columnName === "REAL") {
                         throw new Error("REAL column should not be present in statistical tables");
                     }
-                    nonStatisticalColumns.set(selectorColumn.columnName, new Column(selectorColumn.columnName, type));
+                    nonStatisticalColumns.set(
+                        selectorColumn.columnName,
+                        new Column(selectorColumn.columnName, ColumnType.INDEX),
+                    );
                 }
             }
 

@@ -1,9 +1,9 @@
 import React from "react";
 
 import { Close } from "@mui/icons-material";
-import _ from "lodash";
+import { defaults, mapValues, take } from "lodash-es";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { Button } from "@lib/components/Button";
 import { useStableProp } from "@lib/hooks/useStableProp";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
@@ -11,12 +11,14 @@ import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { formatNumber } from "../utils/numberFormatting";
 
 export type ReadoutItem = {
+    id: string;
     label: string;
     info: InfoItem[];
     color?: string;
 };
 
 export type InfoItem = {
+    id: string;
     adornment?: React.ReactNode;
     name: React.ReactNode;
     value: string | number | boolean | number[];
@@ -47,25 +49,25 @@ export type ReadoutBoxProps = {
 
 export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
     const maxNumItemsOrDefault = props.maxNumItems ?? 3;
-    const visibleReadoutItems = _.take(props.readoutItems, maxNumItemsOrDefault);
+    const visibleReadoutItems = take(props.readoutItems, maxNumItemsOrDefault);
 
     const [flipped, setFlipped] = React.useState<boolean>(false);
     const [stableEdgeDistanceRem] = useStableProp(props.edgeDistanceRem);
     const edgeDistance = React.useMemo(() => computeEdgeDistance(stableEdgeDistanceRem), [stableEdgeDistanceRem]);
-    const readoutRoot = React.useRef<HTMLDivElement>(null);
+    const readoutRootRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(
         function addListenersForFlip() {
             if (props.flipDisabled) return;
 
             function maybeFlipBox(evt: MouseEvent) {
-                if (!readoutRoot.current) return;
+                if (!readoutRootRef.current) return;
 
-                const offsetParent = readoutRoot.current.offsetParent;
+                const offsetParent = readoutRootRef.current.offsetParent;
                 if (!offsetParent) return; // Not floating, I believe
 
                 const parentRect = offsetParent.getBoundingClientRect();
-                const { top, bottom, width } = readoutRoot.current.getBoundingClientRect();
+                const { top, bottom, width } = readoutRootRef.current.getBoundingClientRect();
 
                 // If above, or below, it's guaranteed to fit
                 if (evt.clientY < top || evt.clientY > bottom) {
@@ -102,13 +104,13 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
 
     return (
         <div
-            ref={readoutRoot}
+            ref={readoutRootRef}
             className={resolveClassNames(
-                "absolute z-9999 grid items-center rounded-sm border border-neutral-300 bg-white/75 backdrop-blur-xs pointer-events-none",
+                "border-neutral-subtle bg-surface/75 z-tooltip pointer-events-none absolute grid items-center rounded-sm border backdrop-blur-xs",
                 {
-                    "gap-2 p-2 text-sm w-72": !props.compact,
-                    "gap-y-0.5 gap-x-2 py-2 px-2 text-xs min-w-52": props.compact,
-                    "text-neutral-500": props.textGrayedOut,
+                    "px-2xs py-3xs text-body-sm gap-3xs w-72": !props.compact,
+                    "gap-x-2xs gap-y-2xs px-2xs py-2xs text-body-xs min-w-52": props.compact,
+                    "text-neutral-subtle": props.textGrayedOut,
                 },
             )}
             style={{
@@ -117,26 +119,30 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
             }}
         >
             {props.onClose && (
-                <DenseIconButton
+                <Button
                     onClick={props.onClose}
-                    className="absolute top-0.5 right-0.5 pointer-events-auto text-xs"
+                    layoutClassName="pointer-events-auto absolute top-0.5 right-0.5"
                     title="Clear readout"
+                    variant="ghost"
+                    size="small"
+                    tone="neutral"
+                    iconOnly
                 >
                     <Close fontSize="inherit" />
-                </DenseIconButton>
+                </Button>
             )}
-            {visibleReadoutItems.map((item, idx) => (
-                <React.Fragment key={idx}>
+            {visibleReadoutItems.map((item) => (
+                <React.Fragment key={item.id}>
                     <InfoLabel item={item} noLabelColor={props.noLabelColor} />
 
-                    {item.info.map((i: InfoItem, idx: number) => (
-                        <InfoItem key={idx} {...i} />
+                    {item.info.map((i: InfoItem) => (
+                        <InfoItem key={i.id} {...i} />
                     ))}
                 </React.Fragment>
             ))}
 
             {props.readoutItems.length > maxNumItemsOrDefault && (
-                <div className="flex items-center gap-2 col-span-4">
+                <div className="gap-x-2xs col-span-4 flex items-center">
                     ...and {props.readoutItems.length - maxNumItemsOrDefault} more
                 </div>
             )}
@@ -146,10 +152,10 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
 
 function InfoLabel(props: { item: ReadoutItem; noLabelColor?: boolean; compact?: boolean }): React.ReactNode {
     return (
-        <div className="col-span-4 flex gap-2 font-bold items-center">
+        <div className="gap-x-2xs font-bolder col-span-4 flex items-center">
             {!props.noLabelColor && (
                 <div
-                    className="rounded-full w-3 h-3 border border-slate-500"
+                    className="border-neutral-subtle h-3 w-3 rounded-full border"
                     style={{ backgroundColor: props.item.color }}
                 />
             )}
@@ -177,25 +183,21 @@ function computeEdgeDistance(edgeDistanceProp?: number | PartialEdgeDistance): E
     if (typeof edgeDistanceProp === "number") {
         edgesRem = { left: edgeDistanceProp, right: edgeDistanceProp, bottom: edgeDistanceProp };
     } else {
-        edgesRem = _.defaults({}, edgeDistanceProp ?? {}, DEFAULT_EDGE_DISTANCE);
+        edgesRem = defaults({}, edgeDistanceProp ?? {}, DEFAULT_EDGE_DISTANCE);
     }
-    return _.mapValues(edgesRem, convertRemToPixels);
+    return mapValues(edgesRem, convertRemToPixels);
 }
 
 function makeFormattedInfoValue(value: string | number | boolean | number[]): string {
-    let formattedValue = "";
-
     if (value instanceof Array) {
         if (value.length === 3) {
-            formattedValue = value.map((el) => formatValue(el)).join(", ");
+            return value.map((el) => formatValue(el)).join(", ");
         } else {
-            formattedValue = value.map((el) => formatValue(el)).join(" - ");
+            return value.map((el) => formatValue(el)).join(" - ");
         }
     } else {
-        formattedValue = formatValue(value);
+        return formatValue(value);
     }
-
-    return formattedValue;
 }
 
 function formatValue(value: number | string | boolean): string {

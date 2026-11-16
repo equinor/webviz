@@ -1,6 +1,6 @@
 import React from "react";
 
-import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Provider } from "jotai";
 
@@ -8,21 +8,8 @@ import { tanstackDebugTimeOverride } from "@framework/utils/debug";
 
 import { HydrateQueryClientAtom } from "../components/HydrateQueryClientAtom";
 
-import { AuthState, useAuthProvider } from "./AuthProvider";
-
-type QueryError = {
-    url: string;
-    status: number;
-    statusText: string;
-    body: unknown;
-    request: unknown;
-    name: string;
-};
-
 export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement }> = (props) => {
-    const authProvider = useAuthProvider();
-
-    const queryClient = React.useRef<QueryClient>(
+    const queryClientRef = React.useRef<QueryClient>(
         new QueryClient({
             defaultOptions: {
                 queries: {
@@ -34,18 +21,11 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
                     staleTime: tanstackDebugTimeOverride(1000 * 60), // 1 minute
                 },
             },
-            queryCache: new QueryCache({
-                onError: (error) => {
-                    if (error && (error as unknown as QueryError).status === 401) {
-                        authProvider.setAuthState(AuthState.NotLoggedIn);
-                    }
-                },
-            }),
         }),
     );
 
     return (
-        <QueryClientProvider client={queryClient.current}>
+        <QueryClientProvider client={queryClientRef.current}>
             <Provider>
                 <HydrateQueryClientAtom>{props.children}</HydrateQueryClientAtom>
             </Provider>

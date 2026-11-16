@@ -1,9 +1,10 @@
 import React from "react";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import type { PlotDatum, PlotMouseEvent } from "plotly.js";
+import type { PlotDatum, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
 
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -24,10 +25,10 @@ import { useMakeResampleFrequencyWarningMessage } from "./hooks/useMakeResampleF
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
-import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
+import { EnsemblesParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 import { SubplotOwner } from "./utils/PlotBuilder";
 
-export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) => {
+export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
@@ -43,7 +44,13 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
     const isAnyQueryLoading = useAtomValue(queryIsFetchingAtom);
 
+    const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
     const setActiveTimestampUtcMs = useSetAtom(activeTimestampUtcMsAtom);
+
+    const moduleInstanceId = viewContext.getInstanceIdString();
+    const hoveredTimestampUtcMs = useHoverValue(HoverTopic.TIMESTAMP, hoverService, moduleInstanceId);
+    const isHoverExternal = hoverService.getLastHoveredModule() !== moduleInstanceId;
+    const setHoveredTimestamp = usePublishHoverValue(HoverTopic.TIMESTAMP, hoverService, moduleInstanceId);
 
     // Color palettes
     const colorSet = useColorSet(workbenchSettings);
@@ -64,7 +71,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     // Create parameter color scale helper
     const ensemblesParameterColoring =
         colorByParameter && parameterIdent
-            ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
+            ? new EnsemblesParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
             : null;
 
     const ensemblesWithoutParameter: (RegularEnsemble | DeltaEnsemble)[] = [];
@@ -86,6 +93,9 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     const handleClickInChart = React.useCallback(
         function handleClickInChart(e: PlotMouseEvent) {
+            if (!showTimestampMarker) {
+                return;
+            }
             const clickedPoint: PlotDatum = e.points[0];
             if (!clickedPoint) {
                 return;
@@ -98,7 +108,28 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                 }
             }
         },
-        [setActiveTimestampUtcMs],
+        [setActiveTimestampUtcMs, showTimestampMarker],
+    );
+
+    const handleHoverInChart = React.useCallback(
+        function handleHoverInChart(e: PlotHoverEvent) {
+            const hoveredPoint: PlotDatum | undefined = e.points[0];
+            if (!hoveredPoint) {
+                return;
+            }
+            const timestampUtcMs = hoveredPoint.data.x[hoveredPoint.pointIndex];
+            if (typeof timestampUtcMs === "number") {
+                setHoveredTimestamp(timestampUtcMs);
+            }
+        },
+        [setHoveredTimestamp],
+    );
+
+    const handleUnhoverInChart = React.useCallback(
+        function handleUnhoverInChart() {
+            setHoveredTimestamp(null);
+        },
+        [setHoveredTimestamp],
     );
 
     const { assembleCsvAndDownload } = useDownloadData(viewContext);
@@ -108,6 +139,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         vectorHexColorMap,
         subplotOwner,
         ensemblesParameterColoring,
+        hoveredTimestampUtcMs,
+        isHoverExternal,
     );
 
     const hasQueryErrors = hasRealizationsQueryError || hasStatisticsQueryError;
@@ -132,6 +165,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                 <Plot
                     plotUpdateReady={!isAnyQueryLoading}
                     onClick={handleClickInChart}
+                    onHover={handleHoverInChart}
+                    onUnhover={handleUnhoverInChart}
                     onDownloadClick={assembleCsvAndDownload}
                     data={plotBuilder.makePlotData()}
                     layout={plotBuilder.makePlotLayout()}
@@ -145,12 +180,14 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
             resampleFrequencyWarningMessage,
             assembleCsvAndDownload,
             handleClickInChart,
+            handleHoverInChart,
+            handleUnhoverInChart,
         ],
     );
 
     // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
     return (
-        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
+        <div className="h-full w-full overflow-hidden" ref={wrapperDivRef}>
             {viewContent}
         </div>
     );

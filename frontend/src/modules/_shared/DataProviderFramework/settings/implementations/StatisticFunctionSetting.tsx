@@ -1,8 +1,8 @@
 import type React from "react";
 
 import { SurfaceStatisticFunction_api } from "@api";
-import type { DropdownOption } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 
 import type {
     SettingComponentProps,
@@ -33,7 +33,7 @@ export class StatisticFunctionSetting implements StaticSettingImplementation<Val
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        const itemArr: DropdownOption[] = [
+        const itemArr: ComboboxItem<string>[] = [
             { value: SurfaceStatisticFunction_api.MEAN, label: "Mean" },
             { value: SurfaceStatisticFunction_api.STD, label: "Std" },
             { value: SurfaceStatisticFunction_api.MIN, label: "Min" },
@@ -45,12 +45,11 @@ export class StatisticFunctionSetting implements StaticSettingImplementation<Val
 
         return function StatisticFunction(props: SettingComponentProps<ValueType>) {
             return (
-                <Dropdown
-                    options={itemArr}
-                    value={!props.isOverridden ? props.value?.toString() : props.overriddenValue?.toString()}
-                    onChange={(newVal: string) => props.onValueChange(newVal as ValueType)}
-                    disabled={props.isOverridden}
-                    showArrows
+                <ComboboxCompositions.WithBrowseButtons
+                    items={itemArr}
+                    value={props.value?.toString()}
+                    onValueChange={(newVal: string) => props.onValueChange(newVal as ValueType)}
+                    disabled={props.disabled}
                 />
             );
         };

@@ -1,14 +1,15 @@
 import React from "react";
 
+import { Info } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
+import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
+import { Avatar } from "@lib/components/Avatar";
+import { Button } from "@lib/components/Button";
+import { Popover } from "@lib/components/Popover";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
-import { Tooltip } from "@lib/components/Tooltip";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-import { UserAvatar } from "../../UserAvatar";
 
 export type ItemCardProps = {
     id: string;
@@ -23,7 +24,7 @@ export type ItemCardProps = {
 };
 
 export function ItemCard(props: ItemCardProps): React.ReactNode {
-    const showOwnerRow = props.ownerId;
+    const showOwnerColumn = props.ownerId !== undefined;
 
     const ownerInfo = useUserGraphInfo(props.ownerId);
 
@@ -46,42 +47,48 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
     }
 
     return (
-        <Tooltip
-            title={<TooltipContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />}
-            placement="left"
-            enterDelay="medium"
-        >
-            <a
-                className={resolveClassNames("flex gap-4 items-center px-2 py-1 rounded text-indigo-600 font-medium", {
-                    "opacity-50 italic line-through cursor-not-allowed": props.isDeleted,
-                    "hover:bg-indigo-100": !props.isDeleted,
-                })}
+        <Button.Group layoutClassName="w-full" split>
+            <Button.AsLink
+                variant="ghost"
+                size="small"
+                data-is-deleted={props.isDeleted ? "" : undefined}
+                layoutClassName="flex-1 min-w-0 data-is-deleted:line-through"
+                compact
+                disabled={props.isDeleted}
                 href={props.href}
                 onClick={handleClick}
             >
-                <div className="w-60 overflow-hidden truncate grow">
-                    <span>{props.title}</span>
-                </div>
-                {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-                <span className="w-20 ml-auto text-gray-500 whitespace-nowrap text-xs">
-                    ~ <TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
+                <div className="truncate-small-squished-fix text-body-md min-w-0 grow">{props.title}</div>
+                {/* Guarantee consistent height of the owner row, even if the owner is not shown. */}
+                {showOwnerColumn ? <OwnerLine owner={ownerInfo} /> : <span className="block h-4" />}
+                <span className="text-body-xs text-neutral-subtle w-16 shrink-0 text-right whitespace-nowrap">
+                    ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
                 </span>
-            </a>
-        </Tooltip>
+            </Button.AsLink>
+
+            <Popover.Root>
+                <Popover.Trigger size="small" variant="ghost" iconOnly>
+                    <Info />
+                </Popover.Trigger>
+                <Popover.Popup side="bottom">
+                    <Popover.Title hideCloseButton>{props.title}</Popover.Title>
+                    <Popover.Content as="div" layoutClassName="min-w-2xs">
+                        <PopoverContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />
+                    </Popover.Content>
+                </Popover.Popup>
+            </Popover.Root>
+        </Button.Group>
     );
 }
 
 function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     const name = props.owner?.principal_name?.split("@")?.[0].toLocaleLowerCase();
+    const avatarFn = useUserAvatar(props.owner?.id ?? "", props.owner?.display_name);
 
     return (
-        <div className="flex gap-1 items-center text-sm italic text-gray-500">
-            <UserAvatar
-                userIdOrEmail={props.owner?.id ?? ""}
-                className="shrink-0 inline"
-                userDisplayName={props.owner?.display_name}
-            />
-            <span className="truncate">{name}</span>
+        <div className="mx-sm gap-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic no-underline!">
+            <Avatar size={16} userData={props.owner !== null ? avatarFn : undefined} />
+            <span className="truncate-squished-small-fix min-w-0 flex-1 no-underline!">{name}</span>
         </div>
     );
 }
@@ -95,19 +102,19 @@ function useUserGraphInfo(ownerId: string | undefined): GraphUser_api | null {
     return userInfoQuery.data ?? null;
 }
 
-function TooltipContent(
+function PopoverContent(
     props: { owner: GraphUser_api | null; tooltipInfo?: Record<string, string> } & ItemCardProps,
 ): React.ReactNode {
-    if (props.isDeleted) {
-        return "This item has been deleted.";
-    }
     return (
-        <div className="w-2xs whitespace-normal text-base">
-            <h3 className="text-lg">{props.title}</h3>
-            <hr className="h-px mb-2 bg-white/25" />
-            {props.description && <p className="text-sm whitespace-pre-wrap">{props.description}</p>}
+        <>
+            {props.isDeleted && (
+                <p className="text-danger-subtle italic">This snapshot has been deleted by the owner.</p>
+            )}
+            {props.description && (
+                <p className="text-body-sm wrap-break-word hyphens-auto whitespace-pre-wrap">{props.description}</p>
+            )}
             {props.tooltipInfo && (
-                <ul className="mt-6 text-sm truncate">
+                <ul className="not-first:mt-sm text-body-sm truncate">
                     {Object.entries(props.tooltipInfo).map(([k, v]) => (
                         <li key={k} className="truncate">
                             {k}: <strong>{v}</strong>
@@ -115,7 +122,6 @@ function TooltipContent(
                     ))}
                 </ul>
             )}
-            <span className="italic mt-4 block text-gray-400 text-sm">Click to open</span>
-        </div>
+        </>
     );
 }

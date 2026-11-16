@@ -15,4 +15,5 @@ export const showPercentilesAndMeanLinesAtom = atom<boolean>(false);
 
 export const showConstantParametersAtom = atom<boolean>(false);
 export const showLogParametersAtom = atom<boolean>(false);
+export const showNumericDiscreteParametersAtom = atom<boolean>(true);
 export const histogramModeAtom = atom<HistogramMode>(HistogramMode.OVERLAY);

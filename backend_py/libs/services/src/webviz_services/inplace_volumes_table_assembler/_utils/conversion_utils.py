@@ -95,26 +95,36 @@ def get_required_volume_names_from_property(prop: str) -> list[str]:
     Function to convert property to list of required volume names
     """
 
-    if prop == Property.NTG:
-        return [InplaceVolumes.VolumetricColumns.BULK.value, InplaceVolumes.VolumetricColumns.NET.value]
-    if prop == Property.PORO:
-        return [InplaceVolumes.VolumetricColumns.BULK.value, InplaceVolumes.VolumetricColumns.PORV.value]
-    if prop == Property.PORO_NET:
-        return [InplaceVolumes.VolumetricColumns.PORV.value, InplaceVolumes.VolumetricColumns.NET.value]
-    if prop == Property.SW:
-        return [InplaceVolumes.VolumetricColumns.HCPV.value, InplaceVolumes.VolumetricColumns.PORV.value]
-    if prop == Property.BO:
-        return [InplaceVolumes.VolumetricColumns.HCPV.value, InplaceVolumes.VolumetricColumns.STOIIP.value]
-    if prop == Property.BG:
-        return [InplaceVolumes.VolumetricColumns.HCPV.value, InplaceVolumes.VolumetricColumns.GIIP.value]
+    VolumeColumns = InplaceVolumes.VolumetricColumns
+    required_volumes_per_property: dict[str, list[str]] = {
+        Property.NTG: [VolumeColumns.BULK.value, VolumeColumns.NET.value],
+        Property.PORO: [VolumeColumns.BULK.value, VolumeColumns.PORV.value],
+        Property.PORO_NET: [VolumeColumns.PORV.value, VolumeColumns.NET.value],
+        Property.SW: [VolumeColumns.HCPV.value, VolumeColumns.PORV.value],
+        Property.BO: [VolumeColumns.HCPV.value, VolumeColumns.STOIIP.value],
+        Property.BG: [VolumeColumns.HCPV.value, VolumeColumns.GIIP.value],
+        Property.FACIES_FRACTION: [VolumeColumns.BULK.value],
+    }
+
+    if prop in required_volumes_per_property:
+        return required_volumes_per_property[prop]
 
     raise ValueError(f"Unhandled property: {prop}")
 
 
-def get_available_properties_from_volume_names(volume_names: Iterable[str]) -> list[str]:
+def get_available_properties_from_volume_names(
+    volume_names: Iterable[str], index_columns: Iterable[str] | None = None
+) -> list[str]:
     """
-    Function to get available properties from volume names
+    Function to get available properties from volume names.
+
+    Some properties additionally require certain index columns to be present in the table
+    (e.g. FACIES_FRACTION requires a FACIES index column). Pass `index_columns` to enable
+    detection of those properties; when omitted, properties that depend on index columns
+    are not advertised.
     """
+
+    index_column_set = set(index_columns) if index_columns is not None else set()
 
     properties = set()
     if set([InplaceVolumes.VolumetricColumns.BULK, InplaceVolumes.VolumetricColumns.NET]).issubset(volume_names):
@@ -129,6 +139,11 @@ def get_available_properties_from_volume_names(volume_names: Iterable[str]) -> l
         properties.add(Property.BO.value)
     if set([InplaceVolumes.VolumetricColumns.HCPV, InplaceVolumes.VolumetricColumns.GIIP]).issubset(volume_names):
         properties.add(Property.BG.value)
+    if (
+        InplaceVolumes.VolumetricColumns.BULK in volume_names
+        and InplaceVolumes.TableIndexColumns.FACIES.value in index_column_set
+    ):
+        properties.add(Property.FACIES_FRACTION.value)
 
     return list(properties)
 

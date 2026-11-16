@@ -6,11 +6,11 @@
  * @param moveAmt The amount of items (from the start-index) that should be moved
  * @returns A shallow copy of the original array, with its items moved accordingly
  */
-export function arrayMove<T>(array: T[], from: number, to: number, moveAmt = 1): T[] {
-    const newArrray = [...array];
-    const movedItems = newArrray.splice(from, moveAmt);
+export function arrayMove<T>(array: readonly T[], from: number, to: number, moveAmt = 1): T[] {
+    const newArray = [...array];
+    const movedItems = newArray.splice(from, moveAmt);
 
-    return newArrray.toSpliced(to, 0, ...movedItems);
+    return newArray.toSpliced(to, 0, ...movedItems);
 }
 
 /**
@@ -33,5 +33,20 @@ export function sortStringArray(values: string[], valuesByOrder: string[]): stri
         if (ib !== -1) return 1; // only b in order
 
         return a.localeCompare(b); // neither in order list
+    });
+}
+
+/**
+ * Sort time-or-interval values with NO_TIME first, then alphabetically.
+ *
+ * ISO timestamps and intervals sort chronologically with localeCompare because the
+ * backend returns them in ISO-like string formats.
+ */
+export function sortTimeOrIntervalArray(values: string[]): string[] {
+    return [...values].sort((a, b) => {
+        if (a === "NO_TIME") return -1;
+        if (b === "NO_TIME") return 1;
+
+        return a.localeCompare(b);
     });
 }

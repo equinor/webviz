@@ -13,7 +13,7 @@ import type { Size2D } from "@lib/utils/geometry";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
-import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils";
+import { getVaryingNumericParameters } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import { createRankedParameterCorrelations } from "@modules/_shared/rankParameter";
 
@@ -26,7 +26,7 @@ const MAX_NUM_PLOTS = 12;
 function MaxNumberPlotsExceededMessage() {
     return (
         <ContentWarning>
-            <Warning fontSize="large" className="mb-2" />
+            <Warning fontSize="large" className="mb-sm" />
             Too many plots to display. Due to performance limitations, the number of plots is limited to {MAX_NUM_PLOTS}
             .
         </ContentWarning>
@@ -45,7 +45,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
     const [prevParameterIdentString, setPrevParameterIdentString] = React.useState<string | null>(null);
 
     useSyncSetting({
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         moduleContext: props.viewContext,
         syncSettingKey: SyncSettingKey.PARAMETER,
         topic: "global.syncValue.parameter",
@@ -147,8 +147,8 @@ export function View(props: ModuleViewProps<Interfaces>) {
                         return;
                     }
 
-                    const continuousParameters = getVaryingContinuousParameters(ensemble);
-                    if (!continuousParameters) {
+                    const numericParameters = getVaryingNumericParameters(ensemble);
+                    if (!numericParameters) {
                         continue;
                     }
                     const responseData: ResponseData = {
@@ -158,7 +158,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
                     };
 
                     const rankedParameters = createRankedParameterCorrelations(
-                        continuousParameters,
+                        numericParameters,
                         responseData,
                         numParams,
                         corrCutOff,
@@ -188,7 +188,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
 
     // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
     return (
-        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
+        <div className="h-full w-full overflow-hidden" ref={wrapperDivRef}>
             {content}
         </div>
     );

@@ -1,18 +1,28 @@
 import { InplaceVolumesStatistic_api } from "@api";
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
+import { getEnsembleIdentsFromStrings } from "@framework/utils/ensembleIdentUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { SENSITIVITY_CASE_IDENT_SCHEMA } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { selectedIndexValueCriteriaAtom, selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./atoms/baseAtoms";
+import { StatisticsLayout } from "../types";
+
+import {
+    selectedIndexValueCriteriaAtom,
+    selectedStatisticOptionsAtom,
+    selectedStatisticsLayoutAtom,
+    selectedTableTypeAtom,
+} from "./atoms/baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedGroupByIndicesAtom,
     selectedIndicesWithValuesAtom,
     selectedResultNamesAtom,
+    selectedSensitivityCasesAtom,
     selectedTableNamesAtom,
 } from "./atoms/persistableFixableAtoms";
 
@@ -24,7 +34,9 @@ export type SerializedSettings = {
     selectedGroupByIndices: string[];
     selectedTableType: TableType;
     selectedStatisticOptions: InplaceVolumesStatistic_api[];
+    selectedStatisticsLayout?: StatisticsLayout;
     selectedIndexValueCriteria: IndexValueCriteria;
+    selectedSensitivityCases?: SensitivityCaseIdent[];
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
@@ -62,6 +74,14 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
             enum: Object.values(IndexValueCriteria),
         },
     },
+    optionalProperties: {
+        selectedStatisticsLayout: {
+            enum: Object.values(StatisticsLayout),
+        },
+        selectedSensitivityCases: {
+            elements: SENSITIVITY_CASE_IDENT_SCHEMA,
+        },
+    },
 }));
 
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
@@ -74,6 +94,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
     const selectedGroupByIndices = get(selectedGroupByIndicesAtom);
     const selectedTableType = get(selectedTableTypeAtom);
     const selectedStatisticOptions = get(selectedStatisticOptionsAtom);
+    const selectedStatisticsLayout = get(selectedStatisticsLayoutAtom);
     const selectedIndexValueCriteria = get(selectedIndexValueCriteriaAtom);
 
     const indicesWithStringifiedValues = selectedIndicesWithValues.value.map((index) => ({
@@ -89,13 +110,16 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         selectedGroupByIndices: selectedGroupByIndices.value,
         selectedTableType: selectedTableType,
         selectedStatisticOptions: selectedStatisticOptions,
+        selectedStatisticsLayout: selectedStatisticsLayout,
         selectedIndexValueCriteria: selectedIndexValueCriteria,
+        selectedSensitivityCases: get(selectedSensitivityCasesAtom).value,
     };
 };
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
-    const ensembleIdents =
-        raw.selectedEnsembleIdentStrings?.map((ident) => RegularEnsembleIdent.fromString(ident)) ?? undefined;
+    const ensembleIdents = raw.selectedEnsembleIdentStrings
+        ? getEnsembleIdentsFromStrings(raw.selectedEnsembleIdentStrings)
+        : undefined;
 
     setIfDefined(set, selectedEnsembleIdentsAtom, ensembleIdents);
     setIfDefined(set, selectedTableNamesAtom, raw.selectedTableNames);
@@ -104,5 +128,7 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedGroupByIndicesAtom, raw.selectedGroupByIndices);
     setIfDefined(set, selectedTableTypeAtom, raw.selectedTableType);
     setIfDefined(set, selectedStatisticOptionsAtom, raw.selectedStatisticOptions);
+    setIfDefined(set, selectedStatisticsLayoutAtom, raw.selectedStatisticsLayout);
     setIfDefined(set, selectedIndexValueCriteriaAtom, raw.selectedIndexValueCriteria);
+    setIfDefined(set, selectedSensitivityCasesAtom, raw.selectedSensitivityCases);
 };

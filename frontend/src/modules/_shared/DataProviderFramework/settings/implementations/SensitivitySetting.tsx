@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { Dropdown } from "@lib/components/Dropdown";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
 
 import type {
     CustomSettingImplementation,
@@ -85,29 +85,15 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
                 .filter((sensitivity) => sensitivity.sensitivityName === currentSensitivityName)
                 .map((sensitivity) => sensitivity.sensitivityCase);
 
-            const currentSensitivityCase = fixupSensitivityCase(
-                props.value?.sensitivityCase || null,
-                availableSensitiveCases,
-            );
-
-            const sensitivityNameOptions = availableSensitivityNames.map((sensitivityName) => ({
+            const sensitivityNameItems = availableSensitivityNames.map((sensitivityName) => ({
                 value: sensitivityName,
                 label: sensitivityName,
             }));
 
-            const sensitivityCaseOptions = availableSensitiveCases.map((sensitivityCase) => ({
+            const sensitivityCaseItems = availableSensitiveCases.map((sensitivityCase) => ({
                 value: sensitivityCase,
                 label: sensitivityCase,
             }));
-
-            if (!currentSensitivityName || !currentSensitivityCase) {
-                props.onValueChange(null);
-            } else if (currentSensitivityCase !== props.value?.sensitivityCase) {
-                props.onValueChange({
-                    sensitivityName: currentSensitivityName,
-                    sensitivityCase: currentSensitivityCase,
-                });
-            }
 
             function handleSensitivityNameChange(selectedValue: string) {
                 const availableSensitiveCases = valueConstraints
@@ -135,15 +121,20 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
             }
             return (
                 <div className="flex">
-                    <Dropdown
-                        options={sensitivityNameOptions}
+                    <ComboboxCompositions.WithBrowseButtons
+                        items={sensitivityNameItems}
                         value={props.value?.sensitivityName ?? ""}
-                        onChange={handleSensitivityNameChange}
+                        onValueChange={handleSensitivityNameChange}
+                        disabled={props.disabled}
+                        layoutClassName="grow"
                     />
-                    <Dropdown
-                        options={sensitivityCaseOptions}
-                        value={currentSensitivityCase ?? ""}
-                        onChange={handleSensitivityCaseChange}
+                    <ComboboxCompositions.WithBrowseButtons
+                        items={sensitivityCaseItems}
+                        // The kept case, even when invalid - the setting flags it, and only the user changes it
+                        value={props.value?.sensitivityCase ?? ""}
+                        onValueChange={handleSensitivityCaseChange}
+                        disabled={props.disabled}
+                        layoutClassName="grow"
                     />
                 </div>
             );

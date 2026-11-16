@@ -1,8 +1,7 @@
 import { useAtom } from "jotai";
 
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Label } from "@lib/components/Label";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Setting } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
 
 import { corrCutOffAtom, numParamsAtom, showLabelsAtom } from "./atoms/baseAtoms";
@@ -13,45 +12,48 @@ export function Settings() {
     const [corrCutOff, setCorrCutOff] = useAtom(corrCutOffAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
 
-    function handleNumParamsChange(_: Event, value: number | number[]) {
-        if (Array.isArray(value)) {
-            return;
-        }
-        setNumParams(value);
+    function handleNumParamsChange(value: number | readonly number[]) {
+        const newValue = Array.isArray(value) ? value[0] : (value as number);
+        setNumParams(newValue);
     }
-    function handleCorrCutOffChange(e: React.ChangeEvent<HTMLInputElement>) {
-        let threshold = e.target.value ? parseFloat(e.target.value) : 0.0;
-        threshold = Math.max(0.0, Math.min(1.0, Math.abs(threshold))); // Ensure threshold is between 0 and 1
-        setCorrCutOff(threshold);
+    function handleCorrCutOffChange(value: number | readonly number[]) {
+        const newValue = Array.isArray(value) ? value[0] : (value as number);
+        setCorrCutOff(newValue);
     }
     return (
-        <CollapsibleGroup title="Plot settings" expanded>
-            <div className="flex flex-col gap-2">
-                <Label text="Max number of parameters" key="number-of-params">
-                    <Slider
-                        value={numParams}
-                        onChange={handleNumParamsChange}
-                        min={2}
-                        step={1}
-                        max={500}
-                        valueLabelDisplay="auto"
-                    />
-                </Label>
-                <Label text="Correlation cutoff (absolute)">
-                    <input
-                        type="number"
-                        step={0.01}
-                        min={0}
-                        max={1}
-                        value={corrCutOff}
-                        onChange={handleCorrCutOffChange}
-                        className="w-full p-1 border border-gray-300 rounded"
-                    />
-                </Label>
-                <Label text="Show parameter labels" position="left" key="show-labels">
-                    <Checkbox checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />
-                </Label>
-            </div>
-        </CollapsibleGroup>
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Plot settings" defaultOpen>
+                    <Setting.Field label="Max number of parameters">
+                        <Slider
+                            value={numParams}
+                            onValueChange={handleNumParamsChange}
+                            min={2}
+                            step={1}
+                            max={500}
+                            valueLabelDisplay="auto"
+                        />
+                    </Setting.Field>
+                    <Setting.Field label={`Correlation cutoff (absolute): ${corrCutOff}`}>
+                        <Slider
+                            value={corrCutOff}
+                            onValueChange={handleCorrCutOffChange}
+                            min={0}
+                            step={0.01}
+                            max={1}
+                            valueLabelDisplay="auto"
+                        />
+                    </Setting.Field>
+                    <Setting.Field>
+                        <CheckboxCompositions.WithLabel
+                            label="Show parameter labels"
+                            checked={showLabels}
+                            onCheckedChange={setShowLabels}
+                            size="small"
+                        />
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

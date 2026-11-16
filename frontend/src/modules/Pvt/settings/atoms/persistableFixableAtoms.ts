@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -58,12 +58,19 @@ export const selectedPvtNumsAtom = persistableFixableAtom<number[], number[]>({
     computeDependenciesState: ({ get }) => {
         const pvtDataAccessorWithStatus = get(pvtDataAccessorWithStatusAtom);
 
+        // Nothing is requested while the ensemble or realization selection is invalid or empty - the PVT nums wait
         if (pvtDataAccessorWithStatus.pvtDataAccessor === null) {
-            return "error";
+            return "blocked";
         }
 
         if (pvtDataAccessorWithStatus.isFetching) {
             return "loading";
+        }
+
+        // The accessor then only has empty tables, which are no data to settle the PVT nums against. Partial failures
+        // still provide the PVT nums of the other realizations.
+        if (pvtDataAccessorWithStatus.allQueriesFailed) {
+            return "error";
         }
 
         return "loaded";

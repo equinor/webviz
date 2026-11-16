@@ -52,7 +52,7 @@ async def get_user_info(
 
 
 @router.get("/user_photo/")
-@cache_time(CacheTime.NORMAL)
+@cache_time(CacheTime.LONG)
 async def get_user_photo(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),

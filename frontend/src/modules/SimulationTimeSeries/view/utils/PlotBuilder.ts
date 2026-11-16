@@ -15,12 +15,14 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 import type { Figure } from "@modules/_shared/Figure";
 import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
+import type { BadgeColors } from "@modules/_shared/utils/plotlyBadge";
+import { getNumericXExtent, makeRoundedBadge } from "@modules/_shared/utils/plotlyBadge";
 import type { VectorHexColorMap, VectorSpec, VectorSpecWithData } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { FrequencyEnumToStringMapping, SubplotLimitDirection } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 
 import { scaleHexColorLightness } from "./colorUtils";
-import type { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
+import type { EnsemblesParameterColoring } from "./ensemblesContinuousParameterColoring";
 import { getHexColorFromOwner } from "./plotColoring";
 import {
     createHistoricalVectorTrace,
@@ -75,7 +77,7 @@ export class PlotBuilder {
     private _defaultHoverTemplate = "(%{x}, %{y})<br>";
     private _scatterType: "scatter" | "scattergl";
 
-    private _ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null = null;
+    private _ensemblesParameterColoring: EnsemblesParameterColoring | null = null;
     private _parameterFallbackColor = "#808080";
 
     private _traceFallbackColor = "#000000";
@@ -83,6 +85,8 @@ export class PlotBuilder {
     private _vectorNameSubplotTitleMap: VectorNameSubplotTitleMap = {};
 
     private _timeAnnotationTimestamps: number[] = [];
+    private _hoveredTimestampUtcMs: number | null = null;
+    private _hoveredTimestampIsExternal = false;
 
     private _figure: Figure;
     private _numRows = 1;
@@ -99,7 +103,7 @@ export class PlotBuilder {
         vectorHexColorMap: VectorHexColorMap,
         width: number,
         height: number,
-        ensemblesParameterColoring?: EnsemblesContinuousParameterColoring,
+        ensemblesParameterColoring?: EnsemblesParameterColoring,
         limitDirection?: SubplotLimitDirection,
         limitDirectionMaxElements?: number,
         scatterType: "scatter" | "scattergl" = "scatter",
@@ -148,6 +152,55 @@ export class PlotBuilder {
             showGrid: true,
             sharedXAxes: "all",
         });
+
+        // Keep at least one WebGL trace present for the whole lifetime of the plot when rendering
+        // with "scattergl". Plotly tears down the shared WebGL context - without ever releasing it -
+        // whenever the figure goes from having gl traces to having none, and recreates it on the way
+        // back. An always-present, invisible anchor trace avoids that toggle during transient states
+        // (data still loading, all series filtered out, etc.).
+        if (this._scatterType === "scattergl") {
+            this._figure.addTrace({
+                uid: "webgl-context-anchor",
+                type: "scattergl",
+                x: [null],
+                y: [null],
+                hoverinfo: "skip",
+                showlegend: false,
+            });
+        }
+    }
+
+    /**
+     * Build a stable, deterministic uid from the given parts.
+     *
+     * Plotly.react matches traces across updates by uid; giving every trace a semantic uid keeps
+     * unchanged traces identical across updates even when trace count or order shifts, which avoids
+     * unnecessary teardown/rebuild of their (WebGL) resources.
+     *
+     * Plotly uses the uid verbatim in DOM class names and `querySelector` calls, so the result is
+     * reduced to characters that are safe in a CSS identifier. The reduction is a reversible escape
+     * rather than a lossy replace, so distinct parts never collapse onto the same uid (e.g. `WOPR:A1`
+     * and `WOPR_A1` stay distinct); otherwise Plotly could match an update to the wrong prior trace.
+     */
+    private makeTraceUid(...parts: (string | number)[]): string {
+        // Escape every character outside [A-Za-z0-9-] - including `_` itself, so it can only ever
+        // appear as an escape marker - to `_` + zero-padded hex of its UTF-16 code unit. Encoded
+        // parts therefore contain no bare `_`, which makes `__` an unambiguous part separator.
+        const encodePart = (part: string | number): string =>
+            String(part).replace(
+                /[^A-Za-z0-9-]/g,
+                (ch) => "_" + ch.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0"),
+            );
+        return parts.map(encodePart).join("__");
+    }
+
+    private makeVectorTraceUid(kind: string, vectorSpecification: VectorSpec, suffix: string | number): string {
+        return this.makeTraceUid(
+            kind,
+            vectorSpecification.vectorName,
+            vectorSpecification.ensembleIdent.toString(),
+            suffix,
+        );
     }
 
     private calcNumRowsAndCols(
@@ -204,8 +257,8 @@ export class PlotBuilder {
      *
      */
     private getSubplotRowAndColFromIndex(subplotIndex: number): { row: number; col: number } {
-        let col = 1;
-        let row = 1;
+        let col;
+        let row;
         if (this._limitDirection === SubplotLimitDirection.ROWS) {
             col = Math.floor(subplotIndex / this._numRows) + 1;
             row = (subplotIndex % this._numRows) + 1;
@@ -258,13 +311,20 @@ export class PlotBuilder {
 
     prepareAnnotations(): void {
         // Add time annotations and shapes
+        const xExtent = getNumericXExtent(this._figure.makeData());
+        const timeShapes = this.createTimeShapes();
+        const badges = this.createTimeBadges(xExtent);
         for (let index = 0; index < this._numberOfSubplots; index++) {
             const { row, col } = this.getSubplotRowAndColFromIndex(index);
-            for (const timeAnnotation of this.createTimeAnnotations()) {
-                this._figure.addAnnotation(timeAnnotation, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
-            }
-            for (const timeShape of this.createTimeShapes()) {
+            // Lines are added before badges, so the badges are drawn on top of the lines
+            for (const timeShape of timeShapes) {
                 this._figure.addShape(timeShape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
+            }
+            for (const badgeShape of badges.shapes) {
+                this._figure.addShape(badgeShape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
+            }
+            for (const badgeAnnotation of badges.annotations) {
+                this._figure.addAnnotation(badgeAnnotation, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
             }
         }
     }
@@ -336,6 +396,12 @@ export class PlotBuilder {
                     type: this._scatterType,
                 });
 
+                vectorRealizationTrace.uid = this.makeVectorTraceUid(
+                    "realization-param",
+                    elm.vectorSpecification,
+                    realizationData.realization,
+                );
+
                 const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
                 this._figure.addTrace(vectorRealizationTrace, row, col);
 
@@ -393,6 +459,11 @@ export class PlotBuilder {
                 type: this._scatterType,
             });
 
+            vectorRealizationTraces.forEach((trace, index) => {
+                const realization = elm.data[index]?.realization ?? index;
+                trace.uid = this.makeVectorTraceUid("realization", elm.vectorSpecification, realization);
+            });
+
             const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
             this._figure.addTraces(vectorRealizationTraces, row, col);
 
@@ -437,6 +508,13 @@ export class PlotBuilder {
                 lineShape: lineShape,
                 name: name,
                 type: this._scatterType,
+            });
+
+            vectorFanchartTraces.forEach((trace, index) => {
+                // Key the uid off the statistic each trace represents (set by createFanchartTraces),
+                // not its array position - the optional min/max and low/high pairs shift indices when
+                // toggled, which would otherwise hand an unchanged trace a different uid.
+                trace.uid = this.makeVectorTraceUid("fanchart", elm.vectorSpecification, trace.uid ?? index);
             });
 
             const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
@@ -489,6 +567,13 @@ export class PlotBuilder {
                 type: this._scatterType,
             });
 
+            vectorStatisticsTraces.forEach((trace, index) => {
+                // Key the uid off the statistic each trace represents (set by createStatisticsTraces),
+                // not its array position - the optional min/max/percentile lines shift indices when
+                // toggled, which would otherwise hand an unchanged trace a different uid.
+                trace.uid = this.makeVectorTraceUid("statistics", elm.vectorSpecification, trace.uid ?? index);
+            });
+
             const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
             this._figure.addTraces(vectorStatisticsTraces, row, col);
 
@@ -528,6 +613,8 @@ export class PlotBuilder {
                 lineShape: lineShape,
             });
 
+            vectorHistoryTrace.uid = this.makeVectorTraceUid("history", elm.vectorSpecification, "history");
+
             const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
             this._figure.addTrace(vectorHistoryTrace, row, col);
 
@@ -562,6 +649,10 @@ export class PlotBuilder {
                 type: this._scatterType,
             });
 
+            vectorObservationsTraces.forEach((trace, index) => {
+                trace.uid = this.makeVectorTraceUid("observation", elm.vectorSpecification, index);
+            });
+
             const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
             this._figure.addTraces(vectorObservationsTraces, row, col);
 
@@ -573,24 +664,62 @@ export class PlotBuilder {
         this._timeAnnotationTimestamps.push(timestampUtcMs);
     }
 
-    private createTimeAnnotations(): Partial<Annotations>[] {
-        const timeAnnotations: Partial<Annotations>[] = [];
+    setHoveredTimestamp(timestampUtcMs: number | null, isExternal = false): void {
+        this._hoveredTimestampUtcMs = timestampUtcMs;
+        this._hoveredTimestampIsExternal = isExternal;
+    }
+
+    private getHoverBadgeColors(): BadgeColors {
+        const color = this.getHoverColor();
+        return this._hoveredTimestampIsExternal
+            ? { bgColor: "white", textColor: color, borderColor: color }
+            : { bgColor: color, textColor: "white", borderColor: color };
+    }
+
+    private getHoverColor(): string {
+        return this._hoveredTimestampIsExternal ? "rgba(220, 38, 38, 0.9)" : "rgba(107, 114, 128, 0.8)";
+    }
+
+    private createTimeBadges(xExtent: [number, number] | null): {
+        shapes: Partial<Shape>[];
+        annotations: Partial<Annotations>[];
+    } {
+        const shapes: Partial<Shape>[] = [];
+        const annotations: Partial<Annotations>[] = [];
 
         for (const timestampUtcMs of this._timeAnnotationTimestamps) {
-            timeAnnotations.push({
-                x: timestampUtcMs, // Data coordinate
-                y: -0.02, // Domain coordinate [0, 1]
-                text: timestampUtcMsToCompactIsoString(timestampUtcMs),
-                showarrow: false,
-                arrowhead: 0,
-                bgcolor: "rgba(255, 255, 255, 1)",
-                bordercolor: "rgba(255, 0, 0, 1)",
-                borderwidth: 1,
-                borderpad: 4,
-            });
+            // y is in domain coordinates [0, 1]
+            const badge = makeRoundedBadge(
+                timestampUtcMsToCompactIsoString(timestampUtcMs),
+                timestampUtcMs,
+                -0.02,
+                {
+                    bgColor: "black",
+                    textColor: "white",
+                    borderColor: "black",
+                },
+                xExtent,
+            );
+            shapes.push(badge.shape);
+            annotations.push(badge.annotation);
         }
 
-        return timeAnnotations;
+        if (
+            this._hoveredTimestampUtcMs !== null &&
+            !this._timeAnnotationTimestamps.includes(this._hoveredTimestampUtcMs)
+        ) {
+            const badge = makeRoundedBadge(
+                timestampUtcMsToCompactIsoString(this._hoveredTimestampUtcMs),
+                this._hoveredTimestampUtcMs,
+                -0.02,
+                this.getHoverBadgeColors(),
+                xExtent,
+            );
+            shapes.push(badge.shape);
+            annotations.push(badge.annotation);
+        }
+
+        return { shapes, annotations };
     }
 
     private createTimeShapes(): Partial<Shape>[] {
@@ -604,7 +733,22 @@ export class PlotBuilder {
                 y0: 0, // Domain coordinate
                 y1: 1, // Domain coordinate
                 line: {
-                    color: "red",
+                    color: "black",
+                    width: 2,
+                    dash: "dot",
+                },
+            });
+        }
+
+        if (this._hoveredTimestampUtcMs !== null) {
+            timeShapes.push({
+                type: "line",
+                x0: this._hoveredTimestampUtcMs,
+                x1: this._hoveredTimestampUtcMs,
+                y0: 0,
+                y1: 1,
+                line: {
+                    color: this.getHoverColor(),
                     width: 1,
                     dash: "dot",
                 },
@@ -665,8 +809,8 @@ export class PlotBuilder {
             if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
                 this._addedVectorsLegendTracker.forEach((vectorName) => {
                     const hexColor = this._vectorHexColorMap[vectorName] ?? this._traceFallbackColor;
-                    this._figure.addTrace(
-                        this.createLegendTrace(
+                    this._figure.addTrace({
+                        ...this.createLegendTrace(
                             vectorName,
                             vectorName,
                             hexColor,
@@ -674,7 +818,8 @@ export class PlotBuilder {
                             yAxisTopRight,
                             xAxisTopRight,
                         ),
-                    );
+                        uid: this.makeTraceUid("legend", "vector", vectorName),
+                    });
                 });
             }
             if (this._subplotOwner === SubplotOwner.VECTOR) {
@@ -684,8 +829,8 @@ export class PlotBuilder {
                     const legendColor =
                         this._selectedVectorSpecifications.find((el) => el.ensembleIdent === ensembleIdent)?.color ??
                         this._traceFallbackColor;
-                    this._figure.addTrace(
-                        this.createLegendTrace(
+                    this._figure.addTrace({
+                        ...this.createLegendTrace(
                             legendName,
                             legendGroup,
                             legendColor,
@@ -693,7 +838,8 @@ export class PlotBuilder {
                             xAxisTopRight,
                             yAxisTopRight,
                         ),
-                    );
+                        uid: this.makeTraceUid("legend", "ensemble", legendGroup),
+                    });
                 });
             }
         }
@@ -701,8 +847,8 @@ export class PlotBuilder {
         // Add legend for history trace with legendrank after vectors/ensembles
         if (this._hasHistoryTraces) {
             const historyName = "History";
-            this._figure.addTrace(
-                this.createLegendTrace(
+            this._figure.addTrace({
+                ...this.createLegendTrace(
                     historyName,
                     historyName,
                     this._historyVectorColor,
@@ -710,15 +856,16 @@ export class PlotBuilder {
                     yAxisTopRight,
                     xAxisTopRight,
                 ),
-            );
+                uid: "legend__history",
+            });
         }
 
         // Add legend for observation trace with legendrank after vectors/ensembles and history
         if (this._hasObservationTraces) {
             const observationName = "Observation";
             const includeMarkers = true;
-            this._figure.addTrace(
-                this.createLegendTrace(
+            this._figure.addTrace({
+                ...this.createLegendTrace(
                     observationName,
                     observationName,
                     this._observationColor,
@@ -727,7 +874,8 @@ export class PlotBuilder {
                     xAxisTopRight,
                     includeMarkers,
                 ),
-            );
+                uid: "legend__observation",
+            });
         }
 
         // Add color scale for color by parameter below the legends
@@ -735,13 +883,16 @@ export class PlotBuilder {
             const colorScaleMarker: Partial<PlotMarker> = {
                 ...this._ensemblesParameterColoring.getColorScale().getAsPlotlyColorScaleMarkerObject(),
                 colorbar: {
-                    title: "Range: " + this._ensemblesParameterColoring.getParameterDisplayName(),
-                    titleside: "right",
+                    title: {
+                        text: "Range: " + this._ensemblesParameterColoring.getParameterDisplayName(),
+                        side: "right",
+                    },
                     ticks: "outside",
                     len: 0.75, // Note: If too many legends are added, this len might have to be reduced?
                 },
             };
             const parameterColorLegendTrace: Partial<TimeSeriesPlotData> = {
+                uid: "legend__parameter-colorscale",
                 x: [null],
                 y: [null],
                 marker: colorScaleMarker,

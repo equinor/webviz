@@ -21,6 +21,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
     }
 
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        if (import.meta.env.DEV) {
+            console.error("Module crashed:", error, errorInfo.componentStack);
+        }
         this.props.moduleInstance.setFatalError(error, errorInfo);
     }
 

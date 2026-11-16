@@ -8,6 +8,8 @@ from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_
 
 LOGGER = logging.getLogger(__name__)
 
+SENTINEL_ACCESS_TOKEN_FOR_TESTING = "DUMMY_TOKEN_FOR_TESTING"  # nosec B105
+
 
 class _FakeSyncHttpClient:
     """A fake HTTP client to ensure we use async methods instead of sync ones.
@@ -26,7 +28,7 @@ def create_sumo_client(access_token: str) -> SumoClient:
 
     services_config = get_services_config()
 
-    if access_token == "DUMMY_TOKEN_FOR_TESTING":  # nosec bandit B105
+    if access_token == SENTINEL_ACCESS_TOKEN_FOR_TESTING:
         sumo_client = SumoClient(env=services_config.sumo_env, interactive=False)
     else:
         sumo_client = SumoClient(

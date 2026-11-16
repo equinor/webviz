@@ -1,5 +1,5 @@
 import type { QueryFilters, QueryKey } from "@tanstack/query-core";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { Options } from "@api";
 

@@ -1,7 +1,7 @@
 import React from "react";
 
-import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import { FieldCompositions } from "@lib/components/Field/compositions";
 
 import type {
     CustomSettingImplementation,
@@ -12,6 +12,38 @@ import type { Setting, SettingTypeDefinitions } from "../settingsDefinitions";
 type InternalValueType = SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION_FILTER]["internalValue"] | null;
 type ExternalValueType = SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION_FILTER]["externalValue"] | null;
 type ValueRangeType = SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION_FILTER]["valueConstraints"] | null;
+
+// Per-field validity, composed together by isValueValid() below - also used directly in the component
+// to flag only the specific field that's actually wrong, instead of a single setting-wide flag applying
+// to all three fields at once.
+function isTopSurfaceValid(value: InternalValueType, valueConstraints: ValueRangeType): boolean {
+    if (value === null || valueConstraints === null) {
+        return true;
+    }
+    return value.topSurfaceName !== null && valueConstraints.surfaceNamesInStratOrder.includes(value.topSurfaceName);
+}
+
+function isBaseSurfaceValid(value: InternalValueType, valueConstraints: ValueRangeType): boolean {
+    if (value === null || valueConstraints === null || value.baseSurfaceName === null) {
+        return true;
+    }
+    if (!valueConstraints.surfaceNamesInStratOrder.includes(value.baseSurfaceName)) {
+        return false;
+    }
+    if (value.topSurfaceName === null) {
+        return true;
+    }
+    const topIndex = valueConstraints.surfaceNamesInStratOrder.indexOf(value.topSurfaceName);
+    const bottomIndex = valueConstraints.surfaceNamesInStratOrder.indexOf(value.baseSurfaceName);
+    return topIndex !== -1 && bottomIndex !== -1 && topIndex <= bottomIndex;
+}
+
+function isRealizationNumValid(value: InternalValueType, valueConstraints: ValueRangeType): boolean {
+    if (value === null || valueConstraints === null) {
+        return true;
+    }
+    return value.realizationNum !== null && valueConstraints.realizationNums.includes(value.realizationNum);
+}
 
 export class WellboreDepthFilterSetting implements CustomSettingImplementation<
     InternalValueType,
@@ -131,32 +163,11 @@ export class WellboreDepthFilterSetting implements CustomSettingImplementation<
             return false;
         }
 
-        if (value.topSurfaceName === null || value.realizationNum === null) {
-            return false;
-        }
-
-        if (!valueConstraints.surfaceNamesInStratOrder.includes(value.topSurfaceName)) {
-            return false;
-        }
-
-        if (value.baseSurfaceName !== null) {
-            if (!valueConstraints.surfaceNamesInStratOrder.includes(value.baseSurfaceName)) {
-                return false;
-            }
-
-            const topIndex = valueConstraints.surfaceNamesInStratOrder.indexOf(value.topSurfaceName);
-            const bottomIndex = valueConstraints.surfaceNamesInStratOrder.indexOf(value.baseSurfaceName);
-
-            if (topIndex === -1 || bottomIndex === -1 || topIndex > bottomIndex) {
-                return false;
-            }
-        }
-
-        if (!valueConstraints.realizationNums.includes(value.realizationNum)) {
-            return false;
-        }
-
-        return true;
+        return (
+            isTopSurfaceValid(value, valueConstraints) &&
+            isBaseSurfaceValid(value, valueConstraints) &&
+            isRealizationNumValid(value, valueConstraints)
+        );
     }
 
     serializeValue(value: InternalValueType): string {
@@ -255,28 +266,40 @@ export class WellboreDepthFilterSetting implements CustomSettingImplementation<
             );
 
             return (
-                <div className="flex flex-col gap-2 mt-1">
-                    <Label text="Top Surface:" labelClassName="text-xs">
-                        <Dropdown
-                            options={topSurfaceOptions}
+                <div className="gap-y-2xs text-body-sm flex w-full flex-col">
+                    <FieldCompositions.Default
+                        label="Top Surface"
+                        invalid={!isTopSurfaceValid(props.value, props.valueConstraints)}
+                    >
+                        <ComboboxCompositions.WithBrowseButtons
+                            items={topSurfaceOptions}
                             value={props.value?.topSurfaceName}
-                            onChange={handleTopSurfaceChange}
+                            onValueChange={handleTopSurfaceChange}
+                            disabled={props.disabled}
                         />
-                    </Label>
-                    <Label text="Base Surface:" labelClassName="text-xs">
-                        <Dropdown
-                            options={baseSurfaceOptions}
+                    </FieldCompositions.Default>
+                    <FieldCompositions.Default
+                        label="Base Surface"
+                        invalid={!isBaseSurfaceValid(props.value, props.valueConstraints)}
+                    >
+                        <ComboboxCompositions.WithBrowseButtons
+                            items={baseSurfaceOptions}
                             value={props.value?.baseSurfaceName}
-                            onChange={handleBaseSurfaceChange}
+                            onValueChange={handleBaseSurfaceChange}
+                            disabled={props.disabled}
                         />
-                    </Label>
-                    <Label text="Realization Number:" labelClassName="text-xs">
-                        <Dropdown
-                            options={realizationNumOptions}
+                    </FieldCompositions.Default>
+                    <FieldCompositions.Default
+                        label="Realization Number"
+                        invalid={!isRealizationNumValid(props.value, props.valueConstraints)}
+                    >
+                        <ComboboxCompositions.WithBrowseButtons
+                            items={realizationNumOptions}
                             value={props.value?.realizationNum}
-                            onChange={handleRealizationNumChange}
+                            onValueChange={handleRealizationNumChange}
+                            disabled={props.disabled}
                         />
-                    </Label>
+                    </FieldCompositions.Default>
                 </div>
             );
         };

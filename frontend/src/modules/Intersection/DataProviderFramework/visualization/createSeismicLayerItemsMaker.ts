@@ -1,17 +1,17 @@
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
+import { SeismicLayer } from "@modules/_shared/components/EsvIntersection";
 import type {
     IntersectionSeismicData,
     IntersectionSeismicSettings,
     IntersectionSeismicStoredData,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/IntersectionSeismicProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { createValidExtensionLength } from "@modules/_shared/DataProviderFramework/settings/utils/extensionLengthUtils";
 import type {
     EsvLayerItemsMaker,
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import { createSeismicColorScaleValues } from "../utils/colorScaleUtils";
-import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 /**
  * Make a trajectory in the uz-plane of a fence made from a polyline in the xy-plane of a
@@ -64,14 +64,11 @@ export function createSeismicLayerItemsMaker({
     const attribute = getSetting(Setting.ATTRIBUTE);
     const valueRange = getDataValueRange();
 
-    const extensionLength = createValidExtensionLength(
-        getSetting(Setting.INTERSECTION),
-        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-    );
+    const extensionLength = createValidExtensionLength(getSetting(Setting.INTERSECTION));
 
     const seismicFenceSectionLengths = getStoredData("seismicFencePolylineWithSectionLengths")?.actualSectionLengths;
 
-    if (!fenceData || !seismicFenceSectionLengths || !colorScale || isLoading || !valueRange) {
+    if (!fenceData || !seismicFenceSectionLengths || !colorScale || isLoading) {
         return null;
     }
 
@@ -90,20 +87,19 @@ export function createSeismicLayerItemsMaker({
 
     const adjustedColorScale = colorScale.clone();
     if (!useCustomColorScaleBoundaries) {
-        const { min, max, mid } = createSeismicColorScaleValues(valueRange);
+        const { min, max, mid } = createSeismicColorScaleValues(valueRange ?? [-1, 1]);
         adjustedColorScale.setRangeAndMidPoint(min, max, mid);
     }
 
-    // The layer has to be created inside EsvIntersection, so we need to return a LayerItem
     const intersectionSeismicLayerItemsMaker: EsvLayerItemsMaker = {
-        makeLayerItems: () => {
+        makeLayerItems: (_, order) => {
             return [
-                {
-                    id: `${id}-seismic-layer`,
-                    name: name,
-                    type: LayerType.SEISMIC,
-                    options: {
+                new SeismicLayer(
+                    `${id}-seismic-layer`,
+                    {
+                        order,
                         data: {
+                            source: fenceData.source,
                             propertyName: attribute ?? "",
                             propertyUnit: "",
                             minFenceDepth: fenceData.min_fence_depth,
@@ -116,8 +112,8 @@ export function createSeismicLayerItemsMaker({
                             opacityPercent: colorOpacityPercent,
                         },
                     },
-                    hoverable: true,
-                },
+                    { name, hoverable: true },
+                ),
             ];
         },
     };

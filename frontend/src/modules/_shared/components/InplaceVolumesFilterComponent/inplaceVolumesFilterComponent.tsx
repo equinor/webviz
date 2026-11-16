@@ -1,58 +1,81 @@
 import React from "react";
 
-import { cloneDeep, isEqual } from "lodash";
+import { cloneDeep, isEqual, omit } from "lodash-es";
 
 import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { SettingsContext } from "@framework/ModuleContext";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
+import type { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { ContextHelp } from "@lib/components/ContextHelp";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { Banner } from "@lib/components/Banner";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import type { SettingAnnotation } from "@lib/components/Setting";
+import { Setting } from "@lib/components/Setting";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
+import { filterAndOrderSelectedIndexValues } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
+import type { SensitivityCaseOption, SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { makeSensitivityCaseKey } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
     settingsContext: SettingsContext<any>;
     workbenchSession: WorkbenchSession;
-    workbenchServices: WorkbenchServices;
+    syncSettingsService: SyncSettingsService;
     availableTableNames: string[];
     availableIndicesWithValues: InplaceVolumesIndexWithValues_api[];
-    selectedEnsembleIdents: RegularEnsembleIdent[];
+    selectedEnsembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
     selectedTableNames: string[];
     selectedIndicesWithValues: InplaceVolumesIndexWithValues_api[];
     selectedAllowIndicesValuesIntersection: boolean;
-    onChange: (filter: InplaceVolumesFilterSettings) => void;
-    isPending?: boolean;
-    additionalSettings?: React.ReactNode;
-    areCurrentlySelectedTablesComparable?: boolean;
+    availableSensitivityCases?: SensitivityCaseOption[];
+    selectedSensitivityCases?: SensitivityCaseIdent[];
+    sensitivityCasesAnnotations?: SettingAnnotation[];
+    dataAnnotations?: SettingAnnotation[];
+    ensembleAnnotations?: SettingAnnotation[];
+    tableNamesAnnotations?: SettingAnnotation[];
+    selectionAnnotations?: SettingAnnotation[];
     debounceMs?: number;
+    allowDeltaEnsembles?: boolean;
+    isPending?: boolean;
+    areCurrentlySelectedTablesComparable?: boolean;
+
+    additionalSettings?: React.ReactNode;
+
+    onChange: (filter: InplaceVolumesFilterSettings) => void;
 };
 
 export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterComponentProps): React.ReactNode {
-    const [ensembleIdents, setEnsembleIdents] = React.useState<RegularEnsembleIdent[]>(props.selectedEnsembleIdents);
+    const [ensembleIdents, setEnsembleIdents] = React.useState<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>(
+        props.selectedEnsembleIdents,
+    );
     const [tableNames, setTableNames] = React.useState<string[]>(props.selectedTableNames);
     const [indicesWithValues, setIndicesWithValues] = React.useState<InplaceVolumesIndexWithValues_api[]>(
         props.selectedIndicesWithValues,
     );
+    const [sensitivityCases, setSensitivityCases] = React.useState<SensitivityCaseIdent[]>(
+        props.selectedSensitivityCases ?? [],
+    );
 
-    const [prevEnsembleIdents, setPrevEnsembleIdents] = React.useState<RegularEnsembleIdent[]>(
+    const [prevEnsembleIdents, setPrevEnsembleIdents] = React.useState<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>(
         props.selectedEnsembleIdents,
     );
     const [prevTableNames, setPrevTableNames] = React.useState<string[]>(props.selectedTableNames);
     const [prevIndicesWithValues, setPrevIndicesWithValues] = React.useState<InplaceVolumesIndexWithValues_api[]>(
         props.selectedIndicesWithValues,
     );
+    const [prevSelectedSensitivityCases, setPrevSelectedSensitivityCases] = React.useState<
+        SensitivityCaseIdent[] | undefined
+    >(props.selectedSensitivityCases);
     const [prevSyncedFilter, setPrevSyncedFilter] = React.useState<InplaceVolumesFilterSettings | null>(null);
 
-    const debounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    // const debounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     if (!isEqual(props.selectedEnsembleIdents, prevEnsembleIdents)) {
         setEnsembleIdents(props.selectedEnsembleIdents);
@@ -62,6 +85,11 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     if (!isEqual(props.selectedTableNames, prevTableNames)) {
         setTableNames(props.selectedTableNames);
         setPrevTableNames(props.selectedTableNames);
+    }
+
+    if (!isEqual(props.selectedSensitivityCases, prevSelectedSensitivityCases)) {
+        setSensitivityCases(props.selectedSensitivityCases ?? []);
+        setPrevSelectedSensitivityCases(props.selectedSensitivityCases);
     }
 
     if (!isEqual(props.selectedIndicesWithValues, prevIndicesWithValues)) {
@@ -84,7 +112,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     }
 
     const syncHelper = useRefStableSyncSettingsHelper({
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         moduleContext: props.settingsContext,
     });
 
@@ -95,11 +123,12 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
 
     if (!isEqual(syncedFilter, prevSyncedFilter)) {
         if (syncedFilter) {
-            const filter = {
+            const filter: InplaceVolumesFilterSettings = {
                 ensembleIdents,
                 tableNames,
                 indicesWithValues,
                 allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
+                sensitivityCases,
             };
 
             if (!isEqual(syncedFilter.ensembleIdents, ensembleIdents)) {
@@ -110,6 +139,15 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 filter.tableNames = [...syncedFilter.tableNames];
             }
 
+            // Only adopt cases when the publisher knows about them; validity is fixed up by the module's atom.
+            if (syncedFilter.sensitivityCases && !isEqual(syncedFilter.sensitivityCases, sensitivityCases)) {
+                const newSensitivityCases = syncedFilter.sensitivityCases.map((sensitivityCase) => ({
+                    ...sensitivityCase,
+                }));
+                setSensitivityCases(newSensitivityCases);
+                filter.sensitivityCases = newSensitivityCases;
+            }
+
             if (syncedFilter.allowIndicesValuesIntersection !== props.selectedAllowIndicesValuesIntersection) {
                 filter.allowIndicesValuesIntersection = props.selectedAllowIndicesValuesIntersection;
             }
@@ -118,11 +156,17 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 const newIndicesValues = cloneDeep(indicesWithValues);
 
                 for (const index of syncedFilter.indicesWithValues) {
+                    const availableIndex = props.availableIndicesWithValues.find(
+                        (item) => item.indexColumn === index.indexColumn,
+                    );
+                    const orderedValues = availableIndex
+                        ? filterAndOrderSelectedIndexValues(index.values, availableIndex.values)
+                        : [...index.values];
                     const indexValues = newIndicesValues.find((filter) => filter.indexColumn === index.indexColumn);
                     if (!indexValues) {
-                        newIndicesValues.push({ ...index });
+                        newIndicesValues.push({ ...index, values: orderedValues });
                     } else {
-                        indexValues.values = [...index.values];
+                        indexValues.values = orderedValues;
                     }
                 }
                 setIndicesWithValues(newIndicesValues);
@@ -135,55 +179,46 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         setPrevSyncedFilter(syncedFilter);
     }
 
-    React.useEffect(function mountEffect() {
-        const currentDebounceTimeoutRef = debounceTimeoutRef.current;
-        return function unmountEffect() {
-            if (currentDebounceTimeoutRef) {
-                clearTimeout(currentDebounceTimeoutRef);
-            }
-        };
-    }, []);
-
     function callOnChangeAndMaybePublish(filter: InplaceVolumesFilterSettings, publish: boolean): void {
-        if (debounceTimeoutRef.current) {
-            clearTimeout(debounceTimeoutRef.current);
-        }
-        props.onChange(filter);
+        // Modules without case selection must not publish cases, or synced modules would reset theirs.
+        const supportedFilter =
+            props.selectedSensitivityCases === undefined ? omit(filter, "sensitivityCases") : filter;
+        props.onChange(supportedFilter);
         if (publish) {
             syncHelper.publishValue(
                 SyncSettingKey.INPLACE_VOLUMES_FILTER,
                 "global.syncValue.inplaceVolumesFilterSettings",
-                filter,
+                supportedFilter,
             );
         }
     }
+
+    const debouncedOnChangeAndMaybePublish = useDebouncedFunction(callOnChangeAndMaybePublish, props.debounceMs ?? 0);
 
     function maybeDebounceOnChange(
         filter: InplaceVolumesFilterSettings,
         publish: boolean,
         dropDebounce?: boolean,
     ): void {
-        if (debounceTimeoutRef.current) {
-            clearTimeout(debounceTimeoutRef.current);
-        }
-
-        if (!props.debounceMs || dropDebounce) {
+        if (dropDebounce) {
+            debouncedOnChangeAndMaybePublish.cancel();
             callOnChangeAndMaybePublish(filter, publish);
-            return;
+        } else {
+            debouncedOnChangeAndMaybePublish(filter, publish);
         }
-
-        debounceTimeoutRef.current = setTimeout(() => {
-            callOnChangeAndMaybePublish(filter, publish);
-        }, props.debounceMs);
     }
 
-    function handleEnsembleIdentsChange(newEnsembleIdents: RegularEnsembleIdent[], publish = true): void {
+    function handleEnsembleIdentsChange(
+        newEnsembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
+        publish = true,
+    ): void {
         setEnsembleIdents(newEnsembleIdents);
         const filter = {
             ensembleIdents: newEnsembleIdents,
             tableNames,
             indicesWithValues,
             allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
+            sensitivityCases,
         };
         callOnChangeAndMaybePublish(filter, publish);
     }
@@ -195,6 +230,22 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             tableNames: newTableNames,
             indicesWithValues,
             allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
+            sensitivityCases,
+        };
+        callOnChangeAndMaybePublish(filter, publish);
+    }
+
+    function handleSensitivityCasesChange(newKeys: string[], publish = true): void {
+        const newSensitivityCases = (props.availableSensitivityCases ?? [])
+            .filter((option) => newKeys.includes(makeSensitivityCaseKey(option.caseIdent)))
+            .map((option) => option.caseIdent);
+        setSensitivityCases(newSensitivityCases);
+        const filter = {
+            ensembleIdents,
+            tableNames,
+            indicesWithValues,
+            allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
+            sensitivityCases: newSensitivityCases,
         };
         callOnChangeAndMaybePublish(filter, publish);
     }
@@ -205,6 +256,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             tableNames,
             indicesWithValues,
             allowIndicesValuesIntersection: checked,
+            sensitivityCases,
         };
         const doPublish = true;
         const dropDebounce = true;
@@ -212,12 +264,15 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     }
 
     function handleIndexValuesChange(indexColumn: string, values: string[], publish = true): void {
+        const availableValues =
+            props.availableIndicesWithValues.find((item) => item.indexColumn === indexColumn)?.values ?? [];
+        const orderedValues = filterAndOrderSelectedIndexValues(values, availableValues);
         const newIndicesWithValues = cloneDeep(indicesWithValues);
         const indexValues = newIndicesWithValues.find((filter) => filter.indexColumn === indexColumn);
         if (!indexValues) {
-            newIndicesWithValues.push({ indexColumn: indexColumn, values });
+            newIndicesWithValues.push({ indexColumn: indexColumn, values: orderedValues });
         } else {
-            indexValues.values = [...values];
+            indexValues.values = orderedValues;
         }
         setIndicesWithValues(newIndicesWithValues);
         const filter = {
@@ -225,28 +280,70 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             tableNames,
             indicesWithValues: newIndicesWithValues,
             allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
+            sensitivityCases,
         };
         maybeDebounceOnChange(filter, publish);
     }
 
     const tableSourceOptions = props.availableTableNames.map((source) => ({ value: source, label: source }));
+    const sensitivityCaseOptions = (props.availableSensitivityCases ?? []).map((option) => ({
+        value: makeSensitivityCaseKey(option.caseIdent),
+        label: option.label,
+    }));
+
+    const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(props.workbenchSession);
+
+    // Errors are shown on the index columns whose selection holds values that are no longer available, so that the
+    // section header counts them. Other annotations (e.g. waiting for valid table sources) are shown for the section.
+    const selectionErrorAnnotations =
+        props.selectionAnnotations?.filter((annotation) => annotation.type === "error") ?? [];
+    const otherSelectionAnnotations =
+        props.selectionAnnotations?.filter((annotation) => annotation.type !== "error") ?? [];
+
+    function hasUnavailableSelectedValues(availableIndexWithValues: InplaceVolumesIndexWithValues_api): boolean {
+        const selectedValues =
+            props.selectedIndicesWithValues.find((el) => el.indexColumn === availableIndexWithValues.indexColumn)
+                ?.values ?? [];
+        return selectedValues.some((value) => !availableIndexWithValues.values.includes(value));
+    }
 
     return (
         <>
-            <CollapsibleGroup contentClassName="flex flex-col gap-2" title="Ensembles and table sources" expanded>
-                <SettingWrapper label="Ensembles">
-                    <EnsemblePicker
-                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
-                        value={ensembleIdents}
-                        allowDeltaEnsembles={false}
-                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                        onChange={handleEnsembleIdentsChange}
-                    />
-                </SettingWrapper>
+            <Setting.Section title="Data" defaultOpen>
+                {props.dataAnnotations?.map((annotation) => (
+                    <Banner
+                        layoutClassName="col-span-3"
+                        key={annotation.message}
+                        tone={({ info: "info", warning: "warning", error: "danger" } as const)[annotation.type]}
+                    >
+                        {annotation.message}
+                    </Banner>
+                ))}
+                <Setting.Field label="Ensembles" annotations={props.ensembleAnnotations} stacked>
+                    {props.allowDeltaEnsembles ? (
+                        <EnsemblePicker
+                            ensembles={props.ensembleSet.getEnsembleArray()}
+                            value={ensembleIdents}
+                            allowDeltaEnsembles={true}
+                            ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                            onValueChange={handleEnsembleIdentsChange}
+                        />
+                    ) : (
+                        <EnsemblePicker
+                            ensembles={props.ensembleSet.getRegularEnsembleArray()}
+                            value={filterEnsembleIdentsByType(ensembleIdents, RegularEnsembleIdent)}
+                            allowDeltaEnsembles={false}
+                            ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                            onValueChange={handleEnsembleIdentsChange}
+                        />
+                    )}
+                </Setting.Field>
 
-                <SettingWrapper
+                <Setting.Field
+                    stacked
                     loadingOverlay={props.isPending ?? false}
                     label="Table sources"
+                    annotations={props.tableNamesAnnotations}
                     errorOverlay={
                         !props.isPending && tableSourceOptions.length === 0
                             ? "No table names. See logs for details."
@@ -256,69 +353,107 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                     <Select
                         options={tableSourceOptions}
                         value={tableNames}
-                        onChange={handleTableNamesChange}
+                        onValueChange={handleTableNamesChange}
                         multiple
                         size={3}
                     />
-                </SettingWrapper>
-
-                <div className="flex flex-row gap-2">
-                    <Checkbox
-                        label="Allow table intersections"
-                        checked={props.selectedAllowIndicesValuesIntersection}
-                        onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
-                    />
-                    <ContextHelp
-                        title="Allow table intersections"
-                        content={
+                </Setting.Field>
+                {sensitivityCaseOptions.length > 0 && (
+                    <Setting.Field label="Sensitivity cases" stacked annotations={props.sensitivityCasesAnnotations}>
+                        <Select
+                            options={sensitivityCaseOptions}
+                            value={sensitivityCases.map(makeSensitivityCaseKey)}
+                            onValueChange={handleSensitivityCasesChange}
+                            multiple
+                            showQuickSelectButtons
+                            size={Math.max(Math.min(sensitivityCaseOptions.length, 10), 3)}
+                        />
+                    </Setting.Field>
+                )}
+                <Setting.Field
+                    help={{
+                        content: (
                             <>
-                                When active allows comparison of tables where available zones, regions, facies, fluids
-                                or responses differs.
+                                Tables with the same filters may contain different values, such as different zone names.
+                                Enable this setting to compare them using only the values available in every table.
+                                Values not shared by all tables are omitted.
                                 <br />
-                                Only the <b>intersection</b> of options will then be available for filtering. <br />
-                                Identifiers not present in all tables will be <b>filtered out</b>.
+                                Filters that are not available in every selected table are always omitted.
                             </>
-                        }
-                    />
-                </div>
-            </CollapsibleGroup>
-            <div className="flex flex-col gap-2">{props.additionalSettings}</div>
-            <div className="flex flex-col gap-2">
-                <CollapsibleGroup title="Index filters" expanded>
-                    <PendingWrapper
-                        className="flex flex-col gap-2"
-                        isPending={props.isPending ?? false}
-                        errorMessage={
-                            !props.areCurrentlySelectedTablesComparable
-                                ? "Selected tables are not comparable due to mismatching index columns"
-                                : undefined
+                        ),
+                    }}
+                >
+                    <SwitchCompositions.WithLabel
+                        checked={props.selectedAllowIndicesValuesIntersection}
+                        onCheckedChange={handleAllowIndexValueIntersectionChange}
+                    >
+                        Compare using common filter values
+                    </SwitchCompositions.WithLabel>
+                </Setting.Field>
+            </Setting.Section>
+
+            <Setting.Section title="Data Selection">
+                {/* Only judged for valid table sources - invalid ones or ones waiting for valid ensembles have no
+                    filters to compare yet */}
+                {!props.availableIndicesWithValues.length && !props.tableNamesAnnotations?.length && (
+                    // TODO - Waiting for section overlay. Temp workaround
+                    <Banner layoutClassName="col-span-3" tone="danger">
+                        Selected tables are not comparable because they have no filters in common
+                    </Banner>
+                )}
+
+                {otherSelectionAnnotations.map((annotation) => (
+                    <Banner
+                        key={annotation.message}
+                        layoutClassName="col-span-3"
+                        tone={
+                            ({ info: "info", warning: "warning", error: "danger", invalid: "danger" } as const)[
+                                annotation.type
+                            ]
                         }
                     >
-                        {props.availableIndicesWithValues.map((indexWithValues) => (
-                            <CollapsibleGroup
-                                key={indexWithValues.indexColumn}
-                                title={indexWithValues.indexColumn}
-                                expanded
-                            >
-                                <Select
-                                    options={indexWithValues.values.map((value) => ({
-                                        value: value,
-                                        label: value.toString(),
-                                    }))}
-                                    value={
-                                        indicesWithValues.find((el) => el.indexColumn === indexWithValues.indexColumn)
-                                            ?.values ?? []
-                                    }
-                                    onChange={(value) => handleIndexValuesChange(indexWithValues.indexColumn, value)}
-                                    multiple
-                                    size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
-                                    showQuickSelectButtons={true}
-                                />
-                            </CollapsibleGroup>
-                        ))}
-                    </PendingWrapper>
-                </CollapsibleGroup>
-            </div>
+                        {annotation.message}
+                    </Banner>
+                ))}
+
+                {props.availableIndicesWithValues.map((indexWithValues) => {
+                    const options = indexWithValues.values.map((value) => ({
+                        value: value,
+                        label: value.toString(),
+                    }));
+
+                    // A column without an entry has never been filtered - all its values count as selected
+                    const value =
+                        indicesWithValues.find((el) => el.indexColumn === indexWithValues.indexColumn)?.values ??
+                        indexWithValues.values;
+
+                    return (
+                        <Setting.Field
+                            key={indexWithValues.indexColumn}
+                            label={indexWithValues.indexColumn}
+                            stacked
+                            annotations={
+                                hasUnavailableSelectedValues(indexWithValues) ? selectionErrorAnnotations : undefined
+                            }
+                            errorOverlay={
+                                !props.areCurrentlySelectedTablesComparable
+                                    ? "Selected tables are not comparable because their filter values differ"
+                                    : undefined
+                            }
+                        >
+                            <Select
+                                options={options}
+                                value={value}
+                                multiple
+                                size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
+                                showQuickSelectButtons={true}
+                                onValueChange={(value) => handleIndexValuesChange(indexWithValues.indexColumn, value)}
+                            />
+                        </Setting.Field>
+                    );
+                })}
+            </Setting.Section>
+            {props.additionalSettings}
         </>
     );
 }

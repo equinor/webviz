@@ -12,9 +12,9 @@ from webviz_core_utils.b64 import b64_encode_uint_array_as_smallest_size, b64_en
 from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_server_schemas.user_grid3d_ri import api_schemas
 
-from user_grid3d_ri.logic.grid_properties import GridPropertiesExtractor
 from user_grid3d_ri.logic.local_blob_cache import LocalBlobCache
 from user_grid3d_ri.logic.resinsight_manager import RESINSIGHT_MANAGER
+from user_grid3d_ri.routers._property_source import make_property_extractor_async
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ async def post_get_polyline_intersection(
     # LOGGER.debug(f"{req_body.sas_token=}")
     # LOGGER.debug(f"{req_body.blob_store_base_uri=}")
     # LOGGER.debug(f"{req_body.grid_blob_object_uuid=}")
-    # LOGGER.debug(f"{req_body.property_blob_object_uuid=}")
+    # LOGGER.debug(f"{req_body.property_source=}")
     # LOGGER.debug(f"{req_body.include_inactive_cells=}")
     # LOGGER.debug(f"{len(req_body.polyline_utm_xy)=}")
 
@@ -45,12 +45,6 @@ async def post_get_polyline_intersection(
     if grid_path_name is None:
         raise HTTPException(500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
     perf_metrics.record_lap("get-grid-blob")
-
-    property_path_name = await blob_cache.ensure_property_blob_downloaded_async(req_body.property_blob_object_uuid)
-    LOGGER.debug(f"{myfunc} - {property_path_name=}")
-    if property_path_name is None:
-        raise HTTPException(500, detail=f"Failed to download property blob: {req_body.property_blob_object_uuid=}")
-    perf_metrics.record_lap("get-prop-blob")
 
     grpc_channel: grpc.aio.Channel | None = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
     if grpc_channel is None:
@@ -69,7 +63,7 @@ async def post_get_polyline_intersection(
 
     LOGGER.debug(f"{myfunc} - {len(grpc_response.fenceMeshSections)=}")
 
-    prop_extractor = await GridPropertiesExtractor.from_roff_property_file_async(property_path_name)
+    prop_extractor = await make_property_extractor_async(blob_cache, req_body.property_source)
     perf_metrics.record_lap("read-props")
 
     min_global_prop_value = prop_extractor.get_min_global_val()

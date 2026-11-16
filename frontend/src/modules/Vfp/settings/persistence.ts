@@ -1,7 +1,9 @@
+import type { VfpType_api } from "@api";
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
+
 
 import { PressureOption, VfpParam } from "../types";
 
@@ -13,14 +15,16 @@ import {
     selectedGfrIndicesAtom,
     selectedRealizationNumberAtom,
     selectedThpIndicesAtom,
-    selectedVfpTableNameAtom,
+    selectedVfpTableNumberAtom,
+    selectedVfpTypeAtom,
     selectedWfrIndicesAtom,
 } from "./atoms/persistableFixableAtoms";
 
 export type SerializedSettings = {
     selectedEnsembleIdentString: string | null;
     selectedRealization: number | null;
-    selectedVfpTableName: string | null;
+    selectedVfpType: string | null;
+    selectedVfpTableNumber: number | null;
     selectedThpIndices: number[] | null;
     selectedWfrIndices: number[] | null;
     selectedGfrIndices: number[] | null;
@@ -33,7 +37,8 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
     properties: {
         selectedEnsembleIdentString: { type: "string", nullable: true },
         selectedRealization: { type: "int16", nullable: true },
-        selectedVfpTableName: { type: "string", nullable: true },
+        selectedVfpType: { type: "string", nullable: true },
+        selectedVfpTableNumber: { type: "int32", nullable: true },
         selectedThpIndices: { elements: { type: "int16" }, nullable: true },
         selectedWfrIndices: { elements: { type: "int16" }, nullable: true },
         selectedGfrIndices: { elements: { type: "int16" }, nullable: true },
@@ -51,7 +56,8 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
     return {
         selectedEnsembleIdentString: selectedEnsembleIdentString,
         selectedRealization: get(selectedRealizationNumberAtom).value,
-        selectedVfpTableName: get(selectedVfpTableNameAtom).value,
+        selectedVfpType: get(selectedVfpTypeAtom).value,
+        selectedVfpTableNumber: get(selectedVfpTableNumberAtom).value,
         selectedThpIndices: get(selectedThpIndicesAtom).value,
         selectedWfrIndices: get(selectedWfrIndicesAtom).value,
         selectedGfrIndices: get(selectedGfrIndicesAtom).value,
@@ -68,7 +74,8 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
 
     setIfDefined(set, selectedEnsembleIdentAtom, ensembleIdent);
     setIfDefined(set, selectedRealizationNumberAtom, raw.selectedRealization);
-    setIfDefined(set, selectedVfpTableNameAtom, raw.selectedVfpTableName);
+    setIfDefined(set, selectedVfpTypeAtom, raw.selectedVfpType as VfpType_api | null);
+    setIfDefined(set, selectedVfpTableNumberAtom, raw.selectedVfpTableNumber);
     setIfDefined(set, selectedThpIndicesAtom, raw.selectedThpIndices);
     setIfDefined(set, selectedWfrIndicesAtom, raw.selectedWfrIndices);
     setIfDefined(set, selectedGfrIndicesAtom, raw.selectedGfrIndices);

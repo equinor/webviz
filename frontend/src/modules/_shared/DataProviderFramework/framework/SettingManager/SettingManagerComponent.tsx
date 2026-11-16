@@ -1,8 +1,9 @@
 import React from "react";
 
-import { Link, Warning } from "@mui/icons-material";
+import { Error, HourglassEmpty, Link } from "@mui/icons-material";
 
-import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { Field } from "@lib/components/Field";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -30,6 +31,7 @@ export function SettingManagerComponent<
     );
     const value = usePublishSubscribeTopicValue(props.setting, SettingTopic.INTERNAL_VALUE);
     const attributes = usePublishSubscribeTopicValue(props.setting, SettingTopic.ATTRIBUTES);
+    const areAttributesResolved = usePublishSubscribeTopicValue(props.setting, SettingTopic.ARE_ATTRIBUTES_RESOLVED);
     const isValid = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_VALID);
     const isPersisted = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED);
     const isValidPersistedValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED_VALUE_VALID);
@@ -40,10 +42,13 @@ export function SettingManagerComponent<
         SettingTopic.EXTERNAL_CONTROLLER_PROVIDER,
     );
     const isLoading = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_LOADING);
+    const isBlocked = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_BLOCKED);
+    const blockedBy = usePublishSubscribeTopicValue(props.setting, SettingTopic.BLOCKED_BY);
     const isInitialized = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_INITIALIZED);
     const globalSettings = usePublishSubscribeTopicValue(props.manager, DataProviderManagerTopic.GLOBAL_SETTINGS);
 
-    let actuallyLoading = isLoading || !isInitialized;
+    // A blocked setting waits for another one to become valid - which is up to the user, so it is not shown as loading
+    let actuallyLoading = !isBlocked && (isLoading || !isInitialized);
     if (!isLoading && isPersisted && !isValid) {
         actuallyLoading = false;
     }
@@ -60,15 +65,24 @@ export function SettingManagerComponent<
         [props.setting],
     );
 
-    if (!attributes.visible) {
+    // Until its attributes are resolved, a setting that is about to be hidden would flash up
+    if (!attributes.visible || !areAttributesResolved) {
         return null;
     }
 
-    if (props.sharedSetting && !actuallyLoading && valueConstraints === null && !props.setting.isStatic()) {
+    if (
+        props.sharedSetting &&
+        !actuallyLoading &&
+        !isBlocked &&
+        valueConstraints === null &&
+        !props.setting.isStatic()
+    ) {
         return (
             <React.Fragment key={props.setting.getId()}>
-                <div className="p-0.5 px-2 w-32 flex items-center">{props.setting.getLabel()}</div>
-                <div className="p-0.5 px-2 w-full italic flex items-center text-orange-600">Empty intersection</div>
+                <div className="py-4xs px-2xs flex w-32 items-center">{props.setting.getLabel()}</div>
+                <div className="text-warning-strong px-4xs py-4xs gap-x-2xs flex w-full items-center italic">
+                    Empty intersection
+                </div>
             </React.Fragment>
         );
     }
@@ -85,73 +99,122 @@ export function SettingManagerComponent<
 
         return (
             <React.Fragment key={props.setting.getId()}>
-                <div className="p-0.5 px-2 w-32 flex items-center gap-2 text-teal-600">
+                <div className="gap-x-2xs py-4xs px-2xs text-accent-subtle flex w-32 items-center">
                     <span>{props.setting.getLabel()}</span>
-                    <span className="text-base mb-1">
-                        <Link fontSize="inherit" titleAccess="This settings is controlled by a shared setting" />
+                    <span className="mb-2xs text-body-base">
+                        <Link style={{ fontSize: 16 }} titleAccess="This settings is controlled by a shared setting" />
                     </span>
                 </div>
-                <div className="p-0.5 px-2 w-full flex items-center">
-                    {isValid ? valueAsString : <i className="text-orange-600">No valid shared setting value</i>}
+                <div className="gap-x-2xs py-4xs px-2xs flex w-full items-center">
+                    {isBlocked ? (
+                        <i className="text-neutral-subtle">{makeBlockedMessage(blockedBy)}</i>
+                    ) : isValid ? (
+                        valueAsString
+                    ) : (
+                        <i className="text-warning-subtle">No valid shared setting value</i>
+                    )}
                 </div>
             </React.Fragment>
         );
     }
 
+    // A blocked setting is not judged invalid, as its value constraints may be outdated - for the same reason, it can't
+    // be changed until it is no longer blocked
+    const isShownAsInvalid = !isValid && !actuallyLoading && !isBlocked;
+    const isDisabled = !isSettingEnabled(attributes.enabled) || isBlocked;
+
     return (
         <React.Fragment key={props.setting.getId()}>
-            <div className="p-0.5 px-2 w-32 flex items-center">{props.setting.getLabel()}</div>
-            <div className="p-0.5 px-2 w-full">
-                <PendingWrapper isPending={actuallyLoading}>
-                    <div className="flex flex-col gap-1 min-w-0">
-                        <div
-                            className={resolveClassNames("relative", {
-                                "outline outline-red-500": !isValid && !actuallyLoading,
-                                "pointer-events-none opacity-50": !isSettingEnabled(attributes.enabled),
-                            })}
-                        >
-                            {isEnabledObject(attributes.enabled) && !attributes.enabled.enabled && (
-                                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 text-center p-2">
-                                    {attributes.enabled.reason}
-                                </div>
-                            )}
-                            <componentRef.current
-                                onValueChange={handleValueChanged}
-                                value={value}
-                                isValueValid={isValid}
-                                isOverridden={isExternallyControlled}
-                                overriddenValue={value}
-                                valueConstraints={valueConstraints}
-                                globalSettings={globalSettings}
-                                workbenchSession={props.manager.getWorkbenchSession()}
-                                workbenchSettings={props.manager.getWorkbenchSettings()}
-                            />
-                        </div>
-                        {isPersisted && isValidPersistedValue && !isLoading && isInitialized && !isValid && (
-                            <span
-                                className="text-xs flex items-center gap-1 text-orange-600"
-                                title="The persisted value for this setting is not valid in the current context. It could also be that the data source has changed."
+            <div className="px-2xs py-4xs text-body-sm flex w-32 items-center">{props.setting.getLabel()}</div>
+            <div className="px-2xs py-4xs w-full min-w-0">
+                <StatusWrapper isPending={actuallyLoading}>
+                    <div className="gap-y-3xs flex min-w-0 flex-col">
+                        <Field.Root inline invalid={isShownAsInvalid}>
+                            <div
+                                className={resolveClassNames("relative", {
+                                    "outline-danger-strong outline": isShownAsInvalid,
+                                    "pointer-events-none opacity-50": isDisabled,
+                                })}
                             >
-                                <Warning fontSize="inherit" />
-                                <span className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                                    Persisted value not valid.
+                                {isEnabledObject(attributes.enabled) && !attributes.enabled.enabled && (
+                                    <div className="z-overlay bg-surface/80 px-2xs py-2xs absolute inset-0 flex flex-col items-center justify-center text-center">
+                                        {attributes.enabled.reason}
+                                    </div>
+                                )}
+                                <componentRef.current
+                                    onValueChange={handleValueChanged}
+                                    value={value}
+                                    isValueValid={isValid}
+                                    valueConstraints={valueConstraints}
+                                    globalSettings={globalSettings}
+                                    disabled={isDisabled}
+                                    workbenchSession={props.manager.getWorkbenchSession()}
+                                    workbenchSettings={props.manager.getWorkbenchSettings()}
+                                />
+                            </div>
+                        </Field.Root>
+                        {isPersisted &&
+                            isValidPersistedValue &&
+                            !isLoading &&
+                            isInitialized &&
+                            !isValid &&
+                            !isBlocked && (
+                                <span
+                                    className="gap-x-3xs text-body-xs text-warning-subtle flex items-center"
+                                    title="The saved value for this setting is not valid in the current context. It could also be that the data source has changed."
+                                >
+                                    <Error fontSize="inherit" />
+                                    <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
+                                        Saved value not valid.
+                                    </span>
+                                </span>
+                            )}
+                        {isPersisted && !isValidPersistedValue && (
+                            <span
+                                className="gap-x-3xs text-body-xs text-danger-strong flex items-center"
+                                title="The saved value for this setting has an invalid structure and could not be loaded."
+                            >
+                                <Error fontSize="inherit" />
+                                <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
+                                    Saved value has invalid structure.
                                 </span>
                             </span>
                         )}
-                        {isPersisted && !isValidPersistedValue && (
+                        {!isPersisted && isShownAsInvalid && (
                             <span
-                                className="text-xs flex items-center gap-1 text-red-600"
-                                title="The persisted value for this setting has an invalid structure and could not be loaded."
+                                className="gap-x-3xs text-body-xs text-danger-strong flex items-center"
+                                title="This setting's value is invalid, likely because a dependency changed. Please choose a valid value."
                             >
-                                <Warning fontSize="inherit" />
-                                <span className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                                    Persisted value has invalid structure.
+                                <Error fontSize="inherit" />
+                                <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
+                                    The current value is invalid.
+                                </span>
+                            </span>
+                        )}
+                        {isBlocked && (
+                            <span
+                                className="gap-x-3xs text-body-xs text-neutral-subtle flex items-center"
+                                title="The options of this setting depend on the settings named here. It keeps its value, and can be changed once they are valid."
+                            >
+                                <HourglassEmpty fontSize="inherit" />
+                                <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
+                                    {makeBlockedMessage(blockedBy)}
                                 </span>
                             </span>
                         )}
                     </div>
-                </PendingWrapper>
+                </StatusWrapper>
             </div>
         </React.Fragment>
     );
+}
+
+function makeBlockedMessage(blockedBy: string[]): string {
+    if (blockedBy.length === 0) {
+        return "Waiting for other settings to become valid.";
+    }
+    if (blockedBy.length === 1) {
+        return `Waiting for a valid ${blockedBy[0]}.`;
+    }
+    return `Waiting for valid ${blockedBy.join(", ")}.`;
 }

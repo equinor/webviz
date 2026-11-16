@@ -5,6 +5,7 @@ import "./2DViewer/registerModule";
 import "./3DViewer/registerModule";
 import "./DistributionPlot/registerModule";
 import "./FlowNetwork/registerModule";
+import "./InplaceVolumesComparison/registerModule";
 import "./InplaceVolumesNew/registerModule";
 import "./InplaceVolumesPlot/registerModule";
 import "./InplaceVolumesTable/registerModule";
@@ -15,10 +16,12 @@ import "./ParameterResponseCorrelationBarPlot/registerModule";
 import "./ParameterResponseCorrelationMatrixPlot/registerModule";
 import "./ParameterResponseCrossPlot/registerModule";
 import "./Pvt/registerModule";
+import "./RelPerm/registerModule";
 import "./Rft/registerModule";
 import "./SimulationTimeSeries/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
 import "./SensitivityPlot/registerModule";
+import "./TemplateModule/registerModule";
 import "./Vfp/registerModule";
 import "./WellCompletions/registerModule";
 import "./WellLogViewer/registerModule";
@@ -27,9 +30,8 @@ import "./WellLogViewer/registerModule";
 (async function registerDebugModules() {
     if (isDevMode() || debugFlagIsEnabled(SHOW_DEBUG_MODULES_FLAG)) {
         await import("./Map/registerModule");
-        await import("./SubsurfaceMap/registerModule");
+        await import("./DbgPerformanceTest/registerModule");
         await import("./MyModule/registerModule");
-        await import("./MyModule2/registerModule");
         await import("./DbgWorkbenchSpy/registerModule");
     }
 })();

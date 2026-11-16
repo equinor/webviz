@@ -1,4 +1,5 @@
-export type SizeName = "extra-small" | "small" | "medium-small" | "medium" | "large";
+export const SIZE_NAMES = ["extra-small", "small", "medium-small", "medium", "large"] as const;
+export type SizeName = (typeof SIZE_NAMES)[any];
 
 export function getSizeClass(size: SizeName) {
     switch (size) {

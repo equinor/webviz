@@ -98,13 +98,14 @@ export class PolylineIntersectionLayer extends PixiLayer<PolylineIntersectionDat
                 color = this.data.colorScale.getColorForValue(propValue);
             }
 
+            // Zero-width strokes must be skipped (not stroked with width 0): Pixi still emits their
+            // vertices but culls all their triangles, which can push the vertex count past 65,535 while
+            // the index count stays below it. Pixi then picks a Uint16 index buffer and overflows,
+            // leaving the layer only partially rendered.
             if (showGridlines) {
-                graphics.lineStyle(0.2, "#000", 1);
-            } else {
-                graphics.lineStyle(0);
+                graphics.stroke({ width: 0.2, color: "#000", alpha: 1 });
             }
 
-            graphics.beginFill(color, alpha);
             const polySize = section.verticesPerPolyArr[polygonIndex];
             const polyVertices: number[] = [];
             for (let i = 0; i < polySize; i++) {
@@ -114,8 +115,8 @@ export class PolylineIntersectionLayer extends PixiLayer<PolylineIntersectionDat
                 polyVertices.push(offsetU + verticeU, verticeZ);
             }
 
-            graphics.drawPolygon(polyVertices);
-            graphics.endFill();
+            graphics.poly(polyVertices);
+            graphics.fill({ color, alpha });
 
             indicesIndex += polySize;
         }

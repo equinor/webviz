@@ -5,9 +5,9 @@ import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { HoverService } from "@framework/HoverService";
 import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
-import { IntersectionType } from "@framework/types/intersection";
+import { IntersectionType, isWellboreIntersectionType } from "@framework/types/intersection";
 import type { Viewport } from "@framework/types/viewport";
-import type { EsvIntersectionReadoutEvent, LayerItem, Bounds } from "@modules/_shared/components/EsvIntersection";
+import type { EsvIntersectionReadoutEvent, EsvLayer, Bounds } from "@modules/_shared/components/EsvIntersection";
 import { EsvIntersection } from "@modules/_shared/components/EsvIntersection";
 import type { ReadoutItem as EsvReadoutItem, HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
 import { HighlightItemShape } from "@modules/_shared/components/EsvIntersection/types";
@@ -17,7 +17,12 @@ import { PositionReadout, type PositionCoordinates } from "@modules/_shared/comp
 import type { ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
+import { CURVE_FITTING_EPSILON } from "@modules/_shared/Intersection/intersectionPolylineUtils";
+import { makeFenceSourceId } from "@modules/_shared/utils/fence";
+import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
 import type { Interfaces } from "@modules/Intersection/interfaces";
+
+import { inBounds } from "../utils/boundsUtils";
 
 const AXES_LABELS = { xLabel: "Length along", yLabel: "Depth" };
 
@@ -32,14 +37,15 @@ export type ReadoutWrapperProps = {
     intersectionSource: IntersectionSettingValue | null;
     showGrid: boolean;
     referenceSystem?: IntersectionReferenceSystem;
-    layers: LayerItem[];
+    layers: EsvLayer[];
     layerIdToNameMap: Record<string, string>;
     viewport?: Viewport;
-    onViewportChange: (viewport: Viewport) => void;
     bounds: Bounds;
+    focusBounds: Bounds | null;
     verticalScale: number;
     hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
+    onViewportChange: (viewport: Viewport) => void;
 };
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
@@ -47,25 +53,48 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const [readoutItems, setReadoutItems] = React.useState<ReadoutItem[]>([]);
     const [mouseCursorUtmCoordinate, setMouseCursorUtmCoordinate] = React.useState<PositionCoordinates | null>(null);
 
+    // Track if hovering is from this view, or externally:
+    const isLocallyHoveringRef = React.useRef(false);
+
     // Hover synchronization
-    const hoverIsLocal = props.hoverService.getLastHoveredModule() === moduleInstanceId;
     const [hoveredMd, setHoveredMd] = useHover(HoverTopic.WELLBORE_MD, props.hoverService, moduleInstanceId);
+    const [hoveredFence, setHoveredFence] = useHover(HoverTopic.FENCE, props.hoverService, moduleInstanceId);
+
     const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
-    const [polylineHoverData, setPolylineHoverData] = useHover(
-        HoverTopic.POLYLINE_LENGTH_ALONG,
-        props.hoverService,
-        moduleInstanceId,
-    );
+
+    // Extract wellbore and fence id
+    const simplifiedExtendedPath = React.useMemo(() => {
+        if (!props.referenceSystem) return null;
+        if (!props.intersectionSource) return null;
+
+        if (props.intersectionSource.type === IntersectionType.CUSTOM_POLYLINE) {
+            return props.referenceSystem.path ?? null;
+        }
+
+        return calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
+            props.referenceSystem.path,
+            props.intersectionSource.extensionLength,
+            CURVE_FITTING_EPSILON,
+        ).simplifiedWellboreTrajectoryXy;
+    }, [props.referenceSystem, props.intersectionSource]);
+
+    const extensionLength = React.useMemo(() => {
+        if (!isWellboreIntersectionType(props.intersectionSource?.type)) return 0;
+
+        return props.intersectionSource.extensionLength;
+    }, [props.intersectionSource]);
 
     // Extract wellbore and polyline id
     const wellboreUuid =
-        props.intersectionSource?.type === IntersectionType.WELLBORE ? props.intersectionSource.uuid : null;
-    const polylineId =
-        props.intersectionSource?.type === IntersectionType.CUSTOM_POLYLINE ? props.intersectionSource.uuid : null;
+        props.intersectionSource && isWellboreIntersectionType(props.intersectionSource.type)
+            ? props.intersectionSource.uuid
+            : null;
+
+    const fenceSourceId = props.intersectionSource ? makeFenceSourceId(props.intersectionSource) : null;
 
     const formatEsvLayout = React.useCallback(
-        function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
-            return esvReadoutToGenericReadout(item, index, props.layerIdToNameMap, AXES_LABELS);
+        function formatEsvLayout(item: EsvReadoutItem): ReadoutItem {
+            return esvReadoutToGenericReadout(item, props.layerIdToNameMap, AXES_LABELS);
         },
         [props.layerIdToNameMap],
     );
@@ -85,6 +114,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     const handleMousePositionChange = React.useCallback(
         function handleMousePositionChange(position: { x: number; y: number } | null): void {
+            isLocallyHoveringRef.current = position !== null;
+
             const viewportSpanY = props.viewport
                 ? props.viewport[2] / props.verticalScale
                 : props.bounds.y[1] - props.bounds.y[0];
@@ -99,9 +130,11 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 position.y >= props.bounds.y[0] - depthThreshold &&
                 position.y <= props.bounds.y[1] + depthThreshold;
 
-            if (polylineId) {
-                const polylineHoverData = isValidCursorPosition ? { polylineId, lengthAlong: position.x } : null;
-                setPolylineHoverData(polylineHoverData);
+            if (fenceSourceId) {
+                const fenceHoverData = isValidCursorPosition
+                    ? { fenceId: fenceSourceId, lengthAlong: position.x, depth: position.y }
+                    : null;
+                setHoveredFence(fenceHoverData);
             }
 
             if (!isValidCursorPosition || !props.referenceSystem || !position) {
@@ -110,23 +143,70 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             }
 
             // Extract UTM coordinates from the intersection ref system
-            const utmPos = props.referenceSystem.getPosition(position.x);
-            setMouseCursorUtmCoordinate({ x: utmPos[0], y: utmPos[1], z: position.y });
+            // ! When using a wellbore path with an extension length, we might hover
+            // ! outside of the "actual" intersection bounding box. This means we will
+            // ! need to interpolate a position based on the outgoing vector.
+            // ! ESV does support this, but it seems to not fully match our own extension
+            // ! done in calcExtendedSimplifiedWellboreTrajectoryInXYPlane() when making
+            // ! some layers (like Seismic Fence). Additionally, ESV does not seem to
+            // ! handle strictly vertical trajectories, so we'll use our own logic here
+
+            // This to if cases only happens if the intersection is an extended well track
+            if (position.x < 0) {
+                const positionAlongSegment = position.x + extensionLength;
+
+                // We're in the *one* extension segment at the *start* of the simplified
+                // track, which is always of 'extensionLength' length
+                const segmentStart = simplifiedExtendedPath![0];
+                const segmentEnd = simplifiedExtendedPath![1];
+
+                const ratio = positionAlongSegment / extensionLength;
+
+                setMouseCursorUtmCoordinate({
+                    x: segmentStart[0] + ratio * (segmentEnd[0] - segmentStart[0]),
+                    y: segmentStart[1] + ratio * (segmentEnd[1] - segmentStart[1]),
+                    z: position.y,
+                });
+            } else if (position.x > props.referenceSystem.displacement) {
+                const positionAlongSegment = position.x - props.referenceSystem.displacement;
+
+                // We're in the *one* extension segment at the *end* of the simplified
+                // track, which is always of 'extensionLength' length
+                const segmentStart = simplifiedExtendedPath!.at(-2)!;
+                const segmentEnd = simplifiedExtendedPath!.at(-1)!;
+
+                const ratio = positionAlongSegment / extensionLength;
+
+                setMouseCursorUtmCoordinate({
+                    x: segmentStart[0] + ratio * (segmentEnd[0] - segmentStart[0]),
+                    y: segmentStart[1] + ratio * (segmentEnd[1] - segmentStart[1]),
+                    z: position.y,
+                });
+            } else {
+                // Get a MD position along the well track.
+                const lengthAlong = props.referenceSystem.unproject(position.x) ?? position.x;
+                const utmPos = props.referenceSystem.getPosition(lengthAlong);
+
+                setMouseCursorUtmCoordinate({ x: utmPos[0], y: utmPos[1], z: position.y });
+            }
         },
         [
-            polylineId,
-            props.bounds,
-            props.verticalScale,
             props.viewport,
+            props.verticalScale,
+            props.bounds.y,
+            props.bounds.x,
             props.referenceSystem,
-            setPolylineHoverData,
-            setMouseCursorUtmCoordinate,
+            fenceSourceId,
+            extensionLength,
+            simplifiedExtendedPath,
+            setHoveredFence,
         ],
     );
 
     const handleReadoutItemsChange = React.useCallback(
         function handleReadoutItemsChange(event: EsvIntersectionReadoutEvent): void {
             const items = event.readoutItems;
+
             const wellboreReadoutItem = items.find((item) => isWellborepathLayer(item.layer));
 
             publishWellboreHoverEvent(wellboreReadoutItem?.md ?? null);
@@ -140,7 +220,12 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     // External hover on wellbore path
     // - red point at the hovered MD position
-    if (props.referenceSystem && !hoverIsLocal && hoveredMd && hoveredMd.wellboreUuid === wellboreUuid) {
+    if (
+        props.referenceSystem &&
+        !isLocallyHoveringRef.current &&
+        hoveredMd &&
+        hoveredMd.wellboreUuid === wellboreUuid
+    ) {
         const point = props.referenceSystem.project(hoveredMd.md);
         highlightItems.push({
             point: [point[0], point[1]],
@@ -150,19 +235,31 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         });
     }
 
-    // External hover on polyline
+    // External hover on fence
     // - vertical red line at the length-along position
-    if (polylineId && !hoverIsLocal && polylineHoverData?.polylineId === polylineId) {
-        const yExtension = Math.abs(props.bounds.y[1] - props.bounds.y[0]) * 0.1;
+    if (fenceSourceId && !isLocallyHoveringRef.current && hoveredFence?.fenceId === fenceSourceId) {
+        const bounds = props.focusBounds ?? props.bounds;
+
+        const yExtension = Math.abs(bounds.y[1] - bounds.y[0]) * 0.01;
+
         highlightItems.push({
             shape: HighlightItemShape.LINE,
             line: [
-                [polylineHoverData.lengthAlong, props.bounds.y[0] - yExtension],
-                [polylineHoverData.lengthAlong, props.bounds.y[1] + yExtension],
+                [hoveredFence.lengthAlong, bounds.y[0] - yExtension],
+                [hoveredFence.lengthAlong, bounds.y[1] + yExtension],
             ],
             color: "red",
             paintOrder: 5,
         });
+
+        if (hoveredFence.depth && inBounds([hoveredFence.lengthAlong, hoveredFence.depth], bounds)) {
+            highlightItems.push({
+                shape: HighlightItemShape.CROSS,
+                center: [hoveredFence.lengthAlong, hoveredFence.depth],
+                color: "red",
+                paintOrder: 5,
+            });
+        }
     }
 
     return (
@@ -172,6 +269,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 zFactor={props.verticalScale}
                 intersectionReferenceSystem={props.referenceSystem ?? undefined}
                 showAxes
+                showAxesLabels
                 axesOptions={{
                     xLabel: AXES_LABELS.xLabel,
                     yLabel: AXES_LABELS.yLabel,
@@ -186,11 +284,11 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 onMousePositionChange={handleMousePositionChange}
                 onViewportChange={props.onViewportChange}
             />
-            <ReadoutBox readoutItems={readoutItems} edgeDistanceRem={READOUT_EDGE_DISTANCE_REM} />
+            <ReadoutBox readoutItems={readoutItems} edgeDistanceRem={READOUT_EDGE_DISTANCE_REM} compact />
             <PositionReadout
                 coordinates={mouseCursorUtmCoordinate}
                 labels={{ z: "Depth" }}
-                className="absolute bottom-10 right-12 bg-white/50 p-2 backdrop-blur-sm rounded-sm flex gap-2 z-10 text-sm font-mono"
+                className="text-body-sm z-elevated gap-3xs p-3xs bg-surface/50 absolute right-12 bottom-10 flex rounded-sm font-mono backdrop-blur-sm"
                 visible={!!mouseCursorUtmCoordinate}
             />
         </>

@@ -1,7 +1,6 @@
 import React from "react";
 
 import { Tooltip } from "@equinor/eds-core-react";
-import { PinDrop, Public } from "@mui/icons-material";
 
 import { Drawer } from "@framework/internal/components/Drawer";
 import { DashboardTopic } from "@framework/internal/Dashboard";
@@ -50,8 +49,7 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
         forceRerender();
     }
 
-    function handleGlobalSyncSettingChange(setting: SyncSettingKey, value: boolean) {
-        // @rmt: This has to be changed as soon as we support multiple pages
+    function handleDashboardSyncSettingChange(setting: SyncSettingKey, value: boolean) {
         for (const moduleInstance of moduleInstances) {
             if (moduleInstance.getModule().hasSyncableSettingKey(setting)) {
                 if (value) {
@@ -67,8 +65,7 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
         forceRerender();
     }
 
-    function isGlobalSyncSetting(setting: SyncSettingKey): boolean {
-        // @rmt: This has to be changed as soon as we support multiple pages
+    function isDashboardSyncSetting(setting: SyncSettingKey): boolean {
         for (const moduleInstance of moduleInstances) {
             if (moduleInstance.getModule().hasSyncableSettingKey(setting)) {
                 if (!moduleInstance.isSyncedSetting(setting)) {
@@ -94,43 +91,57 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
         const disabledReason = isSnapshot ? "Sync settings cannot be changed in snapshot mode" : undefined;
 
         return (
-            <table className="w-full m-2">
+            <table className="w-full">
                 <thead>
-                    <tr className="border-b ">
-                        <th className="border-r p-2 w-6" title="Sync for all module instances">
-                            <Public fontSize="small" />
+                    <tr className="border-neutral-subtle border-b">
+                        <th
+                            className="border-neutral-subtle px-xs py-xs w-4 border-r"
+                            title="Sync for all modules in this dashboard"
+                        >
+                            Dashboard
                         </th>
-                        <th className="border-r p-2 w-6" title="Sync for active module instance">
-                            <PinDrop fontSize="small" />
+                        <th
+                            className="border-neutral-subtle px-xs py-xs w-4 border-r"
+                            title="Sync for active module instance"
+                        >
+                            Local
                         </th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     {syncableSettingKeys.map((setting) => {
-                        const globallySynced = isGlobalSyncSetting(setting);
+                        const dashboardSynced = isDashboardSyncSetting(setting);
                         return (
-                            <tr key={setting} className="hover:bg-blue-50">
+                            <tr key={setting} className="hover:bg-neutral-subtle">
                                 <Tooltip title={disabledReason} disabled={!isSnapshot}>
-                                    <td className="border-r p-2">
+                                    <td className="border-neutral-subtle px-xs py-3xs align-center border-r">
                                         <Checkbox
-                                            checked={globallySynced}
-                                            onChange={(e) => handleGlobalSyncSettingChange(setting, e.target.checked)}
+                                            checked={dashboardSynced}
+                                            onCheckedChange={(checked) =>
+                                                handleDashboardSyncSettingChange(setting, checked)
+                                            }
                                             disabled={isSnapshot}
+                                            size="small"
                                         />
                                     </td>
                                 </Tooltip>
                                 <Tooltip title={disabledReason} disabled={!isSnapshot}>
-                                    <td className="border-r p-2">
+                                    <td className="border-neutral-subtle px-xs py-3xs align-center border-r">
                                         <Checkbox
-                                            checked={globallySynced || activeModuleInstance.isSyncedSetting(setting)}
-                                            onChange={(e) => handleSyncSettingChange(setting, e.target.checked)}
+                                            checked={dashboardSynced || activeModuleInstance.isSyncedSetting(setting)}
+                                            onCheckedChange={(checked) => handleSyncSettingChange(setting, checked)}
                                             disabled={isSnapshot}
+                                            size="small"
                                         />
                                     </td>
                                 </Tooltip>
 
-                                <td className={resolveClassNames("p-2", { "opacity-50": isSnapshot })}>
+                                <td
+                                    className={resolveClassNames("px-xs py-3xs", {
+                                        "opacity-50": isSnapshot,
+                                    })}
+                                >
                                     {SyncSettingsMeta[setting].name}
                                 </td>
                             </tr>

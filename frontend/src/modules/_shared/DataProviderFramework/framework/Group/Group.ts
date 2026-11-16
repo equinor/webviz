@@ -15,7 +15,7 @@ import type { SerializedGroup, SerializedSettingsState } from "../../interfacesA
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import type { MakeSettingTypesMap, SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { Settings } from "../../settings/settingsDefinitions";
-import { DataProviderManagerTopic, type DataProviderManager } from "../DataProviderManager/DataProviderManager";
+import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
 
@@ -43,8 +43,7 @@ export class Group<
     TSettings extends Settings = [],
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-> implements ItemGroup
-{
+> implements ItemGroup {
     private readonly [GROUP_BRAND] = true;
 
     private _itemDelegate: ItemDelegate;
@@ -88,7 +87,7 @@ export class Group<
     }
 
     handleSettingsChange() {
-        this._itemDelegate.getDataProviderManager().publishTopic(DataProviderManagerTopic.DATA_REVISION);
+        this._itemDelegate.getDataProviderManager().increaseGuiStateRevisionNumber();
     }
 
     getItemDelegate(): ItemDelegate {

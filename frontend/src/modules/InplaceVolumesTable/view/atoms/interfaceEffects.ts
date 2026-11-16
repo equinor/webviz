@@ -5,8 +5,11 @@ import {
     groupByIndicesAtom,
     areTableDefinitionSelectionsValidAtom,
     filterAtom,
+    isSensitivityEnsembleSelectionBlockedAtom,
     resultNamesAtom,
+    sensitivitySelectionAtom,
     statisticOptionsAtom,
+    statisticsLayoutAtom,
     tableTypeAtom,
 } from "./baseAtoms";
 
@@ -32,7 +35,20 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
         setAtomValue(statisticOptionsAtom, statisticOptions);
     },
     (getInterfaceValue, setAtomValue) => {
+        const statisticsLayout = getInterfaceValue("statisticsLayout");
+        setAtomValue(statisticsLayoutAtom, statisticsLayout);
+    },
+    (getInterfaceValue, setAtomValue) => {
         const areTableDefinitionSelectionsValid = getInterfaceValue("areTableDefinitionSelectionsValid");
         setAtomValue(areTableDefinitionSelectionsValidAtom, areTableDefinitionSelectionsValid);
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(sensitivitySelectionAtom, getInterfaceValue("sensitivitySelection"));
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(
+            isSensitivityEnsembleSelectionBlockedAtom,
+            getInterfaceValue("isSensitivityEnsembleSelectionBlocked"),
+        );
     },
 ];

@@ -1,10 +1,11 @@
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
+import { PolylineIntersectionLayer } from "@modules/_shared/components/EsvIntersection";
 import type {
     IntersectionRealizationGridData,
     IntersectionRealizationGridSettings,
     IntersectionRealizationGridStoredData,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { createValidExtensionLength } from "@modules/_shared/DataProviderFramework/settings/utils/extensionLengthUtils";
 import type {
     EsvLayerItemsMaker,
     TransformerArgs,
@@ -12,7 +13,6 @@ import type {
 import { createTransformedPolylineIntersectionResult } from "@modules/_shared/Intersection/gridIntersectionTransform";
 
 import { createGridColorScaleValues } from "../utils/colorScaleUtils";
-import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 export function createGridLayerItemsMaker({
     id,
@@ -37,10 +37,7 @@ export function createGridLayerItemsMaker({
     const sourcePolylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
     const valueRange = getDataValueRange();
 
-    const extensionLength = createValidExtensionLength(
-        getSetting(Setting.INTERSECTION),
-        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-    );
+    const extensionLength = createValidExtensionLength(getSetting(Setting.INTERSECTION));
 
     if (!intersectionData || !sourcePolylineWithSectionLengths || !colorScale || isLoading || !valueRange) {
         return null;
@@ -69,13 +66,12 @@ export function createGridLayerItemsMaker({
     }
 
     const gridIntersectionLayerItemsMaker: EsvLayerItemsMaker = {
-        makeLayerItems: () => {
+        makeLayerItems: (_, order) => {
             return [
-                {
-                    id: `${id}-grid-layer`,
-                    name: name,
-                    type: LayerType.POLYLINE_INTERSECTION,
-                    options: {
+                new PolylineIntersectionLayer(
+                    `${id}-grid-layer`,
+                    {
+                        order,
                         data: {
                             fenceMeshSections: transformedPolylineIntersection.fenceMeshSections.map((section) => ({
                                 verticesUzArr: section.verticesUzFloat32Arr,
@@ -102,8 +98,8 @@ export function createGridLayerItemsMaker({
                             propertyUnit: "",
                         },
                     },
-                    hoverable: true,
-                },
+                    { name, hoverable: true },
+                ),
             ];
         },
     };

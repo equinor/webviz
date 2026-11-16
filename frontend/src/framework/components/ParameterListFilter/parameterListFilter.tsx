@@ -1,16 +1,12 @@
 import React from "react";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { Parameter } from "@framework/EnsembleParameters";
 import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
 import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-
-// Icons placed here due to limitation of jest for testing utils (cannot import svg)
-import checkIcon from "./private-assets/check.svg";
-import segmentIcon from "./private-assets/segment.svg";
 import {
     ParameterParentNodeNames,
     createTreeDataNodeListFromParameters,
@@ -27,24 +23,29 @@ export type ParameterListFilterProps = {
     initialFilters?: InitialParameterFilter[];
     showTitle?: boolean;
     onChange?: (filteredParameters: Parameter[]) => void;
+    disabled?: boolean;
 };
 
 export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: ParameterListFilterProps) => {
     const { onChange } = props;
 
     const smartNodeSelectorId = React.useId();
-    const [selectedTags, setSelectedTags] = React.useState<string[]>(
-        props.initialFilters ?? [ParameterParentNodeNames.IS_NONCONSTANT],
-    );
+    const smartNodeSelectorDelimiter = ":";
+    const initFiltersOrDefault = props.initialFilters ?? [ParameterParentNodeNames.IS_NONCONSTANT];
+
+    const [selectedTags, setSelectedTags] = React.useState<string[]>(initFiltersOrDefault);
     const [selectedNodes, setSelectedNodes] = React.useState<string[]>([]);
-    const [numberOfMatchingParameters, setNumberOfMatchingParameters] = React.useState<number>(0);
     const [parameters, setParameters] = React.useState<Parameter[] | null>(null);
     const [previousTreeDataNodeList, setPreviousTreeDataNodeList] = React.useState<TreeDataNode[]>([]);
-    const smartNodeSelectorDelimiter = ":";
+
+    const filteredParameters = React.useMemo(() => {
+        if (!parameters?.length) return [];
+        return getParametersMatchingSelectedNodes(parameters, selectedNodes, smartNodeSelectorDelimiter);
+    }, [parameters, selectedNodes]);
 
     let newTreeDataNodeList: TreeDataNode[] | null = null;
     if (parameters === null || !isEqual(props.parameters, parameters)) {
-        newTreeDataNodeList = createTreeDataNodeListFromParameters(props.parameters, checkIcon, segmentIcon);
+        newTreeDataNodeList = createTreeDataNodeListFromParameters(props.parameters);
         setParameters(props.parameters);
         setPreviousTreeDataNodeList(newTreeDataNodeList);
     }
@@ -53,25 +54,9 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
     // Utilizing useEffect to prevent re-render of parent component during rendering of this component
     React.useEffect(
         function createFilterParameters() {
-            if (parameters === null || parameters.length === 0) {
-                setNumberOfMatchingParameters(0);
-                if (onChange) {
-                    onChange([]);
-                }
-                return;
-            }
-
-            const filteredParameters = getParametersMatchingSelectedNodes(
-                parameters,
-                selectedNodes,
-                smartNodeSelectorDelimiter,
-            );
-            setNumberOfMatchingParameters(filteredParameters.length);
-            if (onChange) {
-                onChange(filteredParameters);
-            }
+            onChange?.(filteredParameters);
         },
-        [selectedNodes, parameters, onChange, smartNodeSelectorDelimiter],
+        [filteredParameters, onChange],
     );
 
     function handleSmartNodeSelectorChange(selection: SmartNodeSelectorSelection) {
@@ -80,19 +65,21 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
     }
 
     return (
-        <div className={props.showTitle ? "mb-2 mt-2" : ""}>
+        <div className={props.showTitle ? "mt-2xs mb-2xs" : ""}>
             <>
                 <SmartNodeSelector
                     id={smartNodeSelectorId}
                     delimiter={smartNodeSelectorDelimiter}
                     data={treeDataNodeList}
                     selectedTags={selectedTags}
-                    label={props.showTitle ? "Parameter filtering" : undefined}
-                    onChange={handleSmartNodeSelectorChange}
+                    onValueChange={handleSmartNodeSelectorChange}
                     placeholder="Add new filter condition..."
+                    disabled={props.disabled}
                 />
-                <div className={resolveClassNames("text-right relative w-full mt-2 text-slate-600 text-sm")}>
-                    Number of matches: {numberOfMatchingParameters}
+                <div
+                    className={resolveClassNames("mt-2xs text-body-sm text-neutral-subtle relative w-full text-right")}
+                >
+                    Number of matches: {filteredParameters.length}
                 </div>
             </>
         </div>

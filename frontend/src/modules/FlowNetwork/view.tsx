@@ -20,6 +20,7 @@ export function View({ viewContext }: ModuleViewProps<Interfaces>) {
     const selectedNodeKey = viewContext.useSettingsToViewInterfaceValue("selectedNodeKey");
     const selectedDateTime = viewContext.useSettingsToViewInterfaceValue("selectedDateTime");
     const queryStatus = viewContext.useSettingsToViewInterfaceValue("queryStatus");
+    const areNetworkSelectionsValid = viewContext.useSettingsToViewInterfaceValue("areNetworkSelectionsValid");
 
     const statusWriter = useViewStatusWriter(viewContext);
     statusWriter.setLoading(queryStatus === QueryStatus.Loading);
@@ -51,13 +52,15 @@ export function View({ viewContext }: ModuleViewProps<Interfaces>) {
     }, [nodeMetadataList]);
 
     return (
-        <div className="w-full h-full">
+        <div className="h-full w-full">
             {queryStatus === QueryStatus.Loading ? (
                 <ContentInfo>
                     <CircularProgress />
                 </ContentInfo>
             ) : queryStatus === QueryStatus.Error ? (
                 <ContentError>Error loading group tree data.</ContentError>
+            ) : !areNetworkSelectionsValid ? (
+                <ContentInfo>Invalid selection - see the settings.</ContentInfo>
             ) : !datedTrees.length ? (
                 <ContentInfo>No dated trees found</ContentInfo>
             ) : (

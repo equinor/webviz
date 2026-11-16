@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from webviz_services.sumo_access.rft_access import RftAccess
+from webviz_services.sumo_access.observation_access import ObservationAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
@@ -74,3 +75,17 @@ async def get_rft_realization_data(
         )
 
     return ret_data
+
+
+@router.get("/rft_observations")
+@cache_time(CacheTime.LONG)
+async def get_rft_observations(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+) -> list[schemas.RftObservations]:
+    """Get RFT observations per well and date for a given ensemble."""
+    access = ObservationAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    observations = await access.get_rft_observations_async()
+
+    return converters.to_api_rft_observations(observations)

@@ -85,7 +85,7 @@ def pvt_dataframe_to_api_data(pvt_table_pa: pa.Table) -> List[PvtData]:
                 name=name,
                 phase=phase,
                 ratio=df_grouped_on_pvtnum["RATIO"].to_numpy().tolist(),
-                pressure=df_grouped_on_pvtnum["PRESSURE"].to_numpy().tolist()(),
+                pressure=df_grouped_on_pvtnum["PRESSURE"].to_numpy().tolist(),
                 volumefactor=df_grouped_on_pvtnum["VOLUMEFACTOR"].to_numpy().tolist(),
                 viscosity=df_grouped_on_pvtnum["VISCOSITY"].to_numpy().tolist(),
                 density=df_grouped_on_pvtnum["DENSITY"].to_numpy().tolist(),

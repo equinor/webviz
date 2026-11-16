@@ -9,6 +9,7 @@ import {
     groupByAtom,
     resampleFrequencyAtom,
     showHistoricalAtom,
+    showTimestampMarkerAtom,
     showObservationsAtom,
     statisticsSelectionAtom,
     subplotLimitDirectionAtom,
@@ -28,6 +29,7 @@ import type {
     VectorSpec,
     VisualizationMode,
 } from "./typesAndEnums";
+import { activeTimestampUtcMsAtom } from "./view/atoms/persistableFixableAtoms";
 
 export type SettingsToViewInterface = {
     groupBy: GroupBy;
@@ -38,6 +40,7 @@ export type SettingsToViewInterface = {
     visualizationMode: VisualizationMode;
     showObservations: boolean;
     showHistorical: boolean;
+    showTimestampMarker: boolean;
     vectorSpecifications: VectorSpec[];
     statisticsSelection: StatisticsSelection;
     colorByParameter: boolean;
@@ -47,8 +50,13 @@ export type SettingsToViewInterface = {
     resampleFrequency: Frequency_api | null;
 };
 
+export type ViewToSettingsInterface = {
+    selectedTimestampUtcMs: number | null;
+};
+
 export type Interfaces = {
     settingsToView: SettingsToViewInterface;
+    viewToSettings: ViewToSettingsInterface;
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
@@ -70,6 +78,9 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     showHistorical: (get) => {
         return get(showHistoricalAtom);
     },
+    showTimestampMarker: (get) => {
+        return get(showTimestampMarkerAtom);
+    },
     vectorSpecifications: (get) => {
         return get(vectorSpecificationsAtom);
     },
@@ -90,5 +101,11 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     resampleFrequency: (get) => {
         return get(resampleFrequencyAtom);
+    },
+};
+
+export const viewToSettingsInterfaceInitialization: InterfaceInitialization<ViewToSettingsInterface> = {
+    selectedTimestampUtcMs: (get) => {
+        return get(activeTimestampUtcMsAtom).value;
     },
 };

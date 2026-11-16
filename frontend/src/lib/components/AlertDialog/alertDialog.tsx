@@ -1,0 +1,132 @@
+import React from "react";
+
+import { AlertDialog as AlertDialogBase, type AlertDialogPopupProps, type AlertDialogRootProps } from "@base-ui/react";
+
+import { AlertDialogNestingContext } from "../../contexts/alertDialogNestingContext";
+import type { ButtonProps } from "../Button";
+import { Button } from "../Button";
+import { Typography } from "../Typography";
+import { Heading } from "../Typography/compositions";
+
+export type AlertDialogAction = {
+    /** The button label text. */
+    label: string;
+    /** Color tone of the action button. */
+    tone?: ButtonProps["tone"];
+    /** Called when the action button is clicked. */
+    onClick: () => void;
+    /** When true, clicking the button automatically closes the dialog. */
+    closesDialog?: boolean;
+    /** Focus this action when the dialog opens. If no action sets it, the primary action is focused. */
+    autoFocus?: boolean;
+};
+
+export type AlertDialogProps = Omit<AlertDialogRootProps, "className" | "render" | "style" | "children"> & {
+    /** Dialog heading text. */
+    title: string;
+    /** The main call-to-action button, rendered with contained styling and auto-focused unless another action sets `autoFocus`. */
+    primaryAction: AlertDialogAction;
+    /** Additional action buttons rendered before the primary action. */
+    secondaryActions?: AlertDialogAction[];
+    /** The dialog description content. */
+    children: React.ReactNode;
+    /** Where focus goes when the dialog closes. @default the element focused before it opened */
+    finalFocus?: AlertDialogPopupProps["finalFocus"];
+};
+
+export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(function AlertDialog(props, ref) {
+    const { title, primaryAction, secondaryActions, children, open, finalFocus, ...rest } = props;
+    const { increment, decrement } = React.useContext(AlertDialogNestingContext);
+
+    const focusPrimary = primaryAction.autoFocus ?? !secondaryActions?.some((action) => action.autoFocus);
+
+    React.useEffect(
+        function syncNestingCount() {
+            if (!open) return;
+            increment();
+            return function cleanup() {
+                decrement();
+            };
+        },
+        [open, increment, decrement],
+    );
+
+    // The "dialog__*" classes can be found in the dialog.css file in the styles/components folder
+    return (
+        <AlertDialogBase.Root {...rest} open={open}>
+            <AlertDialogBase.Portal>
+                <AlertDialogBase.Backdrop className="dialog__backdrop z-alert" />
+                <AlertDialogBase.Popup className="dialog__popup z-alert" ref={ref} finalFocus={finalFocus}>
+                    <AlertDialogBase.Title
+                        className="dialog__popup__child"
+                        render={(baseProps) => (
+                            <Heading as="h5" {...baseProps}>
+                                {title}
+                            </Heading>
+                        )}
+                    />
+                    <AlertDialogBase.Description
+                        className="dialog__popup__child"
+                        render={<Typography as="div" size="md" />}
+                    >
+                        {children}
+                    </AlertDialogBase.Description>
+                    <div className="dialog__popup__child gap-x-md flex items-center justify-end">
+                        {secondaryActions?.map((action) =>
+                            action.closesDialog ? (
+                                <AlertDialogBase.Close
+                                    key={action.label}
+                                    onClick={action.onClick}
+                                    render={(htmlProps) => (
+                                        <Button
+                                            variant="outlined"
+                                            tone={action.tone}
+                                            {...htmlProps}
+                                            autoFocus={action.autoFocus}
+                                        >
+                                            {action.label}
+                                        </Button>
+                                    )}
+                                />
+                            ) : (
+                                <Button
+                                    variant="ghost"
+                                    key={action.label}
+                                    tone={action.tone}
+                                    onClick={action.onClick}
+                                    autoFocus={action.autoFocus}
+                                >
+                                    {action.label}
+                                </Button>
+                            ),
+                        )}
+                        {primaryAction.closesDialog ? (
+                            <AlertDialogBase.Close
+                                onClick={primaryAction.onClick}
+                                render={(htmlProps) => (
+                                    <Button
+                                        variant="contained"
+                                        tone={primaryAction.tone}
+                                        {...htmlProps}
+                                        autoFocus={focusPrimary}
+                                    >
+                                        {primaryAction.label}
+                                    </Button>
+                                )}
+                            />
+                        ) : (
+                            <Button
+                                variant="contained"
+                                tone={primaryAction.tone}
+                                onClick={primaryAction.onClick}
+                                autoFocus={focusPrimary}
+                            >
+                                {primaryAction.label}
+                            </Button>
+                        )}
+                    </div>
+                </AlertDialogBase.Popup>
+            </AlertDialogBase.Portal>
+        </AlertDialogBase.Root>
+    );
+});

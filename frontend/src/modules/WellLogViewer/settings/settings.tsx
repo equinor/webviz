@@ -1,7 +1,7 @@
 import React from "react";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { WellboreHeader_api } from "@api";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
@@ -12,13 +12,13 @@ import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncS
 import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Collapsible } from "@lib/components/Collapsible";
+import { Combobox } from "@lib/components/Combobox";
 import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { InterfaceTypes } from "../interfaces";
 
@@ -62,7 +62,7 @@ function useSyncedWellboreSetting(
 export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     // Utilities
     const syncHelper = useRefStableSyncSettingsHelper({
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         moduleContext: props.settingsContext,
     });
     const providerManager = useAtomValue(dataProviderManagerAtom);
@@ -75,59 +75,75 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     // Wellbore selection
     const wellboreHeadersQuery = useAtomValue(drilledWellboreHeadersQueryAtom);
     const [selectedWellboreHeader, setSelectedWellboreHeader] = useSyncedWellboreSetting(syncHelper);
+    // A blocked selection (e.g. while the field is invalid) can still report a retained null as valid - it is not usable
+    const selectedWellboreUuid = useAtomValue(selectedWellboreUuidAtom);
+    const isSelectedWellboreValid = selectedWellboreUuid.isValidInContext && !selectedWellboreUuid.isBlocked;
 
     const handleWellboreSelectionChange = React.useCallback(
-        function handleWellboreSelectionChange(uuids: string[]) {
-            setSelectedWellboreHeader(uuids[0] ?? null);
+        function handleWellboreSelectionChange(wellboreUuid: string | null) {
+            setSelectedWellboreHeader(wellboreUuid);
         },
         [setSelectedWellboreHeader],
     );
 
     // Error messages
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
-    const wellboreHeadersErrorMessage = usePropagateQueryErrorToStatusWriter(wellboreHeadersQuery, statusWriter) ?? "";
+    // A disabled query keeps its cached error, which must not be reported for an invalid field
+    const wellboreHeadersErrorMessage = wellboreHeadersQuery.isEnabled
+        ? (propagateQueryErrorToStatusWriter(wellboreHeadersQuery, statusWriter) ?? "")
+        : "";
 
     React.useEffect(() => {
-        providerManager?.updateGlobalSetting("fieldId", selectedField.value);
-    }, [providerManager, selectedField.value]);
+        providerManager?.updateGlobalSetting("fieldId", selectedField.value, selectedField.isValidInContext);
+    }, [providerManager, selectedField.value, selectedField.isValidInContext]);
 
     React.useEffect(() => {
-        providerManager?.updateGlobalSetting("wellboreUuid", selectedWellboreHeader?.wellboreUuid ?? null);
-    }, [providerManager, selectedWellboreHeader]);
+        // An invalid wellbore (e.g. while the field is invalid, no header resolves) blocks the providers reading it,
+        // instead of leaving them pending on a null value
+        providerManager?.updateGlobalSetting(
+            "wellboreUuid",
+            selectedWellboreHeader?.wellboreUuid ?? null,
+            isSelectedWellboreValid,
+        );
+    }, [providerManager, selectedWellboreHeader, isSelectedWellboreValid]);
 
     const fieldSettingAnnotations = useMakePersistableFixableAtomAnnotations(selectedFieldIdentAtom);
     const wellboreSettingAnnotations = useMakePersistableFixableAtomAnnotations(selectedWellboreUuidAtom);
 
     return (
-        <div className="flex flex-col h-full gap-1">
-            <CollapsibleGroup title="Wellbore" expanded contentClassName="flex flex-col gap-3">
-                <SettingWrapper label="Field" annotations={fieldSettingAnnotations}>
-                    <FieldDropdown
-                        value={selectedField.value}
-                        ensembleSet={ensembleSet}
-                        fallbackFieldList={allFields.map((f) => f.fieldIdentifier)}
-                        onChange={setSelectedField}
-                    />
-                </SettingWrapper>
+        <div className="flex h-full flex-col">
+            <Collapsible.Group
+                title={`Wellbore${selectedWellboreHeader ? `: ${selectedWellboreHeader.uniqueWellboreIdentifier}` : ""}`}
+                defaultOpen
+            >
+                <Collapsible.Content layoutClassName="flex flex-col gap-y-xs">
+                    <Setting.Field label="Field" annotations={fieldSettingAnnotations}>
+                        <FieldDropdown
+                            value={selectedField.value}
+                            ensembleSet={ensembleSet}
+                            fallbackFieldList={allFields.map((f) => f.fieldIdentifier)}
+                            onChange={setSelectedField}
+                        />
+                    </Setting.Field>
 
-                <SettingWrapper
-                    label="Wellbore"
-                    annotations={wellboreSettingAnnotations}
-                    errorOverlay={wellboreHeadersErrorMessage}
-                >
-                    <Select
-                        options={makeWellHeaderOptions(wellboreHeadersQuery.data ?? [])}
-                        value={selectedWellboreHeader ? [selectedWellboreHeader.wellboreUuid] : []}
-                        onChange={handleWellboreSelectionChange}
-                        filter
-                        size={5}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-
-            <CollapsibleGroup title="Log viewer settings" expanded>
-                <ViewerSettings />
-            </CollapsibleGroup>
+                    <Setting.Field
+                        label="Wellbore"
+                        annotations={wellboreSettingAnnotations}
+                        errorOverlay={wellboreHeadersErrorMessage}
+                    >
+                        <Combobox
+                            items={makeWellHeaderOptions(wellboreHeadersQuery.data ?? [])}
+                            value={selectedWellboreHeader ? selectedWellboreHeader.wellboreUuid : null}
+                            onValueChange={handleWellboreSelectionChange}
+                        />
+                    </Setting.Field>
+                </Collapsible.Content>
+            </Collapsible.Group>
+            <Collapsible.Group title="Log viewer settings" defaultOpen>
+                <Collapsible.Content>
+                    <ViewerSettings />
+                </Collapsible.Content>
+            </Collapsible.Group>
 
             <ProviderManagerComponentWrapper
                 workbenchSession={props.workbenchSession}

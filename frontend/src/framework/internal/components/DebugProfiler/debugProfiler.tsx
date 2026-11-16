@@ -14,7 +14,7 @@ type DebugProfilerRenderInfoProps = {
 
 const DebugProfilerRenderInfo: React.FC<DebugProfilerRenderInfoProps> = (props) => {
     return (
-        <span className="text-pink-300" title={props.title}>
+        <span className="text-info-subtle" title={props.title}>
             {props.children}
         </span>
     );
@@ -130,7 +130,7 @@ export const DebugProfiler: React.FC<DebugProfilerProps> = (props) => {
                     {props.children}
                 </DebugProfilerWrapper>
                 {debugInfoVisible && (
-                    <div className="absolute bottom-1 w-full flex gap-2 flex-wrap pointer-events-none">
+                    <div className="gap-2xs pointer-events-none absolute bottom-1 flex w-full flex-wrap">
                         {renderInfo && (
                             <>
                                 {reportedRenderCount !== null && (

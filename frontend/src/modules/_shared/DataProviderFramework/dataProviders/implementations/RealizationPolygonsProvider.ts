@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { PolygonData_api } from "@api";
 import { getPolygonsDataOptions, getPolygonsDirectoryOptions, PolygonsAttributeType_api } from "@api";

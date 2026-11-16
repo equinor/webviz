@@ -1,16 +1,10 @@
 import React from "react";
 
-import { ExpandMore } from "@mui/icons-material";
-
 import { ColorGradient } from "@lib/components/ColorGradient";
-import { ColorTileGroup } from "@lib/components/ColorTileGroup";
-import { IconButton } from "@lib/components/IconButton";
-import { Overlay } from "@lib/components/Overlay";
-import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { ColorTile } from "@lib/components/ColorTile";
+import { Combobox, type ComboboxProps } from "@lib/components/Combobox";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
-import { createPortal } from "@lib/utils/createPortal";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
 export enum ColorPaletteSelectorType {
     Categorical = "categorical",
@@ -25,145 +19,70 @@ function makeColorPalettePreview(
 ): React.ReactNode {
     switch (type) {
         case ColorPaletteSelectorType.Continuous:
-            return <ColorGradient colorPalette={colorPalette} />;
+            return <ColorGradient colorPalette={colorPalette} layoutClassName="w-full" size="small" />;
         case ColorPaletteSelectorType.Categorical:
-            return <ColorTileGroup colorPalette={colorPalette} />;
+            return <ColorTile.Group colorPalette={colorPalette} layoutClassName="w-full" size="small" />;
         case ColorPaletteSelectorType.Discrete:
-            return <ColorGradient colorPalette={colorPalette} steps={steps} />;
+            return <ColorGradient colorPalette={colorPalette} layoutClassName="w-full" steps={steps} size="small" />;
     }
 }
 
-type ColorPaletteItemProps = {
-    colorPalette: ColorPalette;
-    onClick?: () => void;
-    selected?: boolean;
-    type: ColorPaletteSelectorType;
-    steps?: number;
-};
-
-const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
-    function handleItemClick() {
-        if (!props.onClick) {
-            return;
-        }
-
-        props.onClick();
-    }
-
-    return (
-        <div
-            className={resolveClassNames("p-2 flex items-center gap-2 hover:bg-blue-100 cursor-pointer h-12", {
-                "bg-blue-50": props.selected,
-            })}
-            onClick={handleItemClick}
-        >
-            <span
-                className="text-sm leading-none min-w-0 w-20 whitespace-nowrap text-ellipsis overflow-hidden"
-                title={props.colorPalette.getName()}
-            >
-                {props.colorPalette.getName()}
-            </span>
-            <div className="grow">{makeColorPalettePreview(props.colorPalette, props.type, props.steps)}</div>
-        </div>
-    );
-};
-
-export type ColorPaletteSelectorProps = {
+export type ColorPaletteSelectorProps = Omit<
+    ComboboxProps<ColorPalette>,
+    "items" | "value" | "renderItemAdornment" | "onValueChange" | "onValueCommit" | "defaultValue"
+> & {
+    /** The list of available color palettes to choose from. */
     colorPalettes: ColorPalette[];
+    /** The ID of the currently selected color palette. */
     selectedColorPaletteId: string;
-    onChange?: (colorPalette: ColorPalette) => void;
+    /** Called when the user selects a different palette. */
+    onValueChange?: (colorPalette: ColorPalette) => void;
+    /** Determines how the palette preview is rendered in each dropdown item. */
     type: ColorPaletteSelectorType;
+    /** Number of discrete steps shown in the preview. Only used when `type` is `Discrete`. */
     steps?: number;
+    /** Whether the selector is disabled. @default false */
+    disabled?: boolean;
 };
 
-export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
-    const [open, setOpen] = React.useState<boolean>(false);
-    const [selectedColorPalette, setSelectedColorPalette] = React.useState<ColorPalette>(
-        props.colorPalettes.find((el) => el.getId() === props.selectedColorPaletteId) || props.colorPalettes[0],
-    );
+export const ColorPaletteSelector = React.forwardRef<HTMLInputElement, ColorPaletteSelectorProps>(
+    function ColorPaletteSelector(props, ref) {
+        const { colorPalettes, selectedColorPaletteId, onValueChange, type, steps, ...comboboxProps } = props;
 
-    const ref = React.useRef<HTMLDivElement>(null);
-    const dropdownContentRef = React.useRef<HTMLDivElement>(null);
+        const selectedColorPalette =
+            colorPalettes.find((el) => el.getId() === selectedColorPaletteId) ?? colorPalettes[0];
 
-    const boundingRect = useElementBoundingRect(ref);
+        const comboboxItems = React.useMemo(
+            () =>
+                colorPalettes.map<ComboboxItem<ColorPalette>>((palette) => ({
+                    value: palette,
+                    label: palette.getName(),
+                })),
+            [colorPalettes],
+        );
 
-    React.useEffect(function addPointerEvents() {
-        function handlePointerDown(event: PointerEvent) {
-            if (dropdownContentRef.current?.contains(event.target as Node)) {
-                return;
-            }
+        const handleValueChange = React.useCallback(
+            function handleValueChange(colorPalette: ColorPalette | null) {
+                if (!colorPalette) {
+                    return;
+                }
+                onValueChange?.(colorPalette);
+            },
+            [onValueChange],
+        );
 
-            setOpen(false);
-        }
-
-        window.addEventListener("pointerdown", handlePointerDown);
-
-        return () => {
-            window.removeEventListener("pointerdown", handlePointerDown);
-        };
-    }, []);
-
-    function handleChevronClick() {
-        setOpen(!open);
-    }
-
-    function handleColorPaletteSelected(colorPalette: ColorPalette) {
-        setSelectedColorPalette(colorPalette);
-        setOpen(false);
-
-        if (!props.onChange) {
-            return;
-        }
-
-        props.onChange(colorPalette);
-    }
-
-    function renderColorPalettes() {
-        return props.colorPalettes.map((colorPalette) => (
-            <ColorPaletteItem
-                key={colorPalette.getId()}
-                colorPalette={colorPalette}
-                type={props.type}
-                onClick={() => {
-                    handleColorPaletteSelected(colorPalette);
-                }}
-                selected={selectedColorPalette.getId() === colorPalette.getId()}
-                steps={props.steps}
-            />
-        ));
-    }
-
-    const height = convertRemToPixels(props.colorPalettes.length * 3);
-    let marginTop = Math.max(-boundingRect.top, convertRemToPixels((-(props.colorPalettes.length - 1) * 3) / 2));
-    if (boundingRect.top - marginTop + height > window.innerHeight) {
-        marginTop = -(boundingRect.top + height - window.innerHeight + 8);
-    }
-
-    return (
-        <div className="bg-slate-100 rounded-sm p-2 flex items-center gap-4" ref={ref}>
-            <div className="grow">{makeColorPalettePreview(selectedColorPalette, props.type, props.steps)}</div>
-            <IconButton onClick={handleChevronClick}>
-                <ExpandMore fontSize="small" className="grow-0" />
-            </IconButton>
-            {open &&
-                createPortal(
-                    <>
-                        <Overlay visible={true} />
-                        <div
-                            ref={dropdownContentRef}
-                            className="absolute z-60 shadow-sm bg-white rounded-sm overflow-hidden"
-                            style={{
-                                left: boundingRect.left,
-                                top: boundingRect.top,
-                                width: boundingRect.width,
-                                marginTop: marginTop,
-                                height: `${props.colorPalettes.length * 3}rem`,
-                            }}
-                        >
-                            {renderColorPalettes()}
-                        </div>
-                    </>,
+        return (
+            <Combobox
+                {...comboboxProps}
+                ref={ref}
+                items={comboboxItems}
+                value={selectedColorPalette}
+                onValueChange={handleValueChange}
+                filter={null}
+                renderItemAdornment={(palette) => (
+                    <span className="flex w-24 min-w-0">{makeColorPalettePreview(palette, type, steps)}</span>
                 )}
-        </div>
-    );
-};
+            />
+        );
+    },
+);

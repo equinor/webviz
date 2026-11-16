@@ -1,5 +1,5 @@
 import type { IR } from "@hey-api/openapi-ts";
-import { set } from "lodash";
+import { set } from "lodash-es";
 
 import type { CacheBustingPlugin } from "./types";
 

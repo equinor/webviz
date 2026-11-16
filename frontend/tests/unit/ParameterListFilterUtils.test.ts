@@ -10,7 +10,6 @@ import type { ContinuousParameter, DiscreteParameter } from "@framework/Ensemble
 import { ParameterType } from "@framework/EnsembleParameters";
 import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
 
-
 const CONTINUOUS_PARAMETER: ContinuousParameter = {
     type: ParameterType.CONTINUOUS,
     name: "continuous parameter",
@@ -39,6 +38,7 @@ const DISCRETE_PARAMETER: DiscreteParameter = {
     groupName: "group2",
     description: "discrete parameter description",
     isConstant: true,
+    isNumerical: true,
     realizations: [1, 2, 3],
     values: [10, 11, 12],
 };

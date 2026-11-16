@@ -12,6 +12,7 @@ import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import type { FipRegionMapping } from "@framework/EnsembleFipRegionsMapping";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
 import { createDeltaEnsembleDisplayName, createRegularEnsembleDisplayName } from "@framework/utils/ensembleUiHelpers";
 import { calcFnv1aHash } from "@lib/utils/hashUtils";
@@ -36,7 +37,11 @@ type EnsembleIdentStringToEnsembleApiDataMap = {
 };
 
 export type EnsembleLoadingErrorInfoMap = {
-    [ensembleIdentString: string]: { errorMessage: string; displayName: string };
+    [ensembleIdentString: string]: { errorMessage: string; displayName: string; details?: string };
+};
+
+export type EnsembleLoadingWarningInfoMap = {
+    [ensembleIdentString: string]: { warningMessage: string; displayName: string };
 };
 
 export type UserEnsembleSetting = {
@@ -62,6 +67,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
 ): Promise<{
     ensembleSet: EnsembleSet;
     ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap;
+    ensembleLoadingWarningInfoMap: EnsembleLoadingWarningInfoMap;
 }> {
     // Get ensemble idents to load
     const ensembleFingerprintsMap = new Map<string, string>();
@@ -104,9 +110,11 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     const {
         ensembleIdentStringToEnsembleApiDataMap: ensembleApiDataMap,
         ensembleLoadingErrorInfoMap: ensembleLoadingErrorInfoMapFromApiDataLoad,
+        ensembleLoadingWarningInfoMap: ensembleLoadingWarningInfoMapFromApiDataLoad,
     } = await loadEnsembleApiDataMapFromBackend(queryClient, ensembleIdentsToLoad, ensembleFingerprintsMap);
 
     const ensembleLoadingErrorInfoMap = ensembleLoadingErrorInfoMapFromApiDataLoad;
+    const ensembleLoadingWarningInfoMap = ensembleLoadingWarningInfoMapFromApiDataLoad;
 
     // Create regular ensembles
     const outEnsembleArray: RegularEnsemble[] = [];
@@ -135,7 +143,20 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
 
         const parameterArray = buildParameterArrFromApiResponse(ensembleApiData.parameters);
         const sensitivityArray = buildSensitivityArrFromApiResponse(ensembleApiData.sensitivities);
-        const fipRegionsMappingArray = buildFipRegionsMappingArrFromApiResponse(ensembleApiData.ensembleDetails.fipRegions);
+        const fipRegionsMappingArray = buildFipRegionsMappingArrFromApiResponse(
+            ensembleApiData.ensembleDetails.fipRegions,
+        );
+
+        // Refine the display name of any warning for this ensemble now that we know the custom name
+        const existingWarningInfo = ensembleLoadingWarningInfoMap[ensembleIdentString];
+        if (existingWarningInfo) {
+            existingWarningInfo.displayName = createRegularEnsembleDisplayName(
+                ensembleSetting.ensembleIdent,
+                ensembleSetting.caseName,
+                ensembleSetting.customName ?? undefined,
+            );
+        }
+
         outEnsembleArray.push(
             new RegularEnsemble(
                 ensembleApiData.ensembleDetails.assetName,
@@ -210,36 +231,36 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const comparisonEnsemble = existingComparisonEnsemble
             ? existingComparisonEnsemble
             : new RegularEnsemble(
-                comparisonEnsembleApiData.ensembleDetails.assetName,
-                comparisonEnsembleApiData.ensembleDetails.fieldIdentifiers,
-                comparisonEnsembleApiData.ensembleDetails.caseUuid,
-                comparisonEnsembleApiData.ensembleDetails.caseName,
-                comparisonEnsembleApiData.ensembleDetails.name,
-                comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
-                comparisonEnsembleApiData.ensembleDetails.realizations,
-                emptyParameterArray,
-                nullSensitivityArray,
-                emptyFipRegionsMappingArray,
-                emptyColor,
-                comparisonEnsembleCustomName,
-            );
+                  comparisonEnsembleApiData.ensembleDetails.assetName,
+                  comparisonEnsembleApiData.ensembleDetails.fieldIdentifiers,
+                  comparisonEnsembleApiData.ensembleDetails.caseUuid,
+                  comparisonEnsembleApiData.ensembleDetails.caseName,
+                  comparisonEnsembleApiData.ensembleDetails.name,
+                  comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
+                  comparisonEnsembleApiData.ensembleDetails.realizations,
+                  emptyParameterArray,
+                  nullSensitivityArray,
+                  emptyFipRegionsMappingArray,
+                  emptyColor,
+                  comparisonEnsembleCustomName,
+              );
 
         const referenceEnsemble = existingReferenceEnsemble
             ? existingReferenceEnsemble
             : new RegularEnsemble(
-                comparisonEnsembleApiData.ensembleDetails.assetName,
-                comparisonEnsembleApiData.ensembleDetails.fieldIdentifiers,
-                referenceEnsembleApiData.ensembleDetails.caseUuid,
-                referenceEnsembleApiData.ensembleDetails.caseName,
-                referenceEnsembleApiData.ensembleDetails.name,
-                comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
-                referenceEnsembleApiData.ensembleDetails.realizations,
-                emptyParameterArray,
-                nullSensitivityArray,
-                emptyFipRegionsMappingArray,
-                emptyColor,
-                referenceEnsembleCustomName,
-            );
+                  comparisonEnsembleApiData.ensembleDetails.assetName,
+                  comparisonEnsembleApiData.ensembleDetails.fieldIdentifiers,
+                  referenceEnsembleApiData.ensembleDetails.caseUuid,
+                  referenceEnsembleApiData.ensembleDetails.caseName,
+                  referenceEnsembleApiData.ensembleDetails.name,
+                  comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
+                  referenceEnsembleApiData.ensembleDetails.realizations,
+                  emptyParameterArray,
+                  nullSensitivityArray,
+                  emptyFipRegionsMappingArray,
+                  emptyColor,
+                  referenceEnsembleCustomName,
+              );
 
         outDeltaEnsembleArray.push(
             new DeltaEnsemble(
@@ -254,7 +275,15 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     return {
         ensembleSet: new EnsembleSet(outEnsembleArray, outDeltaEnsembleArray),
         ensembleLoadingErrorInfoMap: ensembleLoadingErrorInfoMap,
+        ensembleLoadingWarningInfoMap: ensembleLoadingWarningInfoMap,
     };
+}
+
+function getBackendErrorMessage(reason: unknown): string | undefined {
+    if (!(reason instanceof Error)) {
+        return undefined;
+    }
+    return ApiErrorHelper.fromError(reason)?.getMessage() ?? undefined;
 }
 
 async function loadEnsembleApiDataMapFromBackend(
@@ -264,6 +293,7 @@ async function loadEnsembleApiDataMapFromBackend(
 ): Promise<{
     ensembleIdentStringToEnsembleApiDataMap: EnsembleIdentStringToEnsembleApiDataMap;
     ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap;
+    ensembleLoadingWarningInfoMap: EnsembleLoadingWarningInfoMap;
 }> {
     console.debug("loadEnsembleIdentStringToApiDataMapFromBackend", ensembleIdents);
     const STALE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
@@ -273,6 +303,7 @@ async function loadEnsembleApiDataMapFromBackend(
     const parametersAndSensitivitiesPromiseArray: Promise<EnsembleParametersAndSensitivities_api>[] = [];
 
     const ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap = {};
+    const ensembleLoadingWarningInfoMap: EnsembleLoadingWarningInfoMap = {};
 
     for (const ensembleIdent of ensembleIdents) {
         const caseUuid = ensembleIdent.getCaseUuid();
@@ -283,11 +314,12 @@ async function loadEnsembleApiDataMapFromBackend(
 
         const ensembleDetailsPromise = queryClient.fetchQuery({
             ...getEnsembleDetailsOptions({
-                query: { zCacheBust: fingerprintHash },
+                query: { _cacheBust: fingerprintHash },
                 path: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
                 },
+                throwOnError: false, // We will handle errors manually to be able to continue loading other ensembles even if one fails
             }),
             gcTime: CACHE_TIME,
             staleTime: STALE_TIME,
@@ -299,8 +331,9 @@ async function loadEnsembleApiDataMapFromBackend(
                 query: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
-                    zCacheBust: fingerprintHash,
+                    _cacheBust: fingerprintHash,
                 },
+                throwOnError: false, // We will handle errors manually to be able to continue loading other ensembles even if one fails
             }),
             gcTime: CACHE_TIME,
             staleTime: STALE_TIME,
@@ -309,8 +342,11 @@ async function loadEnsembleApiDataMapFromBackend(
     }
     console.debug(`Issued ${ensembleDetailsPromiseArray.length} promise(s)`);
 
-    const ensembleDetailsOutcomeArray = await Promise.allSettled(ensembleDetailsPromiseArray);
-    const parametersAndSensitivitiesOutcomeArray = await Promise.allSettled(parametersAndSensitivitiesPromiseArray);
+    // Settle both arrays together, otherwise an early rejection in the second array is unhandled and terminates the app
+    const [ensembleDetailsOutcomeArray, parametersAndSensitivitiesOutcomeArray] = await Promise.all([
+        Promise.allSettled(ensembleDetailsPromiseArray),
+        Promise.allSettled(parametersAndSensitivitiesPromiseArray),
+    ]);
 
     const resMap: EnsembleIdentStringToEnsembleApiDataMap = {};
     for (let i = 0; i < ensembleDetailsOutcomeArray.length; i++) {
@@ -321,10 +357,12 @@ async function loadEnsembleApiDataMapFromBackend(
         console.debug(`ensembleDetailsOutcome[${i}]:`, ensembleDetailsOutcome.status);
         if (ensembleDetailsOutcome.status === "rejected") {
             const errorMessage = "Error fetching ensemble details, dropping ensemble.";
-            console.error(errorMessage, ensembleIdentString);
+            const details = getBackendErrorMessage(ensembleDetailsOutcome.reason);
+            console.error(errorMessage, ensembleIdentString, details);
             ensembleLoadingErrorInfoMap[ensembleIdentString] = {
                 errorMessage: errorMessage,
                 displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
+                details: details,
             };
             continue;
         }
@@ -349,10 +387,12 @@ async function loadEnsembleApiDataMapFromBackend(
         console.debug(`parametersAndSensitivitiesOutcome[${i}]:`, parametersAndSensitivitiesOutcome.status);
         if (parametersAndSensitivitiesOutcome.status === "rejected") {
             const errorMessage = "Error fetching ensemble parameters and sensitivities, dropping ensemble.";
-            console.error(errorMessage, ensembleIdentString);
+            const details = getBackendErrorMessage(parametersAndSensitivitiesOutcome.reason);
+            console.error(errorMessage, ensembleIdentString, details);
             ensembleLoadingErrorInfoMap[ensembleIdentString] = {
                 errorMessage: errorMessage,
                 displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
+                details: details,
             };
             continue;
         }
@@ -371,6 +411,16 @@ async function loadEnsembleApiDataMapFromBackend(
             continue;
         }
 
+        // Surface a non-fatal warning if realization-level parameters are missing from the standard result
+        // (e.g. legacy design matrix parameters injected into parameters.txt/json). The ensemble still loads.
+        if (parametersAndSensitivities.nonStandardParametersWarning) {
+            console.warn(parametersAndSensitivities.nonStandardParametersWarning, ensembleIdentString);
+            ensembleLoadingWarningInfoMap[ensembleIdentString] = {
+                warningMessage: parametersAndSensitivities.nonStandardParametersWarning,
+                displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
+            };
+        }
+
         resMap[ensembleIdentString] = {
             ensembleDetails: ensembleDetails,
             parameters: parameterArray,
@@ -381,6 +431,7 @@ async function loadEnsembleApiDataMapFromBackend(
     return {
         ensembleIdentStringToEnsembleApiDataMap: resMap,
         ensembleLoadingErrorInfoMap: ensembleLoadingErrorInfoMap,
+        ensembleLoadingWarningInfoMap: ensembleLoadingWarningInfoMap,
     };
 }
 
@@ -428,6 +479,7 @@ function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_a
                 groupName: apiPar.groupName ?? null,
                 description: apiPar.descriptiveName ?? null,
                 isConstant: apiPar.isConstant,
+                isNumerical: apiPar.isNumerical,
                 realizations: apiPar.realizations,
                 values: apiPar.values,
             };

@@ -1,8 +1,10 @@
 import { atom } from "jotai";
 
 import type { InplaceVolumesStatistic_api } from "@api";
+import type { SensitivitySelection } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
 import type { InplaceVolumesFilterSelections } from "@modules/InplaceVolumesTable/types";
+import { StatisticsLayout } from "@modules/InplaceVolumesTable/types";
 
 export const filterAtom = atom<InplaceVolumesFilterSelections>({
     ensembleIdents: [],
@@ -14,4 +16,7 @@ export const resultNamesAtom = atom<string[]>([]);
 export const groupByIndicesAtom = atom<string[]>([]);
 export const tableTypeAtom = atom<TableType>(TableType.STATISTICAL);
 export const statisticOptionsAtom = atom<InplaceVolumesStatistic_api[]>([]);
+export const statisticsLayoutAtom = atom<StatisticsLayout>(StatisticsLayout.RESPONSES_AS_COLUMNS);
 export const areTableDefinitionSelectionsValidAtom = atom<boolean>(false);
+export const sensitivitySelectionAtom = atom<SensitivitySelection | null>(null);
+export const isSensitivityEnsembleSelectionBlockedAtom = atom<boolean>(false);

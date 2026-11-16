@@ -119,7 +119,7 @@ export function GroupDropOverlay(props: GroupDropOverlayProps) {
         <div
             ref={overlayRef}
             data-sl-group-overlay
-            className="absolute top-0 left-0 bg-blue-500 outline-blue-600 pointer-events-none z-10 opacity-30"
+            className="bg-accent outline-accent-strong z-overlay pointer-events-none absolute top-0 left-0 opacity-30"
             style={{
                 transform: "translate3d(0,0,0)",
                 width: 0,

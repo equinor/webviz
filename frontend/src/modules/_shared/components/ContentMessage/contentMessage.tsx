@@ -1,11 +1,14 @@
 import type React from "react";
 
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Block } from "@mui/icons-material";
+
+import { Typography } from "@lib/components/Typography";
 
 export enum ContentMessageType {
     INFO = "info",
     ERROR = "error",
     WARNING = "warning",
+    ACTION_REQUIRED = "action_required",
 }
 
 export type ContentMessageProps = {
@@ -14,15 +17,23 @@ export type ContentMessageProps = {
 };
 
 export const ContentMessage: React.FC<ContentMessageProps> = (props) => {
+    const tone =
+        props.type === ContentMessageType.ERROR || props.type === ContentMessageType.ACTION_REQUIRED
+            ? "danger"
+            : props.type === ContentMessageType.WARNING
+              ? "warning"
+              : "info";
+
     return (
-        <div
-            className={resolveClassNames("w-full h-full flex items-center justify-center flex-col", {
-                "text-red-700": props.type === "error",
-                "text-yellow-600": props.type === "warning",
-            })}
+        <Typography
+            as="div"
+            layoutClassName="flex h-full w-full flex-col items-center justify-center text-center gap-y-2xs"
+            size="md"
+            tone={tone}
         >
+            {props.type === ContentMessageType.ACTION_REQUIRED && <Block fontSize="large" />}
             {props.children}
-        </div>
+        </Typography>
     );
 };
 
@@ -47,6 +58,16 @@ export const ContentWarning: React.FC<ContentWarningProps> = (props) => {
 };
 
 ContentError.displayName = "ContentWarning";
+
+export type ContentActionRequiredProps = {
+    children: React.ReactNode;
+};
+
+export const ContentActionRequired: React.FC<ContentActionRequiredProps> = (props) => {
+    return <ContentMessage type={ContentMessageType.ACTION_REQUIRED}>{props.children}</ContentMessage>;
+};
+
+ContentActionRequired.displayName = "ContentActionRequired";
 
 export type ContentInfoProps = {
     children: React.ReactNode;

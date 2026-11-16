@@ -4,6 +4,14 @@ import { statisticalVectorSensitivityDataQueryAtom } from "./queryAtoms";
 
 export const activeTimestampUtcMsAtom = persistableFixableAtom<number | null>({
     initialValue: null,
+    // Without data, there is no timestamp to pick yet - settling then would keep null once the data arrives
+    computeDependenciesState: ({ get }) => {
+        const statisticalVectorSensitivityDataQuery = get(statisticalVectorSensitivityDataQueryAtom);
+        if (statisticalVectorSensitivityDataQuery.isFetching) {
+            return "loading";
+        }
+        return statisticalVectorSensitivityDataQuery.data?.length ? "loaded" : "blocked";
+    },
     isValidFunction: ({ get, value }) => {
         const statisticalVectorSensitivityDataQuery = get(statisticalVectorSensitivityDataQueryAtom);
 

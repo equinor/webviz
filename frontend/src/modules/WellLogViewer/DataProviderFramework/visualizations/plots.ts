@@ -1,5 +1,5 @@
 import type { ColormapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
-import { maxBy, minBy } from "lodash";
+import { maxBy, minBy } from "lodash-es";
 
 import type { WellboreLogCurveData_api } from "@api";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
@@ -53,6 +53,7 @@ function getCommonConfig(args: PlotVisualizationArgs<AreaPlotSettingTypes>): Tem
     const color = args.getSetting(Setting.COLOR)!;
 
     return {
+        id: args.id,
         name: data.name,
         logName: data.logName,
         color,
@@ -112,6 +113,7 @@ export function makeStackedPlotConfig(args: PlotVisualizationArgs<StackedPlotSet
     const rotation = args.getSetting(Setting.LABEL_ROTATION) ?? 90;
 
     return {
+        id: args.id,
         name: data.name,
         logName: data.logName,
         type: "stacked",

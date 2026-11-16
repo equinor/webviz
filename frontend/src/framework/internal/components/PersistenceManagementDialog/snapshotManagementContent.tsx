@@ -1,188 +1,47 @@
 import React from "react";
 
-import { DateRangePicker } from "@equinor/eds-core-react";
 import { Close, Delete, FileOpen, Refresh, Search } from "@mui/icons-material";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { omit } from "lodash";
+import { omit } from "lodash-es";
 
-import type {
-    GetSnapshotAccessLogsData_api,
-    GraphUser_api,
-    SnapshotAccessLog_api,
-    SortDirection_api,
-    Options,
-} from "@api";
+import type { GetSnapshotAccessLogsData_api, GraphUser_api, SnapshotAccessLog_api, Options } from "@api";
 import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAccessLogSortBy_api } from "@api";
+import { useUserInfo } from "@framework/internal/auth/hooks";
+import type { UseRefreshQueryResult } from "@framework/internal/hooks/useRefreshQuery";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
-import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
-import {
-    edsDateRangeToIsoStringRange,
-    isoRangeToEdsDateRange,
-    type EdsDateRange,
-    type IsoStringRange,
-} from "@framework/utils/edsDateUtils";
+import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
+import { buildWorkbenchUrl } from "@framework/internal/WorkbenchSession/utils/url";
+import { edsDateRangeToIsoStringRange } from "@framework/utils/edsDateUtils";
+import type { EdsDateRange } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
+import { Avatar } from "@lib/components/Avatar";
 import { Button } from "@lib/components/Button";
+import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Input } from "@lib/components/Input";
-import { Label } from "@lib/components/Label";
-import { Switch } from "@lib/components/Switch";
+import { DateRangePicker } from "@lib/components/DateRangePicker";
+import { Field } from "@lib/components/Field";
+import { Hidden } from "@lib/components/Hidden";
+import { Separator } from "@lib/components/Separator";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { Table } from "@lib/components/Table";
-import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
-import type { TableColumns, TableSorting, TContext } from "@lib/components/Table/types";
-import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
+import { TableCompositions } from "@lib/components/Table/compositions";
+import { ROW_HEIGHT_PX } from "@lib/components/Table/constants";
+import { SortDirection as TableSortDirection } from "@lib/components/Table/typesAndEnums";
+import type { TableSortState } from "@lib/components/Table/typesAndEnums";
+import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
-import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
+import { Typography } from "@lib/components/Typography";
+import { Virtualization } from "@lib/components/Virtualization";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { formatDate } from "@lib/utils/dates";
 
-import { UserAvatar } from "../UserAvatar";
-
-import {
-    HEADER_HEIGHT,
-    NEXT_PAGE_THRESHOLD,
-    QUERY_PAGE_SIZE,
-    ROW_HEIGHT,
-    TABLE_HEIGHT,
-    USE_ALTERNATING_COLUMN_COLORS,
-} from "./constants";
+import { tableSortDirToApiSortDir } from "./_utils";
+import { NEXT_PAGE_THRESHOLD, PENDING_PAGE, PENDING_ROW, QUERY_PAGE_SIZE } from "./constants";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {
     [K in keyof SnapshotAccessLog_api["snapshotMetadata"] as `snapshotMetadata.${Extract<K, string>}`]: SnapshotAccessLog_api["snapshotMetadata"][K];
 };
-
-type TableFilter = {
-    title?: string;
-    visitedAt?: IsoStringRange;
-    ownerId?: string;
-    snapshotDeleted?: boolean;
-};
-
-const makeRowStyle = (context: TContext<FlattenedSnapshotAccessLog_api>): React.CSSProperties => {
-    if (context.entry.snapshotDeleted) {
-        return {
-            textDecoration: "line-through",
-            opacity: 0.6,
-        };
-    }
-    return {};
-};
-
-const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
-    {
-        _type: "data",
-        label: "Visits",
-        sizeInPercent: 7,
-        columnId: "visits",
-        sortable: false, // The sorting adornments require too much space, so the table looks off
-        filter: false,
-        formatStyle: (v, context) => ({ textAlign: "center", paddingRight: "0.5rem", ...makeRowStyle(context) }),
-    },
-    {
-        _type: "data",
-        label: "Title",
-        sizeInPercent: 24,
-        columnId: "snapshotMetadata.title",
-        filter: false,
-        renderData(value, context) {
-            const style = makeRowStyle(context);
-            return (
-                <span style={{ ...style, textDecoration: "inherit" }}>
-                    {value}
-                    {context.entry.snapshotDeleted && <strong className="text-red-600"> (deleted by owner)</strong>}
-                </span>
-            );
-        },
-    },
-    {
-        _type: "data",
-        columnId: "snapshotMetadata.description",
-        label: "Description",
-        sizeInPercent: 26,
-        filter: false,
-        sortable: false,
-        formatStyle: (value, context) => {
-            let style = makeRowStyle(context);
-            if (!value) {
-                style = {
-                    ...style,
-                    color: "gray",
-                    fontStyle: "italic",
-                };
-            }
-            return style;
-        },
-    },
-    {
-        // TODO: This too could be a "virtual" column
-        _type: "data",
-        columnId: "snapshotId",
-        label: "URL",
-        sortable: false,
-        filter: false,
-        sizeInPercent: 12,
-        renderData: function SnapshotUrlCell(snapshotId, context) {
-            const url = buildSnapshotUrl(snapshotId);
-
-            function handleCopyRequested() {
-                return url;
-            }
-
-            const style = makeRowStyle(context);
-
-            return (
-                <CopyCellValue onCopyRequested={handleCopyRequested}>
-                    <div className="h-full group relative flex items-center min-w-0" style={style} title={url}>
-                        <div className="overflow-hidden text-ellipsis whitespace-nowrap">{url}</div>
-                    </div>
-                </CopyCellValue>
-            );
-        },
-    },
-    {
-        _type: "data",
-        columnId: "snapshotMetadata.ownerId",
-        label: "Owner",
-        sortable: false,
-        filter: false,
-        sizeInPercent: 11,
-        renderData: function OwnerField(userId: string, context) {
-            const style = makeRowStyle(context);
-            const ownerInfo = useUserGraphInfo(userId);
-            const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
-            return (
-                <div className="flex gap-1" style={style}>
-                    <UserAvatar userIdOrEmail={userId} userDisplayName={ownerInfo?.display_name} />
-                    {name}
-                </div>
-            );
-        },
-    },
-    {
-        _type: "data",
-        label: "Last visited at",
-        sizeInPercent: 20,
-        columnId: "lastVisitedAt",
-        filter: false,
-        renderData(value) {
-            if (!value) return "N/A";
-            return formatDate(new Date(value));
-        },
-        formatStyle: (value, context) => {
-            const style = makeRowStyle(context);
-            if (!value) {
-                return {
-                    ...style,
-                    color: "gray",
-                    fontStyle: "italic",
-                };
-            }
-            return style;
-        },
-    },
-];
 
 function useUserGraphInfo(ownerId: string | undefined): GraphUser_api | null {
     const userInfoQuery = useQuery({
@@ -209,10 +68,6 @@ function columnIdToApiSortField(columnId: string): SnapshotAccessLogSortBy_api {
     }
 }
 
-function tableSortDirToApiSortDir(sort: TableSortDirection): SortDirection_api {
-    return sort as unknown as SortDirection_api;
-}
-
 export function flattenSnapshotAccessLogEntry(logEntry: SnapshotAccessLog_api): FlattenedSnapshotAccessLog_api {
     const ret = omit(logEntry, ["snapshotMetadata"]) as Record<string, any>;
 
@@ -230,41 +85,249 @@ export type SnapshotOverviewContentProps = {
 };
 
 export function SnapshotManagementContent(props: SnapshotOverviewContentProps): React.ReactNode {
-    const userId = useAuthProvider().userInfo?.user_id;
-    const [selectedSnapshotId, setSelectedSnapshotId] = React.useState<string | null>(null);
+    const queryRefreshActionRef = React.useRef<UseRefreshQueryResult>(null);
+
+    const userId = useUserInfo()?.user_id;
+
+    const [selectedSnapshots, setSelectedSnapshots] = React.useState<SnapshotAccessLog_api[]>([]);
     const [deletePending, setDeletePending] = React.useState<boolean>(false);
 
+    const [titleFilterValue, setTitleFilterValue] = React.useState<string>("");
+    const [visitedAtRange, setVisitedAtRange] = React.useState<EdsDateRange | null>(null);
+    const [onlyShowOwnSnapshots, setOnlyShowOwnSnapshots] = React.useState(false);
+    const [hideDeletedSnapshots, setHideDeletedSnapshots] = React.useState(false);
+
+    const [immediateTitleFilterValue, setDebouncedTitleFilterValue] = useDebouncedOnChange(
+        titleFilterValue,
+        setTitleFilterValue,
+        500,
+    );
+
+    // Selected snapshots hidden by a filter would otherwise still be targeted by bulk deletion. The title is tracked both
+    // as typed and once applied, since rows from the previous filter remain selectable during the debounce
+    const filterCriteria = [
+        immediateTitleFilterValue,
+        titleFilterValue,
+        visitedAtRange,
+        onlyShowOwnSnapshots,
+        hideDeletedSnapshots,
+    ];
+    const [prevFilterCriteria, setPrevFilterCriteria] = React.useState(filterCriteria);
+    if (filterCriteria.some((criterion, index) => criterion !== prevFilterCriteria[index])) {
+        setPrevFilterCriteria(filterCriteria);
+        setSelectedSnapshots([]);
+    }
+
+    function handleClearTitleFilter() {
+        setTitleFilterValue("");
+    }
+
+    async function deleteOrRemoveSnapshots(snapshots: SnapshotAccessLog_api[]) {
+        if (!snapshots.length || !userId) return;
+
+        // Only snapshots owned by the user, and not already deleted, can be deleted. The rest can only be removed from the list
+        const toDelete = snapshots.filter((s) => s.snapshotMetadata.ownerId === userId && !s.snapshotDeleted);
+        const toRemove = snapshots.filter((s) => !toDelete.includes(s));
+        const toDeletionItem = (s: SnapshotAccessLog_api) => ({
+            snapshotId: s.snapshotId,
+            title: s.snapshotMetadata.title,
+        });
+
+        setDeletePending(true);
+
+        const { deletedIds, removedIds } = await props.workbench
+            .getSessionManager()
+            .deleteOrRemoveSnapshots(toDelete.map(toDeletionItem), toRemove.map(toDeletionItem));
+
+        setDeletePending(false);
+
+        const handledIds = [...deletedIds, ...removedIds];
+        if (!handledIds.length) return;
+
+        setSelectedSnapshots((prev) => prev.filter((s) => !handledIds.includes(s.snapshotId)));
+    }
+
+    async function handleDeleteClick() {
+        await deleteOrRemoveSnapshots(selectedSnapshots);
+    }
+
+    async function deleteSnapshot(snapshot: SnapshotAccessLog_api) {
+        await deleteOrRemoveSnapshots([snapshot]);
+    }
+
+    async function openSnapshot(snapshotId: string) {
+        await props.workbench.getSessionManager().openSnapshot(snapshotId);
+    }
+
+    function handleClearSelectionClick() {
+        setSelectedSnapshots([]);
+    }
+
+    return (
+        <div className="gap-y-sm flex h-full flex-col">
+            <div className="gap-x-sm flex">
+                <Field.Root layoutClassName="grow">
+                    <Field.Label>Filter by Title</Field.Label>
+                    <TextInput
+                        value={immediateTitleFilterValue}
+                        placeholder="Search title"
+                        onValueChange={setDebouncedTitleFilterValue}
+                        startAdornment={<Search />}
+                        endAdornment={
+                            <Tooltip content="Clear title filter" side="top">
+                                <Button
+                                    onClick={handleClearTitleFilter}
+                                    size="small"
+                                    variant="ghost"
+                                    iconOnly
+                                    tone="neutral"
+                                >
+                                    <Close />
+                                </Button>
+                            </Tooltip>
+                        }
+                    />
+                </Field.Root>
+                <Field.Root>
+                    <Field.Label>Last visited</Field.Label>
+                    <DateRangePicker value={visitedAtRange ?? { from: null, to: null }} onChange={setVisitedAtRange} />
+                </Field.Root>
+            </div>
+            <div className="gap-x-4xs flex items-center">
+                <SwitchCompositions.WithLabel
+                    checked={onlyShowOwnSnapshots}
+                    label="Show my snapshots only"
+                    size="small"
+                    onCheckedChange={setOnlyShowOwnSnapshots}
+                />
+
+                <SwitchCompositions.WithLabel
+                    checked={hideDeletedSnapshots}
+                    label="Hide deleted snapshots"
+                    size="small"
+                    onCheckedChange={setHideDeletedSnapshots}
+                />
+                <span className="grow" />
+                <Hidden hidden={!selectedSnapshots.length}>
+                    <span className="gap-x-sm flex items-center">
+                        <Typography tone="neutral" size="sm">
+                            {selectedSnapshots.length} selected snapshot{selectedSnapshots.length !== 1 ? "s" : ""}
+                        </Typography>
+                        <Button onClick={handleClearSelectionClick} size="small" variant="ghost">
+                            Clear
+                        </Button>
+                    </span>
+                    <Separator orientation="vertical" />
+                </Hidden>
+                <Tooltip.Provider side="bottom">
+                    <Tooltip
+                        content={
+                            selectedSnapshots.length > 1
+                                ? `Delete or remove the ${selectedSnapshots.length} selected snapshots`
+                                : "Delete or remove the selected snapshot"
+                        }
+                    >
+                        <Button
+                            variant="ghost"
+                            tone="danger"
+                            disabled={!selectedSnapshots.length || deletePending || !userId}
+                            focusableWhenDisabled
+                            onClick={handleDeleteClick}
+                            icon={deletePending ? <CircularProgress /> : <Delete />}
+                        >
+                            Delete
+                        </Button>
+                    </Tooltip>
+                    <Tooltip content="Refresh list">
+                        <Button
+                            variant="ghost"
+                            tone="accent"
+                            onClick={queryRefreshActionRef.current?.refresh}
+                            icon={queryRefreshActionRef.current?.isRefreshing ? <CircularProgress /> : <Refresh />}
+                        >
+                            Refresh
+                        </Button>
+                    </Tooltip>
+                </Tooltip.Provider>
+            </div>
+
+            <SnapshotTable
+                selectedSnapshots={selectedSnapshots}
+                active={props.active}
+                titleFilter={titleFilterValue}
+                lastVisitedAtFilter={visitedAtRange}
+                showMySnapshotsOnly={onlyShowOwnSnapshots}
+                hideDeletedSnapshots={hideDeletedSnapshots}
+                refreshActionRef={queryRefreshActionRef}
+                deletePending={deletePending}
+                onSelectedSnapshotsChange={setSelectedSnapshots}
+                onOpenSnapshot={openSnapshot}
+                onDeleteSnapshot={deleteSnapshot}
+            />
+        </div>
+    );
+}
+
+type SnapshotTableProps = {
+    selectedSnapshots: SnapshotAccessLog_api[];
+    active: boolean;
+    titleFilter: string | null;
+    lastVisitedAtFilter: EdsDateRange | null;
+    showMySnapshotsOnly: boolean;
+    hideDeletedSnapshots: boolean;
+
+    refreshActionRef: React.RefObject<UseRefreshQueryResult | null>;
+    deletePending: boolean;
+
+    onSelectedSnapshotsChange: (snapshots: SnapshotAccessLog_api[]) => void;
+    onOpenSnapshot: (snapshotId: string) => void;
+    onDeleteSnapshot: (snapshot: SnapshotAccessLog_api) => void;
+};
+
+function SnapshotTable(props: SnapshotTableProps) {
+    const { onSelectedSnapshotsChange } = props;
+
+    const wrapperRef = React.useRef<HTMLDivElement>(null);
+
+    const userId = useUserInfo()?.user_id;
+
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
-    const [tableFilter, setTableFilter] = React.useState<TableFilter>({});
-    const [tableSortState, setTableSortState] = React.useState<TableSorting>([
-        { columnId: "lastVisitedAt", direction: TableSortDirection.DESC },
-    ]);
+    const [tableSortState, setTableSortState] = React.useState<TableSortState | null>(null);
 
-    const timeoutFunction = useTimeoutFunction();
-
-    const querySortParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
-        if (!tableSortState?.length) return undefined;
-
-        const sortBy = columnIdToApiSortField(tableSortState[0].columnId);
-        const SortDirection = tableSortDirToApiSortDir(tableSortState[0].direction);
+    const queryFilterParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
+        const dateFilterRange = edsDateRangeToIsoStringRange(props.lastVisitedAtFilter) ?? undefined;
 
         return {
-            sort_by: sortBy,
-            sort_direction: SortDirection,
-            filter_title: tableFilter.title,
-            filter_last_visited_from: tableFilter.visitedAt?.from,
-            filter_last_visited_to: tableFilter.visitedAt?.to,
-            filter_owner_id: tableFilter.ownerId,
-            filter_snapshot_deleted: tableFilter.snapshotDeleted,
+            filter_title: props.titleFilter,
+            filter_last_visited_from: dateFilterRange?.from,
+            filter_last_visited_to: dateFilterRange?.to,
+            filter_owner_id: props.showMySnapshotsOnly ? userId : undefined,
+            filter_snapshot_deleted: props.hideDeletedSnapshots ? false : undefined,
         };
-    }, [tableFilter, tableSortState]);
+    }, [props.lastVisitedAtFilter, props.titleFilter, props.showMySnapshotsOnly, props.hideDeletedSnapshots, userId]);
+
+    const querySortingParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
+        const { columnKey, direction } = tableSortState ?? {};
+
+        if (!columnKey || !direction || direction === TableSortDirection.NONE) return {};
+
+        return {
+            sort_by: columnIdToApiSortField(columnKey),
+            sort_direction: tableSortDirToApiSortDir(direction),
+        };
+    }, [tableSortState]);
+
+    const queryCollationParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
+        return {
+            ...queryFilterParams,
+            ...querySortingParams,
+        };
+    }, [queryFilterParams, querySortingParams]);
 
     const snapshotsQuery = useInfiniteQuery({
         ...getSnapshotAccessLogsInfiniteOptions({
-            query: { ...querySortParams, page_size: QUERY_PAGE_SIZE },
+            query: { ...queryCollationParams, page_size: QUERY_PAGE_SIZE },
         }),
-        // Tanstack requires initialPageParam. The correct option would be `null`, but that causes an
-        // undefined-error in `getVisitedSnapshotsInfiniteOptions(...)` since it thinks it's an object.
         initialPageParam: "",
         refetchInterval: 10000,
         getNextPageParam(lastPage) {
@@ -273,107 +336,24 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         enabled: props.active,
     });
 
-    const { isRefreshing, refresh } = useRefreshQuery(snapshotsQuery);
+    const { fetchNextPage: fetchNextSnapshotPage } = snapshotsQuery;
+
+    const queryRefreshAction = useRefreshQuery(snapshotsQuery);
+    React.useImperativeHandle(props.refreshActionRef, () => queryRefreshAction, [queryRefreshAction]);
 
     const tableData = React.useMemo(() => {
         if (!snapshotsQuery.data) return [];
 
-        return snapshotsQuery.data?.pages?.flatMap(({ items }) => {
-            return items.map(flattenSnapshotAccessLogEntry);
-        });
+        return snapshotsQuery.data.pages?.flatMap(({ items }) => items);
     }, [snapshotsQuery.data]);
 
-    const selectedSnapshot = React.useMemo(() => {
-        if (!selectedSnapshotId) return null;
-        return tableData.find((snapshot) => snapshot.snapshotId === selectedSnapshotId) || null;
-    }, [tableData, selectedSnapshotId]);
+    const tableDataWithPendingRows = React.useMemo(() => {
+        if (!(snapshotsQuery.isLoading || snapshotsQuery.isFetchingNextPage)) return tableData;
 
-    function handleDateFilterRangeChange(newRange: null | EdsDateRange) {
-        setTableFilter((prev) => {
-            return {
-                ...prev,
-                visitedAt: edsDateRangeToIsoStringRange(newRange) ?? undefined,
-            };
-        });
-    }
+        return [...tableData, ...PENDING_PAGE];
+    }, [snapshotsQuery.isFetchingNextPage, snapshotsQuery.isLoading, tableData]);
 
-    function handleTitleFilterValueChange(e: React.ChangeEvent<HTMLInputElement>) {
-        timeoutFunction(() => {
-            const newValue = e.target.value;
-            setTableFilter((prev) => {
-                return {
-                    ...prev,
-                    title: newValue ?? undefined,
-                };
-            });
-        }, 800);
-    }
-
-    function handleClearTitleFilter() {
-        setTableFilter((prev) => {
-            return {
-                ...prev,
-                title: undefined,
-            };
-        });
-    }
-
-    function handleShowMySnapshotsOnlyChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const checked = e.target.checked;
-
-        if (!userId) return;
-        setTableFilter((prev) => {
-            return {
-                ...prev,
-                ownerId: checked ? userId : undefined,
-            };
-        });
-    }
-
-    function handleHideDeletedSnapshotsChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const checked = e.target.checked;
-
-        setTableFilter((prev) => {
-            return {
-                ...prev,
-                snapshotDeleted: checked ? false : undefined,
-            };
-        });
-    }
-
-    async function handleDeleteClick() {
-        if (!selectedSnapshot || !userId) return;
-
-        const snapshotOwnerId = selectedSnapshot["snapshotMetadata.ownerId"];
-
-        setDeletePending(true);
-
-        let success: boolean;
-        if (userId === snapshotOwnerId) {
-            success = await props.workbench.getSessionManager().deleteSnapshot(selectedSnapshotId!);
-        } else {
-            success = await props.workbench.getSessionManager().deleteSnapshotAccessLog(selectedSnapshotId!);
-        }
-
-        setDeletePending(false);
-
-        if (!success) {
-            return;
-        }
-
-        setSelectedSnapshotId(null);
-    }
-
-    async function handleOpenSnapshotClick() {
-        if (!selectedSnapshotId) return;
-
-        await props.workbench.getSessionManager().openSnapshot(selectedSnapshotId);
-    }
-
-    const handleTableScrollIndexChange = React.useCallback(function handleTableScrollIndexChange(
-        start: number,
-        end: number,
-    ) {
+    const onTableScrollIndexChange = React.useCallback((start: number, end: number) => {
         setVisibleRowRange({ start, end });
     }, []);
 
@@ -383,100 +363,262 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
             if (!snapshotsQuery.hasNextPage) return;
             if (snapshotsQuery.isFetchingNextPage) return;
             if (tableData.length - visibleRowRange?.end <= NEXT_PAGE_THRESHOLD) {
-                snapshotsQuery.fetchNextPage();
+                fetchNextSnapshotPage();
             }
         },
-        [snapshotsQuery, tableData.length, visibleRowRange],
+        [
+            snapshotsQuery.isFetchingNextPage,
+            snapshotsQuery.hasNextPage,
+            tableData.length,
+            visibleRowRange,
+            fetchNextSnapshotPage,
+        ],
     );
 
-    let deleteButtonText = "Delete";
-    let deleteButtonTooltip = "";
-    if (selectedSnapshotId) {
-        const isOwner = selectedSnapshot?.["snapshotMetadata.ownerId"] === userId;
-        deleteButtonText = isOwner ? "Delete snapshot" : "Remove from list";
-        deleteButtonTooltip = isOwner
-            ? "Delete selected snapshot (permanently removes it for all users)"
-            : "Remove snapshot from list (you are not the owner, snapshot will remain accessible to other users)";
+    const selectedSnapshotIds = React.useMemo(
+        () => props.selectedSnapshots.map((s) => s.snapshotId),
+        [props.selectedSnapshots],
+    );
+
+    React.useEffect(
+        function maybeSyncSelectedSnapshotsEffect() {
+            const settled = snapshotsQuery.isSuccess && !snapshotsQuery.isFetching;
+            const synced = props.selectedSnapshots.flatMap((selected) => {
+                const fresh = tableData.find((s) => s.snapshotId === selected.snapshotId);
+                // Also drop entries that may exist on unloaded pages: rows the user can't see must not stay deletable
+                if (!fresh) return settled ? [] : [selected];
+                return [fresh];
+            });
+            const changed =
+                synced.length !== props.selectedSnapshots.length ||
+                synced.some((s, i) => s !== props.selectedSnapshots[i]);
+            if (changed) {
+                // Deliberately in an effect: entries can change or disappear on refetch without any user event to react to
+                onSelectedSnapshotsChange(synced);
+            }
+        },
+        [
+            onSelectedSnapshotsChange,
+            props.selectedSnapshots,
+            tableData,
+            snapshotsQuery.isSuccess,
+            snapshotsQuery.isFetching,
+        ],
+    );
+
+    function handleToggleSnapshotSelected(snapshot: SnapshotAccessLog_api, checked: boolean) {
+        const otherSnapshots = props.selectedSnapshots.filter((s) => s.snapshotId !== snapshot.snapshotId);
+        onSelectedSnapshotsChange(checked ? [...otherSnapshots, snapshot] : otherSnapshots);
     }
+
+    function handleRowClick(snapshot: SnapshotAccessLog_api) {
+        onSelectedSnapshotsChange([snapshot]);
+    }
+
     return (
-        <>
-            <div className="mb-4 flex gap-4">
-                <Label text="Title" wrapperClassName="grow">
-                    <Input
-                        startAdornment={<Search fontSize="small" />}
-                        endAdornment={
-                            <DenseIconButton onClick={handleClearTitleFilter} title="Clear filter">
-                                <Close fontSize="inherit" />
-                            </DenseIconButton>
+        <Table.Root
+            layoutClassName="h-full"
+            size="small"
+            overflowWrapperRef={wrapperRef}
+            sortable
+            // Selection is fully controlled here; the table's own toggle-on-click handler is intentionally not used
+            selectable="multiple"
+            fixed
+            columnSorting={tableSortState}
+            rowSelection={selectedSnapshotIds}
+            onChangeColumnSort={setTableSortState}
+        >
+            <Table.Head sticky>
+                <Table.Column colKey="select" width={60} sortable={false} />
+                <Table.Column
+                    colKey="visits"
+                    width={60}
+                    // The sorting adornment require some space, which normally looks a bit weirdly aligned
+                    // for as the column text here is centered. We remove the right side padding to make the
+                    // alignment look more natural in the un-sorted state
+                    layoutClassName="text-center! pr-0!"
+                >
+                    Visits
+                </Table.Column>
+                <Table.Column colKey="snapshotMetadata.title" widthInPercent={24}>
+                    Title
+                </Table.Column>
+                <Table.Column colKey="snapshotMetadata.description" sortable={false}>
+                    Description
+                </Table.Column>
+                <Table.Column colKey="snapshotId" sortable={false} widthInPercent={12}>
+                    URL
+                </Table.Column>
+                <Table.Column colKey="snapshotMetadata.ownerId" sortable={false} width={120}>
+                    Owner
+                </Table.Column>
+                <Table.Column colKey="lastVisitedAt" width={160}>
+                    Last visited at
+                </Table.Column>
+                <Table.Column colKey="actions" sortable={false} width={80}>
+                    Actions
+                </Table.Column>
+            </Table.Head>
+            <Table.Body emptyMessage="No snapshots found.">
+                <Virtualization
+                    containerRef={wrapperRef}
+                    placeholderComponent="tr"
+                    items={tableDataWithPendingRows}
+                    itemSize={ROW_HEIGHT_PX["small"]}
+                    direction="vertical"
+                    renderItem={(item, idx) => {
+                        if (item === PENDING_ROW) {
+                            return <TableCompositions.PendingRow key={`pending-row--${idx}`} />;
+                        } else {
+                            return (
+                                <SnapshotRow
+                                    key={item.snapshotId}
+                                    item={item}
+                                    selected={selectedSnapshotIds.includes(item.snapshotId)}
+                                    canDelete={item.snapshotMetadata.ownerId === userId && !item.snapshotDeleted}
+                                    deletePending={props.deletePending}
+                                    onSelectedChange={handleToggleSnapshotSelected}
+                                    onClick={handleRowClick}
+                                    onOpen={props.onOpenSnapshot}
+                                    onDelete={props.onDeleteSnapshot}
+                                />
+                            );
                         }
-                        value={tableFilter.title ?? ""}
-                        placeholder="Search title"
-                        onChange={handleTitleFilterValueChange}
-                        className="h-6"
-                    />
-                </Label>
-                <Label text="Last visited at" wrapperClassName="min-w-2xs">
-                    <DateRangePicker
-                        className="webviz-eds-date-range-picker --compact rounded focus-within:outline-0 border border-gray-300"
-                        value={isoRangeToEdsDateRange(tableFilter.visitedAt ?? null)}
-                        onChange={handleDateFilterRangeChange}
-                    />
-                </Label>
-            </div>
-            <div className="flex gap-4 mb-2 items-center">
-                <Label text="Show my snapshots only" wrapperClassName="flex items-center" position="right">
-                    <Switch checked={tableFilter.ownerId === userId} onChange={handleShowMySnapshotsOnlyChange} />
-                </Label>
-                <Label text="Hide deleted snapshots" wrapperClassName="flex items-center" position="right">
-                    <Switch
-                        checked={tableFilter.snapshotDeleted === false}
-                        onChange={handleHideDeletedSnapshotsChange}
-                    />
-                </Label>
-                <span className="grow" />
-                <Tooltip title={"Open selected snapshot"} placement="top" enterDelay="medium">
-                    <Button
-                        color="primary"
-                        disabled={!selectedSnapshotId || selectedSnapshot?.snapshotDeleted}
-                        onClick={handleOpenSnapshotClick}
-                        size="medium"
-                    >
-                        <FileOpen fontSize="inherit" /> Open
-                    </Button>
-                </Tooltip>
-                <Tooltip title={deleteButtonTooltip} placement="top" enterDelay="medium">
-                    <Button
-                        color="danger"
-                        disabled={!selectedSnapshotId || deletePending || !userId}
-                        onClick={handleDeleteClick}
-                        size="medium"
-                    >
-                        {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />}{" "}
-                        {deleteButtonText}
-                    </Button>
-                </Tooltip>
-                <Tooltip title="Refresh list" placement="top" enterDelay="medium">
-                    <Button color="primary" onClick={refresh} size="medium">
-                        {isRefreshing ? <CircularProgress size="small" /> : <Refresh fontSize="inherit" />} Refresh
-                    </Button>
-                </Tooltip>
-            </div>
-            <Table
-                rowIdentifier="snapshotId"
-                alternatingColumnColors={USE_ALTERNATING_COLUMN_COLORS}
-                columns={TABLE_COLUMNS}
-                rows={tableData}
-                numPendingRows={snapshotsQuery.isLoading || snapshotsQuery.isFetchingNextPage ? QUERY_PAGE_SIZE : 0}
-                rowHeight={ROW_HEIGHT}
-                height={TABLE_HEIGHT}
-                headerHeight={HEADER_HEIGHT}
-                sorting={tableSortState}
-                onSortingChange={setTableSortState}
-                selectable
-                controlledCollation
-                onVisibleRowRangeChange={handleTableScrollIndexChange}
-                onSelectedRowsChange={(selection) => setSelectedSnapshotId(selection[0])}
-            />
-        </>
+                    }}
+                    onScroll={onTableScrollIndexChange}
+                />
+                <TableCompositions.PendingRows
+                    rowCount={snapshotsQuery.isLoading || snapshotsQuery.isFetchingNextPage ? QUERY_PAGE_SIZE : 0}
+                />
+            </Table.Body>
+        </Table.Root>
+    );
+}
+
+type SnapshotRowProps = {
+    item: SnapshotAccessLog_api;
+    selected: boolean;
+    canDelete: boolean;
+    deletePending: boolean;
+    onSelectedChange: (snapshot: SnapshotAccessLog_api, selected: boolean) => void;
+    onClick: (snapshot: SnapshotAccessLog_api) => void;
+    onOpen: (snapshotId: string) => void;
+    onDelete: (snapshot: SnapshotAccessLog_api) => void;
+};
+
+function SnapshotRow(props: SnapshotRowProps) {
+    const { item } = props;
+    const ownerInfo = useUserGraphInfo(item.snapshotMetadata.ownerId);
+    const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
+    const avatarFn = useUserAvatar(ownerInfo?.id ?? "", ownerInfo?.display_name);
+    const url = buildWorkbenchUrl({ kind: "snapshot", snapshotId: item.snapshotId, dashboardId: null });
+
+    const isDeleted = item.snapshotDeleted;
+
+    return (
+        <Table.Row
+            rowKey={item.snapshotId}
+            layoutClassName="group/snapshot-row"
+            data-deleted={isDeleted ? "" : undefined}
+            onClick={() => props.onClick(item)}
+            onDoubleClick={(evt) => {
+                // Buttons inside cells (e.g. copy URL) only stop click propagation, so their double-clicks still bubble here
+                if (isDeleted || (evt.target as HTMLElement).closest("button")) return;
+                props.onOpen(item.snapshotId);
+            }}
+        >
+            {/* Stop propagation on the cell, since the checkbox also dispatches a click on its hidden input */}
+            <Table.Cell
+                onClick={(evt) => evt.stopPropagation()}
+                onDoubleClick={(evt) => evt.stopPropagation()}
+                noPadding
+                layoutClassName="px-sm"
+            >
+                <Checkbox
+                    size="small"
+                    aria-label={`Select snapshot ${item.snapshotMetadata.title}`}
+                    checked={props.selected}
+                    onCheckedChange={(checked) => props.onSelectedChange(item, checked)}
+                />
+            </Table.Cell>
+            <Table.Cell layoutClassName="text-center! group-data-deleted/snapshot-row:line-through">
+                {item.visits}
+            </Table.Cell>
+            <Table.Cell title={item.snapshotMetadata.title}>
+                <div className="gap-x-4xs flex items-center justify-between">
+                    <span className="truncate overflow-hidden group-data-deleted/snapshot-row:line-through">
+                        {item.snapshotMetadata.title}
+                    </span>
+                    {isDeleted && (
+                        <strong
+                            title="This snapshot has been deleted by the snapshot owner"
+                            className="text-danger-subtle"
+                        >
+                            (Deleted)
+                        </strong>
+                    )}
+                </div>
+            </Table.Cell>
+            <Table.Cell layoutClassName="group-data-deleted/snapshot-row:*:line-through">
+                {item.snapshotMetadata.description || <span className="text-current/50 italic">N/A</span>}
+            </Table.Cell>
+            <Table.Cell layoutClassName="group-data-deleted/snapshot-row:line-through">
+                <TableCompositions.CopyCellValue onCopyRequested={() => url}>
+                    <div className="group relative flex h-full min-w-0 items-center" title={url}>
+                        <div className="overflow-hidden text-ellipsis whitespace-nowrap">{url}</div>
+                    </div>
+                </TableCompositions.CopyCellValue>
+            </Table.Cell>
+            <Table.Cell noPadding>
+                <div className="px-sm gap-x-xs flex items-center">
+                    <Avatar userData={avatarFn} size={24} />
+                    <span className="group-data-deleted/snapshot-row:line-through">{name}</span>
+                </div>
+            </Table.Cell>
+            <Table.Cell layoutClassName="group-data-deleted/snapshot-row:line-through">
+                {item.lastVisitedAt ? (
+                    formatDate(new Date(item.lastVisitedAt))
+                ) : (
+                    <span className="text-current/50 italic">N/A</span>
+                )}
+            </Table.Cell>
+            <Table.Cell
+                noPadding
+                // Row actions should not change the selection or trigger the row double-click
+                onClick={(evt) => evt.stopPropagation()}
+                onDoubleClick={(evt) => evt.stopPropagation()}
+            >
+                <div className="px-sm gap-x-3xs flex items-center">
+                    <Tooltip content={isDeleted ? "Deleted snapshots cannot be opened" : "Open snapshot"} side="left">
+                        <Button
+                            variant="ghost"
+                            tone="accent"
+                            size="small"
+                            iconOnly
+                            aria-label={`Open snapshot ${item.snapshotMetadata.title}`}
+                            disabled={isDeleted}
+                            focusableWhenDisabled
+                            onClick={() => props.onOpen(item.snapshotId)}
+                        >
+                            <FileOpen style={{ fontSize: 16 }} />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip content={props.canDelete ? "Delete snapshot" : "Remove from my list"} side="left">
+                        <Button
+                            variant="ghost"
+                            tone="danger"
+                            size="small"
+                            iconOnly
+                            aria-label={`${props.canDelete ? "Delete" : "Remove"} snapshot ${item.snapshotMetadata.title}`}
+                            disabled={props.deletePending}
+                            focusableWhenDisabled
+                            onClick={() => props.onDelete(item)}
+                        >
+                            <Delete style={{ fontSize: 16 }} />
+                        </Button>
+                    </Tooltip>
+                </div>
+            </Table.Cell>
+        </Table.Row>
     );
 }

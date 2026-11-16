@@ -1,8 +1,16 @@
+/** Some rules disabled since this is legacy code */
+/* eslint-disable @eslint-react/no-unused-class-component-members   */
+/* eslint-disable @eslint-react/no-access-state-in-setstate */
+
 import React from "react";
 
 import { Close } from "@mui/icons-material";
-import _ from "lodash";
+import { cloneDeep } from "lodash-es";
 
+import {
+    type FieldStateDataAttributes,
+    useFieldStateDataAttributes,
+} from "@lib/components/Field/_components/FieldStateContext";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { Suggestions } from "./private-components/suggestions";
@@ -34,22 +42,34 @@ export type SmartNodeSelectorSelection = {
 
 export type SmartNodeSelectorProps = {
     id?: string;
+    dataTestId?: string;
     maxNumSelectedNodes?: number;
     delimiter?: string;
     numMetaNodes?: number;
     data: TreeDataNode[];
-    label?: string;
     showSuggestions?: boolean;
-    onChange?: (selection: SmartNodeSelectorSelection) => void;
+    onValueChange?: (selection: SmartNodeSelectorSelection) => void;
     selectedTags?: string[];
     placeholder?: string;
     numSecondsUntilSuggestionsAreShown?: number;
     lineBreakAfterTag?: boolean;
     caseInsensitiveMatching?: boolean;
     useBetaFeatures?: boolean;
+    inputRef?: React.Ref<HTMLInputElement>;
+    disabled?: boolean;
+    fieldStateDataAttributes?: FieldStateDataAttributes;
 };
 
 export type SmartNodeSelectorComponentProps = { [K in keyof SmartNodeSelectorProps]-?: SmartNodeSelectorProps[K] };
+
+function assignRef<T>(ref: React.Ref<T> | undefined, value: T | null): void {
+    if (!ref) return;
+    if (typeof ref === "function") {
+        ref(value);
+    } else {
+        (ref as React.MutableRefObject<T | null>).current = value;
+    }
+}
 
 type SmartNodeSelectorStateType = {
     nodeSelections: TreeNodeSelection[];
@@ -118,6 +138,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         lineBreakAfterTag: false,
         caseInsensitiveMatching: false,
         useBetaFeatures: false,
+        disabled: false,
     };
 
     constructor(props: SmartNodeSelectorComponentProps) {
@@ -215,7 +236,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         this.disableBlur = this.disableBlur.bind(this);
         this.selectLastInput = this.selectLastInput.bind(this);
         this.clearAllTags = this.clearAllTags.bind(this);
-        this.useSuggestion = this.useSuggestion.bind(this);
+        this.pickSuggestion = this.pickSuggestion.bind(this);
         this.handleInputSelect = this.handleInputSelect.bind(this);
     }
 
@@ -228,6 +249,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         if (!this.state.hasError) {
             this.updateSelectedTagsAndNodes(true);
         }
+        this.updateInputRef();
     }
 
     componentWillUnmount(): void {
@@ -238,11 +260,12 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         document.removeEventListener("mouseup", this.handleMouseUp, true);
         document.removeEventListener("mousemove", this.handleMouseMove, true);
         document.removeEventListener("keydown", this.handleGlobalKeyDown, true);
+        assignRef(this.props.inputRef, null);
     }
 
     componentDidUpdate(prevProps: SmartNodeSelectorProps): void {
         if (
-            (this.props.data && JSON.stringify(this.props.data) !== JSON.stringify(prevProps.data)) ||
+            (this.props.data && this.props.data !== prevProps.data) ||
             (this.props.delimiter && this.props.delimiter !== prevProps.delimiter)
         ) {
             let error: string | undefined;
@@ -297,6 +320,13 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
             this.updateState({ nodeSelections: nodeSelections });
         }
         this.justUpdated = true;
+        this.updateInputRef();
+    }
+
+    protected updateInputRef(): void {
+        const lastSelection = this.state.nodeSelections[this.state.nodeSelections.length - 1];
+        const lastInput = (lastSelection?.getRef() as React.RefObject<HTMLInputElement>)?.current;
+        assignRef(this.props.inputRef, lastInput ?? null);
     }
 
     protected createNewNodeSelection(nodePath: string[] = [""]): TreeNodeSelection {
@@ -544,7 +574,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         });
     }
 
-    protected useSuggestion(e: globalThis.KeyboardEvent | React.MouseEvent<HTMLDivElement>, suggestion: string): void {
+    protected pickSuggestion(e: globalThis.KeyboardEvent | React.MouseEvent<HTMLDivElement>, suggestion: string): void {
         const nodeSelection = this.currentNodeSelection();
         this.noUserInputSelect = true;
 
@@ -582,9 +612,9 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
             const blinkTimer = setInterval(() => {
                 numBlinks++;
                 if (numBlinks % 2 === 0) {
-                    numberOfTagsDiv.classList.add("text-orange-500!");
+                    numberOfTagsDiv.classList.add("text-warning-subtle!");
                 } else {
-                    numberOfTagsDiv.classList.remove("text-orange-500!");
+                    numberOfTagsDiv.classList.remove("text-warning-subtle!");
                 }
                 if (numBlinks === 7) {
                     clearInterval(blinkTimer);
@@ -958,7 +988,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         if (this.clipboardData === null) return;
         const selections = this.clipboardData;
         if (selections && selections.length > 0) {
-            const newSelections = _.cloneDeep(this.state.nodeSelections);
+            const newSelections = cloneDeep(this.state.nodeSelections);
             if (this.lastNodeSelection().isEmpty()) {
                 newSelections.pop();
             }
@@ -993,7 +1023,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     }
 
     protected updateSelectedTagsAndNodes(initialUpdate = false): void {
-        const { onChange, maxNumSelectedNodes } = this.props;
+        const { onValueChange: onChange, maxNumSelectedNodes } = this.props;
         const selectedTags: SmartNodeSelectorTag[] = [];
         const selectedNodes: string[] = [];
         const selectedIds: string[] = [];
@@ -1661,7 +1691,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     }
 
     render(): React.ReactNode {
-        const { id, label, maxNumSelectedNodes, placeholder, showSuggestions, lineBreakAfterTag } = this.props;
+        const { id, maxNumSelectedNodes, placeholder, showSuggestions, lineBreakAfterTag, disabled } = this.props;
         const { nodeSelections, suggestionsVisible, showAllSuggestions, hasError, error } = this.state;
 
         if (hasError) {
@@ -1669,11 +1699,12 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                 <div id={id} ref={this.ref} className="SmartNodeSelector--Error">
                     <strong>SmartNodeSelector</strong>
                     <br />
-                    {error.split("\n").map((item) => (
-                        <>
+                    {error.split("\n").map((item, i) => (
+                        // eslint-disable-next-line @eslint-react/no-array-index-key -- Legacy
+                        <React.Fragment key={i}>
                             {item}
                             <br />
-                        </>
+                        </React.Fragment>
                     ))}
                 </div>
             );
@@ -1685,23 +1716,24 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         const duplicateFlags = this.computeDuplicateFlags(nodeSelections);
 
         return (
-            <div id={id} ref={this.ref}>
-                {label && <label>{label}</label>}
+            <div id={id} data-testid={this.props.dataTestId || undefined} ref={this.ref} className={resolveClassNames({ "cursor-not-allowed": disabled ?? false })}>
                 <div
+                    {...(this.props.fieldStateDataAttributes ?? {})}
+                    data-disabled={disabled || undefined}
                     className={resolveClassNames(
-                        "border rounded-sm p-2 pl-4 pr-12 flex flex-wrap cursor-text relative my-2 min-h-12 min-w-48",
+                        "form-element text-body-md py-xs px-sm relative flex min-w-48 cursor-text rounded",
                         {
-                            "border-0 p-0 pr-10": frameless,
-                            "rounded-b-none!": suggestionsVisible,
-                            "border-red-600": maxNumSelectedNodes > 0 && this.numValidSelections > maxNumSelectedNodes,
+                            "border-0 p-0": frameless,
+                            "border-danger": maxNumSelectedNodes > 0 && this.numValidSelections > maxNumSelectedNodes,
+                            "text-disabled! pointer-events-none": disabled ?? false,
                         },
                     )}
                     onClick={this.selectLastInput}
                     onMouseDown={this.handleMouseDown}
                 >
                     <ul
-                        className={resolveClassNames({
-                            "inline-flex flex-wrap": !lineBreakAfterTag,
+                        className={resolveClassNames("gap-x-xs grow", {
+                            "gap-x-xs inline-flex flex-wrap": !lineBreakAfterTag,
                             "w-full": frameless,
                         })}
                         ref={this.tagFieldRef}
@@ -1710,6 +1742,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                             const isActiveTag = index === this.currentTagIndex();
                             const tag = (
                                 <Tag
+                                    // eslint-disable-next-line @eslint-react/no-array-index-key -- Legacy
                                     key={`${index}`}
                                     index={index}
                                     frameless={frameless}
@@ -1731,6 +1764,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                                     updateSelectedTagsAndNodes={this.updateSelectedTagsAndNodes}
                                     shake={this.state.currentTagShaking && index === this.currentTagIndex()}
                                     maxNumSelectedNodes={numSelectedNodes === -1 ? -1 : numSelectedNodes}
+                                    disabled={disabled ?? false}
                                 />
                             );
                             if (maxNumSelectedNodes !== -1) {
@@ -1739,13 +1773,13 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                             return tag;
                         })}
                     </ul>
-                    <div className="absolute right-2 top-1/2 -mt-3">
+                    <div className="flex flex-col items-center justify-center">
                         <button
-                            className="appearance-none bg-cyan-600 rounded-full w-6 h-6 flex items-center justify-center hover:bg-cyan-500 text-white cursor-pointer disabled:hidden text-sm"
+                            className="selectable text-body-sm flex cursor-pointer appearance-none items-center justify-center rounded text-white disabled:hidden"
                             type="button"
                             title="Clear all"
                             onClick={this.clearAllTags}
-                            disabled={this.countTags() <= 1 && this.hasLastEmptyTag()}
+                            disabled={(this.countTags() <= 1 && this.hasLastEmptyTag()) || (disabled ?? false)}
                         >
                             <Close fontSize="inherit" />
                         </button>
@@ -1755,7 +1789,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                             suggestionsRef={this.suggestionsRef}
                             tagInputFieldRef={this.tagFieldRef}
                             visible={suggestionsVisible && this.currentTagIndex() >= 0}
-                            useSuggestion={this.useSuggestion}
+                            useSuggestion={this.pickSuggestion}
                             treeNodeSelection={this.currentNodeSelection()}
                             showAllSuggestions={showAllSuggestions}
                             enableInputBlur={this.enableBlur}
@@ -1763,31 +1797,22 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                         />
                     )}
                 </div>
-                {maxNumSelectedNodes > 1 && (
-                    <div
-                        className={resolveClassNames("text-right relative w-full mt-2 text-slate-600 text-sm", {
-                            "text-red-600!": this.numValidSelections > maxNumSelectedNodes,
-                        })}
-                        ref={this.refNumberOfTags}
-                    >
-                        Selected {this.numValidSelections} of {maxNumSelectedNodes}
-                    </div>
-                )}
             </div>
         );
     }
 }
 
-export const SmartNodeSelector: React.FC<SmartNodeSelectorProps> = (props) => {
+export const SmartNodeSelector = React.forwardRef<HTMLInputElement, SmartNodeSelectorProps>((props, ref) => {
+    const fieldStateDataAttributes = useFieldStateDataAttributes();
     const adjustedProps: SmartNodeSelectorComponentProps = {
         id: props.id ?? "",
+        dataTestId: props.dataTestId ?? "",
         data: props.data,
-        onChange:
-            props.onChange ??
+        onValueChange:
+            props.onValueChange ??
             (() => {
                 return;
             }),
-        label: props.label ?? "",
         maxNumSelectedNodes: props.maxNumSelectedNodes ?? -1,
         delimiter: props.delimiter ?? ":",
         numMetaNodes: props.numMetaNodes ?? 0,
@@ -1798,7 +1823,10 @@ export const SmartNodeSelector: React.FC<SmartNodeSelectorProps> = (props) => {
         lineBreakAfterTag: props.lineBreakAfterTag ?? false,
         caseInsensitiveMatching: props.caseInsensitiveMatching ?? false,
         useBetaFeatures: props.useBetaFeatures ?? false,
+        inputRef: props.inputRef ?? ref,
+        disabled: props.disabled ?? false,
+        fieldStateDataAttributes,
     };
 
     return <SmartNodeSelectorComponent {...adjustedProps} />;
-};
+});

@@ -15,4 +15,7 @@ RUN npm ci --ignore-scripts
 
 COPY --chown=node:node frontend/ ./
 
+# Make doc files available for frontend imports
+COPY --chown=node:node docs/ ../docs
+
 CMD ["npm", "run", "dev"]

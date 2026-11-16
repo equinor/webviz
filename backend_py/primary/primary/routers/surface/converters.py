@@ -6,7 +6,14 @@ from numpy.typing import NDArray
 from webviz_core_utils.b64 import b64_encode_float_array_as_float32
 
 from webviz_services.smda_access.types import StratigraphicSurface
-from webviz_services.sumo_access.surface_types import SurfaceMetaSet
+from webviz_services.sumo_access.surface_types import (
+    InitialFluidContactSurfaceMeta,
+    StdResAttribute as ServiceStdResAttribute,
+    SurfaceAttribute as ServiceSurfaceAttribute,
+    SurfaceMetaSet,
+    SurfaceStandardResult as ServiceSurfaceStandardResult,
+    TagNameAttribute as ServiceTagNameAttribute,
+)
 from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline
 from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionResult
 from webviz_services.utils.surface_helpers import (
@@ -18,6 +25,27 @@ from webviz_services.utils.surface_to_png import surface_to_png_bytes_optimized
 from webviz_services.utils.surfaces_well_trajectory_formation_segments import FormationSegment
 
 from . import schemas
+
+
+def to_api_surface_attribute(attribute: ServiceSurfaceAttribute) -> schemas.SurfaceAttribute:
+    if isinstance(attribute, ServiceTagNameAttribute):
+        return schemas.TagNameAttribute(kind="TAGNAME", tag_name=attribute.tag_name)
+
+    return schemas.StdResAttribute(
+        kind="STDRES",
+        std_res_name=schemas.SurfaceStandardResult(attribute.std_res_name.value),
+        sub_name=attribute.sub_name,
+    )
+
+
+def from_api_surface_attribute(attribute: schemas.SurfaceAttribute) -> ServiceSurfaceAttribute:
+    if isinstance(attribute, schemas.TagNameAttribute):
+        return ServiceTagNameAttribute(tag_name=attribute.tag_name)
+
+    return ServiceStdResAttribute(
+        std_res_name=ServiceSurfaceStandardResult(attribute.std_res_name.value),
+        sub_name=attribute.sub_name,
+    )
 
 
 def resample_to_surface_def(
@@ -132,7 +160,7 @@ def to_api_surface_meta_set(
             schemas.SurfaceMeta(
                 name=sumo_surf.name,
                 name_is_stratigraphic_offical=sumo_surf.is_stratigraphic,
-                attribute_name=sumo_surf.attribute_name,
+                attribute=to_api_surface_attribute(sumo_surf.attribute),
                 attribute_type=schemas.SurfaceAttributeType.from_sumo_content(sumo_surf.content),
                 time_type=schemas.SurfaceTimeType(sumo_surf.time_type.value),
                 is_observation=sumo_surf.is_observation,
@@ -159,6 +187,22 @@ def to_api_surface_meta_set(
         time_intervals_iso_str=sumo_surf_meta_set.time_intervals_iso_str,
         surface_names_in_strat_order=names_ordered_by_stratigraphy + remaining_names_sorted,
     )
+
+
+def to_api_initial_fluid_contact_surface_meta(
+    metadata: list[InitialFluidContactSurfaceMeta],
+) -> list[schemas.InitialFluidContactSurfaceMeta]:
+    return [
+        schemas.InitialFluidContactSurfaceMeta(
+            name=item.name,
+            contact=schemas.InitialFluidContactType(item.contact.value),
+            standard_result=schemas.SurfaceStandardResult.FLUID_CONTACT_SURFACE,
+            name_is_stratigraphic_offical=item.is_stratigraphic,
+            value_min=item.global_min_val,
+            value_max=item.global_max_val,
+        )
+        for item in metadata
+    ]
 
 
 def from_api_cumulative_length_polyline_to_xtgeo_polyline(

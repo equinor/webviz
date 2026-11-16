@@ -2,12 +2,12 @@ import React from "react";
 
 import { useAtomValue } from "jotai";
 
+import { HoverTopic, useHoverValue } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import type { Interfaces } from "../interfaces";
@@ -24,9 +24,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
     const colorSet = useColorSet(props.workbenchSettings);
 
-    const hoveredRegion = useSubscribedValue("global.hoverRegion", props.workbenchServices);
-    const hoveredZone = useSubscribedValue("global.hoverZone", props.workbenchServices);
-    const hoveredFacies = useSubscribedValue("global.hoverFacies", props.workbenchServices);
+    const moduleInstanceId = props.viewContext.getInstanceIdString();
+    const hoveredRegion = useHoverValue(HoverTopic.REGION, props.hoverService, moduleInstanceId);
+    const hoveredZone = useHoverValue(HoverTopic.ZONE, props.hoverService, moduleInstanceId);
+    const hoveredFacies = useHoverValue(HoverTopic.FACIES, props.hoverService, moduleInstanceId);
 
     const divRef = React.useRef<HTMLDivElement>(null);
     const divBoundingRect = useElementBoundingRect(divRef);
@@ -44,9 +45,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         colorSet,
         divBoundingRect.width,
         divBoundingRect.height,
-        hoveredRegion?.regionName ?? null,
-        hoveredZone?.zoneName ?? null,
-        hoveredFacies?.faciesName ?? null,
+        hoveredRegion,
+        hoveredZone,
+        hoveredFacies,
     );
 
     const table = plotAndTableData?.table;
@@ -71,10 +72,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const isPending = aggregatedTableDataQueries.isFetching && areSelectedTablesComparable;
 
     return (
-        <div ref={divRef} className="w-full h-full relative">
-            <PendingWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
+        <div ref={divRef} className="relative h-full w-full">
+            <StatusWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
                 {plots ?? <div style={{ height: divBoundingRect.height }} />}
-            </PendingWrapper>
+            </StatusWrapper>
         </div>
     );
 }

@@ -1,13 +1,13 @@
 import type { QueryObserverResult } from "@tanstack/react-query";
 import { atom } from "jotai";
 
-import type { Observations_api, VectorHistoricalData_api } from "@api";
+import type { SummaryVectorObservations_api, VectorHistoricalData_api } from "@api";
 import {
     Frequency_api,
     getDeltaEnsembleRealizationsVectorDataOptions,
     getDeltaEnsembleStatisticalVectorDataOptions,
     getHistoricalVectorDataOptions,
-    getObservationsOptions,
+    getSummaryObservationsOptions,
     getRealizationsVectorDataOptions,
     getStatisticalVectorDataOptions,
 } from "@api";
@@ -96,9 +96,9 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
             ...options,
             enabled: Boolean(
                 showHistorical &&
-                    item.vectorName &&
-                    item.ensembleIdent.getCaseUuid() &&
-                    item.ensembleIdent.getEnsembleName(),
+                item.vectorName &&
+                item.ensembleIdent.getCaseUuid() &&
+                item.ensembleIdent.getEnsembleName(),
             ),
         });
     });
@@ -150,9 +150,10 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
     }
 
     const queries = uniqueEnsembleIdents.map((item) => {
-        const options = getObservationsOptions({
+        const options = getSummaryObservationsOptions({
             query: {
                 case_uuid: item.getCaseUuid(),
+                ensemble_name: item.getEnsembleName(),
                 ...makeCacheBustingQueryParam(item),
             },
         });
@@ -164,7 +165,7 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
 
     return {
         queries,
-        combine: (results: QueryObserverResult<Observations_api>[]) => {
+        combine: (results: QueryObserverResult<SummaryVectorObservations_api[]>[]) => {
             const combinedResult: EnsembleVectorObservationDataMap = new Map();
             if (!vectorSpecifications) {
                 return { isFetching: false, isError: false, ensembleVectorObservationDataMap: combinedResult };
@@ -178,7 +179,7 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
                     (item) => item.ensembleIdent === ensembleIdent,
                 );
 
-                const summary = result.data?.summary ?? [];
+                const summary = result.data ?? [];
                 const ensembleHasObservations = summary.length !== 0;
                 combinedResult.set(ensembleIdent, {
                     hasSummaryObservations: ensembleHasObservations,
@@ -285,11 +286,11 @@ const deltaEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
             ...options,
             enabled: Boolean(
                 enabled &&
-                    vectorName &&
-                    comparisonEnsembleIdent.getCaseUuid() &&
-                    comparisonEnsembleIdent.getEnsembleName() &&
-                    referenceEnsembleIdent.getCaseUuid() &&
-                    referenceEnsembleIdent.getEnsembleName(),
+                vectorName &&
+                comparisonEnsembleIdent.getCaseUuid() &&
+                comparisonEnsembleIdent.getEnsembleName() &&
+                referenceEnsembleIdent.getCaseUuid() &&
+                referenceEnsembleIdent.getEnsembleName(),
             ),
         });
     });
@@ -382,11 +383,11 @@ const deltaEnsembleStatisticsQueriesAtom = atomWithQueries((get) => {
             ...options,
             enabled: Boolean(
                 enabled &&
-                    vectorName &&
-                    comparisonEnsembleIdent.getCaseUuid() &&
-                    comparisonEnsembleIdent.getEnsembleName() &&
-                    referenceEnsembleIdent.getCaseUuid() &&
-                    referenceEnsembleIdent.getEnsembleName(),
+                vectorName &&
+                comparisonEnsembleIdent.getCaseUuid() &&
+                comparisonEnsembleIdent.getEnsembleName() &&
+                referenceEnsembleIdent.getCaseUuid() &&
+                referenceEnsembleIdent.getEnsembleName(),
             ),
         });
     });

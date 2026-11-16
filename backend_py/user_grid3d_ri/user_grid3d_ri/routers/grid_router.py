@@ -4,6 +4,7 @@ from typing import Any
 import grpc
 import numpy as np
 from fastapi import APIRouter, HTTPException
+from numpy.typing import NDArray
 
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
 
@@ -14,9 +15,9 @@ from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_server_schemas.user_grid3d_ri import api_schemas
 
 from user_grid3d_ri.logic.data_cache import DataCache
-from user_grid3d_ri.logic.grid_properties import GridPropertiesExtractor
 from user_grid3d_ri.logic.local_blob_cache import LocalBlobCache
 from user_grid3d_ri.logic.resinsight_manager import RESINSIGHT_MANAGER
+from user_grid3d_ri.routers._property_source import make_property_extractor_async
 
 LOGGER = logging.getLogger(__name__)
 
@@ -156,7 +157,6 @@ async def post_get_grid_geometry(
 
 
 @router.post("/get_mapped_grid_properties")
-# pylint: disable-next=too-many-locals, too-many-statements
 async def post_get_mapped_grid_properties(
     req_body: api_schemas.MappedGridPropertiesRequest,
 ) -> api_schemas.MappedGridPropertiesResponse:
@@ -166,7 +166,7 @@ async def post_get_mapped_grid_properties(
     # LOGGER.debug(f"{req_body.sas_token=}")
     # LOGGER.debug(f"{req_body.blob_store_base_uri=}")
     # LOGGER.debug(f"{req_body.grid_blob_object_uuid=}")
-    # LOGGER.debug(f"{req_body.property_blob_object_uuid=}")
+    # LOGGER.debug(f"{req_body.property_source=}")
     # LOGGER.debug(f"{req_body.include_inactive_cells=}")
     # LOGGER.debug(f"{req_body.ijk_index_filter=}")
 
@@ -175,68 +175,21 @@ async def post_get_mapped_grid_properties(
     blob_cache = LocalBlobCache(req_body.sas_token, req_body.blob_store_base_uri)
 
     grid_path_name = await blob_cache.ensure_grid_blob_downloaded_async(req_body.grid_blob_object_uuid)
-    property_path_name = await blob_cache.ensure_property_blob_downloaded_async(req_body.property_blob_object_uuid)
-
     if grid_path_name is None:
         raise HTTPException(500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
-    if property_path_name is None:
-        raise HTTPException(500, detail=f"Failed to download property blob: {req_body.property_blob_object_uuid=}")
 
     LOGGER.debug(f"{myfunc} - {grid_path_name=}")
-    LOGGER.debug(f"{myfunc} - {property_path_name=}")
-    perf_metrics.record_lap("get-blobs")
+    perf_metrics.record_lap("get-grid-blob")
 
-    source_cell_indices_np = None
-    data_cache_key = _make_grid_geo_key(
+    source_cell_indices_np, ri_total_time, ri_perf_metrics = await _get_source_cell_indices_async(
+        grid_path_name=grid_path_name,
         grid_blob_object_uuid=req_body.grid_blob_object_uuid,
         include_inactive_cells=req_body.include_inactive_cells,
-        filt=req_body.ijk_index_filter,
+        ijk_index_filter=req_body.ijk_index_filter,
+        perf_metrics=perf_metrics,
     )
-    LOGGER.debug(f"{myfunc} - {data_cache_key=}")
-    source_cell_indices_np = DATA_CACHE.get_uint32_numpy_arr(data_cache_key)
-    perf_metrics.record_lap("read-cache")
 
-    ri_total_time: int | None = None
-    ri_perf_metrics: dict[str, int] | None = None
-
-    if source_cell_indices_np is None:
-        grpc_channel: grpc.aio.Channel | None = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
-        if grpc_channel is None:
-            raise HTTPException(500, detail="Failed to get gRPC channel for ResInsight instance")
-        perf_metrics.record_lap("get-ri")
-
-        grpc_ijk_index_filter = None
-        if req_body.ijk_index_filter:
-            grpc_ijk_index_filter = GridGeometryExtraction_pb2.IJKIndexFilter(
-                iMin=req_body.ijk_index_filter.min_i,
-                iMax=req_body.ijk_index_filter.max_i,
-                jMin=req_body.ijk_index_filter.min_j,
-                jMax=req_body.ijk_index_filter.max_j,
-                kMin=req_body.ijk_index_filter.min_k,
-                kMax=req_body.ijk_index_filter.max_k,
-            )
-        LOGGER.debug(f"{myfunc} - grpc_ijk_index_filter: {_proto_msg_as_oneliner(grpc_ijk_index_filter)}")
-
-        request = GridGeometryExtraction_pb2.GetGridSurfaceRequest(
-            gridFilename=grid_path_name,
-            includeInactiveCells=req_body.include_inactive_cells,
-            ijkIndexFilter=grpc_ijk_index_filter,
-            cellIndexFilter=None,
-            propertyFilter=None,
-        )
-
-        geo_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
-        grpc_response = await geo_extraction_stub.GetGridSurface(request)
-
-        ri_total_time = grpc_response.timeElapsedInfo.totalTimeElapsedMs
-        ri_perf_metrics = dict(grpc_response.timeElapsedInfo.namedEventsAndTimeElapsedMs)
-        perf_metrics.record_lap("ri-grid-geo")
-
-        source_cell_indices_np = np.asarray(grpc_response.sourceCellIndicesArr, dtype=np.uint32)
-        DATA_CACHE.set_uint32_numpy_arr(data_cache_key, source_cell_indices_np)
-        perf_metrics.record_lap("write-cache")
-
-    prop_extractor = await GridPropertiesExtractor.from_roff_property_file_async(property_path_name)
+    prop_extractor = await make_property_extractor_async(blob_cache, req_body.property_source)
     perf_metrics.record_lap("read-props")
 
     poly_props_b64arr: B64FloatArray | B64IntArray
@@ -272,6 +225,71 @@ async def post_get_mapped_grid_properties(
     LOGGER.debug(f"{myfunc} - Got mapped grid properties in: {perf_metrics.to_string_s()}")
 
     return ret_obj
+
+
+async def _get_source_cell_indices_async(
+    grid_path_name: str,
+    grid_blob_object_uuid: str,
+    include_inactive_cells: bool,
+    ijk_index_filter: api_schemas.IJKIndexFilter | None,
+    perf_metrics: PerfMetrics,
+) -> tuple[NDArray[np.uint32], int | None, dict[str, int] | None]:
+    """Get the poly source cell indices for a grid surface, from cache if possible.
+
+    Also returns the ResInsight timings, which are None when the cache was hit.
+    """
+    myfunc = "_get_source_cell_indices_async()"
+
+    data_cache_key = _make_grid_geo_key(
+        grid_blob_object_uuid=grid_blob_object_uuid,
+        include_inactive_cells=include_inactive_cells,
+        filt=ijk_index_filter,
+    )
+    LOGGER.debug(f"{myfunc} - {data_cache_key=}")
+    cached_source_cell_indices_np = DATA_CACHE.get_uint32_numpy_arr(data_cache_key)
+    perf_metrics.record_lap("read-cache")
+
+    if cached_source_cell_indices_np is not None:
+        return cached_source_cell_indices_np, None, None
+
+    grpc_channel: grpc.aio.Channel | None = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+    if grpc_channel is None:
+        raise HTTPException(500, detail="Failed to get gRPC channel for ResInsight instance")
+    perf_metrics.record_lap("get-ri")
+
+    grpc_ijk_index_filter = None
+    if ijk_index_filter:
+        grpc_ijk_index_filter = GridGeometryExtraction_pb2.IJKIndexFilter(
+            iMin=ijk_index_filter.min_i,
+            iMax=ijk_index_filter.max_i,
+            jMin=ijk_index_filter.min_j,
+            jMax=ijk_index_filter.max_j,
+            kMin=ijk_index_filter.min_k,
+            kMax=ijk_index_filter.max_k,
+        )
+    LOGGER.debug(f"{myfunc} - grpc_ijk_index_filter: {_proto_msg_as_oneliner(grpc_ijk_index_filter)}")
+
+    request = GridGeometryExtraction_pb2.GetGridSurfaceRequest(
+        gridFilename=grid_path_name,
+        includeInactiveCells=include_inactive_cells,
+        ijkIndexFilter=grpc_ijk_index_filter,
+        cellIndexFilter=None,
+        propertyFilter=None,
+    )
+
+    geo_extraction_stub = GridGeometryExtraction_pb2_grpc.GridGeometryExtractionStub(grpc_channel)
+    grpc_response = await geo_extraction_stub.GetGridSurface(request)
+    perf_metrics.record_lap("ri-grid-geo")
+
+    source_cell_indices_np = np.asarray(grpc_response.sourceCellIndicesArr, dtype=np.uint32)
+    DATA_CACHE.set_uint32_numpy_arr(data_cache_key, source_cell_indices_np)
+    perf_metrics.record_lap("write-cache")
+
+    return (
+        source_cell_indices_np,
+        grpc_response.timeElapsedInfo.totalTimeElapsedMs,
+        dict(grpc_response.timeElapsedInfo.namedEventsAndTimeElapsedMs),
+    )
 
 
 def _make_grid_geo_key(

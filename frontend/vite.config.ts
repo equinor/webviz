@@ -1,5 +1,8 @@
 import path from "path";
 
+import fs from "fs";
+
+import babel from "@rolldown/plugin-babel";
 import tailwindPlugin from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import jotaiDebugLabel from "jotai-babel/plugin-debug-label";
@@ -9,6 +12,7 @@ import vitePluginChecker from "vite-plugin-checker";
 import glsl from "vite-plugin-glsl";
 
 import aliases from "./aliases.json";
+import { plotlyWebglContextReleasePlugin } from "./vite-plugin-plotly-webgl-context-release.js";
 
 const paths = {
     public: "./public",
@@ -16,34 +20,39 @@ const paths = {
     root: "./src",
 };
 
+// Serves local recordings from public/tutorial-videos when that folder exists, otherwise "" so the app falls
+// back to its hardcoded Azure URL. An explicitly set VITE_TUTORIAL_MEDIA_BASE_URL takes precedence.
+process.env.VITE_TUTORIAL_MEDIA_BASE_URL ??= fs.existsSync(path.resolve(__dirname, "public/tutorial-videos"))
+    ? "/tutorial-videos"
+    : "";
+
 // https://vitejs.dev/config/
-export default defineConfig(({ mode, command }) => {
-    const define = {
+export default defineConfig(({ command }) => {
+    const define: Record<string, any> = {
         "process.env": {},
+        // Subsurface viewer expects this to be polyfilled
+        global: "globalThis",
     };
 
-    // In order to polyfill "global" for older packages
-    // Only in dev since "@loaders.gl" is already exporting "window" and would cause a duplicate export
-    if (mode === "development" && command === "serve") {
-        define["global"] = "globalThis";
-    }
+    // jotaiReactRefresh preserves atom identity across Vite HMR updates by permanently caching every
+    // atom object on globalThis.jotaiAtomCache. That cache is a dev-server-only concern (HMR doesn't
+    // exist in production) and it defeats WeakMap-based GC of per-atom state if left enabled in builds.
+    const babelPlugins = command === "serve" ? [jotaiDebugLabel, jotaiReactRefresh] : [jotaiDebugLabel];
 
     return {
         plugins: [
+            plotlyWebglContextReleasePlugin(),
             tailwindPlugin(),
-            react({
-                babel: {
-                    plugins: [jotaiDebugLabel, jotaiReactRefresh],
-                },
-            }),
+            react(),
             vitePluginChecker({ typescript: true }),
+            babel({ plugins: babelPlugins }),
             glsl({
                 include: "**/*.glsl",
                 defaultExtension: "glsl",
             }),
         ],
         build: {
-            rollupOptions: {
+            rolldownOptions: {
                 input: {
                     app: paths.publicHtmlFile,
                 },
@@ -52,16 +61,18 @@ export default defineConfig(({ mode, command }) => {
         },
         define: define,
         resolve: {
-            alias: Object.keys(aliases.compilerOptions.paths).reduce(
-                (prev, current) => ({
-                    ...prev,
-                    [current.replace("/*", "")]: path.resolve(
+            alias: [
+                ...Object.keys(aliases.compilerOptions.paths).map((current) => ({
+                    find: current.replace("/*", ""),
+                    replacement: path.resolve(
                         __dirname,
-                        aliases.compilerOptions.paths[current][0].replace("/*", ""),
+                        aliases.compilerOptions.paths[current as keyof typeof aliases.compilerOptions.paths][0].replace(
+                            "/*",
+                            "",
+                        ),
                     ),
-                }),
-                {},
-            ),
+                })),
+            ],
         },
         server: {
             port: 8080,
@@ -70,6 +81,9 @@ export default defineConfig(({ mode, command }) => {
                     target: "http://backend-primary:5000",
                     rewrite: (path) => path.replace(/^\/api/, ""),
                 },
+            },
+            fs: {
+                allow: [path.resolve(__dirname, "../docs"), path.resolve(__dirname, "./")],
             },
         },
     };

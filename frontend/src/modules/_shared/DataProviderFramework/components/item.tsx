@@ -28,9 +28,13 @@ export type SortableListItemProps = {
 export function SortableListItem(props: SortableListItemProps): React.ReactNode {
     return (
         <SortableList.Item id={props.id}>
-            <div className={resolveClassNames("flex flex-col relative")}>
+            <div className={resolveClassNames("relative flex flex-col")}>
                 <Header {...props} />
-                <div className={resolveClassNames("bg-white border-b shadow-sm")}>{props.children}</div>
+                <div
+                    className={resolveClassNames("border-b-neutral-subtle bg-surface shadow-elevation-raised border-b")}
+                >
+                    {props.children}
+                </div>
             </div>
         </SortableList.Item>
     );
@@ -47,16 +51,16 @@ function Header(props: HeaderProps): React.ReactNode {
     return (
         <div
             className={resolveClassNames(
-                "w-full flex gap-1 h-8 bg-slate-100 text-sm items-center border-b border-b-gray-300 px-2",
+                "gap-x-3xs bg-neutral-canvas border-b-neutral-subtle text-body-sm px-3xs flex h-8 w-full items-center border-b",
                 props.headerClassNames ?? "",
             )}
         >
             <SortableList.DragHandle>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </SortableList.DragHandle>
-            <div className="flex items-center gap-2 grow min-w-0">
+            <div className="gap-x-3xs flex min-w-0 grow items-center">
                 {props.startAdornment}
-                <div className="grow min-w-0">{props.title}</div>
+                <div className="min-w-0 grow">{props.title}</div>
                 {props.endAdornment}
             </div>
         </div>

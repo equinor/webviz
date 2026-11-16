@@ -115,6 +115,25 @@ export function assertNumberArrayOrNull(value: unknown): asserts value is number
 }
 
 /**
+ * Validates that a value is an array of strings, the literal "all", or null
+ */
+export function isStringArrayOrAllOrNull(value: unknown): value is string[] | "all" | null {
+    if (value === null || value === "all") {
+        return true;
+    }
+    return Array.isArray(value) && value.every((v) => typeof v === "string");
+}
+
+/**
+ * Asserts that a value is an array of strings, the literal "all", or null, throws if not
+ */
+export function assertStringArrayOrAllOrNull(value: unknown): asserts value is string[] | "all" | null {
+    if (!isStringArrayOrAllOrNull(value)) {
+        throw new Error(`Expected string array, "all", or null, got ${typeof value}`);
+    }
+}
+
+/**
  * Validates that a value is a tuple of [number | "min" | "max", number | "min" | "max"] or null
  */
 export function isNumberOrStringTuple(

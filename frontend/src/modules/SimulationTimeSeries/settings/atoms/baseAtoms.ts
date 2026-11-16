@@ -1,5 +1,5 @@
 import { atom } from "jotai";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
 import type { ParameterIdent } from "@framework/EnsembleParameters";
@@ -15,6 +15,8 @@ export const groupByAtom = atom<GroupBy>(GroupBy.TIME_SERIES);
 export const subplotLimitDirectionAtom = atom<SubplotLimitDirection>(SubplotLimitDirection.NONE);
 
 export const subplotMaxDirectionElementsAtom = atom<number>(3);
+
+export const showTimestampMarkerAtom = atom<boolean>(true);
 
 export const colorRealizationsByParameterAtom = atom<boolean>(false);
 

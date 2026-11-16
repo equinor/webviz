@@ -1,19 +1,30 @@
+import type { Getter } from "jotai";
+
 import type { InplaceVolumesIndexWithValues_api } from "@api";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
-import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
+import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import {
     fixupUserSelectedIndexValues,
+    getSelectionForOfferedIndexColumns,
     isSelectedIndicesWithValuesValidSubset,
 } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import {
+    fixupSensitivityCaseSelection,
+    isValidSensitivityCaseSelection,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { makeUniqueTableNamesIntersection } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
+import { isFluidSpecificResultName, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
-import { tableDefinitionsAccessorAtom } from "./derivedAtoms";
+import { availableSensitivityCasesAtom, tableDefinitionsAccessorAtom } from "./derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
-export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[]>({
+export const selectedEnsembleIdentsAtom = persistableFixableAtom<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>({
     initialValue: [],
     isValidFunction: ({ get, value }) => {
         if (value.length === 0) {
@@ -25,13 +36,13 @@ export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsemble
     },
     fixupFunction: ({ value, get }) => {
         const ensembleSet = get(EnsembleSetAtom);
-        return fixupRegularEnsembleIdents(value ?? null, ensembleSet) ?? [];
+        return fixupEnsembleIdents(value ?? null, ensembleSet) ?? [];
     },
 });
 
 export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>({
     initialValue: [],
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: ({ get }) => get(tableDefinitionsQueryAtom).dependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsQueryResult = get(tableDefinitionsQueryAtom);
         const uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsQueryResult.data);
@@ -46,13 +57,42 @@ export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>
     },
 });
 
+export const selectedGroupByIndicesAtom = persistableFixableAtom<string[], string[]>({
+    initialValue: [],
+    computeDependenciesState: computeSelectedTableDefinitionsDependenciesState,
+    precomputeFunction: ({ get }) => {
+        const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+        return tableDefinitionsAccessor.getCommonIndicesWithValues().map((el) => el.indexColumn);
+    },
+    isValidFunction: ({ value, precomputedValue }) => {
+        return value.every((index) => precomputedValue.includes(index));
+    },
+    fixupFunction: ({ value, precomputedValue }) => {
+        return fixupUserSelection(value ?? [], precomputedValue);
+    },
+});
+
+/**
+ * Result names that can be requested given the current grouping.
+ *
+ * The backend only computes BO/BG per fluid and discards them when the fluids are summed, so they
+ * are unavailable unless FLUID is part of the grouping.
+ */
+export function getSelectableResultNames(get: Getter): string[] {
+    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+    const isGroupedByFluid = get(selectedGroupByIndicesAtom).value.includes(TableOriginKey.FLUID);
+
+    return tableDefinitionsAccessor
+        .getResultNamesIntersection()
+        .filter((name) => isGroupedByFluid || !isFluidSpecificResultName(name));
+}
+
 export const selectedResultNamesAtom = persistableFixableAtom<string[]>({
     initialValue: [],
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: computeSelectedTableDefinitionsDependenciesState,
     isValidFunction: ({ value, get }) => {
         const tableDefinitions = get(tableDefinitionsQueryAtom);
-        const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-        const validResultNames = tableDefinitionsAccessor.getResultNamesIntersection();
+        const validResultNames = getSelectableResultNames(get);
 
         // Do not perform fixup during loading of new table definitions
         if (tableDefinitions.isLoading) {
@@ -68,25 +108,8 @@ export const selectedResultNamesAtom = persistableFixableAtom<string[]>({
         return value?.every((name) => validResultNames.includes(name)) ?? false;
     },
     fixupFunction: ({ value, get }) => {
-        const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-
-        const fixedSelection = fixupUserSelection(value ?? [], tableDefinitionsAccessor.getResultNamesIntersection());
+        const fixedSelection = fixupUserSelection(value ?? [], getSelectableResultNames(get));
         return fixedSelection.length > 0 ? fixedSelection : [];
-    },
-});
-
-export const selectedGroupByIndicesAtom = persistableFixableAtom<string[], string[]>({
-    initialValue: [],
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
-    precomputeFunction: ({ get }) => {
-        const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-        return tableDefinitionsAccessor.getCommonIndicesWithValues().map((el) => el.indexColumn);
-    },
-    isValidFunction: ({ value, precomputedValue }) => {
-        return value.every((index) => precomputedValue.includes(index));
-    },
-    fixupFunction: ({ value, precomputedValue }) => {
-        return fixupUserSelection(value ?? [], precomputedValue);
     },
 });
 
@@ -95,31 +118,44 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
     InplaceVolumesIndexWithValues_api[]
 >({
     initialValue: [],
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    computeDependenciesState: computeSelectedTableDefinitionsDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return tableDefinitionsAccessor.getCommonIndicesWithValues();
     },
     isValidFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
-        return value.length > 0 && isSelectedIndicesWithValuesValidSubset(value, availableIndicesWithValues);
+        // Only the offered columns are judged, and one without an entry counts as unfiltered - see
+        // getSelectionForOfferedIndexColumns(). With none offered, there is nothing to select, so any selection is valid.
+        if (availableIndicesWithValues.length === 0) {
+            return true;
+        }
+        const offeredSelection = getSelectionForOfferedIndexColumns(value, availableIndicesWithValues);
+        return isSelectedIndicesWithValuesValidSubset(offeredSelection, availableIndicesWithValues);
     },
     fixupFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
         return fixupUserSelectedIndexValues(value ?? [], availableIndicesWithValues, FixupSelection.SELECT_ALL);
     },
 });
 
-// Utility function to compute dependencies state from tableDefinitionsQueryAtom
-function computeTableDefinitionsQueryDependenciesState({
+export const selectedSensitivityCasesAtom = persistableFixableAtom<SensitivityCaseIdent[], SensitivityCaseIdent[]>({
+    initialValue: [],
+    // The available cases follow from the ensemble selection, so don't settle on them while it is invalid.
+    computeDependenciesState: ({ get }) => (get(selectedEnsembleIdentsAtom).isValidInContext ? "loaded" : "blocked"),
+    precomputeFunction: ({ get }) => get(availableSensitivityCasesAtom),
+    isValidFunction: ({ value, precomputedValue }) => isValidSensitivityCaseSelection(value, precomputedValue),
+    fixupFunction: ({ value, precomputedValue }) => fixupSensitivityCaseSelection(value, precomputedValue),
+});
+
+// The table definitions are filtered by the selected table names. While they are invalid, there are no options to check
+// against - so the settings wait (and don't settle on the empty options) until valid table names are selected.
+function computeSelectedTableDefinitionsDependenciesState({
     get,
 }: {
     get: (atom: any) => any;
-}): "error" | "loading" | "loaded" {
-    const tableDefinitions = get(tableDefinitionsQueryAtom);
-    if (tableDefinitions.isLoading) {
-        return "loading";
+}): PersistableAtomDependenciesState {
+    const tableDefinitionsQueryDependenciesState = get(tableDefinitionsQueryAtom).dependenciesState;
+    if (tableDefinitionsQueryDependenciesState !== "loaded") {
+        return tableDefinitionsQueryDependenciesState;
     }
-    if (tableDefinitions.errors.length > 0) {
-        return "error";
-    }
-    return "loaded";
+    return get(selectedTableNamesAtom).isValidInContext ? "loaded" : "blocked";
 }

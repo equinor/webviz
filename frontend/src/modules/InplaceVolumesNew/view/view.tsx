@@ -1,55 +1,66 @@
 import React from "react";
 
 import { useAtomValue } from "jotai";
+import { orderBy } from "lodash";
 
+import { HoverTopic, useHoverValue } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
-import { Table as TableComponent } from "@lib/components/Table";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
+import { Table } from "@lib/components/Table";
+import { TableCompositions } from "@lib/components/Table/compositions";
+import type { TableSortState } from "@lib/components/Table/typesAndEnums";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 
 import type { Interfaces } from "../interfaces";
 
+import { isSensitivityEnsembleSelectionBlockedAtom } from "./atoms/baseAtoms";
 import { areSelectedTablesComparableAtom } from "./atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useBuildPlotAndTable } from "./hooks/usePlotAndTableBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { makeStatisticsTableColumns } from "./utils/makeStatisticsTableColumns";
+import type { StatisticsTableRowData } from "./utils/TableBuilder";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useViewStatusWriter(props.viewContext);
     const colorSet = useColorSet(props.workbenchSettings);
 
-    const hoveredRegion = useSubscribedValue("global.hoverRegion", props.workbenchServices);
-    const hoveredZone = useSubscribedValue("global.hoverZone", props.workbenchServices);
-    const hoveredFacies = useSubscribedValue("global.hoverFacies", props.workbenchServices);
+    const moduleInstanceId = props.viewContext.getInstanceIdString();
+    const hoveredRegion = useHoverValue(HoverTopic.REGION, props.hoverService, moduleInstanceId);
+    const hoveredZone = useHoverValue(HoverTopic.ZONE, props.hoverService, moduleInstanceId);
+    const hoveredFacies = useHoverValue(HoverTopic.FACIES, props.hoverService, moduleInstanceId);
 
-    const divRef = React.useRef<HTMLDivElement>(null);
-    const divBoundingRect = useElementBoundingRect(divRef);
+    const plotDivRef = React.useRef<HTMLDivElement>(null);
+    const plotDivBoundingRect = useElementBoundingRect(plotDivRef);
 
     const aggregatedTableDataQueries = useAtomValue(aggregatedTableDataQueriesAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
+    const isSensitivityEnsembleSelectionBlocked = useAtomValue(isSensitivityEnsembleSelectionBlockedAtom);
     const showStatisticsTable = props.viewContext.useSettingsToViewInterfaceValue("showTable");
+    const resultName = props.viewContext.useSettingsToViewInterfaceValue("resultName");
+    const subplotBy = props.viewContext.useSettingsToViewInterfaceValue("subplotBy");
+    const colorBy = props.viewContext.useSettingsToViewInterfaceValue("colorBy");
+
+    const [tableSortState, setTableSortState] = React.useState<TableSortState[]>([]);
 
     statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
-    useMakeViewStatusWriterMessages(statusWriter);
-
-    const plotHeightFraction = showStatisticsTable ? 0.7 : 1;
+    useMakeViewStatusWriterMessages(statusWriter, ensembleSet, resultName, subplotBy, colorBy);
 
     const plotAndTableData = useBuildPlotAndTable(
         props.viewContext,
         ensembleSet,
         colorSet,
-        divBoundingRect.width,
-        divBoundingRect.height * plotHeightFraction,
-        hoveredRegion?.regionName ?? null,
-        hoveredZone?.zoneName ?? null,
-        hoveredFacies?.faciesName ?? null,
+        plotDivBoundingRect.width,
+        plotDivBoundingRect.height,
+        hoveredRegion,
+        hoveredZone,
+        hoveredFacies,
     );
 
     const table = plotAndTableData?.table;
@@ -63,11 +74,24 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         return makeStatisticsTableColumns(
             statisticsTableData.subplotByLabel,
             statisticsTableData.colorByLabel,
-            statisticsTableData.colorMap,
+            statisticsTableData.barCategoryLabel,
         );
     }, [statisticsTableData]);
 
+    const collatedTableRows = React.useMemo(() => {
+        if (!statisticsTableData?.rows) return [];
+
+        return orderBy(
+            statisticsTableData.rows,
+            tableSortState.map((s) => s.columnKey),
+            tableSortState.map((s) => s.direction as "asc" | "desc"),
+        );
+    }, [statisticsTableData, tableSortState]);
+
     function createErrorMessage(): string | null {
+        if (isSensitivityEnsembleSelectionBlocked) {
+            return SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE;
+        }
         if (aggregatedTableDataQueries.allQueriesFailed) {
             return "Failed to load inplace volumes table data";
         }
@@ -84,20 +108,75 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const isPending = aggregatedTableDataQueries.isFetching && areSelectedTablesComparable;
 
     return (
-        <div ref={divRef} className="w-full h-full relative flex flex-col">
-            <PendingWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
-                <div style={{ height: divBoundingRect.height * plotHeightFraction }}>{plots ?? null}</div>
+        <StatusWrapper className="h-full" isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
+            <div className="flex h-full min-h-0 flex-col">
+                <div ref={plotDivRef} className="flex-1 overflow-hidden">
+                    <div>{plots}</div>
+                </div>
                 {showStatisticsTable && statisticsTableData && tableColumns && (
-                    <div className="border-t" style={{ height: divBoundingRect.height * (1 - plotHeightFraction) }}>
-                        <TableComponent
-                            columns={tableColumns}
-                            rows={statisticsTableData.rows}
-                            rowIdentifier="id"
-                            height={divBoundingRect.height * (1 - plotHeightFraction)}
-                        />
+                    <div className="px-sm py-xs max-h-1/4 min-h-0 flex-none overflow-auto">
+                        <Table.Root
+                            fixed
+                            compact
+                            size="small"
+                            height="100%"
+                            sortable="multiple"
+                            columnSorting={tableSortState}
+                            onChangeColumnSort={setTableSortState}
+                        >
+                            <Table.Head sticky>
+                                {tableColumns.map((col) => (
+                                    <Table.Column
+                                        key={col.columnId}
+                                        colKey={col.columnId}
+                                        widthInPercent={col.sizeInPercent}
+                                    >
+                                        {col.label}
+                                    </Table.Column>
+                                ))}
+                            </Table.Head>
+                            <Table.Body>
+                                <TableCompositions.VirtualizedRows rows={collatedTableRows}>
+                                    {(row) => (
+                                        <Table.Row key={row.id}>
+                                            {tableColumns.map((col) => (
+                                                <TableCell
+                                                    key={col.columnId}
+                                                    row={row}
+                                                    value={row[col.columnId]}
+                                                    columnId={col.columnId}
+                                                    colorMap={statisticsTableData.colorMap}
+                                                />
+                                            ))}
+                                        </Table.Row>
+                                    )}
+                                </TableCompositions.VirtualizedRows>
+                            </Table.Body>
+                        </Table.Root>
                     </div>
                 )}
-            </PendingWrapper>
-        </div>
+            </div>
+        </StatusWrapper>
     );
+}
+
+function TableCell<TK extends keyof StatisticsTableRowData>(props: {
+    value: StatisticsTableRowData[TK];
+    columnId: TK;
+    row: StatisticsTableRowData;
+    colorMap: Map<string, string>;
+}) {
+    if (props.columnId === "colorByValue") {
+        const rowColor = props.colorMap.get(props.row.colorByKey);
+        return (
+            <Table.Cell>
+                <div className="gap-xs flex items-center">
+                    <div className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: rowColor }} />
+                    <span>{props.value}</span>
+                </div>
+            </Table.Cell>
+        );
+    }
+
+    return <Table.Cell>{props.value}</Table.Cell>;
 }

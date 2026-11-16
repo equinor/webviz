@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { DeltaEnsemble } from "./DeltaEnsemble";
 import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";

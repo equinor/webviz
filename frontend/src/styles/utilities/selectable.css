@@ -1,0 +1,40 @@
+@utility selectable {
+    @apply focusable hover:bg-accent active:bg-accent-active cursor-pointer rounded p-[calc()] focus-visible:outline-0;
+
+    --touch-target-size: 2.25rem; /* 44px, per accessibility guidelines */
+    padding: calc((var(--touch-target-size) - var(--eds-sizing-icon-lg)) / 2);
+
+    transition: background-color 150ms;
+
+    &[data-selectable-wrapper] {
+        @apply px-selectable;
+    }
+    .selectable[data-selectable-wrapper] & {
+        @apply -mx-[4.8px]! -my-[6px]! p-0! focus:shadow-none! focus:outline-0;
+    }
+
+    &[data-disabled] {
+        @apply text-disabled! cursor-not-allowed bg-transparent;
+    }
+
+    &[data-readonly] {
+        @apply text-neutral-subtle! cursor-not-allowed bg-transparent;
+    }
+
+    & .selectable {
+        @apply p-0!;
+
+        &:focus-visible,
+        &:has(:focus-visible),
+        &:focus-within {
+            box-shadow: none;
+        }
+    }
+
+    & .selectable__wrapper-inner-text {
+        /* 
+            This prop affects height of text flex-children, but is not present in some browsers, like firefox. Reverting this to ensure wrapped buttons look the same across browsers
+        */
+        text-box: "none";
+    }
+}

@@ -2,7 +2,12 @@ import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
-import { DataProvider } from "../framework/DataProvider/DataProvider";
+import {
+    type DataProvider,
+    DataProviderStatus,
+    DataProviderTopic,
+    isDataProvider,
+} from "../framework/DataProvider/DataProvider";
 import { DeserializationAssistant } from "../framework/utils/DeserializationAssistant";
 import { instanceofItemGroup, type Item } from "../interfacesAndTypes/entities";
 import type { SerializedItem } from "../interfacesAndTypes/serialization";
@@ -25,6 +30,13 @@ export type GroupDelegateTopicPayloads = {
     [GroupDelegateTopic.CHILDREN_EXPANSION_STATES]: { [id: string]: boolean };
 };
 
+// A provider is pending until it has loaded (or failed to load) for its current settings - including while a refetch is
+// scheduled but hasn't started, as its status only changes once the fetch starts
+function isDataProviderPending(provider: DataProvider<any, any>): boolean {
+    const status = provider.getStatus();
+    return status === DataProviderStatus.IDLE || status === DataProviderStatus.LOADING || provider.isFetchScheduled();
+}
+
 /*
  * The GroupDelegate class is responsible for managing the children of a group item.
  * It provides methods for adding, removing, and moving children, as well as for serializing and deserializing children.
@@ -38,6 +50,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
     private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
     private _treeRevisionNumber: number = 0;
     private _deserializing = false;
+    private _readinessWaitCounter = 0;
 
     constructor(owner: Item | null) {
         this._owner = owner;
@@ -83,6 +96,8 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
     clearChildren() {
         for (const child of this._children) {
             this.disposeOwnershipOfChild(child);
+            // Cleared children are discarded, not moved - tear them down so they stop fetching and publishing to the manager
+            child.beforeDestroy?.();
         }
         this._children = [];
         this.publishTopic(GroupDelegateTopic.CHILDREN);
@@ -217,12 +232,22 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         this.clearChildren();
 
         this._deserializing = true;
-        const assistant = new DeserializationAssistant(this._owner.getItemDelegate().getDataProviderManager());
-        for (const child of children) {
-            const item = assistant.makeItem(child);
-            this.appendChild(item);
+        try {
+            const assistant = new DeserializationAssistant(this._owner.getItemDelegate().getDataProviderManager());
+            for (const child of children) {
+                const item = assistant.makeItem(child);
+                try {
+                    this.appendChild(item);
+                } catch (error) {
+                    // Not part of the tree, so nothing else would ever tear it down - and a provider starts initializing,
+                    // and publishing to the manager, as soon as it is made
+                    item.beforeDestroy?.();
+                    throw error;
+                }
+            }
+        } finally {
+            this._deserializing = false;
         }
-        this._deserializing = false;
     }
 
     private incrementTreeRevisionNumber() {
@@ -236,17 +261,14 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
 
         this._unsubscribeFunctionsManagerDelegate.unsubscribe(child.getItemDelegate().getId());
 
-        if (child instanceof DataProvider) {
-            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-                child.getItemDelegate().getId(),
-                child
-                    .getItemDelegate()
-                    .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(ItemDelegateTopic.EXPANDED)(() => {
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            child.getItemDelegate().getId(),
+            child.getItemDelegate().getPublishSubscribeDelegate().makeSubscriberFunction(ItemDelegateTopic.EXPANDED)(
+                () => {
                     this.publishTopic(GroupDelegateTopic.CHILDREN_EXPANSION_STATES);
-                }),
-            );
-        }
+                },
+            ),
+        );
 
         if (instanceofItemGroup(child)) {
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -271,6 +293,72 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
 
         this.publishTopic(GroupDelegateTopic.CHILDREN);
         this.incrementTreeRevisionNumber();
+    }
+
+    getPendingDescendantDataProviders(): DataProvider<any, any>[] {
+        return (this.getDescendantItems(isDataProvider) as DataProvider<any, any>[]).filter(isDataProviderPending);
+    }
+
+    /*
+     * Calls the callback once all data providers currently in the tree are out of the IDLE/LOADING state at the same time.
+     * The tree is re-checked on every status change and on every structural change:
+     * - a provider that has already settled may start loading again (e.g. when a setting it depends on resolves later)
+     * - a provider that is removed (and destroyed) while loading never publishes another status
+     * - a provider that is added while waiting has to settle as well
+     * Returns a function that cancels the wait - after cancelling, the callback is never called.
+     * Each wait gets its own subscription key, so overlapping waits on providers with the same id don't
+     * unsubscribe each other.
+     */
+    waitUntilAllDescendantDataProvidersAreReady(callback: () => void): () => void {
+        const getProviders = () => this.getDescendantItems(isDataProvider) as DataProvider<any, any>[];
+
+        if (!getProviders().some(isDataProviderPending)) {
+            callback();
+            return () => {};
+        }
+
+        const key = `readiness:${this._readinessWaitCounter++}`;
+        const unsubscribeFunctionsManagerDelegate = this._unsubscribeFunctionsManagerDelegate;
+        const subscribedProviders = new Set<DataProvider<any, any>>();
+        let settled = false;
+        function cancel() {
+            settled = true;
+            unsubscribeFunctionsManagerDelegate.unsubscribe(key);
+        }
+
+        function checkProvidersReady() {
+            if (settled) {
+                return;
+            }
+            const providers = getProviders();
+            for (const provider of providers) {
+                if (subscribedProviders.has(provider)) {
+                    continue;
+                }
+                subscribedProviders.add(provider);
+                unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                    key,
+                    provider.getPublishSubscribeDelegate().makeSubscriberFunction(DataProviderTopic.STATUS)(
+                        checkProvidersReady,
+                    ),
+                );
+            }
+            if (providers.some(isDataProviderPending)) {
+                return;
+            }
+            cancel();
+            callback();
+        }
+
+        unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            key,
+            this._publishSubscribeDelegate.makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(
+                checkProvidersReady,
+            ),
+        );
+        checkProvidersReady();
+
+        return cancel;
     }
 
     private publishTopic(topic: GroupDelegateTopic) {

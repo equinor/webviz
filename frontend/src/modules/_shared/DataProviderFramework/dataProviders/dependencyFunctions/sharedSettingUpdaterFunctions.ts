@@ -5,7 +5,7 @@ import { IntersectionType } from "@framework/types/intersection";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 
-import type { IntersectionSettingValue } from "../../settings/implementations/IntersectionSetting";
+import type { IntersectionSettingOption } from "../../settings/implementations/IntersectionSetting";
 
 /**
  * Create list of available ensembles for the given field identifier.
@@ -48,17 +48,28 @@ export function getAvailableRealizationsForEnsembleIdent(
 
 /**
  * Get available intersection options for the given wellbore headers and custom intersection polylines.
+ *
+ * Planned (not yet drilled) wellbore headers are emitted as separate PLANNED_WELLBORE options.
  */
 export function getAvailableIntersectionOptions(
     wellboreHeaders: WellboreHeader_api[],
     intersectionPolylines: IntersectionPolyline[],
-): IntersectionSettingValue[] {
-    const intersectionOptions: IntersectionSettingValue[] = [];
+    plannedWellboreHeaders: WellboreHeader_api[] = [],
+): IntersectionSettingOption[] {
+    const intersectionOptions: IntersectionSettingOption[] = [];
     for (const wellboreHeader of wellboreHeaders) {
         intersectionOptions.push({
             type: IntersectionType.WELLBORE,
             name: wellboreHeader.uniqueWellboreIdentifier,
             uuid: wellboreHeader.wellboreUuid,
+        });
+    }
+
+    for (const plannedWellboreHeader of plannedWellboreHeaders) {
+        intersectionOptions.push({
+            type: IntersectionType.PLANNED_WELLBORE,
+            name: plannedWellboreHeader.uniqueWellboreIdentifier,
+            uuid: plannedWellboreHeader.wellboreUuid,
         });
     }
 

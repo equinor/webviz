@@ -1,17 +1,24 @@
 import React from "react";
 
 import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MIN_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
+import { AlertDialog } from "@lib/components/AlertDialog";
 import { Button } from "@lib/components/Button";
-import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
+import { FieldCompositions } from "@lib/components/Field/compositions";
+import { Hidden } from "@lib/components/Hidden";
+import { TextArea } from "@lib/components/TextArea";
+import { TextInput } from "@lib/components/TextInput";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { truncateString } from "@lib/utils/strings";
 
-import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { dashboardsToPreviewItems } from "../DashboardPreview/_utils";
+import { DashboardPreviewCarousel } from "../DashboardPreview/dashboardPreviewCarousel";
 
 export type EditSessionMetadataDialogProps = {
     workbench: Workbench;
@@ -20,10 +27,7 @@ export type EditSessionMetadataDialogProps = {
     description?: string;
     open: boolean;
     onClose?: () => void;
-};
-
-type EditSessionDialogInputFeedback = {
-    title?: string;
+    showPreview?: boolean;
 };
 
 export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps) {
@@ -36,33 +40,19 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
 
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
+    const [showConfirmationDialog, setShowConfirmationDialog] = React.useState<boolean>(false);
 
-    const [prevOriginalTitle, setPrevOriginalTitle] = React.useState<string>("");
-    const [prevOriginalDescription, setPrevOriginalDescription] = React.useState<string>("");
+    const [prevOpen, setPrevOpen] = React.useState<boolean>(false);
+    if (props.open !== prevOpen) {
+        setPrevOpen(props.open);
+        if (props.open) {
+            setTitle(truncateString(props.title, MAX_TITLE_LENGTH));
+            setDescription(truncateString(props.description ?? "", MAX_DESCRIPTION_LENGTH));
+        }
+    }
 
-    if (props.title !== prevOriginalTitle) {
-        setPrevOriginalTitle(props.title);
-        setTitle(`${truncateString(props.title, MAX_TITLE_LENGTH)}`);
-    }
-    if (props.description !== prevOriginalDescription) {
-        setPrevOriginalDescription(props.description ?? "");
-        setDescription(`${truncateString(props.description ?? "", MAX_DESCRIPTION_LENGTH)}`);
-    }
     const inputRef = React.useRef<HTMLInputElement>(null);
     const formId = React.useId();
-
-    const [prevTitle, setPrevTitle] = React.useState<string>(props.title);
-    const [prevDescription, setPrevDescription] = React.useState<string>(props.description ?? "");
-
-    if (prevTitle !== props.title) {
-        setPrevTitle(props.title);
-        setTitle(props.title);
-    }
-
-    if (prevDescription !== props.description) {
-        setPrevDescription(props.description ?? "");
-        setDescription(props.description ?? "");
-    }
 
     function handleSave(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -109,77 +99,115 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
     }
 
     function handleCancel() {
-        setPrevOriginalTitle("");
-        setPrevOriginalDescription("");
+        if (title !== props.title || description !== props.description) {
+            setShowConfirmationDialog(true);
+            return;
+        }
+        handleDiscardChanges();
+    }
+
+    function handleDiscardChanges() {
         props.onClose?.();
     }
 
-    const inputFeedback: EditSessionDialogInputFeedback = React.useMemo(() => {
-        const feedback: EditSessionDialogInputFeedback = {};
-        if (title.trim() === "") {
-            feedback.title = "Title is required.";
-        }
-        return feedback;
-    }, [title]);
-
-    const layout = hasActiveSession
-        ? (props.workbench.getSessionManager().getActiveSession().getActiveDashboard()?.getLayout() ?? [])
-        : [];
-
-    React.useEffect(
-        function focusInput() {
-            if (props.open && inputRef.current) {
-                inputRef.current.focus();
-            }
-        },
-        [props.open],
-    );
+    const activeWorkbenchSession = hasActiveSession ? props.workbench.getSessionManager().getActiveSession() : null;
+    const isEditingActiveSession =
+        activeWorkbenchSession !== null && (activeWorkbenchSession.getId() === props.id || props.id === null);
+    const dashboards = isEditingActiveSession ? dashboardsToPreviewItems(activeWorkbenchSession.getDashboards()) : [];
 
     return (
-        <Dialog
-            open={props.open}
-            onClose={handleCancel}
-            title="Edit session metadata"
-            modal
-            showCloseCross
-            actions={
-                <>
-                    <Button variant="text" disabled={isSaving} onClick={handleCancel}>
-                        Cancel
-                    </Button>
-                    <Button variant="text" color="success" disabled={isSaving} type="submit" form={formId}>
-                        {isSaving && <CircularProgress size="small" />} Save
-                    </Button>
-                </>
-            }
-            zIndex={60}
-        >
-            <form id={formId} className="flex gap-4 items-center" onSubmit={handleSave}>
-                <DashboardPreview height={100} width={100} layout={layout} />
-                <div className="flex flex-col gap-2 grow min-w-0">
-                    <CharLimitedInput
-                        label="Title"
-                        onControlledValueChange={(value) => setTitle(value)}
-                        maxLength={MAX_TITLE_LENGTH}
-                        inputRef={inputRef}
-                        placeholder="Enter session title"
-                        type="text"
-                        value={title}
-                        error={!!inputFeedback.title}
-                        autoFocus
-                        required
-                    />
-                    <div className="text-red-600 text-sm mb-1 h-4">{inputFeedback.title}</div>
-                    <CharLimitedInput
-                        label="Description (optional)"
-                        maxLength={MAX_DESCRIPTION_LENGTH}
-                        onControlledValueChange={(value) => setDescription(value)}
-                        placeholder="Enter session description"
-                        value={description}
-                        multiline
-                    />
-                </div>
-            </form>
-        </Dialog>
+        <>
+            <Dialog.Popup open={props.open} onOpenChange={handleCancel} modal width={600}>
+                <Dialog.Header closeIconVisible>
+                    <Dialog.Title>Edit session metadata</Dialog.Title>
+                </Dialog.Header>
+                <form id={formId} onSubmit={handleSave}>
+                    <Dialog.Body layoutClassName="flex items-center gap-x-sm">
+                        <Hidden hidden={!props.showPreview}>
+                            <DashboardPreviewCarousel height={220} width={150} dashboards={dashboards} />
+                        </Hidden>
+                        <div className="gap-y-sm flex min-w-0 grow flex-col">
+                            <FieldCompositions.Default
+                                label="Title"
+                                indicator="(Required)"
+                                info={`Enter a descriptive title for your session, which will help you identify it later. This must be between ${MIN_TITLE_LENGTH} and ${MAX_TITLE_LENGTH} characters.`}
+                                validationMode="onSubmit"
+                            >
+                                <TextInput
+                                    minLength={MIN_TITLE_LENGTH}
+                                    maxLength={MAX_TITLE_LENGTH}
+                                    ref={inputRef}
+                                    value={title}
+                                    onValueChange={(val) => setTitle(val)}
+                                    placeholder="Enter session title"
+                                    autoFocus
+                                    required
+                                    endAdornment={
+                                        <Tooltip
+                                            content={`Your title is currently using ${title.length} out of the maximum ${MAX_TITLE_LENGTH} characters.`}
+                                        >
+                                            <Typography
+                                                size="sm"
+                                                family="body"
+                                                tone="neutral"
+                                            >{`${title.length}/${MAX_TITLE_LENGTH}`}</Typography>
+                                        </Tooltip>
+                                    }
+                                />
+                            </FieldCompositions.Default>
+                            <FieldCompositions.Default label="Description" indicator="(Optional)">
+                                <TextArea
+                                    maxLength={MAX_DESCRIPTION_LENGTH}
+                                    value={description}
+                                    onValueChange={(val) => setDescription(val)}
+                                    placeholder="Enter session description"
+                                    rows={3}
+                                    bottomAdornment={
+                                        <Tooltip
+                                            content={`Your descriptions is currently using ${description.length} out of the maximum ${MAX_DESCRIPTION_LENGTH} characters.`}
+                                        >
+                                            <Typography
+                                                size="sm"
+                                                family="body"
+                                                tone="neutral"
+                                            >{`${description.length}/${MAX_DESCRIPTION_LENGTH}`}</Typography>
+                                        </Tooltip>
+                                    }
+                                />
+                            </FieldCompositions.Default>
+                        </div>
+                    </Dialog.Body>
+                    <Dialog.Actions>
+                        <Button variant="ghost" tone="neutral" disabled={isSaving} onClick={handleCancel}>
+                            Cancel
+                        </Button>
+                        <Button variant="contained" disabled={isSaving} type="submit" form={formId}>
+                            {isSaving && <CircularProgress size={16} />} Save
+                        </Button>
+                    </Dialog.Actions>
+                </form>
+            </Dialog.Popup>
+            <AlertDialog
+                open={showConfirmationDialog}
+                onOpenChange={setShowConfirmationDialog}
+                title="Discard changes?"
+                primaryAction={{
+                    label: "Keep editing",
+                    onClick: () => setShowConfirmationDialog(false),
+                    tone: "neutral",
+                    closesDialog: true,
+                }}
+                secondaryActions={[
+                    {
+                        label: "Discard",
+                        onClick: handleDiscardChanges,
+                        tone: "danger",
+                        closesDialog: true,
+                    },
+                ]}
+            >
+                You have unsaved changes. Are you sure you want to discard them and close the dialog?
+            </AlertDialog>
+        </>
     );
 }

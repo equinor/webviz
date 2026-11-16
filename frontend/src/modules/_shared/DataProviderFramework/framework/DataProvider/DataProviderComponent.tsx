@@ -3,8 +3,8 @@ import type React from "react";
 import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -29,6 +29,8 @@ export type DataProviderComponentProps = {
 
 export function DataProviderComponent(props: DataProviderComponentProps): React.ReactNode {
     const isExpanded = usePublishSubscribeTopicValue(props.dataProvider.getItemDelegate(), ItemDelegateTopic.EXPANDED);
+    const status = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS);
+    const isErrorOrInvalid = status === DataProviderStatus.ERROR || status === DataProviderStatus.INVALID_SETTINGS;
 
     function makeSetting(setting: SettingManager<any>) {
         const manager = props.dataProvider.getItemDelegate().getDataProviderManager();
@@ -56,12 +58,13 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
             title={<EditName item={props.dataProvider} />}
             startAdornment={<StartActions dataProvider={props.dataProvider} />}
             endAdornment={<EndActions dataProvider={props.dataProvider} />}
+            headerClassNames={isErrorOrInvalid ? "bg-danger-canvas!" : undefined}
         >
-            <div className="relative">
+            <div className="bg-neutral/20 relative">
                 <ErrorOverlay itemDelegate={props.dataProvider.getItemDelegate()} isExpanded={isExpanded} />
                 <div
                     className={resolveClassNames(
-                        "grid grid-cols-[auto_1fr] items-stretch text-xs border [&>*:nth-child(4n-3)]:bg-slate-50 [&>*:nth-child(4n-2)]:bg-slate-50",
+                        "[&>*:nth-child(4n-2)]:bg-surface [&>*:nth-child(4n-3)]:bg-surface text-body-sm border-neutral-subtle grid grid-cols-[auto_1fr] items-stretch border",
                         {
                             hidden: !isExpanded,
                         },
@@ -86,9 +89,11 @@ function StartActions(props: StartActionProps): React.ReactNode {
     }
     return (
         <div className="flex items-center">
-            <DenseIconButton onClick={handleToggleExpanded} title={isExpanded ? "Hide settings" : "Show settings"}>
-                {isExpanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-            </DenseIconButton>
+            <Tooltip content={isExpanded ? "Hide settings" : "Show settings"} side="bottom">
+                <Button onClick={handleToggleExpanded} variant="ghost" tone="neutral" size="small" iconOnly>
+                    {isExpanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
+                </Button>
+            </Tooltip>
             <VisibilityToggle item={props.dataProvider} />
         </div>
     );
@@ -108,22 +113,25 @@ function EndActions(props: EndActionProps): React.ReactNode {
         ItemDelegateTopic.DESERIALIZATION_ERRORS,
     );
 
+    // Each status gets its own key, so its tooltip is mounted anew when the status changes. Otherwise React keeps
+    // the same tooltip and only swaps the element it is attached to (e.g. the loading spinner for the success icon),
+    // and Base UI's tooltip trigger keeps listening for the mouse on the replaced element - the tooltip never opens.
     function makeStatus(): React.ReactNode {
         if (isSubordinated) {
             return (
-                <Tooltip title="Subordinated">
-                    <Difference fontSize="small" />
+                <Tooltip key="subordinated" content="Subordinated" side="bottom">
+                    <Difference style={{ fontSize: 16 }} />
                 </Tooltip>
             );
         }
         if (status === DataProviderStatus.LOADING) {
             return (
-                <Tooltip title={progressMessage ?? "Loading"}>
-                    <div className="flex gap-2 min-w-0 items-center">
-                        <span className="overflow-hidden whitespace-nowrap min-w-0 text-ellipsis">
+                <Tooltip key="loading" content={progressMessage ?? "Loading"} side="bottom">
+                    <div className="gap-x-2xs flex min-w-0 items-center">
+                        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                             {progressMessage}
                         </span>
-                        <CircularProgress size="extra-small" />
+                        <CircularProgress size={16} />
                     </div>
                 </Tooltip>
             );
@@ -132,25 +140,23 @@ function EndActions(props: EndActionProps): React.ReactNode {
             const error = props.dataProvider.getError();
             if (!error) {
                 return (
-                    <Tooltip title="Error">
-                        <Error className="text-red-700 p-0.5" fontSize="small" />
+                    <Tooltip key="error" content="Error" side="bottom">
+                        <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
                     </Tooltip>
                 );
             }
 
             if (typeof error === "string") {
                 return (
-                    <Tooltip title={error}>
-                        <div className="text-red-700 p-0.5">
-                            <Error fontSize="small" />
-                        </div>
+                    <Tooltip key="error" content={error} side="bottom">
+                        <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
                     </Tooltip>
                 );
             } else {
                 const statusMessage = error as StatusMessage;
                 return (
-                    <Tooltip title={statusMessage.message}>
-                        <Error className="text-red-700 p-0.5" fontSize="small" />
+                    <Tooltip key="error" content={statusMessage.message} side="bottom">
+                        <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
                     </Tooltip>
                 );
             }
@@ -164,18 +170,27 @@ function EndActions(props: EndActionProps): React.ReactNode {
             }
             errorMessage += ".";
 
-            errorMessage += "\nPlease check the settings.";
+            errorMessage += "\nClick to show the settings.";
 
             return (
-                <Tooltip title={errorMessage}>
-                    <Block className="text-red-700 p-0.5" fontSize="small" />
+                <Tooltip key="invalid-settings" content={errorMessage} side="bottom">
+                    <Button
+                        onClick={() => props.dataProvider.getItemDelegate().setExpanded(true)}
+                        variant="ghost"
+                        tone="danger"
+                        size="small"
+                        iconOnly
+                        aria-label="Invalid settings - show the settings"
+                    >
+                        <Block style={{ fontSize: 16 }} />
+                    </Button>
                 </Tooltip>
             );
         }
         if (status === DataProviderStatus.SUCCESS) {
             return (
-                <Tooltip title="Successfully loaded">
-                    <CheckCircle className="text-green-700 p-0.5" fontSize="small" />
+                <Tooltip key="success" content="Successfully loaded" side="bottom">
+                    <CheckCircle className="text-success-subtle" style={{ fontSize: 16 }} />
                 </Tooltip>
             );
         }

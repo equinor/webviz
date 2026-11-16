@@ -3,8 +3,7 @@ import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
 
-import { DisplayComponentType, SensitivityScaling } from "../typesAndEnums";
-import { ColorBy } from "../view/components/sensitivityChartFigure";
+import { ColorBy, DisplayComponentType, SensitivityScaling } from "../typesAndEnums";
 
 import {
     colorByAtom,
@@ -15,6 +14,7 @@ import {
     sensitivityScalingAtom,
     sensitivitySortByAtom,
     showLabelsAtom,
+    showSensitivityMeanPointsAtom,
     showRealizationPointsAtom,
 } from "./atoms/baseAtoms";
 
@@ -23,6 +23,7 @@ export type SerializedSettings = {
     referenceSensitivityName: string | null;
     responseChannelName: string | null;
     showLabels: boolean;
+    showSensitivityMeanPoints?: boolean;
     hideZeroY: boolean;
     showRealizationPoints: boolean;
     sensitivitySortBy: SensitivitySortBy;
@@ -44,6 +45,9 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         sensitivityScaling: { enum: Object.values(SensitivityScaling) },
         colorBy: { enum: Object.values(ColorBy) },
     },
+    optionalProperties: {
+        showSensitivityMeanPoints: { type: "boolean" },
+    },
 }));
 
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
@@ -54,6 +58,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         referenceSensitivityName: get(referenceSensitivityNameAtom),
         responseChannelName: get(responseChannelNameAtom),
         showLabels: get(showLabelsAtom),
+        showSensitivityMeanPoints: get(showSensitivityMeanPointsAtom),
         hideZeroY: get(hideZeroYAtom),
         showRealizationPoints: get(showRealizationPointsAtom),
         sensitivitySortBy: get(sensitivitySortByAtom),
@@ -67,6 +72,7 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, referenceSensitivityNameAtom, raw.referenceSensitivityName);
     setIfDefined(set, responseChannelNameAtom, raw.responseChannelName);
     setIfDefined(set, showLabelsAtom, raw.showLabels);
+    setIfDefined(set, showSensitivityMeanPointsAtom, raw.showSensitivityMeanPoints);
     setIfDefined(set, hideZeroYAtom, raw.hideZeroY);
     setIfDefined(set, showRealizationPointsAtom, raw.showRealizationPoints);
     setIfDefined(set, sensitivitySortByAtom, raw.sensitivitySortBy);

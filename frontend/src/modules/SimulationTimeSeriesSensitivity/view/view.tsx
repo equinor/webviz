@@ -2,9 +2,9 @@ import React from "react";
 
 import { useAtom, useAtomValue } from "jotai";
 
+import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
@@ -19,19 +19,24 @@ import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriter
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { useTimeSeriesChartTracesDataArrayBuilder } from "./hooks/useTimeSeriesChartTracesDataArrayBuilder";
 
-export const View = ({ viewContext, workbenchSettings, workbenchServices }: ModuleViewProps<Interfaces>) => {
+export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     const statusWriter = useViewStatusWriter(viewContext);
 
+    const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
     const [activeTimestampUtcMs, setSelectedTimestampUtcMs] = useAtom(activeTimestampUtcMsAtom);
+
     const vectorSpecification = useAtomValue(vectorSpecificationAtom);
 
     const descriptiveVectorName = vectorSpecification
         ? simulationVectorDescription(vectorSpecification?.vectorName)
         : "";
-    const subscribedHoverTimestampUtcMs = useSubscribedValue("global.hoverTimestamp", workbenchServices);
+    const moduleInstanceId = viewContext.getInstanceIdString();
+    const subscribedHoverTimestampUtcMs = useHoverValue(HoverTopic.TIMESTAMP, hoverService, moduleInstanceId);
+    const setHoveredTimestamp = usePublishHoverValue(HoverTopic.TIMESTAMP, hoverService, moduleInstanceId);
+    const setHoveredRealization = usePublishHoverValue(HoverTopic.REALIZATION, hoverService, moduleInstanceId);
 
     useMakeViewStatusWriterMessages(statusWriter);
     usePublishToDataChannels(viewContext);
@@ -41,38 +46,38 @@ export const View = ({ viewContext, workbenchSettings, workbenchServices }: Modu
 
     function handleHoverInChart(hoverInfo: TimeSeriesChartHoverInfo | null) {
         if (hoverInfo) {
-            if (hoverInfo.shiftKeyIsDown) {
+            if (hoverInfo.shiftKeyIsDown && showTimestampMarker) {
                 setSelectedTimestampUtcMs(hoverInfo.timestampUtcMs);
             }
 
-            workbenchServices.publishGlobalData("global.hoverTimestamp", {
-                timestampUtcMs: hoverInfo.timestampUtcMs,
-            });
+            setHoveredTimestamp(hoverInfo.timestampUtcMs);
 
             if (typeof hoverInfo.realization === "number") {
-                workbenchServices.publishGlobalData("global.hoverRealization", {
-                    realization: hoverInfo.realization,
-                });
+                setHoveredRealization(hoverInfo.realization);
             }
         } else {
-            workbenchServices.publishGlobalData("global.hoverTimestamp", null);
-            workbenchServices.publishGlobalData("global.hoverRealization", null);
+            setHoveredTimestamp(null);
+            setHoveredRealization(null);
         }
     }
 
     function handleClickInChart(timestampUtcMs: number) {
+        if (!showTimestampMarker) {
+            return;
+        }
         setSelectedTimestampUtcMs(timestampUtcMs);
     }
 
     // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
     return (
-        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
+        <div className="h-full w-full overflow-hidden" ref={wrapperDivRef}>
             <TimeSeriesChart
                 traceDataArr={traceDataArr}
                 title={descriptiveVectorName}
                 uirevision={vectorSpecification?.vectorName}
-                activeTimestampUtcMs={activeTimestampUtcMs.value ?? undefined}
-                hoveredTimestampUtcMs={subscribedHoverTimestampUtcMs?.timestampUtcMs ?? undefined}
+                activeTimestampUtcMs={showTimestampMarker ? (activeTimestampUtcMs.value ?? undefined) : undefined}
+                hoveredTimestampUtcMs={subscribedHoverTimestampUtcMs ?? undefined}
+                isHoverExternal={hoverService.getLastHoveredModule() !== moduleInstanceId}
                 onClick={handleClickInChart}
                 onHover={handleHoverInChart}
                 height={wrapperDivSize.height}

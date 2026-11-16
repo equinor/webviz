@@ -15,6 +15,7 @@ import polars as pl
 from webviz_services.sumo_access.inplace_volumes_table_types import (
     CategorizedResultNames,
     InplaceVolumes,
+    Property,
     RepeatedTableColumnData,
     Statistic,
     TableColumnStatisticalData,
@@ -26,6 +27,7 @@ from .conversion_utils import create_repeated_table_column_data_from_polars_colu
 from .polars_column_utils import is_invalid_column
 from .polars_expression_utils import (
     create_calculated_volume_column_expressions,
+    create_facies_fraction_expression,
     create_property_column_expressions,
 )
 
@@ -73,6 +75,20 @@ def create_per_fluid_results_df(
     property_column_expressions: list[pl.Expr] = create_property_column_expressions(
         per_fluid_inplace_volumes_df.columns, requested_properties, fluid
     )
+
+    # FACIES_FRACTION is a windowed property: BULK / sum(BULK) over partition columns.
+    # Partition columns are the selector columns in the per-fluid DF excluding FACIES
+    # (typically REAL + remaining group-by indices). The expression requires FACIES and
+    # BULK to be present in the source DataFrame.
+    if Property.FACIES_FRACTION.value in requested_properties:
+        partition_columns = [
+            col for col in available_selector_columns if col != InplaceVolumes.TableIndexColumns.FACIES.value
+        ]
+        facies_fraction_expr = create_facies_fraction_expression(
+            per_fluid_inplace_volumes_df.columns, partition_columns
+        )
+        if facies_fraction_expr is not None:
+            property_column_expressions.append(facies_fraction_expr)
 
     # Create result dataframe, select columns and calculate volumes + properties
     column_names_and_expressions = (

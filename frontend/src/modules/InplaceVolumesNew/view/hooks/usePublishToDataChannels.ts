@@ -1,24 +1,40 @@
 import { useAtomValue } from "jotai";
 
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewContext } from "@framework/ModuleContext";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ChannelContentDefinition, ChannelContentMetaData, DataGenerator } from "@framework/types/dataChannnel";
+import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { ChannelIds } from "@modules/InplaceVolumesNew/channelDefs";
 import type { Interfaces } from "@modules/InplaceVolumesNew/interfaces";
-import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
-import { colorByAtom, resultNameAtom, plotTypeAtom, subplotByAtom } from "../atoms/baseAtoms";
+import {
+    areTableDefinitionSelectionsValidAtom,
+    colorByAtom,
+    resultNameAtom,
+    plotTypeAtom,
+    selectorColumnAtom,
+    subplotByAtom,
+} from "../atoms/baseAtoms";
+import { areSelectedTablesComparableAtom, indicesWithValuesAtom } from "../atoms/derivedAtoms";
+import { orderEntriesByPreferredValues } from "../utils/GroupedTableData";
 
-const STANDARD_ORIGIN_KEYS = [TableOriginKey.ENSEMBLE, TableOriginKey.TABLE_NAME, TableOriginKey.FLUID];
+// SENSITIVITY is never split: the SensitivityPlot tornado needs the whole per-realization response.
+const STANDARD_ORIGIN_KEYS = [
+    TableOriginKey.ENSEMBLE,
+    TableOriginKey.TABLE_NAME,
+    TableOriginKey.FLUID,
+    TableOriginKey.SENSITIVITY,
+];
 
 interface ContentContext {
     ensembleName: string;
-    ensembleIdent: RegularEnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     ensembleIdentStr: string | number;
     tableName: string | number;
     fluidZone: string | number;
@@ -109,18 +125,40 @@ export function usePublishToDataChannels(
     const colorBy = useAtomValue(colorByAtom);
     const resultName = useAtomValue(resultNameAtom);
     const plotType = useAtomValue(plotTypeAtom);
+    const selectorColumn = useAtomValue(selectorColumnAtom);
+    const indicesWithValues = useAtomValue(indicesWithValuesAtom);
+    const areTableDefinitionSelectionsValid = useAtomValue(areTableDefinitionSelectionsValidAtom);
+    const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
+    const isSelectionValid = areTableDefinitionSelectionsValid && areSelectedTablesComparable;
+    // Keep the last contents while loading, but clear them when the selection is invalid.
+    const enabled = Boolean(table && resultName) || !isSelectionValid;
+    const dependencies = [
+        table,
+        ensembleSet,
+        resultName,
+        colorBy,
+        colorSet,
+        plotType,
+        subplotBy,
+        selectorColumn,
+        indicesWithValues,
+        isSelectionValid,
+    ];
 
-    if (
-        !table ||
-        !resultName ||
-        !table.getColumn("REAL") ||
-        !table.getColumn(resultName) ||
-        plotType === PlotType.BAR
-    ) {
+    // Backend group order is not stable; follow the filter's order, as the plot does.
+    const categoryOrder = new Map(indicesWithValues.map((index) => [index.indexColumn, index.values]));
+    function splitInDisplayOrder(tableToSplit: Table, column: string) {
+        return orderEntriesByPreferredValues(
+            Array.from(tableToSplit.splitByColumn(column).getCollectionMap()),
+            categoryOrder.get(column),
+        );
+    }
+
+    if (!table || !resultName || !table.getColumn("REAL") || !table.getColumn(resultName)) {
         viewContext.usePublishChannelContents({
             channelIdString: ChannelIds.RESPONSE_PER_REAL,
-            dependencies: [table, ensembleSet, resultName, colorBy, colorSet],
-            enabled: Boolean(table && resultName),
+            dependencies,
+            enabled,
             contents,
         });
         return;
@@ -129,20 +167,19 @@ export function usePublishToDataChannels(
     const colorByMap = createColumnValuesToColorMap(table, ensembleSet, colorBy, colorSet);
     const isStandardSubplotBy = STANDARD_ORIGIN_KEYS.includes(subplotBy as TableOriginKey);
     const isStandardColorBy = STANDARD_ORIGIN_KEYS.includes(colorBy as TableOriginKey);
+    let hasDuplicateRealizations = false;
 
     for (const [ensembleIdentStr, ensembleTable] of table.splitByColumn(TableOriginKey.ENSEMBLE).getCollectionMap()) {
-        const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentStr.toString());
-        const ensembleName = makeDistinguishableEnsembleDisplayName(
-            ensembleIdent,
-            ensembleSet.getRegularEnsembleArray(),
-        );
+        const ensembleIdent = getEnsembleIdentFromString(ensembleIdentStr.toString());
+        if (!ensembleIdent) {
+            continue;
+        }
+        const ensembleName = makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getEnsembleArray());
 
         for (const [tableName, tableForTableName] of ensembleTable
             .splitByColumn(TableOriginKey.TABLE_NAME)
             .getCollectionMap()) {
-            for (const [fluidZone, fluidZoneTable] of tableForTableName
-                .splitByColumn(TableOriginKey.FLUID)
-                .getCollectionMap()) {
+            for (const [fluidZone, fluidZoneTable] of splitInDisplayOrder(tableForTableName, TableOriginKey.FLUID)) {
                 const baseCtx: Omit<ContentContext, "subplotByValue" | "colorByValue"> = {
                     ensembleName,
                     ensembleIdent,
@@ -154,19 +191,31 @@ export function usePublishToDataChannels(
 
                 const tablesToProcess = isStandardSubplotBy
                     ? [{ table: fluidZoneTable, subplotByValue: undefined }]
-                    : Array.from(fluidZoneTable.splitByColumn(subplotBy).getCollectionMap()).map(
-                          ([subplotValue, subplotTable]) => ({ table: subplotTable, subplotByValue: subplotValue }),
-                      );
+                    : splitInDisplayOrder(fluidZoneTable, subplotBy).map(([subplotValue, subplotTable]) => ({
+                          table: subplotTable,
+                          subplotByValue: subplotValue,
+                      }));
 
                 for (const { table: currentTable, subplotByValue } of tablesToProcess) {
-                    const colorEntries = isStandardColorBy
-                        ? [{ table: currentTable, colorByValue: undefined }]
-                        : Array.from(currentTable.splitByColumn(colorBy).getCollectionMap()).map(
-                              ([colorValue, colorTable]) => ({ table: colorTable, colorByValue: colorValue }),
-                          );
+                    // When subplotBy and colorBy are the same column, the split by subplotBy above
+                    // has already dropped that column (and each subtable holds a single value), so we
+                    // must not split again on it. Reuse the subplot value as the color value instead.
+                    const colorBySameAsSubplotBy = !isStandardColorBy && colorBy === subplotBy;
+                    let colorEntries: { table: Table; colorByValue: string | number | undefined }[];
+                    if (isStandardColorBy) {
+                        colorEntries = [{ table: currentTable, colorByValue: undefined }];
+                    } else if (colorBySameAsSubplotBy) {
+                        colorEntries = [{ table: currentTable, colorByValue: subplotByValue }];
+                    } else {
+                        colorEntries = splitInDisplayOrder(currentTable, colorBy).map(([colorValue, colorTable]) => ({
+                            table: colorTable,
+                            colorByValue: colorValue,
+                        }));
+                    }
 
                     for (const { table: finalTable, colorByValue } of colorEntries) {
                         const ctx: ContentContext = { ...baseCtx, subplotByValue, colorByValue };
+                        hasDuplicateRealizations ||= hasSeveralRowsPerRealization(finalTable);
                         contents.push(createChannelContent(finalTable, ctx, colorByMap, colorBy));
                     }
                 }
@@ -176,10 +225,16 @@ export function usePublishToDataChannels(
 
     viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.RESPONSE_PER_REAL,
-        dependencies: [table, ensembleSet, resultName, colorBy, colorSet],
-        enabled: Boolean(table && resultName),
-        contents,
+        dependencies,
+        enabled,
+        // E.g. bars per zone without splitting by zone; a response per realization is required.
+        contents: hasDuplicateRealizations ? [] : contents,
     });
+}
+
+function hasSeveralRowsPerRealization(table: Table): boolean {
+    const realColumn = table.getColumn("REAL");
+    return realColumn !== undefined && realColumn.getUniqueValues().length < realColumn.getNumRows();
 }
 
 function createColumnValuesToColorMap(
@@ -202,8 +257,8 @@ function createColumnValuesToColorMap(
         let effectiveColor = currentBaseColorFromSet;
 
         if (colorBy === TableOriginKey.ENSEMBLE) {
-            const currentEnsembleIdent = RegularEnsembleIdent.fromString(keyOfColorByItem.toString());
-            const ensemble = ensembleSet.findEnsemble(currentEnsembleIdent);
+            const currentEnsembleIdent = getEnsembleIdentFromString(keyOfColorByItem.toString());
+            const ensemble = currentEnsembleIdent ? ensembleSet.findEnsemble(currentEnsembleIdent) : null;
             const ensembleSpecificColor = ensemble?.getColor();
 
             if (ensembleSpecificColor !== undefined) {

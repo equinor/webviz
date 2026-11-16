@@ -1,8 +1,8 @@
 import React from "react";
 
-import { type ConfirmOptions, ConfirmationService } from "@framework/ConfirmationService";
-import { Button } from "@lib/components/Button";
-import { Dialog } from "@lib/components/Dialog";
+import { type ConfirmActionColor, type ConfirmOptions, ConfirmationService } from "@framework/ConfirmationService";
+import { AlertDialog } from "@lib/components/AlertDialog";
+import type { ButtonProps } from "@lib/components/Button";
 
 export function GlobalConfirmationDialog(): React.ReactNode {
     const [visible, setVisible] = React.useState<boolean>(false);
@@ -24,29 +24,37 @@ export function GlobalConfirmationDialog(): React.ReactNode {
         return null;
     }
 
+    const primaryAction = options.actions[options.actions.length - 1];
+
     return (
-        <Dialog
+        <AlertDialog
             open
-            modal
-            showCloseCross={false}
+            primaryAction={{
+                label: primaryAction.label,
+                tone: mapActionColorToButtonTone(primaryAction.color),
+                onClick: () => handleAction(primaryAction.id),
+            }}
+            secondaryActions={options.actions.slice(0, -1).map((action) => ({
+                label: action.label,
+                tone: mapActionColorToButtonTone(action.color),
+                onClick: () => handleAction(action.id),
+            }))}
             title={options.title}
-            variant={options.variant}
-            actions={
-                <>
-                    {options.actions.map((action) => (
-                        <Button
-                            key={action.id}
-                            color={action.color ?? "primary"}
-                            onClick={() => handleAction(action.id)}
-                        >
-                            {action.label}
-                        </Button>
-                    ))}
-                </>
-            }
-            zIndex={101}
         >
             {options.message}
-        </Dialog>
+        </AlertDialog>
     );
+}
+
+function mapActionColorToButtonTone(color: ConfirmActionColor | undefined): ButtonProps["tone"] {
+    switch (color) {
+        case "primary":
+            return "accent";
+        case "danger":
+            return "danger";
+        case "secondary":
+            return "neutral";
+        default:
+            return "accent";
+    }
 }

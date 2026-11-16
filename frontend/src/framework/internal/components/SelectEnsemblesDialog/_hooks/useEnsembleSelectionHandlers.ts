@@ -1,5 +1,7 @@
 import React from "react";
 
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+
 import { createUpdatedDeltaEnsemble } from "../_utils";
 import type { EnsembleIdentWithCaseName, InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "../types";
 
@@ -24,7 +26,8 @@ export type UseEnsembleSelectionHandlersResult = {
     handleSelectEnsemble: (newItem: InternalRegularEnsembleSetting) => void;
     handleExploreRegularEnsemble: () => void;
     handleUpdateRegularEnsemble: (updatedItem: InternalRegularEnsembleSetting) => void;
-    handleRemoveRegularEnsemble: (removedItem: InternalRegularEnsembleSetting) => void;
+    handleSetRegularEnsembles: (newItems: InternalRegularEnsembleSetting[]) => void;
+    handleRemoveRegularEnsembles: (...removedItems: RegularEnsembleIdent[]) => void;
     handleMoveRegularEnsemble: (movedEnsemble: InternalRegularEnsembleSetting, newIndex: number) => void;
     handleAddDeltaEnsemble: (newItem: InternalDeltaEnsembleSetting) => void;
     handleUpdateDeltaEnsemble: (updatedItem: InternalDeltaEnsembleSetting) => void;
@@ -166,10 +169,10 @@ export function useEnsembleSelectionHandlers({
         [selectedRegularEnsembles, setSelectedRegularEnsembles],
     );
 
-    const handleRemoveRegularEnsemble = React.useCallback(
-        function handleRemoveRegularEnsemble(removedItem: InternalRegularEnsembleSetting) {
+    const handleRemoveRegularEnsembles = React.useCallback(
+        function handleRemoveRegularEnsembles(...removedItems: RegularEnsembleIdent[]) {
             setSelectedRegularEnsembles((prev) =>
-                prev.filter((el) => !el.ensembleIdent.equals(removedItem.ensembleIdent)),
+                prev.filter((el) => !removedItems.some((item) => el.ensembleIdent.equals(item))),
             );
         },
         [setSelectedRegularEnsembles],
@@ -272,7 +275,8 @@ export function useEnsembleSelectionHandlers({
         handleSelectEnsemble,
         handleExploreRegularEnsemble,
         handleUpdateRegularEnsemble,
-        handleRemoveRegularEnsemble,
+        handleSetRegularEnsembles: setSelectedRegularEnsembles,
+        handleRemoveRegularEnsembles,
         handleMoveRegularEnsemble,
         handleAddDeltaEnsemble,
         handleUpdateDeltaEnsemble,

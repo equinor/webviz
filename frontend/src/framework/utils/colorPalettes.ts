@@ -16,7 +16,7 @@ import { ColorPalette } from "@lib/utils/ColorPalette";
  */
 export const defaultColorPalettes = [
     new ColorPalette({
-        name: "Tab10 (Matplotlib default)",
+        name: "Tab10",
         colors: [
             "#1f77b4",
             "#ff7f0e",
@@ -146,6 +146,33 @@ export const defaultContinuousDivergingColorPalettes = [
             "#053061",
         ],
         id: "rdbu",
+    }),
+    new ColorPalette({
+        name: "YlRdBu",
+        colors: [
+            "#fbf705",
+            "#fccd04",
+            "#fda304",
+            "#fe7d04",
+            "#ff5303",
+            "#e74502",
+            "#c84302",
+            "#a64201",
+            "#844000",
+            "#bc9b7a",
+            "#f9f9f9",
+            "#adadb0",
+            "#676678",
+            "#4a4889",
+            "#302c99",
+            "#130eaa",
+            "#051dbb",
+            "#0452cd",
+            "#0387de",
+            "#01b9ee",
+            "#00eeff",
+        ],
+        id: "yellow-red-blue",
     }),
     new ColorPalette({
         name: "RdYlBu",

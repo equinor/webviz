@@ -1,27 +1,45 @@
 import React from "react";
 
-import { OrbitView, OrthographicView, type Layer } from "@deck.gl/core";
+import type { Layer } from "@deck.gl/core";
+import { OrbitView, OrthographicView } from "@deck.gl/core";
 import type { BoundingBox2D, BoundingBox3D, ViewStateType } from "@webviz/subsurface-viewer";
-import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { AxesLayer, Grid3DLayer, MapLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ContentActionRequired } from "@modules/_shared/components/ContentMessage";
+import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
+import { WebvizWellsLayer } from "@modules/_shared/customDeckGlLayers/WebvizWellsLayer";
+import {
+    type DataProviderManager,
+    DataProviderManagerTopic,
+} from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type {
     AssemblerProduct,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import {
+    isVisualizationLoading,
+    VisualizationItemType,
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { ViewLayout } from "@modules/_shared/enums/viewLayout";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 
 import { PlaceholderLayer } from "../../customDeckGlLayers/PlaceholderLayer";
+import type { LayerTransformationLookupMap } from "../../utils/subsurfaceViewer/hoverTransformations";
+import {
+    makeHoverTransformationLookup,
+    transformPolylineToFenceHoverData,
+    transformToWellboreHoverData,
+    transformToWorldPosHoverData,
+} from "../../utils/subsurfaceViewer/hoverTransformations";
 
 import { InteractionWrapper } from "./_components/InteractionWrapper";
-import { PreferredViewLayout } from "./typesAndEnums";
+import { mergeLayersOfViews } from "./_utils/mergeLayersOfViews";
 
 export type DpfSubsurfaceViewerContextType = {
     visualizationMode: "2D" | "3D";
@@ -30,13 +48,13 @@ export type DpfSubsurfaceViewerContextType = {
     onViewStateChange?: (viewState: ViewStateType) => void;
     onVerticalScaleChange?: (verticalScale: number) => void;
     visualizationAssemblerProduct: AssemblerProduct<any>;
-    preferredViewLayout: PreferredViewLayout;
-    bounds: BoundingBox2D | undefined;
+    preferredViewLayout: ViewLayout;
+    bounds: BoundingBox2D | BoundingBox3D | undefined;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
-    workbenchServices: WorkbenchServices;
     hoverService: HoverService;
     moduleInstanceId: string;
+    hoverDataTransformationLookup: LayerTransformationLookupMap;
 };
 
 export const DpfSubsurfaceViewerContext = React.createContext<DpfSubsurfaceViewerContextType | null>(null);
@@ -56,18 +74,40 @@ export type DpfSubsurfaceViewerWrapperProps = {
     onViewStateChange?: (viewState: ViewStateType) => void;
     onVerticalScaleChange?: (verticalScale: number) => void;
     fieldId: string;
+    dataProviderManager: DataProviderManager;
     visualizationAssemblerProduct: AssemblerProduct<VisualizationTarget.DECK_GL, any, any>;
     viewContext: ViewContext<any>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
-    workbenchServices: WorkbenchServices;
-    preferredViewLayout: PreferredViewLayout;
+    preferredViewLayout: ViewLayout;
     hoverService: HoverService;
     moduleInstanceId: string;
+    customHoverDataTransformations?: LayerTransformationLookupMap;
 };
 
+const HOVER_TRANSFORMATIONS = makeHoverTransformationLookup(
+    [WebvizWellsLayer, transformToWellboreHoverData],
+    [MapLayer, transformToWorldPosHoverData],
+    [Grid3DLayer, transformToWorldPosHoverData],
+    [PolylinesLayer, transformPolylineToFenceHoverData],
+);
+
 export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProps): React.ReactNode {
-    const { onViewStateChange } = props;
+    const { onViewStateChange, dataProviderManager } = props;
+
+    // The field the providers have actually been switched to. The fieldId prop changes in the same render as the
+    // settings, while the manager only receives it afterwards (in the settings' effect) - until then, the product
+    // still shows the previous field's data and isn't loading.
+    const subscribeToGlobalSettings = React.useMemo(
+        () =>
+            dataProviderManager
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS),
+        [dataProviderManager],
+    );
+    const appliedFieldId = React.useSyncExternalStore(subscribeToGlobalSettings, () =>
+        dataProviderManager.getGlobalSetting("fieldId"),
+    );
 
     const [changingFields, setChangingFields] = React.useState<boolean>(false);
     const [prevFieldId, setPrevFieldId] = React.useState<string | null>(props.fieldId);
@@ -75,28 +115,33 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         props.getInitialViewState?.() ?? undefined,
     );
 
+    const hoverDataTransformationsLookup = React.useMemo<LayerTransformationLookupMap>(() => {
+        const customTransforms = props.customHoverDataTransformations ?? new Map();
+
+        return new Map([...HOVER_TRANSFORMATIONS, ...customTransforms]);
+    }, [props.customHoverDataTransformations]);
+
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     const usedPolylineIds = props.visualizationAssemblerProduct.accumulatedData.polylineIds;
 
     const viewports: ViewportTypeExtended[] = [];
-    const deckGlLayers: Layer<any>[] = [];
+    const layersPerView: Layer<any>[][] = [];
     const globalLayerIds: string[] = ["placeholder", "axes"];
 
     for (const item of props.visualizationAssemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
             const colorScales = item.annotations.filter((el) => "colorScale" in el);
             const layerIds: string[] = [...globalLayerIds];
+            const viewLayers: Layer<any>[] = [];
 
             for (const child of item.children) {
                 if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
-                    const layer = child.visualization;
-
-                    layerIds.push(layer.id);
-                    // Shared layers (aka, root group layers) might already have been added
-                    if (!deckGlLayers.some((l) => l.id === layer.id)) deckGlLayers.push(layer);
+                    layerIds.push(child.visualization.id);
+                    viewLayers.push(child.visualization);
                 }
             }
+            layersPerView.push(viewLayers);
             viewports.push({
                 id: item.id,
                 name: item.name,
@@ -109,6 +154,9 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         }
     }
 
+    // Shared layers (aka, root group layers) are in several views, so they are merged into one list
+    const deckGlLayers = mergeLayersOfViews(layersPerView);
+
     const views: ViewsTypeExtended = {
         layout: [0, 0],
         showLabel: false,
@@ -119,21 +167,39 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         (item) => item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW,
     ).length;
 
+    // Grid should flow row-first
     if (numViews) {
-        const numCols = Math.ceil(Math.sqrt(numViews));
-        const numRows = Math.ceil(numViews / numCols);
-        views.layout = [numCols, numRows];
+        if (props.preferredViewLayout === ViewLayout.GRID) {
+            const numRows = Math.ceil(Math.sqrt(numViews));
+            const numCols = Math.ceil(numViews / numRows);
+
+            views.layout = [numCols, numRows];
+        }
+
+        if (props.preferredViewLayout === ViewLayout.HORIZONTAL) {
+            views.layout = [1, numViews];
+        }
+
+        if (props.preferredViewLayout === ViewLayout.VERTICAL) {
+            views.layout = [numViews, 1];
+        }
     }
 
-    if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
-        views.layout = [views.layout[1], views.layout[0]];
-    }
-
-    statusWriter.setLoading(props.visualizationAssemblerProduct.numLoadingDataProviders > 0);
+    statusWriter.setLoading(isVisualizationLoading(props.visualizationAssemblerProduct));
 
     for (const message of props.visualizationAssemblerProduct.aggregatedErrorMessages) {
         statusWriter.addError(message);
     }
+
+    for (const message of props.visualizationAssemblerProduct.aggregatedActionRequiredMessages) {
+        statusWriter.flagActionRequired(message);
+    }
+
+    const hasRenderableLayers = deckGlLayers.length > 0;
+    const showActionRequiredFallback =
+        !hasRenderableLayers &&
+        props.visualizationAssemblerProduct.numLoadingDataProviders === 0 &&
+        props.visualizationAssemblerProduct.aggregatedActionRequiredMessages.length > 0;
 
     let bounds3D: BoundingBox3D | undefined = undefined;
     let bounds2D: BoundingBox2D | undefined = undefined;
@@ -156,7 +222,15 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
 
     deckGlLayers.push(
         new PlaceholderLayer({ id: "placeholder" }),
-        new AxesLayer({ id: "axes", bounds: bounds3D, ZIncreasingDownwards: true }),
+        new AxesLayer({
+            id: "axes",
+            bounds: bounds3D,
+            ZIncreasingDownwards: true,
+            // Alpha must be explicit — luma.gl's shared scratch buffer is never zeroed, so a
+            // 3-element array leaves the alpha channel at whatever garbage was last written there.
+            axisColor: [120, 120, 120, 255],
+            labelColor: [120, 120, 120, 255],
+        }),
     );
 
     deckGlLayers.reverse();
@@ -176,12 +250,21 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     }
 
     const finalLayers: Layer<any>[] = [];
-    if (changingFields && props.visualizationAssemblerProduct.numLoadingDataProviders === 0) {
+    // Only done once the providers have been switched to the new field and have loaded for it - otherwise the
+    // previous field's layers would be shown in the new viewer while the new field loads
+    if (
+        changingFields &&
+        appliedFieldId === props.fieldId &&
+        !isVisualizationLoading(props.visualizationAssemblerProduct)
+    ) {
         setChangingFields(false);
     }
 
     if (!changingFields) {
-        finalLayers.push(...deckGlLayers);
+        // Cloned, as the layer instances come from the assembler's cache and may already have been used, and
+        // finalized, by the viewer that was replaced on the last field change - deck.gl needs a fresh instance per
+        // viewer. Cloning is shallow, and deck.gl matches layers by id, so nothing is recomputed.
+        finalLayers.push(...deckGlLayers.map((layer) => layer.clone({})));
     }
 
     const handleViewStateChange = React.useCallback(
@@ -195,15 +278,27 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
 
     // -----------------------------------------------------------------------------
 
+    if (showActionRequiredFallback) {
+        return (
+            <ContentActionRequired>
+                {makeInvalidSettingsSummary(
+                    props.visualizationAssemblerProduct.aggregatedActionRequiredMessages.length,
+                    props.visualizationAssemblerProduct.numDataProviders,
+                )}
+            </ContentActionRequired>
+        );
+    }
+
     return (
         <DpfSubsurfaceViewerContext.Provider
             value={{
                 ...props,
                 onViewStateChange: handleViewStateChange,
                 viewState,
-                bounds: props.visualizationMode === "2D" ? bounds2D : undefined,
+                bounds: props.visualizationMode === "2D" ? bounds2D : bounds3D,
                 moduleInstanceId: props.moduleInstanceId,
                 hoverService: props.hoverService,
+                hoverDataTransformationLookup: hoverDataTransformationsLookup,
             }}
         >
             <InteractionWrapper
@@ -215,4 +310,15 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
             />
         </DpfSubsurfaceViewerContext.Provider>
     );
+}
+
+// The details per layer are reported to the status writer - the content only summarizes them to stay short
+function makeInvalidSettingsSummary(numInvalid: number, numTotal: number): string {
+    if (numTotal <= 1) {
+        return "The layer has invalid settings.";
+    }
+    if (numInvalid >= numTotal) {
+        return "All layers have invalid settings.";
+    }
+    return `${numInvalid} of ${numTotal} layers have invalid settings.`;
 }

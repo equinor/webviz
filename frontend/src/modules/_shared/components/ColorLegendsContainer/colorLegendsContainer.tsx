@@ -10,7 +10,7 @@ import type { ColorScaleWithId } from "./colorScaleWithId";
 
 const STYLE_CONSTANTS = {
     lineWidth: 6,
-    lineColor: "#555",
+    lineColor: "currentColor",
     textGap: 6,
     offset: 10,
     legendGap: 4,
@@ -21,12 +21,13 @@ const STYLE_CONSTANTS = {
 
 const TEXT_STYLE: React.CSSProperties = {
     fontSize: "11px",
-    stroke: "#fff",
+    fill: "currentColor",
+    stroke: "Canvas",
     paintOrder: "stroke",
     strokeWidth: "5px",
     strokeLinecap: "round",
     strokeLinejoin: "round",
-    fontWeight: 800,
+    fontWeight: 400,
     overflow: "hidden",
 };
 
@@ -377,7 +378,7 @@ export function ColorLegendsContainer(props: ColorLegendsContainerProps): React.
 
     return (
         <div
-            className={resolveClassNames("absolute bottom-8 flex gap-2 z-50", {
+            className={resolveClassNames("z-elevated gap-x-2xs absolute bottom-8 flex", {
                 "left-0": props.position === "left" || props.position === undefined,
                 "right-0": props.position === "right",
             })}
@@ -422,9 +423,9 @@ function GradientDef(props: GradientDefProps): React.ReactNode {
 
     return (
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            {colorStops.toReversed().map((colorStop, index) => (
+            {colorStops.toReversed().map((colorStop) => (
                 <stop
-                    key={index}
+                    key={`color-stop-${colorStop.offset}`}
                     offset={`${((1 - colorStop.offset) * 100).toFixed(2)}%`}
                     stopColor={colorStop.color}
                 />

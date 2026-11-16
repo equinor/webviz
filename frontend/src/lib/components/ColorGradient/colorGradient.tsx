@@ -1,10 +1,24 @@
-import type React from "react";
+import React from "react";
 
+import { useComponentSize } from "@lib/components/_shared/contexts/componentSizeContext";
+import type { SelectableSize } from "@lib/components/_shared/utils/size";
+import type { LayoutClassProps } from "@lib/components/_shared/utils/wrapperProps";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type ColorGradientProps = {
+export type ColorGradientProps = LayoutClassProps & {
+    /** The color palette used to generate the gradient. */
     colorPalette: ColorPalette;
+    /** Number of discrete color steps to render. When omitted, a continuous CSS gradient is used. */
     steps?: number;
+    /** Controls the height of the gradient bar. @default "default" */
+    size?: SelectableSize;
+};
+
+const SIZE_TO_CLASSNAMES: Record<NonNullable<ColorGradientProps["size"]>, string> = {
+    small: "h-4",
+    default: "h-5",
+    large: "h-6",
 };
 
 function makeColorSamples(steps: number, colorPalette: ColorPalette) {
@@ -15,20 +29,28 @@ function makeColorSamples(steps: number, colorPalette: ColorPalette) {
         samples.push(
             <div
                 key={`${color}-${i}`}
-                className="border border-slate-600 h-5 w-full"
-                style={{
-                    backgroundColor: color,
-                }}
-            ></div>,
+                className="h-full grow first-of-type:rounded-l last-of-type:rounded-r"
+                style={{ backgroundColor: color }}
+            />,
         );
     }
     return samples;
 }
 
-export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
+export const ColorGradient = React.forwardRef<HTMLDivElement, ColorGradientProps>(function ColorGradient(props, ref) {
+    const size = useComponentSize(props);
+
     if (props.steps) {
         return (
-            <div className="flex gap-0.5 flex-row justify-between">
+            <div
+                ref={ref}
+                style={props.layoutStyle}
+                className={resolveClassNames(
+                    props.layoutClassName,
+                    SIZE_TO_CLASSNAMES[size],
+                    "border-neutral-strong flex rounded border",
+                )}
+            >
                 {makeColorSamples(props.steps, props.colorPalette)}
             </div>
         );
@@ -36,10 +58,13 @@ export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
 
     return (
         <div
-            className="rounded-sm border border-slate-600 h-5 w-full"
-            style={{
-                backgroundImage: props.colorPalette.getGradient(),
-            }}
-        ></div>
+            ref={ref}
+            style={{ ...props.layoutStyle, backgroundImage: props.colorPalette.getGradient() }}
+            className={resolveClassNames(
+                props.layoutClassName,
+                SIZE_TO_CLASSNAMES[size],
+                "border-neutral-strong rounded border",
+            )}
+        />
     );
-};
+});

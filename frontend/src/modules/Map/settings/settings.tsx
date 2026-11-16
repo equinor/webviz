@@ -10,23 +10,25 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CircularProgress } from "@lib/components/CircularProgress";
-import { Input } from "@lib/components/Input";
-import { Label } from "@lib/components/Label";
-import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
-import { RadioGroup } from "@lib/components/RadioGroup";
+import { Hidden } from "@lib/components/Hidden";
+import { NumberInput } from "@lib/components/NumberInput";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-import type { FullSurfaceAddress } from "@modules/_shared/Surface";
+import { Setting } from "@lib/components/Setting";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
+import type { AnySurfaceAddress, SurfaceAttribute } from "@modules/_shared/Surface";
 import {
     SurfaceAddressBuilder,
     SurfaceDirectory,
     SurfaceTimeType,
+    getSurfaceAttributeDisplayLabel,
+    isSameAttribute,
+    surfaceAttributeKey,
     useObservedSurfacesMetadataQuery,
     useRealizationSurfacesMetadataQuery,
 } from "@modules/_shared/Surface";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { AggregationDropdown } from "../UiComponents";
@@ -47,14 +49,14 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
     const [selectedSurfaceName, setSelectedSurfaceName] = React.useState<string | null>(null);
-    const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = React.useState<string | null>(null);
+    const [selectedSurfaceAttribute, setSelectedSurfaceAttribute] = React.useState<SurfaceAttribute | null>(null);
     const [realizationNum, setRealizationNum] = React.useState<number>(0);
     const [selectedTimeOrInterval, setSelectedTimeOrInterval] = React.useState<string | null>(null);
     const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction_api | null>(null);
-    const [useObserved, toggleUseObserved] = React.useState(false);
+    const [useObserved, setUseObserved] = React.useState(false);
     const setSurfaceAddress = useSetAtom(surfaceAddressAtom);
     const syncHelper = useRefStableSyncSettingsHelper({
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         moduleContext: props.settingsContext,
     });
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
@@ -66,8 +68,8 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     const realizationSurfacesMetaQuery = useRealizationSurfacesMetadataQuery(computedEnsembleIdent);
     const observedSurfacesMetaQuery = useObservedSurfacesMetadataQuery(computedEnsembleIdent);
 
-    usePropagateQueryErrorToStatusWriter(realizationSurfacesMetaQuery, statusWriter);
-    usePropagateQueryErrorToStatusWriter(observedSurfacesMetaQuery, statusWriter);
+    propagateQueryErrorToStatusWriter(realizationSurfacesMetaQuery, statusWriter);
+    propagateQueryErrorToStatusWriter(observedSurfacesMetaQuery, statusWriter);
 
     const surfaceDirectory = new SurfaceDirectory({
         realizationMetaSet: realizationSurfacesMetaQuery.data,
@@ -99,7 +101,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     if (computedSurfaceName && computedSurfaceName !== selectedSurfaceName) {
         setSelectedSurfaceName(computedSurfaceName);
     }
-    if (computedSurfaceAttribute && computedSurfaceAttribute !== selectedSurfaceAttribute) {
+    if (computedSurfaceAttribute && !isSameAttribute(computedSurfaceAttribute, selectedSurfaceAttribute)) {
         setSelectedSurfaceAttribute(computedSurfaceAttribute);
     }
     if (computedTimeOrInterval && computedTimeOrInterval !== selectedTimeOrInterval) {
@@ -107,7 +109,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     }
 
     React.useEffect(function propagateSurfaceSelectionToView() {
-        let surfaceAddress: FullSurfaceAddress | null = null;
+        let surfaceAddress: AnySurfaceAddress | null = null;
         if (computedEnsembleIdent && computedSurfaceName && computedSurfaceAttribute) {
             const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(computedEnsembleIdent);
@@ -154,9 +156,12 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
         }
     }
 
-    function handleSurfAttributeSelectionChange(selectedSurfAttributes: string[]) {
+    function handleSurfAttributeSelectionChange(selectedSurfAttributeKeys: string[]) {
         console.debug("handleSurfAttributeSelectionChange()");
-        const newAttr = selectedSurfAttributes[0] ?? null;
+        const selectedKey = selectedSurfAttributeKeys[0] ?? null;
+        const newAttr = selectedKey
+            ? (surfaceDirectory.getAttributeNames(computedSurfaceName).find((a) => surfaceAttributeKey(a) === selectedKey) ?? null)
+            : null;
         setSelectedSurfaceAttribute(newAttr);
         if (newAttr && computedSurfaceName) {
             syncHelper.publishValue(SyncSettingKey.SURFACE, "global.syncValue.surface", {
@@ -182,11 +187,10 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
         setAggregation(aggregation);
     }
 
-    function handleRealizationTextChanged(value: string) {
+    function handleRealizationTextChanged(value: number | null) {
         console.debug("handleRealizationTextChanged() " + value);
-        const realNum = parseInt(value, 10);
-        if (realNum >= 0) {
-            setRealizationNum(realNum);
+        if (value !== null && value >= 0) {
+            setRealizationNum(value);
         }
     }
 
@@ -194,18 +198,16 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
         setTimeType(event.target.value as SurfaceTimeType);
     }
 
-    let surfNameOptions: SelectOption[] = [];
-    let surfAttributeOptions: SelectOption[] = [];
-    let timeOrIntervalOptions: SelectOption[] = [];
-
-    surfNameOptions = surfaceDirectory.getSurfaceNames(null).map((name) => ({
+    const surfNameOptions = surfaceDirectory.getSurfaceNames(null).map<SelectOption>((name) => ({
         value: name,
         label: name,
     }));
-    surfAttributeOptions = surfaceDirectory.getAttributeNames(computedSurfaceName).map((attr) => ({
-        value: attr,
-        label: attr,
+    const surfAttributeOptions = surfaceDirectory.getAttributeNames(computedSurfaceName).map<SelectOption>((attr) => ({
+        value: surfaceAttributeKey(attr),
+        label: getSurfaceAttributeDisplayLabel(attr),
     }));
+
+    let timeOrIntervalOptions: SelectOption[] = [];
 
     if (timeType === SurfaceTimeType.Interval || timeType === SurfaceTimeType.TimePoint) {
         timeOrIntervalOptions = surfaceDirectory.getTimeOrIntervalStrings().map((interval) => ({
@@ -220,86 +222,92 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     let chooseRealizationElement: JSX.Element | null = null;
     if (aggregation === null) {
         chooseRealizationElement = (
-            <Label text="Realization:">
-                <Input type={"number"} value={realizationNum} onValueChange={handleRealizationTextChanged} />
-            </Label>
+            <Setting.Field label="Realization">
+                <NumberInput value={realizationNum} onValueChange={handleRealizationTextChanged} />
+            </Setting.Field>
         );
     }
 
     return (
-        <>
-            <Label
-                text="Ensemble:"
-                labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
-            >
-                <EnsembleDropdown
-                    ensembles={ensembleSet.getRegularEnsembleArray()}
-                    value={computedEnsembleIdent}
-                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                    onChange={handleEnsembleSelectionChange}
-                />
-            </Label>
-            <RadioGroup
-                value={timeType}
-                options={Object.values(SurfaceTimeType).map((val: SurfaceTimeType) => {
-                    return { value: val, label: SurfaceTimeTypeEnumToStringMapping[val] };
-                })}
-                onChange={handleTimeModeChange}
-            />
-            <Label
-                wrapperClassName="mt-4 mb-4 flex items-center"
-                labelClassName="text-l"
-                text={"Use observed surfaces"}
-            >
-                <div className={"ml-2"}>
-                    <Checkbox onChange={(e: any) => toggleUseObserved(e.target.checked)} checked={useObserved} />
-                </div>
-            </Label>
-
-            <QueryStateWrapper
-                queryResult={realizationSurfacesMetaQuery}
-                errorComponent={"Error loading surface directoryAAA"}
-                loadingComponent={<CircularProgress />}
-            >
-                <Label
-                    text="Surface name:"
-                    labelClassName={syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""}
+        <Setting.Panel>
+            <Setting.Section title="Data" defaultOpen>
+                <Setting.Field label="Ensemble">
+                    <EnsembleDropdown
+                        ensembles={ensembleSet.getRegularEnsembleArray()}
+                        value={computedEnsembleIdent}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                        onValueChange={handleEnsembleSelectionChange}
+                    />
+                </Setting.Field>
+            </Setting.Section>
+            <Setting.Section title="Selection" defaultOpen>
+                <Setting.Field label="Time Type" stacked>
+                    <RadioCompositions.GroupWithLabels
+                        size="small"
+                        value={timeType}
+                        options={Object.values(SurfaceTimeType).map((val: SurfaceTimeType) => {
+                            return { value: val, label: SurfaceTimeTypeEnumToStringMapping[val] };
+                        })}
+                        onValueChange={handleTimeModeChange}
+                    />
+                </Setting.Field>
+                <Setting.Field>
+                    <SwitchCompositions.WithLabel
+                        onCheckedChange={(checked) => setUseObserved(checked)}
+                        checked={useObserved}
+                        label="Use observed surfaces"
+                    />
+                </Setting.Field>
+                <Setting.Field
+                    label="Surface name"
+                    loadingOverlay={realizationSurfacesMetaQuery.isLoading || observedSurfacesMetaQuery.isLoading}
+                    errorAnnotation={realizationSurfacesMetaQuery.error ? "Error loading surface directory" : undefined}
+                    stacked
                 >
                     <Select
                         options={surfNameOptions}
                         value={computedSurfaceName ? [computedSurfaceName] : []}
-                        onChange={handleSurfNameSelectionChange}
+                        onValueChange={handleSurfNameSelectionChange}
                         size={5}
                     />
-                </Label>
-                <Label
-                    text="Surface attribute:"
-                    labelClassName={syncHelper.isSynced(SyncSettingKey.SURFACE) ? "bg-indigo-700 text-white" : ""}
+                </Setting.Field>
+                <Setting.Field
+                    label="Surface attribute"
+                    loadingOverlay={realizationSurfacesMetaQuery.isLoading || observedSurfacesMetaQuery.isLoading}
+                    errorAnnotation={realizationSurfacesMetaQuery.error ? "Error loading surface directory" : undefined}
+                    stacked
                 >
                     <Select
                         options={surfAttributeOptions}
-                        value={computedSurfaceAttribute ? [computedSurfaceAttribute] : []}
-                        onChange={handleSurfAttributeSelectionChange}
+                        value={computedSurfaceAttribute ? [surfaceAttributeKey(computedSurfaceAttribute)] : []}
+                        onValueChange={handleSurfAttributeSelectionChange}
                         size={5}
                     />
-                </Label>
-                {timeType !== SurfaceTimeType.None && (
-                    <Label text={timeType === SurfaceTimeType.TimePoint ? "Time Point" : "Time Interval"}>
+                </Setting.Field>
+                <Hidden hidden={timeType === SurfaceTimeType.None}>
+                    <Setting.Field
+                        label={timeType === SurfaceTimeType.TimePoint ? "Time point" : "Time interval"}
+                        loadingOverlay={realizationSurfacesMetaQuery.isLoading || observedSurfacesMetaQuery.isLoading}
+                        errorAnnotation={
+                            realizationSurfacesMetaQuery.error ? "Error loading surface directory" : undefined
+                        }
+                        stacked
+                    >
                         <Select
                             options={timeOrIntervalOptions}
                             value={computedTimeOrInterval ? [computedTimeOrInterval] : []}
-                            onChange={handleTimeOrIntervalSelectionChange}
+                            onValueChange={handleTimeOrIntervalSelectionChange}
                             size={5}
                         />
-                    </Label>
-                )}
-            </QueryStateWrapper>
-            <AggregationDropdown
-                selectedAggregation={aggregation}
-                onAggregationSelectionChange={handleAggregationChanged}
-            />
-            {chooseRealizationElement}
-        </>
+                    </Setting.Field>
+                </Hidden>
+                <AggregationDropdown
+                    selectedAggregation={aggregation}
+                    onAggregationSelectionChange={handleAggregationChanged}
+                />
+                {chooseRealizationElement}
+            </Setting.Section>
+        </Setting.Panel>
     );
 }
 
@@ -308,7 +316,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
 
 type PartialSurfSpec = {
     surfaceName: string | null;
-    surfaceAttribute: string | null;
+    surfaceAttribute: SurfaceAttribute | null;
     timeOrInterval: string | null;
 };
 
@@ -323,7 +331,7 @@ function fixupSurface(
         selectedSurface.surfaceName,
         surfaceNames,
     );
-    let finalSurfaceAttribute: string | null = null;
+    let finalSurfaceAttribute: SurfaceAttribute | null = null;
     let finalTimeOrInterval: string | null = null;
     if (finalSurfaceName) {
         const surfaceAttributes = surfaceDirectory.getAttributeNames(finalSurfaceName);
@@ -331,6 +339,7 @@ function fixupSurface(
             syncedSurface.surfaceAttribute,
             selectedSurface.surfaceAttribute,
             surfaceAttributes,
+            isSameAttribute,
         );
     }
     if (finalSurfaceName && finalSurfaceAttribute) {
@@ -348,15 +357,16 @@ function fixupSurface(
     };
 }
 
-function fixupSyncedOrSelectedOrFirstValue(
-    syncedValue: string | null,
-    selectedValue: string | null,
-    values: string[],
-): string | null {
-    if (syncedValue && values.includes(syncedValue)) {
+function fixupSyncedOrSelectedOrFirstValue<T>(
+    syncedValue: T | null,
+    selectedValue: T | null,
+    values: T[],
+    isEqualFunc: (a: T, b: T) => boolean = (a, b) => a === b,
+): T | null {
+    if (syncedValue && values.some((value) => isEqualFunc(value, syncedValue))) {
         return syncedValue;
     }
-    if (selectedValue && values.includes(selectedValue)) {
+    if (selectedValue && values.some((value) => isEqualFunc(value, selectedValue))) {
         return selectedValue;
     }
     if (values.length) {

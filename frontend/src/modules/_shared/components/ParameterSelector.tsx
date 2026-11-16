@@ -1,49 +1,75 @@
 import React from "react";
 
+import { isEqual } from "lodash-es";
+
 import { ParameterIdent } from "@framework/EnsembleParameters";
-import { Checkbox } from "@lib/components/Checkbox";
-import { Label } from "@lib/components/Label";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
+import type { SettingAnnotation } from "@lib/components/Setting";
+import { Setting } from "@lib/components/Setting";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
+
+const MIN_SELECTOR_SIZE = 3;
+const MAX_SELECTOR_SIZE = 10;
 
 type ParametersSelectorProps = {
     allParameterIdents: ParameterIdent[];
     selectedParameterIdents: ParameterIdent[];
     onChange: (selected: ParameterIdent[]) => void;
+    /**
+     * Select all parameters - also whenever they change - until the user interacts with the selector. Turn it off for a
+     * selection that is persisted or kept when invalid, which this would overwrite. @default true
+     */
+    selectAllUntilUserInteracts?: boolean;
+    /** Annotations for the parameter selection, shown on the "Parameters" field. */
+    annotations?: SettingAnnotation[];
 };
 
 enum GroupType {
     NO_GROUP = "NO GROUP",
 }
 
+function parameterIdentsToGroupSelection(parameterIdents: ParameterIdent[]): string[] {
+    return Array.from(new Set(parameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)));
+}
+
 export function ParametersSelector({
     allParameterIdents,
     selectedParameterIdents,
     onChange,
+    selectAllUntilUserInteracts = true,
+    annotations,
 }: ParametersSelectorProps): React.ReactNode {
+    const [prevAllParameterIdents, setPrevAllParameterIdents] = React.useState(allParameterIdents);
     const [autoSelectAllOnGroupChange, setAutoSelectAllOnGroupChange] = React.useState<boolean>(true);
     const [userHasInteracted, setUserHasInteracted] = React.useState<boolean>(false);
-    const [selectedGroupFilterValues, setSelectedGroupFilterValues] = React.useState<string[]>([]);
+    const [selectedGroupFilterValues, setSelectedGroupFilterValues] = React.useState<string[]>(() =>
+        parameterIdentsToGroupSelection(selectedParameterIdents.length ? selectedParameterIdents : allParameterIdents),
+    );
 
     const [prevSelectedParameterIdents, setPrevSelectedParameterIdents] =
         React.useState<ParameterIdent[]>(selectedParameterIdents);
+
     if (prevSelectedParameterIdents !== selectedParameterIdents) {
         setPrevSelectedParameterIdents(selectedParameterIdents);
         if (selectedGroupFilterValues.length === 0 && selectedParameterIdents.length > 0) {
-            setSelectedGroupFilterValues(
-                Array.from(new Set(selectedParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP))),
-            );
+            setSelectedGroupFilterValues(parameterIdentsToGroupSelection(selectedParameterIdents));
         }
     }
+
+    // While no interaction has happened, always auto-select all parameters
+    if (!userHasInteracted && allParameterIdents.length > 0 && !isEqual(allParameterIdents, prevAllParameterIdents)) {
+        setPrevAllParameterIdents(allParameterIdents);
+        setSelectedGroupFilterValues(parameterIdentsToGroupSelection(allParameterIdents));
+    }
+
     React.useEffect(
         function selectAllParametersUntilUserInteracts() {
-            if (!userHasInteracted && allParameterIdents.length > 0) {
-                const allGroups = Array.from(new Set(allParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)));
-                setSelectedGroupFilterValues(allGroups);
+            if (selectAllUntilUserInteracts && !userHasInteracted && allParameterIdents.length > 0) {
                 onChange(allParameterIdents);
             }
         },
-        [allParameterIdents, userHasInteracted, onChange],
+        [selectAllUntilUserInteracts, allParameterIdents, userHasInteracted, onChange],
     );
     const handleInteractiveOnChange = React.useCallback(
         function handleInteractiveOnChange(newParameters: ParameterIdent[]) {
@@ -67,7 +93,7 @@ export function ParametersSelector({
                     ),
                 );
 
-                let newSelectedParameters: ParameterIdent[] = [];
+                let newSelectedParameters: ParameterIdent[];
 
                 if (autoSelectAllOnGroupChange) {
                     newSelectedParameters = parametersThatMatchNewGroups;
@@ -109,35 +135,44 @@ export function ParametersSelector({
         }));
 
     return (
-        <div>
-            <Label wrapperClassName="mb-4" text="Select Group(s)">
+        <>
+            <Setting.Field label="Parameter groups" stacked>
                 <Select
                     options={groupSelectOptions}
                     value={selectedGroupFilterValues}
-                    onChange={handleGroupChange}
+                    onValueChange={handleGroupChange}
                     multiple={true}
-                    size={Math.min(10, groupSelectOptions.length > 0 ? groupSelectOptions.length : 1)}
+                    size={Math.min(
+                        MAX_SELECTOR_SIZE,
+                        groupSelectOptions.length > MIN_SELECTOR_SIZE ? groupSelectOptions.length : MIN_SELECTOR_SIZE,
+                    )}
                     showQuickSelectButtons
                 />
-            </Label>
-            <Label text="Select Parameter(s)">
-                <>
-                    <Checkbox
+            </Setting.Field>
+            <Setting.Field label="Parameters" stacked annotations={annotations}>
+                <div className="gap-y-xs flex flex-col">
+                    <SwitchCompositions.WithLabel
                         label="Auto-select all on group change"
                         checked={autoSelectAllOnGroupChange}
-                        onChange={(e) => setAutoSelectAllOnGroupChange(e.target.checked)}
+                        onCheckedChange={setAutoSelectAllOnGroupChange}
+                        size="small"
                     />
                     <Select
                         value={selectedParameterIdents.map((p) => p.toString())}
-                        onChange={handleParameterChange}
+                        onValueChange={handleParameterChange}
                         options={parameterSelectOptions}
                         multiple={true}
-                        size={Math.min(10, parameterSelectOptions.length > 0 ? parameterSelectOptions.length : 1)}
+                        size={Math.min(
+                            MAX_SELECTOR_SIZE,
+                            parameterSelectOptions.length > MIN_SELECTOR_SIZE
+                                ? parameterSelectOptions.length
+                                : MIN_SELECTOR_SIZE,
+                        )}
                         filter
                         showQuickSelectButtons
                     />
-                </>
-            </Label>
-        </div>
+                </div>
+            </Setting.Field>
+        </>
     );
 }

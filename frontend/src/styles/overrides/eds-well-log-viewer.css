@@ -1,0 +1,10 @@
+.welllog-layout {
+    [data-color-scheme="dark"] & {
+        filter: invert(85%) hue-rotate(180deg);
+    }
+
+    /* Hides the built-in hover tooltip */
+    & .overlay .depth {
+        @apply invisible!;
+    }
+}

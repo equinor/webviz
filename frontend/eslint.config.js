@@ -1,36 +1,30 @@
 import eslintCore from "@eslint/js";
+import reactPlugin from "@eslint-react/eslint-plugin";
+import pluginQuery from "@tanstack/eslint-plugin-query";
+import { defineConfig } from "eslint/config";
 import configPrettier from "eslint-config-prettier";
-import * as importPlugin from "eslint-plugin-import";
-import reactPlugin from "eslint-plugin-react";
-import reactHooksPlugin from "eslint-plugin-react-hooks";
+import * as importPlugin from "eslint-plugin-import-x";
 import globals from "globals";
 import eslintTypescript from "typescript-eslint";
 
-export default eslintTypescript.config(
+export default defineConfig(
     // Plugins --------------------------------------------------------------------------
     eslintCore.configs.recommended,
     eslintTypescript.configs.recommended,
-    reactPlugin.configs.flat.recommended,
-    reactPlugin.configs.flat["jsx-runtime"],
+    reactPlugin.configs["recommended-typescript"],
     importPlugin.flatConfigs.recommended,
+    pluginQuery.configs["flat/recommended"],
     // Configure typescript resolver
     // ! Make sure "eslint-import-resolver-typescript" is installed
     {
         settings: {
-            "import/resolver": {
+            "import-x/resolver": {
                 // always try to resolve types under `<root>@types` directory even it doesn't contain any source code, like `@types/unist`
                 typescript: { alwaysTryTypes: true },
             },
         },
     },
 
-    // ! Currently unable to directly import recommended hooks-plugin config. Need to manually set them up for now
-    // ! See: https://github.com/facebook/react/issues/32431
-    // Once resolved, replace with this: reactHooksPlugin.configs["recommended-latest"],
-    {
-        plugins: { "react-hooks": reactHooksPlugin },
-        rules: { ...reactHooksPlugin.configs.recommended.rules },
-    },
     // Specify react version (stops a warning when running lint)
     { settings: { react: { version: "detect" } } },
     // Make import plugin work with typescript files
@@ -42,7 +36,7 @@ export default eslintTypescript.config(
     // ! Make sure prettier is *after* other plugins, so it can override
     configPrettier,
 
-    { ignores: ["scripts/", "playwright/", "coverage/", "dist/", "src/api/"] },
+    { ignores: ["scripts/", "playwright/", "coverage/", "dist/"] },
 
     // Other configs  -------------------------------------------------------------------
     {
@@ -55,16 +49,49 @@ export default eslintTypescript.config(
     },
     // Custom rules ---------------------------------------------------------------------
     {
+        // generate-api will use the project linter config. However, the generated code occasionally uses bare-bones ts-comments, so we need to relax the rule a bit for this folder specifically
+        files: ["src/api/**"],
+        rules: { "@typescript-eslint/ban-ts-comment": "off" },
+    },
+    {
+        // Lodash-es exposes the "chain" utility in its typing, but the function will fail due to tree-shaking in production. This rule config should flag any use of chain as an error
+        rules: {
+            "no-restricted-imports": [
+                "error",
+                {
+                    paths: [
+                        {
+                            name: "lodash-es",
+                            importNames: ["chain"],
+                            message:
+                                "`lodash-es` is meant to be tree-shaken, therefore importing `chain` from lodash-es causes issues in production. Do not import `chain` from lodash-es",
+                        },
+                    ],
+                },
+            ],
+            "no-restricted-syntax": [
+                "error",
+                {
+                    selector: "MemberExpression[object.name='_'][property.name='chain']",
+                    message:
+                        "`lodash-es` is meant to be tree-shaken, therefore `_.chain` causes issues in production. Do not use `_.chain`",
+                },
+                {
+                    selector: "CallExpression[callee.name='_']",
+                    message:
+                        "`lodash-es` is meant to be tree-shaken, therefore `_(value)` is equivalent of using `_.chain` which causes issues in production. Do not use `_.chain`",
+                },
+            ],
+        },
+    },
+    {
         rules: {
             "@typescript-eslint/no-unused-expressions": ["warn", { allowShortCircuit: true, allowTernary: true }], // Allow some useful "unused" expressions, such as `foo && foo()`
             "@typescript-eslint/consistent-type-imports": "warn",
             "@typescript-eslint/no-explicit-any": "off",
-            "react/prop-types": "off", // Causes issues in classes (and I don't see why you'd need this along with TS)
-            "react/jsx-uses-react": "off", // Import of React is not required anymore in React 17
-            "react/react-in-jsx-scope": "off", // Import of React is not required anymore in React 17
             "no-console": ["error", { allow: ["debug", "info", "warn", "error"] }],
-            "import/no-named-as-default-member": "off", // Conflicts with us requiring always using the react default
-            "import/order": [
+            "import-x/no-named-as-default-member": "off", // Conflicts with us requiring always using the react default
+            "import-x/order": [
                 "warn",
                 {
                     groups: [
@@ -80,7 +107,9 @@ export default eslintTypescript.config(
                         { pattern: "@core/**", group: "internal", position: "before" },
                         { pattern: "@components/**", group: "internal", position: "before" },
                         { pattern: "@shared-types/**", group: "internal", position: "before" },
+
                         { pattern: "@assets/**", group: "internal", position: "before" },
+                        { pattern: "@docs/**", group: "internal", position: "after" },
                         { pattern: "@/**", group: "internal" }, // fallback for anything else under @
                     ],
                     pathGroupsExcludedImportTypes: ["react"],
@@ -88,6 +117,19 @@ export default eslintTypescript.config(
                     "newlines-between": "always",
                 },
             ],
+        },
+    },
+
+    // Playwright test fixtures use conventions that trip up React/lint rules ------------
+    {
+        files: ["tests/e2e/**/*.ts"],
+        rules: {
+            // Playwright's `use` fixture callback is not a React hook.
+            "@eslint-react/rules-of-hooks": "off",
+            // Fixtures that don't consume other fixtures use `async ({}, use) => {}`.
+            "no-empty-pattern": "off",
+            // Allow `_`-prefixed fixture dependencies that are requested only for setup ordering.
+            "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
         },
     },
 );

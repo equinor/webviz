@@ -1,13 +1,15 @@
+import type { VfpType_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { persistableFixableAtom } from "@framework/utils/atomUtils";
+import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
+import { computeQueryDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 import { areEnsembleIdentsEqual } from "@framework/utils/ensembleIdentUtils";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { VfpParam } from "@modules/Vfp/types";
 import { isProdTable } from "@modules/Vfp/utils/vfpTableClassifier";
 
-import { availableRealizationNumbersAtom, availableVfpTableNamesAtom } from "./derivedAtoms";
-import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
+import { availableRealizationNumbersAtom, availableVfpTableNumbersAtom, availableVfpTypesAtom } from "./derivedAtoms";
+import { vfpTablesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
 
 export const selectedEnsembleIdentAtom = persistableFixableAtom<RegularEnsembleIdent | null>({
     initialValue: null,
@@ -43,35 +45,49 @@ export const selectedRealizationNumberAtom = persistableFixableAtom<number | nul
     },
 });
 
-export const selectedVfpTableNameAtom = persistableFixableAtom<string | null>({
+function computeVfpTablesQueryDependenciesState({
+    get,
+}: {
+    get: (atom: any) => any;
+}): PersistableAtomDependenciesState {
+    return computeQueryDependenciesState(get(vfpTablesQueryAtom));
+}
+
+export const selectedVfpTypeAtom = persistableFixableAtom<VfpType_api | null>({
     initialValue: null,
-    computeDependenciesState: ({ get }) => {
-        const vfpTableNamesQuery = get(vfpTableNamesQueryAtom);
-
-        if (vfpTableNamesQuery.isError) {
-            return "error";
-        }
-        if (vfpTableNamesQuery.isFetching) {
-            return "loading";
-        }
-
-        return !vfpTableNamesQuery.data ? "error" : "loaded";
-    },
+    computeDependenciesState: computeVfpTablesQueryDependenciesState,
     isValidFunction: ({ get, value }) => {
-        const availableVfpTableNames = get(availableVfpTableNamesAtom);
-        if (!value) {
-            return availableVfpTableNames.length === 0;
+        const availableVfpTypes = get(availableVfpTypesAtom);
+        if (value === null) {
+            return availableVfpTypes.length === 0;
         }
-        return availableVfpTableNames.includes(value);
+        return availableVfpTypes.includes(value);
     },
     fixupFunction: ({ get, value }) => {
-        const availableVfpTableNames = get(availableVfpTableNamesAtom);
-        if (!value) {
-            return availableVfpTableNames[0] ?? null;
+        const availableVfpTypes = get(availableVfpTypesAtom);
+        if (value === null || value === undefined || !availableVfpTypes.includes(value)) {
+            return availableVfpTypes[0] ?? null;
         }
+        return value;
+    },
+});
 
-        // When value is invalid string, enforce user to reselect
-        return null;
+export const selectedVfpTableNumberAtom = persistableFixableAtom<number | null>({
+    initialValue: null,
+    computeDependenciesState: computeVfpTablesQueryDependenciesState,
+    isValidFunction: ({ get, value }) => {
+        const availableVfpTableNumbers = get(availableVfpTableNumbersAtom);
+        if (value === null) {
+            return availableVfpTableNumbers.length === 0;
+        }
+        return availableVfpTableNumbers.includes(value);
+    },
+    fixupFunction: ({ get, value }) => {
+        const availableVfpTableNumbers = get(availableVfpTableNumbersAtom);
+        if (value === null || value === undefined || !availableVfpTableNumbers.includes(value)) {
+            return availableVfpTableNumbers[0] ?? null;
+        }
+        return value;
     },
 });
 
@@ -99,7 +115,7 @@ export const selectedThpIndicesAtom = persistableFixableAtom<number[] | null, nu
 
 export const selectedWfrIndicesAtom = persistableFixableAtom<number[] | null, number[]>({
     initialValue: null,
-    computeDependenciesState: computeVfpTableQueryDependenciesState,
+    computeDependenciesState: computeProdTableParamDependenciesState,
     precomputeFunction: ({ get }) => {
         const vfpTable = get(vfpTableQueryAtom).data;
         if (!vfpTable || !isProdTable(vfpTable)) {
@@ -125,7 +141,7 @@ export const selectedWfrIndicesAtom = persistableFixableAtom<number[] | null, nu
 
 export const selectedGfrIndicesAtom = persistableFixableAtom<number[] | null, number[]>({
     initialValue: null,
-    computeDependenciesState: computeVfpTableQueryDependenciesState,
+    computeDependenciesState: computeProdTableParamDependenciesState,
     precomputeFunction: ({ get }) => {
         const vfpTable = get(vfpTableQueryAtom).data;
         if (!vfpTable || !isProdTable(vfpTable)) {
@@ -151,7 +167,7 @@ export const selectedGfrIndicesAtom = persistableFixableAtom<number[] | null, nu
 
 export const selectedAlqIndicesAtom = persistableFixableAtom<number[] | null, number[]>({
     initialValue: null,
-    computeDependenciesState: computeVfpTableQueryDependenciesState,
+    computeDependenciesState: computeProdTableParamDependenciesState,
     precomputeFunction: ({ get }) => {
         const vfpTable = get(vfpTableQueryAtom).data;
         if (!vfpTable || !isProdTable(vfpTable)) {
@@ -201,14 +217,21 @@ export const selectedColorByAtom = persistableFixableAtom<VfpParam>({
 });
 
 // Utility function to compute dependencies state from vfpTableQueryAtom
-function computeVfpTableQueryDependenciesState({ get }: { get: (atom: any) => any }): "error" | "loading" | "loaded" {
-    const vfpTableQuery = get(vfpTableQueryAtom);
+function computeVfpTableQueryDependenciesState({ get }: { get: (atom: any) => any }): PersistableAtomDependenciesState {
+    return computeQueryDependenciesState(get(vfpTableQueryAtom));
+}
 
-    if (vfpTableQuery.isError) {
-        return "error";
+// WFR, GFR and ALQ are only part of production tables. While another table is loaded, the data to check them against is
+// not available - so they wait (and don't settle on an empty selection) until a production table is loaded.
+function computeProdTableParamDependenciesState({
+    get,
+}: {
+    get: (atom: any) => any;
+}): PersistableAtomDependenciesState {
+    const vfpTableQueryDependenciesState = computeVfpTableQueryDependenciesState({ get });
+    if (vfpTableQueryDependenciesState !== "loaded") {
+        return vfpTableQueryDependenciesState;
     }
-    if (vfpTableQuery.isFetching) {
-        return "loading";
-    }
-    return !vfpTableQuery.data ? "error" : "loaded";
+    const vfpTable = get(vfpTableQueryAtom).data;
+    return vfpTable && isProdTable(vfpTable) ? "loaded" : "blocked";
 }

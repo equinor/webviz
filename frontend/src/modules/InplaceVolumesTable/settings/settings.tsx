@@ -7,38 +7,51 @@ import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
+import { FIXUP } from "@framework/utils/atomUtils";
+import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
-import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
-import type { TagOption } from "@lib/components/TagPicker";
-import { TagPicker } from "@lib/components/TagPicker";
+import { Combobox } from "@lib/components/Combobox";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
+import { Setting } from "@lib/components/Setting";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import {
+    getSensitivityCaseOptions,
+    SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import {
     InplaceVolumesStatisticEnumToStringMapping,
+    isFluidSpecificResultName,
+    TableOriginKey,
     TableType,
     TableTypeToStringMapping,
 } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
+import { StatisticsLayout, StatisticsLayoutToStringMapping } from "../types";
 
-import { selectedIndexValueCriteriaAtom, selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./atoms/baseAtoms";
-import { tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
+import {
+    selectedIndexValueCriteriaAtom,
+    selectedStatisticOptionsAtom,
+    selectedStatisticsLayoutAtom,
+    selectedTableTypeAtom,
+} from "./atoms/baseAtoms";
+import { sensitivityModeAtom, tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedGroupByIndicesAtom,
     selectedIndicesWithValuesAtom,
     selectedResultNamesAtom,
+    selectedSensitivityCasesAtom,
     selectedTableNamesAtom,
 } from "./atoms/persistableFixableAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
+
+const DEBOUNCE_TIME_MS = 1500;
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -46,21 +59,51 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const tableDefinitionsQuery = useAtomValue(tableDefinitionsQueryAtom);
     const tableDefinitionsAccessor = useAtomValue(tableDefinitionsAccessorAtom);
+    const sensitivityMode = useAtomValue(sensitivityModeAtom);
+    const [selectedSensitivityCases, setSelectedSensitivityCases] = useAtom(selectedSensitivityCasesAtom);
 
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
-
     const [selectedTableNames, setSelectedTableNames] = useAtom(selectedTableNamesAtom);
-
     const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
-
-    const [selectedResultNames, setSelectedResultNames] = useAtom(selectedResultNamesAtom);
-    const [selectedGroupByIndices, setSelectedGroupByIndices] = useAtom(selectedGroupByIndicesAtom);
-
-    const [selectedTableType, setSelectedTableType] = useAtom(selectedTableTypeAtom);
-    const [selectedStatisticOptions, setSelectedStatisticOptions] = useAtom(selectedStatisticOptionsAtom);
     const [selectedIndexValueCriteria, setSelectedIndexValueCriteria] = useAtom(selectedIndexValueCriteriaAtom);
 
-    usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
+    // Local form settings that all have a debounce
+    const [settledSelectedTableType, setSettledSelectedTableType] = useAtom(selectedTableTypeAtom);
+    const [selectedTableType, setSelectedTableTypeChange] = useDebouncedOnChange<TableType>(
+        settledSelectedTableType,
+        setSettledSelectedTableType,
+        DEBOUNCE_TIME_MS,
+    );
+
+    const [settledSelectedStatisticOptions, setSettledSelectedStatisticOptions] = useAtom(selectedStatisticOptionsAtom);
+    const [selectedStatisticOptions, setStatisticOptionsChange] = useDebouncedOnChange(
+        settledSelectedStatisticOptions,
+        setSettledSelectedStatisticOptions,
+        DEBOUNCE_TIME_MS,
+    );
+
+    const [settledSelectedStatisticsLayout, setSettledSelectedStatisticsLayout] = useAtom(selectedStatisticsLayoutAtom);
+    const [selectedStatisticsLayout, setSelectedStatisticsLayoutChange] = useDebouncedOnChange<StatisticsLayout>(
+        settledSelectedStatisticsLayout,
+        setSettledSelectedStatisticsLayout,
+        DEBOUNCE_TIME_MS,
+    );
+
+    const [settledSelectedResultNames, setSettledSelectedResultNames] = useAtom(selectedResultNamesAtom);
+    const [selectedResultNames, setSelectedResultNames] = useDebouncedOnChange(
+        settledSelectedResultNames.value,
+        setSettledSelectedResultNames,
+        DEBOUNCE_TIME_MS,
+    );
+
+    const [settledSelectedGroupByIndices, setSettledSelectedGroupByIndices] = useAtom(selectedGroupByIndicesAtom);
+    const [selectedGroupByIndices, setSettledGroupByIndices] = useDebouncedOnChange(
+        settledSelectedGroupByIndices.value,
+        setSettledSelectedGroupByIndices,
+        DEBOUNCE_TIME_MS,
+    );
+
+    propagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
 
     useApplyInitialSettingsToState(
         props.initialSettings,
@@ -69,6 +112,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIndexValueCriteria,
     );
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
+        const haveEnsemblesChanged = !areEnsembleIdentListsEqual(
+            newFilter.ensembleIdents,
+            selectedEnsembleIdents.value,
+        );
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
         setSelectedIndicesWithValues(newFilter.indicesWithValues);
@@ -77,30 +124,60 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 ? IndexValueCriteria.ALLOW_INTERSECTION
                 : IndexValueCriteria.REQUIRE_EQUALITY,
         );
+        if (newFilter.sensitivityCases) {
+            setSelectedSensitivityCases(newFilter.sensitivityCases);
+        }
+        if (haveEnsemblesChanged) {
+            // Cases belong to the ensemble: fill them in for a new one instead of keeping an empty or stale selection.
+            setSelectedSensitivityCases(FIXUP);
+        }
     }
 
-    function handleGroupByIndicesChange(newGroupByIndices: string[]) {
-        setSelectedGroupByIndices(newGroupByIndices);
+    function handleSelectedTableTypeChange(value: string | null) {
+        if (value === null) throw new Error("Table type value cannot be null");
+
+        setSelectedTableTypeChange(value as TableType);
     }
 
-    function handleStatisticOptionsChange(newStatistics: InplaceVolumesStatistic_api[]) {
-        setSelectedStatisticOptions(newStatistics);
+    function handleSelectedStatisticsLayoutChange(value: string | null) {
+        if (value === null) throw new Error("Statistics layout value cannot be null");
+
+        setSelectedStatisticsLayoutChange(value as StatisticsLayout);
     }
 
-    function handleSelectedTableTypeChange(value: string) {
-        setSelectedTableType(value as TableType);
-    }
-
-    const resultNameOptions: SelectOption<string>[] = tableDefinitionsAccessor
+    const isGroupedByFluid = selectedGroupByIndices.includes(TableOriginKey.FLUID);
+    const resultNameOptions: ComboboxItem<string>[] = tableDefinitionsAccessor
         .getResultNamesIntersection()
-        .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
+        .map((name) => {
+            const requiresFluidGrouping = isFluidSpecificResultName(name) && !isGroupedByFluid;
+            return {
+                label: name,
+                value: name,
+                description: requiresFluidGrouping
+                    ? `${name} is only defined per fluid. Add FLUID to Grouping to select it.`
+                    : createHoverTextForVolume(name),
+                disabled: requiresFluidGrouping,
+            };
+        });
 
-    const groupByIndicesOptions: TagOption<string>[] = [];
+    const groupByIndicesOptions: ComboboxItem<string>[] = [];
     for (const indicesWithValues of tableDefinitionsAccessor.getCommonIndicesWithValues()) {
         groupByIndicesOptions.push({ label: indicesWithValues.indexColumn, value: indicesWithValues.indexColumn });
     }
 
-    const statisticOptions = React.useMemo<TagOption<InplaceVolumesStatistic_api>[]>(() => {
+    // Retained values that are no longer available are still shown as chips. When the user changes the selection, they
+    // are dropped rather than carried along with the new values.
+    function handleResultNamesChange(resultNames: string[]) {
+        setSelectedResultNames(resultNames.filter((name) => resultNameOptions.some((option) => option.value === name)));
+    }
+
+    function handleGroupByIndicesChange(groupByIndices: string[]) {
+        setSettledGroupByIndices(
+            groupByIndices.filter((index) => groupByIndicesOptions.some((option) => option.value === index)),
+        );
+    }
+
+    const statisticOptions = React.useMemo<ComboboxItem<InplaceVolumesStatistic_api>[]>(() => {
         return Object.values(InplaceVolumesStatistic_api).map((v) => {
             return { value: v, label: InplaceVolumesStatisticEnumToStringMapping[v] };
         });
@@ -108,74 +185,109 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const selectedResultNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedResultNamesAtom);
     const selectedGroupByIndicesAnnotations = useMakePersistableFixableAtomAnnotations(selectedGroupByIndicesAtom);
+    const selectedSensitivityCasesAnnotations = useMakePersistableFixableAtomAnnotations(selectedSensitivityCasesAtom);
 
     const selectedIndicesWithValuesAnnotations =
         useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
+    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
+    const selectedTableNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedTableNamesAtom);
 
     const tableSettings = (
-        <CollapsibleGroup title="Result and grouping" expanded>
-            <div className="flex flex-col gap-2">
-                <Label text="Table type">
-                    <Dropdown
-                        value={selectedTableType}
-                        options={Object.values(TableType).map((val: TableType) => {
-                            return { value: val, label: TableTypeToStringMapping[val] };
-                        })}
-                        onChange={handleSelectedTableTypeChange}
-                    />
-                </Label>
-                {selectedTableType === TableType.STATISTICAL && (
-                    <Label text="Statistics">
-                        <TagPicker
-                            selection={selectedStatisticOptions}
-                            tagOptions={statisticOptions}
-                            onChange={handleStatisticOptionsChange}
-                        />
-                    </Label>
-                )}
-                <SettingWrapper label="Results" annotations={selectedResultNamesAnnotations}>
-                    <Select
-                        value={selectedResultNames.value}
-                        options={resultNameOptions}
-                        onChange={setSelectedResultNames}
+        <Setting.Section title="Responses and grouping" defaultOpen>
+            <Setting.Field label="Table type" stacked>
+                <Combobox
+                    value={selectedTableType}
+                    items={Object.values(TableType).map((val: TableType) => {
+                        return { value: val, label: TableTypeToStringMapping[val] };
+                    })}
+                    onValueChange={handleSelectedTableTypeChange}
+                />
+            </Setting.Field>
+            {settledSelectedTableType === TableType.STATISTICAL && (
+                <Setting.Field label="Statistics">
+                    <Combobox
+                        value={selectedStatisticOptions}
+                        items={statisticOptions}
                         multiple
-                        size={5}
-                        debounceTimeMs={1500}
+                        showClearAllButton
+                        onValueChange={setStatisticOptionsChange}
                     />
-                </SettingWrapper>
-                <SettingWrapper label="Grouping" annotations={selectedGroupByIndicesAnnotations}>
-                    <TagPicker
-                        selection={selectedGroupByIndices.value}
-                        tagOptions={groupByIndicesOptions}
-                        onChange={handleGroupByIndicesChange}
-                        debounceTimeMs={1500}
+                </Setting.Field>
+            )}
+            {settledSelectedTableType === TableType.STATISTICAL && (
+                <Setting.Field label="Statistics layout" stacked>
+                    <Combobox
+                        value={selectedStatisticsLayout}
+                        items={Object.values(StatisticsLayout).map((val: StatisticsLayout) => {
+                            return { value: val, label: StatisticsLayoutToStringMapping[val] };
+                        })}
+                        onValueChange={handleSelectedStatisticsLayoutChange}
                     />
-                </SettingWrapper>
-            </div>
-        </CollapsibleGroup>
+                </Setting.Field>
+            )}
+            <Setting.Field label="Responses" annotations={selectedResultNamesAnnotations}>
+                <Combobox
+                    value={selectedResultNames}
+                    items={resultNameOptions}
+                    multiple
+                    selectionMode="chips"
+                    showClearAllButton
+                    placeholder="Select responses..."
+                    onValueChange={handleResultNamesChange}
+                />
+            </Setting.Field>
+            <Setting.Field label="Grouping" annotations={selectedGroupByIndicesAnnotations}>
+                <Combobox
+                    value={selectedGroupByIndices}
+                    items={groupByIndicesOptions}
+                    multiple
+                    showClearAllButton
+                    onValueChange={handleGroupByIndicesChange}
+                    placeholder="Select one ore more groups..."
+                />
+            </Setting.Field>
+        </Setting.Section>
     );
 
     return (
-        <SettingWrapper annotations={selectedIndicesWithValuesAnnotations}>
-            <InplaceVolumesFilterComponent
-                ensembleSet={ensembleSet}
-                settingsContext={props.settingsContext}
-                workbenchSession={props.workbenchSession}
-                workbenchServices={props.workbenchServices}
-                isPending={tableDefinitionsQuery.isLoading}
-                availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
-                availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
-                selectedEnsembleIdents={selectedEnsembleIdents.value}
-                selectedIndicesWithValues={selectedIndicesWithValues.value}
-                selectedTableNames={selectedTableNames.value}
-                selectedAllowIndicesValuesIntersection={
-                    selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
-                }
-                onChange={handleFilterChange}
-                additionalSettings={tableSettings}
-                areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
-                debounceMs={1500}
-            />
-        </SettingWrapper>
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <InplaceVolumesFilterComponent
+                    debounceMs={DEBOUNCE_TIME_MS}
+                    ensembleSet={ensembleSet}
+                    settingsContext={props.settingsContext}
+                    workbenchSession={props.workbenchSession}
+                    syncSettingsService={props.syncSettingsService}
+                    isPending={tableDefinitionsQuery.isLoading}
+                    availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
+                    availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
+                    selectedEnsembleIdents={selectedEnsembleIdents.value}
+                    selectedIndicesWithValues={selectedIndicesWithValues.value}
+                    selectedTableNames={selectedTableNames.value}
+                    selectedAllowIndicesValuesIntersection={
+                        selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
+                    }
+                    availableSensitivityCases={
+                        sensitivityMode.kind === "active"
+                            ? getSensitivityCaseOptions(sensitivityMode.sensitivities)
+                            : []
+                    }
+                    selectedSensitivityCases={selectedSensitivityCases.value}
+                    sensitivityCasesAnnotations={selectedSensitivityCasesAnnotations}
+                    dataAnnotations={
+                        sensitivityMode.kind === "blocked"
+                            ? [{ type: "error", message: SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE }]
+                            : undefined
+                    }
+                    additionalSettings={tableSettings}
+                    areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
+                    selectionAnnotations={selectedIndicesWithValuesAnnotations}
+                    ensembleAnnotations={selectedEnsembleIdentsAnnotations}
+                    tableNamesAnnotations={selectedTableNamesAnnotations}
+                    allowDeltaEnsembles
+                    onChange={handleFilterChange}
+                />
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

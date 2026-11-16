@@ -1,6 +1,10 @@
-import type { TableColumns } from "@lib/components/Table/types";
-
 import { type StatisticsTableRowData } from "./TableBuilder";
+
+export type TableColumn = {
+    label: string;
+    columnId: keyof StatisticsTableRowData;
+    sizeInPercent: number;
+};
 
 /**
  * Creates the table columns for the statistics table with custom labels and color indicators.
@@ -8,71 +12,31 @@ import { type StatisticsTableRowData } from "./TableBuilder";
 export function makeStatisticsTableColumns(
     subplotByLabel: string,
     colorByLabel: string,
-    colorMap: Map<string, string>,
-): TableColumns<StatisticsTableRowData> {
+    barCategoryLabel: string | null,
+): TableColumn[] {
+    const identifierSizeInPercent = barCategoryLabel ? 12 : 15;
+    const statisticSizeInPercent = barCategoryLabel ? 9 : 10;
+
+    const identifierColumns: TableColumn[] = [
+        { columnId: "subplotValue", label: subplotByLabel, sizeInPercent: identifierSizeInPercent },
+        { columnId: "colorByValue", label: colorByLabel, sizeInPercent: identifierSizeInPercent },
+    ];
+    if (barCategoryLabel) {
+        identifierColumns.push({ columnId: "barCategoryValue", label: barCategoryLabel, sizeInPercent: 13 });
+    }
+
+    const statisticColumns: Pick<TableColumn, "columnId" | "label">[] = [
+        { columnId: "mean", label: "Mean" },
+        { columnId: "p10", label: "P10" },
+        { columnId: "p90", label: "P90" },
+        { columnId: "p50", label: "P50" },
+        { columnId: "stdDev", label: "Std Dev" },
+        { columnId: "min", label: "Min" },
+        { columnId: "max", label: "Max" },
+    ];
+
     return [
-        {
-            _type: "data",
-            columnId: "subplotValue",
-            label: subplotByLabel,
-            sizeInPercent: 15,
-        },
-        {
-            _type: "data",
-            columnId: "colorByValue",
-            label: colorByLabel,
-            sizeInPercent: 15,
-            renderData: (value: string, context: { entry: StatisticsTableRowData }) => {
-                const rowColor = colorMap.get(context.entry.colorByKey);
-                return (
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: rowColor }} />
-                        <span>{value}</span>
-                    </div>
-                );
-            },
-        },
-        {
-            _type: "data",
-            columnId: "mean",
-            label: "Mean",
-            sizeInPercent: 10,
-        },
-        {
-            _type: "data",
-            columnId: "p10",
-            label: "P10",
-            sizeInPercent: 10,
-        },
-        {
-            _type: "data",
-            columnId: "p90",
-            label: "P90",
-            sizeInPercent: 10,
-        },
-        {
-            _type: "data",
-            columnId: "p50",
-            label: "P50",
-            sizeInPercent: 10,
-        },
-        {
-            _type: "data",
-            columnId: "stdDev",
-            label: "Std Dev",
-            sizeInPercent: 10,
-        },
-        {
-            _type: "data",
-            columnId: "min",
-            label: "Min",
-            sizeInPercent: 10,
-        },
-        {
-            _type: "data",
-            columnId: "max",
-            label: "Max",
-            sizeInPercent: 10,
-        },
+        ...identifierColumns,
+        ...statisticColumns.map((column) => ({ ...column, sizeInPercent: statisticSizeInPercent })),
     ];
 }

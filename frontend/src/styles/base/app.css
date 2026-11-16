@@ -1,0 +1,36 @@
+html {
+    font-size: 16px;
+}
+
+body {
+    overflow: hidden;
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-heading);
+}
+
+#root-portal {
+    position: absolute;
+    inset: 0;
+}
+
+input:placeholder-shown {
+    text-overflow: ellipsis;
+}
+
+/* Global default timing for View Transitions API animations */
+@media (prefers-reduced-motion: no-preference) {
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation-duration: 220ms;
+        animation-timing-function: ease-out;
+    }
+}

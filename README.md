@@ -17,10 +17,23 @@ You can then access
 - backend API documentation at `http://localhost:8080/api/docs`
 
 Before you start however you need to create a file `.env` at the root of the project
-with the following variable:
+with the following variables:
 
 ```
-WEBVIZ_CLIENT_SECRET=...
+AZURE_TENANT_ID=3aa4a235-b6e2-48d5-9195-7fcf05b459b0
+AZURE_CLIENT_ID=6e4f6e15-5b73-40e7-835e-f563fabd604a
+AZURE_CLIENT_SECRET=...
+
+WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY=0
+WEBVIZ_REDIS_AUTH_STORE_PASSWORD=0
+WEBVIZ_REDIS_CACHE_PASSWORD=0
+WEBVIZ_SESSION_STORE_FERNET_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+```
+
+If you want to test persistence features locally with Cosmos DB Emulator, use:
+
+```bash
+docker-compose -f docker-compose.yml -f docker-compose-cosmos-db.yml up
 ```
 
 ### Hot reload
@@ -59,19 +72,20 @@ The production application is located at https://webviz.fmu.equinor.com
 (which is an alias for https://frontend-webviz-prod.c3.radix.equinor.com/,
 which again is promoted manually from the pre-prod application mentioned below).
 
-We have three applications in Radix built automatically and redeployed when pushing commits to the respective branch:
+We have four applications in Radix built automatically and redeployed when pushing commits to the respective branch:
 
 - [Pre-prod application](https://frontend-webviz-preprod.c3.radix.equinor.com/) built from the `main` branch.
 - [Review application](https://frontend-webviz-review.c3.radix.equinor.com/) built from the `review` branch.
-- [Dev application](https://frontend-webviz-dev.c3.radix.equinor.com/) built from the `dev` branch.
+- [Review2 application](https://frontend-webviz-review2.c3.radix.equinor.com/) built from the `review2` branch.
+- [Review3 application](https://frontend-webviz-review3.c3.radix.equinor.com/) built from the `review3` branch.
 
-You can push/update the `review` branch with state of another feature branch with e.g.:
+You can update, for example, the `review` branch with the state of another feature branch by running:
 
 ```
 git push upstream <featurebranchname>:review --force
 ```
 
-The `dev` branch is updated similarly. The `main` branch only accepts commits through pull requests.
+The `review2` and `review3` branches are updated similarly. The `main` branch only accepts commits through pull requests.
 
 NB: Note that Radix will always use the `radixconfig.yml` as it is in `main` branch (unless changed in Radix UI).
 

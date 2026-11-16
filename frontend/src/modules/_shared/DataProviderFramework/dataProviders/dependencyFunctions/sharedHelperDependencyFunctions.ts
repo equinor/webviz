@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/query-core";
 
 import type { WellboreHeader_api } from "@api";
-import { getDrilledWellboreHeadersOptions } from "@api";
+import { getDrilledWellboreHeadersOptions, getPlannedWellboreHeadersOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
@@ -34,12 +34,31 @@ export async function fetchWellboreHeaders(
 }
 
 /**
+ * Fetch planned (not yet drilled) wellbore headers for the provided field identifier.
+ */
+export async function fetchPlannedWellboreHeaders(
+    fieldIdentifier: string | null,
+    abortSignal: AbortSignal,
+    queryClient: QueryClient,
+): Promise<WellboreHeader_api[] | null> {
+    if (!fieldIdentifier) {
+        return null;
+    }
+
+    return await queryClient.fetchQuery({
+        ...getPlannedWellboreHeadersOptions({
+            query: { field_identifier: fieldIdentifier },
+            signal: abortSignal,
+        }),
+    });
+}
+
+/**
  * Create intersection polyline and actual section lengths for the given field identifier and selected intersection.
  */
 export async function createIntersectionPolylineWithSectionLengthsForField(
     fieldIdentifier: string | null,
     intersection: IntersectionSettingValue | null,
-    wellboreExtensionLength: number,
     workbenchSession: WorkbenchSession,
     queryClient: QueryClient,
     abortSignal: AbortSignal,
@@ -62,19 +81,24 @@ export async function createIntersectionPolylineWithSectionLengthsForField(
         };
         return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification, queryClient, abortSignal);
     }
-    if (intersection.type === IntersectionType.WELLBORE) {
-        if (!fieldIdentifier) {
-            throw new Error("Field identifier is not set");
-        }
 
-        const intersectionSpecification: WellboreIntersectionSpecification = {
-            type: IntersectionType.WELLBORE,
-            wellboreUuid: intersection.uuid,
-            extensionLength: wellboreExtensionLength,
-            fieldIdentifier: fieldIdentifier,
-        };
-        return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification, queryClient, abortSignal);
+    // Wellbore intersection (drilled or planned)
+    if (!fieldIdentifier) {
+        throw new Error("Field identifier is not set");
     }
 
-    throw new Error(`Unhandled intersection type ${intersection.type}`);
+    // Exhaustiveness guard: if a new IntersectionType is added, this will fail to compile.
+    if (intersection.type !== IntersectionType.WELLBORE && intersection.type !== IntersectionType.PLANNED_WELLBORE) {
+        const exhaustiveCheck: never = intersection.type;
+        throw new Error(`Unsupported intersection type: ${exhaustiveCheck}`);
+    }
+
+    const intersectionSpecification: WellboreIntersectionSpecification = {
+        type: IntersectionType.WELLBORE,
+        wellboreUuid: intersection.uuid,
+        extensionLength: intersection.extensionLength ?? 0,
+        fieldIdentifier: fieldIdentifier,
+        isPlanned: intersection.type === IntersectionType.PLANNED_WELLBORE,
+    };
+    return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification, queryClient, abortSignal);
 }

@@ -1,17 +1,18 @@
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
-import { selectedColorByAtom, selectedDependentVariablesAtom, selectedPhaseAtom } from "./settings/atoms/baseAtoms";
+import { selectedGroupByAtom, selectedDependentVariablesAtom, selectedPhaseAtom } from "./settings/atoms/baseAtoms";
 import { pvtDataAccessorWithStatusAtom } from "./settings/atoms/derivedAtoms";
 import { selectedEnsembleIdentsAtom, selectedPvtNumsAtom } from "./settings/atoms/persistableFixableAtoms";
-import type { ColorBy, PhaseType, PressureDependentVariable, PvtDataAccessorWithStatus } from "./typesAndEnums";
+import type { GroupBy, PhaseType, PressureDependentVariable, PvtDataAccessorWithStatus } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
     selectedPhase: PhaseType;
-    selectedColorBy: ColorBy;
+    selectedGroupBy: GroupBy;
     selectedDependentVariables: PressureDependentVariable[];
     selectedEnsembleIdents: RegularEnsembleIdent[];
-    selectedPvtNums: number[];
+    // Null while the selection is invalid, so that no plot is made for it
+    selectedPvtNums: number[] | null;
     pvtDataAccessorWithStatus: PvtDataAccessorWithStatus;
 };
 
@@ -23,8 +24,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     selectedPhase: (get) => {
         return get(selectedPhaseAtom);
     },
-    selectedColorBy: (get) => {
-        return get(selectedColorByAtom);
+    selectedGroupBy: (get) => {
+        return get(selectedGroupByAtom);
     },
     selectedDependentVariables: (get) => {
         return get(selectedDependentVariablesAtom);
@@ -33,7 +34,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return get(selectedEnsembleIdentsAtom).value;
     },
     selectedPvtNums: (get) => {
-        return get(selectedPvtNumsAtom).value;
+        const selectedPvtNums = get(selectedPvtNumsAtom);
+        return selectedPvtNums.isValidInContext ? selectedPvtNums.value : null;
     },
     pvtDataAccessorWithStatus: (get) => {
         return get(pvtDataAccessorWithStatusAtom);

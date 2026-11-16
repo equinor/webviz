@@ -16,6 +16,7 @@ export type ItemProps = {
 export const Item = React.forwardRef<HTMLElement, ItemProps>(function Item(props, externalRef): React.ReactElement {
     assertSafeId(props.id);
 
+    // eslint-disable-next-line @eslint-react/no-children-only -- Special use case
     const only = React.Children.only(props.children) as React.ReactElement;
 
     const itemElementRef = React.useRef<HTMLElement | null>(null);
@@ -38,6 +39,7 @@ export const Item = React.forwardRef<HTMLElement, ItemProps>(function Item(props
 
     return (
         <>
+            {/* eslint-disable-next-line @eslint-react/no-clone-element -- Special use case */}
             {React.cloneElement(only, {
                 ref: mergedRef,
                 "data-sortable": "item",

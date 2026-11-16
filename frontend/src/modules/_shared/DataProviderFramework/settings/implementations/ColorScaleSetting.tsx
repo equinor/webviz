@@ -82,6 +82,7 @@ export class ColorScaleSetting implements CustomSettingImplementation<ValueType,
 
             return (
                 <ColorScaleSelector
+                    disabled={props.disabled}
                     workbenchSettings={props.workbenchSettings}
                     colorScaleSpecification={props.value ?? undefined}
                     onChange={handleChange}

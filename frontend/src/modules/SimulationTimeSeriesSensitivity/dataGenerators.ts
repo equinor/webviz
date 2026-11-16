@@ -1,4 +1,4 @@
-import { indexOf } from "lodash";
+import { indexOf } from "lodash-es";
 
 import type { VectorRealizationData_api } from "@api";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
@@ -25,7 +25,7 @@ export function makeVectorDataGenerator(
             data,
             metaData: {
                 ensembleIdentString: ensemble?.getIdent().toString() ?? "",
-                unit: "unit",
+                unit: vectorRealizationData?.[0]?.unit ?? "",
             },
         };
     };

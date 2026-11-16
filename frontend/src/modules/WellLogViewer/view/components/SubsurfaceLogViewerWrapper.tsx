@@ -9,13 +9,13 @@ import type {
     WellPickProps,
 } from "@webviz/well-log-viewer/dist/components/WellLogView";
 import type { ColormapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
-import { isNaN } from "lodash";
+import { isNaN } from "lodash-es";
 
 import type { WellboreHeader_api } from "@api";
 import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { Template } from "@modules/_shared/types/wellLogTemplates";
 
 import type { InterfaceTypes } from "../../interfaces";
@@ -61,7 +61,7 @@ export type SubsurfaceLogViewerWrapperProps = {
 };
 
 function useSubscribeToGlobalVerticalScaleChange(
-    workbenchServices: WorkbenchServices,
+    syncSettingsService: SyncSettingsService,
     wellLogController: WellLogController | null,
     syncableSettingKeys: SyncSettingKey[],
     instanceId: string,
@@ -78,7 +78,7 @@ function useSubscribeToGlobalVerticalScaleChange(
         }
 
         if (verticalSyncActive) {
-            const unsubscribe = workbenchServices.subscribe(
+            const unsubscribe = syncSettingsService.subscribe(
                 "global.syncValue.verticalScale",
                 handleGlobalVertScaleChange,
                 instanceId,
@@ -86,11 +86,11 @@ function useSubscribeToGlobalVerticalScaleChange(
 
             return unsubscribe;
         }
-    }, [workbenchServices, wellLogController, verticalSyncActive, syncableSettingKeys, instanceId]);
+    }, [syncSettingsService, wellLogController, verticalSyncActive, syncableSettingKeys, instanceId]);
 }
 
 function useCreateGlobalVerticalScaleBroadcastFunc(
-    workbenchServices: WorkbenchServices,
+    syncSettingsService: SyncSettingsService,
     syncableSettingKeys: SyncSettingKey[],
     instanceId: string,
 ) {
@@ -101,9 +101,9 @@ function useCreateGlobalVerticalScaleBroadcastFunc(
         (newScale: number | null) => {
             if (!verticalSyncActive || newScale === null) return;
 
-            workbenchServices.publishGlobalData("global.syncValue.verticalScale", newScale, instanceId);
+            syncSettingsService.publishValue("global.syncValue.verticalScale", newScale, instanceId);
         },
-        [workbenchServices, instanceId, verticalSyncActive],
+        [syncSettingsService, instanceId, verticalSyncActive],
     );
 
     return broadcastVerticalScaleChange;
@@ -146,14 +146,14 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
 
     // Set up global vertical scale synchronization
     useSubscribeToGlobalVerticalScaleChange(
-        props.moduleProps.workbenchServices,
+        props.moduleProps.syncSettingsService,
         wellLogController,
         syncableSettingKeys,
         moduleInstanceId,
     );
 
     const broadcastVerticalScaleChange = useCreateGlobalVerticalScaleBroadcastFunc(
-        props.moduleProps.workbenchServices,
+        props.moduleProps.syncSettingsService,
         syncableSettingKeys,
         moduleInstanceId,
     );
@@ -200,8 +200,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     const handleTrackMouseEvent = React.useCallback((/* welllogView: WellLogView, e: TrackMouseEvent */) => {}, []);
 
     return (
-        // The weird tailwind-class hides the built-in hover tooltip
-        <div className="h-full [&_.welllogview_.overlay_.depth]:invisible!" onMouseLeave={handleMouseOut}>
+        <div className="h-full" onMouseLeave={handleMouseOut}>
             <WellLogViewer
                 id="well-log-viewer"
                 template={props.viewerTemplate}
