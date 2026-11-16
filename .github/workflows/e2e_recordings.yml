@@ -1,9 +1,10 @@
 name: e2e recordings
 
 on:
-  push:
-    branches:
-     - main
+  # Temporarily disabled until a GPU-enabled GitHub runner is available.
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
 
 permissions:
