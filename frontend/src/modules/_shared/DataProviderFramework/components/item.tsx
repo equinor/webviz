@@ -9,6 +9,9 @@ export type SortableListItemProps = {
     id: string;
     title: React.ReactNode;
     headerClassNames?: string;
+    /** Stable identifiers exposed as `data-dpf-item` / `data-dpf-type` for e2e tests. */
+    itemKind?: string;
+    itemType?: string;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
     children?: React.ReactNode;
@@ -28,7 +31,11 @@ export type SortableListItemProps = {
 export function SortableListItem(props: SortableListItemProps): React.ReactNode {
     return (
         <SortableList.Item id={props.id}>
-            <div className={resolveClassNames("relative flex flex-col")}>
+            <div
+                className={resolveClassNames("relative flex flex-col")}
+                data-dpf-item={props.itemKind}
+                data-dpf-type={props.itemType}
+            >
                 <Header {...props} />
                 <div
                     className={resolveClassNames("border-b-neutral-subtle bg-surface shadow-elevation-raised border-b")}
@@ -54,6 +61,7 @@ function Header(props: HeaderProps): React.ReactNode {
                 "gap-x-3xs bg-neutral-canvas border-b-neutral-subtle text-body-sm px-3xs flex h-8 w-full items-center border-b",
                 props.headerClassNames ?? "",
             )}
+            data-dpf-header
         >
             <SortableList.DragHandle>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
