@@ -42,7 +42,7 @@ export function ComboboxValueChipsInputComponent<TValue>(
                                                 wrapRemoveButton={(btn) => <ComboboxBase.ChipRemove render={btn} />}
                                             >
                                                 <span
-                                                    className={`line-clamp-2 min-w-0 flex-1${isInvalid ? "opacity-60" : ""}`}
+                                                    className={`line-clamp-2 min-w-0 flex-1${isInvalid ? " opacity-60" : ""}`}
                                                     title={isInvalid ? "Not available" : undefined}
                                                 >
                                                     {label}
