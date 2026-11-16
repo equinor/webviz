@@ -284,7 +284,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             placeholder="Filter by Standard Results..."
                             multiple
                             items={standardResultItems}
-                            invalidChipTone="warning"
+                            getChipTone={(value) => (invalidStandardResults.has(value) ? "warning" : "neutral")}
                             disabled={standardResultItems.length === 0}
                             onValueChange={(value) => value && setSelectedStandardResults([...value])}
                             showClearAllButton

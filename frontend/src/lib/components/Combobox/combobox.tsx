@@ -45,8 +45,8 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
         endAdornment?: React.ReactNode;
         /** Optional function to render an adornment alongside each item in the dropdown list. */
         renderItemAdornment?: (item: TValue) => React.ReactNode;
-        /** Tone of chips for selected values not present in `items`; such chips also get dimmed labels and an "unavailable" tooltip. Only applies when `multiple` with chips selection mode. @default "neutral" */
-        invalidChipTone?: "accent" | "neutral" | "danger" | "warning";
+        /** Optional function returning the chip tone per selected value, also called for values not present in `items`. Only applies when `multiple` with chips selection mode. @default "neutral" */
+        getChipTone?: (value: TValue) => "accent" | "neutral" | "danger" | "warning";
         /** Size of the combobox input. @default "default" */
         size?: SelectableSize;
         /** Only applies when `multiple` is true. @default "chips" */
@@ -70,7 +70,6 @@ const DEFAULT_PROPS = {
     ),
     showClearAllButton: false,
     selectionMode: "chips",
-    invalidChipTone: "neutral",
 } satisfies Partial<ComboboxProps<any, any>>;
 
 function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false>(
@@ -82,7 +81,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
     const baseProps = resolveWrapperProps(
         defaultedProps,
         "renderItemAdornment",
-        "invalidChipTone",
+        "getChipTone",
         "placeholder",
         "noMatchesText",
         "loadingText",
@@ -186,7 +185,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                         ref={ref}
                         getLabelForValue={getLabelForValue}
                         isValueInvalid={isValueInvalid}
-                        invalidChipTone={defaultedProps.invalidChipTone}
+                        getChipTone={defaultedProps.getChipTone}
                         renderItemAdornment={defaultedProps.renderItemAdornment}
                         placeholder={defaultedProps.placeholder}
                     />
