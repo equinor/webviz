@@ -32,6 +32,8 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
         <SortableListItem
             key={props.sharedSetting.getItemDelegate().getId()}
             id={props.sharedSetting.getItemDelegate().getId()}
+            itemKind="shared-setting"
+            itemType={props.sharedSetting.getWrappedSetting().getType()}
             title={
                 <div className="font-bolder overflow-hidden text-ellipsis">
                     {props.sharedSetting.getItemDelegate().getName()}
