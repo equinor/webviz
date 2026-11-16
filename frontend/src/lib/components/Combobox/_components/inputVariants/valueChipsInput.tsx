@@ -32,7 +32,7 @@ export function ComboboxValueChipsInputComponent<TValue>(
                                 return (
                                     <ComboboxBase.Chip
                                         key={key}
-                                        aria-label={label}
+                                        aria-label={isInvalid ? `${label} (unavailable, ignored)` : label}
                                         render={(htmlProps, chipState) => (
                                             <Chip
                                                 {...htmlProps}
@@ -42,9 +42,11 @@ export function ComboboxValueChipsInputComponent<TValue>(
                                                 wrapRemoveButton={(btn) => <ComboboxBase.ChipRemove render={btn} />}
                                             >
                                                 <span
-                                                    className={`line-clamp-2 min-w-0 flex-1${isInvalid ? " opacity-60" : ""}`}
-                                                    title={isInvalid ? "Not available - ignored" : undefined}
-                                                >{label}</span>
+                                                    className={`line-clamp-2 min-w-0 flex-1${isInvalid ? "opacity-60" : ""}`}
+                                                    title={isInvalid ? "Not available" : undefined}
+                                                >
+                                                    {label}
+                                                </span>
                                             </Chip>
                                         )}
                                     />

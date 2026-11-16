@@ -285,7 +285,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             multiple
                             items={standardResultItems}
                             getChipTone={(value) => (invalidStandardResults.has(value) ? "warning" : "neutral")}
-                            disabled={standardResultItems.length === 0}
+                            disabled={standardResultItems.length === 0 && selectedStandardResults.length === 0}
                             onValueChange={(value) => value && setSelectedStandardResults([...value])}
                             showClearAllButton
                         />
