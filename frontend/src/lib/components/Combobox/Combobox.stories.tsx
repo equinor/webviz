@@ -175,7 +175,7 @@ export const MultipleSelect: Story = {
     },
     render: (args) => (
         <div className="w-64">
-            <Combobox multiple showClearAllButton placeholder="Select countries" {...args} />
+            <Combobox multiple showClearAllButton placeholder="Select countries" {...(args as ComboboxProps<string, true>)} />
         </div>
     ),
 };
@@ -215,7 +215,7 @@ export const Controlled: Story = {
         const [value, setValue] = React.useState<string | null>(null);
         return (
             <div className="gap-2xs flex w-64 flex-col">
-                <Combobox<string> {...args} value={value} onValueChange={setValue} />
+                <Combobox<string> {...(args as ComboboxProps<string>)} value={value} onValueChange={setValue} />
                 <p className="text-body-sm text-neutral-subtle">
                     Selected: {value ? (COUNTRIES.find((c) => c.value === value)?.label ?? value) : "none"}
                 </p>

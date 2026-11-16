@@ -45,14 +45,24 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
         endAdornment?: React.ReactNode;
         /** Optional function to render an adornment alongside each item in the dropdown list. */
         renderItemAdornment?: (item: TValue) => React.ReactNode;
-        /** Optional function returning the chip tone per selected value, also called for values not present in `items`. Only applies when `multiple` with chips selection mode. @default "neutral" */
-        getChipTone?: (value: TValue) => "accent" | "neutral" | "danger" | "warning";
-        /** Size of the combobox input. @default "default" */
-        size?: SelectableSize;
         /** Only applies when `multiple` is true. @default "chips" */
         selectionMode?: "chips" | "count";
+        /** Size of the combobox input. @default "default" */
+        size?: SelectableSize;
         /** Placeholder text shown when no value is selected. Not applicable in count selection mode. @default "Select an option" */
         placeholder?: string;
+    };
+
+type ChipToneProps<TValue> = {
+    /** Returns the chip tone for each selected value, including values not present in `items` (these are dimmed and flagged as unavailable). @default "neutral" */
+    getChipTone?: (value: TValue) => "accent" | "neutral" | "danger" | "warning";
+};
+
+/** Special case: multi-select with chips, the only variant where `getChipTone` applies. */
+export type ComboboxMultipleChipsProps<TValue> = Omit<ComboboxProps<TValue, true>, "selectionMode"> &
+    ChipToneProps<TValue> & {
+        multiple: true;
+        selectionMode?: "chips";
     };
 
 function getItemValueKey<TValue>(item: TValue): React.Key {
@@ -73,7 +83,7 @@ const DEFAULT_PROPS = {
 } satisfies Partial<ComboboxProps<any, any>>;
 
 function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false>(
-    props: ComboboxProps<TValue, TMultiple>,
+    props: ComboboxProps<TValue, TMultiple> & ChipToneProps<TValue>,
     ref: React.ForwardedRef<HTMLInputElement>,
 ) {
     const defaultedProps = withDefaults(props, DEFAULT_PROPS);
@@ -255,11 +265,14 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
     );
 }
 
-export const Combobox = React.forwardRef(ComboboxComponent as any) as <
-    TValue,
-    TMultiple extends boolean | undefined = false,
->(
-    props: ComboboxProps<TValue, TMultiple> & {
-        ref?: React.Ref<HTMLInputElement>;
-    },
-) => React.ReactElement;
+type ComboboxRef = { ref?: React.Ref<HTMLInputElement> };
+
+// Overloads keep contextual typing of getChipTone's literal return values
+type ComboboxFunction = {
+    <TValue>(props: ComboboxMultipleChipsProps<TValue> & ComboboxRef): React.ReactElement;
+    <TValue, TMultiple extends boolean | undefined = false>(
+        props: ComboboxProps<TValue, TMultiple> & ComboboxRef,
+    ): React.ReactElement;
+};
+
+export const Combobox = React.forwardRef(ComboboxComponent as any) as unknown as ComboboxFunction;
