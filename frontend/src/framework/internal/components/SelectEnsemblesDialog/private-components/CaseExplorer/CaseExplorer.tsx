@@ -115,25 +115,24 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         return Array.from(standardResults).sort();
     }, [casesQuery.data]);
 
-    // Selection is kept as-is when switching asset; values not available for the asset are highlighted instead of removed
+    // Selection is kept as-is when switching asset; the Combobox marks values not available for the asset
     const [selectedStandardResults, setSelectedStandardResults] = React.useState<string[]>([]);
 
-    const invalidStandardResults = React.useMemo(() => {
-        if (!casesQuery.data) {
-            return new Set<string>();
-        }
-        return new Set(selectedStandardResults.filter((res) => !casesStandardResults.includes(res)));
-    }, [casesQuery.data, casesStandardResults, selectedStandardResults]);
+    // Keep the last loaded options while a new asset is loading, so the selection isn't marked unavailable meanwhile
+    const [standardResultOptions, setStandardResultOptions] = React.useState<string[]>([]);
+    if (casesQuery.data && casesStandardResults !== standardResultOptions) {
+        setStandardResultOptions(casesStandardResults);
+    }
 
-    const standardResultItems = React.useMemo(() => {
-        const values = [...casesStandardResults, ...invalidStandardResults];
-        return values.map((elm) => ({ value: elm, label: elm }));
-    }, [casesStandardResults, invalidStandardResults]);
+    const standardResultItems = React.useMemo(
+        () => standardResultOptions.map((elm) => ({ value: elm, label: elm })),
+        [standardResultOptions],
+    );
 
-    // Invalid values are ignored when filtering
+    // Unavailable values are ignored when filtering
     const activeStandardResults = React.useMemo(
-        () => selectedStandardResults.filter((res) => !invalidStandardResults.has(res)),
-        [selectedStandardResults, invalidStandardResults],
+        () => selectedStandardResults.filter((res) => standardResultOptions.includes(res)),
+        [selectedStandardResults, standardResultOptions],
     );
 
     const caseData = React.useMemo(() => {
@@ -284,8 +283,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             placeholder="Filter by Standard Results..."
                             multiple
                             items={standardResultItems}
-                            getChipTone={(value) => (invalidStandardResults.has(value) ? "danger" : "neutral")}
-                            disabled={standardResultItems.length === 0}
+                            disabled={!casesQuery.data || standardResultItems.length === 0}
                             onValueChange={(value) => value && setSelectedStandardResults([...value])}
                             showClearAllButton
                         />

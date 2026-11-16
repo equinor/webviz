@@ -350,6 +350,30 @@ export const WithEndAdornment: Story = {
     ),
 };
 
+export const WithUnavailableValues: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story: "Selected values that are not in `items` are marked as unavailable, with `unavailableValueText` shown as tooltip and accessible description. When no selected value is available, the field is also marked invalid. Use `getUnavailableValueLabel` to label them. Keep `items` populated while loading, otherwise all selected values are marked.",
+            },
+        },
+    },
+    args: {
+        items: COUNTRIES,
+        showClearAllButton: true,
+        unavailableValueText: "Not available for this region",
+        getUnavailableValueLabel: (value) => String(value).toUpperCase(),
+    },
+    render: (args: ComboboxProps<any, any>) => (
+        <div className="flex w-64 flex-col gap-6">
+            <Combobox {...args} defaultValue="se" />
+            <Combobox {...args} multiple defaultValue={["no", "se", "dk"]} />
+            <Combobox {...args} multiple defaultValue={["se", "dk"]} />
+            <Combobox {...args} multiple selectionMode="count" defaultValue={["no", "se", "dk"]} />
+        </div>
+    ),
+};
+
 // ─── Async stories ────────────────────────────────────────────────────────────
 
 export const AsyncLoading: Story = {
