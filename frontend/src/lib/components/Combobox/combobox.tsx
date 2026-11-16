@@ -45,8 +45,8 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
         endAdornment?: React.ReactNode;
         /** Optional function to render an adornment alongside each item in the dropdown list. */
         renderItemAdornment?: (item: TValue) => React.ReactNode;
-        /** Optional function returning the chip tone per selected value. Only applies in chips selection mode. @default "neutral" */
-        getChipTone?: (value: TValue) => "accent" | "neutral" | "danger" | "warning";
+        /** Tone of chips for selected values not present in `items`; such chips also get dimmed labels and an "unavailable" tooltip. Only applies when `multiple` with chips selection mode. @default "neutral" */
+        invalidChipTone?: "accent" | "neutral" | "danger" | "warning";
         /** Size of the combobox input. @default "default" */
         size?: SelectableSize;
         /** Only applies when `multiple` is true. @default "chips" */
@@ -70,6 +70,7 @@ const DEFAULT_PROPS = {
     ),
     showClearAllButton: false,
     selectionMode: "chips",
+    invalidChipTone: "neutral",
 } satisfies Partial<ComboboxProps<any, any>>;
 
 function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false>(
@@ -81,7 +82,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
     const baseProps = resolveWrapperProps(
         defaultedProps,
         "renderItemAdornment",
-        "getChipTone",
+        "invalidChipTone",
         "placeholder",
         "noMatchesText",
         "loadingText",
@@ -119,6 +120,10 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
     const itemByValue = React.useMemo(() => {
         return new Map(flatItems.map((item) => [item.value, item]));
     }, [flatItems]);
+
+    function isValueInvalid(value: TValue): boolean {
+        return !itemByValue.has(value);
+    }
 
     function getLabelForValue(value: TValue): string {
         return itemByValue.get(value)?.label ?? String(value);
@@ -180,7 +185,8 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                     <ComboboxValueChipsInput
                         ref={ref}
                         getLabelForValue={getLabelForValue}
-                        getChipTone={defaultedProps.getChipTone}
+                        isValueInvalid={isValueInvalid}
+                        invalidChipTone={defaultedProps.invalidChipTone}
                         renderItemAdornment={defaultedProps.renderItemAdornment}
                         placeholder={defaultedProps.placeholder}
                     />

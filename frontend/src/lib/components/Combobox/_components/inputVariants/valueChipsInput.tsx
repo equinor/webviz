@@ -9,7 +9,8 @@ import { ComboboxInput } from "./_input";
 export type ComboboxValueChipsInputProps<TValue> = {
     placeholder?: string;
     getLabelForValue: (value: TValue) => string;
-    getChipTone?: (value: TValue) => "accent" | "neutral" | "danger" | "warning";
+    isValueInvalid?: (value: TValue) => boolean;
+    invalidChipTone: "accent" | "neutral" | "danger" | "warning";
     renderItemAdornment?: (item: TValue) => React.ReactNode;
     children?: React.ReactNode;
 };
@@ -27,6 +28,7 @@ export function ComboboxValueChipsInputComponent<TValue>(
                             value.map((item) => {
                                 const label = props.getLabelForValue(item as unknown as TValue);
                                 const key = String(item);
+                                const isInvalid = props.isValueInvalid?.(item as unknown as TValue) ?? false;
                                 return (
                                     <ComboboxBase.Chip
                                         key={key}
@@ -34,12 +36,15 @@ export function ComboboxValueChipsInputComponent<TValue>(
                                         render={(htmlProps, chipState) => (
                                             <Chip
                                                 {...htmlProps}
-                                                tone={props.getChipTone?.(item as unknown as TValue) ?? "neutral"}
+                                                tone={isInvalid ? props.invalidChipTone : "neutral"}
                                                 disabled={chipState.disabled}
                                                 startAdornment={props.renderItemAdornment?.(item)}
                                                 wrapRemoveButton={(btn) => <ComboboxBase.ChipRemove render={btn} />}
                                             >
-                                                <span className="line-clamp-2 min-w-0 flex-1">{label}</span>
+                                                <span
+                                                    className={`line-clamp-2 min-w-0 flex-1${isInvalid ? " opacity-60" : ""}`}
+                                                    title={isInvalid ? "Not available - ignored" : undefined}
+                                                >{label}</span>
                                             </Chip>
                                         )}
                                     />

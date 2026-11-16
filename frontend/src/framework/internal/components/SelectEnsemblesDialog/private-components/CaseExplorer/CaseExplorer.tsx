@@ -125,10 +125,10 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         return new Set(selectedStandardResults.filter((res) => !casesStandardResults.includes(res)));
     }, [casesQuery.data, casesStandardResults, selectedStandardResults]);
 
-    const standardResultItems = React.useMemo(() => {
-        const values = [...casesStandardResults, ...invalidStandardResults];
-        return values.map((elm) => ({ value: elm, label: elm }));
-    }, [casesStandardResults, invalidStandardResults]);
+    const standardResultItems = React.useMemo(
+        () => casesStandardResults.map((elm) => ({ value: elm, label: elm })),
+        [casesStandardResults],
+    );
 
     // Invalid values are ignored when filtering
     const activeStandardResults = React.useMemo(
@@ -284,7 +284,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             placeholder="Filter by Standard Results..."
                             multiple
                             items={standardResultItems}
-                            getChipTone={(value) => (invalidStandardResults.has(value) ? "danger" : "neutral")}
+                            invalidChipTone="warning"
                             disabled={standardResultItems.length === 0}
                             onValueChange={(value) => value && setSelectedStandardResults([...value])}
                             showClearAllButton
