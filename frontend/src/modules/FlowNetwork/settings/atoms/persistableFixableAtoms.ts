@@ -1,9 +1,13 @@
+import { makeDashboardPersistableFixableAtoms } from "@framework/DashboardSettings/adapters/jotai";
+import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
+import { TIME_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/time";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
 import { computeQueryDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 import { areEnsembleIdentsEqual } from "@framework/utils/ensembleIdentUtils";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
+import { isoStringToTimestampUtcMs } from "@framework/utils/timestampUtils";
 
 import {
     availableDateTimesAtom,
@@ -28,16 +32,16 @@ export const selectedEnsembleIdentAtom = persistableFixableAtom<RegularEnsembleI
     },
 });
 
+function isRealizationValid(realization: number | null, availableRealizations: number[]): boolean {
+    if (realization === null) {
+        return availableRealizations.length === 0;
+    }
+    return availableRealizations.includes(realization);
+}
+
 export const selectedRealizationAtom = persistableFixableAtom<number | null>({
     initialValue: null,
-    isValidFunction: ({ get, value }) => {
-        const availableRealizations = get(availableRealizationsAtom);
-
-        if (value === null) {
-            return availableRealizations.length === 0;
-        }
-        return availableRealizations.includes(value);
-    },
+    isValidFunction: ({ get, value }) => isRealizationValid(value, get(availableRealizationsAtom)),
     fixupFunction: ({ get, value }) => {
         const availableRealizations = get(availableRealizationsAtom);
         if (value === null || value === undefined) {
@@ -48,6 +52,21 @@ export const selectedRealizationAtom = persistableFixableAtom<number | null>({
         return null;
     },
 });
+
+/**
+ * `effectiveRealizationAtom` is the realization in effect: the dashboard setting's realization while that
+ * is active (see `isRealizationDashboardControlledAtom`), otherwise the module's own selection. It contributes the
+ * realizations of the selected ensemble to the dashboard setting.
+ *
+ * Read `effectiveRealizationAtom` - but persist `selectedRealizationAtom`, the module's own selection,
+ * which is used again once it is no longer controlled by the dashboard setting.
+ */
+export const { valueAtom: effectiveRealizationAtom, isDashboardControlledAtom: isRealizationDashboardControlledAtom } =
+    makeDashboardPersistableFixableAtoms(selectedRealizationAtom, {
+        definition: REALIZATION_DASHBOARD_SETTING,
+        // No ensemble selected yet means no opinion, rather than "no realizations available"
+        getConstraints: (get) => (get(selectedEnsembleIdentAtom).value ? get(availableRealizationsAtom) : null),
+    });
 
 export const selectedTreeTypeAtom = persistableFixableAtom<string | null>({
     initialValue: null,
@@ -86,6 +105,31 @@ export const selectedDateTimeAtom = persistableFixableAtom<string | null>({
         return availableDateTimes[0] ?? null;
     },
 });
+
+function findDateTimeForTimestamp(timestampUtcMs: number | null, availableDateTimes: string[]): string | null {
+    if (timestampUtcMs === null) {
+        return null;
+    }
+    return availableDateTimes.find((dateTime) => isoStringToTimestampUtcMs(dateTime) === timestampUtcMs) ?? null;
+}
+
+/**
+ * `effectiveDateTimeAtom` is the time step in effect: the flow network's date matching the dashboard's
+ * dashboard time while that is active (see `isDateTimeDashboardControlledAtom`), otherwise the module's own selection.
+ * It contributes the flow network's dates to the dashboard setting.
+ *
+ * Read `effectiveDateTimeAtom` - but persist `selectedDateTimeAtom`, the module's own selection.
+ */
+export const { valueAtom: effectiveDateTimeAtom, isDashboardControlledAtom: isDateTimeDashboardControlledAtom } =
+    makeDashboardPersistableFixableAtoms(selectedDateTimeAtom, {
+        definition: TIME_DASHBOARD_SETTING,
+        // A flow network without time steps means no opinion, rather than "no time steps available"
+        getConstraints: (get) => {
+            const availableDateTimes = get(availableDateTimesAtom);
+            return availableDateTimes.length > 0 ? availableDateTimes.map(isoStringToTimestampUtcMs) : null;
+        },
+        mapDashboardValue: (dashboardTime, get) => findDateTimeForTimestamp(dashboardTime, get(availableDateTimesAtom)),
+    });
 
 export const selectedEdgeKeyAtom = persistableFixableAtom<string | null>({
     initialValue: null,

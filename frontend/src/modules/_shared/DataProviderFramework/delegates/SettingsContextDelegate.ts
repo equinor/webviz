@@ -103,6 +103,8 @@ export class SettingsContextDelegate<
 
         // Global settings are not subscribed to here - changes reach the settings through the dependencies that read them
         for (const key in this._settings) {
+            this._settings[key].connectDashboardSettingsService(dataProviderManager.getDashboardSettingsService());
+
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "settings",
                 this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(() => {
@@ -163,15 +165,16 @@ export class SettingsContextDelegate<
 
     /*
      * The values that decide whether the provider's data is outdated. A persisted value that is still held has not been
-     * adopted yet, and a hidden setting does not apply to the current configuration (e.g. a shared setting may still
-     * change it) - both are left undefined, so that changing them never makes the provider refetch.
+     * adopted yet (unless a dashboard setting's value is in effect instead), and a hidden setting does not apply to the
+     * current configuration (e.g. a shared setting may still change it) - both are left undefined, so that changing
+     * them never makes the provider refetch.
      */
     getValues(): { [K in TSettingKey]?: TSettingTypes[K] } {
         const settings: { [K in TSettingKey]?: TSettingTypes[K] } = {} as {
             [K in TSettingKey]?: TSettingTypes[K];
         };
         for (const key in this._settings) {
-            if (this._settings[key].isPersistedValue() || !this.isSettingApplicable(key)) {
+            if (this._settings[key].isPersistedValueInEffect() || !this.isSettingApplicable(key)) {
                 settings[key] = undefined;
                 continue;
             }
@@ -194,7 +197,7 @@ export class SettingsContextDelegate<
         if (!this.isSettingApplicable(key)) {
             return false;
         }
-        return !this._settings[key].isValueValid() || this._settings[key].isPersistedValue();
+        return !this._settings[key].isValueValid() || this._settings[key].isPersistedValueInEffect();
     }
 
     // A blocked setting can't be checked against up-to-date value constraints, so it does not count as valid either
@@ -255,11 +258,11 @@ export class SettingsContextDelegate<
     /*
      * A persisted value is adopted as soon as value constraints that accept it arrive. One that is still held once the
      * settings are initialized has either been rejected by the constraints or failed to deserialize, and stays until the
-     * user changes the setting.
+     * user changes the setting. While a dashboard setting controls the setting, the held value is not in effect.
      */
     isSomePersistedValueUnresolved(): boolean {
         for (const key in this._settings) {
-            if (this.isSettingApplicable(key) && this._settings[key].isPersistedValue()) {
+            if (this.isSettingApplicable(key) && this._settings[key].isPersistedValueInEffect()) {
                 return true;
             }
         }

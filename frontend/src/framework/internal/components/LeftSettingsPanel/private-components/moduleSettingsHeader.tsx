@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { ChevronLeft, ChevronRight, Settings, WarningRounded } from "@mui/icons-material";
+import { Settings, WarningRounded } from "@mui/icons-material";
 
 import { useModuleWarning } from "@framework/internal/components/LeftSettingsPanel/_hooks";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -15,8 +15,6 @@ type ModuleSettingsHeaderProps = {
     activeTab: string | null;
     availableTabs: Record<string, TabConfig>;
     isCollapsed: boolean;
-    onExpandClick: () => void;
-    onCollapseClick: () => void;
     onTabChange: (tabKey: string) => void;
 };
 
@@ -69,21 +67,7 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
 
     function makeHeaderContent() {
         if (props.isCollapsed) {
-            return (
-                <Button
-                    onClick={props.onExpandClick}
-                    title="Expand settings panel"
-                    iconOnly
-                    tone="neutral"
-                    size="small"
-                    variant="ghost"
-                >
-                    <div className="flex flex-row items-center">
-                        {activeTab?.icon ?? <Settings fontSize="inherit" />}
-                        <ChevronRight fontSize="inherit" />
-                    </div>
-                </Button>
-            );
+            return activeTab?.icon ?? <Settings fontSize="inherit" />;
         }
 
         const highlightWarning = !!warningText && !isWarningVisible;
@@ -116,16 +100,6 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
                         </span>
                     </Tooltip>
                 )}
-                <Button
-                    onClick={props.onCollapseClick}
-                    title="Collapse settings panel"
-                    iconOnly
-                    tone="neutral"
-                    size="small"
-                    variant="ghost"
-                >
-                    <ChevronLeft fontSize="inherit" />
-                </Button>
             </>
         );
     }

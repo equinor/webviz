@@ -1,3 +1,5 @@
+import "./framework/DashboardSettings/registerAllSettings";
+
 import { ThemeProvider, createTheme } from "@mui/material";
 
 import { AuthenticationBoundary } from "@framework/internal/components/AuthenticationBoundary";

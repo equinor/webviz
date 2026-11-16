@@ -4,6 +4,7 @@ import type { JTDSchemaType } from "ajv/dist/core";
 import type { Getter, Setter } from "jotai";
 
 import type { AtomStore } from "./AtomStoreMaster";
+import type { DashboardSettingsService } from "./DashboardSettings/DashboardSettingsService";
 import type { HoverService } from "./HoverService";
 import type { InitialSettings } from "./InitialSettings";
 import type { SettingsContext, ViewContext } from "./ModuleContext";
@@ -56,6 +57,7 @@ export type ModuleSettingsProps<
     settingsContext: SettingsContext<TInterfaceTypes>;
     workbenchSession: WorkbenchSession;
     syncSettingsService: SyncSettingsService;
+    dashboardSettingsService: DashboardSettingsService;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
 };
@@ -70,6 +72,7 @@ export type ModuleViewProps<
     workbenchSession: WorkbenchSession;
     syncSettingsService: SyncSettingsService;
     hoverService: HoverService;
+    dashboardSettingsService: DashboardSettingsService;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
 };

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
 import type { ContextBoundary } from "@modules/_shared/DataProviderFramework/framework/ContextBoundary/ContextBoundary";
 import { DataProviderStatus } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
 import {
@@ -136,6 +137,42 @@ describe("Shared settings", () => {
         expect(isControlled(surfaceName)).toBe(false);
         expect(surfaceName.getValue()).toBe("Base reservoir");
         expect(backend.callsTo("getSurfaceData")).toHaveLength(1);
+    });
+
+    test("under a dashboard setting, contribute as one source and pass the dashboard value on - until it is removed", async () => {
+        const manager = await restore(
+            sharedSetting("Shared realization", Setting.REALIZATION, 1),
+            surfaceProvider("Top", { attribute: "depth", surfaceName: "Top reservoir" }),
+            surfaceProvider("Base", { attribute: "depth", surfaceName: "Base reservoir" }),
+        );
+        const topRealization = getProviderSetting(findProvider(manager, "Top"), Setting.REALIZATION);
+        const baseRealization = getProviderSetting(findProvider(manager, "Base"), Setting.REALIZATION);
+        const dashboardSettingsService = manager.getDashboardSettingsService();
+
+        const realization = dashboardSettingsService.addSetting(REALIZATION_DASHBOARD_SETTING);
+        await settle(manager);
+
+        // Only the shared setting is connected - the settings it controls follow it, not the dashboard setting
+        expect(realization.getSourceCount()).toBe(1);
+        expect(realization.getConstraints()).toEqual([1, 2]);
+
+        realization.setValue(2);
+        await settle(manager);
+
+        expect(topRealization.getValue()).toBe(2);
+        expect(baseRealization.getValue()).toBe(2);
+        expect(backend.callsTo("getSurfaceData")).toEqual(
+            expect.arrayContaining([
+                ["field-a", "depth", "Top reservoir", 2],
+                ["field-a", "depth", "Base reservoir", 2],
+            ]),
+        );
+
+        dashboardSettingsService.removeSetting(REALIZATION_DASHBOARD_SETTING);
+        await settle(manager);
+
+        expect(topRealization.getValue()).toBe(1);
+        expect(baseRealization.getValue()).toBe(1);
     });
 
     test("isExternallyControlled() reports a setting controlled by a shared setting as controlled", async () => {

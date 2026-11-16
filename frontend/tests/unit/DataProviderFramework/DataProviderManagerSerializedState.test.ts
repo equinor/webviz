@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import { DashboardSettingValueSource } from "@framework/DashboardSettings/DashboardSettingInstance";
+import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
 import {
     type DataProviderManager,
     DataProviderManagerTopic,
@@ -138,5 +140,38 @@ describe("DataProviderManager serialized state", () => {
         manager.deserializeState(managerState([surfaceProvider("Surface")]));
         await settle(manager);
         expect(onSerializedStateRevision).toHaveBeenCalledTimes(1);
+    });
+
+    test("a restored dashboard value controls the restored providers, while their own values stay persisted", async () => {
+        const manager = makeDataProviderManager({ fieldId: "field-a" });
+        const dashboardSettingsService = manager.getDashboardSettingsService();
+        // As on load: the dashboard settings are restored before the module instances (see Dashboard)
+        dashboardSettingsService.deserializeState({ [REALIZATION_DASHBOARD_SETTING.key]: { value: 2 } });
+        manager.deserializeState(
+            managerState([
+                surfaceProvider("Surface", { attribute: "depth", surfaceName: "Top reservoir", realization: 3 }),
+            ]),
+        );
+        await settle(manager);
+        const realization = getProviderSetting(findProvider(manager, "Surface"), Setting.REALIZATION);
+        const dashboardRealization = dashboardSettingsService.getSetting(REALIZATION_DASHBOARD_SETTING)!;
+
+        expect(realization.getValue()).toBe(2);
+        expect(dashboardRealization.getValueSource()).toBe(DashboardSettingValueSource.USER);
+        expect(getPersistedSetting(manager, "Surface", Setting.REALIZATION)).toBe(3);
+        // Only fetched with the dashboard value - never with the persisted local one
+        expect(backend.callsTo("getSurfaceData")).toEqual([["field-a", "depth", "Top reservoir", 2]]);
+
+        // The dashboard value is persisted by the dashboard, not by the module
+        const onSerializedStateRevision = countSerializedStateRevisions(manager);
+        dashboardRealization.setValue(1);
+        await settle(manager);
+        expect(realization.getValue()).toBe(1);
+        expect(onSerializedStateRevision).not.toHaveBeenCalled();
+
+        dashboardSettingsService.removeSetting(REALIZATION_DASHBOARD_SETTING);
+        await settle(manager);
+        expect(realization.getValue()).toBe(3);
+        expect(getPersistedSetting(manager, "Surface", Setting.REALIZATION)).toBe(3);
     });
 });

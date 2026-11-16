@@ -6,11 +6,11 @@ import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { QueryStatus } from "../../types";
 
 import {
-    selectedDateTimeAtom,
+    effectiveDateTimeAtom,
+    effectiveRealizationAtom,
     selectedEdgeKeyAtom,
     selectedEnsembleIdentAtom,
     selectedNodeKeyAtom,
-    selectedRealizationAtom,
     selectedTreeTypeAtom,
 } from "./persistableFixableAtoms";
 import { realizationFlowNetworkQueryAtom } from "./queryAtoms";
@@ -28,7 +28,7 @@ export const availableRealizationsAtom = atom<number[]>((get) => {
 // A disabled query keeps its cached data and error, which belong to a selection that may no longer be
 // valid (e.g. a realization excluded by the realization filter), so neither is exposed while this is false
 export const areQuerySelectionsValidAtom = atom<boolean>((get) => {
-    return get(selectedEnsembleIdentAtom).isValidInContext && get(selectedRealizationAtom).isValidInContext;
+    return get(selectedEnsembleIdentAtom).isValidInContext && get(effectiveRealizationAtom).isValidInContext;
 });
 
 // Invalid selections are retained rather than fixed up. The plot can't show them - an unknown time step makes it show
@@ -36,7 +36,7 @@ export const areQuerySelectionsValidAtom = atom<boolean>((get) => {
 export const areNetworkSelectionsValidAtom = atom<boolean>((get) => {
     return (
         get(selectedTreeTypeAtom).isValidInContext &&
-        get(selectedDateTimeAtom).isValidInContext &&
+        get(effectiveDateTimeAtom).isValidInContext &&
         get(selectedEdgeKeyAtom).isValidInContext &&
         get(selectedNodeKeyAtom).isValidInContext
     );

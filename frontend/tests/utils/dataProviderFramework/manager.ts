@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 
+import { DashboardSettingsService } from "@framework/DashboardSettings/DashboardSettingsService";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
@@ -31,7 +32,12 @@ function makeFakeWorkbenchSettings(): WorkbenchSettings {
 export function makeDataProviderManager(globalSettings: Partial<GlobalSettings> = {}): DataProviderManager {
     // Without retries, a failing request fails right away instead of after TanStack's retry delays
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const manager = new DataProviderManager(makeFakeWorkbenchSession(), makeFakeWorkbenchSettings(), queryClient);
+    const manager = new DataProviderManager(
+        makeFakeWorkbenchSession(),
+        makeFakeWorkbenchSettings(),
+        new DashboardSettingsService(),
+        queryClient,
+    );
     for (const [key, value] of Object.entries(globalSettings)) {
         manager.updateGlobalSetting(key as keyof GlobalSettings, value);
     }

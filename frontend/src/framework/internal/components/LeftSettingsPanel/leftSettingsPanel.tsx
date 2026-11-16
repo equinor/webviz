@@ -10,6 +10,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useActiveDashboard } from "../ActiveDashboardBoundary";
 
+import { CollapseHeader } from "./private-components/collapseHeader";
+import { DashboardSettingsPanel } from "./private-components/dashboardSettingsPanel";
 import { EmptySettingsPlaceholder } from "./private-components/emptySettingsPlaceholder";
 import { ModuleSettingsHeader } from "./private-components/moduleSettingsHeader";
 import { ModuleSettingsStack } from "./private-components/moduleSettingsStack";
@@ -28,6 +30,10 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
     const [isCollapsed, setIsCollapsed] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.LeftSettingsPanelIsCollapsed,
+    );
+    const [isDashboardControlledSettingsPanelVisible, setIsDashboardSettingsPanelVisible] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.DashboardSettingsPanelVisible,
     );
     const [drawerContent, setDrawerContent] = React.useState<DrawerContent>(DrawerContent.ModuleSettings);
 
@@ -51,8 +57,22 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
         setIsCollapsed(true);
     }
 
+    const handleCloseDashboardSettingsPanel = React.useCallback(
+        function handleCloseDashboardSettingsPanel() {
+            setIsDashboardSettingsPanelVisible(false);
+        },
+        [setIsDashboardSettingsPanelVisible],
+    );
+
     return (
         <div className="bg-surface flex h-full flex-col overflow-hidden">
+            <CollapseHeader
+                isCollapsed={isCollapsed}
+                onCollapseChange={isCollapsed ? handleExpandPanel : handleCollapsePanel}
+            />
+            {isDashboardControlledSettingsPanelVisible && !isCollapsed && (
+                <DashboardSettingsPanel onClose={handleCloseDashboardSettingsPanel} />
+            )}
             <ModuleSettingsHeader
                 activeTab={drawerContent}
                 availableTabs={{
@@ -67,8 +87,6 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
                 }}
                 activeModuleInstance={activeModuleInstance}
                 isCollapsed={isCollapsed}
-                onExpandClick={handleExpandPanel}
-                onCollapseClick={handleCollapsePanel}
                 onTabChange={handleSetDrawerContent}
             />
             <>

@@ -4,6 +4,7 @@ export { RemovePathPointIcon } from "./removePathPointIcon";
 export { XYRulersIcon } from "./xyRulersIcon";
 export { WindowListIcon } from "./windowListIcon";
 export { SettingsDialogIcon } from "./settingsDialogIcon";
+export { DashboardSettingsIcon } from "./dashboardSettingsIcon";
 export { AxesLayerIcon } from "./axesLayerIcon";
 export { SortAscendingIcon } from "./sortAscendingIcon";
 export { SortDescendingIcon } from "./sortDescendingIcon";
