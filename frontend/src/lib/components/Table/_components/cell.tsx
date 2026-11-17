@@ -1,6 +1,7 @@
 import React from "react";
 
 import { ArrowDownward, ArrowUpward, Square } from "@mui/icons-material";
+import { defaults } from "lodash-es";
 import { Key } from "ts-key-enum";
 
 import { useComponentSize } from "@lib/components/_shared/contexts/componentSizeContext";
@@ -18,34 +19,28 @@ import { SortDirection } from "../typesAndEnums";
 import type { TableCellProps } from "./types";
 
 export const Cell = React.forwardRef<HTMLTableCellElement, TableCellProps>(function Cell(props, ref): React.ReactNode {
-    const baseProps = resolveWrapperProps(
-        props,
-        "colKey",
-        "sortable",
-        "widthInPercent",
-        "noPadding",
-        "stickyLeftPx",
-        "stickyEdge",
-    );
-
     const sectionContext = useTableSectionContext();
     const rootContext = useTableRootContext();
     const componentSize = useComponentSize();
     const leafColumn = useTableCellColumnContext();
 
-    // Explicit cell props win over the column definition
-    const stickyLeftPx = props.stickyLeftPx ?? leafColumn?.cellProps.stickyLeftPx;
-    const stickyEdge = props.stickyEdge ?? leafColumn?.cellProps.stickyEdge;
+    // Explicit cell props win over the column definitions
+    const cellProps = defaults({}, props, leafColumn?.cellProps);
+
+    const baseProps = resolveWrapperProps(cellProps, "colKey", "sortable", "widthInPercent", "noPadding");
 
     const CellTag = sectionContext === "body" ? "td" : "th";
 
     // Local prop takes precedence over root prop
-    const isSortable = (props.sortable ?? rootContext.sortable) && sectionContext === "head";
+    const isSortable = (cellProps.sortable ?? rootContext.sortable) && sectionContext === "head";
+
+    const isPinned = Boolean(leafColumn?.isPinned);
+    const pinOffset = leafColumn?.pinLeftOffset ?? 0;
 
     let currentSortDirection = SortDirection.NONE;
     let sortingIndex = -1;
-    if (isSortable && props.colKey && rootContext.columnSort) {
-        const idx = rootContext.columnSort.findIndex(({ columnKey }) => columnKey === props.colKey);
+    if (isSortable && cellProps.colKey && rootContext.columnSort) {
+        const idx = rootContext.columnSort.findIndex(({ columnKey }) => columnKey === cellProps.colKey);
 
         currentSortDirection = rootContext.columnSort[idx]?.direction ?? SortDirection.NONE;
         sortingIndex = rootContext.columnSort.length > 1 ? idx : -1;
@@ -53,22 +48,22 @@ export const Cell = React.forwardRef<HTMLTableCellElement, TableCellProps>(funct
 
     const isMultiSort = rootContext.sortable === "multiple";
     const isSorted = currentSortDirection !== SortDirection.NONE;
-    const percentWidth = props.widthInPercent ? `${props.widthInPercent}%` : undefined;
-    const activeCellWidth = props.width ?? percentWidth;
+    const percentWidth = cellProps.widthInPercent ? `${cellProps.widthInPercent}%` : undefined;
+    const activeCellWidth = cellProps.width ?? percentWidth;
 
     const cellHeightPx = rootContext.compact ? ROW_HEIGHT_PX_COMPACT[componentSize] : ROW_HEIGHT_PX[componentSize];
-    const isSticky = stickyLeftPx !== undefined;
 
     function toggleSort(additive: boolean) {
         if (!isSortable) return;
-        if (!props.colKey) return console.warn("Missing column identifier key");
+        if (!cellProps.colKey) return console.warn("Missing column identifier key");
 
-        rootContext.onColumnSort(props.colKey, getNextSortDirection(currentSortDirection), additive);
+        rootContext.onColumnSort(cellProps.colKey, getNextSortDirection(currentSortDirection), additive);
     }
 
     return (
         <CellTag
             {...baseProps}
+            data-pinned={isPinned ? "" : undefined}
             ref={ref}
             width={activeCellWidth}
             tabIndex={isSortable ? 0 : undefined}
@@ -76,32 +71,37 @@ export const Cell = React.forwardRef<HTMLTableCellElement, TableCellProps>(funct
             style={{
                 fontWeight: "inherit",
                 height: `${cellHeightPx}px`,
-                left: stickyLeftPx,
+                left: isPinned ? pinOffset : undefined,
                 ...baseProps.style,
             }}
             className={resolveClassNames(
                 baseProps.className,
                 "border-neutral-subtle group/cell text-left align-middle whitespace-nowrap",
                 {
-                    relative: !isSticky,
-                    "sticky z-[1]": isSticky,
-                    "bg-neutral-canvas": isSticky && sectionContext !== "body",
+                    relative: !isPinned,
+                    "sticky z-1": isPinned,
+                    "bg-neutral-canvas": isPinned && sectionContext !== "body",
                     "bg-surface group-hover/row:bg-neutral-hover group-data-selected/row:bg-accent group-data-selected/row:group-hover/row:bg-accent-hover":
-                        isSticky && sectionContext === "body",
-                    "border-r": stickyEdge,
+                        isPinned && sectionContext === "body",
                     "truncate overflow-hidden": rootContext.fixed,
                     "border-b": sectionContext === "body",
                     "border-b-2": sectionContext !== "body",
-                    "px-sm": !props.noPadding,
-                    "py-sm": !rootContext.compact && !props.noPadding,
-                    "py-2xs": rootContext.compact && !props.noPadding,
+                    "px-sm": !cellProps.noPadding,
+                    "py-sm": !rootContext.compact && !cellProps.noPadding,
+                    "py-2xs": rootContext.compact && !cellProps.noPadding,
                     "hover:bg-neutral-hover cursor-pointer select-none": isSortable,
                     "border-accent! text-accent-subtle": isSorted,
+
+                    // Give the *last* pinned column a clear border, and hide the
+                    // Using pure CSS styling selectors so we don't need to bother computing what
+                    // pinned cols are last during table setup
+                    "border-r-2 [&:has(+&)]:border-r-0": isPinned,
+                    "[&:has(+&)>.--separator]:visible [&>.--separator]:invisible": isPinned,
                 },
             )}
             onClick={(evt) => {
                 toggleSort(evt.shiftKey);
-                props.onClick?.(evt);
+                cellProps.onClick?.(evt);
             }}
             onKeyDown={(evt) => {
                 if (!isSortable) return;
@@ -110,10 +110,10 @@ export const Cell = React.forwardRef<HTMLTableCellElement, TableCellProps>(funct
                 evt.preventDefault();
 
                 toggleSort(evt.shiftKey);
-                props.onKeyDown?.(evt);
+                cellProps.onKeyDown?.(evt);
             }}
         >
-            {props.children}
+            {cellProps.children}
 
             {isSortable && <SortingIcon direction={currentSortDirection} />}
             {isSortable && isMultiSort && (
@@ -128,7 +128,7 @@ export const Cell = React.forwardRef<HTMLTableCellElement, TableCellProps>(funct
             {sectionContext !== "body" && (
                 <Separator
                     orientation="vertical"
-                    layoutClassName="absolute inset-y-1/3 right-0 mx-0! group-last/cell:invisible"
+                    layoutClassName="--separator absolute inset-y-1/3 right-0 mx-0! group-last/cell:invisible"
                 />
             )}
         </CellTag>

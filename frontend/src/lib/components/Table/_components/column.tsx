@@ -2,7 +2,7 @@ import React from "react";
 
 import type { TableCellProps } from "./types";
 
-export type TableColumnProps = TableCellProps;
+export type TableColumnProps = TableCellProps & { pinned?: boolean };
 
 export type ColumnMetaData = {
     cellProps: TableCellProps;
@@ -11,6 +11,8 @@ export type ColumnMetaData = {
     depth: number;
     maxDepth: number;
     leafCount: number;
+    isPinned: boolean;
+    pinLeftOffset: number;
 };
 
 /**
