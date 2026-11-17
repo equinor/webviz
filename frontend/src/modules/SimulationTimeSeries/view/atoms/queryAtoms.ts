@@ -31,6 +31,7 @@ import {
     resampleFrequencyAtom,
     showHistoricalAtom,
     showObservationsAtom,
+    timeSeriesChannelHasReceiversAtom,
     vectorSpecificationsAtom,
     visualizationModeAtom,
 } from "./baseAtoms";
@@ -209,11 +210,16 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
 
 // ----------------------------------------------------
 
-function isVectorDataQueryEnabled(visualizationMode: VisualizationMode): boolean {
+export function isRealizationsVisualizationMode(visualizationMode: VisualizationMode): boolean {
     return (
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
         visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
     );
+}
+
+// Realization data is also published to the data channel, so fetch it when a receiver is connected
+function isVectorDataQueryEnabled(visualizationMode: VisualizationMode, channelHasReceivers: boolean): boolean {
+    return isRealizationsVisualizationMode(visualizationMode) || channelHasReceivers;
 }
 
 function isDeltaEnsembleQueryEnabled(resampleFrequency: Frequency_api | null): boolean {
@@ -225,8 +231,9 @@ const regularEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
     const resampleFrequency = get(resampleFrequencyAtom);
     const visualizationMode = get(visualizationModeAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+    const channelHasReceivers = get(timeSeriesChannelHasReceiversAtom);
 
-    const enabled = isVectorDataQueryEnabled(visualizationMode);
+    const enabled = isVectorDataQueryEnabled(visualizationMode, channelHasReceivers);
 
     const queries = regularEnsembleVectorSpecifications.map(({ item }) => {
         const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
@@ -260,8 +267,11 @@ const deltaEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
     const resampleFrequency = get(resampleFrequencyAtom);
     const visualizationMode = get(visualizationModeAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+    const channelHasReceivers = get(timeSeriesChannelHasReceiversAtom);
 
-    const enabled = isVectorDataQueryEnabled(visualizationMode) && isDeltaEnsembleQueryEnabled(resampleFrequency);
+    const enabled =
+        isVectorDataQueryEnabled(visualizationMode, channelHasReceivers) &&
+        isDeltaEnsembleQueryEnabled(resampleFrequency);
 
     const queries = deltaEnsembleVectorSpecifications.map(({ item }) => {
         const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];

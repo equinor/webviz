@@ -10,6 +10,7 @@
  */
 
 /* eslint-disable @eslint-react/rules-of-hooks */
+import { useChannelHasReceivers } from "./internal/DataChannels/hooks/useChannelHasReceivers";
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 import type { ModuleInterfaceTypes } from "./Module";
@@ -77,6 +78,20 @@ export class ModuleContext<TInterfaceTypes extends ModuleInterfaceTypes> {
             channel,
             ...options,
         });
+    }
+
+    /**
+     * Returns true when at least one receiver is connected to the given channel of this module.
+     * Useful to only fetch data that is needed exclusively by channel subscribers.
+     */
+    useChannelHasReceivers(channelIdString: string): boolean {
+        const channel = this._moduleInstance.getChannelManager().getChannel(channelIdString);
+
+        if (!channel) {
+            throw new Error(`Channel '${channelIdString}' does not exist`);
+        }
+
+        return useChannelHasReceivers(channel);
     }
 
     useSettingsToViewInterfaceValue<TKey extends keyof TInterfaceTypes["settingsToView"]>(

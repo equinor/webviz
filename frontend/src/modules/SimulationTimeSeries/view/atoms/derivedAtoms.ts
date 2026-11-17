@@ -2,8 +2,9 @@ import { atom } from "jotai";
 
 import { createLoadedVectorSpecificationAndDataArray } from "../utils/vectorSpecificationsAndQueriesUtils";
 
-import { vectorSpecificationsAtom } from "./baseAtoms";
+import { vectorSpecificationsAtom, visualizationModeAtom } from "./baseAtoms";
 import {
+    isRealizationsVisualizationMode,
     regularEnsembleHistoricalVectorDataQueriesAtom,
     vectorDataQueriesAtom,
     vectorObservationsQueriesAtom,
@@ -31,6 +32,11 @@ export const queryIsFetchingAtom = atom((get) => {
 });
 
 export const realizationsQueryHasErrorAtom = atom((get) => {
+    // Realizations may be fetched only for the data channel; don't block the statistics plot on their errors
+    if (!isRealizationsVisualizationMode(get(visualizationModeAtom))) {
+        return false;
+    }
+
     const vectorDataQueries = get(vectorDataQueriesAtom);
 
     return vectorDataQueries.some((query) => query.isError);
