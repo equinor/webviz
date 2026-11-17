@@ -10,6 +10,7 @@
 ### Added
 
 - **Session and snapshot management**: You can now select several sessions or snapshots with checkboxes and delete them in one go. When deleting your own snapshots, you can choose to delete them for everyone or only remove them from your list.
+- **Simulation Time Series**: Delta ensemble realization curves can now be colored by parameter values from the comparison ensemble.
 
 ### Changed
 
