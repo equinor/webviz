@@ -62,6 +62,7 @@ export function ContextBoundaryComponent(props: ContextBoundaryComponentProps): 
         <SortableListGroup
             key={props.group.getItemDelegate().getId()}
             id={props.group.getItemDelegate().getId()}
+            itemKind="context-boundary"
             title={
                 <div className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                     {props.group.getItemDelegate().getName()}
