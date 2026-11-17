@@ -35,6 +35,19 @@ export type CaseTableFilterRowProps = {
     ) => void;
 };
 
+function mapSelectionToOptions(values: string[] = [], items: { value: string }[]): string[] {
+    return Array.from(
+        new Set(
+            values.map(
+                (value) =>
+                    items.find((item) => item.value === value)?.value ??
+                    items.find((item) => item.value.toLowerCase() === value.toLowerCase())?.value ??
+                    value,
+            ),
+        ),
+    );
+}
+
 export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactNode {
     const statusOptions = React.useMemo(() => {
         if (!props.caseData) return [];
@@ -77,15 +90,6 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
             .sort()
             .map((elm) => ({ label: elm, value: elm }));
     }, [props.caseData]);
-
-    const isModelAvailable = React.useCallback(
-        (value: string) => casesModelNames.some((item) => predicateSelectionFilter([value], item.value)),
-        [casesModelNames],
-    );
-    const isRevisionAvailable = React.useCallback(
-        (value: string) => casesModelRevisions.some((item) => predicateSelectionFilter([value], item.value)),
-        [casesModelRevisions],
-    );
 
     return (
         <Table.Row layoutClassName="font-normal!" sortable={false} formOnEmphasis>
@@ -130,9 +134,8 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
             <Table.Cell noPadding>
                 <Combobox
                     layoutClassName="h-full"
-                    value={props.filterState["model"] ?? []}
+                    value={mapSelectionToOptions(props.filterState.model, casesModelNames)}
                     items={casesModelNames}
-                    isValueAvailable={isModelAvailable}
                     multiple
                     selectionMode="count"
                     onValueChange={(v) => props.onFilterStateChange("model", v)}
@@ -141,9 +144,8 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
             <Table.Cell noPadding>
                 <Combobox
                     layoutClassName="h-full"
-                    value={props.filterState["revision"] ?? []}
+                    value={mapSelectionToOptions(props.filterState.revision, casesModelRevisions)}
                     items={casesModelRevisions}
-                    isValueAvailable={isRevisionAvailable}
                     multiple
                     selectionMode="count"
                     onValueChange={(v) => props.onFilterStateChange("revision", v)}
