@@ -27,13 +27,17 @@ export class EnsemblesParameterColoring {
         for (const ensemble of selectedEnsembles) {
             const ensembleParameters = ensemble.getParameters();
             const parameter = ensembleParameters.findParameter(parameterIdent);
-            if (!parameter || !isVaryingNumericParameter(parameter)) continue;
+            if (!parameter || !isVaryingNumericParameter(parameter) || parameter.values.length === 0) continue;
 
             this._ensembleParameterMap.set(ensemble.getIdent().toString(), parameter);
             minMax = minMax.extendedBy(MinMax.fromNumericValues(parameter.values));
         }
 
-        // Consider: Set Range [0,0] if parameterMinMax is invalid?
+        // Fallback to range [0,0] when no ensemble contributes parameter values
+        if (!minMax.isValid()) {
+            minMax = new MinMax(0, 0);
+        }
+
         this._colorScale = colorScale;
         const midValue = minMax.min + (minMax.max - minMax.min) / 2;
         this._colorScale.setRangeAndMidPoint(minMax.min, minMax.max, midValue);
