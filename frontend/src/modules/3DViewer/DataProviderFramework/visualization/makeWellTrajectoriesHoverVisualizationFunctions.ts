@@ -1,8 +1,13 @@
 import { GeoJsonLayer } from "@deck.gl/layers";
+import { GL } from "@luma.gl/webgl/constants";
+import {
+    getAziAndInclForSegment,
+    getSegmentIndicesForMd,
+    WellMarkersLayer,
+} from "@webviz/subsurface-viewer/dist/layers";
 
 import type { WellboreTrajectory_api } from "@api";
 import { HoverTopic } from "@framework/HoverService";
-import { BiconeLayer } from "@modules/3DViewer/customDeckGlLayers/BiconeLayer";
 import type {
     HoverVisualizationFunctions,
     TransformerArgs,
@@ -10,16 +15,19 @@ import type {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ExtendedWellFeature } from "@modules/_shared/types/geojson";
 import {
-    getInterpolatedNormalAtMd,
-    getInterpolatedPositionAtMd,
-    getTrajectoryIndexForMd,
+    getLengthAlongSegment,
+    interpolateSegmentPosition,
+    isInMdRange,
     wellTrajectoryToGeojson,
+    zipTrajectoryCoord,
 } from "@modules/_shared/utils/wellbore";
 
 function findWellboreTrajectory(uuid: string | null | undefined, trajectories: WellboreTrajectory_api[]) {
     if (!uuid) return undefined;
     return trajectories.find(({ wellboreUuid }) => wellboreUuid === uuid);
 }
+
+const DUMMY_DATA = ["dummy"];
 
 export function makeWellTrajectoriesHoverVisualizationFunctions(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,
@@ -33,6 +41,36 @@ export function makeWellTrajectoriesHoverVisualizationFunctions(
     }
 
     return {
+        // ! Marker disc is transparent, so it needs to be rendered *before*
+        // ! the trajectory layer to make it clear where they intersect
+        [HoverTopic.WELLBORE_MD]: (hoverData) => {
+            const wellboreTrajectory = findWellboreTrajectory(hoverData?.wellboreUuid, wellboreTrajectories);
+
+            if (!wellboreTrajectory || !hoverData || !isInMdRange(wellboreTrajectory, hoverData.md)) return [];
+
+            const data = getMarkerDataAtMd(wellboreTrajectory, hoverData.md);
+
+            return [
+                new WellMarkersLayer({
+                    id: `${id}-hovered-md-point`,
+                    name: "Well Markers",
+                    // ! Layer prepares the markers on init, data list length needs to be
+                    // ! consistent: if the data list starts empty, no markers will be shown.
+                    // Use consistent dummy data to avoid re-creating layer
+                    data: DUMMY_DATA,
+                    shape: "circle",
+                    sizeUnits: "pixels",
+
+                    getSize: 9,
+                    getColor: [255, 0, 0, 115],
+                    getPosition: data.position,
+                    getAzimuth: data.azimuth,
+                    getInclination: data.inclination,
+
+                    ZIncreasingDownwards: false,
+                }),
+            ];
+        },
         [HoverTopic.WELLBORE]: (wellboreUuid) => {
             const trajectoryData: ExtendedWellFeature[] = [];
             const wellboreTrajectory = findWellboreTrajectory(wellboreUuid, wellboreTrajectories);
@@ -55,45 +93,29 @@ export function makeWellTrajectoriesHoverVisualizationFunctions(
                     pickable: false,
                     visible: trajectoryData.length > 0,
                     autoHighlight: false,
-                }),
-            ];
-        },
-        [HoverTopic.WELLBORE_MD]: (hoverData) => {
-            const wellboreTrajectory = wellboreTrajectories.find(
-                (wellTrajectory) => wellTrajectory.wellboreUuid === hoverData?.wellboreUuid,
-            );
 
-            let hoveredMdPoint3d: [number, number, number] = [0, 0, 0];
-            let normal: [number, number, number] = [0, 0, 1];
-
-            const visible = hoverData !== null && wellboreTrajectory !== undefined;
-
-            if (visible) {
-                const trajectoryIndex = getTrajectoryIndexForMd(hoverData.md, wellboreTrajectory);
-
-                normal = getInterpolatedNormalAtMd(hoverData.md, wellboreTrajectory, trajectoryIndex);
-                hoveredMdPoint3d = getInterpolatedPositionAtMd(hoverData.md, wellboreTrajectory, trajectoryIndex);
-                hoveredMdPoint3d[2] *= -1; // Invert z-axis
-            }
-
-            return [
-                new BiconeLayer({
-                    id: `${id}-hovered-md-point`,
-                    centerPoint: hoveredMdPoint3d,
-                    radius: 20,
-                    height: 10,
-                    normalVector: normal,
-                    numberOfSegments: 32,
-                    color: [255, 0, 0],
-                    opacity: 0.3,
-                    visible: visible,
-                    autoHighlight: false,
-                    pickable: false,
-                    sizeUnits: "pixels",
-                    minSizeInMeters: 0,
-                    maxSizeInMeters: 200,
+                    parameters: {
+                        // ! Some subsurface-comp layers are turning this setting off; this ensures
+                        // ! that the hover effect renders correctly on top of the trajectory
+                        [GL.POLYGON_OFFSET_FILL]: true,
+                    },
                 }),
             ];
         },
     };
+}
+
+function getMarkerDataAtMd(trajectory: WellboreTrajectory_api, md: number) {
+    const [startIdx, endIdx] = getSegmentIndicesForMd(trajectory.mdArr, md);
+    const lengthAlongSegment = getLengthAlongSegment(trajectory, startIdx, endIdx, md);
+
+    // ! The azi/incl interpolator needs z decreasing downwards
+    const segStartPoint = zipTrajectoryCoord(trajectory, startIdx, true);
+    const segEndPoint = zipTrajectoryCoord(trajectory, endIdx, true);
+
+    // Interpolate values
+    const position = interpolateSegmentPosition(trajectory, startIdx, endIdx, lengthAlongSegment);
+    const { azimuth, inclination } = getAziAndInclForSegment(segStartPoint, segEndPoint);
+
+    return { position, azimuth, inclination };
 }
