@@ -180,10 +180,15 @@ test.describe("Inplace volumes in a sensitivity ensemble", () => {
         const unchangedCasesNarration = narrate(
             "Notice that several cases, such as relperm, kvkh and min-P-V, have exactly the same oil in place as rms_seed. These sensitivities only change the dynamic model, so the static volumes are untouched.",
         );
+        // Follow the narration: point at each case as it is named (about 2 s in), then at rms_seed.
+        if (RECORDING) {
+            await page.waitForTimeout(1_800);
+        }
         for (const caseLabel of [/^relperm/, /^kvkh/, /^min_?pv/i]) {
             await smoothMoveToLocator(page, table.getByRole("cell", { name: caseLabel }).first());
             await pace(page, "medium");
         }
+        await pace(page, "long");
         await smoothMoveToLocator(page, table.getByRole("cell", { name: /^rms_seed/ }).first());
         await unchangedCasesNarration;
 
