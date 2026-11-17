@@ -1,3 +1,6 @@
+import io
+from collections.abc import Sequence
+
 import numpy as np
 import pytest
 import xtgeo
@@ -12,14 +15,23 @@ from webviz_services.utils.delta_surface import (
 
 
 def create_surface(
-    values: list[list[float]], masked_cells: list[tuple[int, int]] | None = None, **kwargs: float
+    values: Sequence[Sequence[float]], masked_cells: list[tuple[int, int]] | None = None, **kwargs: float
 ) -> xtgeo.RegularSurface:
     """Helper to create a 3x2 surface, optionally with masked cells."""
     mask = np.zeros((3, 2), dtype=bool)
     for col, row in masked_cells or []:
         mask[col, row] = True
 
-    surf_args = {"ncol": 3, "nrow": 2, "xinc": 10.0, "yinc": 10.0, "xori": 0.0, "yori": 0.0, "rotation": 0.0}
+    surf_args = {
+        "ncol": 3,
+        "nrow": 2,
+        "xinc": 10.0,
+        "yinc": 10.0,
+        "xori": 0.0,
+        "yori": 0.0,
+        "rotation": 0.0,
+        "yflip": 1,
+    }
     surf_args.update(kwargs)
 
     return xtgeo.RegularSurface(
@@ -30,6 +42,7 @@ def create_surface(
         xori=surf_args["xori"],
         yori=surf_args["yori"],
         rotation=surf_args["rotation"],
+        yflip=int(surf_args["yflip"]),
         values=np.ma.MaskedArray(np.array(values, dtype=np.float64), mask=mask),
     )
 
@@ -153,6 +166,39 @@ def test_assert_same_surface_definition_tolerates_float_noise_at_utm_scale() -> 
     b = create_surface([[1, 2], [3, 4], [5, 6]], xori=456_000.0 + 1e-6, yori=6_500_000.0 - 1e-6)
 
     assert_same_surface_definition(a, b)
+
+
+def test_assert_same_surface_definition_wraps_rotation_around_zero_and_360() -> None:
+    zero_deg = create_surface([[1, 2], [3, 4], [5, 6]], rotation=0.0)
+    near_360_deg = create_surface([[1, 2], [3, 4], [5, 6]], rotation=359.99995)
+
+    # Exporting 359.99999 to irap_binary (float32) rounds the header rotation to 360.0 on import
+    exported = create_surface([[1, 2], [3, 4], [5, 6]], rotation=359.99999)
+    buf = io.BytesIO()
+    exported.to_file(buf, fformat="irap_binary")
+    buf.seek(0)
+    irap_360 = xtgeo.surface_from_file(buf)
+    assert irap_360.rotation == 360.0
+
+    assert_same_surface_definition(zero_deg, near_360_deg)
+    assert_same_surface_definition(near_360_deg, zero_deg)
+    assert_same_surface_definition(zero_deg, irap_360)
+
+
+def test_assert_same_surface_definition_tolerates_float32_rotation_noise() -> None:
+    # 1 float32 ULP near 350 deg is ~3.05e-5 deg
+    a = create_surface([[1, 2], [3, 4], [5, 6]], rotation=350.0)
+    b = create_surface([[1, 2], [3, 4], [5, 6]], rotation=350.0 + 3.1e-5)
+
+    assert_same_surface_definition(a, b)
+
+
+def test_assert_same_surface_definition_raises_for_differing_yflip() -> None:
+    a = create_surface([[1, 2], [3, 4], [5, 6]], yflip=1)
+    b = create_surface([[1, 2], [3, 4], [5, 6]], yflip=-1)
+
+    with pytest.raises(SurfaceDefinitionMismatchError, match="yflip"):
+        assert_same_surface_definition(a, b)
 
 
 def test_is_entirely_undefined_for_disjoint_masks() -> None:

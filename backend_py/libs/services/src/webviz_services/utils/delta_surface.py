@@ -7,20 +7,28 @@ class SurfaceDefinitionMismatchError(Exception):
 
 
 # Absolute tolerances only: np.isclose's default rtol is ~65 m at UTM northings, which would let a whole cell shift pass.
+# Note: Sumo irap_binary headers store coordinates/angles as float32 (~0.5 m ULP at UTM northings, ~2-8 um on increments,
+# up to ~3e-5 deg on rotation), so 1 mm requires matching float32 origins while absorbing float noise on increments.
 _COORD_ABS_TOL = 1e-3  # metres
-_ANGLE_ABS_TOL = 1e-6  # degrees
+_ANGLE_ABS_TOL = 1e-4  # degrees (~17 mm at 10 km; covers float32 ULP across [0, 360))
 
 
 def _is_close(a: float, b: float, abs_tol: float) -> bool:
     return bool(np.isclose(a, b, rtol=0.0, atol=abs_tol))
 
 
+def _is_angle_close(a: float, b: float, abs_tol: float) -> bool:
+    diff_deg = abs((a - b + 180.0) % 360.0 - 180.0)
+    return diff_deg <= abs_tol
+
+
 def assert_same_surface_definition(a: xtgeo.RegularSurface, b: xtgeo.RegularSurface) -> None:
     """
     Raise SurfaceDefinitionMismatchError if the two surfaces do not share the same grid definition.
 
-    Not using xtgeo's RegularSurface.compare_topology(): it compares exactly (no tolerance for float noise in
-    origin/rotation) and only returns a bool, whereas the mismatching fields are needed for the user-facing message.
+    Not using xtgeo's RegularSurface.compare_topology(): it compares floats with exact != (no tolerance or 0/360
+    rotation wrap-around), compares masks by default (strict=True), omits yflip, and only returns a bool rather than
+    naming the mismatching fields for the user-facing message.
     """
     mismatching_fields: list[str] = []
 
@@ -36,7 +44,7 @@ def assert_same_surface_definition(a: xtgeo.RegularSurface, b: xtgeo.RegularSurf
         mismatching_fields.append(f"xori ({a.xori} vs {b.xori})")
     if not _is_close(a.yori, b.yori, _COORD_ABS_TOL):
         mismatching_fields.append(f"yori ({a.yori} vs {b.yori})")
-    if not _is_close(a.rotation, b.rotation, _ANGLE_ABS_TOL):
+    if not _is_angle_close(a.rotation, b.rotation, _ANGLE_ABS_TOL):
         mismatching_fields.append(f"rotation ({a.rotation} vs {b.rotation})")
     if a.yflip != b.yflip:
         mismatching_fields.append(f"yflip ({a.yflip} vs {b.yflip})")
