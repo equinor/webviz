@@ -108,7 +108,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
 
     const size = useComponentSize(props);
 
-    // Mirrors the value also when uncontrolled; needed to list unavailable selected values in count mode
+    // Mirrors the value also when uncontrolled; needed to list unavailable selected values in multi-select modes
     const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultedProps.defaultValue);
     const currentValue = defaultedProps.value !== undefined ? defaultedProps.value : uncontrolledValue;
 
@@ -128,13 +128,13 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         return new Map(flatItems.map((item) => [item.value, item]));
     }, [flatItems]);
 
-    // Count mode has no chips, so unavailable selected values are listed in the dropdown to allow unselecting them
+    // Unavailable selected values are listed in the dropdown (in both multi-select modes) so they can be unselected there
     const unavailableListValues = React.useMemo(() => {
-        if (!defaultedProps.multiple || defaultedProps.selectionMode !== "count" || !Array.isArray(currentValue)) {
+        if (!defaultedProps.multiple || !Array.isArray(currentValue)) {
             return [];
         }
         return (currentValue as TValue[]).filter((value) => !itemByValue.has(value));
-    }, [defaultedProps.multiple, defaultedProps.selectionMode, currentValue, itemByValue]);
+    }, [defaultedProps.multiple, currentValue, itemByValue]);
 
     const baseItems = React.useMemo(() => {
         const items = defaultedProps.items;
