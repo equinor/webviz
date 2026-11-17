@@ -239,7 +239,7 @@ describe("computeColumnLayout", () => {
             formatPlain,
             pinnedWidth * 2 - 1,
         );
-        expect(partial.pinnedColumns).toEqual(new Map([["ENSEMBLE", 0]]));
+        expect(partial.pinnedColumns).toEqual(new Set(["ENSEMBLE"]));
         expect(partial.lastPinnedKey).toBe("ENSEMBLE");
 
         const narrow = computeColumnLayout(
