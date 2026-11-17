@@ -45,6 +45,25 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
         endAdornment?: React.ReactNode;
         /** Optional function to render an adornment alongside each item in the dropdown list. */
         renderItemAdornment?: (item: TValue) => React.ReactNode;
+        /**
+         * Explanation shown (as tooltip and accessible description) for selected values that are unavailable.
+         * By default a value is unavailable when it is not among `items`; see `isValueAvailable` to override this.
+         * Unavailable values are marked as such, and the field is marked invalid when no selected value is available.
+         * Keep `items` populated while loading to avoid false marking, or provide `isValueAvailable` if `items` is partial.
+         * @default "Not available"
+         */
+        unavailableValueText?: string;
+        /**
+         * Label for selected values that are not in `items`, regardless of `isValueAvailable`.
+         * Needed when `items` is partial, as such values have no item to take a label from. @default String(value)
+         */
+        getUnavailableValueLabel?: (value: TValue) => string;
+        /**
+         * Decides whether a selected value is available. Overrides the default check (value is among `items`).
+         * Use when `items` is a partial list, e.g. server-side filtered; `() => true` never marks values as unavailable.
+         * Memoize the function (e.g. `useCallback`) to avoid recomputing the dropdown list on every render.
+         */
+        isValueAvailable?: (value: TValue) => boolean;
         /** Size of the combobox input. @default "default" */
         size?: SelectableSize;
         /** Only applies when `multiple` is true. @default "chips" */
@@ -57,6 +76,8 @@ function getItemValueKey<TValue>(item: TValue): React.Key {
     return (item as any).value ?? String(item);
 }
 
+const UNAVAILABLE_GROUP_KEY = "__unavailable__";
+
 const DEFAULT_PROPS = {
     placeholder: "Select an option",
     noMatchesText: "No matches found",
@@ -68,6 +89,7 @@ const DEFAULT_PROPS = {
     ),
     showClearAllButton: false,
     selectionMode: "chips",
+    unavailableValueText: "Not available",
 } satisfies Partial<ComboboxProps<any, any>>;
 
 function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false>(
@@ -79,6 +101,9 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
     const baseProps = resolveWrapperProps(
         defaultedProps,
         "renderItemAdornment",
+        "unavailableValueText",
+        "getUnavailableValueLabel",
+        "isValueAvailable",
         "placeholder",
         "noMatchesText",
         "loadingText",
@@ -92,8 +117,16 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         "size",
     );
 
-    const hasGroups = isGroupedItems(defaultedProps.items);
     const size = useComponentSize(props);
+
+    // Mirrors the value also when uncontrolled; needed to list unavailable selected values in multi-select modes
+    const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultedProps.defaultValue);
+    const currentValue = defaultedProps.value !== undefined ? defaultedProps.value : uncontrolledValue;
+
+    const handleValueChange: typeof defaultedProps.onValueChange = function handleValueChange(value, eventDetails) {
+        setUncontrolledValue(value);
+        defaultedProps.onValueChange?.(value, eventDetails);
+    };
 
     const flatItems = React.useMemo(() => {
         if (isGroupedItems(defaultedProps.items)) {
@@ -102,28 +135,59 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         return defaultedProps.items;
     }, [defaultedProps.items]);
 
-    const baseItems = React.useMemo(() => {
-        if (isGroupedItems(defaultedProps.items)) {
-            return defaultedProps.items.map((group) => ({
-                ...group,
-                items: group.items.map((item) => item.value),
-            }));
-        }
-
-        return defaultedProps.items.map((item) => item.value);
-    }, [defaultedProps.items]);
-
     const itemByValue = React.useMemo(() => {
         return new Map(flatItems.map((item) => [item.value, item]));
     }, [flatItems]);
 
+    // Single source of truth for availability; used for highlighting, validity and the unavailable group alike
+    const { isValueAvailable: isValueAvailableProp } = defaultedProps;
+    const isValueAvailable = React.useCallback(
+        function isValueAvailable(value: TValue): boolean {
+            return isValueAvailableProp ? isValueAvailableProp(value) : itemByValue.has(value);
+        },
+        [isValueAvailableProp, itemByValue],
+    );
+
+    // Unavailable selected values are listed in the dropdown (in both multi-select modes) so they can be unselected there
+    const unavailableListValues = React.useMemo(() => {
+        if (!defaultedProps.multiple || !Array.isArray(currentValue)) {
+            return [];
+        }
+        return (currentValue as TValue[]).filter((value) => !itemByValue.has(value) && !isValueAvailable(value));
+    }, [defaultedProps.multiple, currentValue, itemByValue, isValueAvailable]);
+
+    const baseItems = React.useMemo(() => {
+        const items = defaultedProps.items;
+        if (!isGroupedItems(items) && unavailableListValues.length === 0) {
+            return items.map((item) => item.value);
+        }
+
+        const groups = isGroupedItems(items) ? items : [{ value: "", items }];
+        const baseGroups = groups.map((group) => ({ ...group, items: group.items.map((item) => item.value) }));
+        if (unavailableListValues.length > 0) {
+            // Placed first so they are visible without scrolling in long lists
+            baseGroups.unshift({ value: UNAVAILABLE_GROUP_KEY, items: unavailableListValues });
+        }
+        return baseGroups;
+    }, [defaultedProps.items, unavailableListValues]);
+
+    const hasGroups = isGroupedItems(defaultedProps.items) || unavailableListValues.length > 0;
+
     function getLabelForValue(value: TValue): string {
-        return itemByValue.get(value)?.label ?? String(value);
+        const item = itemByValue.get(value);
+        if (item) {
+            return item.label;
+        }
+        return defaultedProps.getUnavailableValueLabel?.(value) ?? String(value);
+    }
+
+    function hasOnlyUnavailableValues(value: unknown): boolean {
+        const values = defaultedProps.multiple && Array.isArray(value) ? value : value == null ? [] : [value];
+        return values.length > 0 && values.every((v) => !isValueAvailable(v as TValue));
     }
 
     function renderValueItem(value: TValue) {
-        const item = itemByValue.get(value as TValue);
-        if (!item) return null;
+        const item = itemByValue.get(value as TValue) ?? { value, label: getLabelForValue(value) };
 
         return (
             <ComboboxListItem
@@ -138,6 +202,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
     return (
         <ComboboxBase.Root
             {...baseProps}
+            onValueChange={handleValueChange}
             items={baseItems}
             itemToStringLabel={(value) => getLabelForValue(value as unknown as TValue)}
         >
@@ -145,30 +210,35 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 render={(htmlProps, state) => {
                     const { children, className, ...divProps } = htmlProps;
                     return (
-                        <div
-                            {...divProps}
-                            className={resolveClassNames(
-                                className,
-                                baseProps.className,
-                                "form-element gap-x-sm px-sm flex cursor-text items-center",
-                                size !== "small" ||
-                                    (defaultedProps.multiple && defaultedProps.selectionMode === "chips")
-                                    ? "py-2xs"
-                                    : undefined,
-                                SELECTABLE_SIZES_CLASSNAMES[size],
-                            )}
-                        >
-                            {(state.valid === false || defaultedProps.startAdornment) && (
-                                <div className="flex shrink-0 items-center">
-                                    {state.valid === false ? (
-                                        <Error fontSize="inherit" className="fill-text-danger-subtle!" />
-                                    ) : (
-                                        defaultedProps.startAdornment
+                        <ComboboxBase.Value>
+                            {(value) => (
+                                <div
+                                    {...divProps}
+                                    {...(hasOnlyUnavailableValues(value) && { "data-invalid": "" })}
+                                    className={resolveClassNames(
+                                        className,
+                                        baseProps.className,
+                                        "form-element gap-x-sm px-sm flex cursor-text items-center",
+                                        size !== "small" ||
+                                            (defaultedProps.multiple && defaultedProps.selectionMode === "chips")
+                                            ? "py-2xs"
+                                            : undefined,
+                                        SELECTABLE_SIZES_CLASSNAMES[size],
                                     )}
+                                >
+                                    {(state.valid === false || defaultedProps.startAdornment) && (
+                                        <div className="flex shrink-0 items-center">
+                                            {state.valid === false ? (
+                                                <Error fontSize="inherit" className="fill-text-danger-subtle!" />
+                                            ) : (
+                                                defaultedProps.startAdornment
+                                            )}
+                                        </div>
+                                    )}
+                                    {children}
                                 </div>
                             )}
-                            {children}
-                        </div>
+                        </ComboboxBase.Value>
                     );
                 }}
             >
@@ -176,17 +246,30 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 {defaultedProps.multiple && defaultedProps.selectionMode === "chips" && (
                     <ComboboxValueChipsInput
                         ref={ref}
+                        hasOnlyUnavailableValues={hasOnlyUnavailableValues}
                         getLabelForValue={getLabelForValue}
+                        isValueAvailable={isValueAvailable}
+                        unavailableValueText={defaultedProps.unavailableValueText}
                         renderItemAdornment={defaultedProps.renderItemAdornment}
                         placeholder={defaultedProps.placeholder}
                     />
                 )}
                 {defaultedProps.multiple && defaultedProps.selectionMode === "count" && (
-                    <ComboboxValueCountInput ref={ref} flatItems={flatItems} />
+                    <ComboboxValueCountInput
+                        ref={ref}
+                        hasOnlyUnavailableValues={hasOnlyUnavailableValues}
+                        flatItems={flatItems}
+                        getLabelForValue={getLabelForValue}
+                        isValueAvailable={isValueAvailable}
+                        unavailableValueText={defaultedProps.unavailableValueText}
+                    />
                 )}
                 {!defaultedProps.multiple && (
                     <ComboboxSingleValueInput
                         ref={ref}
+                        hasOnlyUnavailableValues={hasOnlyUnavailableValues}
+                        isValueAvailable={isValueAvailable}
+                        unavailableValueText={defaultedProps.unavailableValueText}
                         renderItemAdornment={defaultedProps.renderItemAdornment}
                         placeholder={defaultedProps.placeholder}
                     />
@@ -234,7 +317,16 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                                 ? (group) => (
                                       <React.Fragment key={group.value}>
                                           <ComboboxBase.Separator className="menu__separator" />
-                                          <ComboboxListGroup group={group}>{renderValueItem}</ComboboxListGroup>
+                                          <ComboboxListGroup
+                                              group={group}
+                                              label={
+                                                  group.value === UNAVAILABLE_GROUP_KEY
+                                                      ? defaultedProps.unavailableValueText
+                                                      : undefined
+                                              }
+                                          >
+                                              {renderValueItem}
+                                          </ComboboxListGroup>
                                       </React.Fragment>
                                   )
                                 : renderValueItem}
