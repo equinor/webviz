@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Path, Query, Body, Response
 
 from webviz_services.service_exceptions import ServiceLayerException
 from webviz_services.sumo_access.case_inspector import CaseInspector
-from webviz_services.sumo_access.ensemble_lineage import RestartAncestor
+from webviz_services.sumo_access.ensemble_lineage import ResolvedEnsemble, RestartChain
 from webviz_services.sumo_access.sumo_inspector import SumoInspector
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
 from webviz_services.utils.authenticated_user import AuthenticatedUser
@@ -94,7 +94,7 @@ async def get_ensemble_details(
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     try:
         async with asyncio.TaskGroup() as tg:
-            restart_chain_task = tg.create_task(case_inspector.get_restart_chain_async(ensemble_name))
+            restart_chain_task = tg.create_task(_get_restart_chain_or_empty_async(case_inspector, ensemble_name))
 
             case_name = await case_inspector.get_case_name_async()
             realizations = await case_inspector.get_realizations_in_ensemble_async(ensemble_name)
@@ -125,9 +125,21 @@ async def get_ensemble_details(
         stratigraphicColumnIdentifier=stratigraphic_column_identifier,
         standardResults=standard_results,
         fipRegions=fip_regions,
-        restartFromChain=[_to_api_restart_from_ensemble(ancestor) for ancestor in restart_chain.ancestors],
-        restartFromUnresolvedUuid=restart_chain.unresolved_ensemble_uuid,
+        restartChain=schemas.RestartChain(
+            ancestors=[_to_api_ensemble_reference(ancestor) for ancestor in restart_chain.ancestors],
+            unresolvedEnsembleUuid=restart_chain.unresolved_ensemble_uuid,
+            truncated=restart_chain.truncated,
+        ),
     )
+
+
+async def _get_restart_chain_or_empty_async(case_inspector: CaseInspector, ensemble_name: str) -> RestartChain:
+    # The restart chain is supplementary information; failing to get it should not prevent loading the ensemble
+    try:
+        return await case_inspector.get_restart_chain_async(ensemble_name)
+    except Exception:  # pylint: disable=broad-exception-caught
+        LOGGER.exception(f"Failed to get restart chain, returning an empty chain. {ensemble_name=}")
+        return RestartChain(ensemble=None, ancestors=[], unresolved_ensemble_uuid=None, truncated=False)
 
 
 @router.get("/cases/{case_uuid}/ensemble_restart_infos")
@@ -143,18 +155,18 @@ async def get_ensemble_restart_infos(
     return [
         schemas.EnsembleRestartInfo(
             ensembleName=info.ensemble_name,
-            restartFrom=_to_api_restart_from_ensemble(info.restart_from) if info.restart_from is not None else None,
+            restartFrom=_to_api_ensemble_reference(info.restart_from) if info.restart_from is not None else None,
             restartFromUnresolvedUuid=info.restart_from_unresolved_uuid,
         )
         for info in restart_infos
     ]
 
 
-def _to_api_restart_from_ensemble(ancestor: RestartAncestor) -> schemas.RestartFromEnsemble:
-    return schemas.RestartFromEnsemble(
-        caseUuid=ancestor.case_uuid,
-        caseName=ancestor.case_name,
-        ensembleName=ancestor.ensemble_name,
+def _to_api_ensemble_reference(ensemble: ResolvedEnsemble) -> schemas.EnsembleReference:
+    return schemas.EnsembleReference(
+        caseUuid=ensemble.case_uuid,
+        caseName=ensemble.case_name,
+        ensembleName=ensemble.ensemble_name,
     )
 
 

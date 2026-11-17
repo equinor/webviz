@@ -1,176 +1,180 @@
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import httpx
 import pytest
 
+from webviz_services.service_exceptions import NoDataError, Service
 from webviz_services.sumo_access import ensemble_lineage
-from webviz_services.sumo_access.case_inspector import CaseInspector, EnsembleInfo
 from webviz_services.sumo_access.ensemble_lineage import (
     MAX_RESTART_CHAIN_DEPTH,
-    RestartAncestor,
+    ResolvedEnsemble,
+    get_case_ensemble_restart_infos_async,
     get_restart_chain_async,
-    get_restart_from_uuid_async,
     resolve_ensemble_by_uuid_async,
 )
 
 
-class _FakeSumo:
-    """In-memory stand-in for the Sumo index, used to build SearchContext mocks."""
+def _term_value(filters: list[dict[str, Any]], field: str) -> str | None:
+    return next((f["term"][field] for f in filters if "term" in f and field in f["term"]), None)
+
+
+class _FakeSumoClient:
+    """Stand-in for SumoClient.post_async("/search") serving realization-level documents of known ensembles."""
 
     def __init__(self) -> None:
-        # (case_uuid, ensemble_name) -> fmu.ensemble metadata on realization documents
-        self.realization_ensemble_meta: dict[tuple[str, str], dict[str, Any]] = {}
-        # ensemble_uuid -> (case_uuid, case_name, ensemble_name)
-        self.ensembles: dict[str, tuple[str, str, str]] = {}
+        # ensemble_uuid -> (case_uuid, case_name, ensemble_name, restart_from)
+        self.ensembles: dict[str, tuple[str, str, str, str | None]] = {}
+        self.payloads: list[dict[str, Any]] = []
 
     def add_ensemble(
         self, ens_uuid: str, case_uuid: str, case_name: str, ensemble_name: str, restart_from: str | None = None
     ) -> None:
-        meta: dict[str, Any] = {"name": ensemble_name, "uuid": ens_uuid}
+        self.ensembles[ens_uuid] = (case_uuid, case_name, ensemble_name, restart_from)
+
+    def _source(self, ens_uuid: str) -> dict[str, Any]:
+        case_uuid, case_name, ensemble_name, restart_from = self.ensembles[ens_uuid]
+        ensemble: dict[str, Any] = {"uuid": ens_uuid, "name": ensemble_name}
         if restart_from is not None:
-            meta["restart_from"] = restart_from
-        self.realization_ensemble_meta[(case_uuid, ensemble_name)] = meta
-        self.ensembles[ens_uuid] = (case_uuid, case_name, ensemble_name)
+            ensemble["restart_from"] = restart_from
+        return {"fmu": {"case": {"uuid": case_uuid, "name": case_name}, "ensemble": ensemble}}
 
-    def search_context_factory(self, sumo: Any) -> MagicMock:  # pylint: disable=unused-argument
-        root = MagicMock()
+    async def post_async(self, path: str, json: dict[str, Any]) -> MagicMock:
+        assert path == "/search"
+        self.payloads.append(json)
+        query = json["query"]["bool"]
+        assert {"exists": {"field": "fmu.realization.id"}} in query["filter"]
+        assert query["must_not"] == [{"term": {"_sumo.hidden": True}}]
 
-        def _filter(*, uuid: str, ensemble: str, realization: bool) -> MagicMock:
-            assert realization is True
-            meta = self.realization_ensemble_meta.get((uuid, ensemble))
-            limited = MagicMock()
-            limited.length_async = AsyncMock(return_value=0 if meta is None else 1)
-            doc = MagicMock()
-            doc.metadata = {"fmu": {"ensemble": meta}}
-            limited.getitem_async = AsyncMock(return_value=doc)
+        filters = query["filter"]
+        case_uuid = _term_value(filters, "fmu.case.uuid.keyword")
+        ensemble_name = _term_value(filters, "fmu.ensemble.name.keyword")
+        ensemble_uuid = _term_value(filters, "fmu.ensemble.uuid.keyword")
+        matching = [
+            uuid
+            for uuid, (c_uuid, _, name, _) in self.ensembles.items()
+            if (case_uuid is None or c_uuid == case_uuid)
+            and (ensemble_name is None or name == ensemble_name)
+            and (ensemble_uuid is None or uuid == ensemble_uuid)
+        ]
 
-            filtered = MagicMock()
-            filtered.limit = MagicMock(return_value=limited)
-            return filtered
+        response = MagicMock()
+        if "aggs" in json:
+            buckets = [
+                {"key": self.ensembles[uuid][2], "doc": {"hits": {"hits": [{"_source": self._source(uuid)}]}}}
+                for uuid in matching
+            ]
+            response.json.return_value = {"aggregations": {"ensembles": {"buckets": buckets}}}
+        else:
+            assert json["size"] == 1
+            assert "fmu.ensemble.restart_from" in json["_source"]
+            response.json.return_value = {"hits": {"hits": [{"_source": self._source(uuid)} for uuid in matching[:1]]}}
+        return response
 
-        async def _get_ensemble_by_uuid_async(ens_uuid: str) -> MagicMock:
-            if ens_uuid not in self.ensembles:
-                request = httpx.Request("GET", f"https://sumo/objects('{ens_uuid}')")
-                response = httpx.Response(404, request=request)
-                raise httpx.HTTPStatusError("not found", request=request, response=response)
-            case_uuid, case_name, ensemble_name = self.ensembles[ens_uuid]
-            ens = MagicMock()
-            ens.caseuuid = case_uuid
-            ens.casename = case_name
-            ens.name = ensemble_name
-            return ens
-
-        root.filter = MagicMock(side_effect=_filter)
-        root.get_ensemble_by_uuid_async = AsyncMock(side_effect=_get_ensemble_by_uuid_async)
-        return root
-
-
-@pytest.fixture(name="fake_sumo")
-def fixture_fake_sumo() -> Any:
-    fake = _FakeSumo()
-    with patch.object(ensemble_lineage, "SearchContext", side_effect=fake.search_context_factory):
-        yield fake
-
-
-async def test_get_restart_from_uuid_returns_none_without_restart_from(fake_sumo: _FakeSumo) -> None:
-    fake_sumo.add_ensemble("uuid-pred", "case-a", "Case A", "pred")
-    assert await get_restart_from_uuid_async(MagicMock(), "case-a", "pred") is None
+    def count_uuid_lookups(self, ensemble_uuid: str) -> int:
+        return sum(
+            1
+            for payload in self.payloads
+            if _term_value(payload["query"]["bool"]["filter"], "fmu.ensemble.uuid.keyword") == ensemble_uuid
+        )
 
 
-async def test_get_restart_from_uuid_returns_none_when_no_documents(
-    fake_sumo: _FakeSumo,
-) -> None:  # pylint: disable=unused-argument
-    assert await get_restart_from_uuid_async(MagicMock(), "case-a", "missing") is None
+@pytest.fixture(name="sumo")
+def fixture_sumo() -> _FakeSumoClient:
+    return _FakeSumoClient()
 
 
-async def test_resolve_ensemble_by_uuid_returns_none_on_miss(
-    fake_sumo: _FakeSumo,
-) -> None:  # pylint: disable=unused-argument
-    assert await resolve_ensemble_by_uuid_async(MagicMock(), "unknown") is None
+async def test_resolve_ensemble_by_uuid(sumo: _FakeSumoClient) -> None:
+    sumo.add_ensemble("uuid-iter3", "case-b", "Case B", "iter-3")
+
+    assert await resolve_ensemble_by_uuid_async(sumo, "uuid-iter3") == ResolvedEnsemble(  # type: ignore[arg-type]
+        "uuid-iter3", "case-b", "Case B", "iter-3"
+    )
+    assert await resolve_ensemble_by_uuid_async(sumo, "unknown") is None  # type: ignore[arg-type]
 
 
-async def test_resolve_ensemble_by_uuid_reraises_other_http_errors() -> None:
-    request = httpx.Request("GET", "https://sumo")
-    error = httpx.HTTPStatusError("boom", request=request, response=httpx.Response(500, request=request))
-    search_context = MagicMock()
-    search_context.get_ensemble_by_uuid_async = AsyncMock(side_effect=error)
-    with patch.object(ensemble_lineage, "SearchContext", return_value=search_context):
-        with pytest.raises(httpx.HTTPStatusError):
-            await resolve_ensemble_by_uuid_async(MagicMock(), "some-uuid")
+async def test_chain_empty_for_unknown_ensemble(sumo: _FakeSumoClient) -> None:
+    chain = await get_restart_chain_async(sumo, "case-a", "missing")  # type: ignore[arg-type]
+
+    assert chain.ensemble is None
+    assert chain.ancestors == []
+    assert chain.unresolved_ensemble_uuid is None
+    assert chain.truncated is False
 
 
-async def test_chain_empty_without_restart_from(fake_sumo: _FakeSumo) -> None:
-    fake_sumo.add_ensemble("uuid-pred", "case-a", "Case A", "pred")
+async def test_chain_empty_without_restart_from(sumo: _FakeSumoClient) -> None:
+    sumo.add_ensemble("uuid-pred", "case-a", "Case A", "pred")
 
-    chain = await get_restart_chain_async(MagicMock(), "case-a", "pred")
+    chain = await get_restart_chain_async(sumo, "case-a", "pred")  # type: ignore[arg-type]
 
     assert chain.ancestors == []
     assert chain.unresolved_ensemble_uuid is None
     assert chain.truncated is False
 
 
-async def test_chain_one_level(fake_sumo: _FakeSumo) -> None:
-    fake_sumo.add_ensemble("uuid-iter3", "case-b", "Case B", "iter-3")
-    fake_sumo.add_ensemble("uuid-pred", "case-a", "Case A", "pred", restart_from="uuid-iter3")
+async def test_chain_one_level_uses_one_search_per_ensemble(sumo: _FakeSumoClient) -> None:
+    sumo.add_ensemble("uuid-iter3", "case-b", "Case B", "iter-3")
+    sumo.add_ensemble("uuid-pred", "case-a", "Case A", "pred", restart_from="uuid-iter3")
 
-    chain = await get_restart_chain_async(MagicMock(), "case-a", "pred")
+    chain = await get_restart_chain_async(sumo, "case-a", "pred")  # type: ignore[arg-type]
 
-    assert chain.ancestors == [RestartAncestor("uuid-iter3", "case-b", "Case B", "iter-3")]
+    assert chain.ancestors == [ResolvedEnsemble("uuid-iter3", "case-b", "Case B", "iter-3")]
+    assert chain.ancestors[0].label == "Case B/iter-3"
+    assert chain.ensemble == ResolvedEnsemble("uuid-pred", "case-a", "Case A", "pred")
     assert chain.unresolved_ensemble_uuid is None
     assert chain.truncated is False
+    assert len(sumo.payloads) == 2
 
 
-async def test_chain_two_levels_nearest_first(fake_sumo: _FakeSumo) -> None:
-    fake_sumo.add_ensemble("uuid-iter2", "case-a", "Case A", "iter-2")
-    fake_sumo.add_ensemble("uuid-iter3", "case-a", "Case A", "iter-3", restart_from="uuid-iter2")
-    fake_sumo.add_ensemble("uuid-pred", "case-a", "Case A", "pred", restart_from="uuid-iter3")
+async def test_chain_two_levels_nearest_first(sumo: _FakeSumoClient) -> None:
+    sumo.add_ensemble("uuid-iter2", "case-a", "Case A", "iter-2")
+    sumo.add_ensemble("uuid-iter3", "case-a", "Case A", "iter-3", restart_from="uuid-iter2")
+    sumo.add_ensemble("uuid-pred", "case-a", "Case A", "pred", restart_from="uuid-iter3")
 
-    chain = await get_restart_chain_async(MagicMock(), "case-a", "pred")
+    chain = await get_restart_chain_async(sumo, "case-a", "pred")  # type: ignore[arg-type]
 
     assert [anc.ensemble_name for anc in chain.ancestors] == ["iter-3", "iter-2"]
     assert chain.unresolved_ensemble_uuid is None
     assert chain.truncated is False
 
 
-async def test_chain_unresolved_keeps_ancestors_before_it(fake_sumo: _FakeSumo) -> None:
-    fake_sumo.add_ensemble("uuid-iter3", "case-a", "Case A", "iter-3", restart_from="uuid-deleted")
-    fake_sumo.add_ensemble("uuid-pred", "case-a", "Case A", "pred", restart_from="uuid-iter3")
+async def test_chain_unresolved_keeps_ancestors_before_it(sumo: _FakeSumoClient) -> None:
+    sumo.add_ensemble("uuid-iter3", "case-a", "Case A", "iter-3", restart_from="uuid-deleted")
+    sumo.add_ensemble("uuid-pred", "case-a", "Case A", "pred", restart_from="uuid-iter3")
 
-    chain = await get_restart_chain_async(MagicMock(), "case-a", "pred")
+    chain = await get_restart_chain_async(sumo, "case-a", "pred")  # type: ignore[arg-type]
 
     assert [anc.ensemble_name for anc in chain.ancestors] == ["iter-3"]
     assert chain.unresolved_ensemble_uuid == "uuid-deleted"
     assert chain.truncated is False
 
 
-async def test_chain_cycle_back_to_start_is_truncated(fake_sumo: _FakeSumo) -> None:
-    fake_sumo.add_ensemble("uuid-a", "case-a", "Case A", "ens-a", restart_from="uuid-b")
-    fake_sumo.add_ensemble("uuid-b", "case-a", "Case A", "ens-b", restart_from="uuid-a")
+async def test_chain_cycle_back_to_start_is_truncated(sumo: _FakeSumoClient) -> None:
+    sumo.add_ensemble("uuid-a", "case-a", "Case A", "ens-a", restart_from="uuid-b")
+    sumo.add_ensemble("uuid-b", "case-a", "Case A", "ens-b", restart_from="uuid-a")
 
-    chain = await get_restart_chain_async(MagicMock(), "case-a", "ens-a")
+    chain = await get_restart_chain_async(sumo, "case-a", "ens-a")  # type: ignore[arg-type]
 
     assert [anc.ensemble_name for anc in chain.ancestors] == ["ens-b"]
     assert chain.unresolved_ensemble_uuid is None
     assert chain.truncated is True
 
 
-async def test_chain_self_restart_is_truncated(fake_sumo: _FakeSumo) -> None:
-    fake_sumo.add_ensemble("uuid-a", "case-a", "Case A", "ens-a", restart_from="uuid-a")
+async def test_chain_self_restart_is_truncated(sumo: _FakeSumoClient) -> None:
+    sumo.add_ensemble("uuid-a", "case-a", "Case A", "ens-a", restart_from="uuid-a")
 
-    chain = await get_restart_chain_async(MagicMock(), "case-a", "ens-a")
+    chain = await get_restart_chain_async(sumo, "case-a", "ens-a")  # type: ignore[arg-type]
 
     assert chain.ancestors == []
     assert chain.truncated is True
 
 
-async def test_chain_depth_cap_is_truncated(fake_sumo: _FakeSumo) -> None:
+async def test_chain_depth_cap_is_truncated(sumo: _FakeSumoClient) -> None:
     chain_length = MAX_RESTART_CHAIN_DEPTH + 3
     for i in range(chain_length):
         restart_from = f"uuid-{i + 1}" if i + 1 < chain_length else None
-        fake_sumo.add_ensemble(f"uuid-{i}", "case-a", "Case A", f"ens-{i}", restart_from=restart_from)
+        sumo.add_ensemble(f"uuid-{i}", "case-a", "Case A", f"ens-{i}", restart_from=restart_from)
 
-    chain = await get_restart_chain_async(MagicMock(), "case-a", "ens-0")
+    chain = await get_restart_chain_async(sumo, "case-a", "ens-0")  # type: ignore[arg-type]
 
     assert len(chain.ancestors) == MAX_RESTART_CHAIN_DEPTH
     assert chain.ancestors[0].ensemble_name == "ens-1"
@@ -178,33 +182,42 @@ async def test_chain_depth_cap_is_truncated(fake_sumo: _FakeSumo) -> None:
     assert chain.truncated is True
 
 
-async def test_chain_exactly_at_depth_cap_is_not_truncated(fake_sumo: _FakeSumo) -> None:
+async def test_chain_exactly_at_depth_cap_is_not_truncated(sumo: _FakeSumoClient) -> None:
     chain_length = MAX_RESTART_CHAIN_DEPTH + 1
     for i in range(chain_length):
         restart_from = f"uuid-{i + 1}" if i + 1 < chain_length else None
-        fake_sumo.add_ensemble(f"uuid-{i}", "case-a", "Case A", f"ens-{i}", restart_from=restart_from)
+        sumo.add_ensemble(f"uuid-{i}", "case-a", "Case A", f"ens-{i}", restart_from=restart_from)
 
-    chain = await get_restart_chain_async(MagicMock(), "case-a", "ens-0")
+    chain = await get_restart_chain_async(sumo, "case-a", "ens-0")  # type: ignore[arg-type]
 
     assert len(chain.ancestors) == MAX_RESTART_CHAIN_DEPTH
     assert chain.truncated is False
 
 
-async def test_case_inspector_ensemble_restart_infos_gives_direct_parent_only(fake_sumo: _FakeSumo) -> None:
-    fake_sumo.add_ensemble("uuid-iter2", "case-a", "Case A", "iter-2")
-    fake_sumo.add_ensemble("uuid-iter3", "case-a", "Case A", "iter-3", restart_from="uuid-iter2")
-    fake_sumo.add_ensemble("uuid-pred", "case-a", "Case A", "pred", restart_from="uuid-iter3")
-    fake_sumo.add_ensemble("uuid-pred2", "case-a", "Case A", "pred2", restart_from="uuid-deleted")
-    ensembles = [EnsembleInfo(name=name, realization_count=1) for name in ["iter-2", "iter-3", "pred", "pred2"]]
+async def test_case_restart_infos_give_direct_parent_sorted_and_resolve_shared_parent_once(
+    sumo: _FakeSumoClient,
+) -> None:
+    sumo.add_ensemble("uuid-iter3", "case-a", "Case A", "iter-3")
+    sumo.add_ensemble("uuid-pred2", "case-a", "Case A", "pred2", restart_from="uuid-iter3")
+    sumo.add_ensemble("uuid-pred1", "case-a", "Case A", "pred1", restart_from="uuid-iter3")
+    sumo.add_ensemble("uuid-pred3", "case-a", "Case A", "pred3", restart_from="uuid-deleted")
+    sumo.add_ensemble("uuid-other", "case-b", "Case B", "other")
 
-    inspector = CaseInspector(sumo_client=MagicMock(), case_uuid="case-a")
-    with patch.object(CaseInspector, "get_ensembles_async", AsyncMock(return_value=ensembles)):
-        infos = await inspector.get_ensemble_restart_infos_async()
+    with patch.object(ensemble_lineage, "create_sumo_case_async", AsyncMock()):
+        infos = await get_case_ensemble_restart_infos_async(sumo, "case-a")  # type: ignore[arg-type]
 
-    infos_by_name = {info.ensemble_name: info for info in infos}
-    assert infos_by_name["iter-2"].restart_from is None
-    assert infos_by_name["iter-2"].restart_from_unresolved_uuid is None
-    assert infos_by_name["iter-3"].restart_from == RestartAncestor("uuid-iter2", "case-a", "Case A", "iter-2")
-    assert infos_by_name["pred"].restart_from == RestartAncestor("uuid-iter3", "case-a", "Case A", "iter-3")
-    assert infos_by_name["pred2"].restart_from is None
-    assert infos_by_name["pred2"].restart_from_unresolved_uuid == "uuid-deleted"
+    iter3 = ResolvedEnsemble("uuid-iter3", "case-a", "Case A", "iter-3")
+    assert [(info.ensemble_name, info.restart_from, info.restart_from_unresolved_uuid) for info in infos] == [
+        ("iter-3", None, None),
+        ("pred1", iter3, None),
+        ("pred2", iter3, None),
+        ("pred3", None, "uuid-deleted"),
+    ]
+    assert sumo.count_uuid_lookups("uuid-iter3") == 1
+
+
+async def test_case_restart_infos_reraise_missing_case_unwrapped(sumo: _FakeSumoClient) -> None:
+    missing_case = AsyncMock(side_effect=NoDataError("Sumo case not found", Service.SUMO))
+    with patch.object(ensemble_lineage, "create_sumo_case_async", missing_case):
+        with pytest.raises(NoDataError):
+            await get_case_ensemble_restart_infos_async(sumo, "case-x")  # type: ignore[arg-type]

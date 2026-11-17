@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 
 
@@ -48,3 +48,14 @@ class EnsembleSensitivity:
     name: str
     type: SensitivityType
     cases: list[EnsembleSensitivityCase]
+
+
+@dataclass
+class ParametersAndSensitivities:
+    """Parameters and sensitivities for an ensemble, with non-fatal user-facing warnings."""
+
+    parameters: list[EnsembleParameter]
+    sensitivities: list[EnsembleSensitivity]
+    warnings: list[str] = field(default_factory=list)
+    # True if the restart chain broke on an ensemble that could not be found (deleted or no access)
+    has_unresolved_restart_ensemble: bool = False
