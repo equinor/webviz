@@ -8,7 +8,7 @@ import { getNextTextSize, getTextSizeForSelectableSize, type SelectableSize } fr
 import { Typography } from "@lib/components/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { isDualSliderValue } from "../_utils";
+import { isDualSliderValue, thumbValueOutOfBounds } from "../_utils";
 
 export function Thumb(props: {
     labelBoundaryRef: React.RefObject<HTMLDivElement>;
@@ -38,7 +38,7 @@ export function Thumb(props: {
     const thumbHidden = props.min === props.max || (!isDualSliderValue(props.sliderValue) && props.index === 1);
     const thumbValue = isDualSliderValue(props.sliderValue) ? props.sliderValue[props.index] : props.sliderValue;
 
-    const isOutOfBounds = thumbValue < props.min || thumbValue > props.max;
+    const isOutOfBounds = thumbValueOutOfBounds(thumbValue, props.min, props.max);
     const shouldShowThumbLabel = props.showValue || isOutOfBounds;
 
     const anchorRef = React.useRef<HTMLDivElement>(null);

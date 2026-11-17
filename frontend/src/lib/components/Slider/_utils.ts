@@ -53,3 +53,15 @@ export function getNearestThumbIndex(thumbValues: number | readonly number[], ta
     // Target is between the thumbs, compute the closest one
     return minBy([0, 1], (idx) => Math.abs(thumbValues[idx] - targetValue))!;
 }
+
+export function anyThumbValueOutOfBounds(thumbValues: number | readonly number[], min: number, max: number) {
+    if (isDualSliderValue(thumbValues)) {
+        return thumbValues.some((value) => thumbValueOutOfBounds(value, min, max));
+    }
+
+    return thumbValueOutOfBounds(thumbValues, min, max);
+}
+
+export function thumbValueOutOfBounds(value: number, min: number, max: number) {
+    return value < min || value > max;
+}

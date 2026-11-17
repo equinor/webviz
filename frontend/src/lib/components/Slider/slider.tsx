@@ -11,6 +11,7 @@ import { useComponentSize } from "../_shared/contexts/componentSizeContext";
 import { withDefaults } from "../_shared/utils/defaultProps";
 import { SELECTABLE_SIZES_CLASSNAMES, type SelectableSize } from "../_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
+import { Button } from "../Button";
 
 import { LimitLockSwitch } from "./_components/limitLockSwitch";
 import { Marker, type MarkerVariant } from "./_components/marker";
@@ -19,7 +20,13 @@ import { SliderLockGutter } from "./_components/sliderLockGutter";
 import { Thumb } from "./_components/thumb";
 import { INDICATOR_CLASS_NAME, TRACK_CLASS_NAME, TRACK_HEIGHT_CLASS_NAMES } from "./_constants";
 import { useLockedValueUpdate, useLockState, useUnlockOnValueChange } from "./_hooks";
-import { getMarkerPercentage, getNearestThumbIndex, getSnappedValue, isDualSliderValue } from "./_utils";
+import {
+    anyThumbValueOutOfBounds,
+    getMarkerPercentage,
+    getNearestThumbIndex,
+    getSnappedValue,
+    isDualSliderValue,
+} from "./_utils";
 import type { SliderChangeEventDetails, SnapTarget } from "./types";
 
 export type SliderProps<TValue extends number | readonly number[] = number | readonly number[]> = ComponentWrapperProps<
@@ -347,7 +354,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
     return (
         <SliderBase.Root
             {...baseProps}
-            className={resolveClassNames(baseProps.className, "px-2xs grid items-center")}
+            className={resolveClassNames(baseProps.className, "px-2xs relative grid items-center")}
             // ! A slider with equal min/max is unusable, so we disable it
             disabled={minAndMaxAreEqual || baseProps.disabled}
             ref={wrapperRef}
@@ -373,6 +380,26 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
             }
             render={(rootProps, state) => (
                 <div {...rootProps}>
+                    {minAndMaxAreEqual &&
+                        anyThumbValueOutOfBounds(activeValue, defaultedProps.min, defaultedProps.max) && (
+                            <div className="z-overlay bg-surface/10 outline-danger-subtle text-danger-subtle gap-xs absolute inset-0 flex items-center justify-center rounded outline-2 backdrop-blur-xs">
+                                <span>Slider value is out of bounds.</span>
+                                <Button
+                                    size="small"
+                                    tone="accent"
+                                    onClick={() => {
+                                        const fixedValue = isDualSlider
+                                            ? [defaultedProps.min, defaultedProps.min]
+                                            : defaultedProps.min;
+
+                                        updateValue(fixedValue, { reason: "marker-clicked" });
+                                    }}
+                                >
+                                    Fix
+                                </Button>
+                            </div>
+                        )}
+
                     {showMinLock && (
                         <LimitLockSwitch
                             layoutClassName="mr-2xs"
