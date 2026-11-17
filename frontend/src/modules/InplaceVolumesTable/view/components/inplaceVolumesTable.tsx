@@ -189,7 +189,7 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
                 </Button>
             </div>
             {constantColumnsCaption && (
-                <p className="px-3xs pb-3xs text-body-sm text-neutral-subtle shrink-0 break-words">
+                <p className="px-3xs pb-3xs text-body-sm text-neutral-subtle shrink-0 wrap-break-word">
                     {constantColumnsCaption}
                 </p>
             )}
@@ -331,6 +331,8 @@ function TableFilterCell(props: {
                         layoutClassName="my-4xs -mr-4xs"
                         iconOnly
                         variant="ghost"
+                        tone="neutral"
+                        size="small"
                         onClick={() => debouncedHandleFilterChange(null)}
                     >
                         <Clear />
