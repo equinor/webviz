@@ -18,7 +18,12 @@ import type { Interfaces } from "../interfaces";
 import type { VectorHexColorMap } from "../typesAndEnums";
 import { GroupBy } from "../typesAndEnums";
 
-import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
+import {
+    queryIsFetchingAtom,
+    realizationsQueryHasErrorAtom,
+    selectedEnsemblesAtom,
+    statisticsQueryHasErrorAtom,
+} from "./atoms/derivedAtoms";
 import { activeTimestampUtcMsAtom } from "./atoms/persistableFixableAtoms";
 import { useDownloadData } from "./hooks/useDownloadData";
 import { useMakeResampleFrequencyWarningMessage } from "./hooks/useMakeResampleFrequencyWarningMessage";
@@ -36,8 +41,7 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
 
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const parameterIdent = viewContext.useSettingsToViewInterfaceValue("parameterIdent");
-    const selectedEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedRegularEnsembles");
-    const selectedDeltaEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedDeltaEnsembles");
+    const selectedEnsembles = useAtomValue(selectedEnsemblesAtom);
     const vectorSpecifications = viewContext.useSettingsToViewInterfaceValue("vectorSpecifications");
     const groupBy = viewContext.useSettingsToViewInterfaceValue("groupBy");
     const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
@@ -68,19 +72,17 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
     });
     const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
 
-    const allSelectedEnsembles = [...selectedEnsembles, ...selectedDeltaEnsembles];
-
     // Create parameter color scale helper
     const ensemblesParameterColoring =
         colorByParameter && parameterIdent
-            ? new EnsemblesParameterColoring(allSelectedEnsembles, parameterIdent, parameterColorScale)
+            ? new EnsemblesParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
             : null;
 
     const ensemblesWithoutParameter: (RegularEnsemble | DeltaEnsemble)[] = [];
     let parameterDisplayName: string | null = null;
     if (ensemblesParameterColoring) {
         ensemblesWithoutParameter.push(
-            ...allSelectedEnsembles.filter(
+            ...selectedEnsembles.filter(
                 (ensemble) => !ensemblesParameterColoring.hasParameterForEnsemble(ensemble.getIdent()),
             ),
         );

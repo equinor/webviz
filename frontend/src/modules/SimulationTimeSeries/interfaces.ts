@@ -1,7 +1,7 @@
 import type { Frequency_api } from "@api";
-import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { ParameterIdent } from "@framework/EnsembleParameters";
-import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
@@ -16,12 +16,8 @@ import {
     subplotMaxDirectionElementsAtom,
     visualizationModeAtom,
 } from "./settings/atoms/baseAtoms";
-import {
-    parameterIdentAtom,
-    selectedDeltaEnsemblesAtom,
-    selectedRegularEnsemblesAtom,
-    vectorSpecificationsAtom,
-} from "./settings/atoms/derivedAtoms";
+import { parameterIdentAtom, vectorSpecificationsAtom } from "./settings/atoms/derivedAtoms";
+import { selectedEnsembleIdentsAtom } from "./settings/atoms/persistableFixableAtoms";
 import type {
     GroupBy,
     StatisticsSelection,
@@ -45,8 +41,7 @@ export type SettingsToViewInterface = {
     statisticsSelection: StatisticsSelection;
     colorByParameter: boolean;
     parameterIdent: ParameterIdent | null;
-    selectedRegularEnsembles: RegularEnsemble[];
-    selectedDeltaEnsembles: DeltaEnsemble[];
+    selectedEnsembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[] | null;
     resampleFrequency: Frequency_api | null;
 };
 
@@ -93,11 +88,9 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     parameterIdent: (get) => {
         return get(parameterIdentAtom);
     },
-    selectedRegularEnsembles: (get) => {
-        return get(selectedRegularEnsemblesAtom);
-    },
-    selectedDeltaEnsembles: (get) => {
-        return get(selectedDeltaEnsemblesAtom);
+    selectedEnsembleIdents: (get) => {
+        const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+        return selectedEnsembleIdents.isValidInContext ? selectedEnsembleIdents.value : null;
     },
     resampleFrequency: (get) => {
         return get(resampleFrequencyAtom);
