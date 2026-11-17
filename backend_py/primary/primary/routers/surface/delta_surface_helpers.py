@@ -45,6 +45,12 @@ def validate_delta_surface_params(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Endpoint only supports address types REAL and STAT"
         )
 
+    if addr.iso_time_or_interval is not None and not _is_valid_time_or_interval_str(addr.iso_time_or_interval):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Time in surface address must be a single timestamp or interval",
+        )
+
     if (reference_case_uuid is None) != (reference_ensemble_name is None):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

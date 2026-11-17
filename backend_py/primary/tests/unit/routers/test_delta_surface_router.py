@@ -50,6 +50,14 @@ REAL_STATIC_ADDR = RealizationSurfaceAddress(
     realization=0,
     iso_time_or_interval=None,
 ).to_addr_str()
+REAL_MALFORMED_TIME_ADDR = RealizationSurfaceAddress(
+    case_uuid="case-1",
+    ensemble_name="iter-1",
+    name="TopVolantis",
+    attribute=TAG_ATTR,
+    realization=0,
+    iso_time_or_interval="2020-07-01/",
+).to_addr_str()
 OBS_ADDR = ObservedSurfaceAddress(
     case_uuid="case-1",
     name="TopVolantis",
@@ -180,6 +188,12 @@ def test_time_or_interval_str_to_sumo_time_filter_rejects_empty_or_malformed(bad
         {"surf_addr_str": REAL_TIMED_ADDR, "reference_case_uuid": "case-0", "reference_ensemble_name": ""},
         {"surf_addr_str": REAL_TIMED_ADDR, "base_iso_time_or_interval": ""},
         {"surf_addr_str": REAL_TIMED_ADDR, "base_iso_time_or_interval": "2018-01-01/"},
+        {"surf_addr_str": REAL_MALFORMED_TIME_ADDR, "base_iso_time_or_interval": "2018-01-01"},
+        {
+            "surf_addr_str": REAL_MALFORMED_TIME_ADDR,
+            "reference_case_uuid": "case-0",
+            "reference_ensemble_name": "iter-0",
+        },
         {"surf_addr_str": REAL_STATIC_ADDR, "base_iso_time_or_interval": "2018-01-01"},
         {"surf_addr_str": REAL_TIMED_ADDR, "base_iso_time_or_interval": "2020-07-01"},
         {"surf_addr_str": REAL_TIMED_ADDR, "reference_case_uuid": "case-1", "reference_ensemble_name": "iter-1"},
