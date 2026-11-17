@@ -177,7 +177,15 @@ export function useCaseDataFilter(caseData: CaseInfo_api[] | undefined, filterSt
             if (!caseData) return [];
             if (Object.values(filterState).every((fs) => fs == null)) return caseData;
 
-            return caseData.filter((c) => applyFilter(c, filterState));
+            const availableModels = new Set(caseData.map((c) => c.modelName).filter(Boolean));
+            const availableRevisions = new Set(caseData.map((c) => c.modelRevision).filter(Boolean));
+            const activeFilterState: CaseTableFilterState = {
+                ...filterState,
+                model: filterState.model?.filter((value) => availableModels.has(value)),
+                revision: filterState.revision?.filter((value) => availableRevisions.has(value)),
+            };
+
+            return caseData.filter((c) => applyFilter(c, activeFilterState));
         },
         [caseData, filterState],
     );
@@ -239,8 +247,8 @@ function predicateCaseNameAndIdFilter(filterValue: string, dataValue: string, ca
 }
 
 function predicateSelectionFilter(filterValues: string[], dataValue: string | null): boolean {
-    if (typeof dataValue !== "string") return false;
     if (!filterValues || filterValues.length === 0) return true;
+    if (typeof dataValue !== "string") return false;
 
     return filterValues.some((filterValue) => filterValue.toLowerCase() === dataValue.toLowerCase());
 }

@@ -46,17 +46,22 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
         /** Optional function to render an adornment alongside each item in the dropdown list. */
         renderItemAdornment?: (item: TValue) => React.ReactNode;
         /**
-         * Explanation shown (as tooltip and accessible description) for selected values that are not available.
-         * Such values are always marked as unavailable, and the field is marked invalid when no selected value is available.
+         * Explanation shown (as tooltip and accessible description) for selected values that are unavailable.
+         * By default a value is unavailable when it is not among `items`; see `isValueAvailable` to override this.
+         * Unavailable values are marked as such, and the field is marked invalid when no selected value is available.
          * Keep `items` populated while loading to avoid false marking, or provide `isValueAvailable` if `items` is partial.
          * @default "Not available"
          */
         unavailableValueText?: string;
-        /** Label for selected values that are not in `items`. @default String(value) */
+        /**
+         * Label for selected values that are not in `items`, regardless of `isValueAvailable`.
+         * Needed when `items` is partial, as such values have no item to take a label from. @default String(value)
+         */
         getUnavailableValueLabel?: (value: TValue) => string;
         /**
          * Decides whether a selected value is available. Overrides the default check (value is among `items`).
          * Use when `items` is a partial list, e.g. server-side filtered; `() => true` never marks values as unavailable.
+         * Memoize the function (e.g. `useCallback`) to avoid recomputing the dropdown list on every render.
          */
         isValueAvailable?: (value: TValue) => boolean;
         /** Size of the combobox input. @default "default" */
