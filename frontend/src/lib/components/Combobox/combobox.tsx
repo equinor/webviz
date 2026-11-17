@@ -153,8 +153,8 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         if (!defaultedProps.multiple || !Array.isArray(currentValue)) {
             return [];
         }
-        return (currentValue as TValue[]).filter((value) => !isValueAvailable(value));
-    }, [defaultedProps.multiple, currentValue, isValueAvailable]);
+        return (currentValue as TValue[]).filter((value) => !itemByValue.has(value) && !isValueAvailable(value));
+    }, [defaultedProps.multiple, currentValue, itemByValue, isValueAvailable]);
 
     const baseItems = React.useMemo(() => {
         const items = defaultedProps.items;
