@@ -13,6 +13,7 @@ import type { Interfaces } from "@modules/InplaceVolumesPlot/interfaces";
 import { PlotType, plotTypeToStringMapping } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
 import {
+    areTableDefinitionSelectionsValidAtom,
     colorByAtom,
     plotTypeAtom,
     secondResultNameAtom,
@@ -40,9 +41,16 @@ export function useBuildPlotAndTable(
     const selectorColumn = useAtomValue(selectorColumnAtom);
     const subplotBy = useAtomValue(subplotByAtom);
     const colorBy = useAtomValue(colorByAtom);
+    const areTableDefinitionSelectionsValid = useAtomValue(areTableDefinitionSelectionsValidAtom);
 
     // Return null if there is no data to plot
     if (aggregatedTableDataQueries.tablesData.length === 0) {
+        return null;
+    }
+
+    // Disabled queries keep their cached data, which may lack columns the retained selections reference
+    // (e.g. a subplot-by column the plot builder would not find)
+    if (!areTableDefinitionSelectionsValid) {
         return null;
     }
 

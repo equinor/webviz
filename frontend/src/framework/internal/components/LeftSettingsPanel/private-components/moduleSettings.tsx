@@ -91,9 +91,9 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
             return (
                 <div className="gap-x-xs flex h-full w-full flex-col items-center justify-center">
                     <div className="my-2xs text-danger-subtle text-center">
-                        The persisted settings for this module&apos;s settings are invalid and could not be applied.
-                        They have most likely been outdated by a module update. You can reset the module to its default
-                        values to continue using it.
+                        The saved settings state for this module is invalid and could not be applied. It has most likely
+                        been outdated by a module update. You can reset the module to its default values to continue
+                        using it.
                     </div>
                     <Button onClick={() => props.moduleInstance.resetInvalidPersistedFlags()} variant="contained">
                         Reset module

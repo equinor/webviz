@@ -171,6 +171,42 @@ describe("computeStatisticalTableFromPerRealizationTable", () => {
 
         expect(statistical.tableDataPerFluidSelection.map((data) => data.fluidSelection)).toEqual(["oil", "gas"]);
     });
+
+    test("computes one statistics row per sensitivity case and other selectors", function statisticsPerCase() {
+        const perRealization = makePerFluidSelection([
+            {
+                fluidSelection: "oil",
+                selectorColumns: [
+                    makeSelectorColumn("SENSITIVITY", [
+                        "rms_seed",
+                        "rms_seed",
+                        "faults:low",
+                        "rms_seed",
+                        "rms_seed",
+                        "faults:low",
+                    ]),
+                    makeSelectorColumn("REAL", [0, 1, 2, 0, 1, 2]),
+                    makeSelectorColumn("ZONE", ["A", "A", "A", "B", "B", "B"]),
+                ],
+                resultColumns: [makeResultColumn("STOIIP", [10, 20, 100, 1, 3, 7])],
+            },
+        ]);
+
+        const oil = computeStatisticalTableFromPerRealizationTable(perRealization).tableDataPerFluidSelection[0];
+
+        expect(oil.selectorColumns.map((column) => column.columnName)).toEqual(["SENSITIVITY", "ZONE"]);
+        const [sensitivityColumn, zoneColumn] = oil.selectorColumns;
+        expect(sensitivityColumn.indices.map((index) => sensitivityColumn.uniqueValues[index])).toEqual([
+            "rms_seed",
+            "faults:low",
+            "rms_seed",
+            "faults:low",
+        ]);
+        expect(zoneColumn.indices.map((index) => zoneColumn.uniqueValues[index])).toEqual(["A", "A", "B", "B"]);
+        expect(oil.resultColumnStatistics[0].statisticValues[InplaceVolumesStatistic_api.MEAN]).toEqual([
+            15, 100, 2, 7,
+        ]);
+    });
 });
 
 describe("computeStatisticalTableFromPerRealizationTableMemoized", () => {

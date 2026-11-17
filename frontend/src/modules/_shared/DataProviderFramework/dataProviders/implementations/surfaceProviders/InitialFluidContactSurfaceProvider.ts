@@ -42,8 +42,8 @@ const initialFluidContactSurfaceSettings = [
     Setting.REALIZATION,
     Setting.STATISTIC_FUNCTION,
     Setting.SENSITIVITY,
-    Setting.SURFACE_NAME,
     Setting.FLUID_CONTACT,
+    Setting.SURFACE_NAME,
     Setting.DEPTH_COLOR_SCALE,
     Setting.CONTOURS,
 ] as const;

@@ -18,6 +18,7 @@ import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ErrorOverlay } from "../utilityComponents/ErrorOverlay";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { GroupErrorBadge } from "../utilityComponents/GroupErrorBadge";
+import { GroupInvalidSettingsBadge } from "../utilityComponents/GroupInvalidSettingsBadge";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { StatusMessages } from "../utilityComponents/StatusWriterMessages";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
@@ -78,6 +79,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
     function makeEndAdornment() {
         const adornments: React.ReactNode[] = [];
         adornments.push(<GroupErrorBadge key="error-badge" group={props.group} />);
+        adornments.push(<GroupInvalidSettingsBadge key="invalid-settings-badge" group={props.group} />);
 
         if (sharedSettingsDelegate) {
             adornments.push(<StatusMessagesWrapper key="status-wrapper" settingsDelegate={sharedSettingsDelegate} />);
@@ -99,6 +101,8 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
         <SortableListGroup
             key={props.group.getItemDelegate().getId()}
             id={props.group.getItemDelegate().getId()}
+            itemKind="group"
+            itemType={props.group.getGroupType()}
             title={
                 <div className="gap-x-2xs relative flex min-w-0 items-center">
                     {color && (

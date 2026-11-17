@@ -21,16 +21,16 @@ export function ConfirmDeleteDashboardDialog(props: ConfirmDeleteDashboardDialog
             }}
             title={`Really delete dashboard "${props.dashboardName ?? ""}"?`}
             primaryAction={{
-                label: "Yes, delete",
-                onClick: props.onConfirmDelete,
-                tone: "danger",
+                label: "No, cancel",
+                onClick: props.onClose,
+                tone: "neutral",
                 closesDialog: true,
             }}
             secondaryActions={[
                 {
-                    label: "No, cancel",
-                    onClick: props.onClose,
-                    tone: "neutral",
+                    label: "Yes, delete",
+                    onClick: props.onConfirmDelete,
+                    tone: "danger",
                     closesDialog: true,
                 },
             ]}

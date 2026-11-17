@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 
+import type { SensitivitySelection } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import type { InplaceVolumesFilterSelections } from "@modules/InplaceVolumesNew/typesAndEnums";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
@@ -16,3 +17,5 @@ export const subplotByAtom = atom<string>(TableOriginKey.ENSEMBLE);
 export const plotTypeAtom = atom<PlotType>(PlotType.HISTOGRAM);
 export const colorByAtom = atom<string>(TableOriginKey.TABLE_NAME);
 export const areTableDefinitionSelectionsValidAtom = atom(false);
+export const sensitivitySelectionAtom = atom<SensitivitySelection | null>(null);
+export const isSensitivityEnsembleSelectionBlockedAtom = atom(false);

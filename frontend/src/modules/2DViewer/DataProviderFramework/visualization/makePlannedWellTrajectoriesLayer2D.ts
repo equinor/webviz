@@ -8,7 +8,5 @@ import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/vis
 export function makePlannedWellTrajectoriesLayer2D(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,
 ): ReturnType<typeof makePlannedWellTrajectoriesLayer> {
-    const layer = makePlannedWellTrajectoriesLayer(args);
-
-    return layer?.clone({ depthTest: false, outline: false }) ?? null;
+    return makePlannedWellTrajectoriesLayer(args, { viewMode: "2D" });
 }

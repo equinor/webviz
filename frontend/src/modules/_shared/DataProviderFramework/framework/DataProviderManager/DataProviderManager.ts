@@ -60,6 +60,15 @@ export type GlobalSettings = {
     intersectionPolylines: readonly IntersectionPolyline[];
 };
 
+// How a global setting is named when a dependency is blocked by it being invalid
+export const GLOBAL_SETTING_LABELS: Record<keyof GlobalSettings, string> = {
+    fieldId: "Field",
+    wellboreUuid: "Wellbore",
+    ensembles: "Ensembles",
+    realizationFilterFunction: "Realization filter",
+    intersectionPolylines: "Intersection polylines",
+};
+
 /*
  * The DataProviderManager class is responsible for managing all items (data providers, groups, settings, etc.).
  * It is the main ancestor of all items and provides a way to subscribe/publish messages to all descendants.
@@ -78,6 +87,8 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     private _itemDelegate: ItemDelegate;
     private _guiStateRevision: number = 0;
     private _globalSettings: Partial<GlobalSettings>;
+    // Global settings whose (retained) value is not valid in the current context - dependencies reading them are blocked
+    private _invalidGlobalSettingKeys = new Set<keyof GlobalSettings>();
     private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
     private _deserializing = false;
     private _serializedStateRevision: number = 0;
@@ -158,15 +169,29 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         return this._groupDelegate;
     }
 
-    updateGlobalSetting<T extends keyof GlobalSettings>(key: T, value: GlobalSettings[T]): void {
-        if (isEqual(this._globalSettings[key], value)) {
+    /*
+     * A value that is not valid in the current context (e.g. a retained field no longer in the ensemble set) is kept,
+     * but blocks the dependencies reading it until it is valid again - see Dependency.getGlobalSetting().
+     */
+    updateGlobalSetting<T extends keyof GlobalSettings>(key: T, value: GlobalSettings[T], isValid: boolean = true): void {
+        const isValueChanged = !isEqual(this._globalSettings[key], value);
+        const isValidityChanged = this.isGlobalSettingValid(key) !== isValid;
+        if (!isValueChanged && !isValidityChanged) {
             return;
         }
 
-        if (typeof value === "function") {
-            this._globalSettings[key] = value;
+        if (isValueChanged) {
+            if (typeof value === "function") {
+                this._globalSettings[key] = value;
+            } else {
+                this._globalSettings[key] = clone(value);
+            }
+        }
+
+        if (isValid) {
+            this._invalidGlobalSettingKeys.delete(key);
         } else {
-            this._globalSettings[key] = clone(value);
+            this._invalidGlobalSettingKeys.add(key);
         }
 
         this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
@@ -174,6 +199,10 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
 
     getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] | null {
         return this._globalSettings[key] ?? null;
+    }
+
+    isGlobalSettingValid(key: keyof GlobalSettings): boolean {
+        return !this._invalidGlobalSettingKeys.has(key);
     }
 
     private publishTopic(topic: DataProviderManagerTopic): void {

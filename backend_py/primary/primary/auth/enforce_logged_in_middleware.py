@@ -1,10 +1,9 @@
-import base64
 import logging
 from typing import List
 
 import starsessions
 from fastapi import Request
-from fastapi.responses import PlainTextResponse, RedirectResponse
+from fastapi.responses import PlainTextResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 from webviz_core_utils.perf_metrics import PerfMetrics
 
@@ -21,20 +20,16 @@ class EnforceLoggedInMiddleware:
 
     Additional paths can be left unprotected by specifying them in `unprotected_paths`
 
-    By default all protected paths will return status code 401 if user is not logged in,
-    but the `paths_redirected_to_login` can be used to specify a list of paths that
-    should cause redirect to the `/login` endpoint instead.
+    All protected paths will return status code 401 if user is not logged in
     """
 
     def __init__(
         self,
         app: ASGIApp,
         unprotected_paths: List[str] | None = None,
-        paths_redirected_to_login: List[str] | None = None,
     ):
         self._app = app
         self._unprotected_paths = unprotected_paths or []
-        self._paths_redirected_to_login = paths_redirected_to_login or []
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -67,13 +62,6 @@ class EnforceLoggedInMiddleware:
             )
 
             if not is_logged_in:
-                if path_to_check in self._paths_redirected_to_login:
-                    LOGGER.info("EnforceLoggedInMiddleware - redirecting to login page")
-                    target_url_b64 = base64.urlsafe_b64encode(str(request.url).encode()).decode()
-                    redirect_response = RedirectResponse(f"{root_path}/login?redirect_url_after_login={target_url_b64}")
-                    await redirect_response(scope, receive, send)
-                    return
-
                 LOGGER.debug("EnforceLoggedInMiddleware - user is not authorized yet")
                 text_response = PlainTextResponse("Not authorized yet, must log in", 401)
                 await text_response(scope, receive, send)

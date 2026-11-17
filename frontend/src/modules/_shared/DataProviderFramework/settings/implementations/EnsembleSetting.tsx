@@ -52,9 +52,18 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
         return function EnsembleSelect(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             const availableValues = props.valueConstraints ?? [];
+            const isCurrentValueAvailable =
+                props.value === null || availableValues.some((value) => value.equals(props.value as RegularEnsembleIdent));
 
-            const ensembles = props.globalSettings.ensembles.filter((ensemble) =>
-                availableValues.some((value) => value.equals(ensemble.getIdent())),
+            // The currently selected ensemble can be invalid in this context (e.g. no longer among
+            // availableValues after an upstream filter change) and is kept rather than silently
+            // replaced - still include it here so EnsembleDropdown can resolve its proper display
+            // name instead of falling back to the raw ensemble ident, but mark it disabled so it
+            // doesn't read as a normal, selectable option.
+            const ensembles = props.globalSettings.ensembles.filter(
+                (ensemble) =>
+                    availableValues.some((value) => value.equals(ensemble.getIdent())) ||
+                    (props.value !== null && props.value.equals(ensemble.getIdent())),
             );
 
             const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(props.workbenchSession);
@@ -62,6 +71,7 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
             return (
                 <EnsembleDropdown
                     ensembles={ensembles}
+                    disabledEnsembleIdents={!isCurrentValueAvailable && props.value !== null ? [props.value] : []}
                     ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
                     value={props.value}
                     onValueChange={props.onValueChange}

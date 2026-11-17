@@ -9,6 +9,7 @@ import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Combobox } from "@lib/components/Combobox";
 import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
 import type { Interfaces } from "../interfaces";
@@ -26,6 +27,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const [showTrendline, setShowTrendline] = useAtom(showTrendlineAtom);
     const setReceivedChannel = useSetAtom(receivedChannelAtom);
     const [availableParameterIdents] = useAtom(availableParameterIdentsAtom);
+    // While blocked, there are just no parameters yet (no channel data) - the view explains that, so no note here
+    const parameterIdentStringAnnotations = useMakePersistableFixableAtomAnnotations(parameterIdentStringAtom);
+    const parameterAnnotations = parameterIdentString.isBlocked ? undefined : parameterIdentStringAnnotations;
     const syncHelper = useRefStableSyncSettingsHelper({
         syncSettingsService: props.syncSettingsService,
         moduleContext: props.settingsContext,
@@ -90,7 +94,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                     </Setting.Field>
                 </Setting.Section>
                 <Setting.Section title="Parameter selection" defaultOpen>
-                    <Setting.Field label="Parameter" stacked>
+                    <Setting.Field label="Parameter" annotations={parameterAnnotations} stacked>
                         <Select
                             value={parameterIdentString.value ? [parameterIdentString.value] : []}
                             onValueChange={handleParameterChanged}

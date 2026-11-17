@@ -1,10 +1,11 @@
 import React from "react";
 
-import { cloneDeep, isEqual } from "lodash-es";
+import { clamp, cloneDeep, isEqual } from "lodash-es";
 
 import type { Grid3dZone_api } from "@api";
 import { Button } from "@lib/components/Button";
 import { Combobox } from "@lib/components/Combobox";
+import { Field } from "@lib/components/Field";
 import { NumberInput } from "@lib/components/NumberInput";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { Slider } from "@lib/components/Slider";
@@ -41,6 +42,11 @@ function isRangeTuple(value: unknown): value is [number | "min", number | "max"]
     if (!Array.isArray(value) || value.length !== 2) return false;
     const [first, second] = value;
     return (first === "min" || typeof first === "number") && (second === "max" || typeof second === "number");
+}
+
+function isRangeWithinConstraints(range: readonly number[], constraint: readonly [number, number, number]): boolean {
+    const [min, max] = range;
+    return min >= constraint[0] && max <= constraint[1] && min <= max;
 }
 
 export class GridLayerRangeSetting implements CustomSettingImplementation<
@@ -318,16 +324,18 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
             ) {
                 // Lock callbacks handle sentinel updates when locking; skip to avoid overwriting them
                 if (reason === "range-locked") return;
+                // Bounds changes make the slider emit a clamped value; ignore it so a retained
+                // out-of-range draft stays visible (and invalid) until the user edits it. Sentinels
+                // already follow the new bounds on their own.
+                if (reason === "clamp-value") return;
 
                 const base = internalValue ?? defaultBase;
 
-                // Preserve a sentinel when:
-                // - the constraint changed (clamp-value): keep all existing sentinels
-                // - the value for that position didn't move (still at the constraint boundary):
-                //   the other thumb was dragged, so this position should stay locked
+                // Preserve a sentinel when the value for that position didn't move (still at the
+                // constraint boundary): the other thumb was dragged, so this position should stay locked
                 function keepSentinel(current: number | "min" | "max", newVal: number, constraintVal: number): boolean {
                     if (current !== "min" && current !== "max") return false;
-                    return reason === "clamp-value" || newVal === constraintVal;
+                    return newVal === constraintVal;
                 }
 
                 if (key === "k") {
@@ -450,6 +458,28 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                             const rangeValue = getRangeValueForLabel(internalValue, label, valueConstraints);
                             const zoneValue = getZoneValueForLabel(internalValue, label);
 
+                            // The setting's isValid reflects the whole compound i/j/k value, so the
+                            // generic Field.Root wrap in SettingManagerComponent would otherwise mark
+                            // every range as invalid even when only one is - compute per-range validity
+                            // here and override that ambient context for just this range.
+                            const isLabelInvalid = rangeValue
+                                ? !isRangeWithinConstraints(rangeValue, valueConstraints.range[label])
+                                : zoneValue
+                                  ? !valueConstraints.zones.some(
+                                        (zone) =>
+                                            zone.name === zoneValue.name &&
+                                            zone.start_layer === zoneValue.range[0] &&
+                                            zone.end_layer === zoneValue.range[1],
+                                    )
+                                  : false;
+
+                            // Each input is bounded by the other one's value - which may be retained outside the grid's
+                            // range. Only these bounds are kept within the range (so min <= max), not the values: an
+                            // out-of-range value is shown as is, and only an edit by the user is clamped.
+                            const [rangeMin, rangeMax] = valueConstraints.range[label];
+                            const lowerInputMax = rangeValue ? clamp(rangeValue[1], rangeMin, rangeMax) : rangeMax;
+                            const upperInputMin = rangeValue ? clamp(rangeValue[0], rangeMin, rangeMax) : rangeMin;
+
                             function handleNumberInputChange(
                                 value: number | null,
                                 reason: string,
@@ -496,61 +526,65 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                     )}
 
                                     {rangeValue && (
-                                        <div className="gap-x-3xs flex items-center">
-                                            {sliderInputVisible && (
-                                                <NumberInput
-                                                    value={rangeValue[0]}
-                                                    layoutClassName="w-16 shrink-0"
+                                        <Field.Root inline invalid={isLabelInvalid}>
+                                            <div className="gap-x-3xs flex items-center">
+                                                {sliderInputVisible && (
+                                                    <NumberInput
+                                                        value={rangeValue[0]}
+                                                        layoutClassName="w-16 shrink-0"
+                                                        min={rangeMin}
+                                                        max={lowerInputMax}
+                                                        onValueCommitted={(v, eventDetails) =>
+                                                            handleNumberInputChange(v, eventDetails.reason, 0, true)
+                                                        }
+                                                        onValueChange={(v, eventDetails) =>
+                                                            handleNumberInputChange(v, eventDetails.reason, 0, false)
+                                                        }
+                                                    />
+                                                )}
+                                                <Slider
+                                                    layoutClassName="w-full"
+                                                    value={rangeValue}
+                                                    disabled={props.disabled}
                                                     min={valueConstraints.range[label][0]}
-                                                    max={rangeValue[1]}
-                                                    onValueCommitted={(v, eventDetails) =>
-                                                        handleNumberInputChange(v, eventDetails.reason, 0, true)
-                                                    }
-                                                    onValueChange={(v, eventDetails) =>
-                                                        handleNumberInputChange(v, eventDetails.reason, 0, false)
-                                                    }
-                                                />
-                                            )}
-                                            <Slider
-                                                layoutClassName="w-full"
-                                                value={rangeValue}
-                                                disabled={props.disabled}
-                                                min={valueConstraints.range[label][0]}
-                                                max={valueConstraints.range[label][1]}
-                                                valueLabelDisplay="auto"
-                                                valueLabelSide="bottom"
-                                                step={valueConstraints.range[label][2]}
-                                                markerLabels
-                                                onValueChange={(value, eventDetails) =>
-                                                    handleSliderChange(label, value, eventDetails.reason)
-                                                }
-                                            />
-                                            {sliderInputVisible && (
-                                                <NumberInput
-                                                    layoutClassName="w-16 shrink-0"
-                                                    value={rangeValue[1]}
-                                                    min={rangeValue[0]}
                                                     max={valueConstraints.range[label][1]}
-                                                    onValueCommitted={(v, eventDetails) =>
-                                                        handleNumberInputChange(v, eventDetails.reason, 1, true)
-                                                    }
-                                                    onValueChange={(v, eventDetails) =>
-                                                        handleNumberInputChange(v, eventDetails.reason, 1, false)
+                                                    valueLabelDisplay="auto"
+                                                    valueLabelSide="bottom"
+                                                    step={valueConstraints.range[label][2]}
+                                                    markerLabels
+                                                    onValueChange={(value, eventDetails) =>
+                                                        handleSliderChange(label, value, eventDetails.reason)
                                                     }
                                                 />
-                                            )}
-                                        </div>
+                                                {sliderInputVisible && (
+                                                    <NumberInput
+                                                        layoutClassName="w-16 shrink-0"
+                                                        value={rangeValue[1]}
+                                                        min={upperInputMin}
+                                                        max={rangeMax}
+                                                        onValueCommitted={(v, eventDetails) =>
+                                                            handleNumberInputChange(v, eventDetails.reason, 1, true)
+                                                        }
+                                                        onValueChange={(v, eventDetails) =>
+                                                            handleNumberInputChange(v, eventDetails.reason, 1, false)
+                                                        }
+                                                    />
+                                                )}
+                                            </div>
+                                        </Field.Root>
                                     )}
                                     {zoneValue && (
-                                        <Combobox
-                                            items={valueConstraints.zones.map((zone) => ({
-                                                label: zone.name,
-                                                value: zone.name,
-                                            }))}
-                                            value={zoneValue.name}
-                                            disabled={props.disabled}
-                                            onValueChange={handleZoneChange}
-                                        />
+                                        <Field.Root inline invalid={isLabelInvalid}>
+                                            <Combobox
+                                                items={valueConstraints.zones.map((zone) => ({
+                                                    label: zone.name,
+                                                    value: zone.name,
+                                                }))}
+                                                value={zoneValue.name}
+                                                disabled={props.disabled}
+                                                onValueChange={handleZoneChange}
+                                            />
+                                        </Field.Root>
                                     )}
                                 </React.Fragment>
                             );

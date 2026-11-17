@@ -1,7 +1,7 @@
 import { createStore } from "jotai";
 import { describe, expect, it } from "vitest";
 
-import { persistableFixableAtom, Source } from "../../src/framework/utils/atomUtils";
+import { FIXUP, persistableFixableAtom, Source } from "../../src/framework/utils/atomUtils";
 
 describe("persistableFixableAtom - auto-transition logic", () => {
     it("should transition PERSISTENCE source to USER when atom becomes valid", async () => {
@@ -216,10 +216,18 @@ describe("persistableFixableAtom - auto-transition logic", () => {
         // User changes atom A to a larger value
         store.set(atomA, 25);
 
-        // Now atom B becomes invalid (20 is not > 25)
+        // Now atom B becomes invalid (20 is not > 25). Both A and B already settled above, so masking
+        // no longer applies: B is kept as-is and reported invalid instead of being silently auto-fixed.
         resultB = store.get(atomB);
-        expect(resultB.isValidInContext).toBe(true); // Still true because source is USER, so it auto-fixes
-        expect(resultB.value).toBe(26); // Auto-fixed to 25 + 1
+        expect(resultB.isValidInContext).toBe(false); // Kept + reported invalid, not masked
+        expect(resultB.value).toBe(20); // Unchanged - no longer auto-fixed on every read
+        expect(resultB._source).toBe(Source.USER);
+
+        // Manually triggering fixup repairs it
+        store.set(atomB, FIXUP);
+        resultB = store.get(atomB);
+        expect(resultB.isValidInContext).toBe(true);
+        expect(resultB.value).toBe(26); // Fixed up to 25 + 1
         expect(resultB._source).toBe(Source.USER);
     });
 
@@ -305,6 +313,72 @@ describe("persistableFixableAtom - auto-transition logic", () => {
         expect(result.value).toBe(200);
         expect(result.isValidInContext).toBe(false);
         expect(result._source).toBe(Source.PERSISTENCE);
+    });
+
+    it("should not corrupt a still-invalid persisted value regardless of subscribe/write order", async () => {
+        // Regression test: the lifecycle effect used to capture a snapshot of internal state
+        // synchronously and write it back from a queued microtask unconditionally. If another write
+        // (e.g. a deserialize write) landed in the gap between the effect running and its microtask
+        // firing, the stale snapshot would silently clobber the real value. This is most easily
+        // triggered when something subscribes to (mounts) the atom BEFORE its persisted value is
+        // written - the atom's very first effect pass then runs against the default {initialValue,
+        // Source.USER} state and queues a write based on that, which can race with a subsequent
+        // deserialize write for the real value.
+        const knownEnsembles = new Set(["unfiltered", "filtered"]);
+        const realizationsByEnsemble: Record<string, number[]> = {
+            unfiltered: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            filtered: [0, 1, 2, 3, 4, 5],
+        };
+
+        const ensembleAtom = persistableFixableAtom<string | null>({
+            initialValue: null,
+            isValidFunction: ({ value }) => value !== null && knownEnsembles.has(value),
+            fixupFunction: () => null,
+        });
+
+        const store = createStore();
+
+        // Subscribe (mount) BEFORE writing the persisted value - the "wrong" order that used to
+        // trigger the corruption.
+        store.sub(ensembleAtom, () => {});
+
+        // Simulate deserialization: a persisted, currently-invalid realization (10 is out of range
+        // for the "filtered" ensemble) landing right after mount.
+        const realizationAtom = persistableFixableAtom<number | null>({
+            initialValue: null,
+            isValidFunction: ({ get, value }) => {
+                const ensembleId = get(ensembleAtom).value;
+                const available = ensembleId ? (realizationsByEnsemble[ensembleId] ?? []) : [];
+                if (value === null) return available.length === 0;
+                return available.includes(value);
+            },
+            fixupFunction: ({ get }) => {
+                const ensembleId = get(ensembleAtom).value;
+                const available = ensembleId ? (realizationsByEnsemble[ensembleId] ?? []) : [];
+                return available[0] ?? null;
+            },
+        });
+        store.sub(realizationAtom, () => {});
+
+        store.set(ensembleAtom, { value: "filtered", _source: Source.PERSISTENCE });
+        store.set(realizationAtom, { value: 10, _source: Source.PERSISTENCE });
+
+        for (let tick = 0; tick < 6; tick++) {
+            await new Promise<void>((resolve) => queueMicrotask(resolve));
+        }
+
+        const ensembleResult = store.get(ensembleAtom);
+        const realizationResult = store.get(realizationAtom);
+
+        // Ensemble is genuinely valid, so it's expected to promote to USER.
+        expect(ensembleResult.value).toBe("filtered");
+        expect(ensembleResult._source).toBe(Source.USER);
+
+        // Realization was never valid and was never touched by the user - it must stay exactly as
+        // persisted (kept + reported invalid), not silently promoted/fixed-up to some other value.
+        expect(realizationResult.value).toBe(10);
+        expect(realizationResult.isValidInContext).toBe(false);
+        expect(realizationResult._source).toBe(Source.PERSISTENCE);
     });
 
     it("should work with precompute function", async () => {

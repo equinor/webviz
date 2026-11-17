@@ -13,3 +13,8 @@ export enum SensitivityScaling {
     ABSOLUTE = "absolute",
     RELATIVE_PERCENTAGE = "relative_percentage",
 }
+
+export enum ColorBy {
+    SENSITIVITY = "Sensitivity",
+    LOW_HIGH = "Low/High",
+}

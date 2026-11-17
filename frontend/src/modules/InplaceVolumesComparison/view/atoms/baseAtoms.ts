@@ -19,4 +19,5 @@ export const waterfallFactorSpecAtom = atom<WaterfallFactorSpec | null>(null);
 export const areSourcesDistinctAtom = atom<boolean>(false);
 export const areSelectedTablesComparableAtom = atom<boolean>(true);
 export const areSelectedIndicesWithValuesValidAtom = atom<boolean>(true);
+export const isSubplotByValidAtom = atom<boolean>(true);
 export const showTableAtom = atom<boolean>(false);

@@ -16,11 +16,11 @@ function useModuleWarningText(moduleInstance: ModuleInstance<any, any> | null): 
         const isDevModule = moduleInstance.getModule().getDevState() === ModuleDevState.DEV;
 
         if (!isSerializable && isDevModule) {
-            return "This module is under development and without persistence. Major changes can occur without warning, and state changes will not be saved.";
+            return "This module is under development and its state cannot be saved. Major changes can occur without warning.";
         } else if (isDevModule) {
             return "This module is under development. Major changes can occur without warning.";
         } else if (!isSerializable) {
-            return "This module cannot be persisted yet. State changes will not be saved.";
+            return "This module's state cannot be saved yet.";
         }
         return null;
     }, [moduleInstance]);

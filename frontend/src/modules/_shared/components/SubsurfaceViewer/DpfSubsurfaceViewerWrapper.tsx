@@ -10,6 +10,7 @@ import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ContentActionRequired } from "@modules/_shared/components/ContentMessage";
 import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
 import { WebvizWellsLayer } from "@modules/_shared/customDeckGlLayers/WebvizWellsLayer";
 import {
@@ -38,6 +39,7 @@ import {
 } from "../../utils/subsurfaceViewer/hoverTransformations";
 
 import { InteractionWrapper } from "./_components/InteractionWrapper";
+import { mergeLayersOfViews } from "./_utils/mergeLayersOfViews";
 
 export type DpfSubsurfaceViewerContextType = {
     visualizationMode: "2D" | "3D";
@@ -124,23 +126,22 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     const usedPolylineIds = props.visualizationAssemblerProduct.accumulatedData.polylineIds;
 
     const viewports: ViewportTypeExtended[] = [];
-    const deckGlLayers: Layer<any>[] = [];
+    const layersPerView: Layer<any>[][] = [];
     const globalLayerIds: string[] = ["placeholder", "axes"];
 
     for (const item of props.visualizationAssemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
             const colorScales = item.annotations.filter((el) => "colorScale" in el);
             const layerIds: string[] = [...globalLayerIds];
+            const viewLayers: Layer<any>[] = [];
 
             for (const child of item.children) {
                 if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
-                    const layer = child.visualization;
-
-                    layerIds.push(layer.id);
-                    // Shared layers (aka, root group layers) might already have been added
-                    if (!deckGlLayers.some((l) => l.id === layer.id)) deckGlLayers.push(layer);
+                    layerIds.push(child.visualization.id);
+                    viewLayers.push(child.visualization);
                 }
             }
+            layersPerView.push(viewLayers);
             viewports.push({
                 id: item.id,
                 name: item.name,
@@ -152,6 +153,9 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
             });
         }
     }
+
+    // Shared layers (aka, root group layers) are in several views, so they are merged into one list
+    const deckGlLayers = mergeLayersOfViews(layersPerView);
 
     const views: ViewsTypeExtended = {
         layout: [0, 0],
@@ -186,6 +190,16 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     for (const message of props.visualizationAssemblerProduct.aggregatedErrorMessages) {
         statusWriter.addError(message);
     }
+
+    for (const message of props.visualizationAssemblerProduct.aggregatedActionRequiredMessages) {
+        statusWriter.flagActionRequired(message);
+    }
+
+    const hasRenderableLayers = deckGlLayers.length > 0;
+    const showActionRequiredFallback =
+        !hasRenderableLayers &&
+        props.visualizationAssemblerProduct.numLoadingDataProviders === 0 &&
+        props.visualizationAssemblerProduct.aggregatedActionRequiredMessages.length > 0;
 
     let bounds3D: BoundingBox3D | undefined = undefined;
     let bounds2D: BoundingBox2D | undefined = undefined;
@@ -264,6 +278,17 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
 
     // -----------------------------------------------------------------------------
 
+    if (showActionRequiredFallback) {
+        return (
+            <ContentActionRequired>
+                {makeInvalidSettingsSummary(
+                    props.visualizationAssemblerProduct.aggregatedActionRequiredMessages.length,
+                    props.visualizationAssemblerProduct.numDataProviders,
+                )}
+            </ContentActionRequired>
+        );
+    }
+
     return (
         <DpfSubsurfaceViewerContext.Provider
             value={{
@@ -285,4 +310,15 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
             />
         </DpfSubsurfaceViewerContext.Provider>
     );
+}
+
+// The details per layer are reported to the status writer - the content only summarizes them to stay short
+function makeInvalidSettingsSummary(numInvalid: number, numTotal: number): string {
+    if (numTotal <= 1) {
+        return "The layer has invalid settings.";
+    }
+    if (numInvalid >= numTotal) {
+        return "All layers have invalid settings.";
+    }
+    return `${numInvalid} of ${numTotal} layers have invalid settings.`;
 }
