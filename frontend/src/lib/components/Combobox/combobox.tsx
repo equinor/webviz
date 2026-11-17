@@ -46,14 +46,19 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
         /** Optional function to render an adornment alongside each item in the dropdown list. */
         renderItemAdornment?: (item: TValue) => React.ReactNode;
         /**
-         * Explanation shown (as tooltip and accessible description) for selected values that are not in `items`.
+         * Explanation shown (as tooltip and accessible description) for selected values that are not available.
          * Such values are always marked as unavailable, and the field is marked invalid when no selected value is available.
-         * Keep `items` populated while loading to avoid false marking.
+         * Keep `items` populated while loading to avoid false marking, or provide `isValueAvailable` if `items` is partial.
          * @default "Not available"
          */
         unavailableValueText?: string;
         /** Label for selected values that are not in `items`. @default String(value) */
         getUnavailableValueLabel?: (value: TValue) => string;
+        /**
+         * Decides whether a selected value is available. Overrides the default check (value is among `items`).
+         * Use when `items` is a partial list, e.g. server-side filtered; `() => true` never marks values as unavailable.
+         */
+        isValueAvailable?: (value: TValue) => boolean;
         /** Size of the combobox input. @default "default" */
         size?: SelectableSize;
         /** Only applies when `multiple` is true. @default "chips" */
@@ -93,6 +98,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         "renderItemAdornment",
         "unavailableValueText",
         "getUnavailableValueLabel",
+        "isValueAvailable",
         "placeholder",
         "noMatchesText",
         "loadingText",
@@ -128,13 +134,22 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         return new Map(flatItems.map((item) => [item.value, item]));
     }, [flatItems]);
 
+    // Single source of truth for availability; used for highlighting, validity and the unavailable group alike
+    const { isValueAvailable: isValueAvailableProp } = defaultedProps;
+    const isValueAvailable = React.useCallback(
+        function isValueAvailable(value: TValue): boolean {
+            return isValueAvailableProp ? isValueAvailableProp(value) : itemByValue.has(value);
+        },
+        [isValueAvailableProp, itemByValue],
+    );
+
     // Unavailable selected values are listed in the dropdown (in both multi-select modes) so they can be unselected there
     const unavailableListValues = React.useMemo(() => {
         if (!defaultedProps.multiple || !Array.isArray(currentValue)) {
             return [];
         }
-        return (currentValue as TValue[]).filter((value) => !itemByValue.has(value));
-    }, [defaultedProps.multiple, currentValue, itemByValue]);
+        return (currentValue as TValue[]).filter((value) => !isValueAvailable(value));
+    }, [defaultedProps.multiple, currentValue, isValueAvailable]);
 
     const baseItems = React.useMemo(() => {
         const items = defaultedProps.items;
@@ -152,10 +167,6 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
     }, [defaultedProps.items, unavailableListValues]);
 
     const hasGroups = isGroupedItems(defaultedProps.items) || unavailableListValues.length > 0;
-
-    function isValueAvailable(value: TValue): boolean {
-        return itemByValue.has(value);
-    }
 
     function getLabelForValue(value: TValue): string {
         const item = itemByValue.get(value);

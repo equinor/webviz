@@ -456,7 +456,7 @@ export const AsyncSearchAsYouType: Story = {
     parameters: {
         docs: {
             description: {
-                story: "Items are re-fetched on every keystroke, simulating a server-side search API. A 600 ms debounce limits requests; the combobox shows a spinner while the request is in flight. Internal filtering is disabled via `filter={null}` so the server-returned list is rendered as-is.",
+                story: "Items are re-fetched on every keystroke, simulating a server-side search API. A 600 ms debounce limits requests; the combobox shows a spinner while the request is in flight. Internal filtering is disabled via `filter={null}` so the server-returned list is rendered as-is. Since `items` only holds the current search results, `isValueAvailable` opts out of unavailable-value marking so a retained selection isn't flagged when it falls outside the results.",
             },
         },
     },
@@ -464,6 +464,7 @@ export const AsyncSearchAsYouType: Story = {
         filter: null,
         showClearAllButton: true,
         placeholder: "Type to search countries…",
+        isValueAvailable: () => true,
     },
     render: function AsyncSearchAsYouTypeComp(args) {
         const [items, setItems] = React.useState<{ value: string; label: string }[]>([]);
