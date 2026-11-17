@@ -3,6 +3,8 @@ import {
     getAvailableEnsembleIdentsForField,
     getAvailableEnsembleIdentsForFieldIncludingDelta,
     getAvailableRealizationsForEnsembleIdent,
+    narrowToRegularEnsembleIdent,
+    requireRegularEnsembleIdent,
 } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type {
     CustomDataProviderImplementation,
@@ -310,7 +312,7 @@ export class EnsembleTestProvider implements CustomDataProviderImplementation<En
         return "Test ensemble";
     }
 
-    setupBindings({ setting }: SetupBindingsContext<EnsembleSettings>) {
+    setupBindings({ setting, makeSharedResult }: SetupBindingsContext<EnsembleSettings>) {
         const includeDeltaEnsembles = this._includeDeltaEnsembles;
 
         setting(Setting.ENSEMBLE).bindValueConstraints({
@@ -328,6 +330,19 @@ export class EnsembleTestProvider implements CustomDataProviderImplementation<En
             },
         });
 
+        // Mirrors regular-only providers whose shared results narrow Setting.ENSEMBLE
+        if (!includeDeltaEnsembles) {
+            makeSharedResult({
+                debugName: "RegularEnsembleCaseUuid",
+                read(read) {
+                    return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
+                },
+                resolve({ ensembleIdent }) {
+                    return narrowToRegularEnsembleIdent(ensembleIdent)?.getCaseUuid() ?? null;
+                },
+            });
+        }
+
         setting(Setting.REALIZATION).bindValueConstraints({
             read(read) {
                 return {
@@ -342,9 +357,10 @@ export class EnsembleTestProvider implements CustomDataProviderImplementation<En
     }
 
     fetchData({ getSetting, fetchQuery }: FetchDataParams<EnsembleSettings, LabelTestData>) {
-        const ensembleIdent = getSetting(Setting.ENSEMBLE)?.toString() ?? "";
+        const rawIdent = getSetting(Setting.ENSEMBLE);
+        const ensembleIdent = this._includeDeltaEnsembles ? rawIdent : requireRegularEnsembleIdent(rawIdent);
         return fetchQuery({
-            queryKey: ["testEnsembleData", ensembleIdent],
+            queryKey: ["testEnsembleData", ensembleIdent?.toString() ?? ""],
             queryFn: () => getTestBackend().getLabelData(false),
         });
     }

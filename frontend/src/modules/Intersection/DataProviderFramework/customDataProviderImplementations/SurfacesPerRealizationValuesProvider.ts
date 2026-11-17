@@ -18,6 +18,7 @@ import {
     getAvailableEnsembleIdentsForField,
     getAvailableIntersectionOptions,
     getAvailableRealizationsForEnsembleIdent,
+    narrowToRegularEnsembleIdent,
     requireRegularEnsembleIdent,
 } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type {
@@ -175,7 +176,7 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
-                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
+                const ensembleIdent = narrowToRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }

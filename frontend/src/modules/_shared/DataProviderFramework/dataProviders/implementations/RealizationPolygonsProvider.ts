@@ -14,6 +14,7 @@ import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
+    narrowToRegularEnsembleIdent,
     requireRegularEnsembleIdent,
 } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
 
@@ -76,7 +77,7 @@ export class RealizationPolygonsProvider implements CustomDataProviderImplementa
                 };
             },
             async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
-                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
+                const ensembleIdent = narrowToRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }

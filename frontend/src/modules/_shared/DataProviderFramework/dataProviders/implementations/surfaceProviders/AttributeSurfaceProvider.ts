@@ -31,6 +31,7 @@ import { Representation } from "../../../settings/implementations/Representation
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
+    narrowToRegularEnsembleIdent,
     requireRegularEnsembleIdent,
 } from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
 
@@ -208,7 +209,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             resolve({ ensembleIdent }) {
-                return resolveSensitivityConstraints(requireRegularEnsembleIdent(ensembleIdent), workbenchSession);
+                return resolveSensitivityConstraints(narrowToRegularEnsembleIdent(ensembleIdent), workbenchSession);
             },
         });
 
@@ -218,7 +219,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
-                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
+                const ensembleIdent = narrowToRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }

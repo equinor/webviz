@@ -20,6 +20,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
+    narrowToRegularEnsembleIdent,
     requireRegularEnsembleIdent,
 } from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
 
@@ -230,7 +231,7 @@ export class SeismicSlicesProvider implements CustomDataProviderImplementation<
                 };
             },
             async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
-                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
+                const ensembleIdent = narrowToRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }

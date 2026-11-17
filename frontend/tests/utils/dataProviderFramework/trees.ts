@@ -150,10 +150,15 @@ export function sharedSetting(
     value: unknown = null,
     options: ItemOptions = {},
 ): SerializedSharedSetting {
+    // EnsembleSetting persists the ident string itself (or "" for null), not JSON
+    const serializedValue =
+        setting === Setting.ENSEMBLE
+            ? ((value as RegularEnsembleIdent | DeltaEnsembleIdent | null)?.toString() ?? "")
+            : JSON.stringify(value);
     return {
         ...makeItem(SerializedType.SHARED_SETTING, name, options),
         wrappedSettingType: setting,
-        value: JSON.stringify(value),
+        value: serializedValue,
     };
 }
 

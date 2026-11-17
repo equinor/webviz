@@ -3,10 +3,14 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
+import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
+import { DataProviderStatus } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
 import type { SharedSetting } from "@modules/_shared/DataProviderFramework/framework/SharedSetting/SharedSetting";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import {
+    DELTA_ENSEMBLE_PROVIDER_TYPE,
+    ENSEMBLE_PROVIDER_TYPE,
     deltaEnsembleProvider,
     ensembleProvider,
     findItem,
@@ -120,5 +124,38 @@ describe("Ensemble setting with delta ensembles", () => {
             );
             expect(getProviderSetting(provider, Setting.REALIZATION).getValueConstraints()).toEqual([1, 2]);
         }
+    });
+
+    test("adding a regular-only provider under a shared setting holding a delta ensemble marks the setting invalid without resolver errors", async () => {
+        const manager = await restore(
+            sharedSetting("Shared ensemble", Setting.ENSEMBLE, delta.getIdent()),
+            deltaEnsembleProvider(DELTA_ENSEMBLE_PROVIDER_TYPE),
+        );
+        const shared = findItem<SharedSetting<Setting.ENSEMBLE>>(manager, "Shared ensemble");
+        expect(shared.getWrappedSetting().getValue()?.equals(delta.getIdent())).toBe(true);
+
+        const regularProvider = DataProviderRegistry.makeDataProvider(ENSEMBLE_PROVIDER_TYPE, manager, "Regular only");
+        manager.getGroupDelegate().appendChild(regularProvider);
+        await settle(manager);
+
+        expect(identStrings(shared.getWrappedSetting().getValueConstraints())).toEqual(REGULAR_IDENT_STRINGS);
+        expect(shared.getWrappedSetting().getValue()?.equals(delta.getIdent())).toBe(true);
+        expect(shared.getWrappedSetting().isValueValid()).toBe(false);
+        expect(regularProvider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
+        expect(regularProvider.getSettingsContextDelegate().getStatusMessages()).toEqual([]);
+
+        shared.getWrappedSetting().setValue(comparison.getIdent());
+        await settle(manager);
+
+        expect(regularProvider.getStatus()).toBe(DataProviderStatus.SUCCESS);
+    });
+
+    test("a persisted delta ensemble on a regular-only provider stays invalid without resolver errors", async () => {
+        const manager = await restore(ensembleProvider("Regular only", { ensemble: delta.getIdent() }));
+        const provider = findProvider(manager, "Regular only");
+
+        expect(provider.getStatus()).toBe(DataProviderStatus.INVALID_SETTINGS);
+        expect(getProviderSetting(provider, Setting.ENSEMBLE).isPersistedValue()).toBe(true);
+        expect(provider.getSettingsContextDelegate().getStatusMessages()).toEqual([]);
     });
 });

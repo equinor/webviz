@@ -40,6 +40,7 @@ import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettin
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 import {
     getAvailableEnsembleIdentsForField,
+    narrowToRegularEnsembleIdent,
     requireRegularEnsembleIdent,
 } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
 
@@ -320,7 +321,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                 };
             },
             async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
-                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
+                const ensembleIdent = narrowToRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -487,7 +488,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                 };
             },
             async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
-                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
+                const ensembleIdent = narrowToRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }

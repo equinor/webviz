@@ -53,7 +53,22 @@ export function getAvailableEnsembleIdentsForFieldIncludingDelta(
 }
 
 /**
- * For providers without delta support. Their value constraints never contain delta idents, so this is a type narrowing, not a code path.
+ * Narrows a selected ensemble ident to a regular ensemble ident, returning null for delta idents.
+ * Use in `setupBindings` resolvers on regular-only providers, which can transiently see a delta ident
+ * (e.g. when added under a shared Ensemble setting that currently holds a delta ensemble).
+ */
+export function narrowToRegularEnsembleIdent(
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null,
+): RegularEnsembleIdent | null {
+    if (ensembleIdent instanceof DeltaEnsembleIdent) {
+        return null;
+    }
+    return ensembleIdent;
+}
+
+/**
+ * Asserts that the ensemble ident is not a delta ident. Use in `fetchData` on regular-only providers,
+ * where invalid settings prevent execution so a delta ident indicates a bug.
  */
 export function requireRegularEnsembleIdent(
     ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null,

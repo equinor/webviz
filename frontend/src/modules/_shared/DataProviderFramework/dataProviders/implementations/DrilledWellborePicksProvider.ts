@@ -17,7 +17,7 @@ import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettin
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 import {
     getAvailableEnsembleIdentsForField,
-    requireRegularEnsembleIdent,
+    narrowToRegularEnsembleIdent,
 } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.WELLBORES, Setting.SURFACE_NAME] as const;
@@ -124,7 +124,7 @@ export class DrilledWellborePicksProvider implements CustomDataProviderImplement
                 };
             },
             async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
-                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
+                const ensembleIdent = narrowToRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }

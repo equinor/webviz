@@ -31,6 +31,7 @@ import {
     getAvailableEnsembleIdentsForField,
     getAvailableIntersectionOptions,
     getAvailableRealizationsForEnsembleIdent,
+    narrowToRegularEnsembleIdent,
     requireRegularEnsembleIdent,
 } from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
 
@@ -205,7 +206,7 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
                 };
             },
             async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
-                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
+                const ensembleIdent = narrowToRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }

@@ -41,7 +41,12 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
     }
 
     fixupValue(value: ValueType, valueConstraints: ValueConstraintsType): ValueType {
-        return fixupValue<EnsembleIdent, EnsembleIdent>(value, valueConstraints, (v) => v);
+        return fixupValue<EnsembleIdent, EnsembleIdent>(
+            value,
+            valueConstraints,
+            (v) => v,
+            (a, b) => a.equals(b),
+        );
     }
 
     serializeValue(value: ValueType): string {
@@ -49,7 +54,14 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
     }
 
     deserializeValue(serializedValue: string): ValueType {
-        return serializedValue !== "" ? getEnsembleIdentFromString(serializedValue) : null;
+        if (serializedValue === "") {
+            return null;
+        }
+        const ensembleIdent = getEnsembleIdentFromString(serializedValue);
+        if (ensembleIdent === null) {
+            throw new Error(`Invalid ensemble ident: ${serializedValue}`);
+        }
+        return ensembleIdent;
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {

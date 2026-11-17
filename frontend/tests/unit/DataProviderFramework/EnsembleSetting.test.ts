@@ -2,7 +2,10 @@ import { describe, expect, test } from "vitest";
 
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { requireRegularEnsembleIdent } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
+import {
+    narrowToRegularEnsembleIdent,
+    requireRegularEnsembleIdent,
+} from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import { EnsembleSetting } from "@modules/_shared/DataProviderFramework/settings/implementations/EnsembleSetting";
 
 const regularA = new RegularEnsembleIdent("11111111-1111-4111-8111-111111111111", "iter-0");
@@ -31,8 +34,9 @@ describe("EnsembleSetting", () => {
         expect(setting.serializeValue(null)).toBe("");
     });
 
-    test("deserializes an invalid string to null", () => {
-        expect(setting.deserializeValue("not-an-ident")).toBeNull();
+    test("throws when deserializing a malformed non-empty string", () => {
+        expect(() => setting.deserializeValue("not-an-ident")).toThrow("Invalid ensemble ident");
+        expect(() => setting.deserializeValue("null")).toThrow("Invalid ensemble ident");
     });
 
     test("a delta value is only valid when the constraints hold an equal delta ident", () => {
@@ -49,24 +53,31 @@ describe("EnsembleSetting", () => {
         expect(setting.isValueValid(null, [regularA, delta])).toBe(false);
     });
 
-    test("fixupValue keeps a valid value and otherwise falls back to the first constraint", () => {
-        expect(setting.fixupValue(delta, [regularA, delta])).toBe(delta);
+    test("fixupValue keeps a valid value (compared with .equals) and otherwise falls back to the first constraint", () => {
+        const equalDelta = new DeltaEnsembleIdent(
+            new RegularEnsembleIdent(regularA.getCaseUuid(), regularA.getEnsembleName()),
+            new RegularEnsembleIdent(regularB.getCaseUuid(), regularB.getEnsembleName()),
+        );
+        const equalRegularA = new RegularEnsembleIdent(regularA.getCaseUuid(), regularA.getEnsembleName());
+
+        expect(setting.fixupValue(equalDelta, [regularA, delta])).toBe(equalDelta);
+        expect(setting.fixupValue(equalRegularA, [regularB, regularA])).toBe(equalRegularA);
         expect(setting.fixupValue(delta, [regularA, regularB])).toBe(regularA);
         expect(setting.fixupValue(null, [delta, regularA])).toBe(delta);
         expect(setting.fixupValue(delta, [])).toBeNull();
     });
 });
 
-describe("requireRegularEnsembleIdent", () => {
-    test("passes null through", () => {
+describe("narrowToRegularEnsembleIdent and requireRegularEnsembleIdent", () => {
+    test("narrowToRegularEnsembleIdent passes null and regular idents through and maps delta idents to null", () => {
+        expect(narrowToRegularEnsembleIdent(null)).toBeNull();
+        expect(narrowToRegularEnsembleIdent(regularA)).toBe(regularA);
+        expect(narrowToRegularEnsembleIdent(delta)).toBeNull();
+    });
+
+    test("requireRegularEnsembleIdent passes null and regular idents through and throws for delta idents", () => {
         expect(requireRegularEnsembleIdent(null)).toBeNull();
-    });
-
-    test("returns a regular ensemble ident unchanged", () => {
         expect(requireRegularEnsembleIdent(regularA)).toBe(regularA);
-    });
-
-    test("throws for a delta ensemble ident", () => {
         expect(() => requireRegularEnsembleIdent(delta)).toThrow("Delta ensembles are not supported");
     });
 });

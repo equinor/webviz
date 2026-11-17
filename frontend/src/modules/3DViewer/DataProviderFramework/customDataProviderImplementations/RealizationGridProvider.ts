@@ -17,6 +17,7 @@ import {
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
+    narrowToRegularEnsembleIdent,
     requireRegularEnsembleIdent,
 } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
@@ -234,7 +235,7 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                 };
             },
             async resolve({ ensembleIdent: selectedEnsembleIdent, realization }, { abortSignal }) {
-                const ensembleIdent = requireRegularEnsembleIdent(selectedEnsembleIdent);
+                const ensembleIdent = narrowToRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent || realization === null) {
                     return null;
                 }
