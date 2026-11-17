@@ -1,3 +1,4 @@
+export { hasCaseOnSide, pickDefaultReferenceSensitivityName } from "./_helpers";
 export { computeSensitivitiesForResponse } from "./sensitivityProcessing";
 export {
     type EnsemblePerRealizationResponse,

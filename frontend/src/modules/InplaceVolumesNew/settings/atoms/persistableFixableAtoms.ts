@@ -11,12 +11,17 @@ import {
     getSelectionForOfferedIndexColumns,
     isSelectedIndicesWithValuesValidSubset,
 } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import {
+    fixupSensitivityCaseSelection,
+    isValidSensitivityCaseSelection,
+} from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { makeUniqueTableNamesIntersection } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
 import { makeColorByOptions, makeSubplotByOptions } from "../utils/plotDimensionUtils";
 
-import { tableDefinitionsAccessorAtom } from "./derivedAtoms";
+import { availableSensitivityCasesAtom, sensitivityModeAtom, tableDefinitionsAccessorAtom } from "./derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
 export const selectedEnsembleIdentsAtom = persistableFixableAtom<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>({
@@ -74,7 +79,10 @@ export const selectedSelectorColumnAtom = persistableFixableAtom<string | null, 
     computeDependenciesState: computeSelectedTableDefinitionsDependenciesState,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-        return tableDefinitionsAccessor.getCommonSelectorColumns();
+        const selectorColumns = tableDefinitionsAccessor.getCommonSelectorColumns();
+        return get(sensitivityModeAtom).kind === "active"
+            ? [...selectorColumns, TableOriginKey.SENSITIVITY]
+            : selectorColumns;
     },
     isValidFunction: ({ value, precomputedValue }) => {
         return value !== null && precomputedValue.includes(value);
@@ -113,7 +121,10 @@ export const selectedSubplotByAtom = persistableFixableAtom<string, string[]>({
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         const selectedTableNames = get(selectedTableNamesAtom);
-        return makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames.value).map((el) => el.value);
+        const isSensitivityModeActive = get(sensitivityModeAtom).kind === "active";
+        return makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames.value, isSensitivityModeActive).map(
+            (el) => el.value,
+        );
     },
     isValidFunction: ({ value, precomputedValue }) => {
         return precomputedValue.includes(value);
@@ -130,10 +141,14 @@ export const selectedColorByAtom = persistableFixableAtom<string, string[]>({
         const selectedSubplotBy = get(selectedSubplotByAtom);
         const selectedTableNames = get(selectedTableNamesAtom);
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+        const isSensitivityModeActive = get(sensitivityModeAtom).kind === "active";
 
-        return makeColorByOptions(tableDefinitionsAccessor, selectedSubplotBy.value, selectedTableNames.value).map(
-            (el) => el.value,
-        );
+        return makeColorByOptions(
+            tableDefinitionsAccessor,
+            selectedSubplotBy.value,
+            selectedTableNames.value,
+            isSensitivityModeActive,
+        ).map((el) => el.value);
     },
     isValidFunction: ({ value, precomputedValue }) => {
         return precomputedValue.includes(value);
@@ -142,6 +157,15 @@ export const selectedColorByAtom = persistableFixableAtom<string, string[]>({
         const fixedSelection = fixupUserSelection([value], precomputedValue);
         return fixedSelection[0] || TableOriginKey.TABLE_NAME;
     },
+});
+
+export const selectedSensitivityCasesAtom = persistableFixableAtom<SensitivityCaseIdent[], SensitivityCaseIdent[]>({
+    initialValue: [],
+    // The available cases follow from the ensemble selection, so don't settle on them while it is invalid.
+    computeDependenciesState: ({ get }) => (get(selectedEnsembleIdentsAtom).isValidInContext ? "loaded" : "blocked"),
+    precomputeFunction: ({ get }) => get(availableSensitivityCasesAtom),
+    isValidFunction: ({ value, precomputedValue }) => isValidSensitivityCaseSelection(value, precomputedValue),
+    fixupFunction: ({ value, precomputedValue }) => fixupSensitivityCaseSelection(value, precomputedValue),
 });
 
 // The table definitions are filtered by the selected table names. While they are invalid, there are no options to check

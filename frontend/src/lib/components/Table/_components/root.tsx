@@ -218,7 +218,8 @@ export const Root = React.forwardRef<HTMLTableElement, TableRootProps>(function 
     return (
         <div
             ref={innerWrapperRef}
-            className={resolveClassNames(wrapperClassName, "relative overflow-auto")}
+            // Isolate keeps the sticky head/foot z-index from competing with elements outside the table
+            className={resolveClassNames(wrapperClassName, "relative isolate overflow-auto")}
             style={{
                 ...wrapperStyle,
                 height: props.height,

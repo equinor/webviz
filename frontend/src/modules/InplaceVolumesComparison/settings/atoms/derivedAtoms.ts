@@ -2,8 +2,12 @@ import type { Getter } from "jotai";
 import { atom } from "jotai";
 
 import type { InplaceVolumesIndexWithValues_api, InplaceVolumesTableDefinition_api } from "@api";
+import type { EnsembleSensitivities } from "@framework/EnsembleSensitivities";
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { getSelectionForOfferedIndexColumns } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
+import type { SensitivityCaseIdent } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
+import { getMultiCaseSensitivities, isSameSensitivityCase } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { IndexValueCriteria, TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
 import {
@@ -18,13 +22,58 @@ import type { WaterfallSource } from "../../view/utils/waterfallSources";
 import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
 import {
     selectedComparisonEnsembleIdentAtom,
+    selectedComparisonSensitivityCaseAtom,
     selectedComparisonTableNameAtom,
     selectedIndicesWithValuesAtom,
     selectedReferenceEnsembleIdentAtom,
+    selectedReferenceSensitivityCaseAtom,
     selectedReferenceTableNameAtom,
     selectedResultNameAtom,
 } from "./persistableFixableAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
+
+function getEnsembleSensitivities(
+    get: Getter,
+    ensembleIdent: RegularEnsembleIdent | null,
+): EnsembleSensitivities | null {
+    return ensembleIdent
+        ? getMultiCaseSensitivities(get(EnsembleSetAtom).findEnsemble(ensembleIdent)?.getSensitivities() ?? null)
+        : null;
+}
+
+export const referenceSensitivitiesAtom = atom<EnsembleSensitivities | null>((get) =>
+    getEnsembleSensitivities(get, get(selectedReferenceEnsembleIdentAtom).value),
+);
+
+export const comparisonSensitivitiesAtom = atom<EnsembleSensitivities | null>((get) =>
+    getEnsembleSensitivities(get, get(selectedComparisonEnsembleIdentAtom).value),
+);
+
+/**
+ * Selected case per side; always null for an ensemble without sensitivities. `isComplete` is false when a
+ * side with sensitivities has no case, or a restored case that is invalid in the current context.
+ */
+function getEffectiveSensitivityCases(get: Getter): {
+    reference: SensitivityCaseIdent | null;
+    comparison: SensitivityCaseIdent | null;
+    isComplete: boolean;
+} {
+    const referenceCase = get(selectedReferenceSensitivityCaseAtom);
+    const comparisonCase = get(selectedComparisonSensitivityCaseAtom);
+    const hasReferenceSensitivities = get(referenceSensitivitiesAtom) !== null;
+    const hasComparisonSensitivities = get(comparisonSensitivitiesAtom) !== null;
+
+    const isReferenceComplete =
+        !hasReferenceSensitivities || (referenceCase.value !== null && referenceCase.isValidInContext);
+    const isComparisonComplete =
+        !hasComparisonSensitivities || (comparisonCase.value !== null && comparisonCase.isValidInContext);
+
+    return {
+        reference: hasReferenceSensitivities ? referenceCase.value : null,
+        comparison: hasComparisonSensitivities ? comparisonCase.value : null,
+        isComplete: isReferenceComplete && isComparisonComplete,
+    };
+}
 
 type TableDefinitionsPerEnsemble = {
     ensembleIdent: RegularEnsembleIdent;
@@ -230,14 +279,16 @@ export const areSelectedIndicesWithValuesValidAtom = atom<boolean>((get) => {
 });
 
 /**
- * The reference and comparison sources, or null when either is incompletely selected. Computed once
- * here so settings and view read the same combination of ensemble and table.
+ * The reference and comparison sources, or null when either is incompletely selected, including a
+ * missing case for an ensemble with sensitivities. Computed once here so settings and view read the
+ * same combination of ensemble, table and case.
  */
 export const waterfallSourcesAtom = atom<{ reference: WaterfallSource; comparison: WaterfallSource } | null>((get) => {
     const referenceEnsembleIdent = get(selectedReferenceEnsembleIdentAtom);
     const comparisonEnsembleIdent = get(selectedComparisonEnsembleIdentAtom);
     const referenceTableName = get(selectedReferenceTableNameAtom);
     const comparisonTableName = get(selectedComparisonTableNameAtom);
+    const sensitivityCases = getEffectiveSensitivityCases(get);
 
     // A retained but invalid selection (e.g. a table missing from the newly selected comparison ensemble) leaves no
     // source - otherwise the accessor, built from the remaining side alone, could still judge the rest valid and
@@ -256,10 +307,21 @@ export const waterfallSourcesAtom = atom<{ reference: WaterfallSource; compariso
     ) {
         return null;
     }
+    if (!sensitivityCases.isComplete) {
+        return null;
+    }
 
     return {
-        reference: { ensembleIdent: referenceEnsembleIdent.value, tableName: referenceTableName.value },
-        comparison: { ensembleIdent: comparisonEnsembleIdent.value, tableName: comparisonTableName.value },
+        reference: {
+            ensembleIdent: referenceEnsembleIdent.value,
+            tableName: referenceTableName.value,
+            sensitivityCase: sensitivityCases.reference,
+        },
+        comparison: {
+            ensembleIdent: comparisonEnsembleIdent.value,
+            tableName: comparisonTableName.value,
+            sensitivityCase: sensitivityCases.comparison,
+        },
     };
 });
 
@@ -302,7 +364,7 @@ export const areSelectedTablesComparableAtom = atom((get) => {
     return get(tableDefinitionsAccessorAtom).getAreTablesComparable();
 });
 
-/** True when the two selected sources are both complete and not the same ensemble/table pair. */
+/** True when the two selected sources are both complete and differ in ensemble, table or case. */
 export const areSourcesDistinctAtom = atom((get) => {
     const referenceEnsembleIdent = get(selectedReferenceEnsembleIdentAtom).value;
     const comparisonEnsembleIdent = get(selectedComparisonEnsembleIdentAtom).value;
@@ -313,8 +375,13 @@ export const areSourcesDistinctAtom = atom((get) => {
         return false;
     }
 
+    const { reference, comparison } = getEffectiveSensitivityCases(get);
     const isSameEnsemble = referenceEnsembleIdent.equals(comparisonEnsembleIdent);
-    return !(isSameEnsemble && referenceTableName === comparisonTableName);
+    return !(
+        isSameEnsemble &&
+        referenceTableName === comparisonTableName &&
+        isSameSensitivityCase(reference, comparison)
+    );
 });
 
 /** True when both sides use the same ensemble, i.e. the comparison is purely between table sources. */

@@ -6,6 +6,6 @@ export const receiverDefs: ChannelReceiverDefinition[] = [
         idString: "response",
         displayName: "Response",
         supportedKindsOfKeys: [KeyKind.REALIZATION],
-        supportsMultiContents: false,
+        supportsMultiContents: true,
     },
 ];

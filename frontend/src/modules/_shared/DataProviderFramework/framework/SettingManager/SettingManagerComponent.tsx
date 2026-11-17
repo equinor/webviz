@@ -29,6 +29,7 @@ export function SettingManagerComponent<
     const componentRef = React.useRef<(props: SettingComponentPropsInterface<any, any>) => React.ReactNode>(
         props.setting.makeComponent(),
     );
+    const settingType = props.setting.getType();
     const value = usePublishSubscribeTopicValue(props.setting, SettingTopic.INTERNAL_VALUE);
     const attributes = usePublishSubscribeTopicValue(props.setting, SettingTopic.ATTRIBUTES);
     const areAttributesResolved = usePublishSubscribeTopicValue(props.setting, SettingTopic.ARE_ATTRIBUTES_RESOLVED);
@@ -79,8 +80,13 @@ export function SettingManagerComponent<
     ) {
         return (
             <React.Fragment key={props.setting.getId()}>
-                <div className="py-4xs px-2xs flex w-32 items-center">{props.setting.getLabel()}</div>
-                <div className="text-warning-strong px-4xs py-4xs gap-x-2xs flex w-full items-center italic">
+                <div className="py-4xs px-2xs flex w-32 items-center" data-dpf-setting-label={settingType}>
+                    {props.setting.getLabel()}
+                </div>
+                <div
+                    className="text-warning-strong px-4xs py-4xs gap-x-2xs flex w-full items-center italic"
+                    data-dpf-setting={settingType}
+                >
                     Empty intersection
                 </div>
             </React.Fragment>
@@ -99,13 +105,16 @@ export function SettingManagerComponent<
 
         return (
             <React.Fragment key={props.setting.getId()}>
-                <div className="gap-x-2xs py-4xs px-2xs text-accent-subtle flex w-32 items-center">
+                <div
+                    className="gap-x-2xs py-4xs px-2xs text-accent-subtle flex w-32 items-center"
+                    data-dpf-setting-label={settingType}
+                >
                     <span>{props.setting.getLabel()}</span>
                     <span className="mb-2xs text-body-base">
                         <Link style={{ fontSize: 16 }} titleAccess="This settings is controlled by a shared setting" />
                     </span>
                 </div>
-                <div className="gap-x-2xs py-4xs px-2xs flex w-full items-center">
+                <div className="gap-x-2xs py-4xs px-2xs flex w-full items-center" data-dpf-setting={settingType}>
                     {isBlocked ? (
                         <i className="text-neutral-subtle">{makeBlockedMessage(blockedBy)}</i>
                     ) : isValid ? (
@@ -125,8 +134,10 @@ export function SettingManagerComponent<
 
     return (
         <React.Fragment key={props.setting.getId()}>
-            <div className="px-2xs py-4xs text-body-sm flex w-32 items-center">{props.setting.getLabel()}</div>
-            <div className="px-2xs py-4xs w-full min-w-0">
+            <div className="px-2xs py-4xs text-body-sm flex w-32 items-center" data-dpf-setting-label={settingType}>
+                {props.setting.getLabel()}
+            </div>
+            <div className="px-2xs py-4xs w-full min-w-0" data-dpf-setting={settingType}>
                 <StatusWrapper isPending={actuallyLoading}>
                     <div className="gap-y-3xs flex min-w-0 flex-col">
                         <Field.Root inline invalid={isShownAsInvalid}>
