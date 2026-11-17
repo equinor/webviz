@@ -123,7 +123,7 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
                 <div className="flex">
                     <ComboboxCompositions.WithBrowseButtons
                         items={sensitivityNameItems}
-                        value={props.value?.sensitivityName ?? ""}
+                        value={props.value?.sensitivityName ?? null}
                         onValueChange={handleSensitivityNameChange}
                         disabled={props.disabled}
                         layoutClassName="grow"
@@ -131,7 +131,7 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
                     <ComboboxCompositions.WithBrowseButtons
                         items={sensitivityCaseItems}
                         // The kept case, even when invalid - the setting flags it, and only the user changes it
-                        value={props.value?.sensitivityCase ?? ""}
+                        value={props.value?.sensitivityCase ?? null}
                         onValueChange={handleSensitivityCaseChange}
                         disabled={props.disabled}
                         layoutClassName="grow"

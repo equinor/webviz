@@ -11,6 +11,7 @@ export type ValueCountProps<TValue> = {
     flatItems: ComboboxItem<TValue>[];
     getLabelForValue: (value: TValue) => string;
     isValueAvailable: (value: TValue) => boolean;
+    hasOnlyUnavailableValues: (value: unknown) => boolean;
     unavailableValueText: string;
     children?: React.ReactNode;
 };
@@ -43,6 +44,7 @@ function ComboboxValueCountInputComponent<TValue>(
                                 data-has-selection={values.length > 0 ? "" : undefined}
                                 data-unavailable={unavailableText ? "" : undefined}
                                 aria-description={unavailableText}
+                                invalid={props.hasOnlyUnavailableValues(value)}
                                 className="data-has-selection:placeholder:text-neutral-strong! data-unavailable:placeholder:text-danger-subtle!"
                                 placeholder={countText}
                             />

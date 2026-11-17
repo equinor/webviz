@@ -8,6 +8,7 @@ import { ComboboxInput } from "./_input";
 
 export type ComboboxSingleValueInputProps<TValue> = {
     isValueAvailable: (value: TValue) => boolean;
+    hasOnlyUnavailableValues: (value: unknown) => boolean;
     unavailableValueText: string;
     renderItemAdornment?: (value: TValue) => React.ReactNode;
     placeholder?: string;
@@ -35,6 +36,7 @@ function ComboboxSingleValueInputComponent<TValue>(
                                     placeholder={props.placeholder}
                                     data-unavailable={isUnavailable ? "" : undefined}
                                     aria-description={isUnavailable ? props.unavailableValueText : undefined}
+                                    invalid={props.hasOnlyUnavailableValues(value)}
                                     className="data-unavailable:text-danger-subtle"
                                 />
                             </div>

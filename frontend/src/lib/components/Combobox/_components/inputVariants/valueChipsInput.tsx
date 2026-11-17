@@ -11,6 +11,7 @@ export type ComboboxValueChipsInputProps<TValue> = {
     placeholder?: string;
     getLabelForValue: (value: TValue) => string;
     isValueAvailable: (value: TValue) => boolean;
+    hasOnlyUnavailableValues: (value: unknown) => boolean;
     unavailableValueText: string;
     renderItemAdornment?: (item: TValue) => React.ReactNode;
     children?: React.ReactNode;
@@ -52,7 +53,11 @@ export function ComboboxValueChipsInputComponent<TValue>(
                                     />
                                 );
                             })}
-                        <ComboboxInput ref={ref} placeholder={value.length > 0 ? "" : props.placeholder} />
+                        <ComboboxInput
+                            ref={ref}
+                            placeholder={value.length > 0 ? "" : props.placeholder}
+                            invalid={props.hasOnlyUnavailableValues(value)}
+                        />
                     </>
                 )}
             </ComboboxBase.Value>

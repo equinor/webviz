@@ -230,6 +230,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 {defaultedProps.multiple && defaultedProps.selectionMode === "chips" && (
                     <ComboboxValueChipsInput
                         ref={ref}
+                        hasOnlyUnavailableValues={hasOnlyUnavailableValues}
                         getLabelForValue={getLabelForValue}
                         isValueAvailable={isValueAvailable}
                         unavailableValueText={defaultedProps.unavailableValueText}
@@ -240,6 +241,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 {defaultedProps.multiple && defaultedProps.selectionMode === "count" && (
                     <ComboboxValueCountInput
                         ref={ref}
+                        hasOnlyUnavailableValues={hasOnlyUnavailableValues}
                         flatItems={flatItems}
                         getLabelForValue={getLabelForValue}
                         isValueAvailable={isValueAvailable}
@@ -249,6 +251,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 {!defaultedProps.multiple && (
                     <ComboboxSingleValueInput
                         ref={ref}
+                        hasOnlyUnavailableValues={hasOnlyUnavailableValues}
                         isValueAvailable={isValueAvailable}
                         unavailableValueText={defaultedProps.unavailableValueText}
                         renderItemAdornment={defaultedProps.renderItemAdornment}

@@ -283,7 +283,6 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             placeholder="Filter by Standard Results..."
                             multiple
                             items={standardResultItems}
-                            disabled={!casesQuery.data || standardResultItems.length === 0}
                             onValueChange={(value) => value && setSelectedStandardResults([...value])}
                             showClearAllButton
                         />
