@@ -36,6 +36,8 @@ export class BackendSyncManager {
                 ...getSessionMetadataOptions({
                     path: { session_id: sessionId },
                 }),
+                // This is a poll for the latest state - never serve it from the cache
+                staleTime: 0,
             });
 
             return new Date(metadata.updatedAt).getTime();

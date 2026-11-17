@@ -156,17 +156,20 @@ class DEPRECATED_InplaceVolumetricsAccess:
         pa.Table with columns: ZONE, REGION, FACIES, REAL, and the requested column names.
         """
 
-        realizations = await self._ensemble_context.realizationids_async
+        table_context = self._ensemble_context.tables.filter(
+            name=table_name, content="volumes", realization=True, aggregation=False
+        )
+        realizations = await table_context.realizationids_async
         if len(realizations) == 0:
             raise InvalidDataError(
-                f"No realizations found in the ensemble {self._case_uuid}, {self._ensemble_name}",
+                f"No realizations with volumes table {table_name} found in the ensemble {self._case_uuid}, {self._ensemble_name}",
                 Service.SUMO,
             )
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         table_loader.require_content_type("volumes")
         table_loader.require_table_name(table_name)
 
-        pa_table = await table_loader.get_single_realization_async(realizations[0])
+        pa_table = await table_loader.get_single_realization_async(min(realizations))
 
         pa_table = _tmp_remove_license_column_if_all_values_are_total(pa_table)
 

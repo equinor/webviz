@@ -3,8 +3,8 @@ import React from "react";
 import { orderBy } from "lodash";
 
 import type { CaseInfo_api } from "@api";
+import { useUserInfo } from "@framework/internal/auth/hooks";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
-import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { HasChangesIndicator } from "@lib/components/HasChangesIndicator";
 import { Table } from "@lib/components/Table";
 import { TableCompositions } from "@lib/components/Table/compositions";
@@ -51,7 +51,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
     const { onDataCollated, showOnlyMyCases, showOnlyOfficialCases } = props;
     const tableOverflowWrapperRef = React.useRef<HTMLDivElement>(null);
 
-    const { userInfo } = useAuthProvider();
+    const userInfo = useUserInfo();
     const userName = React.useMemo(() => {
         return userInfo?.username.replace("@equinor.com", "").toLowerCase() ?? "";
     }, [userInfo]);
@@ -249,7 +249,8 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                                             className={resolveClassNames(
                                                 "px-3xs py-4xs bg-canvas text-body-xs text-neutral-strong relative cursor-help rounded text-center",
                                                 {
-                                                    "bg-accent!": caseRow.numSelectedEnsembles > 0,
+                                                    "bg-accent-strong! text-accent-strong-on-emphasis!":
+                                                        caseRow.numSelectedEnsembles > 0,
                                                 },
                                             )}
                                         >
@@ -266,11 +267,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                                     </Tooltip>
                                 </Table.Cell>
                                 <Table.Cell>
-                                    <CaseNameAndIdCell
-                                        cellRowSelected={props.selectedCase === caseRow.uuid}
-                                        caseName={caseRow.name}
-                                        caseId={caseRow.uuid}
-                                    />
+                                    <CaseNameAndIdCell caseName={caseRow.name} caseId={caseRow.uuid} />
                                 </Table.Cell>
                                 <Table.Cell>
                                     <DescriptionCell description={caseRow.description} caseId={caseRow.uuid} />

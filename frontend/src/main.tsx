@@ -3,7 +3,8 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 
 import { client } from "@api";
-import { AuthProvider } from "@framework/internal/providers/AuthProvider";
+import { installAuthInterceptors } from "@framework/internal/auth/authInterceptors";
+import { AuthState, AuthStateStore } from "@framework/internal/auth/AuthStateStore";
 import { CustomQueryClientProvider } from "@framework/internal/providers/QueryClientProvider";
 import { toastManager } from "@framework/toastManager";
 import { Toast } from "@lib/components/Toast";
@@ -33,6 +34,13 @@ client.setConfig({
     baseURL: "/api",
 });
 
+const authStateStore = AuthStateStore.getInstance();
+installAuthInterceptors(client.instance, {
+    isLoggedIn: () => authStateStore.isLoggedIn(),
+    onUnauthorized: () => authStateStore.setAuthState(AuthState.NotLoggedIn),
+});
+authStateStore.fetchLoggedInUser();
+
 // --------------------------------------------------------------------
 
 /*
@@ -52,11 +60,9 @@ root.render(
         {/* Toast might be used in the error boundary fallback. We assume that the toast comp is very unlikely to crash, so we keep it outside */}
         <Toast toastManager={toastManager} />
         <GlobalErrorBoundary>
-            <AuthProvider>
-                <CustomQueryClientProvider>
-                    <App />
-                </CustomQueryClientProvider>
-            </AuthProvider>
+            <CustomQueryClientProvider>
+                <App />
+            </CustomQueryClientProvider>
         </GlobalErrorBoundary>
     </React.StrictMode>,
 );

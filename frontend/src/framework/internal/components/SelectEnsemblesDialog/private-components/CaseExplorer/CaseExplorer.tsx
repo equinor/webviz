@@ -17,7 +17,6 @@ import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
-import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
 
 import { readInitialStateFromLocalStorage, storeStateInLocalStorage } from "./_utils";
@@ -116,11 +115,25 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         return Array.from(standardResults).sort();
     }, [casesQuery.data]);
 
-    const [selectedStandardResults, setSelectedStandardResults] = useValidArrayState<string>({
-        initialState: [],
-        validStateArray: casesStandardResults,
-        keepStateWhenInvalid: !casesQuery.data, // Requires valid state when data is available, allows invalid while data is fetching
-    });
+    // Selection is kept as-is when switching asset; the Combobox marks values not available for the asset
+    const [selectedStandardResults, setSelectedStandardResults] = React.useState<string[]>([]);
+
+    // Keep the last loaded options while a new asset is loading, so the selection isn't marked unavailable meanwhile
+    const [standardResultOptions, setStandardResultOptions] = React.useState<string[]>([]);
+    if (casesQuery.data && casesStandardResults !== standardResultOptions) {
+        setStandardResultOptions(casesStandardResults);
+    }
+
+    const standardResultItems = React.useMemo(
+        () => standardResultOptions.map((elm) => ({ value: elm, label: elm })),
+        [standardResultOptions],
+    );
+
+    // Unavailable values are ignored when filtering
+    const activeStandardResults = React.useMemo(
+        () => selectedStandardResults.filter((res) => standardResultOptions.includes(res)),
+        [selectedStandardResults, standardResultOptions],
+    );
 
     const caseData = React.useMemo(() => {
         if (!casesQuery.data) {
@@ -128,14 +141,14 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         }
 
         let cases = casesQuery.data;
-        if (selectedStandardResults.length > 0) {
+        if (activeStandardResults.length > 0) {
             cases = cases.filter((c) =>
-                c.ensembles.some((ens) => ens.standardResults.some((res) => selectedStandardResults.includes(res))),
+                c.ensembles.some((ens) => ens.standardResults.some((res) => activeStandardResults.includes(res))),
             );
         }
 
         return cases;
-    }, [casesQuery.data, selectedStandardResults]);
+    }, [casesQuery.data, activeStandardResults]);
 
     const currentCaseSelection: CaseSelection | null = React.useMemo(() => {
         if (!selectedCaseUuid) {
@@ -148,10 +161,10 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         }
 
         const selectedCaseFilteredEnsembles =
-            selectedStandardResults.length === 0
+            activeStandardResults.length === 0
                 ? selectedCase.ensembles
                 : selectedCase.ensembles.filter((ens) =>
-                      ens.standardResults.some((res) => selectedStandardResults.includes(res)),
+                      ens.standardResults.some((res) => activeStandardResults.includes(res)),
                   );
 
         return {
@@ -159,7 +172,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
             caseUuid: selectedCaseUuid,
             filteredEnsembles: selectedCaseFilteredEnsembles,
         };
-    }, [casesQuery.data, selectedCaseUuid, selectedStandardResults]);
+    }, [casesQuery.data, selectedCaseUuid, activeStandardResults]);
 
     // Add useEffect that compares with previous selection before calling the callback
     const prevCaseSelectionRef = React.useRef<CaseSelection | null>(null);
@@ -269,8 +282,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             value={selectedStandardResults}
                             placeholder="Filter by Standard Results..."
                             multiple
-                            items={casesStandardResults.map((elm) => ({ value: elm, label: elm }))}
-                            disabled={casesStandardResults.length === 0}
+                            items={standardResultItems}
                             onValueChange={(value) => value && setSelectedStandardResults([...value])}
                             showClearAllButton
                         />

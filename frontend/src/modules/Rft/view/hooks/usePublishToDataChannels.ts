@@ -7,6 +7,7 @@ import { ChannelIds } from "../../channelDefs";
 import { makeRftDepthDataGenerator } from "../../dataGenerators";
 import type { Interfaces } from "../../interfaces";
 import type { RftRealizationCurve } from "../../typesAndEnums";
+import { interpolateValueAtDepth } from "../../utils/curveUtils";
 
 type PublishToDataChannelsParams = {
     entries: readonly RftRealizationCurve[];
@@ -38,7 +39,12 @@ export function usePublishToDataChannels(
 ): void {
     const contents: ChannelContentDefinition[] = [];
 
-    if (dataChannelDepth !== null && responseName) {
+    // Publish all ensembles (stable subplot count) unless the depth is outside every curve, so receivers show "No data"
+    const hasValueAtDepth =
+        dataChannelDepth !== null &&
+        entries.some((entry) => Number.isFinite(interpolateValueAtDepth(entry.depths, entry.values, dataChannelDepth)));
+
+    if (dataChannelDepth !== null && responseName && hasValueAtDepth) {
         const dateString = timestampUtcMs !== null ? timestampUtcMsToCompactIsoString(timestampUtcMs) : null;
         const groups = new Map<string, { ensembleIdent: RegularEnsembleIdent; entries: RftRealizationCurve[] }>();
         for (const entry of entries) {

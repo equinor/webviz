@@ -1,6 +1,7 @@
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { persistableFixableAtom } from "@framework/utils/atomUtils";
+import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
+import { computeQueryDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 import { areEnsembleIdentsEqual } from "@framework/utils/ensembleIdentUtils";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 
@@ -67,12 +68,16 @@ export const selectedTreeTypeAtom = persistableFixableAtom<string | null>({
 
 export const selectedDateTimeAtom = persistableFixableAtom<string | null>({
     initialValue: null,
-    computeDependenciesState: computeFlowNetworkQueryResultDependenciesState,
+    computeDependenciesState: computeTreeTypeDataDependenciesState,
     isValidFunction: ({ get, value }) => {
         const availableDateTimes = get(availableDateTimesAtom);
 
+        // With nothing to select, the (then disabled) control couldn't repair a kept value - so nothing is invalid
+        if (availableDateTimes.length === 0) {
+            return true;
+        }
         if (!value) {
-            return availableDateTimes.length === 0;
+            return false;
         }
         return availableDateTimes.includes(value);
     },
@@ -84,13 +89,17 @@ export const selectedDateTimeAtom = persistableFixableAtom<string | null>({
 
 export const selectedEdgeKeyAtom = persistableFixableAtom<string | null>({
     initialValue: null,
-    computeDependenciesState: computeFlowNetworkQueryResultDependenciesState,
+    computeDependenciesState: computeTreeTypeDataDependenciesState,
     isValidFunction: ({ get, value }) => {
         const availableEdgesMetadataList = get(edgeMetadataListAtom);
         const availableEdgeKeys = availableEdgesMetadataList.map((item) => item.key);
 
+        // With nothing to select (e.g. only "Other" node types), the disabled control couldn't repair a kept value
+        if (availableEdgeKeys.length === 0) {
+            return true;
+        }
         if (!value) {
-            return availableEdgeKeys.length === 0;
+            return false;
         }
         return availableEdgeKeys.includes(value);
     },
@@ -103,13 +112,17 @@ export const selectedEdgeKeyAtom = persistableFixableAtom<string | null>({
 
 export const selectedNodeKeyAtom = persistableFixableAtom<string | null>({
     initialValue: null,
-    computeDependenciesState: computeFlowNetworkQueryResultDependenciesState,
+    computeDependenciesState: computeTreeTypeDataDependenciesState,
     isValidFunction: ({ get, value }) => {
         const availableNodesMetadataList = get(nodeMetadataListAtom);
         const availableNodeKeys = availableNodesMetadataList.map((item) => item.key);
 
+        // With nothing to select, the disabled control couldn't repair a kept value
+        if (availableNodeKeys.length === 0) {
+            return true;
+        }
         if (!value) {
-            return availableNodeKeys.length === 0;
+            return false;
         }
         return availableNodeKeys.includes(value);
     },
@@ -125,13 +138,16 @@ function computeFlowNetworkQueryResultDependenciesState({
     get,
 }: {
     get: (atom: any) => any;
-}): "error" | "loading" | "loaded" {
-    const flowNetworkQueryResult = get(realizationFlowNetworkQueryAtom);
-    if (flowNetworkQueryResult.isError) {
-        return "error";
+}): PersistableAtomDependenciesState {
+    return computeQueryDependenciesState(get(realizationFlowNetworkQueryAtom));
+}
+
+// The time steps, edges and nodes belong to the selected tree type. While it is invalid, there is no data to check them
+// against - so they wait (and don't settle on the empty lists) until a valid tree type is selected.
+function computeTreeTypeDataDependenciesState({ get }: { get: (atom: any) => any }): PersistableAtomDependenciesState {
+    const flowNetworkQueryResultDependenciesState = computeFlowNetworkQueryResultDependenciesState({ get });
+    if (flowNetworkQueryResultDependenciesState !== "loaded") {
+        return flowNetworkQueryResultDependenciesState;
     }
-    if (flowNetworkQueryResult.isFetching) {
-        return "loading";
-    }
-    return "loaded";
+    return get(selectedTreeTypeAtom).isValidInContext ? "loaded" : "blocked";
 }

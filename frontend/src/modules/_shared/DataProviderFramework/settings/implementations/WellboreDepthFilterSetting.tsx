@@ -13,6 +13,38 @@ type InternalValueType = SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION
 type ExternalValueType = SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION_FILTER]["externalValue"] | null;
 type ValueRangeType = SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION_FILTER]["valueConstraints"] | null;
 
+// Per-field validity, composed together by isValueValid() below - also used directly in the component
+// to flag only the specific field that's actually wrong, instead of a single setting-wide flag applying
+// to all three fields at once.
+function isTopSurfaceValid(value: InternalValueType, valueConstraints: ValueRangeType): boolean {
+    if (value === null || valueConstraints === null) {
+        return true;
+    }
+    return value.topSurfaceName !== null && valueConstraints.surfaceNamesInStratOrder.includes(value.topSurfaceName);
+}
+
+function isBaseSurfaceValid(value: InternalValueType, valueConstraints: ValueRangeType): boolean {
+    if (value === null || valueConstraints === null || value.baseSurfaceName === null) {
+        return true;
+    }
+    if (!valueConstraints.surfaceNamesInStratOrder.includes(value.baseSurfaceName)) {
+        return false;
+    }
+    if (value.topSurfaceName === null) {
+        return true;
+    }
+    const topIndex = valueConstraints.surfaceNamesInStratOrder.indexOf(value.topSurfaceName);
+    const bottomIndex = valueConstraints.surfaceNamesInStratOrder.indexOf(value.baseSurfaceName);
+    return topIndex !== -1 && bottomIndex !== -1 && topIndex <= bottomIndex;
+}
+
+function isRealizationNumValid(value: InternalValueType, valueConstraints: ValueRangeType): boolean {
+    if (value === null || valueConstraints === null) {
+        return true;
+    }
+    return value.realizationNum !== null && valueConstraints.realizationNums.includes(value.realizationNum);
+}
+
 export class WellboreDepthFilterSetting implements CustomSettingImplementation<
     InternalValueType,
     ExternalValueType,
@@ -131,32 +163,11 @@ export class WellboreDepthFilterSetting implements CustomSettingImplementation<
             return false;
         }
 
-        if (value.topSurfaceName === null || value.realizationNum === null) {
-            return false;
-        }
-
-        if (!valueConstraints.surfaceNamesInStratOrder.includes(value.topSurfaceName)) {
-            return false;
-        }
-
-        if (value.baseSurfaceName !== null) {
-            if (!valueConstraints.surfaceNamesInStratOrder.includes(value.baseSurfaceName)) {
-                return false;
-            }
-
-            const topIndex = valueConstraints.surfaceNamesInStratOrder.indexOf(value.topSurfaceName);
-            const bottomIndex = valueConstraints.surfaceNamesInStratOrder.indexOf(value.baseSurfaceName);
-
-            if (topIndex === -1 || bottomIndex === -1 || topIndex > bottomIndex) {
-                return false;
-            }
-        }
-
-        if (!valueConstraints.realizationNums.includes(value.realizationNum)) {
-            return false;
-        }
-
-        return true;
+        return (
+            isTopSurfaceValid(value, valueConstraints) &&
+            isBaseSurfaceValid(value, valueConstraints) &&
+            isRealizationNumValid(value, valueConstraints)
+        );
     }
 
     serializeValue(value: InternalValueType): string {
@@ -256,7 +267,10 @@ export class WellboreDepthFilterSetting implements CustomSettingImplementation<
 
             return (
                 <div className="gap-y-2xs text-body-sm flex w-full flex-col">
-                    <FieldCompositions.Default label="Top Surface">
+                    <FieldCompositions.Default
+                        label="Top Surface"
+                        invalid={!isTopSurfaceValid(props.value, props.valueConstraints)}
+                    >
                         <ComboboxCompositions.WithBrowseButtons
                             items={topSurfaceOptions}
                             value={props.value?.topSurfaceName}
@@ -264,7 +278,10 @@ export class WellboreDepthFilterSetting implements CustomSettingImplementation<
                             disabled={props.disabled}
                         />
                     </FieldCompositions.Default>
-                    <FieldCompositions.Default label="Base Surface">
+                    <FieldCompositions.Default
+                        label="Base Surface"
+                        invalid={!isBaseSurfaceValid(props.value, props.valueConstraints)}
+                    >
                         <ComboboxCompositions.WithBrowseButtons
                             items={baseSurfaceOptions}
                             value={props.value?.baseSurfaceName}
@@ -272,7 +289,10 @@ export class WellboreDepthFilterSetting implements CustomSettingImplementation<
                             disabled={props.disabled}
                         />
                     </FieldCompositions.Default>
-                    <FieldCompositions.Default label="Realization Number">
+                    <FieldCompositions.Default
+                        label="Realization Number"
+                        invalid={!isRealizationNumValid(props.value, props.valueConstraints)}
+                    >
                         <ComboboxCompositions.WithBrowseButtons
                             items={realizationNumOptions}
                             value={props.value?.realizationNum}

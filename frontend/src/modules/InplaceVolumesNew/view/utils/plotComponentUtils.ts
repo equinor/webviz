@@ -20,6 +20,8 @@ export type MakePlotDataOptions = {
     showRealizationPoints: boolean;
     showPercentageInBar: boolean;
     showStatisticalLabels: boolean;
+    /** Name the subplot in hovers, e.g. the sensitivity case when the colour is a zone. */
+    showSubplotLabelInHover?: boolean;
 };
 
 /**
@@ -36,13 +38,14 @@ export function makePlotData({
     showRealizationPoints,
     showPercentageInBar,
     showStatisticalLabels,
-}: MakePlotDataOptions): (colorEntries: ColorEntry[]) => Partial<PlotData>[] {
-    return (colorEntries: ColorEntry[]): Partial<PlotData>[] => {
+    showSubplotLabelInHover = false,
+}: MakePlotDataOptions): (colorEntries: ColorEntry[], subplotLabel?: string) => Partial<PlotData>[] {
+    return (colorEntries: ColorEntry[], subplotLabel?: string): Partial<PlotData>[] => {
         const data: Partial<PlotData>[] = [];
-        const boxPlotKeyToPositionMap: Map<string, number> = new Map();
 
         for (const entry of colorEntries) {
             const { colorLabel: title, color, table } = entry;
+            const firstEntryTraceIndex = data.length;
 
             if (plotType === PlotType.HISTOGRAM) {
                 data.push(
@@ -73,21 +76,8 @@ export function makePlotData({
                     ),
                 );
             } else if (plotType === PlotType.BOX) {
-                let yAxisPosition = boxPlotKeyToPositionMap.get(entry.colorKey);
-                if (yAxisPosition === undefined) {
-                    yAxisPosition = -boxPlotKeyToPositionMap.size; // Negative value for placing top down
-                    boxPlotKeyToPositionMap.set(entry.colorKey, yAxisPosition);
-                }
                 data.push(
-                    ...makeBoxPlot(
-                        title,
-                        table,
-                        firstResultName,
-                        color,
-                        yAxisPosition,
-                        showStatisticalMarkers,
-                        showRealizationPoints,
-                    ),
+                    ...makeBoxPlot(title, table, firstResultName, color, showStatisticalMarkers, showRealizationPoints),
                 );
             } else if (plotType === PlotType.BAR) {
                 data.push(
@@ -102,10 +92,49 @@ export function makePlotData({
                     ),
                 );
             }
+
+            for (const trace of data.slice(firstEntryTraceIndex)) {
+                trace.legendgroup = entry.colorKey;
+                if (showSubplotLabelInHover && subplotLabel) {
+                    prependHoverLine(trace, subplotLabel);
+                }
+            }
         }
 
         return data;
     };
+}
+
+/**
+ * Box statistics and density curves hover from the trace name instead, which is also the legend name.
+ */
+function prependHoverLine(trace: Partial<PlotData>, line: string): void {
+    const prepend = (text: string) => `${line}<br>${text}`;
+    if (typeof trace.hovertemplate === "string") {
+        trace.hovertemplate = prepend(trace.hovertemplate);
+    } else if (Array.isArray(trace.hovertemplate)) {
+        trace.hovertemplate = trace.hovertemplate.map(prepend);
+    }
+    if (trace.type === "box" && Array.isArray(trace.text)) {
+        trace.text = trace.text.map((text) => prepend(String(text)));
+    }
+}
+
+/**
+ * Keeps a single legend entry per legendgroup: the first trace, across all subplots, that wants one.
+ */
+export function hideRepeatedLegendEntries(traces: Partial<PlotData>[]): void {
+    const groupsWithLegendEntry = new Set<string | undefined>();
+    for (const trace of traces) {
+        if (trace.showlegend === false) {
+            continue;
+        }
+        if (groupsWithLegendEntry.has(trace.legendgroup)) {
+            trace.showlegend = false;
+        } else {
+            groupsWithLegendEntry.add(trace.legendgroup);
+        }
+    }
 }
 
 function makeBarPlot(
@@ -173,6 +202,7 @@ function makeHistogram(
     return makePlotlyHistogramTraces({
         title,
         values: resultColumn.getAllRowValues() as number[],
+        realizations: getRealizations(table),
         resultName,
         color,
         numBins,
@@ -202,6 +232,7 @@ function makeDensityPlot(
     return makePlotlyDensityTraces({
         title,
         values: xValues,
+        realizations: getRealizations(table),
         color,
         resultName,
         showRealizationPoints,
@@ -215,9 +246,8 @@ function makeBoxPlot(
     table: Table,
     resultName: string,
     color: string,
-    yAxisPosition?: number,
-    showStatisticalMarkers?: boolean,
-    showRealizationPoints?: boolean,
+    showStatisticalMarkers: boolean,
+    showRealizationPoints: boolean,
 ): Partial<PlotData>[] {
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
@@ -226,10 +256,18 @@ function makeBoxPlot(
     return makePlotlyBoxPlotTraces({
         title,
         values: resultColumn.getAllRowValues() as number[],
+        realizations: getRealizations(table),
         resultName,
         color,
-        yAxisPosition,
-        showStatisticalMarkers: showStatisticalMarkers ?? false,
-        showRealizationPoints: showRealizationPoints ?? false,
+        showStatisticalMarkers,
+        showRealizationPoints,
     });
+}
+
+function getRealizations(table: Table): number[] {
+    const realColumn = table.getColumn("REAL");
+    if (!realColumn) {
+        throw new Error("REAL column not found");
+    }
+    return realColumn.getAllRowValues() as number[];
 }

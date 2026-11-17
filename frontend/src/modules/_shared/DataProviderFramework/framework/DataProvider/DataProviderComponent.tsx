@@ -29,6 +29,8 @@ export type DataProviderComponentProps = {
 
 export function DataProviderComponent(props: DataProviderComponentProps): React.ReactNode {
     const isExpanded = usePublishSubscribeTopicValue(props.dataProvider.getItemDelegate(), ItemDelegateTopic.EXPANDED);
+    const status = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS);
+    const isErrorOrInvalid = status === DataProviderStatus.ERROR || status === DataProviderStatus.INVALID_SETTINGS;
 
     function makeSetting(setting: SettingManager<any>) {
         const manager = props.dataProvider.getItemDelegate().getDataProviderManager();
@@ -53,9 +55,12 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
         <SortableListItem
             key={props.dataProvider.getItemDelegate().getId()}
             id={props.dataProvider.getItemDelegate().getId()}
+            itemKind="provider"
+            itemType={props.dataProvider.getType()}
             title={<EditName item={props.dataProvider} />}
             startAdornment={<StartActions dataProvider={props.dataProvider} />}
             endAdornment={<EndActions dataProvider={props.dataProvider} />}
+            headerClassNames={isErrorOrInvalid ? "bg-danger-canvas!" : undefined}
         >
             <div className="bg-neutral/20 relative">
                 <ErrorOverlay itemDelegate={props.dataProvider.getItemDelegate()} isExpanded={isExpanded} />
@@ -87,7 +92,14 @@ function StartActions(props: StartActionProps): React.ReactNode {
     return (
         <div className="flex items-center">
             <Tooltip content={isExpanded ? "Hide settings" : "Show settings"} side="bottom">
-                <Button onClick={handleToggleExpanded} variant="ghost" tone="neutral" size="small" iconOnly>
+                <Button
+                    onClick={handleToggleExpanded}
+                    aria-label={isExpanded ? "Hide settings" : "Show settings"}
+                    variant="ghost"
+                    tone="neutral"
+                    size="small"
+                    iconOnly
+                >
                     {isExpanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
                 </Button>
             </Tooltip>

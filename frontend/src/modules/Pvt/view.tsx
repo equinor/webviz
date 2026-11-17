@@ -50,6 +50,10 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
             return <ContentMessage type={ContentMessageType.INFO}>No data loaded yet.</ContentMessage>;
         }
 
+        if (!selectedPvtNums) {
+            return <ContentMessage type={ContentMessageType.INFO}>Invalid PVT number selection.</ContentMessage>;
+        }
+
         if (selectedPlots.length === 0) {
             return <ContentMessage type={ContentMessageType.INFO}>No plots selected.</ContentMessage>;
         }

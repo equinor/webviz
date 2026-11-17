@@ -20,7 +20,7 @@ import type {
     CustomGroupImplementation,
     CustomGroupImplementationWithSettings,
 } from "../interfacesAndTypes/customGroupImplementation";
-import { instanceofItemGroup, type ItemGroup } from "../interfacesAndTypes/entities";
+import { instanceofItemGroup } from "../interfacesAndTypes/entities";
 import type { StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { Settings } from "../settings/settingsDefinitions";
@@ -106,6 +106,7 @@ export type VisualizationGroup<
     children: (VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
     annotations: Annotation[];
     aggregatedErrorMessages: (StatusMessage | string)[];
+    aggregatedActionRequiredMessages: (StatusMessage | string)[];
     allItemIds: Set<string>;
     combinedBoundingBox: bbox.BBox | null;
     numLoadingDataProviders: number;
@@ -144,6 +145,18 @@ export type VisualizationAssemblerMakeOptions<
 > = {
     injectedData?: TInjectedData;
     initialAccumulatedData?: TAccumulatedData;
+};
+
+// The providers of the levels above a group, split by whether they come before or after the group in the tree, so that
+// they keep their place among the group's own providers
+type InheritedDataProviders = {
+    before: DataProvider<any, any, any>[];
+    after: DataProvider<any, any, any>[];
+};
+
+type CollectedGroup = {
+    group: Group<any>;
+    numDataProvidersBefore: number;
 };
 
 export class VisualizationAssembler<
@@ -195,7 +208,7 @@ export class VisualizationAssembler<
     ): AssemblerProduct<TTarget, TCustomGroupProps, TAccumulatedData> {
         return this.makeRecursively(
             dataProviderManager.getGroupDelegate(),
-            [],
+            { before: [], after: [] },
             options?.initialAccumulatedData ?? ({} as TAccumulatedData),
             dataProviderManager.isDeserializing(),
             options?.injectedData,
@@ -211,35 +224,18 @@ export class VisualizationAssembler<
         }
     }
 
-    private makeRecursively(
+    /*
+     * Collects the groups and data providers on the level of the given group delegate. Context boundaries only scope
+     * settings, so their items are collected as if they were on the level of the boundary itself - e.g. a provider in a
+     * boundary is passed down into the views next to it, just like a provider outside of it.
+     */
+    private collectLevelItemsRecursively(
         groupDelegate: GroupDelegate,
-        inheritedDataProviders: DataProvider<any, any, any>[],
-        accumulatedData: TAccumulatedData,
-        isRestoringState: boolean,
-        injectedData?: TInjectedData,
-    ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
-        const children: (
-            | VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>
-            | DataProviderVisualization<TTarget>
-        )[] = [];
-        const annotations: Annotation[] = [];
-        const aggregatedErrorMessages: (StatusMessage | string)[] = [];
-        const allItemIds = new Set<string>();
-        let hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget> = {};
-        let numLoadingDataProviders = 0;
-        let numDataProviders = 0;
-        let combinedBoundingBox: bbox.BBox | null = null;
-
-        const itemGroups: ItemGroup[] = [];
-        const dataProviders: DataProvider<any, any, any>[] = [];
-
-        const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
-            if (boundingBox) {
-                combinedBoundingBox =
-                    combinedBoundingBox === null ? boundingBox : bbox.combine(boundingBox, combinedBoundingBox);
-            }
-        };
-
+        allItemIds: Set<string>,
+        aggregatedErrorMessages: (StatusMessage | string)[],
+        groups: CollectedGroup[],
+        dataProviders: DataProvider<any, any, any>[],
+    ): void {
         for (const child of groupDelegate.getChildren()) {
             // Register item id
             allItemIds.add(child.getItemDelegate().getId());
@@ -267,19 +263,61 @@ export class VisualizationAssembler<
                 continue;
             }
 
-            if (instanceofItemGroup(child)) {
-                itemGroups.push(child);
-            }
-
-            if (child instanceof DataProvider) {
+            if (child instanceof Group) {
+                groups.push({ group: child, numDataProvidersBefore: dataProviders.length });
+            } else if (instanceofItemGroup(child)) {
+                this.collectLevelItemsRecursively(
+                    child.getGroupDelegate(),
+                    allItemIds,
+                    aggregatedErrorMessages,
+                    groups,
+                    dataProviders,
+                );
+            } else if (child instanceof DataProvider) {
                 dataProviders.push(child);
             }
         }
+    }
 
-        for (const itemGroup of itemGroups) {
+    private makeRecursively(
+        groupDelegate: GroupDelegate,
+        inheritedDataProviders: InheritedDataProviders,
+        accumulatedData: TAccumulatedData,
+        isRestoringState: boolean,
+        injectedData?: TInjectedData,
+    ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
+        const children: (
+            | VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>
+            | DataProviderVisualization<TTarget>
+        )[] = [];
+        const annotations: Annotation[] = [];
+        const aggregatedErrorMessages: (StatusMessage | string)[] = [];
+        const aggregatedActionRequiredMessages: (StatusMessage | string)[] = [];
+        const allItemIds = new Set<string>();
+        let hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget> = {};
+        let numLoadingDataProviders = 0;
+        let numDataProviders = 0;
+        let combinedBoundingBox: bbox.BBox | null = null;
+
+        const groups: CollectedGroup[] = [];
+        const dataProviders: DataProvider<any, any, any>[] = [];
+
+        const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
+            if (boundingBox) {
+                combinedBoundingBox =
+                    combinedBoundingBox === null ? boundingBox : bbox.combine(boundingBox, combinedBoundingBox);
+            }
+        };
+
+        this.collectLevelItemsRecursively(groupDelegate, allItemIds, aggregatedErrorMessages, groups, dataProviders);
+
+        for (const { group, numDataProvidersBefore } of groups) {
             const product = this.makeRecursively(
-                itemGroup.getGroupDelegate(),
-                [...inheritedDataProviders, ...dataProviders],
+                group.getGroupDelegate(),
+                {
+                    before: [...inheritedDataProviders.before, ...dataProviders.slice(0, numDataProvidersBefore)],
+                    after: [...dataProviders.slice(numDataProvidersBefore), ...inheritedDataProviders.after],
+                },
                 accumulatedData,
                 isRestoringState,
                 injectedData,
@@ -287,6 +325,7 @@ export class VisualizationAssembler<
 
             accumulatedData = product.accumulatedData;
             aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
+            aggregatedActionRequiredMessages.push(...product.aggregatedActionRequiredMessages);
 
             // Add all descendant item ids of the group to the set of all item ids
             for (const id of product.allItemIds) {
@@ -301,23 +340,10 @@ export class VisualizationAssembler<
             numDataProviders += product.numDataProviders;
             maybeApplyBoundingBox(product.combinedBoundingBox);
 
-            if (itemGroup instanceof Group) {
-                const group = this.makeGroup(itemGroup, product);
-
-                children.push(group);
-                continue;
-            } else {
-                annotations.push(...product.annotations);
-            }
-
-            children.push(...product.children);
+            children.push(this.makeGroup(group, product));
         }
 
-        for (const child of [...inheritedDataProviders, ...dataProviders]) {
-            if (children.some((el) => el.id === child.getItemDelegate().getId())) {
-                continue;
-            }
-
+        for (const child of [...inheritedDataProviders.before, ...dataProviders, ...inheritedDataProviders.after]) {
             numDataProviders++;
 
             // IDLE as well - a provider that hasn't started loading yet has no current data either
@@ -326,6 +352,10 @@ export class VisualizationAssembler<
             }
 
             if (child.getStatus() === DataProviderStatus.INVALID_SETTINGS) {
+                const invalidSettings = child.getSettingsContextDelegate().getInvalidSettings();
+                const name = child.getItemDelegate().getName();
+                const details = invalidSettings.length > 0 ? `: invalid ${invalidSettings.join(", ")}` : "";
+                aggregatedActionRequiredMessages.push(`${name}${details}`);
                 continue;
             }
 
@@ -374,6 +404,7 @@ export class VisualizationAssembler<
             groupType: null,
             children,
             aggregatedErrorMessages,
+            aggregatedActionRequiredMessages,
             allItemIds,
             combinedBoundingBox,
             annotations,
@@ -435,6 +466,7 @@ export class VisualizationAssembler<
             children: product.children,
             annotations: product.annotations,
             aggregatedErrorMessages: product.aggregatedErrorMessages,
+            aggregatedActionRequiredMessages: product.aggregatedActionRequiredMessages,
             allItemIds: product.allItemIds,
             combinedBoundingBox: product.combinedBoundingBox,
             numLoadingDataProviders: product.numLoadingDataProviders,

@@ -214,6 +214,21 @@ describe("computeColumnLayout", () => {
         expect(layout.lastPinnedKey).toBe("ZONE");
     });
 
+    test("SENSITIVITY is pinned with the other identifier columns", () => {
+        const columnsConfig: TableColumnsConfig = {
+            ENSEMBLE: { label: "ENSEMBLE", columnType: ColumnType.ENSEMBLE },
+            SENSITIVITY: { label: "SENSITIVITY", columnType: ColumnType.SENSITIVITY },
+            ...makeStatisticalConfig(),
+        };
+        const cases = ["rms_seed", "faults:low", "faults:high"];
+        const rows = makeStatisticalRows().map((row, i) => ({ ...row, SENSITIVITY: cases[i] }));
+
+        const layout = computeColumnLayout(columnsConfig, rows, formatPlain, WIDE_WRAPPER_PX);
+
+        expect(layout.stickyLeftPxByKey.get("SENSITIVITY")).toBe(layout.widthPxByKey.get("ENSEMBLE"));
+        expect(layout.lastPinnedKey).toBe("ZONE");
+    });
+
     test("pins the longest leading run of identifier columns that fits half the wrapper", () => {
         const wideLayout = computeColumnLayout(
             makeStatisticalConfig(),

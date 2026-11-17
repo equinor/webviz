@@ -1,7 +1,8 @@
 import { FmuAnimatedLogo } from "@assets/FmuAnimatedLogo";
 import { FmuLogo } from "@assets/FmuLogo";
 
-import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
+import { AuthState, AuthStateStore } from "@framework/internal/auth/AuthStateStore";
+import { useAuthState } from "@framework/internal/auth/hooks";
 import { Button } from "@lib/components/Button";
 import { Heading, Paragraph } from "@lib/components/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -14,10 +15,25 @@ export type AuthenticationBoundaryProps = {
 };
 
 export function AuthenticationBoundary(props: AuthenticationBoundaryProps) {
-    const { authState } = useAuthProvider();
+    const authState = useAuthState();
 
     function signIn() {
-        window.location.href = `/api/login?redirect_url_after_login=${btoa(window.location.pathname + window.location.search + window.location.hash)}`;
+        // Before actually redirecting to the login page, check first if we might already have been logged in elsewhere
+        AuthStateStore.getInstance()
+            .checkIsLoggedInOnBackend()
+            .then((isLoggedIn) => {
+                // If still not logged in, redirect to the login page
+                if (!isLoggedIn) {
+                    const redirectTargetAfterLogin =
+                        window.location.pathname + window.location.search + window.location.hash;
+                    window.location.href = `/api/login?${new URLSearchParams({ redirect_target_after_login: redirectTargetAfterLogin })}`;
+                    return;
+                }
+                // Otherwise, the user is already logged in, so we reload the page to start fresh but logged in.
+                // The auth state is deliberately left untouched - continuing in place could leave this page
+                // with a second workbench next to the one from before the logout.
+                window.location.reload();
+            });
     }
 
     let content: React.ReactNode = null;

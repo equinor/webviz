@@ -7,8 +7,8 @@ import { selectedNodeTypesAtom, selectedResamplingFrequencyAtom } from "./baseAt
 import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./persistableFixableAtoms";
 
 export const realizationFlowNetworkQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom).value;
-    const selectedRealization = get(selectedRealizationAtom).value;
+    const { value: selectedEnsembleIdent, isValidInContext: ensembleIdentValid } = get(selectedEnsembleIdentAtom);
+    const { value: selectedRealization, isValidInContext: realizationValid } = get(selectedRealizationAtom);
     const selectedResamplingFrequency = get(selectedResamplingFrequencyAtom);
     const selectedNodeTypesArray = [...get(selectedNodeTypesAtom)];
 
@@ -27,7 +27,9 @@ export const realizationFlowNetworkQueryAtom = atomWithQuery((get) => {
             selectedEnsembleIdent?.getCaseUuid() &&
                 selectedEnsembleIdent?.getEnsembleName() &&
                 selectedRealization !== null &&
-                selectedNodeTypesArray.length > 0,
+                selectedNodeTypesArray.length > 0 &&
+                ensembleIdentValid &&
+                realizationValid,
         ),
     };
 

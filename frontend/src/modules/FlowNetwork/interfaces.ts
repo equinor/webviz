@@ -2,6 +2,7 @@ import type { DatedFlowNetwork_api, FlowNetworkMetadata_api } from "@api";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
+    areNetworkSelectionsValidAtom,
     datedNetworksAtom,
     edgeMetadataListAtom,
     nodeMetadataListAtom,
@@ -22,6 +23,7 @@ type SettingsToViewInterface = {
     selectedNodeKey: string;
     selectedDateTime: string;
     queryStatus: QueryStatus;
+    areNetworkSelectionsValid: boolean;
 };
 
 export type Interfaces = {
@@ -29,6 +31,9 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
+    areNetworkSelectionsValid: (get) => {
+        return get(areNetworkSelectionsValidAtom);
+    },
     edgeMetadataList: (get) => {
         return get(edgeMetadataListAtom);
     },
