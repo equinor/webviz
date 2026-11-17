@@ -78,6 +78,15 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
             .map((elm) => ({ label: elm, value: elm }));
     }, [props.caseData]);
 
+    const isModelAvailable = React.useCallback(
+        (value: string) => casesModelNames.some((item) => predicateSelectionFilter([value], item.value)),
+        [casesModelNames],
+    );
+    const isRevisionAvailable = React.useCallback(
+        (value: string) => casesModelRevisions.some((item) => predicateSelectionFilter([value], item.value)),
+        [casesModelRevisions],
+    );
+
     return (
         <Table.Row layoutClassName="font-normal!" sortable={false} formOnEmphasis>
             <Table.Cell noPadding></Table.Cell>
@@ -123,6 +132,7 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
                     layoutClassName="h-full"
                     value={props.filterState["model"] ?? []}
                     items={casesModelNames}
+                    isValueAvailable={isModelAvailable}
                     multiple
                     selectionMode="count"
                     onValueChange={(v) => props.onFilterStateChange("model", v)}
@@ -133,6 +143,7 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
                     layoutClassName="h-full"
                     value={props.filterState["revision"] ?? []}
                     items={casesModelRevisions}
+                    isValueAvailable={isRevisionAvailable}
                     multiple
                     selectionMode="count"
                     onValueChange={(v) => props.onFilterStateChange("revision", v)}
@@ -177,12 +188,14 @@ export function useCaseDataFilter(caseData: CaseInfo_api[] | undefined, filterSt
             if (!caseData) return [];
             if (Object.values(filterState).every((fs) => fs == null)) return caseData;
 
-            const availableModels = new Set(caseData.map((c) => c.modelName).filter(Boolean));
-            const availableRevisions = new Set(caseData.map((c) => c.modelRevision).filter(Boolean));
+            const availableModels = new Set(caseData.flatMap((c) => (c.modelName ? [c.modelName.toLowerCase()] : [])));
+            const availableRevisions = new Set(
+                caseData.flatMap((c) => (c.modelRevision ? [c.modelRevision.toLowerCase()] : [])),
+            );
             const activeFilterState: CaseTableFilterState = {
                 ...filterState,
-                model: filterState.model?.filter((value) => availableModels.has(value)),
-                revision: filterState.revision?.filter((value) => availableRevisions.has(value)),
+                model: filterState.model?.filter((value) => availableModels.has(value.toLowerCase())),
+                revision: filterState.revision?.filter((value) => availableRevisions.has(value.toLowerCase())),
             };
 
             return caseData.filter((c) => applyFilter(c, activeFilterState));
