@@ -4,6 +4,7 @@ import {
     ALL_STATISTIC_LABELS,
     FOUR_RESULT_NAMES,
     makeResponsesAsRowsFixture,
+    makeSensitivityStatisticalFixture,
     makeWideStatisticalFixture,
 } from "./support/inplaceVolumesTableFixtures";
 import { InplaceVolumesTableHarness } from "./support/InplaceVolumesTableHarness";
@@ -307,5 +308,58 @@ test.describe("InplaceVolumesTable responses as rows", () => {
         const content = await readDownloadAsString(await downloadPromise);
 
         expect(content.split("\n")[0]).toBe("ENSEMBLE,TABLE_NAME,FLUID,ZONE,RESPONSE,Mean,Stddev,P10,P90,Min,Max");
+    });
+});
+
+test.describe("InplaceVolumesTable sensitivity column", () => {
+    const CASE_LABELS = ["rms_seed", "faults:low", "faults:high"];
+
+    test("SENSITIVITY is shown as a column with the cases", async ({ mount }) => {
+        const { columnsConfig, rows } = makeSensitivityStatisticalFixture(
+            NUM_ROWS,
+            CASE_LABELS,
+            FOUR_RESULT_NAMES,
+            ALL_STATISTIC_LABELS,
+        );
+        const cmp = await mount(
+            <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />,
+        );
+
+        await expect(cmp.getByRole("button", { name: "SENSITIVITY" })).toBeVisible();
+        await expect(cmp.locator("tbody td", { hasText: "faults:low" }).first()).toBeVisible();
+    });
+
+    test("a single case moves SENSITIVITY to the constant caption", async ({ mount }) => {
+        const { columnsConfig, rows } = makeSensitivityStatisticalFixture(
+            NUM_ROWS,
+            ["faults:high"],
+            ["STOIIP"],
+            ["Mean", "P10", "P90"],
+        );
+        const cmp = await mount(
+            <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />,
+        );
+
+        await expect(cmp.getByRole("button", { name: "ZONE" })).toBeVisible();
+        await expect(cmp.getByRole("button", { name: "SENSITIVITY" })).toHaveCount(0);
+        await expect(cmp.getByText("SENSITIVITY: faults:high")).toBeVisible();
+    });
+
+    test("CSV header contains SENSITIVITY after FLUID", async ({ mount, page }) => {
+        const { columnsConfig, rows } = makeSensitivityStatisticalFixture(
+            NUM_ROWS,
+            CASE_LABELS,
+            ["STOIIP"],
+            ["Mean", "P10", "P90"],
+        );
+        const cmp = await mount(
+            <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />,
+        );
+
+        const downloadPromise = page.waitForEvent("download");
+        await cmp.getByRole("button", { name: "Download CSV" }).click();
+        const content = await readDownloadAsString(await downloadPromise);
+
+        expect(content.split("\n")[0].startsWith("ENSEMBLE,TABLE_NAME,FLUID,SENSITIVITY,ZONE,")).toBe(true);
     });
 });

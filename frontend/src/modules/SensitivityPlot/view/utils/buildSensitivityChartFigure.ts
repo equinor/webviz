@@ -1,27 +1,28 @@
-import type { ViewContext } from "@framework/ModuleContext";
 import type { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
 import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing";
-import type { Interfaces } from "@modules/SensitivityPlot/interfaces";
 
+import type { ColorBy } from "../../typesAndEnums";
 import { SensitivityChartFigure } from "../components/sensitivityChartFigure";
-import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
 
-export function useSensitivityChart(
-    viewContext: ViewContext<Interfaces>,
+import type { SensitivityDataScaler } from "./sensitivityDataScaler";
+
+export type SensitivityChartOptions = {
+    showLabels: boolean;
+    showSensitivityMeanPoints: boolean;
+    showRealizationPoints: boolean;
+    colorBy: ColorBy;
+};
+
+export function buildSensitivityChartFigure(
     width: number,
     height: number,
     sensitivityColorMap: SensitivityColorMap,
-    sensitivityResponseDataset: SensitivityResponseDataset | null,
+    sensitivityResponseDataset: SensitivityResponseDataset,
     sensitivityDataScaler: SensitivityDataScaler,
-): SensitivityChartFigure | null {
-    const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
-    const showSensitivityMeanPoints = viewContext.useSettingsToViewInterfaceValue("showSensitivityMeanPoints");
-    const colorBy = viewContext.useSettingsToViewInterfaceValue("colorBy");
-    const showRealizationPoints = viewContext.useSettingsToViewInterfaceValue("showRealizationPoints");
+    options: SensitivityChartOptions,
+): SensitivityChartFigure {
+    const { showLabels, showSensitivityMeanPoints, showRealizationPoints, colorBy } = options;
 
-    if (!sensitivityResponseDataset) {
-        return null;
-    }
     const chartFigure = new SensitivityChartFigure(
         width,
         height,

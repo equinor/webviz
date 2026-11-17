@@ -95,13 +95,13 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
         const activeName = activePolyline?.name.trim() ? activePolyline.name : "This polyline";
         const actions: ConfirmAction[] = canSaveActivePolyline
             ? [
-                  { id: "keep-editing", label: "Keep editing" },
                   { id: "discard", label: "Discard", color: "danger" },
                   { id: "save", label: "Save", color: "primary" },
+                  { id: "keep-editing", label: "Keep editing" },
               ]
             : [
-                  { id: "keep-editing", label: "Keep editing" },
                   { id: "discard", label: "Discard", color: "danger" },
+                  { id: "keep-editing", label: "Keep editing" },
               ];
 
         let message = `"${activeName}" has not been saved. Do you want to save it before closing, or discard your changes?`;

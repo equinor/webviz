@@ -2,76 +2,57 @@ import { isEqual } from "lodash-es";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { persistableFixableAtom } from "@framework/utils/atomUtils";
-import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { computeQueryDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
+import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 
 import { fixupVectorName } from "../utils/fixupVectorName";
 
-import { syncedRegularEnsembleIdentsAtom, syncedVectorNameAtom } from "./baseAtoms";
 import { availableSensitivityNamesAtom, availableVectorNamesAtom } from "./derivedAtoms";
 import { vectorListQueryAtom } from "./queryAtoms";
 
+// Synced ensembles are written straight into this atom by the settings' sync handler, so validity
+// only needs to check against the ensemble set.
 export const selectedRegularEnsembleIdentAtom = persistableFixableAtom<RegularEnsembleIdent | null>({
     initialValue: null,
     isValidFunction: ({ get, value }) => {
-        const syncedEnsembleIdents = get(syncedRegularEnsembleIdentsAtom);
         const ensembleSet = get(EnsembleSetAtom);
 
-        // Synced ensemble takes precedence
-        const hasInvalidSyncedEnsemble =
-            syncedEnsembleIdents !== null &&
-            syncedEnsembleIdents.length > 0 &&
-            !syncedEnsembleIdents.some((ident) => ident.equals(value));
-        if (!value || hasInvalidSyncedEnsemble) {
+        if (!value) {
             return false;
         }
         return ensembleSet.findEnsemble(value) !== null;
     },
     fixupFunction: ({ get, value }) => {
-        const syncedRegularEnsembleIdents = get(syncedRegularEnsembleIdentsAtom);
         const ensembleSet = get(EnsembleSetAtom);
 
-        const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(value ?? null, syncedRegularEnsembleIdents);
-
-        return fixupRegularEnsembleIdent(candidateEnsembleIdent, ensembleSet);
+        return fixupRegularEnsembleIdent(value ?? null, ensembleSet);
     },
 });
 
 /**
- * Atom that handles vector name and tag in synch with fixup
+ * Atom that handles vector name and tag with fixup. Synced vector names are written straight into
+ * this atom by the settings' sync handler.
  */
 export const selectedVectorNameAndTagAtom = persistableFixableAtom<{ name: string | null; tag: string | null } | null>({
     initialValue: null,
     areEqualFunction: isEqual,
-    computeDependenciesState: ({ get }) => {
-        const vectorListQuery = get(vectorListQueryAtom);
-        if (vectorListQuery.isError) {
-            return "error";
-        }
-        if (vectorListQuery.isFetching) {
-            return "loading";
-        }
-        return "loaded";
-    },
+    // A disabled query (e.g. while the ensemble is invalid) is "blocked", whatever it has cached
+    computeDependenciesState: ({ get }) => computeQueryDependenciesState(get(vectorListQueryAtom)),
     isValidFunction: ({ get, value }) => {
-        const syncedVectorName = get(syncedVectorNameAtom);
         const availableVectorNames = get(availableVectorNamesAtom);
 
-        if (syncedVectorName) {
-            return value?.name === syncedVectorName && value?.tag === syncedVectorName;
-        }
-        if (!value || (value.name && !availableVectorNames.includes(value.name))) {
+        if (!value) {
             return false;
         }
-        return true;
+        // A tag that resolves to no available vector (e.g. typed, or kept from another ensemble) is no valid selection -
+        // unless there are no vectors to select at all
+        if (value.name === null) {
+            return availableVectorNames.length === 0;
+        }
+        return availableVectorNames.includes(value.name);
     },
     fixupFunction: ({ get, value }) => {
-        const syncedVectorName = get(syncedVectorNameAtom);
         const availableVectorNames = get(availableVectorNamesAtom);
-
-        if (syncedVectorName) {
-            return { name: syncedVectorName, tag: syncedVectorName };
-        }
 
         const fixedUpVectorName = fixupVectorName(value?.name ?? null, availableVectorNames);
         if (fixedUpVectorName !== value?.name) {

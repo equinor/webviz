@@ -173,6 +173,11 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         statusWriter.addError(error);
     }
 
+    // Retrieve action-required messages from assembler (e.g. invalid layer settings)
+    for (const message of assemblerProduct.aggregatedActionRequiredMessages) {
+        statusWriter.flagActionRequired(message);
+    }
+
     // Set loading status
     const isLoading = isVisualizationLoading(assemblerProduct);
     statusWriter.setLoading(isLoading);

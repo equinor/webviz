@@ -32,7 +32,7 @@ import {
 type RftApiError = AxiosError<HTTPValidationError_api>;
 
 export const rftTableDefinitionQueriesAtom = atomWithQueries(function makeRftTableDefinitionQueryOptions(get) {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const { value: selectedEnsembleIdents, isValidInContext: ensembleIdentsValid } = get(selectedEnsembleIdentsAtom);
 
     const queries = selectedEnsembleIdents.map(function makeRftTableDefinitionQuery(ensembleIdent) {
         const options = getRftTableDefinitionOptions({
@@ -44,7 +44,7 @@ export const rftTableDefinitionQueriesAtom = atomWithQueries(function makeRftTab
         });
 
         return function getRftTableDefinitionQueryOptions() {
-            return options;
+            return { ...options, enabled: ensembleIdentsValid };
         };
     });
 
@@ -52,14 +52,15 @@ export const rftTableDefinitionQueriesAtom = atomWithQueries(function makeRftTab
 });
 
 export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRealizationDataQueryOptions(get) {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
-    const selectedWellName = get(selectedWellNameAtom).value;
-    const selectedResponseName = get(selectedResponseNameAtom).value;
-    const selectedTimestampUtcMs = get(selectedTimestampUtcMsAtom).value;
+    const { value: selectedEnsembleIdents, isValidInContext: ensembleIdentsValid } = get(selectedEnsembleIdentsAtom);
+    const { value: selectedWellName, isValidInContext: wellNameValid } = get(selectedWellNameAtom);
+    const { value: selectedResponseName, isValidInContext: responseNameValid } = get(selectedResponseNameAtom);
+    const { value: selectedTimestampUtcMs, isValidInContext: timestampValid } = get(selectedTimestampUtcMsAtom);
     const validRealizationNumbers = get(validRealizationNumbersAtom);
 
     const realizationsEncodedAsUintListStr =
         validRealizationNumbers.length > 0 ? encodeAsUintListStr(validRealizationNumbers) : null;
+    const areSelectionsValid = ensembleIdentsValid && wellNameValid && responseNameValid && timestampValid;
 
     const queries = selectedEnsembleIdents.map(function makeRftRealizationDataQuery(ensembleIdent) {
         const options = getRftRealizationDataOptions({
@@ -77,12 +78,20 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
         return function getRftRealizationDataQueryOptions() {
             return {
                 ...options,
-                enabled: Boolean(selectedWellName && selectedResponseName && selectedTimestampUtcMs !== null),
+                enabled: Boolean(
+                    selectedWellName && selectedResponseName && selectedTimestampUtcMs !== null && areSelectionsValid,
+                ),
             };
         };
     });
 
     function combine(results: UseQueryResult<RftRealizationData_api[], RftApiError>[]): RftRealizationDataResult {
+        // A disabled query keeps its cached data and error, which must not be exposed for an invalid selection
+        // (e.g. a removed ensemble whose query key is still cached)
+        if (!areSelectionsValid) {
+            return { dataAccessor: null, isFetching: false, isError: false, errors: [] };
+        }
+
         const ensembleData: RftEnsembleRealizationData[] = [];
 
         results.forEach(function collectEnsembleData(result, index) {
@@ -114,7 +123,7 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
 });
 
 export const rftObservationsQueriesAtom = atomWithQueries(function makeRftObservationsQueryOptions(get) {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const { value: selectedEnsembleIdents, isValidInContext: ensembleIdentsValid } = get(selectedEnsembleIdentsAtom);
 
     const queries = selectedEnsembleIdents.map(function makeRftObservationsQuery(ensembleIdent) {
         const options = getRftObservationsOptions({
@@ -126,11 +135,16 @@ export const rftObservationsQueriesAtom = atomWithQueries(function makeRftObserv
         });
 
         return function getRftObservationsQueryOptions() {
-            return options;
+            return { ...options, enabled: ensembleIdentsValid };
         };
     });
 
     function combine(results: UseQueryResult<RftObservations_api[], RftApiError>[]): RftObservationsResult {
+        // Like the realization data, cached observations must not be exposed for an invalid ensemble selection
+        if (!ensembleIdentsValid) {
+            return { observationsData: [], isFetching: false, isError: false, errors: [] };
+        }
+
         const observationsData: RftEnsembleObservationsData[] = [];
 
         results.forEach(function collectObservationsData(result, index) {

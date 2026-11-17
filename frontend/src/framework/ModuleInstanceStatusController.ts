@@ -3,6 +3,7 @@ import type { InternalAxiosRequestConfig } from "axios";
 export enum StatusMessageType {
     Warning = "warning",
     Error = "error",
+    ActionRequired = "actionRequired",
 }
 
 export enum StatusSource {

@@ -1,6 +1,6 @@
 import type { Axis } from "plotly.js";
 
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
+import { formatWithLargeValuePrefixes } from "@modules/_shared/utils/numberFormatting";
 
 import { isDimensionlessResultName } from "./types";
 
@@ -19,7 +19,7 @@ export function formatInplaceVolumesValue(value: string | number | null): string
     if (typeof value === "string") {
         return value;
     }
-    return formatNumber(value, { unitSystem: "si", useSubUnitPrefixes: false, numSignificantDigits: 3 });
+    return formatWithLargeValuePrefixes(value);
 }
 
 /**

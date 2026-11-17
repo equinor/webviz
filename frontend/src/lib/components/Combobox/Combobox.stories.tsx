@@ -350,6 +350,30 @@ export const WithEndAdornment: Story = {
     ),
 };
 
+export const WithUnavailableValues: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story: "Selected values that are not in `items` are marked as unavailable, with `unavailableValueText` shown as tooltip and accessible description. When no selected value is available, the field is also marked invalid. Use `getUnavailableValueLabel` to label them. Keep `items` populated while loading, otherwise all selected values are marked.",
+            },
+        },
+    },
+    args: {
+        items: COUNTRIES,
+        showClearAllButton: true,
+        unavailableValueText: "Not available for this region",
+        getUnavailableValueLabel: (value) => String(value).toUpperCase(),
+    },
+    render: (args: ComboboxProps<any, any>) => (
+        <div className="flex w-64 flex-col gap-6">
+            <Combobox {...args} defaultValue="se" />
+            <Combobox {...args} multiple defaultValue={["no", "se", "dk"]} />
+            <Combobox {...args} multiple defaultValue={["se", "dk"]} />
+            <Combobox {...args} multiple selectionMode="count" defaultValue={["no", "se", "dk"]} />
+        </div>
+    ),
+};
+
 // ─── Async stories ────────────────────────────────────────────────────────────
 
 export const AsyncLoading: Story = {
@@ -432,7 +456,7 @@ export const AsyncSearchAsYouType: Story = {
     parameters: {
         docs: {
             description: {
-                story: "Items are re-fetched on every keystroke, simulating a server-side search API. A 600 ms debounce limits requests; the combobox shows a spinner while the request is in flight. Internal filtering is disabled via `filter={null}` so the server-returned list is rendered as-is.",
+                story: "Items are re-fetched on every keystroke, simulating a server-side search API. A 600 ms debounce limits requests; the combobox shows a spinner while the request is in flight. Internal filtering is disabled via `filter={null}` so the server-returned list is rendered as-is. Since `items` only holds the current search results, `isValueAvailable` opts out of unavailable-value marking so a retained selection isn't flagged when it falls outside the results.",
             },
         },
     },
@@ -440,6 +464,7 @@ export const AsyncSearchAsYouType: Story = {
         filter: null,
         showClearAllButton: true,
         placeholder: "Type to search countries…",
+        isValueAvailable: () => true,
     },
     render: function AsyncSearchAsYouTypeComp(args) {
         const [items, setItems] = React.useState<{ value: string; label: string }[]>([]);

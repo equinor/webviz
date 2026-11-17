@@ -11,7 +11,8 @@ type SettingsToViewInterface = {
     selectedGroupBy: GroupBy;
     selectedDependentVariables: PressureDependentVariable[];
     selectedEnsembleIdents: RegularEnsembleIdent[];
-    selectedPvtNums: number[];
+    // Null while the selection is invalid, so that no plot is made for it
+    selectedPvtNums: number[] | null;
     pvtDataAccessorWithStatus: PvtDataAccessorWithStatus;
 };
 
@@ -33,7 +34,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return get(selectedEnsembleIdentsAtom).value;
     },
     selectedPvtNums: (get) => {
-        return get(selectedPvtNumsAtom).value;
+        const selectedPvtNums = get(selectedPvtNumsAtom);
+        return selectedPvtNums.isValidInContext ? selectedPvtNums.value : null;
     },
     pvtDataAccessorWithStatus: (get) => {
         return get(pvtDataAccessorWithStatusAtom);

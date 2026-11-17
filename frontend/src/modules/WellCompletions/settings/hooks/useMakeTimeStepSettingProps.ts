@@ -45,13 +45,21 @@ export function useMakeTimeStepSliderSettingProps(params: UseMakeTimeStepSetting
 
     return React.useMemo(() => {
         let label = isSingleTimeStepMode ? "Time Step" : "Time Steps";
+        // A retained index can be out of range - the field's annotations flag it, the label just leaves the date out
         if (sortedCompletionDates) {
             if (isSingleTimeStepMode && selectedCompletionDateIndex.value !== null) {
-                label = `Time Step: (${sortedCompletionDates[selectedCompletionDateIndex.value]})`;
+                const date = sortedCompletionDates[selectedCompletionDateIndex.value];
+                if (date !== undefined) {
+                    label = `Time Step: (${date})`;
+                }
             }
 
             if (!isSingleTimeStepMode && selectedCompletionDateIndexRange.value !== null) {
-                label = `Time Steps: (${sortedCompletionDates[selectedCompletionDateIndexRange.value[0]]}, ${sortedCompletionDates[selectedCompletionDateIndexRange.value[1]]})`;
+                const startDate = sortedCompletionDates[selectedCompletionDateIndexRange.value[0]];
+                const endDate = sortedCompletionDates[selectedCompletionDateIndexRange.value[1]];
+                if (startDate !== undefined && endDate !== undefined) {
+                    label = `Time Steps: (${startDate}, ${endDate})`;
+                }
             }
         }
 

@@ -47,6 +47,7 @@ function makeHistogramTraces(values: number[]) {
     return makePlotlyHistogramTraces({
         title: "Delta",
         values,
+        realizations: values.map((_, index) => index),
         resultName: "STOIIP",
         color: "red",
         numBins: 2,
