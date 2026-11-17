@@ -34,7 +34,6 @@ export const statisticsTypeAtom = atom<StatisticsType>((get) => {
 });
 
 export const selectedRegularEnsemblesAtom = atom<RegularEnsemble[]>((get) => {
-    // NOTE: Used for view and color by parameter, i.e. not for delta ensembles yet!
     const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
 
@@ -71,15 +70,8 @@ export const numericAndNonConstantParametersUnionAtom = atom<Parameter[]>((get) 
     const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
 
-    // Does not support parameters for delta ensembles yet
-    const hasAnyDeltaEnsembles = filterEnsembleIdentsByType(selectedEnsembleIdents, DeltaEnsembleIdent).length > 0;
-    if (hasAnyDeltaEnsembles) {
-        return [];
-    }
-
     const numericAndNonConstantParametersUnion: Parameter[] = [];
-    const regularEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, RegularEnsembleIdent);
-    for (const ensembleIdent of regularEnsembleIdents) {
+    for (const ensembleIdent of selectedEnsembleIdents) {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
         if (!ensemble) {
             continue;

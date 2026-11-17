@@ -68,22 +68,23 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
     });
     const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
 
+    const allSelectedEnsembles = [...selectedEnsembles, ...selectedDeltaEnsembles];
+
     // Create parameter color scale helper
     const ensemblesParameterColoring =
         colorByParameter && parameterIdent
-            ? new EnsemblesParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
+            ? new EnsemblesParameterColoring(allSelectedEnsembles, parameterIdent, parameterColorScale)
             : null;
 
     const ensemblesWithoutParameter: (RegularEnsemble | DeltaEnsemble)[] = [];
     let parameterDisplayName: string | null = null;
     if (ensemblesParameterColoring) {
         ensemblesWithoutParameter.push(
-            ...selectedEnsembles.filter(
+            ...allSelectedEnsembles.filter(
                 (ensemble) => !ensemblesParameterColoring.hasParameterForEnsemble(ensemble.getIdent()),
             ),
         );
         parameterDisplayName = ensemblesParameterColoring.getParameterDisplayName();
-        ensemblesWithoutParameter.push(...selectedDeltaEnsembles);
     }
 
     useMakeViewStatusWriterMessages(statusWriter, parameterDisplayName, ensemblesWithoutParameter);
