@@ -16,7 +16,7 @@ ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 COPY --chown=node:node frontend/package.json frontend/package-lock.json ./
-RUN npm ci --include=dev
+RUN npm ci --include=dev --onnxruntime-node-install-cuda=skip
 
 COPY --chown=node:node frontend/ ./
 

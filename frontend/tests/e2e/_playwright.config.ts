@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+
 import { defineConfig, devices } from "@playwright/test";
 
 import { STORAGE_STATE_PATH } from "./setup/globalSetup";
@@ -13,6 +15,19 @@ import { STORAGE_STATE_PATH } from "./setup/globalSetup";
  * recordings to blob storage). When not recording we keep the lightweight defaults.
  */
 const record = !!process.env.RECORD;
+
+/**
+ * Under WSL (detected by its GPU device, /dev/dxg) the GPU is only reachable through WSLg's display,
+ * via Mesa's D3D12 driver, so that driver is selected for any headed run. Stories run headless by
+ * default (software WebGL, as the published videos were recorded); stories that need the GPU opt in to
+ * headed mode with `test.use(GPU_RENDERING)` (see support/gpuRendering.ts).
+ * MESA_D3D12_DEFAULT_ADAPTER_NAME picks the adapter on machines with more than one GPU.
+ */
+const isWsl = existsSync("/dev/dxg");
+const wslGpuEnv = {
+    GALLIUM_DRIVER: process.env.GALLIUM_DRIVER ?? "d3d12",
+    MESA_D3D12_DEFAULT_ADAPTER_NAME: process.env.MESA_D3D12_DEFAULT_ADAPTER_NAME ?? "NVIDIA",
+};
 
 /** Base URL the browser talks to. Assumes the full stack is already running on this port. */
 const BASE_URL = "http://localhost:8080";
@@ -67,9 +82,9 @@ export default defineConfig({
                 // flushing the full-HD video/trace at context teardown. Point it at /tmp instead.
                 launchOptions: {
                     args: ["--disable-dev-shm-usage"],
+                    ...(isWsl ? { env: { ...process.env, ...wslGpuEnv } } : {}),
                 },
             },
         },
     ],
-
 });

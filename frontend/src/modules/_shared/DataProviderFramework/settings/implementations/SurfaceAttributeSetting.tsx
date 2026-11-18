@@ -74,7 +74,7 @@ export class SurfaceAttributeSetting
                 label: getSurfaceAttributeDisplayLabel(attribute),
             }));
 
-            const currentKey = props.value ? surfaceAttributeKey(props.value) : "";
+            const currentKey = props.value ? surfaceAttributeKey(props.value) : null;
 
             function handleChange(selectedKey: string | null) {
                 const selected = valueConstraints.find((attribute) => surfaceAttributeKey(attribute) === selectedKey);

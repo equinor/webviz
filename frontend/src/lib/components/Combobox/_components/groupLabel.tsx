@@ -8,8 +8,14 @@ import type { ComboboxGroup } from "../types";
 
 export type ComboboxGroupLabelProps = {
     group: ComboboxGroup<any>;
+    /** Overrides the label derived from the group value. */
+    label?: string;
 };
 
 export function ComboboxGroupLabel(props: ComboboxGroupLabelProps): React.ReactNode {
-    return <SharedGroupLabel>{upperFirst(props.group.value)}</SharedGroupLabel>;
+    const label = props.label ?? upperFirst(props.group.value);
+    if (!label) {
+        return null;
+    }
+    return <SharedGroupLabel>{label}</SharedGroupLabel>;
 }
