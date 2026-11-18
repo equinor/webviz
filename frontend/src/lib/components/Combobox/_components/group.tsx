@@ -8,13 +8,15 @@ import { ComboboxGroupLabel } from "./groupLabel";
 
 export type GroupProps<TValue> = {
     group: ComboboxGroup<TValue>;
+    /** Overrides the label derived from the group value. */
+    label?: string;
     children: (value: TValue) => React.ReactNode;
 };
 
 export function ComboboxListGroup<TValue>(props: GroupProps<TValue>): React.ReactNode {
     return (
         <ComboboxBase.Group items={props.group.items} className="contents">
-            <ComboboxGroupLabel group={props.group} />
+            <ComboboxGroupLabel group={props.group} label={props.label} />
             <ComboboxBase.Collection>{props.children}</ComboboxBase.Collection>
         </ComboboxBase.Group>
     );

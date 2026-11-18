@@ -28,6 +28,12 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
         description: "Pipe data between modules: learn how to send data from one module to generic sub-modules, in order to e.g. cross-plot data between individual modules.",
     },
     {
+        slug: "2d-viewer",
+        category: "Modules",
+        title: "2D Viewer",
+        description: "Build maps from layers in three scenarios: a depth map with well picks, faults and ensemble statistics; simulation maps side by side in several views; and observed vs. simulated 4D seismic.",
+    },
+    {
         slug: "grid3d-viewer-3d-grid-model",
         category: "Modules",
         title: "3D Viewer",

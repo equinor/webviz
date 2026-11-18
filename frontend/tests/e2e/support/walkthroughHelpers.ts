@@ -36,20 +36,78 @@ const CURSOR_PX_PER_STEP = 10;
 const CURSOR_MIN_STEPS = 6;
 const CURSOR_MAX_STEPS = 50;
 
+/**
+ * Duration (ms) of one glide step, i.e. per CURSOR_PX_PER_STEP pixels of travel (~450 px/s). Glides are
+ * paced to this on every page, so the cursor moves at the same speed in all recordings regardless of
+ * the machine: on fast pages the glide waits between chunks, and on slow pages (a WebGL map can make
+ * each pointer move take ~100 ms, even with GPU rendering) the remaining distance is covered in fewer,
+ * larger steps. Tune this one constant to change the cursor speed of every tutorial.
+ */
+const CURSOR_STEP_MS = 22;
+
+/** Largest distance (px) the cursor may travel in one step when a glide catches up, to avoid jumps. */
+const CURSOR_MAX_STEP_PX = 30;
+
+/** Steps per chunk when gliding; the glide is re-synced to its schedule between chunks. */
+const CURSOR_CHUNK_STEPS = 5;
+
 /** Last known mouse position per page, used to size the glide by travel distance. */
 const lastMousePosition = new WeakMap<Page, { x: number; y: number }>();
 
 /**
- * Move the real mouse to (x, y) at a roughly constant on-screen speed by sizing the number of
- * interpolation steps to the travel distance. Tracks the last position per page so the next glide
- * can measure how far it has to travel (Playwright's internal mouse starts at 0,0).
+ * Move the real mouse to (x, y) at a constant on-screen speed: the number of interpolation steps
+ * follows the travel distance, and the glide is paced against the wall clock (see CURSOR_STEP_MS).
+ * Tracks the last position per page so the next glide can measure how far it has to travel
+ * (Playwright's internal mouse starts at 0,0).
  */
 async function glideMouseTo(page: Page, x: number, y: number): Promise<void> {
     const from = lastMousePosition.get(page) ?? { x: 0, y: 0 };
     const distance = Math.hypot(x - from.x, y - from.y);
     const steps = Math.min(CURSOR_MAX_STEPS, Math.max(CURSOR_MIN_STEPS, Math.round(distance / CURSOR_PX_PER_STEP)));
-    await page.mouse.move(x, y, { steps });
+    const durationMs = steps * CURSOR_STEP_MS;
+    const start = Date.now();
+
+    let stepsDone = 0;
+    // Time spent in pointer moves only (excluding pacing waits), to estimate what each step costs.
+    let moveMs = 0;
+    while (stepsDone < steps) {
+        const elapsedMs = Date.now() - start;
+        const msPerStep = stepsDone > 0 ? Math.max(1, moveMs / stepsDone) : 1;
+        const affordableSteps = Math.floor((durationMs - elapsedMs) / msPerStep);
+        if (affordableSteps < steps - stepsDone) {
+            // Behind schedule: finish in fewer, larger steps, but never larger than CURSOR_MAX_STEP_PX, so a
+            // busy page makes the glide a little slower rather than making the cursor jump.
+            const remainingPx = distance * (1 - stepsDone / steps);
+            const minSteps = Math.ceil(remainingPx / CURSOR_MAX_STEP_PX);
+            await page.mouse.move(x, y, { steps: Math.max(2, minSteps, affordableSteps) });
+            break;
+        }
+        const chunkSteps = Math.min(CURSOR_CHUNK_STEPS, steps - stepsDone);
+        stepsDone += chunkSteps;
+        const fraction = stepsDone / steps;
+        const moveStart = Date.now();
+        await page.mouse.move(from.x + (x - from.x) * fraction, from.y + (y - from.y) * fraction, {
+            steps: chunkSteps,
+        });
+        moveMs += Date.now() - moveStart;
+        // Ahead of schedule: wait so the cursor doesn't outrun the target speed.
+        const aheadMs = start + stepsDone * CURSOR_STEP_MS - Date.now();
+        if (aheadMs > 0) {
+            await page.waitForTimeout(aheadMs);
+        }
+    }
     lastMousePosition.set(page, { x, y });
+}
+
+/**
+ * Glide the cursor to (x, y) like {@link smoothClick} does, for gestures that need explicit
+ * coordinates (e.g. moving sideways into a submenu). No-op unless RECORD=1.
+ */
+export async function smoothMoveTo(page: Page, x: number, y: number): Promise<void> {
+    if (!RECORDING) {
+        return;
+    }
+    await glideMouseTo(page, x, y);
 }
 
 /**
@@ -267,7 +325,11 @@ export async function hideDevOverlays(page: Page): Promise<void> {
     if (!RECORDING) {
         return;
     }
-    await injectRecordingStyle(page, "__pw_hide_dev_overlays_style__", `.tsqd-parent-container { display: none !important; }`);
+    await injectRecordingStyle(
+        page,
+        "__pw_hide_dev_overlays_style__",
+        `.tsqd-parent-container { display: none !important; }`,
+    );
 }
 
 /**
@@ -489,11 +551,14 @@ function resolveDropTarget(
 ): { x: number; y: number } {
     const centerX = layoutBox.x + layoutBox.width / 2;
     const centerY = layoutBox.y + layoutBox.height / 2;
-    // For a side drop, aim the cross-axis at the centre of the first row/column rather than the layout
-    // centre: once the canvas holds stacked modules, the centre sits on the gutter between them, which
-    // resolves to the parent container (no side edge there) and nests the module instead of splitting.
-    const firstRowY = layoutBox.y + layoutBox.height / 4;
-    const firstColX = layoutBox.x + layoutBox.width / 4;
+    // For a side drop, aim the cross-axis into the first row/column rather than the layout centre: once
+    // the canvas holds stacked modules, the centre sits on the gutter between them, which resolves to the
+    // parent container (no side edge there) and nests the module instead of splitting.
+    // Aim at 30% rather than 25%: a single module's top/left quarter (inside its 25px margin) is its own
+    // top/left drop zone, which wins over the side zones where they overlap, so a quarter in would drop
+    // a "right" module above it instead.
+    const firstRowY = layoutBox.y + layoutBox.height * 0.3;
+    const firstColX = layoutBox.x + layoutBox.width * 0.3;
     switch (dropPosition) {
         case "left":
             return { x: layoutBox.x + DROP_EDGE_INSET_PX, y: firstRowY };
@@ -607,11 +672,7 @@ function moduleHeader(page: Page, moduleTitle: string | RegExp): Locator {
 }
 
 /** Maximize a module to fill the dashboard, or restore it, with the button in its header. */
-export async function setModuleMaximized(
-    page: Page,
-    moduleTitle: string | RegExp,
-    maximized: boolean,
-): Promise<void> {
+export async function setModuleMaximized(page: Page, moduleTitle: string | RegExp, maximized: boolean): Promise<void> {
     // The header buttons have no accessible name; MUI icons carry a data-testid.
     const [clickIcon, resultIcon] = maximized
         ? ["OpenInFullIcon", "CloseFullscreenIcon"]
@@ -921,9 +982,7 @@ export async function createSessionAndSelectEnsemble(
     await pace(page);
 
     markStep("Apply selected ensembles");
-    const applyNarration = narrate(
-        "We select the ensembles and apply them to load them into the session.",
-    );
+    const applyNarration = narrate("We select the ensembles and apply them to load them into the session.");
 
     await smoothClick(page, page.getByText(testCase.ensembleName).first());
 
@@ -975,8 +1034,13 @@ export async function connectDataChannel(
     await expect(async () => {
         // Clean up a content selector left open by a previous attempt.
         if (await selector.isVisible().catch(() => false)) {
-            await selector.getByRole("button", { name: "Cancel" }).click().catch(() => undefined);
-            await expect(selector).toBeHidden({ timeout: 2_000 }).catch(() => undefined);
+            await selector
+                .getByRole("button", { name: "Cancel" })
+                .click()
+                .catch(() => undefined);
+            await expect(selector)
+                .toBeHidden({ timeout: 2_000 })
+                .catch(() => undefined);
         }
 
         await smoothMoveToLocator(page, origin);

@@ -14,10 +14,12 @@
 ### Changed
 
 - **Session and snapshot management**: The open, edit and delete buttons are now on each row of the session and snapshot tables instead of in the toolbar, and the tables have a new look. The dashboard preview is no longer shown when you edit a session from the session list, only when you edit it from the top bar.
+- **Ensemble selection**: Standard Results, Model and Revision selections are kept when you switch asset. Unavailable selections are shown in red and ignored when filtering. Model and Revision availability reflects the selected Standard Results.
 
 ### Fixed
 
 - **Intersection**: Large grids no longer appear cut off partway along the intersection when "Show grid lines" is turned off.
+- **3D Viewer**: Improved trajectory hovering in wellbore layers.
 
 ## October 2026
 
