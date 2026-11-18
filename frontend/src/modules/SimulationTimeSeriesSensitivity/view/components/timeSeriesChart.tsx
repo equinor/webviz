@@ -17,7 +17,7 @@ export type TimeSeriesChartHoverInfo = {
 export type TimeSeriesChartProps = {
     traceDataArr: TimeSeriesPlotlyTrace[];
     title: string;
-    activeTimestampUtcMs?: number;
+    markerTimestampUtcMs?: number;
     hoveredTimestampUtcMs?: number;
     isHoverExternal?: boolean;
     uirevision?: string;
@@ -105,14 +105,14 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
     const hoverColor = props.isHoverExternal ? "rgba(220, 38, 38, 0.9)" : "rgba(107, 114, 128, 0.8)";
 
     // Lines are added before badges, so the badges are drawn on top of the lines
-    if (props.activeTimestampUtcMs !== undefined) {
+    if (props.markerTimestampUtcMs !== undefined) {
         layout.shapes?.push({
             type: "line",
             xref: "x",
             yref: "paper",
-            x0: props.activeTimestampUtcMs,
+            x0: props.markerTimestampUtcMs,
             y0: 0,
-            x1: props.activeTimestampUtcMs,
+            x1: props.markerTimestampUtcMs,
             y1: 0.99,
             line: { color: "black", width: 2, dash: "dot" },
         });
@@ -134,10 +134,10 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
         });
     }
 
-    if (props.activeTimestampUtcMs !== undefined) {
+    if (props.markerTimestampUtcMs !== undefined) {
         const badge = makeRoundedBadge(
-            timestampUtcMsToCompactIsoString(props.activeTimestampUtcMs),
-            props.activeTimestampUtcMs,
+            timestampUtcMsToCompactIsoString(props.markerTimestampUtcMs),
+            props.markerTimestampUtcMs,
             -0.02,
             { bgColor: "black", textColor: "white", borderColor: "black" },
             xExtent,
@@ -145,7 +145,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
         layout.shapes?.push({ ...badge.shape, xref: "x", yref: "y domain" });
         layout.annotations?.push({ ...badge.annotation, xref: "x", yref: "y domain" });
     }
-    if (props.hoveredTimestampUtcMs !== undefined && props.hoveredTimestampUtcMs !== props.activeTimestampUtcMs) {
+    if (props.hoveredTimestampUtcMs !== undefined && props.hoveredTimestampUtcMs !== props.markerTimestampUtcMs) {
         const hoverBadge = makeRoundedBadge(
             timestampUtcMsToCompactIsoString(props.hoveredTimestampUtcMs),
             props.hoveredTimestampUtcMs,

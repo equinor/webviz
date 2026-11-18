@@ -43,7 +43,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
-    const selectedTimestampUtcMs = props.settingsContext.useViewToSettingsInterfaceValue("selectedTimestampUtcMs");
+    const effectiveTimestampUtcMs = props.settingsContext.useViewToSettingsInterfaceValue("effectiveTimestampUtcMs");
 
     const [selectedRegularEnsembleIdent, setSelectedRegularEnsembleIdent] = useAtom(selectedRegularEnsembleIdentAtom);
     const [selectedSensitivityNames, setSelectedSensitivityNamesAtom] = useAtom(selectedSensitivityNamesAtom);
@@ -226,13 +226,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                         contentClassName="flex"
                         help={{
                             content:
-                                "The timestamp currently selected in the view (read-only). Enable the marker and click in the plot to select a new one.",
+                                "The timestamp currently active in the view, from a click in the plot or the dashboard setting (read-only). Enable the marker and click in the plot to select a new one.",
                         }}
                     >
                         <span className="text-sm">
-                            {selectedTimestampUtcMs === null
+                            {effectiveTimestampUtcMs === null
                                 ? "None"
-                                : timestampUtcMsToCompactIsoString(selectedTimestampUtcMs)}
+                                : timestampUtcMsToCompactIsoString(effectiveTimestampUtcMs)}
                         </span>
                     </Setting.Field>
                 </Setting.Section>
