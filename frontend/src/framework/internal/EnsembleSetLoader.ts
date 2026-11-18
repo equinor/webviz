@@ -146,9 +146,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const fipRegionsMappingArray = buildFipRegionsMappingArrFromApiResponse(
             ensembleApiData.ensembleDetails.fipRegions,
         );
-        const restartFromChain = ensembleApiData.ensembleDetails.restartChain.ancestors.map(
-            (item) => new RegularEnsembleIdent(item.caseUuid, item.ensembleName),
-        );
+        const restartFromChain = buildRestartFromChainFromApiResponse(ensembleApiData.ensembleDetails);
 
         // Refine the display name of any warning for this ensemble now that we know the custom name
         const existingWarningInfo = ensembleLoadingWarningInfoMap[ensembleIdentString];
@@ -247,6 +245,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   emptyFipRegionsMappingArray,
                   emptyColor,
                   comparisonEnsembleCustomName,
+                  buildRestartFromChainFromApiResponse(comparisonEnsembleApiData.ensembleDetails),
               );
 
         const referenceEnsemble = existingReferenceEnsemble
@@ -264,6 +263,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   emptyFipRegionsMappingArray,
                   emptyColor,
                   referenceEnsembleCustomName,
+                  buildRestartFromChainFromApiResponse(referenceEnsembleApiData.ensembleDetails),
               );
 
         outDeltaEnsembleArray.push(
@@ -472,6 +472,12 @@ function buildSensitivityArrFromApiResponse(apiSensitivityArray: EnsembleSensiti
     }
 
     return retSensitivityArray;
+}
+
+function buildRestartFromChainFromApiResponse(ensembleDetails: EnsembleDetails_api): RegularEnsembleIdent[] {
+    return ensembleDetails.restartChain.ancestors.map(
+        (ancestor) => new RegularEnsembleIdent(ancestor.caseUuid, ancestor.ensembleName),
+    );
 }
 
 function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_api[]): Parameter[] {
