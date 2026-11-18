@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 
 import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
@@ -12,6 +12,7 @@ import { simulationVectorDescription } from "@modules/_shared/reservoirSimulatio
 import type { Interfaces } from "../interfaces";
 
 import { vectorSpecificationAtom } from "./atoms/baseAtoms";
+import { effectiveTimestampUtcMsAtom } from "./atoms/dashboardSettingAtoms";
 import { activeTimestampUtcMsAtom } from "./atoms/persistableFixableAtoms";
 import type { TimeSeriesChartHoverInfo } from "./components/timeSeriesChart";
 import { TimeSeriesChart } from "./components/timeSeriesChart";
@@ -26,7 +27,8 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
     const statusWriter = useViewStatusWriter(viewContext);
 
     const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
-    const [activeTimestampUtcMs, setSelectedTimestampUtcMs] = useAtom(activeTimestampUtcMsAtom);
+    const setActiveTimestampUtcMs = useSetAtom(activeTimestampUtcMsAtom);
+    const effectiveTimestampUtcMs = useAtomValue(effectiveTimestampUtcMsAtom);
 
     const vectorSpecification = useAtomValue(vectorSpecificationAtom);
 
@@ -47,7 +49,7 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
     function handleHoverInChart(hoverInfo: TimeSeriesChartHoverInfo | null) {
         if (hoverInfo) {
             if (hoverInfo.shiftKeyIsDown && showTimestampMarker) {
-                setSelectedTimestampUtcMs(hoverInfo.timestampUtcMs);
+                setActiveTimestampUtcMs(hoverInfo.timestampUtcMs);
             }
 
             setHoveredTimestamp(hoverInfo.timestampUtcMs);
@@ -65,7 +67,7 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
         if (!showTimestampMarker) {
             return;
         }
-        setSelectedTimestampUtcMs(timestampUtcMs);
+        setActiveTimestampUtcMs(timestampUtcMs);
     }
 
     // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
@@ -75,7 +77,7 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
                 traceDataArr={traceDataArr}
                 title={descriptiveVectorName}
                 uirevision={vectorSpecification?.vectorName}
-                activeTimestampUtcMs={showTimestampMarker ? (activeTimestampUtcMs.value ?? undefined) : undefined}
+                markerTimestampUtcMs={showTimestampMarker ? (effectiveTimestampUtcMs.value ?? undefined) : undefined}
                 hoveredTimestampUtcMs={subscribedHoverTimestampUtcMs ?? undefined}
                 isHoverExternal={hoverService.getLastHoveredModule() !== moduleInstanceId}
                 onClick={handleClickInChart}

@@ -20,6 +20,7 @@ import {
     showStatisticsAtom,
     vectorSpecificationAtom,
 } from "../atoms/baseAtoms";
+import { highlightedRealizationAtom } from "../atoms/dashboardSettingAtoms";
 import {
     historicalVectorDataQueryAtom,
     statisticalVectorSensitivityDataQueryAtom,
@@ -33,6 +34,7 @@ export function useTimeSeriesChartTracesDataArrayBuilder(colorSet: ColorSet): Ti
     const showStatistics = useAtomValue(showStatisticsAtom);
     const showRealizations = useAtomValue(showRealizationsAtom);
     const showHistorical = useAtomValue(showHistoricalAtom);
+    const highlightedRealization = useAtomValue(highlightedRealizationAtom);
 
     const vectorDataQuery = useAtomValue(vectorDataQueryAtom);
     const statisticsQuery = useAtomValue(statisticalVectorSensitivityDataQueryAtom);
@@ -80,7 +82,7 @@ export function useTimeSeriesChartTracesDataArrayBuilder(colorSet: ColorSet): Ti
                     );
                     if (realizationData.length > 0) {
                         sensitivitiesWithRealizationTraces.add(sensitivityName);
-                        const traces = createRealizationLineTraces(realizationData, sensitivity.name, color);
+                        const traces = createRealizationLineTraces(realizationData, sensitivity.name, color, highlightedRealization ?? undefined);
                         traceDataArr.push(...traces);
                     }
                 }
