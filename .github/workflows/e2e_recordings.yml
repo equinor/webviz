@@ -42,7 +42,7 @@ jobs:
 
       - name: 📦 Install frontend dependencies
         working-directory: ./frontend
-        run: npm ci --include=dev
+        run: npm ci --include=dev --onnxruntime-node-install-cuda=skip
 
       - name: 🎭 Install Playwright browser (chromium)
         working-directory: ./frontend

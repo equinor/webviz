@@ -46,7 +46,7 @@ jobs:
         if: steps.node-modules-cache.outputs.cache-hit != 'true'
         working-directory: ./frontend
         run: |
-          npm ci --include=dev
+          npm ci --include=dev --onnxruntime-node-install-cuda=skip
 
       - name: Save node_modules cache
         if: github.ref == 'refs/heads/main' && steps.node-modules-cache.outputs.cache-hit != 'true'
@@ -130,6 +130,8 @@ jobs:
       - name: 📦 Install build dependencies
         if: steps.node-modules-cache.outputs.cache-hit != 'true'
         working-directory: ./frontend
+        env:
+          ONNXRUNTIME_NODE_INSTALL_CUDA: skip
         run: |
           npm ci --include=dev
 
