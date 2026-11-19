@@ -20,6 +20,7 @@ type UseRftPlotBuilderParams = {
     wellName: string | null;
     responseName: string | null;
     timestampUtcMs: number | null;
+    highlightedRealization: number | null;
     visualizationSettings: VisualizationSettings;
     observationsData: RftEnsembleObservationsData[];
     size: Size2D;
@@ -36,6 +37,7 @@ export function useRftPlotBuilder(params: UseRftPlotBuilderParams): RftPlotConte
         wellName,
         responseName,
         timestampUtcMs,
+        highlightedRealization,
         visualizationSettings,
         observationsData,
         size,
@@ -79,8 +81,15 @@ export function useRftPlotBuilder(params: UseRftPlotBuilderParams): RftPlotConte
                           shownLegendEnsembles,
                       )
                     : []),
-                ...(visualizationSettings.showIndividualRealizations
-                    ? plotBuilder.makeIndividualRealizationTraces(responseName, shownLegendEnsembles)
+                // A highlighted realization is shown even when the individual realizations are hidden
+                ...(visualizationSettings.showIndividualRealizations || highlightedRealization !== null
+                    ? plotBuilder.makeIndividualRealizationTraces(
+                          responseName,
+                          shownLegendEnsembles,
+                          highlightedRealization,
+                          !visualizationSettings.showIndividualRealizations,
+                          visualizationSettings.showStatisticalLines || visualizationSettings.showStatisticalFan,
+                      )
                     : []),
                 ...(visualizationSettings.showObservations
                     ? plotBuilder.makeObservationTraces(observationsPerEnsemble, responseName, shownLegendEnsembles)
@@ -95,6 +104,7 @@ export function useRftPlotBuilder(params: UseRftPlotBuilderParams): RftPlotConte
             wellName,
             responseName,
             timestampUtcMs,
+            highlightedRealization,
             visualizationSettings,
             observationsData,
         ],

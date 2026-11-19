@@ -1,21 +1,24 @@
 import React from "react";
 
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import type { Config } from "plotly.js";
 
 import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { dataChannelDepthAtom } from "../settings/atoms/baseAtoms";
 
+import { rftObservationsQueriesAtom, rftRealizationDataQueriesAtom } from "./atoms/queryAtoms";
 import { DepthLineOverlay } from "./components/DepthLineOverlay";
 import { usePlotOverlay } from "./hooks/usePlotOverlay";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
@@ -33,15 +36,26 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
 
     const wellName = viewContext.useSettingsToViewInterfaceValue("wellName");
     const responseName = viewContext.useSettingsToViewInterfaceValue("responseName");
-    const timestampUtcMs = viewContext.useSettingsToViewInterfaceValue("timestampUtcMs");
+    const { value: timestampUtcMs, isValidInContext: isTimestampValid } =
+        viewContext.useSettingsToViewInterfaceValue("timestamp");
+    const highlightedRealization = viewContext.useSettingsToViewInterfaceValue("highlightedRealization");
     const visualizationSettings = viewContext.useSettingsToViewInterfaceValue("visualizationSettings");
     const showDepthLine = viewContext.useSettingsToViewInterfaceValue("showDepthLine");
-    const dataAccessor = viewContext.useSettingsToViewInterfaceValue("dataAccessor");
-    const observationsData = viewContext.useSettingsToViewInterfaceValue("observationsData");
-    const isFetching = viewContext.useSettingsToViewInterfaceValue("isFetching");
+    const realizationDataResult = useAtomValue(rftRealizationDataQueriesAtom);
+    const observationsResult = useAtomValue(rftObservationsQueriesAtom);
+    const dataAccessor = realizationDataResult.dataAccessor;
+    const observationsData = observationsResult.observationsData;
+    const isFetching = realizationDataResult.isFetching || observationsResult.isFetching;
 
     const statusWriter = useViewStatusWriter(viewContext);
     statusWriter.setLoading(isFetching);
+    propagateAllApiErrorsToStatusWriter(realizationDataResult.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(observationsResult.errors, statusWriter);
+    if (timestampUtcMs !== null && !isTimestampValid) {
+        statusWriter.flagActionRequired(
+            `The selected time point (${timestampUtcMsToCompactIsoString(timestampUtcMs)}) is not valid`,
+        );
+    }
 
     const [dataChannelDepth, setDataChannelDepth] = useAtom(dataChannelDepthAtom);
     const depthLineOverlay = usePlotOverlay();
@@ -79,6 +93,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
         wellName,
         responseName,
         timestampUtcMs,
+        highlightedRealization,
         visualizationSettings,
         observationsData,
         size: wrapperDivSize,
@@ -119,6 +134,14 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
             return <ContentMessage type={ContentMessageType.INFO}>No RFT selection.</ContentMessage>;
         }
 
+        if (!isTimestampValid) {
+            return (
+                <ContentMessage type={ContentMessageType.ERROR}>
+                    The selected time point ({timestampUtcMsToCompactIsoString(timestampUtcMs)}) is not valid.
+                </ContentMessage>
+            );
+        }
+
         if (isFetching) {
             return (
                 <ContentMessage type={ContentMessageType.INFO}>
@@ -132,29 +155,31 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
         }
 
         return (
-            <Plot
-                data={plotContent.plotData}
-                layout={plotContent.layout}
-                config={PLOT_CONFIG}
-                onInitialized={depthLineOverlay.handlePlotRendered}
-                onUpdate={depthLineOverlay.handlePlotRendered}
-            />
+            <>
+                <Plot
+                    data={plotContent.plotData}
+                    layout={plotContent.layout}
+                    config={PLOT_CONFIG}
+                    onInitialized={depthLineOverlay.handlePlotRendered}
+                    onUpdate={depthLineOverlay.handlePlotRendered}
+                />
+                {showDepthLine && (
+                    <DepthLineOverlay
+                        graphDiv={depthLineOverlay.graphDiv}
+                        depth={selectedDepth}
+                        depthRange={depthRange}
+                        isOutOfRange={isDepthOutOfRange}
+                        onChange={setDataChannelDepth}
+                        revision={depthLineOverlay.revision}
+                    />
+                )}
+            </>
         );
     }
 
     return (
-        <div className="w-full h-full relative overflow-hidden" ref={wrapperDivRef}>
+        <div className="relative h-full w-full overflow-hidden" ref={wrapperDivRef}>
             <div style={{ height: wrapperDivSize.height }}>{makeContent()}</div>
-            {showDepthLine && (
-                <DepthLineOverlay
-                    graphDiv={depthLineOverlay.graphDiv}
-                    depth={selectedDepth}
-                    depthRange={depthRange}
-                    isOutOfRange={isDepthOutOfRange}
-                    onChange={setDataChannelDepth}
-                    revision={depthLineOverlay.revision}
-                />
-            )}
         </div>
     );
 }

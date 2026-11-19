@@ -2,6 +2,8 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { xor } from "lodash";
 
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
+import { DashboardSettingIndicator } from "@framework/DashboardSettings/components/DashboardSettingIndicator";
+import { TIME_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/time";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -16,10 +18,7 @@ import { Setting, type SettingAnnotation } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import {
-    propagateAllApiErrorsToStatusWriter,
-    propagateQueryErrorsToStatusWriter,
-} from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
+import { propagateQueryErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { RFT_STATISTIC_LABELS, type RftStatistic } from "../typesAndEnums";
@@ -33,6 +32,7 @@ import {
     showStatisticalFanAtom,
     showStatisticalLinesAtom,
 } from "./atoms/baseAtoms";
+import { effectiveTimestampUtcMsAtom, isTimestampDashboardControlledAtom } from "./atoms/dashboardSettingAtoms";
 import {
     availableResponseNamesAtom,
     availableTimestampsUtcMsAtom,
@@ -45,11 +45,7 @@ import {
     selectedTimestampUtcMsAtom,
     selectedWellNameAtom,
 } from "./atoms/persistableFixableAtoms";
-import {
-    rftObservationsQueriesAtom,
-    rftRealizationDataQueriesAtom,
-    rftTableDefinitionQueriesAtom,
-} from "./atoms/queryAtoms";
+import { rftTableDefinitionQueriesAtom } from "./atoms/queryAtoms";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -75,11 +71,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const tableDefinitionQueries = useAtomValue(rftTableDefinitionQueriesAtom);
     propagateQueryErrorsToStatusWriter(tableDefinitionQueries, statusWriter);
 
-    const rftRealizationDataResult = useAtomValue(rftRealizationDataQueriesAtom);
-    const rftObservationsResult = useAtomValue(rftObservationsQueriesAtom);
-    propagateAllApiErrorsToStatusWriter(rftRealizationDataResult.errors, statusWriter);
-    propagateAllApiErrorsToStatusWriter(rftObservationsResult.errors, statusWriter);
-
     const availableResponseNames = useAtomValue(availableResponseNamesAtom);
     const selectedResponseName = useAtomValue(selectedResponseNameAtom).value;
     const setSelectedResponseName = useSetAtom(selectedResponseNameAtom);
@@ -89,7 +80,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const setSelectedWellName = useSetAtom(selectedWellNameAtom);
 
     const availableTimestampsUtcMs = useAtomValue(availableTimestampsUtcMsAtom);
-    const selectedTimestampUtcMs = useAtomValue(selectedTimestampUtcMsAtom).value;
+    const effectiveTimestamp = useAtomValue(effectiveTimestampUtcMsAtom);
+    const isTimestampDashboardControlled = useAtomValue(isTimestampDashboardControlledAtom);
     const setSelectedTimestampUtcMs = useSetAtom(selectedTimestampUtcMsAtom);
 
     const ensembleTableDefinitions = useAtomValue(ensembleTableDefinitionsAtom);
@@ -170,8 +162,13 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         Boolean(selectedWellName) &&
         isSelectedWellNameValid &&
         availableTimestampsUtcMs.length === 0;
+    const isDashboardTimestampInvalid = isTimestampDashboardControlled && !effectiveTimestamp.isValidInContext;
     const timestampAnnotations: SettingAnnotation[] = [
         ...selectedTimestampAnnotations,
+        isDashboardTimestampInvalid && {
+            type: "error" as const,
+            message: "Dashboard setting value not valid here",
+        },
         commonTimestampsAreMissing && {
             type: "error" as const,
             message: "Selected ensembles have no dates in common for this well.",
@@ -229,7 +226,17 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         />
                     </Setting.Field>
                     <Setting.Field
-                        label="Date"
+                        label={
+                            <span className="gap-x-2xs flex items-center">
+                                Date
+                                {isTimestampDashboardControlled && (
+                                    <DashboardSettingIndicator
+                                        dashboardSettingLabel={TIME_DASHBOARD_SETTING.label}
+                                        isValueValidHere={effectiveTimestamp.isValidInContext}
+                                    />
+                                )}
+                            </span>
+                        }
                         annotations={timestampAnnotations}
                         loadingOverlay={tableDefinitionsArePending}
                         errorOverlay={tableDefinitionsErrorMessage}
@@ -237,8 +244,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     >
                         <Select<number>
                             options={makeTimestampOptions(availableTimestampsUtcMs)}
-                            value={selectedTimestampUtcMs !== null ? [selectedTimestampUtcMs] : []}
+                            value={effectiveTimestamp.value !== null ? [effectiveTimestamp.value] : []}
                             onValueChange={handleTimestampChange}
+                            disabled={isTimestampDashboardControlled}
                             filter={availableTimestampsUtcMs.length > 6}
                             size={Math.max(3, Math.min(availableTimestampsUtcMs.length, 6))}
                         />
