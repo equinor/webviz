@@ -1,5 +1,5 @@
 ARG NODE_TAG="24.14.1-alpine@sha256:01743339035a5c3c11a373cd7c83aeab6ed1457b55da6a69e014a95ac4e4700b"
-ARG NGINX_TAG="1.30-alpine@sha256:0c53a1f2890c3526bfd201440f0fd3970e5b78f80630f58284aad0d34b5ec7bd"
+ARG NGINX_TAG="1.31-alpine@sha256:60214a103e6f38e953ff957f34b1f2e97a9db801ab2df3821da955d0fe6cadd6"
 
 ###########################################
 # Build frontend assets and compress them #
