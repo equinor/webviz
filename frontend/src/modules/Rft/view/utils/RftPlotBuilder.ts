@@ -1,4 +1,4 @@
-import { formatRgb, parse } from "culori";
+import { formatHex, formatRgb, hsl as toHsl, parse } from "culori";
 import type { Layout, PlotData } from "plotly.js";
 
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
@@ -78,29 +78,50 @@ export class RftPlotBuilder {
     makeIndividualRealizationTraces(
         responseName: string,
         shownLegendEnsembles = new Set<string>(),
+        highlightedRealization: number | null = null,
+        onlyShowHighlighted = false,
+        useIncreasedBrightness = false,
     ): Partial<PlotData>[] {
-        return this._dataAccessor.getEntries().map((entry) => {
+        const regularTraces: Partial<PlotData>[] = [];
+        const highlightedTraces: Partial<PlotData>[] = [];
+
+        for (const entry of this._dataAccessor.getEntries()) {
+            const isHighlighted = highlightedRealization !== null && entry.realization === highlightedRealization;
+            if (onlyShowHighlighted && !isHighlighted) {
+                continue;
+            }
+
+            const isDimmed = highlightedRealization !== null && !isHighlighted;
             const ensembleKey = entry.ensembleIdent.toString();
             const ensembleDisplayName = this.makeEnsembleDisplayName(entry.ensembleIdent);
-            const showLegend = shouldShowLegend(ensembleKey, shownLegendEnsembles);
+            const ensembleColor = this.makeEnsembleColor(entry.ensembleIdent);
 
-            return {
+            const trace: Partial<PlotData> = {
                 x: entry.values,
                 y: entry.depths,
                 type: "scatter",
                 mode: "lines",
                 name: ensembleDisplayName,
                 legendgroup: ensembleKey,
-                showlegend: showLegend,
-                opacity: 0.35,
-                line: { color: this.makeEnsembleColor(entry.ensembleIdent), width: 0.75 },
+                showlegend: shouldShowLegend(ensembleKey, shownLegendEnsembles),
+                opacity: isDimmed ? 0.15 : isHighlighted ? 1 : 0.35,
+                line: {
+                    // Lighter than the statistics, which keep the regular color
+                    color: useIncreasedBrightness ? scaleColorLightness(ensembleColor, 1.3) : ensembleColor,
+                    width: isHighlighted ? 2.5 : 0.75,
+                },
                 hovertemplate:
                     `<b>${ensembleDisplayName}</b>` +
                     `<br>Realization: ${entry.realization}` +
                     `<br>${responseName}: %{x}` +
                     "<br>Depth: %{y}<extra></extra>",
             };
-        });
+
+            (isHighlighted ? highlightedTraces : regularTraces).push(trace);
+        }
+
+        // Highlighted traces last, so they are drawn on top
+        return [...regularTraces, ...highlightedTraces];
     }
 
     makeStatisticLineTraces(
@@ -419,6 +440,14 @@ function getStatisticLineDash(statistic: RftStatistic): PlotData["line"]["dash"]
     if (statistic === RftStatistic.P50) return "dot";
     if (statistic === RftStatistic.MIN || statistic === RftStatistic.MAX) return "dash";
     return "dashdot";
+}
+
+function scaleColorLightness(color: string, scale: number): string {
+    const hsl = toHsl(color);
+    if (!hsl) {
+        return color;
+    }
+    return formatHex({ ...hsl, l: Math.min(1, (hsl.l ?? 0) * scale) }) ?? color;
 }
 
 function makeTransparentColor(color: string, opacity: number): string {
