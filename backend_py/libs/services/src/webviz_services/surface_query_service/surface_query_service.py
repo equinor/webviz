@@ -9,7 +9,6 @@ from pydantic import BaseModel
 from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_core_utils.text_warning import TextWarning
 from webviz_core_utils.result_with_warning import ResultWithWarning
-from webviz_services.service_warnings import make_missing_realizations_warning
 
 from webviz_services.services_config import get_services_config
 from webviz_services.sumo_access.sumo_blob_access import get_sas_token_and_blob_base_uri_for_case_async
@@ -80,7 +79,7 @@ async def batch_sample_surface_in_points_async(
         missing_realizations = set(realizations).difference(obj.realization for obj in realization_object_ids)
         if missing_realizations:
             warnings.append(
-                make_missing_realizations_warning(sorted(missing_realizations), data_source="Sumo surfaces")
+                TextWarning.from_message_and_realizations("Missing realizations in Sumo surfaces", missing_realizations)
             )
 
     sas_token, blob_store_base_uri = await get_sas_token_and_blob_base_uri_for_case_async(sumo_client, case_uuid)

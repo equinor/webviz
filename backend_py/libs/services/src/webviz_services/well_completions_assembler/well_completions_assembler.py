@@ -7,7 +7,6 @@ import polars as pl
 from webviz_core_utils.text_warning import TextWarning
 from webviz_core_utils.result_with_warning import ResultWithWarning
 from webviz_services.service_exceptions import InvalidDataError, InvalidParameterError, Service
-from webviz_services.service_warnings import make_missing_realizations_warning
 from webviz_services.sumo_access.well_completions_access import WellCompletionsAccess
 
 from webviz_services.sumo_access.well_completions_types import (
@@ -94,8 +93,8 @@ class WellCompletionsAssembler:
 
             if missing_realizations:
                 self._missing_real_warnings.append(
-                    make_missing_realizations_warning(
-                        sorted(missing_realizations), data_source="Sumo well completions data"
+                    TextWarning.from_message_and_realizations(
+                        "Missing realizations in Sumo well completions data", missing_realizations
                     )
                 )
 

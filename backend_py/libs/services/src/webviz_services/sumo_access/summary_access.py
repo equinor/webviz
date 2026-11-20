@@ -23,9 +23,6 @@ from webviz_services.service_exceptions import (
     InvalidParameterError,
     NoDataError,
 )
-from webviz_services.service_warnings import (
-    make_missing_realizations_warning,
-)
 
 from ._field_metadata import create_vector_metadata_from_field_meta
 from ._resampling import resample_segmented_multi_real_table, resample_single_real_table
@@ -131,7 +128,11 @@ class SummaryAccess:
             reals_without_data = detect_missing_realizations(table, requested_reals_arr)
 
             if reals_without_data:
-                warnings.append(make_missing_realizations_warning(reals_without_data, data_source="Sumo vector data"))
+                warnings.append(
+                    TextWarning.from_message_and_realizations(
+                        "Missing realizations in Sumo vector data", reals_without_data
+                    )
+                )
 
         # Our assumption is that the table is segmented on REAL and that within each segment,
         # the DATE column is sorted. We may want to add some checks here to verify this assumption since the

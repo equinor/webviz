@@ -192,7 +192,7 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
                 const ensembleIdent = queryContexts[index].ensembleIdent;
                 ensembleData.push({ ensembleIdent, data: data.value });
                 for (const warning of data.warnings) {
-                    warnings.push(`${ensembleIdent.getEnsembleName()}: ${warning}`);
+                    warnings.push(`${ensembleIdent.getEnsembleName()}, table "${selectedTableName}": ${warning}`);
                 }
             });
 

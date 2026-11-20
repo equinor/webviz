@@ -109,7 +109,9 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
             }
             ensembleData.push({ ensembleIdent: selectedEnsembleIdents[index], data: result.data.value });
             for (const warning of result.data.warnings) {
-                warnings.push(`${selectedEnsembleIdents[index].getEnsembleName()}: ${warning}`);
+                warnings.push(
+                    `${selectedEnsembleIdents[index].getEnsembleName()}, response "${selectedResponseName}": ${warning}`,
+                );
             }
         });
 

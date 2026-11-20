@@ -13,7 +13,6 @@ from webviz_services.service_exceptions import (
     NoDataError,
     MultipleDataMatchesError,
 )
-from webviz_services.service_warnings import make_missing_realizations_warning
 
 from ._arrow_table_loader import ArrowTableLoader
 from .rft_types import RftTableDefinition, RftWellInfo, RftRealizationData
@@ -114,7 +113,9 @@ class RftAccess:
             missing_realizations = set(realizations) - set(pl_df["REAL"].unique().to_list())
             if missing_realizations:
                 warnings.append(
-                    make_missing_realizations_warning(sorted(missing_realizations), data_source="Sumo RFT data")
+                    TextWarning.from_message_and_realizations(
+                        "Missing realizations in Sumo RFT data", missing_realizations
+                    )
                 )
 
         pl_table = pl_df.lazy()

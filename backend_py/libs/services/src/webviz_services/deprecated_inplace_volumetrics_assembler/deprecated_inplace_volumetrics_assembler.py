@@ -25,7 +25,6 @@ from webviz_services.sumo_access.deprecated_inplace_volumetrics_types import (
     InplaceStatisticalVolumetricTableDataPerFluidSelection,
 )
 from webviz_services.service_exceptions import Service, InvalidDataError, InvalidParameterError, NoDataError
-from webviz_services.service_warnings import make_missing_realizations_warning
 
 from ._conversion._conversion import (
     create_raw_volumetric_columns_from_volume_names_and_fluid_zones,
@@ -519,8 +518,8 @@ class DEPRECATED_InplaceVolumetricsAssembler:
 
             if missing_realizations_set:
                 warnings.append(
-                    make_missing_realizations_warning(
-                        sorted(missing_realizations_set), data_source="Sumo inplace volumes data"
+                    TextWarning.from_message_and_realizations(
+                        "Missing realizations in Sumo inplace volumes data", missing_realizations_set
                     )
                 )
 

@@ -21,7 +21,6 @@ from webviz_services.sumo_access.inplace_volumes_table_types import (
     VolumeColumnsAndIndexUniqueValues,
 )
 from webviz_services.service_exceptions import Service, InvalidDataError, InvalidParameterError, NoDataError
-from webviz_services.service_warnings import make_missing_realizations_warning
 from webviz_core_utils.perf_timer import PerfTimer
 from webviz_core_utils.text_warning import TextWarning
 from webviz_core_utils.result_with_warning import ResultWithWarning
@@ -577,8 +576,8 @@ class InplaceVolumesTableAssembler:
 
             if missing_realizations_set:
                 warnings.append(
-                    make_missing_realizations_warning(
-                        sorted(missing_realizations_set), data_source="Sumo inplace volumes data"
+                    TextWarning.from_message_and_realizations(
+                        "Missing realizations in Sumo inplace volumes data", missing_realizations_set
                     )
                 )
 

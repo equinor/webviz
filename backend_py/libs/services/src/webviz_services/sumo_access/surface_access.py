@@ -29,7 +29,6 @@ from webviz_services.service_exceptions import (
     ServiceRequestError,
     InvalidDataError,
 )
-from webviz_services.service_warnings import make_missing_realizations_warning
 
 from .surface_types import (
     InitialFluidContactSurfaceMeta,
@@ -543,7 +542,7 @@ def _make_missing_source_realizations_warnings(
     if not missing_realizations:
         return []
 
-    return [make_missing_realizations_warning(sorted(missing_realizations), data_source="Sumo surfaces")]
+    return [TextWarning.from_message_and_realizations("Missing realizations in Sumo surfaces", missing_realizations)]
 
 
 async def _start_sumo_aggregation_task_async(search_context: SearchContext, sumo_stat_op_str: str) -> str:

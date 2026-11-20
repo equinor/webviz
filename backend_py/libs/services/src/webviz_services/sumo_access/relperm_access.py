@@ -14,7 +14,6 @@ from webviz_core_utils.text_warning import TextWarning
 from webviz_core_utils.result_with_warning import ResultWithWarning
 
 from webviz_services.service_exceptions import InvalidDataError, NoDataError, Service
-from webviz_services.service_warnings import make_missing_realizations_warning
 
 from ._arrow_table_loader import ArrowTableLoader
 from .relperm_types import (
@@ -117,7 +116,9 @@ class RelpermAccess:
             missing_realizations = set(realizations).difference(available_realizations)
             if missing_realizations:
                 warnings.append(
-                    make_missing_realizations_warning(sorted(missing_realizations), data_source="Sumo relperm data")
+                    TextWarning.from_message_and_realizations(
+                        "Missing realizations in Sumo relperm data", missing_realizations
+                    )
                 )
 
         column_names = await self._get_column_names_async(table_name)

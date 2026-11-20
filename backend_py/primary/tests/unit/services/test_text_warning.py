@@ -1,11 +1,11 @@
 import pytest
 
 from webviz_core_utils.result_with_warning import ResultWithWarning, UnhandledWarningError
-from webviz_services.service_warnings import make_missing_realizations_warning
+from webviz_core_utils.text_warning import TextWarning
 
 
 def _warning(reals: list[int]):
-    return make_missing_realizations_warning(reals, data_source="Sumo vector data")
+    return TextWarning.from_message_and_realizations("Missing realizations in Sumo vector data", reals)
 
 
 def test_get_value_requires_warnings_to_be_handled() -> None:
@@ -45,7 +45,12 @@ def test_get_value_ignore_warnings_still_requires_check_without_warnings() -> No
         res.get_value()
 
 
+def test_realizations_are_sorted_and_appended_to_message() -> None:
+    assert _warning([10, 2, 5]).message == "Missing realizations in Sumo vector data. Realizations: [2, 5, 10]"
+    assert _warning([3]).message == "Missing realizations in Sumo vector data. Realization: 3"
+
+
 def test_many_reals_message_is_capped() -> None:
-    warning = _warning(list(range(100)))
-    assert "..." in str(warning)
-    assert "100 of the requested realizations are missing from Sumo vector data" in warning.message
+    message = _warning(list(range(100))).message
+    assert message.endswith("19, ...]")
+    assert "20" not in message
