@@ -792,21 +792,21 @@ tests = ["coverage[toml]", "pytest", "pytest-cov"]
 
 [[package]]
 name = "fmu-datamodels"
-version = "0.21.4"
+version = "0.27.0"
 description = "FMU data standard, including models and schemas"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = [
-    {file = "fmu_datamodels-0.21.4-py3-none-any.whl", hash = "sha256:097cd19c4e45dc56bf9d722aba4a33c46472bba7a64bd87e53040f1b5fc9ef2e"},
-    {file = "fmu_datamodels-0.21.4.tar.gz", hash = "sha256:22d2680f25d19e107557c0e7e9d1e5249e5952d9239069994b44840938ca53ab"},
+    {file = "fmu_datamodels-0.27.0-py3-none-any.whl", hash = "sha256:07f49ed089de8f5ecc5f2dc45ec1a3f006e45fda923d38330107c21c59200d55"},
+    {file = "fmu_datamodels-0.27.0.tar.gz", hash = "sha256:c549ab33e980c7cd03f4c1a8622186a8635e915448cb8591c0815f74320cea12"},
 ]
 
 [package.dependencies]
 pydantic = "*"
 
 [package.extras]
-dev = ["coverage (>=4.1)", "hypothesis", "mypy", "pyarrow", "pyarrow-stubs", "pytest", "pytest-cov", "pytest-mock", "pytest-runner", "pytest-xdist", "ruff", "xtgeo (>=2.16)"]
+dev = ["coverage (>=4.1)", "fmu-settings (>=1.5.0)", "hypothesis", "mypy", "pyarrow", "pyarrow-stubs", "pytest", "pytest-cov", "pytest-mock", "pytest-runner", "pytest-xdist", "ruff", "xtgeo (>=2.16)"]
 docs = ["pydocstyle"]
 
 [[package]]
@@ -3976,7 +3976,7 @@ develop = true
 aiohttp = "^3.14.4"
 azure-identity = "^1.25.3"
 azure-servicebus = "^7.14.3"
-fmu-datamodels = "0.21.4"
+fmu-datamodels = "0.27.0"
 fmu-sumo = "2.15.1"
 httpx = "^0.28.1"
 numpy = "^2.2.0"
