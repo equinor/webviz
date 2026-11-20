@@ -16,7 +16,6 @@ import {
     setItemExpanded,
 } from "../support/dpfHelpers";
 import { DROGON_AHM } from "../support/drogonTestData";
-import { GPU_RENDERING } from "../support/gpuRendering";
 import { test } from "../support/recordingFixtures";
 import { TWO_D_VIEWER, addTwoDViewer, pointAtMap, twoDView, waitForMap } from "../support/twoDViewerHelpers";
 import {
@@ -34,9 +33,6 @@ import {
 } from "../support/walkthroughHelpers";
 
 import { meta } from "./twoDViewer.meta";
-
-// Rendering many WebGL maps is far too slow without a GPU.
-test.use(GPU_RENDERING);
 
 /** How long the voice leads each narrated action, so speech starts before the cursor moves. */
 const SPEECH_LEAD_MS = 800;
@@ -68,9 +64,9 @@ const SIMULATION_MAP_VIEWS: SimulationMapView[] = [
     },
 ];
 
-test.describe("2D Viewer", () => {
+test.describe("2D Viewer", { tag: "@gpu" }, () => {
     test("depth maps, simulation maps and 4D seismic", async ({ page, narrate, markStep }) => {
-        test.setTimeout(2_400_000);
+        test.setTimeout(600_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         /**

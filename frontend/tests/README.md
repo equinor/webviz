@@ -101,14 +101,18 @@ expand/collapse, color scales), and keep module specifics in a small per-module 
 
 #### GPU rendering
 
-Stories run headless by default, with software WebGL, which is how the published videos were
-recorded. Stories with WebGL maps (2D/3D Viewer, Intersection) are far too slow that way, so they opt
-in to GPU rendering with `test.use(GPU_RENDERING)` from `tests/e2e/support/gpuRendering.ts`. Under
-WSL2, the GPU is only reachable through WSLg's display, so those stories run headed (a window opens
-during the run), with Mesa's D3D12 driver selected (NVIDIA adapter by default; override with
-`MESA_D3D12_DEFAULT_ADAPTER_NAME`). Headed mode changes timings, so only opt in where needed. The e2e
-recordings workflow is disabled until a GPU-enabled runner is available, so tutorial videos are
-currently recorded locally.
+Stories run headless by default in the `authenticated-chromium` project (software WebGL). Stories
+with heavy WebGL rendering (2D/3D Viewer, Intersection) opt in to the `authenticated-chromium-gpu`
+project by tagging their `test.describe` or `test` with `{ tag: "@gpu" }`.
+
+- Under WSL2 (`/dev/dxg`), the GPU is only reachable through WSLg's display, so
+  `authenticated-chromium-gpu` runs headed with Mesa's D3D12 driver (NVIDIA adapter by default;
+  override with `MESA_D3D12_DEFAULT_ADAPTER_NAME`).
+- Under native Linux (including the `linux-gpu` GitHub Actions runner), `authenticated-chromium-gpu`
+  runs headless with `--ignore-gpu-blocklist`.
+- In GitHub Actions (`.github/workflows/e2e_recordings.yml`), recordings run on a weekly schedule
+  (and via `workflow_dispatch`), routing `authenticated-chromium` to `ubuntu-24.04` and
+  `authenticated-chromium-gpu` to `linux-gpu`.
 
 #### Running a single story
 

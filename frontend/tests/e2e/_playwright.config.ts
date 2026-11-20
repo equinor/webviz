@@ -18,9 +18,9 @@ const record = !!process.env.RECORD;
 
 /**
  * Under WSL (detected by its GPU device, /dev/dxg) the GPU is only reachable through WSLg's display,
- * via Mesa's D3D12 driver, so that driver is selected for any headed run. Stories run headless by
- * default (software WebGL, as the published videos were recorded); stories that need the GPU opt in to
- * headed mode with `test.use(GPU_RENDERING)` (see support/gpuRendering.ts).
+ * via Mesa's D3D12 driver, so the GPU project runs headed there with that driver selected. Non-GPU
+ * stories run headless by default (software WebGL); stories that need hardware GPU opt in with
+ * `{ tag: "@gpu" }` and run in the `authenticated-chromium-gpu` project.
  * MESA_D3D12_DEFAULT_ADAPTER_NAME picks the adapter on machines with more than one GPU.
  */
 const isWsl = existsSync("/dev/dxg");
@@ -31,6 +31,13 @@ const wslGpuEnv = {
 
 /** Base URL the browser talks to. Assumes the full stack is already running on this port. */
 const BASE_URL = "http://localhost:8080";
+
+/** Shared Chromium settings for both the CPU and GPU authenticated story projects. */
+const authenticatedChromiumUse = {
+    ...devices["Desktop Chrome"],
+    storageState: STORAGE_STATE_PATH,
+    ...(record ? { viewport: { width: 1920, height: 1080 } } : {}),
+};
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -59,6 +66,8 @@ export default defineConfig({
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */
         baseURL: BASE_URL,
+        /* Bound individual Playwright actions so a broken selector fails fast instead of waiting out the full test timeout. */
+        actionTimeout: 30_000,
         trace: record ? { mode: "retain-on-failure", screenshots: false } : "on-first-retry",
         /* If recording, record in full HD  (matches the 1920x1080 viewport set below). */
         video: record ? { mode: "on", size: { width: 1920, height: 1080 } } : "off",
@@ -70,18 +79,33 @@ export default defineConfig({
         /*
          * Authenticated tests reuse the session seeded by the global setup, so the app loads as
          * a logged-in user fetching real Sumo data. They live under the `stories/` folder.
+         * Stories tagged `@gpu` run in `authenticated-chromium-gpu` so CI can route only those
+         * to the GPU runner while keeping standard stories on a regular CPU runner.
          */
         {
             name: "authenticated-chromium",
             testMatch: /stories\/.*\.test\.ts/,
+            grepInvert: /@gpu/,
             use: {
-                ...devices["Desktop Chrome"],
-                storageState: STORAGE_STATE_PATH,
-                ...(record ? { viewport: { width: 1920, height: 1080 } } : {}),
+                ...authenticatedChromiumUse,
                 // CI runners have a tiny /dev/shm; without this Chromium can abort (SIGABRT) when
                 // flushing the full-HD video/trace at context teardown. Point it at /tmp instead.
                 launchOptions: {
                     args: ["--disable-dev-shm-usage"],
+                },
+            },
+        },
+        {
+            name: "authenticated-chromium-gpu",
+            testMatch: /stories\/.*\.test\.ts/,
+            grep: /@gpu/,
+            use: {
+                ...authenticatedChromiumUse,
+                ...(isWsl ? { headless: false } : {}),
+                launchOptions: {
+                    // `--ignore-gpu-blocklist` lets headless Chromium on native Linux GPU runners
+                    // use the hardware GPU instead of falling back to software WebGL (SwiftShader).
+                    args: ["--disable-dev-shm-usage", ...(isWsl ? [] : ["--ignore-gpu-blocklist"])],
                     ...(isWsl ? { env: { ...process.env, ...wslGpuEnv } } : {}),
                 },
             },

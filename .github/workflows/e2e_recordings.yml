@@ -1,11 +1,14 @@
 name: e2e recordings
 
 on:
-  # Temporarily disabled until a GPU-enabled GitHub runner is available.
-  # push:
-  #   branches:
-  #     - main
+  schedule:
+    # Weekly on Sunday at 02:00 UTC
+    - cron: "0 2 * * 0"
   workflow_dispatch:
+
+concurrency:
+  group: e2e-recordings-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -14,7 +17,25 @@ jobs:
   e2e_recordings:
     # The Sumo shared key secret is only available on the upstream repo, so skip on forks.
     if: github.repository == 'equinor/webviz'
-    runs-on: ubuntu-24.04
+    name: e2e recordings (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: ${{ matrix.job_timeout }}
+
+    # Stories tagged @gpu run on the (billed) GPU runner; everything else runs on a standard runner.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: cpu
+            runner: ubuntu-24.04
+            project: authenticated-chromium
+            job_timeout: 135
+            test_timeout: 120
+          - name: gpu
+            runner: linux-gpu
+            project: authenticated-chromium-gpu
+            job_timeout: 50
+            test_timeout: 35
 
     env:
       COMPOSE_FILE: docker-compose.yml:docker-compose-cosmos-db.yml:docker-compose-service-bus.yml
@@ -61,23 +82,28 @@ jobs:
         uses: actions/cache@v4
         with:
           path: frontend/.narration-cache
-          key: narration-audio-${{ github.run_id }}
-          restore-keys: narration-audio-
+          key: narration-audio-${{ matrix.name }}-${{ github.run_id }}
+          restore-keys: |
+            narration-audio-${{ matrix.name }}-
+            narration-audio-
 
       - name: 🐳 Build and start the full stack
+        timeout-minutes: 15
         run: docker compose up --build --detach
 
       - name: ⏳ Wait for the stack to become responsive
+        timeout-minutes: 10
         run: |
           curl --retry 90 --retry-delay 5 --retry-connrefused --retry-all-errors -f http://localhost:5000/alive
           curl --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors -f http://localhost:8080
 
       - name: 🎥 Run e2e tests with recording
         working-directory: ./frontend
+        timeout-minutes: ${{ matrix.test_timeout }}
         env:
           CI: "true"
           SHARED_KEY_DROGON_READ_PROD: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
-        run: npm run test:e2e:record
+        run: npm run test:e2e:record -- --project=${{ matrix.project }}
 
       - name: 🐳 Dump docker compose logs on failure
         if: failure()
@@ -87,7 +113,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-traces
+          name: playwright-traces-${{ matrix.name }}
           path: frontend/test-results/**/trace.zip
           retention-days: 1
           if-no-files-found: ignore
