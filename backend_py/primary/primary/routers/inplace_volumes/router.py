@@ -9,7 +9,7 @@ from webviz_services.inplace_volumes_table_assembler.inplace_volumes_table_assem
 from webviz_services.sumo_access.inplace_volumes_table_access import InplaceVolumesTableAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_warnings_middleware import unwrap_and_report_warnings
+from primary.utils.warning_reporter import WarningReporter
 from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.routers.inplace_volumes.converters import (
     convert_schema_to_indices,
@@ -62,6 +62,7 @@ async def get_inplace_table_definitions(
 async def post_get_aggregated_per_realization_inplace_table_data(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     table_name: Annotated[str, Query(description="Table name")],
@@ -100,6 +101,7 @@ async def post_get_aggregated_per_realization_inplace_table_data(
     if is_deprecated_format:
         return await handle_aggregated_per_realization_table_data_for_deprecated_format_async(
             authenticated_user,
+            warning_reporter,
             case_uuid,
             ensemble_name,
             table_name,
@@ -124,7 +126,7 @@ async def post_get_aggregated_per_realization_inplace_table_data(
     perf_metrics.record_lap("calculate-accumulated-data")
     LOGGER.info(f"Got aggregated inplace volumes data in: {perf_metrics.to_string()}")
 
-    data = unwrap_and_report_warnings(result)
+    data = warning_reporter.unwrap_result_and_report(result)
 
     return convert_table_data_per_fluid_selection_to_schema(data)
 
@@ -134,6 +136,7 @@ async def post_get_aggregated_per_realization_inplace_table_data(
 async def post_get_aggregated_statistical_inplace_table_data(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     table_name: Annotated[str, Query(description="Table name")],
@@ -174,6 +177,7 @@ async def post_get_aggregated_statistical_inplace_table_data(
     if is_deprecated_format:
         return await handle_aggregated_statistical_table_data_for_deprecated_format_async(
             authenticated_user,
+            warning_reporter,
             case_uuid,
             ensemble_name,
             table_name,
@@ -196,6 +200,6 @@ async def post_get_aggregated_statistical_inplace_table_data(
     perf_metrics.record_lap("calculate-accumulated-data")
     LOGGER.info(f"Got aggregated statistical inplace volumes data in: {perf_metrics.to_string()}")
 
-    data = unwrap_and_report_warnings(result)
+    data = warning_reporter.unwrap_result_and_report(result)
 
     return convert_statistical_table_data_per_fluid_selection_to_schema(data)

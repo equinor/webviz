@@ -9,7 +9,7 @@ from webviz_services.sumo_access.observation_access import ObservationAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_warnings_middleware import report_warnings
+from primary.utils.warning_reporter import WarningReporter
 from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.query_string_utils import decode_uint_list_str
 
@@ -39,6 +39,7 @@ async def get_rft_table_definition(
 @cache_time(CacheTime.LONG, result_version=1)
 async def get_rft_realization_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     well_name: Annotated[str, Query(description="Well name")],
@@ -78,7 +79,7 @@ async def get_rft_realization_data(
             )
         )
 
-    report_warnings(warnings)
+    warning_reporter.report(warnings)
     return ret_data
 
 

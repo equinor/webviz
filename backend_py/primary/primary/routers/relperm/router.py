@@ -7,7 +7,7 @@ from webviz_services.sumo_access.relperm_access import RelpermAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_warnings_middleware import unwrap_and_report_warnings
+from primary.utils.warning_reporter import WarningReporter
 from primary.middleware.cache_control_middleware import CacheTime, cache_time
 from primary.utils.query_string_utils import decode_uint_list_str
 
@@ -46,6 +46,7 @@ async def get_relperm_table_definition(
 @cache_time(CacheTime.LONG, result_version=1)
 async def get_relperm_realization_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     table_name: Annotated[str, Query(description="Relperm table name")],
@@ -72,5 +73,5 @@ async def get_relperm_realization_data(
         realizations=realizations,
     )
 
-    realization_data = unwrap_and_report_warnings(result)
+    realization_data = warning_reporter.unwrap_result_and_report(result)
     return converters.to_api_realization_data_response(realization_data)

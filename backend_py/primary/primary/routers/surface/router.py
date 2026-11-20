@@ -28,7 +28,7 @@ from webviz_services.utils.surfaces_well_trajectory_formation_segments import (
 )
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_warnings_middleware import report_warnings
+from primary.utils.warning_reporter import WarningReporter
 from primary.middleware.cache_control_middleware import cache_time, set_cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
@@ -192,6 +192,7 @@ async def get_surface_data(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     surf_addr_str: Annotated[str, Query(description="Surface address string, supported address types are *REAL*, *OBS* and *STAT*")],
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
@@ -211,7 +212,7 @@ async def get_surface_data(
         xtgeo_surf=xtgeo_surf, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
     )
 
-    report_warnings(warnings)
+    warning_reporter.report(warnings)
     return surf_data_response
 
 
@@ -219,6 +220,7 @@ async def get_surface_data(
 async def post_get_well_trajectories_formation_segments(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     well_trajectories: Annotated[list[schemas.WellTrajectory], Body(embed=True)],
     top_depth_surf_addr_str: Annotated[
         str,
@@ -304,7 +306,7 @@ async def post_get_well_trajectories_formation_segments(
     perf_metrics.record_lap("Create segments for all wells")
     LOGGER.info(f"Got well trajectory formation segments in: {perf_metrics.to_string()}")
 
-    report_warnings(warnings)
+    warning_reporter.report(warnings)
     return per_well_trajectory_formation_segments
 
 
@@ -314,6 +316,7 @@ async def get_statistical_surface_data_hybrid(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     surf_addr_str: Annotated[str, Query(description="Surface address string, supported address type is *STAT*")],
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
@@ -393,7 +396,7 @@ async def get_statistical_surface_data_hybrid(
 
         set_cache_time(CacheTime.NORMAL)
 
-        report_warnings(warnings)
+        warning_reporter.report(warnings)
         return LroSuccessResp(result=api_surf_data)
 
     except Exception as _exc:
@@ -411,6 +414,7 @@ async def post_get_surface_intersection(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     surf_addr_str: Annotated[str, Query(description="Surface address string, supported address types are *REAL*, *OBS* and *STAT*")],
     cumulative_length_polyline: Annotated[schemas.SurfaceIntersectionCumulativeLengthPolyline, Body(embed=True)],
     # fmt:on
@@ -439,7 +443,7 @@ async def post_get_surface_intersection(
 
     surface_intersection_response = converters.to_api_surface_intersection(surface_intersection)
 
-    report_warnings(warnings)
+    warning_reporter.report(warnings)
     return surface_intersection_response
 
 
@@ -452,6 +456,7 @@ async def post_get_sample_surface_in_points(
     sample_points: schemas.PointSetXY = Body(embed=True),
     surface_attribute: schemas.SurfaceAttribute = Body(embed=True, description="Surface attribute"),
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    warning_reporter: WarningReporter = Depends(WarningReporter),
 ) -> List[schemas.SurfaceRealizationSampleValues]:
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
@@ -478,7 +483,7 @@ async def post_get_sample_surface_in_points(
             )
         )
 
-    report_warnings(warnings)
+    warning_reporter.report(warnings)
     return intersections
 
 

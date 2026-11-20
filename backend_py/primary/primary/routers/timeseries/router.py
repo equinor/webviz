@@ -30,7 +30,7 @@ from webviz_services.summary_derived_vectors import (
 )
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_warnings_middleware import report_warnings
+from primary.utils.warning_reporter import WarningReporter
 from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.query_string_utils import decode_uint_list_str
@@ -148,6 +148,7 @@ async def get_realizations_vector_data(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name:  Annotated[str, Query(description="Ensemble name")],
     vector_name:  Annotated[str, Query(description="Name of the vector")],
@@ -207,17 +208,18 @@ async def get_realizations_vector_data(
 
     LOGGER.info(f"Loaded realization summary data in: {perf_metrics.to_string()}")
 
-    report_warnings(warnings)
+    warning_reporter.report(warnings)
     return ret_arr
 
 
 @router.get("/delta_ensemble_realizations_vector_data/")
 @cache_time(CacheTime.LONG, result_version=1)
-# pylint: disable-next=too-many-locals
+# pylint: disable-next=too-many-locals,too-many-arguments
 async def get_delta_ensemble_realizations_vector_data(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     comparison_case_uuid: Annotated[str, Query(description="Sumo case uuid for comparison ensemble")],
     comparison_ensemble_name: Annotated[str, Query(description="Comparison ensemble name")],
     reference_case_uuid: Annotated[str, Query(description="Sumo case uuid for reference ensemble")],
@@ -296,7 +298,7 @@ async def get_delta_ensemble_realizations_vector_data(
         )
 
     LOGGER.info(f"Loaded realization delta ensemble summary data in: {perf_metrics.to_string()}")
-    report_warnings(warnings)
+    warning_reporter.report(warnings)
     return ret_arr
 
 
@@ -335,6 +337,7 @@ async def get_statistical_vector_data(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name:  Annotated[str, Query(description="Ensemble name")],
     vector_name: Annotated[str, Query(description="Name of the vector")],
@@ -397,7 +400,7 @@ async def get_statistical_vector_data(
     perf_metrics.record_lap("calc-stat")
     LOGGER.info(f"Loaded and computed statistical summary data in: {perf_metrics.to_string()}")
 
-    report_warnings(warnings)
+    warning_reporter.report(warnings)
     return ret_data
 
 
@@ -409,6 +412,7 @@ async def get_delta_ensemble_statistical_vector_data(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     comparison_case_uuid: Annotated[str, Query(description="Sumo case uuid for comparison ensemble")],
     comparison_ensemble_name: Annotated[str, Query(description="Comparison ensemble name")],
     reference_case_uuid: Annotated[str, Query(description="Sumo case uuid for reference ensemble")],
@@ -490,7 +494,7 @@ async def get_delta_ensemble_statistical_vector_data(
     perf_metrics.record_lap("calc-delta-vector-stat")
     LOGGER.info(f"Loaded and computed statistical delta ensemble summary data in: {perf_metrics.to_string()}")
 
-    report_warnings(warnings)
+    warning_reporter.report(warnings)
     return ret_data
 
 
@@ -500,6 +504,7 @@ async def get_delta_ensemble_statistical_vector_data(
 async def get_statistical_vector_data_per_sensitivity(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name:  Annotated[str, Query(description="Ensemble name")],
     vector_name: Annotated[str, Query(description="Name of the vector")],
@@ -578,7 +583,7 @@ async def get_statistical_vector_data_per_sensitivity(
             )
         )
 
-    report_warnings(warnings)
+    warning_reporter.report(warnings)
     return ret_data
 
 

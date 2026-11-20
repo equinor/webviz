@@ -8,7 +8,7 @@ from webviz_services.sumo_access.well_completions_access import WellCompletionsA
 from webviz_services.well_completions_assembler.well_completions_assembler import WellCompletionsAssembler
 
 from primary.auth.auth_helper import AuthHelper
-from primary.middleware.add_warnings_middleware import report_warnings
+from primary.utils.warning_reporter import WarningReporter
 from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.query_string_utils import decode_uint_list_str
 
@@ -23,6 +23,7 @@ router = APIRouter()
 async def get_well_completions_data(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     realizations_encoded_as_uint_list_str: Annotated[int | str | None, Query( description="Optional realizations to include, list encoded as string. If not specified, all realizations will be returned.")] = None,
@@ -65,5 +66,5 @@ async def get_well_completions_data(
         wells=[converters.convert_well_to_schema(well) for well in data.wells],
     )
 
-    report_warnings(warnings)
+    warning_reporter.report(warnings)
     return response
