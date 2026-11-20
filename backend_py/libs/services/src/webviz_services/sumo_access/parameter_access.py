@@ -38,15 +38,6 @@ class ParameterMetadata:
     max_value: float | None
 
 
-@dataclass
-class ParametersAndSensitivities:
-    """Parameters and sensitivities for an ensemble, with an optional non-fatal warning."""
-
-    parameters: list[EnsembleParameter]
-    sensitivities: list[EnsembleSensitivity]
-    non_standard_parameters_warning: str | None = None
-
-
 class ParameterAccess:
     """Access class for retrieving parameters and sensitivities from SUMO.
 
@@ -67,15 +58,54 @@ class ParameterAccess:
         sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
-    async def get_parameters_and_sensitivities_async(self) -> ParametersAndSensitivities:
-        """Retrieve parameters and sensitivities for an ensemble.
+    async def get_standard_result_parameters_async(
+        self, ensemble_label: str | None = None
+    ) -> list[EnsembleParameter] | None:
+        """Retrieve the ensemble's parameters from the standard result table.
+
+        Args:
+            ensemble_label: Optional user-facing label of the ensemble, used in error messages
 
         Returns:
-            A ParametersAndSensitivities object containing:
-            - List of ensemble parameters with metadata and values
-            - List of ensemble sensitivities derived from parameters
-            - An optional non-fatal warning if realization-level parameters are missing from the
-              standard result (e.g. legacy design matrix parameters injected into parameters.txt/json)
+            List of EnsembleParameter objects, or None if the ensemble has no standard result parameter table
+
+        Raises:
+            MultipleDataMatchesError: If multiple parameter tables are found
+            InvalidDataError: If data format is unexpected
+        """
+        perf_metrics = PerfMetrics()
+
+        parameter_context = self._ensemble_context.filter(standard_result=StandardResultName.parameters)
+        table_count = await parameter_context.length_async()
+        if table_count == 0:
+            return None
+        if table_count > 1:
+            ensemble_description = (
+                f"ensemble {ensemble_label}"
+                if ensemble_label is not None
+                else f"case {self._case_uuid} and ensemble {self._ensemble_name}"
+            )
+            raise MultipleDataMatchesError(
+                f"Multiple Standard result parameter tables found for {ensemble_description}. This is not supported.",
+                Service.SUMO,
+            )
+
+        parameter_table_obj = await parameter_context.getitem_async(0)
+        table = await parameter_table_obj.to_arrow_async()
+        perf_metrics.record_lap("to_arrow")
+
+        ensemble_parameters = _parameter_table_to_ensemble_parameters(table)
+        perf_metrics.record_lap("transform")
+
+        LOGGER.debug(
+            f"ParameterAccess.get_standard_result_parameters_async() took: {perf_metrics.to_string()},"
+            f" {self._case_uuid=}, {self._ensemble_name=}"
+        )
+
+        return ensemble_parameters
+
+    async def get_sensitivities_async(self) -> list[EnsembleSensitivity]:
+        """Retrieve the sensitivities of the ensemble, derived from its own parameters only.
 
         Raises:
             MultipleDataMatchesError: If multiple parameter tables are found
@@ -83,38 +113,12 @@ class ParameterAccess:
             ServiceRequestError: If parameter aggregation fails
             InvalidDataError: If data format is unexpected
         """
+        parameters = await self.get_standard_result_parameters_async()
+        if parameters is None:
+            parameters = await self.get_legacy_parameters_async()
+        return create_ensemble_sensitivities(parameters)
 
-        parameter_context = self._ensemble_context.filter(standard_result=StandardResultName.parameters)
-        table_count = await parameter_context.length_async()
-        if table_count > 1:
-            raise MultipleDataMatchesError(
-                f"Multiple Standard result parameter tables found for case {self._case_uuid} and ensemble {self._ensemble_name}. "
-                "This is not supported.",
-                Service.SUMO,
-            )
-
-        non_standard_parameters_warning: str | None = None
-        if table_count == 0:
-            LOGGER.debug(
-                f"No Standard result parameter table found for case {self._case_uuid} and ensemble {self._ensemble_name}. "
-                "Attempting legacy parameter retrieval."
-            )
-            ensemble_parameters = await self._get_parameters_from_legacy_result_async()
-        else:
-            ensemble_parameters = await self._get_parameters_from_standard_result_async(parameter_context)
-            non_standard_parameters_warning = await self._detect_parameters_missing_from_standard_result_async(
-                ensemble_parameters
-            )
-
-        sensitivities = _create_ensemble_sensitivities(ensemble_parameters)
-
-        return ParametersAndSensitivities(
-            parameters=ensemble_parameters,
-            sensitivities=sensitivities,
-            non_standard_parameters_warning=non_standard_parameters_warning,
-        )
-
-    async def _detect_parameters_missing_from_standard_result_async(
+    async def detect_parameters_missing_from_standard_result_async(
         self, standard_result_parameters: list[EnsembleParameter]
     ) -> str | None:
         """Detect parameters present on realization level but missing from the standard result.
@@ -167,32 +171,8 @@ class ParameterAccess:
             f"matrix support to make all sensitivity parameters appear in Webviz: {ERT_DESIGN_MATRIX_DOCS_URL}"
         )
 
-    async def _get_parameters_from_standard_result_async(
-        self, parameter_context: SearchContext
-    ) -> list[EnsembleParameter]:
-        """Retrieve parameters for an ensemble using standard result format.
-
-        Returns:
-            List of EnsembleParameter objects
-        """
-        perf_metrics = PerfMetrics()
-
-        parameter_table_obj = await parameter_context.getitem_async(0)
-        table = await parameter_table_obj.to_arrow_async()
-        perf_metrics.record_lap("to_arrow")
-
-        ensemble_parameters = _parameter_table_to_ensemble_parameters(table)
-        perf_metrics.record_lap("transform")
-
-        LOGGER.debug(
-            f"ParameterAccess._get_parameters_from_standard_result_async() took: {perf_metrics.to_string()},"
-            f" {self._case_uuid=}, {self._ensemble_name=}"
-        )
-
-        return ensemble_parameters
-
-    async def _get_parameters_from_legacy_result_async(self) -> list[EnsembleParameter]:
-        """Retrieve parameters for an ensemble using legacy legacy result aggregation.
+    async def get_legacy_parameters_async(self) -> list[EnsembleParameter]:
+        """Retrieve parameters for an ensemble using legacy result aggregation.
 
         This method is used as a fallback when standard result parameters are not available.
         It aggregates per-realization parameters.
@@ -247,14 +227,14 @@ class ParameterAccess:
         perf_metrics.record_lap("transform")
 
         LOGGER.debug(
-            f"ParameterAccess._get_parameters_from_legacy_result_async() took: {perf_metrics.to_string()},"
+            f"ParameterAccess.get_legacy_parameters_async() took: {perf_metrics.to_string()},"
             f" {self._case_uuid=}, {self._ensemble_name=}"
         )
 
         return ensemble_parameters
 
 
-def _create_ensemble_sensitivities(
+def create_ensemble_sensitivities(
     sumo_ensemble_parameters: list[EnsembleParameter],
 ) -> list[EnsembleSensitivity]:
     """Extract sensitivities from ensemble parameters.

@@ -47,6 +47,9 @@ import type {
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsErrors_api,
     GetEnsembleDetailsResponses_api,
+    GetEnsembleRestartInfosData_api,
+    GetEnsembleRestartInfosErrors_api,
+    GetEnsembleRestartInfosResponses_api,
     GetFieldIdentifiersData_api,
     GetFieldIdentifiersResponses_api,
     GetFieldPerforationsData_api,
@@ -336,7 +339,26 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/cases/{case_uuid}/ensembles/{ensemble_name}",
         ...options,
-        query: { ...options.query, _rv: "b454e9" },
+        query: { ...options.query, _rv: "4d9a95" },
+    });
+
+/**
+ * Get Ensemble Restart Infos
+ *
+ * Get the ensemble each ensemble in the case was directly restarted from, if any
+ */
+export const getEnsembleRestartInfos = <ThrowOnError extends boolean = false>(
+    options: Options<GetEnsembleRestartInfosData_api, ThrowOnError>,
+): RequestResult<GetEnsembleRestartInfosResponses_api, GetEnsembleRestartInfosErrors_api, ThrowOnError> =>
+    (options.client ?? client).get<
+        GetEnsembleRestartInfosResponses_api,
+        GetEnsembleRestartInfosErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/cases/{case_uuid}/ensemble_restart_infos",
+        ...options,
+        query: { ...options.query, _rv: "09a87c" },
     });
 
 /**
@@ -874,6 +896,13 @@ export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Parameters And Sensitivities
+ *
+ * Get parameters and sensitivities for an ensemble, combined with the parameters of the ensembles it was
+ * restarted from.
+ *
+ * The browser cache is keyed on this ensemble's fingerprint only. This is sufficient since the ensembles it was
+ * restarted from are expected not to change once restarted from. An ensemble in the restart chain that could not
+ * be found may become accessible later, so such responses are cached for a shorter time.
  */
 export const getParametersAndSensitivities = <ThrowOnError extends boolean = false>(
     options: Options<GetParametersAndSensitivitiesData_api, ThrowOnError>,
@@ -886,7 +915,7 @@ export const getParametersAndSensitivities = <ThrowOnError extends boolean = fal
         responseType: "json",
         url: "/parameters/parameters_and_sensitivities/",
         ...options,
-        query: { ...options.query, _rv: "c609c0" },
+        query: { ...options.query, _rv: "8d0716" },
     });
 
 /**

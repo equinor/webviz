@@ -14,6 +14,12 @@ from webviz_services.service_exceptions import (
 )
 
 from ._helpers import create_sumo_case_async
+from .ensemble_lineage import (
+    EnsembleRestartInfo,
+    RestartChain,
+    get_case_ensemble_restart_infos_async,
+    get_restart_chain_async,
+)
 from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
@@ -75,6 +81,14 @@ class CaseInspector:
 
         LOGGER.debug(f"get_ensembles_async {timer.to_string()}")
         return ens_info_arr
+
+    async def get_restart_chain_async(self, ensemble_name: str) -> RestartChain:
+        """Get the chain of ensembles that the specified ensemble was restarted from, nearest parent first"""
+        return await get_restart_chain_async(self._sumo_client, self._case_uuid, ensemble_name)
+
+    async def get_ensemble_restart_infos_async(self) -> list[EnsembleRestartInfo]:
+        """Get the direct restart parent (if any) of every ensemble in the case, sorted by ensemble name"""
+        return await get_case_ensemble_restart_infos_async(self._sumo_client, self._case_uuid)
 
     async def get_realizations_in_ensemble_async(self, ensemble_name: str) -> list[int]:
         """Get list of realizations for the specified ensemble"""

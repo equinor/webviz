@@ -6,6 +6,7 @@ import { EnsembleParameters, ParameterType } from "@framework/EnsembleParameters
 import type { Sensitivity } from "@framework/EnsembleSensitivities";
 import { EnsembleSensitivities, SensitivityType } from "@framework/EnsembleSensitivities";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 describe("RegularEnsemble", () => {
     const assetName = "DROGON";
@@ -126,5 +127,37 @@ describe("RegularEnsemble", () => {
         );
         expect(ensemble.getDisplayName()).toBe(`${ensembleName} (${caseName})`);
         expect(ensemble.getCustomName()).toBeNull();
+    });
+
+    test("should not be a restart ensemble by default", () => {
+        expect(TEST_ENSEMBLE.isRestartEnsemble()).toBe(false);
+        expect(TEST_ENSEMBLE.getRestartFromChain()).toEqual([]);
+        expect(TEST_ENSEMBLE.getRestartFromEnsembleIdent()).toBeNull();
+    });
+
+    test("should expose the restart chain with the nearest parent first", () => {
+        const parentIdent = new RegularEnsembleIdent(caseUuid, "iter-3");
+        const grandParentIdent = new RegularEnsembleIdent("22222222-bbbb-4444-bbbb-bbbbbbbbbbbb", "iter-0");
+        const restartChain = [parentIdent, grandParentIdent];
+        const ensemble = new RegularEnsemble(
+            assetName,
+            fieldIdentifiers,
+            caseUuid,
+            caseName,
+            "pred",
+            stratigraphicColumnIdentifier,
+            realizationsArray,
+            parameterArray,
+            sensitivityArray,
+            fipRegionsMappingArray,
+            color,
+            null,
+            restartChain,
+        );
+        restartChain.pop();
+
+        expect(ensemble.isRestartEnsemble()).toBe(true);
+        expect(ensemble.getRestartFromEnsembleIdent()).toBe(parentIdent);
+        expect(ensemble.getRestartFromChain()).toEqual([parentIdent, grandParentIdent]);
     });
 });

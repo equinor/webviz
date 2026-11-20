@@ -3,6 +3,14 @@ from enum import Enum
 from pydantic import BaseModel
 
 
+class ParameterSourceEnsemble(BaseModel):
+    """The restart ensemble a parameter was inherited from"""
+
+    caseUuid: str
+    caseName: str
+    ensembleName: str
+
+
 class EnsembleParameter(BaseModel):
     """Description/data for a single parameter in an ensemble"""
 
@@ -15,6 +23,7 @@ class EnsembleParameter(BaseModel):
     descriptiveName: str | None = None
     realizations: list[int]
     values: list[float] | list[int] | list[str]
+    sourceEnsemble: ParameterSourceEnsemble | None = None  # None means the ensemble's own parameter
 
 
 class SensitivityType(str, Enum):
@@ -42,4 +51,4 @@ class EnsembleParametersAndSensitivities(BaseModel):
 
     parameters: list[EnsembleParameter]
     sensitivities: list[EnsembleSensitivity]
-    nonStandardParametersWarning: str | None = None
+    warnings: list[str]

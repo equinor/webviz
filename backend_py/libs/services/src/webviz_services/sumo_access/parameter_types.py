@@ -1,5 +1,14 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
+
+
+@dataclass(frozen=True)
+class ParameterSourceEnsemble:
+    """The restart ensemble a parameter was inherited from"""
+
+    case_uuid: str
+    case_name: str
+    ensemble_name: str
 
 
 @dataclass
@@ -16,6 +25,7 @@ class EnsembleParameter:
     values: list[float] | list[int] | list[str]
     group_name: str | None = None
     descriptive_name: str | None = None
+    source_ensemble: ParameterSourceEnsemble | None = None  # None means the ensemble's own parameter
 
 
 class SensitivityType(StrEnum):
@@ -38,3 +48,14 @@ class EnsembleSensitivity:
     name: str
     type: SensitivityType
     cases: list[EnsembleSensitivityCase]
+
+
+@dataclass
+class ParametersAndSensitivities:
+    """Parameters and sensitivities for an ensemble, with non-fatal user-facing warnings."""
+
+    parameters: list[EnsembleParameter]
+    sensitivities: list[EnsembleSensitivity]
+    warnings: list[str] = field(default_factory=list)
+    # True if the restart chain broke on an ensemble that could not be found (deleted or no access)
+    has_unresolved_restart_ensemble: bool = False

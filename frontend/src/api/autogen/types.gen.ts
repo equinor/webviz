@@ -354,6 +354,7 @@ export type EnsembleDetails_api = {
      * Fipregions
      */
     fipRegions: Array<FipRegion_api>;
+    restartChain: RestartChain_api;
 };
 
 /**
@@ -430,6 +431,7 @@ export type EnsembleParameter_api = {
      * Values
      */
     values: Array<number> | Array<number> | Array<string>;
+    sourceEnsemble?: ParameterSourceEnsemble_api | null;
 };
 
 /**
@@ -447,9 +449,42 @@ export type EnsembleParametersAndSensitivities_api = {
      */
     sensitivities: Array<EnsembleSensitivity_api>;
     /**
-     * Nonstandardparameterswarning
+     * Warnings
      */
-    nonStandardParametersWarning?: string | null;
+    warnings: Array<string>;
+};
+
+/**
+ * EnsembleReference
+ */
+export type EnsembleReference_api = {
+    /**
+     * Caseuuid
+     */
+    caseUuid: string;
+    /**
+     * Casename
+     */
+    caseName: string;
+    /**
+     * Ensemblename
+     */
+    ensembleName: string;
+};
+
+/**
+ * EnsembleRestartInfo
+ */
+export type EnsembleRestartInfo_api = {
+    /**
+     * Ensemblename
+     */
+    ensembleName: string;
+    restartFrom: EnsembleReference_api | null;
+    /**
+     * Restartfromunresolveduuid
+     */
+    restartFromUnresolvedUuid: string | null;
 };
 
 /**
@@ -1189,6 +1224,26 @@ export type PageSnapshotMetadata_api = {
 };
 
 /**
+ * ParameterSourceEnsemble
+ *
+ * The restart ensemble a parameter was inherited from
+ */
+export type ParameterSourceEnsemble_api = {
+    /**
+     * Caseuuid
+     */
+    caseUuid: string;
+    /**
+     * Casename
+     */
+    caseName: string;
+    /**
+     * Ensemblename
+     */
+    ensembleName: string;
+};
+
+/**
  * PointSetXY
  */
 export type PointSetXY_api = {
@@ -1484,6 +1539,24 @@ export type RepeatedTableColumnData_api = {
      * Indices
      */
     indices: Array<number>;
+};
+
+/**
+ * RestartChain
+ */
+export type RestartChain_api = {
+    /**
+     * Ancestors
+     */
+    ancestors: Array<EnsembleReference_api>;
+    /**
+     * Unresolvedensembleuuid
+     */
+    unresolvedEnsembleUuid: string | null;
+    /**
+     * Truncated
+     */
+    truncated: boolean;
 };
 
 /**
@@ -3634,6 +3707,44 @@ export type GetEnsembleDetailsResponses_api = {
 };
 
 export type GetEnsembleDetailsResponse_api = GetEnsembleDetailsResponses_api[keyof GetEnsembleDetailsResponses_api];
+
+export type GetEnsembleRestartInfosData_api = {
+    body?: never;
+    path: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+    };
+    query?: {
+        _cacheBust?: string;
+    };
+    url: "/cases/{case_uuid}/ensemble_restart_infos";
+};
+
+export type GetEnsembleRestartInfosErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetEnsembleRestartInfosError_api =
+    GetEnsembleRestartInfosErrors_api[keyof GetEnsembleRestartInfosErrors_api];
+
+export type GetEnsembleRestartInfosResponses_api = {
+    /**
+     * Response Get Ensemble Restart Infos
+     *
+     * Successful Response
+     */
+    200: Array<EnsembleRestartInfo_api>;
+};
+
+export type GetEnsembleRestartInfosResponse_api =
+    GetEnsembleRestartInfosResponses_api[keyof GetEnsembleRestartInfosResponses_api];
 
 export type PostRefreshFingerprintsForEnsemblesData_api = {
     /**
