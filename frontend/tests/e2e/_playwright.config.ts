@@ -101,11 +101,22 @@ export default defineConfig({
             grep: /@gpu/,
             use: {
                 ...authenticatedChromiumUse,
-                ...(isWsl ? { headless: false } : {}),
+                // Under WSL the GPU is only reachable via WSLg (headed). On native Linux, use full
+                // Chromium (`channel: "chromium"`, i.e. `--headless=new`) instead of headless_shell
+                // so Chromium can access the hardware GPU via ANGLE/Vulkan.
+                ...(isWsl ? { headless: false } : { channel: "chromium" }),
                 launchOptions: {
-                    // `--ignore-gpu-blocklist` lets headless Chromium on native Linux GPU runners
-                    // use the hardware GPU instead of falling back to software WebGL (SwiftShader).
-                    args: ["--disable-dev-shm-usage", ...(isWsl ? [] : ["--ignore-gpu-blocklist"])],
+                    args: [
+                        "--disable-dev-shm-usage",
+                        ...(isWsl
+                            ? []
+                            : [
+                                  "--ignore-gpu-blocklist",
+                                  "--use-gl=angle",
+                                  "--use-angle=vulkan",
+                                  "--enable-features=Vulkan",
+                              ]),
+                    ],
                     ...(isWsl ? { env: { ...process.env, ...wslGpuEnv } } : {}),
                 },
             },
