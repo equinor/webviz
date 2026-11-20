@@ -6,6 +6,8 @@ import xtgeo
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
 
 from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 from webviz_core_utils.type_utils import expect_type
 from webviz_services.sumo_access.case_inspector import CaseInspector
 from webviz_services.sumo_access.surface_access import SurfaceAccess
@@ -26,6 +28,7 @@ from webviz_services.utils.surfaces_well_trajectory_formation_segments import (
 )
 
 from primary.auth.auth_helper import AuthHelper
+from primary.utils.warning_reporter import WarningReporter
 from primary.middleware.cache_control_middleware import cache_time, set_cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
@@ -184,11 +187,12 @@ async def get_initial_fluid_contact_surfaces_metadata(
 
 
 @router.get("/surface_data", description="Get surface data for the specified surface." + GENERAL_SURF_ADDR_DOC_STR)
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.LONG, result_version=1)
 async def get_surface_data(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     surf_addr_str: Annotated[str, Query(description="Surface address string, supported address types are *REAL*, *OBS* and *STAT*")],
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
@@ -198,14 +202,17 @@ async def get_surface_data(
 
     access_token = authenticated_user.get_sumo_access_token()
 
-    xtgeo_surf = await _get_xtgeo_surface_from_sumo_async(
+    warnings: list[TextWarning] = []
+    result = await _get_xtgeo_surface_from_sumo_async(
         access_token=access_token, surf_addr_str=surf_addr_str, perf_metrics=perf_metrics
     )
+    xtgeo_surf = result.get_value(warnings)
 
     surf_data_response = _resample_and_convert_to_surface_data_response(
         xtgeo_surf=xtgeo_surf, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
     )
 
+    warning_reporter.report(warnings)
     return surf_data_response
 
 
@@ -213,6 +220,7 @@ async def get_surface_data(
 async def post_get_well_trajectories_formation_segments(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     well_trajectories: Annotated[list[schemas.WellTrajectory], Body(embed=True)],
     top_depth_surf_addr_str: Annotated[
         str,
@@ -247,16 +255,19 @@ async def post_get_well_trajectories_formation_segments(
     perf_metrics = ResponsePerfMetrics(response)
     access_token = authenticated_user.get_sumo_access_token()
 
-    top_xtgeo_surf = await _get_xtgeo_surface_from_sumo_async(
+    warnings: list[TextWarning] = []
+    top_result = await _get_xtgeo_surface_from_sumo_async(
         access_token=access_token, surf_addr_str=top_depth_surf_addr_str, perf_metrics=perf_metrics
     )
+    top_xtgeo_surf = top_result.get_value(warnings)
     perf_metrics.record_lap("get-top-surf")
 
     bottom_xtgeo_surf = None
     if bottom_depth_surf_addr_str:
-        bottom_xtgeo_surf = await _get_xtgeo_surface_from_sumo_async(
+        bottom_result = await _get_xtgeo_surface_from_sumo_async(
             access_token=access_token, surf_addr_str=bottom_depth_surf_addr_str, perf_metrics=perf_metrics
         )
+        bottom_xtgeo_surf = bottom_result.get_value(warnings)
     perf_metrics.record_lap("get-bottom-surf")
 
     per_well_trajectory_formation_segments: list[schemas.WellTrajectoryFormationSegments] = []
@@ -294,14 +305,18 @@ async def post_get_well_trajectories_formation_segments(
 
     perf_metrics.record_lap("Create segments for all wells")
     LOGGER.info(f"Got well trajectory formation segments in: {perf_metrics.to_string()}")
+
+    warning_reporter.report(warnings)
     return per_well_trajectory_formation_segments
 
 
 @router.get("/statistical_surface_data_hybrid")
+# pylint: disable-next=too-many-locals
 async def get_statistical_surface_data_hybrid(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     surf_addr_str: Annotated[str, Query(description="Surface address string, supported address type is *STAT*")],
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
@@ -355,7 +370,7 @@ async def get_statistical_surface_data_hybrid(
 
     try:
         maybe_xtgeo_surf = await access.poll_statistical_surface_calculation_task_async(
-            sumo_task_id=task_meta.task_id, timeout_s=0
+            sumo_task_id=task_meta.task_id, timeout_s=0, requested_realizations=addr.stat_realizations
         )
         perf_metrics.record_lap("poll")
 
@@ -368,8 +383,11 @@ async def get_statistical_surface_data_hybrid(
             response.status_code = status.HTTP_202_ACCEPTED
             return task_helpers.make_lro_in_progress_resp(task_meta, new_sumo_task_was_submitted, maybe_xtgeo_surf)
 
-        # We should now be left with a xtgeo RegularSurface
-        xtgeo_surf: xtgeo.RegularSurface = expect_type(maybe_xtgeo_surf, xtgeo.RegularSurface)
+        # We should now be left with a result with an xtgeo RegularSurface. Warnings are only part of the successful result
+        warnings: list[TextWarning] = []
+        xtgeo_surf_result = expect_type(maybe_xtgeo_surf, ResultWithWarning)
+        xtgeo_surf: xtgeo.RegularSurface = xtgeo_surf_result.get_value(warnings)
+
         api_surf_data = _resample_and_convert_to_surface_data_response(
             xtgeo_surf=xtgeo_surf, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
         )
@@ -377,6 +395,8 @@ async def get_statistical_surface_data_hybrid(
         LOGGER.info(f"Got statistical surface data (hybrid) in: {perf_metrics.to_string()}")
 
         set_cache_time(CacheTime.NORMAL)
+
+        warning_reporter.report(warnings)
         return LroSuccessResp(result=api_surf_data)
 
     except Exception as _exc:
@@ -394,6 +414,7 @@ async def post_get_surface_intersection(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    warning_reporter: Annotated[WarningReporter, Depends(WarningReporter)],
     surf_addr_str: Annotated[str, Query(description="Surface address string, supported address types are *REAL*, *OBS* and *STAT*")],
     cumulative_length_polyline: Annotated[schemas.SurfaceIntersectionCumulativeLengthPolyline, Body(embed=True)],
     # fmt:on
@@ -406,11 +427,13 @@ async def post_get_surface_intersection(
     perf_metrics = ResponsePerfMetrics(response)
 
     addr = decode_surf_addr_str(surf_addr_str)
-    surface = await _get_xtgeo_surface_from_sumo_async(
+    warnings: list[TextWarning] = []
+    result = await _get_xtgeo_surface_from_sumo_async(
         access_token=authenticated_user.get_sumo_access_token(),
         surf_addr_str=surf_addr_str,
         perf_metrics=perf_metrics,
     )
+    surface = result.get_value(warnings)
 
     # Ensure name is applied
     surface.name = addr.name
@@ -420,23 +443,26 @@ async def post_get_surface_intersection(
 
     surface_intersection_response = converters.to_api_surface_intersection(surface_intersection)
 
+    warning_reporter.report(warnings)
     return surface_intersection_response
 
 
 @router.post("/get_sample_surface_in_points")
 async def post_get_sample_surface_in_points(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    warning_reporter: WarningReporter = Depends(WarningReporter),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     surface_name: str = Query(description="Surface name"),
     realization_nums: List[int] = Query(description="Realization numbers"),
     sample_points: schemas.PointSetXY = Body(embed=True),
     surface_attribute: schemas.SurfaceAttribute = Body(embed=True, description="Surface attribute"),
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[schemas.SurfaceRealizationSampleValues]:
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
 
-    result_arr: List[RealizationSampleResult] = await batch_sample_surface_in_points_async(
+    warnings: list[TextWarning] = []
+    sample_result = await batch_sample_surface_in_points_async(
         sumo_access_token=sumo_access_token,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
@@ -446,6 +472,7 @@ async def post_get_sample_surface_in_points(
         x_coords=sample_points.x_points,
         y_coords=sample_points.y_points,
     )
+    result_arr: List[RealizationSampleResult] = sample_result.get_value(warnings)
 
     intersections: List[schemas.SurfaceRealizationSampleValues] = []
     for res in result_arr:
@@ -456,6 +483,7 @@ async def post_get_sample_surface_in_points(
             )
         )
 
+    warning_reporter.report(warnings)
     return intersections
 
 
@@ -546,13 +574,15 @@ async def _get_xtgeo_surface_from_sumo_async(
     access_token: str,
     surf_addr_str: str,
     perf_metrics: ResponsePerfMetrics,
-) -> xtgeo.RegularSurface:
+) -> ResultWithWarning[xtgeo.RegularSurface]:
     """
     Retrieve an xtgeo RegularSurface from SUMO based on the provided surface address string.
+    Statistical surfaces can have warnings, e.g. for requested realizations without a source surface.
     """
 
     addr = decode_surf_addr_str(surf_addr_str)
 
+    warnings: list[TextWarning] = []
     xtgeo_surf: xtgeo.RegularSurface | None = None
     if isinstance(addr, RealizationSurfaceAddress):
         access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
@@ -570,13 +600,14 @@ async def _get_xtgeo_surface_from_sumo_async(
             raise HTTPException(status_code=404, detail="Invalid statistic requested")
 
         access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
-        xtgeo_surf = await access.get_statistical_surface_data_async(
+        stat_surf_result = await access.get_statistical_surface_data_async(
             statistic_function=service_stat_func_to_compute,
             name=addr.name,
             attribute=addr.attribute,
             realizations=addr.stat_realizations,
             time_or_interval_str=addr.iso_time_or_interval,
         )
+        xtgeo_surf = stat_surf_result.get_value(propagate_warnings_to=warnings)
         perf_metrics.record_lap("sumo-calc")
 
     elif isinstance(addr, ObservedSurfaceAddress):
@@ -591,4 +622,4 @@ async def _get_xtgeo_surface_from_sumo_async(
 
     LOGGER.info(f"Got {addr.address_type} surface in: {perf_metrics.to_string()}")
 
-    return xtgeo_surf
+    return ResultWithWarning(xtgeo_surf, warnings)

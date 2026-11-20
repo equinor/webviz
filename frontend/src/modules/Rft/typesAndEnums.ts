@@ -59,6 +59,7 @@ export type RftRealizationDataResult = {
     isFetching: boolean;
     isError: boolean;
     errors: Error[];
+    warnings: string[];
 };
 
 export type RftObservationsResult = {

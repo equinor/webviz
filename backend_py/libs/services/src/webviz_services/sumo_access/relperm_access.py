@@ -10,6 +10,8 @@ import pyarrow.compute as pc
 from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.text_warning import TextWarning
+from webviz_core_utils.result_with_warning import ResultWithWarning
 
 from webviz_services.service_exceptions import InvalidDataError, NoDataError, Service
 
@@ -88,7 +90,12 @@ class RelpermAccess:
         curve_names: Sequence[str],
         satnums: Sequence[int],
         realizations: Sequence[int] | None,
-    ) -> list[RelpermRealizationData]:
+    ) -> ResultWithWarning[list[RelpermRealizationData]]:
+        """
+        Get relperm data per realization. Requested realizations not found for the table are left out and
+        reported as a warning. NoDataError is raised if the table has no realizations at all.
+        """
+        warnings: list[TextWarning] = []
         timer = PerfMetrics()
         if len(curve_names) == 0:
             raise InvalidDataError("At least one relperm curve name must be requested", Service.SUMO)
@@ -103,12 +110,16 @@ class RelpermAccess:
             )
         timer.record_lap("get-realizations")
 
-        requested_realizations = sorted(set(realizations)) if realizations is not None else available_realizations
-        unknown_realizations = sorted(set(requested_realizations) - set(available_realizations))
-        if unknown_realizations:
-            raise InvalidDataError(
-                f"Requested realizations not found for relperm table {table_name}: {unknown_realizations}", Service.SUMO
-            )
+        requested_realizations = available_realizations
+        if realizations is not None:
+            requested_realizations = sorted(set(realizations).intersection(available_realizations))
+            missing_realizations = set(realizations).difference(available_realizations)
+            if missing_realizations:
+                warnings.append(
+                    TextWarning.from_message_and_realizations(
+                        "Missing realizations in Sumo relperm data", missing_realizations
+                    )
+                )
 
         column_names = await self._get_column_names_async(table_name)
         normalized_column_names = normalize_column_names(column_names)
@@ -131,7 +142,7 @@ class RelpermAccess:
         LOGGER.debug(
             f"get_realization_data_async took: {timer.to_string()}, {self._case_uuid=}, {self._ensemble_name=}, {table_name=}, {saturation_axis_name=}, {curve_names=}, {satnums=}, {requested_realizations=}"
         )
-        return ret_arr
+        return ResultWithWarning(ret_arr, warnings)
 
     async def _get_column_names_async(self, table_name: str) -> list[str]:
         table_context = self._ensemble_context.tables.filter(
