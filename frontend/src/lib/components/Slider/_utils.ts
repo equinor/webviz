@@ -37,3 +37,31 @@ export function getMarkerPercentage(value: number, min: number, max: number) {
     if (range === 0) return 0;
     return ((value - min) / range) * 100;
 }
+
+export function getNearestThumbIndex(thumbValues: number | readonly number[], targetValue: number): 0 | 1 {
+    // Mono-sliders only uses the thumb 0
+    if (!isDualSliderValue(thumbValues)) return 0;
+
+    // Target it outside the range; lower is always 0, higher is always 1
+    if (targetValue <= thumbValues[0]) {
+        return 0;
+    }
+    if (targetValue >= thumbValues[1]) {
+        return 1;
+    }
+
+    // Target is between the thumbs, compute the closest one
+    return minBy([0, 1], (idx) => Math.abs(thumbValues[idx] - targetValue))!;
+}
+
+export function anyThumbValueOutOfBounds(thumbValues: number | readonly number[], min: number, max: number) {
+    if (isDualSliderValue(thumbValues)) {
+        return thumbValues.some((value) => thumbValueOutOfBounds(value, min, max));
+    }
+
+    return thumbValueOutOfBounds(thumbValues, min, max);
+}
+
+export function thumbValueOutOfBounds(value: number, min: number, max: number) {
+    return value < min || value > max;
+}

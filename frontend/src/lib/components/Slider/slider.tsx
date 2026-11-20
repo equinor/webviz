@@ -2,7 +2,7 @@ import React from "react";
 
 import type { SliderRootProps as SliderRootBaseProps } from "@base-ui/react/slider";
 import { Slider as SliderBase } from "@base-ui/react/slider";
-import { chain, clamp, clone, isEqual, minBy } from "lodash";
+import { chain, clamp, isEqual } from "lodash";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -11,6 +11,7 @@ import { useComponentSize } from "../_shared/contexts/componentSizeContext";
 import { withDefaults } from "../_shared/utils/defaultProps";
 import { SELECTABLE_SIZES_CLASSNAMES, type SelectableSize } from "../_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
+import { Button } from "../Button";
 
 import { LimitLockSwitch } from "./_components/limitLockSwitch";
 import { Marker, type MarkerVariant } from "./_components/marker";
@@ -19,7 +20,13 @@ import { SliderLockGutter } from "./_components/sliderLockGutter";
 import { Thumb } from "./_components/thumb";
 import { INDICATOR_CLASS_NAME, TRACK_CLASS_NAME, TRACK_HEIGHT_CLASS_NAMES } from "./_constants";
 import { useLockedValueUpdate, useLockState, useUnlockOnValueChange } from "./_hooks";
-import { getMarkerPercentage, getSnappedValue, isDualSliderValue } from "./_utils";
+import {
+    anyThumbValueOutOfBounds,
+    getMarkerPercentage,
+    getNearestThumbIndex,
+    getSnappedValue,
+    isDualSliderValue,
+} from "./_utils";
 import type { SliderChangeEventDetails, SnapTarget } from "./types";
 
 export type SliderProps<TValue extends number | readonly number[] = number | readonly number[]> = ComponentWrapperProps<
@@ -204,8 +211,6 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
     React.useImperativeHandle(ref, () => controllerRef.current as HTMLDivElement);
 
     const [internalValue, setInternalValue] = React.useState(defaultedProps.value ?? defaultedProps.defaultValue);
-    const [prevMin, setPrevMin] = React.useState(defaultedProps.min);
-    const [prevMax, setPrevMax] = React.useState(defaultedProps.max);
 
     const [isHovered, setIsHovered] = React.useState(false);
     const [isFocused, setIsFocused] = React.useState(false);
@@ -214,14 +219,17 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
     const showMinLock = [true, "both", "min"].includes(defaultedProps.showRangeLocks);
     const showMaxLock = [true, "both", "max"].includes(defaultedProps.showRangeLocks);
 
+    const minAndMaxAreEqual = defaultedProps.min === defaultedProps.max;
+
     const markerLabelFormatFunc =
         typeof defaultedProps.markerLabels === "function" ? defaultedProps.markerLabels : undefined;
     const allMarkers = React.useMemo(() => {
+        if (minAndMaxAreEqual) return [defaultedProps.min];
         return chain([defaultedProps.min, ...defaultedProps.markers, defaultedProps.max])
             .sortBy()
             .sortedUniq()
             .value();
-    }, [defaultedProps.markers, defaultedProps.max, defaultedProps.min]);
+    }, [defaultedProps.markers, defaultedProps.max, defaultedProps.min, minAndMaxAreEqual]);
 
     // Prioritize the controlled value if possible
     const activeValue = props.value ?? internalValue;
@@ -274,8 +282,6 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
 
     const updateValue = React.useCallback(
         function updateValue(newValue: number | number[], eventDetails: SliderChangeEventDetails, commit?: boolean) {
-            // Rule gets flagged by the clamp-value use-effect below.
-            // eslint-disable-next-line @eslint-react/set-state-in-effect
             setInternalValue(newValue);
 
             onValueChange?.(newValue, eventDetails);
@@ -345,45 +351,12 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
 
     const showThumbValueLabels = defaultedProps.valueLabelDisplay === "auto" && (isHovered || isFocused);
 
-    const [valueToClamp, setValueToClamp] = React.useState<null | number | number[]>(null);
-    let clampedValue = isDualSlider ? clone(activeValue as number[]) : ([activeValue, activeValue] as number[]);
-
-    if (prevMin !== defaultedProps.min || prevMax !== defaultedProps.max) {
-        setPrevMin(defaultedProps.min);
-        setPrevMax(defaultedProps.max);
-
-        clampedValue = clampedValue.map((v) => clamp(v, defaultedProps.min, defaultedProps.max));
-
-        if (minLocked) {
-            clampedValue[0] = defaultedProps.min;
-            if (!isDualSlider) clampedValue[1] = defaultedProps.min;
-        }
-
-        if (maxLocked) {
-            if (!isDualSlider) clampedValue[0] = defaultedProps.max;
-            clampedValue[1] = defaultedProps.max;
-        }
-
-        const newValue = isDualSlider ? clampedValue : clampedValue[0];
-
-        if (!isEqual(newValue, activeValue)) {
-            setValueToClamp(isDualSlider ? clampedValue : clampedValue[0]);
-        }
-    }
-
-    React.useEffect(() => {
-        if (valueToClamp !== null) {
-            updateValue(valueToClamp, { reason: "clamp-value" }, true);
-            // This effect should only trigger on a small set of prop changes, and there's isn't a simple way to avoid setting state here.
-            // eslint-disable-next-line @eslint-react/set-state-in-effect
-            setValueToClamp(null);
-        }
-    }, [updateValue, valueToClamp]);
-
     return (
         <SliderBase.Root
             {...baseProps}
-            className={resolveClassNames(baseProps.className, "px-2xs grid items-center")}
+            className={resolveClassNames(baseProps.className, "px-2xs relative grid items-center")}
+            // ! A slider with equal min/max is unusable, so we disable it
+            disabled={minAndMaxAreEqual || baseProps.disabled}
             ref={wrapperRef}
             value={activeValue}
             onValueChange={onValueChangeInternal}
@@ -407,6 +380,26 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
             }
             render={(rootProps, state) => (
                 <div {...rootProps}>
+                    {minAndMaxAreEqual &&
+                        anyThumbValueOutOfBounds(activeValue, defaultedProps.min, defaultedProps.max) && (
+                            <div className="z-overlay bg-surface/10 outline-danger-subtle text-danger-subtle gap-xs absolute inset-0 flex items-center justify-center rounded outline-2 backdrop-blur-xs">
+                                <span>Slider value is out of bounds.</span>
+                                <Button
+                                    size="small"
+                                    tone="accent"
+                                    onClick={() => {
+                                        const fixedValue = isDualSlider
+                                            ? [defaultedProps.min, defaultedProps.min]
+                                            : defaultedProps.min;
+
+                                        updateValue(fixedValue, { reason: "marker-clicked" });
+                                    }}
+                                >
+                                    Fix
+                                </Button>
+                            </div>
+                        )}
+
                     {showMinLock && (
                         <LimitLockSwitch
                             layoutClassName="mr-2xs"
@@ -434,7 +427,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                         onBlur={() => setIsFocused(false)}
                         // If the slider is being dragged, we want to check if we should lock to min or max based on the pointer position
                         onPointerDown={(evt) => {
-                            if (props.disabled) return;
+                            if (state.disabled) return;
 
                             evt.currentTarget.setPointerCapture(evt.pointerId);
                             setIsDragging(true);
@@ -532,6 +525,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                     leftPosPercent={getMarkerPercentage(v, defaultedProps.min, defaultedProps.max)}
                                 />
                             ))}
+                            {minAndMaxAreEqual && <Marker variant="dot" leftPosPercent={100} />}
                         </SliderBase.Track>
 
                         {showMaxLock && (
@@ -576,16 +570,14 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                     index={i}
                                     size={componentSize}
                                     numMarkers={allMarkers.length}
-                                    disabled={props.disabled}
+                                    disabled={state.disabled}
                                     labelFormat={markerLabelFormatFunc}
                                     onClick={(v) => {
                                         if (!isDualSliderValue(activeValue)) {
                                             updateValue(v, { reason: "marker-clicked" }, true);
                                             inputRefs[0].current?.focus();
                                         } else {
-                                            const nearestThumbIndex = minBy([0, 1], (idx) =>
-                                                Math.abs(activeValue[idx] - v),
-                                            )!;
+                                            const nearestThumbIndex = getNearestThumbIndex(activeValue, v);
 
                                             const newValue = [...activeValue];
                                             newValue[nearestThumbIndex] = v;
@@ -596,6 +588,18 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                     }}
                                 />
                             ))}
+                            {minAndMaxAreEqual && (
+                                <MarkerLabel
+                                    value={defaultedProps.min}
+                                    size={componentSize}
+                                    leftPosPercent={100}
+                                    disabled={state.disabled}
+                                    index={1}
+                                    numMarkers={2}
+                                    labelFormat={markerLabelFormatFunc}
+                                    onClick={() => {}}
+                                />
+                            )}
                         </div>
                     )}
                 </div>
