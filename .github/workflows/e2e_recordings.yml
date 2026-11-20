@@ -1,6 +1,11 @@
 name: e2e recordings
 
 on:
+  # Pushes to main only run the lightweight `keep_cache_warm` job to prevent GitHub's 7-day
+  # cache eviction from expiring the Kokoro TTS model and synthesized narration audio.
+  push:
+    branches:
+      - main
   schedule:
     # Weekly on Sunday at 02:00 UTC
     - cron: "0 2 * * 0"
@@ -20,16 +25,41 @@ on:
         default: true
 
 concurrency:
-  group: e2e-recordings-${{ github.ref }}
+  group: e2e-recordings-${{ github.event_name == 'push' && 'cache-warm' || github.ref }}
   cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
+  keep_cache_warm:
+    if: github.repository == 'equinor/webviz' && github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: 🧠 Touch Kokoro TTS model cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/huggingface
+          key: huggingface-kokoro-82m-v1.0-onnx
+
+      - name: 📦 Touch CPU narration audio cache
+        uses: actions/cache/restore@v4
+        with:
+          path: frontend/.narration-cache-cpu
+          key: narration-audio-cpu-keepalive
+          restore-keys: narration-audio-cpu-
+
+      - name: 📦 Touch GPU narration audio cache
+        uses: actions/cache/restore@v4
+        with:
+          path: frontend/.narration-cache-gpu
+          key: narration-audio-gpu-keepalive
+          restore-keys: narration-audio-gpu-
+
   select_suites:
     # The Sumo shared key secret is only available on the upstream repo, so skip on forks.
-    if: github.repository == 'equinor/webviz'
+    if: github.repository == 'equinor/webviz' && github.event_name != 'push'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -100,6 +130,7 @@ jobs:
         with:
           path: ~/.cache/huggingface
           key: huggingface-kokoro-82m-v1.0-onnx
+          save-always: true
 
       - name: 📦 Cache synthesized narration audio
         uses: actions/cache@v4
@@ -109,6 +140,7 @@ jobs:
           restore-keys: |
             narration-audio-${{ matrix.name }}-
             narration-audio-
+          save-always: true
 
       - name: 🐳 Build and start the full stack
         timeout-minutes: 15

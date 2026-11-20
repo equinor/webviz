@@ -27,7 +27,7 @@ test.describe("Data channels", () => {
         narrate,
         markStep,
     }) => {
-        test.setTimeout(360_000);
+        test.setTimeout(480_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         const SIMULATION_TIME_SERIES = "Simulation Time Series";
