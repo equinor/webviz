@@ -21,6 +21,7 @@
 
 - **Intersection**: Large grids no longer appear cut off partway along the intersection when "Show grid lines" is turned off.
 - **3D Viewer**: Improved trajectory hovering in wellbore layers.
+- **Parameter Distributions**: Parameters with PERT distributions can now be loaded and plotted.
 
 ## October 2026
 
