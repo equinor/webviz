@@ -19,9 +19,12 @@ import { type CsvAssemblyWorkerApi } from "../utils/CsvAssemblyWorker/csvAssembl
 import CsvAssemblyWorker from "../utils/CsvAssemblyWorker/csvAssembly.worker?worker";
 import { toVectorEnsemblesDataArray } from "../utils/CsvAssemblyWorker/mappers";
 
+
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
-export function useDownloadData(viewContext: ViewContext<Interfaces>): {
+export function useDownloadData(
+    viewContext: ViewContext<Interfaces>,
+): {
     assembleCsvAndDownload: () => void;
 } {
     const statisticsSelection = viewContext.useSettingsToViewInterfaceValue("statisticsSelection");
@@ -34,7 +37,7 @@ export function useDownloadData(viewContext: ViewContext<Interfaces>): {
     const loadedHistoricalData = useAtomValue(loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom);
     const loadedObservationData = useAtomValue(loadedVectorSpecificationsAndObservationDataAtom);
 
-    const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
+    const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc();
 
     const csvAssemblyWorker = useWebWorkerProxy<CsvAssemblyWorkerApi>(CsvAssemblyWorker);
 

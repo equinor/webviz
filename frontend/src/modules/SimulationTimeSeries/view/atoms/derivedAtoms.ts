@@ -1,14 +1,32 @@
 import { atom } from "jotai";
 
+import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+
 import { createLoadedVectorSpecificationAndDataArray } from "../utils/vectorSpecificationsAndQueriesUtils";
 
-import { vectorSpecificationsAtom } from "./baseAtoms";
+import { selectedEnsembleIdentsAtom, vectorSpecificationsAtom } from "./baseAtoms";
 import {
     regularEnsembleHistoricalVectorDataQueriesAtom,
     vectorDataQueriesAtom,
     vectorObservationsQueriesAtom,
     vectorStatisticsQueriesAtom,
 } from "./queryAtoms";
+
+export const selectedEnsemblesAtom = atom<(RegularEnsemble | DeltaEnsemble)[]>((get) => {
+    const ensembleSet = get(EnsembleSetAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom) ?? [];
+
+    const ensembles: (RegularEnsemble | DeltaEnsemble)[] = [];
+    for (const ensembleIdent of selectedEnsembleIdents) {
+        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+        if (ensemble) {
+            ensembles.push(ensemble);
+        }
+    }
+    return ensembles;
+});
 
 export const queryIsFetchingAtom = atom((get) => {
     const vectorDataQueries = get(vectorDataQueriesAtom);

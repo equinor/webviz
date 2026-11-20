@@ -13,6 +13,9 @@ on:
   release:
     types:
       - published
+  # Allows manually re-running CI, e.g. after dependabot_poetry_locks.yml has pushed
+  # regenerated lock files (pushes made with GITHUB_TOKEN do not trigger workflows)
+  workflow_dispatch:
 
 jobs:
   frontend:
