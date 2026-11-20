@@ -1,7 +1,9 @@
 import type React from "react";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 
 import type {
@@ -16,20 +18,21 @@ import {
     makeValueConstraintsIntersectionReducerDefinition,
 } from "./_shared/arraySingleSelect";
 
-type ValueType = RegularEnsembleIdent | null;
-type ValueConstraintsType = RegularEnsembleIdent[];
+type EnsembleIdent = RegularEnsembleIdent | DeltaEnsembleIdent;
+type ValueType = EnsembleIdent | null;
+type ValueConstraintsType = EnsembleIdent[];
 
 export class EnsembleSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     defaultValue: ValueType = null;
     valueConstraintsIntersectionReducerDefinition =
-        makeValueConstraintsIntersectionReducerDefinition<RegularEnsembleIdent[]>();
+        makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>((a, b) => a.equals(b));
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
     }
 
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
-        return isValueValid<RegularEnsembleIdent, RegularEnsembleIdent>(
+        return isValueValid<EnsembleIdent, EnsembleIdent>(
             value,
             valueConstraints,
             (v) => v,
@@ -38,7 +41,12 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
     }
 
     fixupValue(value: ValueType, valueConstraints: ValueConstraintsType): ValueType {
-        return fixupValue<RegularEnsembleIdent, RegularEnsembleIdent>(value, valueConstraints, (v) => v);
+        return fixupValue<EnsembleIdent, EnsembleIdent>(
+            value,
+            valueConstraints,
+            (v) => v,
+            (a, b) => a.equals(b),
+        );
     }
 
     serializeValue(value: ValueType): string {
@@ -46,24 +54,32 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
     }
 
     deserializeValue(serializedValue: string): ValueType {
-        return serializedValue !== "" ? RegularEnsembleIdent.fromString(serializedValue) : null;
+        if (serializedValue === "") {
+            return null;
+        }
+        const ensembleIdent = getEnsembleIdentFromString(serializedValue);
+        if (ensembleIdent === null) {
+            throw new Error(`Invalid ensemble ident: ${serializedValue}`);
+        }
+        return ensembleIdent;
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
         return function EnsembleSelect(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             const availableValues = props.valueConstraints ?? [];
+            const currentValue = props.value;
             const isCurrentValueAvailable =
-                props.value === null || availableValues.some((value) => value.equals(props.value as RegularEnsembleIdent));
+                currentValue === null || availableValues.some((value) => value.equals(currentValue));
 
             // The currently selected ensemble can be invalid in this context (e.g. no longer among
             // availableValues after an upstream filter change) and is kept rather than silently
             // replaced - still include it here so EnsembleDropdown can resolve its proper display
             // name instead of falling back to the raw ensemble ident, but mark it disabled so it
             // doesn't read as a normal, selectable option.
-            const ensembles = props.globalSettings.ensembles.filter(
+            const ensembles = [...props.globalSettings.ensembles, ...props.globalSettings.deltaEnsembles].filter(
                 (ensemble) =>
                     availableValues.some((value) => value.equals(ensemble.getIdent())) ||
-                    (props.value !== null && props.value.equals(ensemble.getIdent())),
+                    (currentValue !== null && currentValue.equals(ensemble.getIdent())),
             );
 
             const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(props.workbenchSession);
@@ -71,7 +87,8 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
             return (
                 <EnsembleDropdown
                     ensembles={ensembles}
-                    disabledEnsembleIdents={!isCurrentValueAvailable && props.value !== null ? [props.value] : []}
+                    allowDeltaEnsembles
+                    disabledEnsembleIdents={!isCurrentValueAvailable && currentValue !== null ? [currentValue] : []}
                     ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
                     value={props.value}
                     onValueChange={props.onValueChange}

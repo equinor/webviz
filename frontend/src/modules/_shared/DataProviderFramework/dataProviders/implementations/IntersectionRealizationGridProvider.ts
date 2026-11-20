@@ -36,6 +36,8 @@ import {
     getAvailableIntersectionOptions,
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
+    narrowToRegularEnsembleIdent,
+    requireRegularEnsembleIdent,
 } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 const intersectionRealizationGridSettings = [
@@ -180,7 +182,8 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
                     realization: read.localSetting(Setting.REALIZATION),
                 };
             },
-            async resolve({ ensembleIdent, realization }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent, realization }, { abortSignal }) {
+                const ensembleIdent = narrowToRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent || realization === null) {
                     return null;
                 }
@@ -403,7 +406,10 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
         IntersectionRealizationGridData,
         IntersectionRealizationGridStoredData
     >): Promise<IntersectionRealizationGridData> {
-        const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
+        const ensembleIdent = assertNonNull(
+            requireRegularEnsembleIdent(getSetting(Setting.ENSEMBLE)),
+            "No ensemble selected",
+        );
         const realizationNum = assertNonNull(getSetting(Setting.REALIZATION), "No realization number selected");
         const gridName = assertNonNull(getSetting(Setting.GRID_NAME), "No grid name selected");
         const parameterName = assertNonNull(getSetting(Setting.ATTRIBUTE), "No attribute selected");
