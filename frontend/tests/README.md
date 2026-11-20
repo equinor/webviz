@@ -109,7 +109,8 @@ project by tagging their `test.describe` or `test` with `{ tag: "@gpu" }`.
   `authenticated-chromium-gpu` runs headed with Mesa's D3D12 driver (NVIDIA adapter by default;
   override with `MESA_D3D12_DEFAULT_ADAPTER_NAME`).
 - Under native Linux (including the `linux-gpu` GitHub Actions runner), `authenticated-chromium-gpu`
-  runs headless with `--ignore-gpu-blocklist`.
+  runs full Chromium (`channel: "chromium"`) headless with ANGLE/Vulkan flags (`--ignore-gpu-blocklist`,
+  `--use-gl=angle`, `--use-angle=vulkan`, `--enable-features=Vulkan`).
 - In GitHub Actions (`.github/workflows/e2e_recordings.yml`), recordings run on a weekly schedule
   (and via `workflow_dispatch`), routing `authenticated-chromium` to `ubuntu-24.04` and
   `authenticated-chromium-gpu` to `linux-gpu`.

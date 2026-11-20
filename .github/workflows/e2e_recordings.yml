@@ -92,43 +92,6 @@ jobs:
         working-directory: ./frontend
         run: npx playwright install --with-deps chromium
 
-      - name: 🎮 Probe GPU & WebGL renderer
-        if: matrix.name == 'gpu'
-        working-directory: ./frontend
-        run: |
-          echo "=== GPU devices ==="
-          nvidia-smi --query-gpu=name,driver_version --format=csv,noheader || true
-          ls -la /dev/dri || true
-          echo "=== Chromium WebGL renderer probe ==="
-          node --input-type=module -e '
-            import { chromium } from "@playwright/test";
-            const configs = [
-              ["vulkan", ["--disable-dev-shm-usage", "--ignore-gpu-blocklist", "--use-gl=angle", "--use-angle=vulkan", "--enable-features=Vulkan"]],
-              ["egl", ["--disable-dev-shm-usage", "--ignore-gpu-blocklist", "--use-gl=angle", "--use-angle=egl"]],
-              ["default", ["--disable-dev-shm-usage", "--ignore-gpu-blocklist"]],
-            ];
-            for (const [label, args] of configs) {
-              try {
-                const browser = await chromium.launch({ channel: "chromium", args });
-                const page = await browser.newPage();
-                const info = await page.evaluate(() => {
-                  const canvas = document.createElement("canvas");
-                  const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
-                  if (!gl) return { error: "no webgl context" };
-                  const ext = gl.getExtension("WEBGL_debug_renderer_info");
-                  return {
-                    vendor: ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
-                    renderer: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
-                  };
-                });
-                console.log(`[${label}]`, JSON.stringify(info));
-                await browser.close();
-              } catch (err) {
-                console.log(`[${label}] ERROR:`, err instanceof Error ? err.message : String(err));
-              }
-            }
-          '
-
       - name: 🎙️ Ensure ffmpeg is available (for voiceover muxing)
         run: ffmpeg -version >/dev/null 2>&1 || (sudo apt-get update && sudo apt-get install -y ffmpeg)
 

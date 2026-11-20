@@ -66,7 +66,7 @@ const SIMULATION_MAP_VIEWS: SimulationMapView[] = [
 
 test.describe("2D Viewer", { tag: "@gpu" }, () => {
     test("depth maps, simulation maps and 4D seismic", async ({ page, narrate, markStep }) => {
-        test.setTimeout(600_000);
+        test.setTimeout(900_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         /**
