@@ -45,6 +45,18 @@ class FipRegion(BaseModel):
     region: str
 
 
+class EnsembleReference(BaseModel):
+    caseUuid: str
+    caseName: str
+    ensembleName: str
+
+
+class RestartChain(BaseModel):
+    ancestors: list[EnsembleReference]  # nearest parent first
+    unresolvedEnsembleUuid: str | None  # set if the chain broke on an ensemble that could not be found
+    truncated: bool  # depth cap or cycle hit
+
+
 class EnsembleDetails(BaseModel):
     name: str
     assetName: str
@@ -55,3 +67,10 @@ class EnsembleDetails(BaseModel):
     stratigraphicColumnIdentifier: str
     standardResults: Sequence[str]
     fipRegions: Sequence[FipRegion]
+    restartChain: RestartChain
+
+
+class EnsembleRestartInfo(BaseModel):
+    ensembleName: str
+    restartFrom: EnsembleReference | None
+    restartFromUnresolvedUuid: str | None

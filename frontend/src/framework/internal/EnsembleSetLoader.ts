@@ -411,12 +411,13 @@ async function loadEnsembleApiDataMapFromBackend(
             continue;
         }
 
-        // Surface a non-fatal warning if realization-level parameters are missing from the standard result
-        // (e.g. legacy design matrix parameters injected into parameters.txt/json). The ensemble still loads.
-        if (parametersAndSensitivities.nonStandardParametersWarning) {
-            console.warn(parametersAndSensitivities.nonStandardParametersWarning, ensembleIdentString);
+        // Surface non-fatal warnings, e.g. realization-level parameters missing from the standard result or
+        // parameters from restart ensembles that could not be combined. The ensemble still loads.
+        if (parametersAndSensitivities.warnings.length > 0) {
+            const warningMessage = parametersAndSensitivities.warnings.join("\n\n");
+            console.warn(warningMessage, ensembleIdentString);
             ensembleLoadingWarningInfoMap[ensembleIdentString] = {
-                warningMessage: parametersAndSensitivities.nonStandardParametersWarning,
+                warningMessage: warningMessage,
                 displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
             };
         }

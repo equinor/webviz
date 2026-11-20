@@ -27,6 +27,7 @@ import {
     getDeltaSurfaceData,
     getDrilledWellboreHeaders,
     getEnsembleDetails,
+    getEnsembleRestartInfos,
     getFieldIdentifiers,
     getFieldPerforations,
     getFieldScreens,
@@ -143,6 +144,9 @@ import type {
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsError_api,
     GetEnsembleDetailsResponse_api,
+    GetEnsembleRestartInfosData_api,
+    GetEnsembleRestartInfosError_api,
+    GetEnsembleRestartInfosResponse_api,
     GetFieldIdentifiersData_api,
     GetFieldIdentifiersResponse_api,
     GetFieldPerforationsData_api,
@@ -503,6 +507,33 @@ export const getEnsembleDetailsOptions = (options: Options<GetEnsembleDetailsDat
             return data;
         },
         queryKey: getEnsembleDetailsQueryKey(options),
+    });
+
+export const getEnsembleRestartInfosQueryKey = (options: Options<GetEnsembleRestartInfosData_api>) =>
+    createQueryKey("getEnsembleRestartInfos", options);
+
+/**
+ * Get Ensemble Restart Infos
+ *
+ * Get the ensemble each ensemble in the case was directly restarted from, if any
+ */
+export const getEnsembleRestartInfosOptions = (options: Options<GetEnsembleRestartInfosData_api>) =>
+    queryOptions<
+        GetEnsembleRestartInfosResponse_api,
+        AxiosError<GetEnsembleRestartInfosError_api>,
+        GetEnsembleRestartInfosResponse_api,
+        ReturnType<typeof getEnsembleRestartInfosQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getEnsembleRestartInfos({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getEnsembleRestartInfosQueryKey(options),
     });
 
 export const postRefreshFingerprintsForEnsemblesQueryKey = (
@@ -1427,6 +1458,13 @@ export const getParametersAndSensitivitiesQueryKey = (options: Options<GetParame
 
 /**
  * Get Parameters And Sensitivities
+ *
+ * Get parameters and sensitivities for an ensemble, combined with the parameters of the ensembles it was
+ * restarted from.
+ *
+ * The browser cache is keyed on this ensemble's fingerprint only. This is sufficient since the ensembles it was
+ * restarted from are expected not to change once restarted from. An ensemble in the restart chain that could not
+ * be found may become accessible later, so such responses are cached for a shorter time.
  */
 export const getParametersAndSensitivitiesOptions = (options: Options<GetParametersAndSensitivitiesData_api>) =>
     queryOptions<

@@ -10,6 +10,7 @@
 ### Added
 
 - **Session and snapshot management**: You can now select several sessions or snapshots with checkboxes and delete them in one go. When deleting your own snapshots, you can choose to delete them for everyone or only remove them from your list.
+- **Ensemble loading**: Ensembles restarted from another ensemble (e.g. a prediction run from the last history-match iteration) now include the parameters of the ensembles they were restarted from. A warning is shown if some of these parameters cannot be included, and loading fails if the same parameter exists in more than one of the ensembles.
 
 ### Changed
 
