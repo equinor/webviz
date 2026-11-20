@@ -199,21 +199,6 @@ describe("computeColumnLayout", () => {
         expect(widths.widthPxByKey.get("STOIIP-Mean")).toBe(RESULT_COLUMN_WIDTH_PX);
     });
 
-    test("sticky offsets are cumulative and the last identifier column is the edge", () => {
-        const layout = computeColumnLayout(
-            makeStatisticalConfig(),
-            makeStatisticalRows(),
-            formatPlain,
-            WIDE_WRAPPER_PX,
-        );
-
-        const ensembleWidth = layout.widthPxByKey.get("ENSEMBLE") ?? NaN;
-        expect(layout.stickyLeftPxByKey.get("ENSEMBLE")).toBe(0);
-        expect(layout.stickyLeftPxByKey.get("ZONE")).toBe(ensembleWidth);
-        expect(layout.stickyLeftPxByKey.has("STOIIP-Mean")).toBe(false);
-        expect(layout.lastPinnedKey).toBe("ZONE");
-    });
-
     test("SENSITIVITY is pinned with the other identifier columns", () => {
         const columnsConfig: TableColumnsConfig = {
             ENSEMBLE: { label: "ENSEMBLE", columnType: ColumnType.ENSEMBLE },
@@ -225,7 +210,8 @@ describe("computeColumnLayout", () => {
 
         const layout = computeColumnLayout(columnsConfig, rows, formatPlain, WIDE_WRAPPER_PX);
 
-        expect(layout.stickyLeftPxByKey.get("SENSITIVITY")).toBe(layout.widthPxByKey.get("ENSEMBLE"));
+        expect(layout.pinnedColumns.has("ENSEMBLE")).toBe(true);
+        expect(layout.pinnedColumns.has("SENSITIVITY")).toBe(true);
         expect(layout.lastPinnedKey).toBe("ZONE");
     });
 
@@ -253,7 +239,7 @@ describe("computeColumnLayout", () => {
             formatPlain,
             pinnedWidth * 2 - 1,
         );
-        expect(partial.stickyLeftPxByKey).toEqual(new Map([["ENSEMBLE", 0]]));
+        expect(partial.pinnedColumns).toEqual(new Set(["ENSEMBLE"]));
         expect(partial.lastPinnedKey).toBe("ENSEMBLE");
 
         const narrow = computeColumnLayout(
@@ -262,7 +248,7 @@ describe("computeColumnLayout", () => {
             formatPlain,
             ensembleWidth * 2 - 1,
         );
-        expect(narrow.stickyLeftPxByKey.size).toBe(0);
+        expect(narrow.pinnedColumns.size).toBe(0);
         expect(narrow.lastPinnedKey).toBeNull();
     });
 
