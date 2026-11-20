@@ -9,3 +9,4 @@ export const resampleFrequencyAtom = atom<Frequency_api | null>(Frequency_api.MO
 export const visualizationModeAtom = atom<VisualizationMode>(VisualizationMode.STATISTICAL_FANCHART);
 export const showObservationsAtom = atom<boolean>(true);
 export const showHistoricalAtom = atom<boolean>(false);
+export const timeSeriesChannelHasReceiversAtom = atom<boolean>(false);

@@ -1,4 +1,6 @@
-import { useAtomValue } from "jotai";
+import React from "react";
+
+import { useAtomValue, useSetAtom } from "jotai";
 
 import type { VectorRealizationData_api } from "@api";
 import type { ViewContext } from "@framework/ModuleContext";
@@ -8,6 +10,7 @@ import { makeVectorGroupDataGenerator } from "@modules/SimulationTimeSeries/data
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 import type { VectorHexColorMap, VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
 
+import { timeSeriesChannelHasReceiversAtom } from "../atoms/baseAtoms";
 import { loadedVectorSpecificationsAndRealizationDataAtom, queryIsFetchingAtom } from "../atoms/derivedAtoms";
 import { activeTimestampUtcMsAtom } from "../atoms/persistableFixableAtoms";
 import type { SubplotOwner } from "../utils/PlotBuilder";
@@ -20,6 +23,15 @@ export function usePublishToDataChannels(
     subplotOwner: SubplotOwner,
     vectorHexColorMap: VectorHexColorMap,
 ): void {
+    const channelHasReceivers = viewContext.useChannelHasReceivers(ChannelIds.TIME_SERIES);
+    const setChannelHasReceivers = useSetAtom(timeSeriesChannelHasReceiversAtom);
+    React.useEffect(
+        function propagateChannelHasReceivers() {
+            setChannelHasReceivers(channelHasReceivers);
+        },
+        [channelHasReceivers, setChannelHasReceivers],
+    );
+
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
     const isQueryFetching = useAtomValue(queryIsFetchingAtom);
