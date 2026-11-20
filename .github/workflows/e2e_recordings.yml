@@ -163,7 +163,7 @@ jobs:
         env:
           CI: "true"
           SHARED_KEY_DROGON_READ_PROD: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
-        run: npm run test:e2e:record -- --project=${{ matrix.project }}
+        run: npm run test:e2e:record -- --project=${{ matrix.project }} --max-failures=1
 
       - name: 🐳 Dump docker compose logs on failure
         if: failure()
