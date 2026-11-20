@@ -47,9 +47,12 @@ export const test = base.extend<NarrationFixtures, NarrationWorkerFixtures>({
         // The page (and its recording) has just been created, so this is ~frame zero of the video.
         narrator.markRecordingStart();
         await use(narrator);
-        // Persist the story slug (pushed as an annotation by the test) so the publish step can key off it.
-        const slug = testInfo.annotations.find((annotation) => annotation.type === "tutorial-slug")?.description;
-        narrator.flush(slug);
+        // Only write the narration manifest for passing tests so globalTeardown doesn't spend
+        // minutes VP9-muxing failed or timed-out recordings.
+        if (testInfo.status === testInfo.expectedStatus) {
+            const slug = testInfo.annotations.find((annotation) => annotation.type === "tutorial-slug")?.description;
+            narrator.flush(slug);
+        }
     },
 
     narrate: async ({ narrator }, use) => {

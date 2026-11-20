@@ -15,7 +15,7 @@ import {
 
 import { meta } from "./grid3d.meta";
 
-test.describe("3D Viewer", () => {
+test.describe("3D Viewer", { tag: "@gpu" }, () => {
     test("displays a 3D grid model", async ({ page, narrate, markStep }) => {
         test.setTimeout(180_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });

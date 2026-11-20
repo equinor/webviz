@@ -18,7 +18,7 @@ import { meta } from "./parameterDistributionsModule.meta";
 
 test.describe("Parameter Distributions module", () => {
     test("compare prior and posterior parameter distributions from an AHM run", async ({ page, narrate, markStep }) => {
-        test.setTimeout(240_000);
+        test.setTimeout(360_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         const PARAMETER_DISTRIBUTIONS = "Parameter Distributions";

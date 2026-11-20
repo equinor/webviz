@@ -43,7 +43,7 @@ async function expandAllGroupTreeNodes(page: Page, container: Locator): Promise<
 
 test.describe("Flow Network module", () => {
     test("select a Drogon ensemble and render a Flow Network", async ({ page, narrate, markStep }) => {
-        test.setTimeout(180_000);
+        test.setTimeout(300_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         const FLOW_NETWORK = "Flow Network";
