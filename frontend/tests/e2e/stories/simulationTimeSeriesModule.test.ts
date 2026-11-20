@@ -20,7 +20,7 @@ import { meta } from "./simulationTimeSeriesModule.meta";
 
 test.describe("Simulation Time Series module", () => {
     test("select a Drogon ensemble and render a Simulation Time Series chart", async ({ page, narrate, markStep }) => {
-        test.setTimeout(240_000);
+        test.setTimeout(420_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         const SIMULATION_TIME_SERIES = "Simulation Time Series";

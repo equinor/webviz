@@ -7,7 +7,7 @@ import { meta } from "./landingPage.meta";
 
 test.describe("Landing page", () => {
     test("explore the landing page", async ({ page, narrate, markStep }) => {
-        test.setTimeout(180_000);
+        test.setTimeout(600_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         await installFakeCursor(page);

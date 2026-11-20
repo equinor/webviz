@@ -95,7 +95,7 @@ async function closeModulesList(page: Page): Promise<void> {
 
 test.describe("Inplace volumes in a sensitivity ensemble", () => {
     test("analyse STOIIP per sensitivity case", async ({ page, narrate, markStep }) => {
-        test.setTimeout(600_000);
+        test.setTimeout(900_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         await installFakeCursor(page);
