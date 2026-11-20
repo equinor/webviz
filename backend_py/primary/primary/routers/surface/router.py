@@ -33,6 +33,7 @@ from primary.utils.drogon import is_drogon_identifier
 from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp, LroCommandResp
 
 from . import converters
+from . import delta_surface_helpers
 from . import schemas
 from . import dependencies
 from . import task_helpers
@@ -459,18 +460,58 @@ async def post_get_sample_surface_in_points(
     return intersections
 
 
-@router.get("/delta_surface_data")
+DELTA_SURF_DOC_STR = """
+Get a delta surface for a selection of a comparison ensemble, an optional reference ensemble, a monitor time,
+an optional base time and a realization or statistic.
+
+The primary address (*REAL* or *STAT*) encodes the comparison ensemble, the surface, and the monitor time.
+A delta ensemble is requested by giving both `reference_case_uuid` and `reference_ensemble_name`. A time delta is
+requested by giving `base_iso_time_or_interval`, which requires the address to carry a monitor time.
+At least one of the two must be given.
+
+For realization *r* the result is, where omitted terms are not fetched:
+
+```
+result[r] = (comparison[r] @ monitor - comparison[r] @ base) - (reference[r] @ monitor - reference[r] @ base)
+```
+
+Cells that are undefined in any of the surfaces involved are undefined in the result.
+Statistics of delta surfaces (*STAT* address) are not implemented yet.
+"""
+
+
+@router.get("/delta_surface_data", description=DELTA_SURF_DOC_STR + GENERAL_SURF_ADDR_DOC_STR)
 async def get_delta_surface_data(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    surf_a_addr_str: Annotated[str, Query(description="Address string of surface A, supported types: *REAL*, *OBS* and *STAT*")],
-    surf_b_addr_str: Annotated[str, Query(description="Address string of surface B, supported types: *REAL*, *OBS* and *STAT*")],
+    surf_addr_str: Annotated[str, Query(description="Surface address string for the comparison ensemble and monitor time, supported address types are *REAL* and *STAT*")],
+    reference_case_uuid: Annotated[str | None, Query(description="Case uuid of the reference ensemble, must be given together with reference_ensemble_name")] = None,
+    reference_ensemble_name: Annotated[str | None, Query(description="Name of the reference ensemble, must be given together with reference_case_uuid")] = None,
+    base_iso_time_or_interval: Annotated[str | None, Query(description="Base time or interval to subtract from the monitor time in the address")] = None,
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
+    delete_task: Annotated[bool, Query(description="If true, deletes the server-side task for this selection. Nothing to delete for realization addresses")] = False,
     # fmt:on
-) -> list[schemas.SurfaceDataFloat]:
-    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
+) -> (
+    LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng]
+    | LroInProgressResp
+    | LroFailureResp
+    | LroCommandResp
+):
+    perf_metrics = ResponsePerfMetrics(response)
+
+    return await delta_surface_helpers.handle_delta_surface_data_async(
+        perf_metrics=perf_metrics,
+        authenticated_user=authenticated_user,
+        surf_addr_str=surf_addr_str,
+        reference_case_uuid=reference_case_uuid,
+        reference_ensemble_name=reference_ensemble_name,
+        base_iso_time_or_interval=base_iso_time_or_interval,
+        data_format=data_format,
+        resample_to=resample_to,
+        delete_task=delete_task,
+    )
 
 
 @router.get("/misfit_surface_data")
