@@ -23,6 +23,7 @@ import {
     filterVectorSpecificationAndIndividualStatisticsDataArray,
 } from "../utils/vectorSpecificationsAndQueriesUtils";
 
+
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
 export function usePlotBuilder(
@@ -48,11 +49,12 @@ export function usePlotBuilder(
     const loadedVectorSpecificationsAndHistoricalData = useAtomValue(
         loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     );
+    const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc();
+
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
 
-    const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 
     // Do not assemble plot for invalid statistical resampling frequency
     if (isInvalidStatisticsResampleFrequency(resampleFrequency, visualizationMode)) {

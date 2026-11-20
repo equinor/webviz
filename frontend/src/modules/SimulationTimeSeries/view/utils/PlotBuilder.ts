@@ -9,8 +9,7 @@ import type {
     VectorStatisticData_api,
 } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import type { Figure } from "@modules/_shared/Figure";
 import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
@@ -361,9 +360,6 @@ export class PlotBuilder {
             if (subplotIndex === -1) continue;
 
             const ensembleIdent = elm.vectorSpecification.ensembleIdent;
-
-            // As of now only regular ensembles are supported
-            if (!isEnsembleIdentOfType(ensembleIdent, RegularEnsembleIdent)) continue;
 
             const hasParameterForEnsemble = this._ensemblesParameterColoring.hasParameterForEnsemble(ensembleIdent);
 
