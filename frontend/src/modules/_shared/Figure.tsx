@@ -89,6 +89,42 @@ export class Figure {
         this._plotData.push(adjustedTrace);
     }
 
+    /**
+     * Returns a copy of the shape with axis references set for the given subplot, without adding it to the figure
+     */
+    makeShapeForSubplot(
+        shape: Partial<Shape>,
+        row = 1,
+        column = 1,
+        xCoordinateDomain = CoordinateDomain.DATA,
+        yCoordinateDomain = CoordinateDomain.DATA,
+    ): Partial<Shape> {
+        const axisIndex = this.getAxisIndex(row, column);
+        return {
+            ...shape,
+            xref: this.makeXAxisRef(axisIndex, xCoordinateDomain),
+            yref: this.makeYAxisRef(axisIndex, yCoordinateDomain),
+        };
+    }
+
+    /**
+     * Returns a copy of the annotation with axis references set for the given subplot, without adding it to the figure
+     */
+    makeAnnotationForSubplot(
+        annotation: Partial<Annotations>,
+        row = 1,
+        column = 1,
+        xCoordinateDomain = CoordinateDomain.DATA,
+        yCoordinateDomain = CoordinateDomain.DATA,
+    ): Partial<Annotations> {
+        const axisIndex = this.getAxisIndex(row, column);
+        return {
+            ...annotation,
+            xref: this.makeXAxisRef(axisIndex, xCoordinateDomain),
+            yref: this.makeYAxisRef(axisIndex, yCoordinateDomain),
+        };
+    }
+
     addShape(
         shape: Partial<Shape>,
         row?: number,

@@ -1,3 +1,5 @@
+import React from "react";
+
 import { useAtomValue } from "jotai";
 
 import type { ViewContext } from "@framework/ModuleContext";
@@ -14,7 +16,6 @@ import {
     loadedVectorSpecificationsAndRealizationDataAtom,
     loadedVectorSpecificationsAndStatisticsDataAtom,
 } from "../atoms/derivedAtoms";
-import { activeTimestampUtcMsAtom } from "../atoms/persistableFixableAtoms";
 import type { EnsemblesParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { PlotBuilder } from "../utils/PlotBuilder";
 import type { SubplotOwner } from "../utils/PlotBuilder";
@@ -31,8 +32,6 @@ export function usePlotBuilder(
     vectorHexColorMap: VectorHexColorMap,
     subplotOwner: SubplotOwner,
     ensemblesParameterColoring: EnsemblesParameterColoring | null,
-    hoveredTimestampUtcMs: number | null = null,
-    isHoverExternal = false,
 ): PlotBuilder | null {
     const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
@@ -49,91 +48,107 @@ export function usePlotBuilder(
         loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     );
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
-    const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
-    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 
-    // Do not assemble plot for invalid statistical resampling frequency
-    if (isInvalidStatisticsResampleFrequency(resampleFrequency, visualizationMode)) {
-        return null;
-    }
+    // Memoized so that marker changes (hover/selection) do not rebuild traces
+    return React.useMemo(
+        function createPlotBuilder(): PlotBuilder | null {
+            // Do not assemble plot for invalid statistical resampling frequency
+            if (isInvalidStatisticsResampleFrequency(resampleFrequency, visualizationMode)) {
+                return null;
+            }
 
-    const scatterType =
-        visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
-        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
-            ? "scattergl"
-            : "scatter";
+            const scatterType =
+                visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
+                visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
+                    ? "scattergl"
+                    : "scatter";
 
-    const plotBuilder = new PlotBuilder(
-        subplotOwner,
-        vectorSpecifications ?? [],
-        resampleFrequency,
-        makeEnsembleDisplayName,
-        vectorHexColorMap,
-        wrapperDivSize.width,
-        wrapperDivSize.height,
-        ensemblesParameterColoring ?? undefined,
-        subplotLimitation.direction,
-        subplotLimitation.maxDirectionElements,
-        scatterType,
+            const plotBuilder = new PlotBuilder(
+                subplotOwner,
+                vectorSpecifications ?? [],
+                resampleFrequency,
+                makeEnsembleDisplayName,
+                vectorHexColorMap,
+                wrapperDivSize.width,
+                wrapperDivSize.height,
+                ensemblesParameterColoring ?? undefined,
+                subplotLimitation.direction,
+                subplotLimitation.maxDirectionElements,
+                scatterType,
+            );
+
+            // Add traces based on visualization mode
+            if (
+                colorByParameter &&
+                ensemblesParameterColoring &&
+                visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS
+            ) {
+                plotBuilder.addRealizationTracesColoredByParameter(loadedVectorSpecificationsAndRealizationData);
+            }
+            if (!colorByParameter && visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS) {
+                const useIncreasedBrightness = false;
+                plotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
+            }
+            if (visualizationMode === VisualizationMode.STATISTICAL_FANCHART) {
+                const selectedVectorsFanchartStatisticData = filterVectorSpecificationAndFanchartStatisticsDataArray(
+                    loadedVectorSpecificationsAndStatisticsData,
+                    statisticsSelection.FanchartStatisticsSelection,
+                );
+                plotBuilder.addFanchartTraces(selectedVectorsFanchartStatisticData);
+            }
+            if (visualizationMode === VisualizationMode.STATISTICAL_LINES) {
+                const highlightStatistics = false;
+                const selectedVectorsIndividualStatisticData =
+                    filterVectorSpecificationAndIndividualStatisticsDataArray(
+                        loadedVectorSpecificationsAndStatisticsData,
+                        statisticsSelection.IndividualStatisticsSelection,
+                    );
+                plotBuilder.addStatisticsTraces(selectedVectorsIndividualStatisticData, highlightStatistics);
+            }
+            if (visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS) {
+                const useIncreasedBrightness = true;
+                const highlightStatistics = true;
+                const selectedVectorsIndividualStatisticData =
+                    filterVectorSpecificationAndIndividualStatisticsDataArray(
+                        loadedVectorSpecificationsAndStatisticsData,
+                        statisticsSelection.IndividualStatisticsSelection,
+                    );
+                plotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
+                plotBuilder.addStatisticsTraces(selectedVectorsIndividualStatisticData, highlightStatistics);
+            }
+
+            // Observations and historical data
+            if (showHistorical) {
+                plotBuilder.addHistoryTraces(loadedVectorSpecificationsAndHistoricalData);
+            }
+            if (showObservations) {
+                plotBuilder.addObservationsTraces(loadedVectorSpecificationsAndObservationData);
+            }
+
+            plotBuilder.prepareLegendsAndTitles();
+
+            return plotBuilder;
+        },
+        [
+            makeEnsembleDisplayName,
+            visualizationMode,
+            showObservations,
+            vectorSpecifications,
+            showHistorical,
+            statisticsSelection,
+            subplotLimitation,
+            resampleFrequency,
+            loadedVectorSpecificationsAndRealizationData,
+            loadedVectorSpecificationsAndStatisticsData,
+            loadedVectorSpecificationsAndObservationData,
+            loadedVectorSpecificationsAndHistoricalData,
+            colorByParameter,
+            wrapperDivSize,
+            vectorHexColorMap,
+            subplotOwner,
+            ensemblesParameterColoring,
+        ],
     );
-
-    // Add traces based on visualization mode
-    if (
-        colorByParameter &&
-        ensemblesParameterColoring &&
-        visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS
-    ) {
-        plotBuilder.addRealizationTracesColoredByParameter(loadedVectorSpecificationsAndRealizationData);
-    }
-    if (!colorByParameter && visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS) {
-        const useIncreasedBrightness = false;
-        plotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
-    }
-    if (visualizationMode === VisualizationMode.STATISTICAL_FANCHART) {
-        const selectedVectorsFanchartStatisticData = filterVectorSpecificationAndFanchartStatisticsDataArray(
-            loadedVectorSpecificationsAndStatisticsData,
-            statisticsSelection.FanchartStatisticsSelection,
-        );
-        plotBuilder.addFanchartTraces(selectedVectorsFanchartStatisticData);
-    }
-    if (visualizationMode === VisualizationMode.STATISTICAL_LINES) {
-        const highlightStatistics = false;
-        const selectedVectorsIndividualStatisticData = filterVectorSpecificationAndIndividualStatisticsDataArray(
-            loadedVectorSpecificationsAndStatisticsData,
-            statisticsSelection.IndividualStatisticsSelection,
-        );
-        plotBuilder.addStatisticsTraces(selectedVectorsIndividualStatisticData, highlightStatistics);
-    }
-    if (visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS) {
-        const useIncreasedBrightness = true;
-        const highlightStatistics = true;
-        const selectedVectorsIndividualStatisticData = filterVectorSpecificationAndIndividualStatisticsDataArray(
-            loadedVectorSpecificationsAndStatisticsData,
-            statisticsSelection.IndividualStatisticsSelection,
-        );
-        plotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
-        plotBuilder.addStatisticsTraces(selectedVectorsIndividualStatisticData, highlightStatistics);
-    }
-
-    // Observations and historical data
-    if (showHistorical) {
-        plotBuilder.addHistoryTraces(loadedVectorSpecificationsAndHistoricalData);
-    }
-    if (showObservations) {
-        plotBuilder.addObservationsTraces(loadedVectorSpecificationsAndObservationData);
-    }
-
-    // Add time annotation if active timestamp is set
-    if (showTimestampMarker && activeTimestampUtcMs) {
-        plotBuilder.addTimeAnnotation(activeTimestampUtcMs);
-    }
-
-    plotBuilder.setHoveredTimestamp(hoveredTimestampUtcMs, isHoverExternal);
-
-    plotBuilder.prepareLegendsAndTitles();
-    plotBuilder.prepareAnnotations();
-
-    return plotBuilder;
 }
