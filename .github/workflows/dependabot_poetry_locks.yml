@@ -1,0 +1,66 @@
+name: dependabot_poetry_locks
+
+# Dependabot does not update lock files of projects depending on a bumped project via
+# path dependencies (e.g. primary -> libs/services). This workflow therefore
+# regenerates poetry lock files on Dependabot PRs and pushes the result back to the Dependabot branch.
+#
+# NB: Pushes made with GITHUB_TOKEN do not trigger new workflow runs. After this
+# workflow has pushed, run the "webviz" workflow manually on the PR branch
+# (Actions -> webviz -> Run workflow).
+
+on:
+  pull_request:
+    paths:
+      - "backend_py/**"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  regenerate_poetry_locks:
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📖 Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: 📦 Install poetry
+        run: |
+          pip install --upgrade pip
+          pip install poetry==2.5.1
+          poetry config virtualenvs.create false
+
+      - name: 🔒 Regenerate poetry lock files
+        working-directory: ./backend_py
+        run: scripts/poetry-regenerate-lock-files.sh
+
+      - name: ⬆️ Commit and push changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BRANCH: ${{ github.head_ref }}
+          WEBVIZ_WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/workflows/webviz.yml
+        run: |
+          if git diff --quiet -- 'backend_py/**/poetry.lock'; then
+            echo "Lock files are already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          # See https://github.com/actions/checkout#push-a-commit-using-the-built-in-token
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- 'backend_py/**/poetry.lock'
+          git commit -m "Regenerate poetry lock files"
+          git push
+          echo "::notice::Lock files regenerated and pushed. Run the 'webviz' workflow manually on branch $BRANCH."
+          gh pr comment "$PR_NUMBER" --body "Poetry lock files have been regenerated and pushed to this branch.
+
+          Pushes made by GitHub Actions do not trigger CI, so please run the [webviz workflow]($WEBVIZ_WORKFLOW_URL) manually on branch \`$BRANCH\` (**Run workflow**)."
