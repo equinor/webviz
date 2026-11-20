@@ -1,7 +1,7 @@
 import type { QueryObserverResult } from "@tanstack/react-query";
 import { atom } from "jotai";
 
-import type { SummaryVectorObservations_api, VectorHistoricalData_api } from "@api";
+import type { ResultWithWarnings, SummaryVectorObservations_api, VectorHistoricalData_api } from "@api";
 import {
     Frequency_api,
     getDeltaEnsembleRealizationsVectorData,
@@ -56,6 +56,21 @@ export const vectorDataQueriesAtom = atom((get) => {
     );
 });
 
+// A disabled query keeps its cached data, so warnings must only be collected from enabled queries
+function makeQueryWarnings(
+    queries: { data: ResultWithWarnings<unknown> | undefined; isEnabled: boolean }[],
+    specs: { item: VectorSpec }[],
+) {
+    return queries.flatMap((query, index) =>
+        query.isEnabled
+            ? getQueryResultWarnings(query).map((warning) => ({
+                  vectorSpecification: specs[index].item,
+                  warning,
+              }))
+            : [],
+    );
+}
+
 export const vectorDataWarningsAtom = atom((get) => {
     const { regularEnsembleVectorSpecifications, deltaEnsembleVectorSpecifications } = get(
         categorizedVectorSpecificationsAtom,
@@ -63,20 +78,9 @@ export const vectorDataWarningsAtom = atom((get) => {
     const regularQueries = get(regularEnsembleVectorDataQueriesAtom);
     const deltaQueries = get(deltaEnsembleVectorDataQueriesAtom);
 
-    const makeWarnings = (
-        queries: (typeof regularQueries)[number][] | (typeof deltaQueries)[number][],
-        specs: { item: VectorSpec }[],
-    ) =>
-        queries.flatMap((query, index) =>
-            getQueryResultWarnings(query).map((warning) => ({
-                vectorSpecification: specs[index].item,
-                warning,
-            })),
-        );
-
     return [
-        ...makeWarnings(regularQueries, regularEnsembleVectorSpecifications),
-        ...makeWarnings(deltaQueries, deltaEnsembleVectorSpecifications),
+        ...makeQueryWarnings(regularQueries, regularEnsembleVectorSpecifications),
+        ...makeQueryWarnings(deltaQueries, deltaEnsembleVectorSpecifications),
     ];
 });
 
@@ -102,20 +106,9 @@ export const vectorStatisticsWarningsAtom = atom((get) => {
     const regularQueries = get(regularEnsembleStatisticsQueriesAtom);
     const deltaQueries = get(deltaEnsembleStatisticsQueriesAtom);
 
-    const makeWarnings = (
-        queries: (typeof regularQueries)[number][] | (typeof deltaQueries)[number][],
-        specs: { item: VectorSpec }[],
-    ) =>
-        queries.flatMap((query, index) =>
-            getQueryResultWarnings(query).map((warning) => ({
-                vectorSpecification: specs[index].item,
-                warning,
-            })),
-        );
-
     return [
-        ...makeWarnings(regularQueries, regularEnsembleVectorSpecifications),
-        ...makeWarnings(deltaQueries, deltaEnsembleVectorSpecifications),
+        ...makeQueryWarnings(regularQueries, regularEnsembleVectorSpecifications),
+        ...makeQueryWarnings(deltaQueries, deltaEnsembleVectorSpecifications),
     ];
 });
 

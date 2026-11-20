@@ -61,30 +61,35 @@ export function wrapLongRunningQuery<
 ): UseQueryOptions<ResultWithWarnings<TData>, Error, ResultWithWarnings<TData>, TQueryKey>;
 export function wrapLongRunningQuery(args: any): any {
     if (!args.withWarnings) {
-        return createLongRunningQueryOptions({ ...args, mapSuccess: (result: unknown) => result });
+        return createLongRunningQueryOptions({ ...args, transformSuccessResult: (result: unknown) => result });
     }
 
     return createLongRunningQueryOptions({
         ...args,
         queryFnArgs: addAllowWarningsHeader(args.queryFnArgs),
         queryKey: [addAllowWarningsHeader(args.queryKey[0])],
-        mapSuccess: (result: unknown, response: { headers?: unknown }) => ({
+        transformSuccessResult: (result: unknown, response: { headers?: unknown }) => ({
             value: result,
             warnings: parseWarnings(response.headers),
         }),
     });
 }
 
-function createLongRunningQueryOptions<TArgs, TData, TResult, TQueryKey extends readonly unknown[]>({
+function createLongRunningQueryOptions<
+    TArgs extends WithRequestHeaders,
+    TData,
+    TResult,
+    TQueryKey extends readonly unknown[],
+>({
     queryFn,
     queryFnArgs,
     queryKey,
-    mapSuccess,
+    transformSuccessResult,
     delayBetweenPollsSecs = 1,
     maxTotalDurationSecs = 60,
 }: Omit<WrapLongRunningQueryArgs<TArgs, TData>, "queryKey"> & {
     queryKey: TQueryKey;
-    mapSuccess: MapSuccess<TData, TResult>;
+    transformSuccessResult: TransformSuccessResult<TData, TResult>;
 }): UseQueryOptions<TResult, Error, TResult, TQueryKey> {
     const busKey = hashKey(queryKey);
 
@@ -119,7 +124,7 @@ function createLongRunningQueryOptions<TArgs, TData, TResult, TQueryKey extends 
                     if (data?.result === undefined) {
                         throw new LroError("Missing result in successful response", data);
                     }
-                    return mapSuccess(data.result, response);
+                    return transformSuccessResult(data.result, response);
                 }
 
                 if (data.response_type === "LroFailureResp") {
@@ -142,7 +147,8 @@ function createLongRunningQueryOptions<TArgs, TData, TResult, TQueryKey extends 
 
                     return pollUntilDone<TData, TResult>({
                         busKey,
-                        mapSuccess,
+                        transformSuccessResult,
+                        headers: queryFnArgs.headers,
                         pollResource: data.poll_url
                             ? {
                                   resourceType: "url",
@@ -226,7 +232,9 @@ type LongRunningRequestResult<TData> = RequestResult<
     false
 >;
 
-type MapSuccess<TData, TResult> = (result: TData, response: { headers?: unknown }) => TResult;
+type WithRequestHeaders = { headers?: Record<string, string> };
+
+type TransformSuccessResult<TData, TResult> = (result: TData, response: { headers?: unknown }) => TResult;
 
 type QueryFn<TArgs, TData> = (options: TArgs) => LongRunningRequestResult<TData>;
 
@@ -252,7 +260,9 @@ type PollResource<TArgs, TData> =
 
 async function pollUntilDone<T, TResult>(options: {
     busKey: string;
-    mapSuccess: MapSuccess<T, TResult>;
+    transformSuccessResult: TransformSuccessResult<T, TResult>;
+    // Request headers (e.g. allowing warnings) to send when polling by URL
+    headers?: Record<string, string>;
     // The URL to poll for the long-running operation status or the original query function if polled from same endpoint
     pollResource: PollResource<any, T>;
     // Not used yet, but possibly required for canceling in the future
@@ -318,6 +328,7 @@ async function pollUntilDone<T, TResult>(options: {
                 // If pollResource is a URL, use it directly
                 response = await client.get<LongRunningRequestResultByType<T>, LongRunningRequestErrorByType, false>({
                     url: currentPollUrl,
+                    headers: options.headers,
                     signal,
                 });
             } else if (pollResource.resourceType === "queryFn") {
@@ -347,7 +358,7 @@ async function pollUntilDone<T, TResult>(options: {
             }
 
             if (data.response_type === "LroSuccessResp") {
-                return options.mapSuccess(data.result as T, response);
+                return options.transformSuccessResult(data.result as T, response);
             }
 
             if (data.response_type === "LroFailureResp") {

@@ -1,6 +1,8 @@
 import { atom } from "jotai";
 
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+import { makeDistinguishableEnsembleDisplayNameFunc } from "@modules/_shared/ensembleNameUtils";
 import {
     makeAggregatedPerRealizationDeltaTableDataQueryOptions,
     makeAggregatedPerRealizationTableDataQueryOptions,
@@ -32,6 +34,7 @@ const regularAggregatedTableDataQueriesAtom = atomWithQueries((get) => {
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
     const areTableDefinitionSelectionsValid = get(areTableDefinitionSelectionsValidAtom);
+    const ensembleSet = get(EnsembleSetAtom);
 
     const enableQueries = areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
@@ -42,6 +45,7 @@ const regularAggregatedTableDataQueriesAtom = atomWithQueries((get) => {
         groupByIndices,
         indicesWithValues,
         enableQueries,
+        makeDistinguishableEnsembleDisplayNameFunc(ensembleSet),
     );
 });
 
@@ -59,6 +63,7 @@ const deltaAggregatedTableDataQueriesAtom = atomWithQueries((get) => {
     const deltaEnsembleIdentsWithRealizations = get(deltaEnsembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
     const areTableDefinitionSelectionsValid = get(areTableDefinitionSelectionsValidAtom);
+    const ensembleSet = get(EnsembleSetAtom);
 
     const enableQueries = areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
@@ -69,6 +74,7 @@ const deltaAggregatedTableDataQueriesAtom = atomWithQueries((get) => {
         groupByIndices,
         indicesWithValues,
         enableQueries,
+        makeDistinguishableEnsembleDisplayNameFunc(ensembleSet),
     );
 });
 

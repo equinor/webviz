@@ -9,7 +9,6 @@ import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import type { SettingAnnotation } from "@lib/components/Setting";
 import { useFlagActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
 import { propagateQueryErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
-import { propagateQueryWarningsToStatusWriter } from "@modules/_shared/utils/propagateWarningsToStatusWriter";
 import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 
 import { selectedVectorNamesAtom } from "../atoms/baseAtoms";
@@ -39,9 +38,6 @@ export function useMakeSettingsStatusWriterMessages(
 
     propagateQueryErrorsToStatusWriter(vectorListQueries, statusWriter);
 
-    propagateQueryWarningsToStatusWriter(vectorListQueries, statusWriter);
-
-    // Set warning for vector names not existing in a selected ensemble
     const handlePanelAnnotationsChange = React.useCallback(
         function handlePanelAnnotationsChange(annotations: SettingAnnotation[]) {
             const invalidFieldValueMessages = annotations.filter((a) => a.type === "error").map((a) => a.message);

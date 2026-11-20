@@ -12,9 +12,11 @@ import {
     withWarnings,
     type ResultWithWarnings,
 } from "@api";
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
+import { makeDistinguishableEnsembleDisplayNameFunc } from "@modules/_shared/ensembleNameUtils";
 
 import type {
     RftEnsembleObservationsData,
@@ -60,6 +62,8 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
     const { value: selectedResponseName, isValidInContext: responseNameValid } = get(selectedResponseNameAtom);
     const { value: selectedTimestampUtcMs, isValidInContext: timestampValid } = get(selectedTimestampUtcMsAtom);
     const validRealizationNumbers = get(validRealizationNumbersAtom);
+    const ensembleSet = get(EnsembleSetAtom);
+    const makeEnsembleDisplayName = makeDistinguishableEnsembleDisplayNameFunc(ensembleSet);
 
     const realizationsEncodedAsUintListStr =
         validRealizationNumbers.length > 0 ? encodeAsUintListStr(validRealizationNumbers) : null;
@@ -109,9 +113,8 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
             }
             ensembleData.push({ ensembleIdent: selectedEnsembleIdents[index], data: result.data.value });
             for (const warning of result.data.warnings) {
-                warnings.push(
-                    `${selectedEnsembleIdents[index].getEnsembleName()}, response "${selectedResponseName}": ${warning}`,
-                );
+                const ensembleName = makeEnsembleDisplayName(selectedEnsembleIdents[index]);
+                warnings.push(`${ensembleName}, response "${selectedResponseName}": ${warning}`);
             }
         });
 

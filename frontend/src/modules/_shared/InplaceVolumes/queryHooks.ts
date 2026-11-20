@@ -35,10 +35,19 @@ export type DeltaEnsembleIdentWithRealizations = {
     realizations: readonly number[];
 };
 
-function makeSourceWarnings(source: { ensembleIdent: RegularEnsembleIdent; tableName: string }, warnings: string[]) {
-    return warnings.map(
-        (warning) => `${source.ensembleIdent.getEnsembleName()}, table "${source.tableName}": ${warning}`,
-    );
+type EnsembleDisplayNameFunc = (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => string;
+
+function getEnsembleName(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent): string {
+    return ensembleIdent.getEnsembleName();
+}
+
+function makeSourceWarnings(
+    source: { ensembleIdent: RegularEnsembleIdent; tableName: string },
+    warnings: string[],
+    makeEnsembleDisplayName: EnsembleDisplayNameFunc,
+) {
+    const ensembleName = makeEnsembleDisplayName(source.ensembleIdent);
+    return warnings.map((warning) => `${ensembleName}, table "${source.tableName}": ${warning}`);
 }
 
 export type AggregatedTableDataResults = {
@@ -94,6 +103,7 @@ export function makeAggregatedStatisticalTableDataQueryOptions(
     groupByIndices: string[],
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
+    makeEnsembleDisplayName: EnsembleDisplayNameFunc = getEnsembleName,
 ) {
     const sources: InplaceVolumesSource[] = [];
     for (const el of ensembleIdentsWithRealizations) {
@@ -108,6 +118,7 @@ export function makeAggregatedStatisticalTableDataQueryOptions(
         groupByIndices,
         indicesWithValues,
         allowEnable,
+        makeEnsembleDisplayName,
     );
 }
 
@@ -124,6 +135,7 @@ export function makeAggregatedStatisticalTableDataQueryOptionsFromSources(
     groupByIndices: string[],
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
+    makeEnsembleDisplayName: EnsembleDisplayNameFunc = getEnsembleName,
 ) {
     const eachIndexHasValues = indicesWithValues.every((index) => index.values.length > 0);
     const validGroupByIndices = groupByIndices.length === 0 ? null : groupByIndices;
@@ -175,7 +187,7 @@ export function makeAggregatedStatisticalTableDataQueryOptionsFromSources(
                     sensitivityCase: sources[index].sensitivityCase,
                     data: result.data.value,
                 });
-                warnings.push(...makeSourceWarnings(sources[index], result.data.warnings));
+                warnings.push(...makeSourceWarnings(sources[index], result.data.warnings, makeEnsembleDisplayName));
             }
             if (result.error) {
                 errors.push(result.error);
@@ -204,6 +216,7 @@ export function makeAggregatedPerRealizationTableDataQueryOptions(
     groupByIndices: string[],
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
+    makeEnsembleDisplayName: EnsembleDisplayNameFunc = getEnsembleName,
 ) {
     const uniqueSources: { ensembleIdent: RegularEnsembleIdent; realizations: readonly number[]; tableName: string }[] =
         [];
@@ -262,7 +275,9 @@ export function makeAggregatedPerRealizationTableDataQueryOptions(
                     tableName: uniqueSources[index].tableName,
                     data: result.data.value,
                 });
-                warnings.push(...makeSourceWarnings(uniqueSources[index], result.data.warnings));
+                warnings.push(
+                    ...makeSourceWarnings(uniqueSources[index], result.data.warnings, makeEnsembleDisplayName),
+                );
             }
             if (result.error) {
                 errors.push(result.error);
@@ -298,6 +313,7 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
     groupByIndices: string[],
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
+    makeEnsembleDisplayName: EnsembleDisplayNameFunc = getEnsembleName,
 ) {
     const querySpecs: DeltaQuerySpec[] = [];
     const queryPairs: DeltaQueryPair[] = [];
@@ -391,9 +407,13 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
             }
 
             if (comparisonResult?.data && referenceResult?.data) {
-                const deltaLabel = `${queryPair.deltaEnsembleIdent.getEnsembleName()}, table "${queryPair.tableName}"`;
-                warnings.push(...comparisonResult.data.warnings.map((warning) => `${deltaLabel}: ${warning}`));
-                warnings.push(...referenceResult.data.warnings.map((warning) => `${deltaLabel}: ${warning}`));
+                const deltaLabel = `${makeEnsembleDisplayName(queryPair.deltaEnsembleIdent)}, table "${queryPair.tableName}"`;
+                warnings.push(
+                    ...comparisonResult.data.warnings.map((warning) => `${deltaLabel}, comparison: ${warning}`),
+                );
+                warnings.push(
+                    ...referenceResult.data.warnings.map((warning) => `${deltaLabel}, reference: ${warning}`),
+                );
 
                 const deltaResult = subtractPerRealizationTablesMemoized(
                     comparisonResult.data.value,

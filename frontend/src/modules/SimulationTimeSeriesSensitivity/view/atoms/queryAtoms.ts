@@ -77,10 +77,21 @@ export const statisticalVectorSensitivityDataQueryAtom = atomWithQuery((get) => 
     return { ...queryOptions, enabled: !!(showStatistics && vectorSpecification) };
 });
 
-export const vectorDataWarningsAtom = atom((get) => [
-    ...getQueryResultWarnings(get(vectorDataQueryAtom)),
-    ...getQueryResultWarnings(get(statisticalVectorSensitivityDataQueryAtom)),
-]);
+// A disabled query keeps its cached data, so warnings must only be collected from enabled queries
+export const vectorDataWarningsAtom = atom((get) => {
+    const vectorDataQuery = get(vectorDataQueryAtom);
+    const statisticsQuery = get(statisticalVectorSensitivityDataQueryAtom);
+
+    const warnings: string[] = [];
+    if (vectorDataQuery.isEnabled) {
+        warnings.push(...getQueryResultWarnings(vectorDataQuery));
+    }
+    if (statisticsQuery.isEnabled) {
+        warnings.push(...getQueryResultWarnings(statisticsQuery));
+    }
+
+    return warnings;
+});
 
 export const historicalVectorDataQueryAtom = atomWithQuery((get) => {
     const vectorSpecification = get(vectorSpecificationAtom);

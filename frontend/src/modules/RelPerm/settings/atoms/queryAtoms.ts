@@ -16,10 +16,12 @@ import {
     withWarnings,
     type ResultWithWarnings,
 } from "@api";
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
+import { makeDistinguishableEnsembleDisplayNameFunc } from "@modules/_shared/ensembleNameUtils";
 
 import type { RelPermDataAccessorStatus, RelPermEnsembleRealizationData } from "../../typesAndEnums";
 import { RelPermDataAccessor } from "../../utils/RelPermDataAccessor";
@@ -115,6 +117,8 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
     const { value: selectedSatnums, isValidInContext: satnumsValid } = get(selectedSatnumsAtom);
     const validRealizationNumbers = get(validRealizationNumbersAtom);
     const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
+    const ensembleSet = get(EnsembleSetAtom);
+    const makeEnsembleDisplayName = makeDistinguishableEnsembleDisplayNameFunc(ensembleSet);
 
     function makeQueryContext(ensembleIdent: RegularEnsembleIdent, index: number): RelPermRealizationDataQueryContext {
         return {
@@ -192,7 +196,8 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
                 const ensembleIdent = queryContexts[index].ensembleIdent;
                 ensembleData.push({ ensembleIdent, data: data.value });
                 for (const warning of data.warnings) {
-                    warnings.push(`${ensembleIdent.getEnsembleName()}, table "${selectedTableName}": ${warning}`);
+                    const ensembleName = makeEnsembleDisplayName(ensembleIdent);
+                    warnings.push(`${ensembleName}, table "${selectedTableName}": ${warning}`);
                 }
             });
 
