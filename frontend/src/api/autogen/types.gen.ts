@@ -2031,6 +2031,15 @@ export enum SortDirection_api {
 }
 
 /**
+ * SourceCoverageRole
+ */
+export enum SourceCoverageRole_api {
+    REGULAR = "REGULAR",
+    COMPARISON = "COMPARISON",
+    REFERENCE = "REFERENCE",
+}
+
+/**
  * StatisticFunction
  */
 export enum StatisticFunction_api {
@@ -2632,6 +2641,55 @@ export type VectorRealizationData_api = {
      */
     isRate: boolean;
     derivedVectorInfo?: DerivedVectorInfo_api | null;
+};
+
+/**
+ * VectorRealizationDataWithSourceCoverage
+ */
+export type VectorRealizationDataWithSourceCoverage_api = {
+    /**
+     * Realization
+     */
+    realization: number;
+    /**
+     * Timestampsutcms
+     */
+    timestampsUtcMs: Array<number>;
+    /**
+     * Values
+     */
+    values: Array<number>;
+    /**
+     * Unit
+     */
+    unit: string;
+    /**
+     * Israte
+     */
+    isRate: boolean;
+    /**
+     * Sourcecoverage
+     *
+     * First and last raw (pre-resampling) sample per source
+     */
+    sourceCoverage: Array<VectorSourceRange_api>;
+};
+
+/**
+ * VectorSourceRange
+ *
+ * First and last raw (pre-resampling) sample of one source for this realization and vector
+ */
+export type VectorSourceRange_api = {
+    role: SourceCoverageRole_api;
+    /**
+     * Firsttimestamputcms
+     */
+    firstTimestampUtcMs: number;
+    /**
+     * Lasttimestamputcms
+     */
+    lastTimestampUtcMs: number;
 };
 
 /**
@@ -3840,6 +3898,61 @@ export type GetRealizationsVectorDataResponses_api = {
 export type GetRealizationsVectorDataResponse_api =
     GetRealizationsVectorDataResponses_api[keyof GetRealizationsVectorDataResponses_api];
 
+export type GetRealizationsVectorDataWithSourceCoverageData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Vector Name
+         *
+         * Name of the vector
+         */
+        vector_name: string;
+        /**
+         * Realizations Encoded As Uint List Str
+         *
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
+         */
+        realizations_encoded_as_uint_list_str?: string | null;
+        _cacheBust?: string;
+    };
+    url: "/timeseries/realizations_vector_data_with_source_coverage/";
+};
+
+export type GetRealizationsVectorDataWithSourceCoverageErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetRealizationsVectorDataWithSourceCoverageError_api =
+    GetRealizationsVectorDataWithSourceCoverageErrors_api[keyof GetRealizationsVectorDataWithSourceCoverageErrors_api];
+
+export type GetRealizationsVectorDataWithSourceCoverageResponses_api = {
+    /**
+     * Response Get Realizations Vector Data With Source Coverage
+     *
+     * Successful Response
+     */
+    200: Array<VectorRealizationDataWithSourceCoverage_api>;
+};
+
+export type GetRealizationsVectorDataWithSourceCoverageResponse_api =
+    GetRealizationsVectorDataWithSourceCoverageResponses_api[keyof GetRealizationsVectorDataWithSourceCoverageResponses_api];
+
 export type GetDeltaEnsembleRealizationsVectorDataData_api = {
     body?: never;
     path?: never;
@@ -3910,6 +4023,73 @@ export type GetDeltaEnsembleRealizationsVectorDataResponses_api = {
 
 export type GetDeltaEnsembleRealizationsVectorDataResponse_api =
     GetDeltaEnsembleRealizationsVectorDataResponses_api[keyof GetDeltaEnsembleRealizationsVectorDataResponses_api];
+
+export type GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Comparison Case Uuid
+         *
+         * Sumo case uuid for comparison ensemble
+         */
+        comparison_case_uuid: string;
+        /**
+         * Comparison Ensemble Name
+         *
+         * Comparison ensemble name
+         */
+        comparison_ensemble_name: string;
+        /**
+         * Reference Case Uuid
+         *
+         * Sumo case uuid for reference ensemble
+         */
+        reference_case_uuid: string;
+        /**
+         * Reference Ensemble Name
+         *
+         * Reference ensemble name
+         */
+        reference_ensemble_name: string;
+        /**
+         * Vector Name
+         *
+         * Name of the vector
+         */
+        vector_name: string;
+        /**
+         * Realizations Encoded As Uint List Str
+         *
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
+         */
+        realizations_encoded_as_uint_list_str?: string | null;
+        _cacheBust?: string;
+    };
+    url: "/timeseries/delta_ensemble_realizations_vector_data_with_source_coverage/";
+};
+
+export type GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageError_api =
+    GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageErrors_api[keyof GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageErrors_api];
+
+export type GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageResponses_api = {
+    /**
+     * Response Get Delta Ensemble Realizations Vector Data With Source Coverage
+     *
+     * Successful Response
+     */
+    200: Array<VectorRealizationDataWithSourceCoverage_api>;
+};
+
+export type GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageResponse_api =
+    GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageResponses_api[keyof GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageResponses_api];
 
 export type GetHistoricalVectorDataData_api = {
     body?: never;

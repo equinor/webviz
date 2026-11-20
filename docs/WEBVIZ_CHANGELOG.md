@@ -22,6 +22,10 @@
 - **3D Viewer**: Improved trajectory hovering in wellbore layers.
 - **Parameter Distributions**: Parameters with PERT distributions can now be loaded and plotted.
 
+### Fixed
+
+- **Simulation Time Series**: For delta ensembles, individual realization curves could mix values from different realizations.
+
 ## October 2026
 
 ### Added

@@ -1,10 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import pyarrow as pa
 import pyarrow.compute as pc
 import numpy as np
 
-from webviz_services.utils.arrow_helpers import validate_summary_vector_table_pa
+from webviz_services.sumo_access.source_coverage import RawDateRange
+from webviz_services.utils.arrow_helpers import sort_table_on_real_then_date, validate_summary_vector_table_pa
 
 
 @dataclass
@@ -20,6 +21,8 @@ class RealizationDeltaVector:
     values: list[float]
     is_rate: bool
     unit: str
+    comparison_raw_date_range: RawDateRange | None = None
+    reference_raw_date_range: RawDateRange | None = None
 
 
 def create_delta_vector_table(
@@ -35,7 +38,8 @@ def create_delta_vector_table(
     Performs "inner join". Only obtain matching index ["DATE", "REAL"] - i.e "DATE"-"REAL" combination
     present in only one vector is neglected.
 
-    Returns: A table with columns ["DATE", "REAL", vector_name] where vector_name contains the delta values.
+    Returns: A table with columns ["DATE", "REAL", vector_name] where vector_name contains the delta values, sorted on
+    REAL then DATE like the tables from `SummaryAccess.get_vector_table_async()`.
 
     `Note`: Pre-processing of DATE-columns, e.g. resampling, should be done before calling this function.
     """
@@ -57,14 +61,16 @@ def create_delta_vector_table(
         }
     )
 
-    return delta_table
+    # The join gives no guaranteed row order
+    return sort_table_on_real_then_date(delta_table)
 
 
 def create_realization_delta_vector_list(
     delta_vector_table: pa.Table, vector_name: str, is_rate: bool, unit: str
 ) -> list[RealizationDeltaVector]:
     """
-    Create a list of RealizationDeltaVector from the delta vector table.
+    Create a list of RealizationDeltaVector from a delta vector table sorted on REAL then DATE, as returned by
+    `create_delta_vector_table()`.
     """
     validate_summary_vector_table_pa(delta_vector_table, vector_name)
 
@@ -92,3 +98,22 @@ def create_realization_delta_vector_list(
         )
 
     return ret_arr
+
+
+def add_raw_date_ranges_to_realization_delta_vectors(
+    realization_delta_vectors: list[RealizationDeltaVector],
+    comparison_raw_date_ranges_per_real: dict[int, RawDateRange],
+    reference_raw_date_ranges_per_real: dict[int, RawDateRange],
+) -> list[RealizationDeltaVector]:
+    """
+    Return copies of the delta vectors with the raw date ranges of both the comparison and the reference
+    ensemble of the same realization attached.
+    """
+    return [
+        replace(
+            delta_vec,
+            comparison_raw_date_range=comparison_raw_date_ranges_per_real[int(delta_vec.realization)],
+            reference_raw_date_range=reference_raw_date_ranges_per_real[int(delta_vec.realization)],
+        )
+        for delta_vec in realization_delta_vectors
+    ]

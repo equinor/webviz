@@ -8,10 +8,18 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from webviz_services.summary_vector_statistics import compute_vector_statistics
 from webviz_services.sumo_access.parameter_access import ParameterAccess
-from webviz_services.sumo_access.summary_access import Frequency, SummaryAccess
+from webviz_services.sumo_access.source_coverage import RawDateRange, SourceCoverageUnsupportedError
+from webviz_services.sumo_access.summary_access import (
+    Frequency,
+    SummaryAccess,
+    raise_if_source_coverage_unsupported_for_metadata,
+    validate_and_resample_with_raw_date_ranges,
+)
+from webviz_services.sumo_access.summary_types import VectorMetadata
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 from webviz_services.summary_delta_vectors import (
     DeltaVectorMetadata,
+    add_raw_date_ranges_to_realization_delta_vectors,
     create_delta_vector_table,
     create_realization_delta_vector_list,
 )
@@ -200,8 +208,51 @@ async def get_realizations_vector_data(
     return ret_arr
 
 
-@router.get("/delta_ensemble_realizations_vector_data/")
+@router.get("/realizations_vector_data_with_source_coverage/")
 @cache_time(CacheTime.LONG)
+async def get_realizations_vector_data_with_source_coverage(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name:  Annotated[str, Query(description="Ensemble name")],
+    vector_name:  Annotated[str, Query(description="Name of the vector")],
+    realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
+    # fmt:on
+) -> list[schemas.VectorRealizationDataWithSourceCoverage]:
+    """Get MONTHLY resampled vector data per realization, with the first and last raw sample date per realization
+
+    Only supported for native cumulative total vectors (not rates or derived vectors).
+    """
+
+    perf_metrics = ResponsePerfMetrics(response)
+
+    _raise_if_derived_vector_for_source_coverage(vector_name)
+
+    realizations: list[int] | None = None
+    if realizations_encoded_as_uint_list_str:
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
+
+    access = SummaryAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
+    try:
+        sumo_vec_arr = await access.get_vector_with_source_coverage_async(
+            vector_name=vector_name,
+            resampling_frequency=Frequency.MONTHLY,
+            realizations=realizations,
+        )
+    except SourceCoverageUnsupportedError as exc:
+        raise HTTPException(status_code=400, detail=exc.message) from exc
+    perf_metrics.record_lap("get-vector")
+
+    ret_arr = converters.realization_vector_list_to_api_vector_realization_data_with_source_coverage_list(sumo_vec_arr)
+
+    LOGGER.info(f"Loaded realization summary data with source coverage in: {perf_metrics.to_string()}")
+    return ret_arr
+
+
+@router.get("/delta_ensemble_realizations_vector_data/")
+@cache_time(CacheTime.LONG, result_version=1)
 # pylint: disable-next=too-many-locals
 async def get_delta_ensemble_realizations_vector_data(
     # fmt:off
@@ -286,6 +337,75 @@ async def get_delta_ensemble_realizations_vector_data(
         )
 
     LOGGER.info(f"Loaded realization delta ensemble summary data in: {perf_metrics.to_string()}")
+    return ret_arr
+
+
+@router.get("/delta_ensemble_realizations_vector_data_with_source_coverage/")
+@cache_time(CacheTime.LONG)
+async def get_delta_ensemble_realizations_vector_data_with_source_coverage(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    comparison_case_uuid: Annotated[str, Query(description="Sumo case uuid for comparison ensemble")],
+    comparison_ensemble_name: Annotated[str, Query(description="Comparison ensemble name")],
+    reference_case_uuid: Annotated[str, Query(description="Sumo case uuid for reference ensemble")],
+    reference_ensemble_name: Annotated[str, Query(description="Reference ensemble name")],
+    vector_name:  Annotated[str, Query(description="Name of the vector")],
+    realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
+    # fmt:on
+) -> list[schemas.VectorRealizationDataWithSourceCoverage]:
+    """Get MONTHLY resampled delta vector data per realization, with the first and last raw sample date per
+    realization of both the comparison and the reference ensemble
+
+    Only supported for native cumulative total vectors (not rates or derived vectors).
+
+    Definition:
+
+        delta_ensemble = comparison_ensemble - reference_ensemble
+
+    """
+
+    perf_metrics = ResponsePerfMetrics(response)
+
+    _raise_if_derived_vector_for_source_coverage(vector_name)
+
+    realizations: list[int] | None = None
+    if realizations_encoded_as_uint_list_str:
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
+
+    (
+        delta_vector_table_pa,
+        delta_vector_metadata,
+        comparison_raw_date_ranges,
+        reference_raw_date_ranges,
+    ) = await _get_vector_tables_with_raw_date_ranges_and_create_delta_vector_table_async(
+        authenticated_user,
+        comparison_case_uuid,
+        comparison_ensemble_name,
+        reference_case_uuid,
+        reference_ensemble_name,
+        vector_name,
+        realizations,
+        Frequency.MONTHLY,
+        perf_metrics,
+    )
+
+    realization_delta_vector_list = create_realization_delta_vector_list(
+        delta_vector_table_pa,
+        vector_name,
+        delta_vector_metadata.is_rate,
+        delta_vector_metadata.unit,
+    )
+    realization_delta_vector_list = add_raw_date_ranges_to_realization_delta_vectors(
+        realization_delta_vector_list, comparison_raw_date_ranges, reference_raw_date_ranges
+    )
+    perf_metrics.record_lap("create-realization-delta-vector-list")
+
+    ret_arr = converters.realization_delta_vector_list_to_api_vector_realization_data_with_source_coverage_list(
+        realization_delta_vector_list
+    )
+
+    LOGGER.info(f"Loaded realization delta ensemble summary data with source coverage in: {perf_metrics.to_string()}")
     return ret_arr
 
 
@@ -386,7 +506,7 @@ async def get_statistical_vector_data(
 
 
 @router.get("/delta_ensemble_statistical_vector_data/")
-@cache_time(CacheTime.LONG)
+@cache_time(CacheTime.LONG, result_version=1)
 # pylint: disable=too-many-arguments
 # pylint: disable-next=too-many-locals
 async def get_delta_ensemble_statistical_vector_data(
@@ -631,17 +751,7 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
     if perf_metrics:
         perf_metrics.record_lap("get-vector-tables-to-create-delta-vector-table")
 
-    # Check for mismatching metadata
-    if comparison_metadata.is_rate != reference_metadata.is_rate:
-        raise HTTPException(
-            status_code=400, detail="Rate mismatch between ensembles for delta ensemble statistical vector data"
-        )
-    if comparison_metadata.unit != reference_metadata.unit:
-        raise HTTPException(
-            status_code=400, detail="Unit mismatch between ensembles for delta ensemble statistical vector data"
-        )
-
-    delta_vector_metadata = DeltaVectorMetadata(unit=reference_metadata.unit, is_rate=reference_metadata.is_rate)
+    delta_vector_metadata = _create_delta_vector_metadata(comparison_metadata, reference_metadata)
 
     # Create delta ensemble table
     delta_vector_table_pa = create_delta_vector_table(
@@ -652,3 +762,86 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
         perf_metrics.record_lap("create-delta-vector-table")
 
     return delta_vector_table_pa, delta_vector_metadata
+
+
+# pylint: disable-next=too-many-locals
+async def _get_vector_tables_with_raw_date_ranges_and_create_delta_vector_table_async(
+    authenticated_user: AuthenticatedUser,
+    comparison_case_uuid: str,
+    comparison_ensemble_name: str,
+    reference_case_uuid: str,
+    reference_ensemble_name: str,
+    vector_name: str,
+    realizations: list[int] | None,
+    resampling_frequency: Frequency,
+    perf_metrics: ResponsePerfMetrics,
+) -> tuple[pa.Table, DeltaVectorMetadata, dict[int, RawDateRange], dict[int, RawDateRange]]:
+    """
+    Same as `_get_vector_tables_and_create_delta_vector_table_and_metadata_async()`, but also returns the raw date
+    ranges per realization of the comparison and reference ensembles, captured from the same single table load per
+    ensemble. A vector that is not a cumulative total in either ensemble is rejected with 400 before either raw table
+    is validated, so the error does not depend on which load finishes first.
+    """
+    comparison_ensemble_access = SummaryAccess.from_ensemble_name(
+        authenticated_user.get_sumo_access_token(), comparison_case_uuid, comparison_ensemble_name
+    )
+    reference_ensemble_access = SummaryAccess.from_ensemble_name(
+        authenticated_user.get_sumo_access_token(), reference_case_uuid, reference_ensemble_name
+    )
+
+    (comparison_raw_table_pa, comparison_metadata), (reference_raw_table_pa, reference_metadata) = await asyncio.gather(
+        comparison_ensemble_access.get_vector_table_async(
+            vector_name=vector_name, resampling_frequency=None, realizations=realizations
+        ),
+        reference_ensemble_access.get_vector_table_async(
+            vector_name=vector_name, resampling_frequency=None, realizations=realizations
+        ),
+    )
+    perf_metrics.record_lap("get-vector-tables-to-create-delta-vector-table")
+
+    try:
+        raise_if_source_coverage_unsupported_for_metadata(comparison_metadata)
+        raise_if_source_coverage_unsupported_for_metadata(reference_metadata)
+    except SourceCoverageUnsupportedError as exc:
+        raise HTTPException(status_code=400, detail=exc.message) from exc
+
+    delta_vector_metadata = _create_delta_vector_metadata(comparison_metadata, reference_metadata)
+
+    comparison_vector_table_pa, comparison_raw_date_ranges = validate_and_resample_with_raw_date_ranges(
+        comparison_raw_table_pa, vector_name, resampling_frequency
+    )
+    reference_vector_table_pa, reference_raw_date_ranges = validate_and_resample_with_raw_date_ranges(
+        reference_raw_table_pa, vector_name, resampling_frequency
+    )
+
+    delta_vector_table_pa = create_delta_vector_table(
+        comparison_vector_table_pa, reference_vector_table_pa, vector_name
+    )
+
+    perf_metrics.record_lap("create-delta-vector-table")
+
+    return delta_vector_table_pa, delta_vector_metadata, comparison_raw_date_ranges, reference_raw_date_ranges
+
+
+def _create_delta_vector_metadata(
+    comparison_metadata: VectorMetadata, reference_metadata: VectorMetadata
+) -> DeltaVectorMetadata:
+    # Check for mismatching metadata
+    if comparison_metadata.is_rate != reference_metadata.is_rate:
+        raise HTTPException(
+            status_code=400, detail="Rate mismatch between ensembles for delta ensemble statistical vector data"
+        )
+    if comparison_metadata.unit != reference_metadata.unit:
+        raise HTTPException(
+            status_code=400, detail="Unit mismatch between ensembles for delta ensemble statistical vector data"
+        )
+
+    return DeltaVectorMetadata(unit=reference_metadata.unit, is_rate=reference_metadata.is_rate)
+
+
+def _raise_if_derived_vector_for_source_coverage(vector_name: str) -> None:
+    if is_derived_vector(vector_name):
+        raise HTTPException(
+            status_code=400,
+            detail="Source coverage is not supported for derived vectors, only for native cumulative total vectors",
+        )

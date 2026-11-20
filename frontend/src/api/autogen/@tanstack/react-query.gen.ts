@@ -22,6 +22,7 @@ import {
     getAssetInfos,
     getCases,
     getDeltaEnsembleRealizationsVectorData,
+    getDeltaEnsembleRealizationsVectorDataWithSourceCoverage,
     getDeltaEnsembleStatisticalVectorData,
     getDeltaEnsembleVectorList,
     getDeltaSurfaceData,
@@ -53,6 +54,7 @@ import {
     getRealizationFlowNetwork,
     getRealizationSurfacesMetadata,
     getRealizationsVectorData,
+    getRealizationsVectorDataWithSourceCoverage,
     getRelpermRealizationData,
     getRelpermTableDefinition,
     getRelpermTableNames,
@@ -128,6 +130,9 @@ import type {
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleRealizationsVectorDataError_api,
     GetDeltaEnsembleRealizationsVectorDataResponse_api,
+    GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageData_api,
+    GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageError_api,
+    GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageResponse_api,
     GetDeltaEnsembleStatisticalVectorDataData_api,
     GetDeltaEnsembleStatisticalVectorDataError_api,
     GetDeltaEnsembleStatisticalVectorDataResponse_api,
@@ -219,6 +224,9 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataError_api,
     GetRealizationsVectorDataResponse_api,
+    GetRealizationsVectorDataWithSourceCoverageData_api,
+    GetRealizationsVectorDataWithSourceCoverageError_api,
+    GetRealizationsVectorDataWithSourceCoverageResponse_api,
     GetRelpermRealizationDataData_api,
     GetRelpermRealizationDataError_api,
     GetRelpermRealizationDataResponse_api,
@@ -651,6 +659,38 @@ export const getRealizationsVectorDataOptions = (options: Options<GetRealization
         queryKey: getRealizationsVectorDataQueryKey(options),
     });
 
+export const getRealizationsVectorDataWithSourceCoverageQueryKey = (
+    options: Options<GetRealizationsVectorDataWithSourceCoverageData_api>,
+) => createQueryKey("getRealizationsVectorDataWithSourceCoverage", options);
+
+/**
+ * Get Realizations Vector Data With Source Coverage
+ *
+ * Get MONTHLY resampled vector data per realization, with the first and last raw sample date per realization
+ *
+ * Only supported for native cumulative total vectors (not rates or derived vectors).
+ */
+export const getRealizationsVectorDataWithSourceCoverageOptions = (
+    options: Options<GetRealizationsVectorDataWithSourceCoverageData_api>,
+) =>
+    queryOptions<
+        GetRealizationsVectorDataWithSourceCoverageResponse_api,
+        AxiosError<GetRealizationsVectorDataWithSourceCoverageError_api>,
+        GetRealizationsVectorDataWithSourceCoverageResponse_api,
+        ReturnType<typeof getRealizationsVectorDataWithSourceCoverageQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getRealizationsVectorDataWithSourceCoverage({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getRealizationsVectorDataWithSourceCoverageQueryKey(options),
+    });
+
 export const getDeltaEnsembleRealizationsVectorDataQueryKey = (
     options: Options<GetDeltaEnsembleRealizationsVectorDataData_api>,
 ) => createQueryKey("getDeltaEnsembleRealizationsVectorData", options);
@@ -683,6 +723,43 @@ export const getDeltaEnsembleRealizationsVectorDataOptions = (
             return data;
         },
         queryKey: getDeltaEnsembleRealizationsVectorDataQueryKey(options),
+    });
+
+export const getDeltaEnsembleRealizationsVectorDataWithSourceCoverageQueryKey = (
+    options: Options<GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageData_api>,
+) => createQueryKey("getDeltaEnsembleRealizationsVectorDataWithSourceCoverage", options);
+
+/**
+ * Get Delta Ensemble Realizations Vector Data With Source Coverage
+ *
+ * Get MONTHLY resampled delta vector data per realization, with the first and last raw sample date per
+ * realization of both the comparison and the reference ensemble
+ *
+ * Only supported for native cumulative total vectors (not rates or derived vectors).
+ *
+ * Definition:
+ *
+ * delta_ensemble = comparison_ensemble - reference_ensemble
+ */
+export const getDeltaEnsembleRealizationsVectorDataWithSourceCoverageOptions = (
+    options: Options<GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageData_api>,
+) =>
+    queryOptions<
+        GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageResponse_api,
+        AxiosError<GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageError_api>,
+        GetDeltaEnsembleRealizationsVectorDataWithSourceCoverageResponse_api,
+        ReturnType<typeof getDeltaEnsembleRealizationsVectorDataWithSourceCoverageQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getDeltaEnsembleRealizationsVectorDataWithSourceCoverage({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getDeltaEnsembleRealizationsVectorDataWithSourceCoverageQueryKey(options),
     });
 
 export const getHistoricalVectorDataQueryKey = (options: Options<GetHistoricalVectorDataData_api>) =>

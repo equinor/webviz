@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Frequency(StrEnum):
@@ -44,6 +44,20 @@ class VectorHistoricalData(BaseModel):
     isRate: bool
 
 
+class SourceCoverageRole(StrEnum):
+    REGULAR = "REGULAR"
+    COMPARISON = "COMPARISON"
+    REFERENCE = "REFERENCE"
+
+
+class VectorSourceRange(BaseModel):
+    """First and last raw (pre-resampling) sample of one source for this realization and vector"""
+
+    role: SourceCoverageRole
+    firstTimestampUtcMs: int
+    lastTimestampUtcMs: int
+
+
 class VectorRealizationData(BaseModel):
     realization: int
     timestampsUtcMs: list[int]
@@ -51,6 +65,15 @@ class VectorRealizationData(BaseModel):
     unit: str
     isRate: bool
     derivedVectorInfo: DerivedVectorInfo | None = None
+
+
+class VectorRealizationDataWithSourceCoverage(BaseModel):
+    realization: int
+    timestampsUtcMs: list[int]
+    values: list[float]
+    unit: str
+    isRate: bool
+    sourceCoverage: list[VectorSourceRange] = Field(description="First and last raw (pre-resampling) sample per source")
 
 
 class StatisticValueObject(BaseModel):

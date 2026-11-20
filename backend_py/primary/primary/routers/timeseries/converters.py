@@ -1,6 +1,7 @@
 from typing import Sequence
 
 from webviz_services.summary_vector_statistics import VectorStatistics
+from webviz_services.sumo_access.source_coverage import RawDateRange
 from webviz_services.sumo_access.summary_access import RealizationVector
 from webviz_services.utils.statistic_function import StatisticFunction
 from webviz_services.summary_delta_vectors import RealizationDeltaVector
@@ -25,6 +26,29 @@ def to_api_derived_vector_info(derived_type: DerivedVectorType, source_vector: s
     )
 
 
+def to_api_vector_source_ranges(
+    role_and_raw_date_range_list: list[tuple[schemas.SourceCoverageRole, RawDateRange | None]],
+) -> list[schemas.VectorSourceRange]:
+    """
+    Create API VectorSourceRange list from service layer raw date ranges, one per source role
+
+    Raises ValueError if a raw date range is missing, as the caller must have loaded them
+    """
+    ret_arr: list[schemas.VectorSourceRange] = []
+    for role, raw_date_range in role_and_raw_date_range_list:
+        if raw_date_range is None:
+            raise ValueError("Source coverage is missing for a vector loaded with source coverage")
+        ret_arr.append(
+            schemas.VectorSourceRange(
+                role=role,
+                firstTimestampUtcMs=raw_date_range.first_timestamp_utc_ms,
+                lastTimestampUtcMs=raw_date_range.last_timestamp_utc_ms,
+            )
+        )
+
+    return ret_arr
+
+
 def realization_vector_list_to_api_vector_realization_data_list(
     realization_vector_list: list[RealizationVector],
 ) -> list[schemas.VectorRealizationData]:
@@ -38,6 +62,25 @@ def realization_vector_list_to_api_vector_realization_data_list(
             values=real_vec.values,
             unit=real_vec.metadata.unit,
             isRate=real_vec.metadata.is_rate,
+        )
+        for real_vec in realization_vector_list
+    ]
+
+
+def realization_vector_list_to_api_vector_realization_data_with_source_coverage_list(
+    realization_vector_list: list[RealizationVector],
+) -> list[schemas.VectorRealizationDataWithSourceCoverage]:
+    """
+    Create API VectorRealizationDataWithSourceCoverage list from service layer RealizationVector list
+    """
+    return [
+        schemas.VectorRealizationDataWithSourceCoverage(
+            realization=real_vec.realization,
+            timestampsUtcMs=real_vec.timestamps_utc_ms,
+            values=real_vec.values,
+            unit=real_vec.metadata.unit,
+            isRate=real_vec.metadata.is_rate,
+            sourceCoverage=to_api_vector_source_ranges([(schemas.SourceCoverageRole.REGULAR, real_vec.raw_date_range)]),
         )
         for real_vec in realization_vector_list
     ]
@@ -79,6 +122,30 @@ def realization_delta_vector_list_to_api_vector_realization_data_list(
             unit=real_vec.unit,
             isRate=real_vec.is_rate,
             derivedVectorInfo=derived_vector_info,
+        )
+        for real_vec in realization_delta_vector_list
+    ]
+
+
+def realization_delta_vector_list_to_api_vector_realization_data_with_source_coverage_list(
+    realization_delta_vector_list: list[RealizationDeltaVector],
+) -> list[schemas.VectorRealizationDataWithSourceCoverage]:
+    """
+    Create API VectorRealizationDataWithSourceCoverage list from service layer RealizationDeltaVector list
+    """
+    return [
+        schemas.VectorRealizationDataWithSourceCoverage(
+            realization=real_vec.realization,
+            timestampsUtcMs=real_vec.timestamps_utc_ms,
+            values=real_vec.values,
+            unit=real_vec.unit,
+            isRate=real_vec.is_rate,
+            sourceCoverage=to_api_vector_source_ranges(
+                [
+                    (schemas.SourceCoverageRole.COMPARISON, real_vec.comparison_raw_date_range),
+                    (schemas.SourceCoverageRole.REFERENCE, real_vec.reference_raw_date_range),
+                ]
+            ),
         )
         for real_vec in realization_delta_vector_list
     ]
