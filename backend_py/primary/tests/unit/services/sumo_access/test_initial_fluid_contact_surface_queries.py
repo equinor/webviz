@@ -257,4 +257,4 @@ def test_missing_source_realizations_warnings() -> None:
 
     warnings = _make_missing_source_realizations_warnings([1, 2, 5], [1, 2])
     assert len(warnings) == 1
-    assert "[5]" in warnings[0].message
+    assert "Realization: 5" in warnings[0].message

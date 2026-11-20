@@ -449,14 +449,14 @@ async def post_get_surface_intersection(
 
 @router.post("/get_sample_surface_in_points")
 async def post_get_sample_surface_in_points(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    warning_reporter: WarningReporter = Depends(WarningReporter),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     surface_name: str = Query(description="Surface name"),
     realization_nums: List[int] = Query(description="Realization numbers"),
     sample_points: schemas.PointSetXY = Body(embed=True),
     surface_attribute: schemas.SurfaceAttribute = Body(embed=True, description="Surface attribute"),
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    warning_reporter: WarningReporter = Depends(WarningReporter),
 ) -> List[schemas.SurfaceRealizationSampleValues]:
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
