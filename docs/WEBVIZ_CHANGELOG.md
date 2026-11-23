@@ -10,6 +10,7 @@
 ### Added
 
 - **Session and snapshot management**: You can now select several sessions or snapshots with checkboxes and delete them in one go. When deleting your own snapshots, you can choose to delete them for everyone or only remove them from your list.
+- **Simulation Time Series**: Delta ensemble realization curves can now be colored by parameter values from the comparison ensemble.
 
 ### Changed
 
@@ -20,6 +21,7 @@
 
 - **Intersection**: Large grids no longer appear cut off partway along the intersection when "Show grid lines" is turned off.
 - **3D Viewer**: Improved trajectory hovering in wellbore layers.
+- **Parameter Distributions**: Parameters with PERT distributions can now be loaded and plotted.
 
 ## October 2026
 
