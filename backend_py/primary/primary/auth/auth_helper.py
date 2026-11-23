@@ -189,7 +189,8 @@ class AuthHelper:
             LOGGER.error("Failed to acquire SUMO access token")
             return _make_html_err_resp("Sign-in verified, but could not get SUMO access token. Please try again.", 500)
 
-        # Issue a new session ID now that the session becomes authenticated to prevent session fixation attacks
+        # Rotate the session ID after authentication to prevent a known pre-login ID from becoming authenticated.
+        # SessionMiddleware sends the new ID in the response cookie.
         starsessions.regenerate_session_id(request)
 
         _save_token_cache_in_session(request, new_token_cache)
