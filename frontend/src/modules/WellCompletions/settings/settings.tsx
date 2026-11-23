@@ -5,11 +5,20 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash-es";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { DashboardControlledSetting } from "@framework/DashboardSettings/components/DashboardControlledSetting";
+import { DashboardControlledSettingLabel } from "@framework/DashboardSettings/components/DashboardControlledSettingLabel";
+import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
+import { TIME_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/time";
+import {
+    realizationToDashboardValueString,
+    timestampUtcMsToDashboardValueString,
+} from "@framework/DashboardSettings/utils/valueToString";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { useStableAtomGetter } from "@framework/utils/atomUtils";
+import { isoStringToTimestampUtcMs } from "@framework/utils/timestampUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
@@ -37,8 +46,12 @@ import {
     wellSortDirectionAtom,
     timeAggregationModeAtom,
 } from "./atoms/baseAtoms";
-import { sortedCompletionDatesAtom, availableRealizationsAtom } from "./atoms/derivedAtoms";
+import { availableRealizationsAtom, sortedCompletionDatesAtom } from "./atoms/derivedAtoms";
 import {
+    effectiveCompletionDateIndexAtom,
+    effectiveRealizationAtom,
+    isCompletionDateIndexDashboardControlledAtom,
+    isRealizationDashboardControlledAtom,
     selectedCompletionDateIndexAtom,
     selectedCompletionDateIndexRangeAtom,
     selectedEnsembleIdentAtom,
@@ -59,10 +72,16 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useAtom(selectedEnsembleIdentAtom);
     const [realizationMode, setRealizationMode] = useAtom(realizationModeAtom);
-    const [selectedRealization, setSelectedRealization] = useAtom(selectedRealizationAtom);
+    const setSelectedRealization = useSetAtom(selectedRealizationAtom);
+    const effectiveRealization = useAtomValue(effectiveRealizationAtom);
+    const isRealizationDashboardSettingActive = useAtomValue(isRealizationDashboardControlledAtom);
 
     const [timeAggregationMode, setTimeAggregationMode] = useAtom(timeAggregationModeAtom);
-    const [selectedCompletionDateIndex, setSelectedCompletionDateIndex] = useAtom(selectedCompletionDateIndexAtom);
+    const setSelectedCompletionDateIndex = useSetAtom(selectedCompletionDateIndexAtom);
+    const effectiveCompletionDateIndex = useAtomValue(effectiveCompletionDateIndexAtom);
+    const isTimeDashboardSettingActive = useAtomValue(
+        isCompletionDateIndexDashboardControlledAtom,
+    );
     const [selectedCompletionDateIndexRange, setSelectedCompletionDateIndexRange] = useAtom(
         selectedCompletionDateIndexRangeAtom,
     );
@@ -164,6 +183,20 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
 
     const isSingleRealizationMode = realizationMode === RealizationMode.SINGLE;
     const isSingleTimeStepMode = timeAggregationMode === TimeAggregationMode.NONE;
+    // The dashboard realization and time only apply to a single realization and a single time step
+    const isRealizationDashboardControlled = isRealizationDashboardSettingActive && isSingleRealizationMode;
+    const isTimeDashboardControlled = isTimeDashboardSettingActive && isSingleTimeStepMode;
+
+    if (isRealizationDashboardControlled && !effectiveRealization.isValidInContext) {
+        statusWriter.flagActionRequired("Dashboard setting value for the realization is not valid here");
+    }
+    if (
+        isTimeDashboardControlled &&
+        !effectiveCompletionDateIndex.isLoading &&
+        !effectiveCompletionDateIndex.isValidInContext
+    ) {
+        statusWriter.flagActionRequired("Dashboard setting value for the time step is not valid here");
+    }
 
     const selectedEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentAtom);
     const selectedRealizationAnnotations = useMakePersistableFixableAtomAnnotations(selectedRealizationAtom);
@@ -171,8 +204,9 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
     // Props for setting wrapper and slider based on selected TimeAggregationMode
     const timeStepSettingProps = useMakeTimeStepSliderSettingProps({
         isSingleTimeStepMode,
+        isDashboardControlled: isTimeDashboardControlled,
         sortedCompletionDates,
-        selectedCompletionDateIndex,
+        selectedCompletionDateIndex: effectiveCompletionDateIndex,
         selectedCompletionDateIndexRange,
     });
 
@@ -189,7 +223,14 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                         />
                     </Setting.Field>
                     <Setting.Field
-                        label="Realization"
+                        label={
+                            <DashboardControlledSettingLabel
+                                label="Realization"
+                                controlledBy={REALIZATION_DASHBOARD_SETTING}
+                                isControlled={isRealizationDashboardControlled}
+                                isValueValidHere={effectiveRealization.isValidInContext}
+                            />
+                        }
                         stacked
                         annotations={
                             // Without realizations (e.g. all excluded by the realization filter), nothing is loaded in
@@ -215,19 +256,27 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                             annotations={
                                 // The selected realization is only used (and validated) in single realization mode
                                 isSingleRealizationMode
-                                    ? selectedRealizationAnnotations
+                                    ? isRealizationDashboardControlled
+                                        ? []
+                                        : selectedRealizationAnnotations
                                     : [{ type: "info", message: "Only available in single realization mode." }]
                             }
                         >
-                            <Combobox
-                                items={availableRealizations.map((real) => {
-                                    return { label: real.toString(), value: real };
-                                })}
-                                value={selectedRealization.value ?? null}
-                                onValueChange={(v) => v !== null && setSelectedRealization(v)}
-                                disabled={!isSingleRealizationMode}
-                                placeholder="Select realization..."
-                            />
+                            <DashboardControlledSetting
+                                isControlled={isRealizationDashboardControlled}
+                                isValueValidHere={effectiveRealization.isValidInContext}
+                                valueRepresentation={realizationToDashboardValueString(effectiveRealization.value)}
+                            >
+                                <Combobox
+                                    items={availableRealizations.map((real) => {
+                                        return { label: real.toString(), value: real };
+                                    })}
+                                    value={effectiveRealization.value ?? null}
+                                    onValueChange={(v) => v !== null && setSelectedRealization(v)}
+                                    disabled={!isSingleRealizationMode}
+                                    placeholder="Select realization..."
+                                />
+                            </DashboardControlledSetting>
                         </Setting.Field>
                     </Setting.Field>
                 </Setting.Section>
@@ -245,33 +294,51 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                     </Setting.Field>
                     <Setting.Field
                         stacked
-                        label={timeStepSettingProps.settingWrapper.label}
+                        label={
+                            <DashboardControlledSettingLabel
+                                label={timeStepSettingProps.settingWrapper.label}
+                                controlledBy={TIME_DASHBOARD_SETTING}
+                                isControlled={isTimeDashboardControlled}
+                                isValueValidHere={effectiveCompletionDateIndex.isValidInContext}
+                            />
+                        }
                         annotations={timeStepSettingProps.settingWrapper.annotations}
                         loadingOverlay={timeStepSettingProps.settingWrapper.loadingOverlay}
                         errorOverlay={timeStepSettingProps.settingWrapper.errorOverlay}
                     >
-                        <Slider
-                            valueLabelDisplay="auto"
-                            value={timeStepSettingProps.sliderValue}
-                            min={0}
-                            max={sortedCompletionDates?.length ? sortedCompletionDates.length - 1 : 0}
-                            markers={sortedCompletionDates?.map((_, index) => index) ?? undefined}
-                            markerLabels={(v, i) =>
-                                (i === 0 || i === sortedCompletionDates!.length - 1) && createValueLabelFormat(v)
-                            }
-                            valueLabelFormat={createValueLabelFormat}
-                            onValueChange={(value, eventDetails) => {
-                                // Bounds changes (e.g. while completion data loads) make the slider emit a
-                                // clamped value; ignore it so retained selections survive until the user edits them
-                                if (eventDetails.reason === "clamp-value") return;
-
-                                if (isSingleTimeStepMode) {
-                                    handleDateIndexSelectionChange(value);
-                                } else {
-                                    handleDateIndexRangeSelectionChange(value);
+                        <DashboardControlledSetting
+                            isControlled={isTimeDashboardControlled}
+                            isValueValidHere={effectiveCompletionDateIndex.isValidInContext}
+                            valueRepresentation={timestampUtcMsToDashboardValueString(
+                                effectiveCompletionDateIndex.value !== null &&
+                                    sortedCompletionDates?.[effectiveCompletionDateIndex.value]
+                                    ? isoStringToTimestampUtcMs(sortedCompletionDates[effectiveCompletionDateIndex.value])
+                                    : null,
+                            )}
+                        >
+                            <Slider
+                                valueLabelDisplay="auto"
+                                value={timeStepSettingProps.sliderValue}
+                                min={0}
+                                max={sortedCompletionDates?.length ? sortedCompletionDates.length - 1 : 0}
+                                markers={sortedCompletionDates?.map((_, index) => index) ?? undefined}
+                                markerLabels={(v, i) =>
+                                    (i === 0 || i === sortedCompletionDates!.length - 1) && createValueLabelFormat(v)
                                 }
-                            }}
-                        />
+                                valueLabelFormat={createValueLabelFormat}
+                                onValueChange={(value, eventDetails) => {
+                                    // Bounds changes (e.g. while completion data loads) make the slider emit a
+                                    // clamped value; ignore it so retained selections survive until the user edits them
+                                    if (eventDetails.reason === "clamp-value") return;
+    
+                                    if (isSingleTimeStepMode) {
+                                        handleDateIndexSelectionChange(value);
+                                    } else {
+                                        handleDateIndexRangeSelectionChange(value);
+                                    }
+                                }}
+                            />
+                        </DashboardControlledSetting>
                     </Setting.Field>
                     <Setting.Field>
                         <SwitchCompositions.WithLabel

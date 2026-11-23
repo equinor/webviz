@@ -15,7 +15,7 @@ import {
     timeAggregationModeAtom,
 } from "./baseAtoms";
 import {
-    selectedCompletionDateIndexAtom,
+    effectiveCompletionDateIndexAtom,
     selectedCompletionDateIndexRangeAtom,
     selectedEnsembleIdentAtom,
 } from "./persistableFixableAtoms";
@@ -30,6 +30,7 @@ export const availableRealizationsAtom = atom<number[]>((get) => {
         : [];
     return validRealizationNumbers;
 });
+
 
 export const dataLoadingStatusAtom = atom<DataLoadingStatus>((get) => {
     const wellCompletionsQuery = get(wellCompletionsQueryAtom);
@@ -75,7 +76,7 @@ export const plotDataAtom = atom<PlotData | null>((get) => {
     const sortWellsBy = get(sortWellsByAtom);
     const wellSortDirection = get(wellSortDirectionAtom);
 
-    const selectedCompletionDateIndex = get(selectedCompletionDateIndexAtom);
+    const effectiveCompletionDateIndex = get(effectiveCompletionDateIndexAtom);
     const selectedCompletionDateIndexRange = get(selectedCompletionDateIndexRangeAtom);
 
     if (!wellCompletionsDataAccessor) {
@@ -86,7 +87,7 @@ export const plotDataAtom = atom<PlotData | null>((get) => {
     // plotted
     const completionDateIndexSelection =
         timeAggregationMode === TimeAggregationMode.NONE
-            ? selectedCompletionDateIndex
+            ? effectiveCompletionDateIndex
             : selectedCompletionDateIndexRange;
     if (completionDateIndexSelection.value === null || !completionDateIndexSelection.isValidInContext) {
         return null;
