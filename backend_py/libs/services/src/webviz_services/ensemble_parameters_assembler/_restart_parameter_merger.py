@@ -12,6 +12,7 @@ def merge_restart_parameters(
     own_parameters: list[EnsembleParameter],
     ancestors_and_parameters: list[tuple[ResolvedEnsemble, list[EnsembleParameter]]],
     own_ensemble_label: str,
+    own_realizations: set[int] | None = None,
 ) -> tuple[list[EnsembleParameter], list[str]]:
     """Combine an ensemble's own parameters with the parameters of its restart ancestors.
 
@@ -19,18 +20,22 @@ def merge_restart_parameters(
         own_parameters: The ensemble's own parameters
         ancestors_and_parameters: Restart ancestors with their parameters, nearest parent first
         own_ensemble_label: User-facing label of the ensemble, used in messages
+        own_realizations: Realizations of the ensemble. Derived from its own parameters if not given, so it must
+            be given if the ensemble has no parameters of its own.
 
     Returns:
         The merged parameters (own first, then ancestors nearest first) and non-fatal warnings.
         Ancestors sharing no realizations with the ensemble are skipped. Other ancestors' parameters are
         filtered to the ensemble's realizations and tagged with their source ensemble.
-        SENSNAME/SENSCASE are kept once, from the ensemble itself.
+        SENSNAME/SENSCASE are kept once: from the ensemble itself, or from the nearest combined ancestor if the
+        ensemble has no parameters of its own.
 
     Raises:
         InvalidDataError: If SENSNAME/SENSCASE are not present in all combined sources or not aligned, or if
             any (name, group) parameter identifier exists in more than one combined source.
     """
-    own_realizations = {real for param in own_parameters for real in param.realizations}
+    if own_realizations is None:
+        own_realizations = {real for param in own_parameters for real in param.realizations}
 
     warnings: list[str] = []
     overlapping_ancestors_and_parameters: list[tuple[ResolvedEnsemble, list[EnsembleParameter]]] = []
@@ -52,7 +57,20 @@ def merge_restart_parameters(
                 "have no values for these realizations."
             )
 
-    _verify_sensitivity_parameters_aligned(own_parameters, overlapping_ancestors_and_parameters, own_ensemble_label)
+    # An ensemble without parameters of its own takes SENSNAME/SENSCASE from its nearest combined ancestor
+    sens_owner_ancestor = (
+        overlapping_ancestors_and_parameters[0][0]
+        if not own_parameters and overlapping_ancestors_and_parameters
+        else None
+    )
+    if sens_owner_ancestor is None:
+        _verify_sensitivity_parameters_aligned(own_parameters, own_ensemble_label, overlapping_ancestors_and_parameters)
+    else:
+        _verify_sensitivity_parameters_aligned(
+            overlapping_ancestors_and_parameters[0][1],
+            sens_owner_ancestor.label,
+            overlapping_ancestors_and_parameters[1:],
+        )
 
     ancestors_and_non_sens_parameters = [
         (ancestor, [param for param in parameters if param.name not in SENSITIVITY_PARAMETER_NAMES])
@@ -60,8 +78,15 @@ def merge_restart_parameters(
     ]
     _verify_no_conflicting_parameters(own_parameters, ancestors_and_non_sens_parameters, own_ensemble_label)
 
+    ancestors_and_merged_parameters = [
+        (ancestor, all_parameters if ancestor is sens_owner_ancestor else non_sens_parameters)
+        for (ancestor, all_parameters), (_, non_sens_parameters) in zip(
+            overlapping_ancestors_and_parameters, ancestors_and_non_sens_parameters
+        )
+    ]
+
     merged_parameters = list(own_parameters)
-    for ancestor, ancestor_parameters in ancestors_and_non_sens_parameters:
+    for ancestor, ancestor_parameters in ancestors_and_merged_parameters:
         source_ensemble = ParameterSourceEnsemble(
             case_uuid=ancestor.case_uuid,
             case_name=ancestor.case_name,
@@ -89,8 +114,8 @@ def _filter_parameter_to_realizations(
 
 def _verify_sensitivity_parameters_aligned(
     own_parameters: list[EnsembleParameter],
-    ancestors_and_parameters: list[tuple[ResolvedEnsemble, list[EnsembleParameter]]],
     own_ensemble_label: str,
+    ancestors_and_parameters: list[tuple[ResolvedEnsemble, list[EnsembleParameter]]],
 ) -> None:
     own_sens_parameters = _get_sensitivity_parameters_by_name(own_parameters)
 

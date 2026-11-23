@@ -253,3 +253,36 @@ def test_merge_does_not_check_conflicts_or_sensitivities_against_skipped_ancesto
     assert merged == own
     assert len(warnings) == 1
     assert "shares no realizations" in warnings[0]
+
+
+def test_merge_without_own_parameters_uses_given_realizations_and_nearest_ancestor_sensitivities() -> None:
+    parent_params = [
+        _param("SENSNAME", ["s1", "s1", "s2"], [0, 1, 2]),
+        _param("SENSCASE", ["c1", "c1", "c2"], [0, 1, 2]),
+        _param("B", [1.0, 2.0, 3.0], [0, 1, 2]),
+    ]
+    grandparent_params = [
+        _param("SENSNAME", ["s1", "s1", "s2"], [0, 1, 2]),
+        _param("SENSCASE", ["c1", "c1", "c2"], [0, 1, 2]),
+        _param("C", [4.0, 5.0, 6.0], [0, 1, 2]),
+    ]
+
+    merged, warnings = merge_restart_parameters(
+        [], [(PARENT, parent_params), (GRANDPARENT, grandparent_params)], CHILD_LABEL, {0, 1}
+    )
+
+    assert [(p.name, p.source_ensemble, p.realizations) for p in merged] == [
+        ("SENSNAME", _source(PARENT), [0, 1]),
+        ("SENSCASE", _source(PARENT), [0, 1]),
+        ("B", _source(PARENT), [0, 1]),
+        ("C", _source(GRANDPARENT), [0, 1]),
+    ]
+    assert not warnings
+
+
+def test_merge_without_own_parameters_checks_sensitivities_against_nearest_ancestor() -> None:
+    parent_params = [_param("SENSNAME", ["s1", "s1"]), _param("SENSCASE", ["c1", "c1"])]
+    grandparent_params = [_param("C", [4.0, 5.0])]
+
+    with pytest.raises(InvalidDataError, match="between Case B/iter-3 and restart ensemble Case B/iter-2"):
+        merge_restart_parameters([], [(PARENT, parent_params), (GRANDPARENT, grandparent_params)], CHILD_LABEL, {0, 1})

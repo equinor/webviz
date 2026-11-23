@@ -6,7 +6,8 @@ import pytest
 
 from webviz_services.ensemble_parameters_assembler import ensemble_parameters_assembler
 from webviz_services.ensemble_parameters_assembler.ensemble_parameters_assembler import EnsembleParametersAssembler
-from webviz_services.service_exceptions import InvalidDataError, MultipleDataMatchesError
+from webviz_services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
+from webviz_services.sumo_access.case_inspector import CaseInspector
 from webviz_services.sumo_access import parameter_access
 from webviz_services.sumo_access.ensemble_lineage import ResolvedEnsemble, RestartChain
 from webviz_services.sumo_access.parameter_access import ParameterAccess
@@ -98,7 +99,14 @@ class _AssemblerHarness:
         self.tables = tables
         self.chain = chain
         self.legacy_parameters: list[EnsembleParameter] = []
+        self.has_legacy_parameters = True
+        self.child_realizations = [0, 1, 2]
         self.detect_warning: str | None = None
+
+    def _make_legacy_mock(self) -> AsyncMock:
+        if self.has_legacy_parameters:
+            return AsyncMock(return_value=self.legacy_parameters)
+        return AsyncMock(side_effect=NoDataError("No parameters stored in Sumo", Service.SUMO))
 
     async def run_async(self) -> ParametersAndSensitivities:
         def _search_context_factory(sumo: Any) -> _FakeSearchContext:  # pylint: disable=unused-argument
@@ -107,8 +115,9 @@ class _AssemblerHarness:
         with (
             patch.object(parameter_access, "SearchContext", side_effect=_search_context_factory),
             patch.object(ensemble_parameters_assembler, "get_restart_chain_async", AsyncMock(return_value=self.chain)),
+            patch.object(ParameterAccess, "get_legacy_parameters_async", self._make_legacy_mock()),
             patch.object(
-                ParameterAccess, "get_legacy_parameters_async", AsyncMock(return_value=self.legacy_parameters)
+                CaseInspector, "get_realizations_in_ensemble_async", AsyncMock(return_value=self.child_realizations)
             ),
             patch.object(
                 ParameterAccess,
@@ -314,3 +323,58 @@ async def test_assembler_warns_for_ancestor_table_without_parameter_columns_asyn
     assert [p.name for p in result.parameters] == ["SENSNAME", "SENSCASE", "FWL"]
     assert len(result.warnings) == 1
     assert "no standard-result parameters" in result.warnings[0]
+
+
+async def test_assembler_child_without_own_parameters_inherits_from_parent_async() -> None:
+    chain = RestartChain(ensemble=CHILD, ancestors=[PARENT], unresolved_ensemble_uuid=None, truncated=False)
+    harness = _AssemblerHarness({("case-b", "iter-3"): [PARENT_TABLE]}, chain)
+    harness.has_legacy_parameters = False
+    harness.child_realizations = [0, 1]
+
+    result = await harness.run_async()
+
+    assert [(p.name, p.source_ensemble, p.realizations) for p in result.parameters] == [
+        ("SENSNAME", _source(PARENT), [0, 1]),
+        ("SENSCASE", _source(PARENT), [0, 1]),
+        ("KVKH", _source(PARENT), [0, 1]),
+    ]
+    assert {case.name for sens in result.sensitivities for case in sens.cases} == {"c1"}
+    assert not result.warnings
+
+
+async def test_assembler_child_without_own_parameters_and_without_restart_raises_async() -> None:
+    harness = _AssemblerHarness({}, _NO_RESTART)
+    harness.has_legacy_parameters = False
+
+    with pytest.raises(NoDataError, match="No parameters stored in Sumo"):
+        await harness.run_async()
+
+
+async def test_assembler_child_without_own_parameters_and_unresolved_parent_raises_async() -> None:
+    chain = RestartChain(ensemble=CHILD, ancestors=[], unresolved_ensemble_uuid="uuid-deleted", truncated=False)
+    harness = _AssemblerHarness({}, chain)
+    harness.has_legacy_parameters = False
+
+    with pytest.raises(NoDataError, match="No parameters stored in Sumo"):
+        await harness.run_async()
+
+
+async def test_assembler_child_without_own_parameters_and_parent_without_table_raises_async() -> None:
+    chain = RestartChain(ensemble=CHILD, ancestors=[PARENT], unresolved_ensemble_uuid=None, truncated=False)
+    harness = _AssemblerHarness({}, chain)
+    harness.has_legacy_parameters = False
+
+    with pytest.raises(NoDataError, match="Case B/iter-3 has no standard-result parameters"):
+        await harness.run_async()
+
+
+async def test_assembler_child_with_real_only_table_inherits_from_parent_async() -> None:
+    chain = RestartChain(ensemble=CHILD, ancestors=[PARENT], unresolved_ensemble_uuid=None, truncated=False)
+    real_only_table = _param_table({}, [0, 1, 2])
+    harness = _AssemblerHarness({("case-a", "pred"): [real_only_table], ("case-b", "iter-3"): [PARENT_TABLE]}, chain)
+
+    result = await harness.run_async()
+
+    assert [p.name for p in result.parameters] == ["SENSNAME", "SENSCASE", "KVKH"]
+    assert result.parameters[-1].realizations == [0, 1, 2]
+    assert not result.warnings

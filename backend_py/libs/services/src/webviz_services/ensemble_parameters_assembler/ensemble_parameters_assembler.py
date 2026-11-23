@@ -4,7 +4,8 @@ import logging
 from fmu.sumo.explorer.explorer import SumoClient
 
 from webviz_core_utils.perf_metrics import PerfMetrics
-from webviz_services.service_exceptions import ServiceLayerException
+from webviz_services.service_exceptions import NoDataError, Service, ServiceLayerException
+from webviz_services.sumo_access.case_inspector import CaseInspector
 from webviz_services.sumo_access.ensemble_lineage import (
     MAX_RESTART_CHAIN_DEPTH,
     ResolvedEnsemble,
@@ -70,21 +71,35 @@ class EnsembleParametersAssembler:
         restart_chain = restart_chain_task.result()
 
         warnings: list[str] = []
+        legacy_parameters: list[EnsembleParameter] | None = None
         if own_standard_parameters is None:
             LOGGER.debug(
                 f"No Standard result parameter table found for case {self._case_uuid} and ensemble "
                 f"{self._ensemble_name}. Attempting legacy parameter retrieval."
             )
-            own_parameters = await self._own_access.get_legacy_parameters_async()
+            try:
+                legacy_parameters = await self._own_access.get_legacy_parameters_async()
+            except NoDataError:
+                # An ensemble restarted from another may have no parameters of its own and inherit all of them
+                if not restart_chain.ancestors:
+                    raise
+                LOGGER.debug(f"No parameters of its own, using restart ensembles. {self._ensemble_name=}")
+
+        if legacy_parameters is not None:
+            own_parameters = legacy_parameters
             parameters = own_parameters
             warnings.extend(_legacy_restart_warnings(restart_chain))
         else:
-            own_parameters = own_standard_parameters
+            own_parameters = own_standard_parameters or []
             try:
                 async with asyncio.TaskGroup() as tg:
                     merge_task = tg.create_task(self._merge_with_restart_ancestors_async(own_parameters, restart_chain))
-                    missing_warning_task = tg.create_task(
-                        self._own_access.detect_parameters_missing_from_standard_result_async(own_parameters)
+                    missing_warning_task = (
+                        tg.create_task(
+                            self._own_access.detect_parameters_missing_from_standard_result_async(own_parameters)
+                        )
+                        if own_parameters
+                        else None
                     )
             except* ServiceLayerException as exc_group:
                 for exc in exc_group.exceptions:
@@ -92,12 +107,21 @@ class EnsembleParametersAssembler:
 
             parameters, restart_warnings = merge_task.result()
             warnings.extend(restart_warnings)
-            missing_warning = missing_warning_task.result()
+            missing_warning = missing_warning_task.result() if missing_warning_task is not None else None
             if missing_warning is not None:
                 warnings.append(missing_warning)
 
-        # Sensitivities describe the ensemble's own realizations; any combined ancestors are verified to match there
-        sensitivities = create_ensemble_sensitivities(own_parameters)
+            if not parameters:
+                raise NoDataError(
+                    f"Ensemble {self._ensemble_name} (case {self._case_uuid}) has no parameters of its own, and "
+                    "no parameters could be combined from the ensembles it was restarted from.\n\n"
+                    + "\n".join(warnings),
+                    Service.SUMO,
+                )
+
+        # Sensitivities describe the ensemble's own realizations; any combined ancestors are verified to match there.
+        # An ensemble without parameters of its own uses those inherited from its nearest combined ancestor.
+        sensitivities = create_ensemble_sensitivities(own_parameters if own_parameters else parameters)
 
         return ParametersAndSensitivities(
             parameters=parameters,
@@ -105,7 +129,7 @@ class EnsembleParametersAssembler:
             warnings=warnings,
             # Legacy ensembles never combine ancestor parameters, so resolving the ancestor later changes nothing
             has_unresolved_restart_ensemble=(
-                own_standard_parameters is not None and restart_chain.unresolved_ensemble_uuid is not None
+                legacy_parameters is None and restart_chain.unresolved_ensemble_uuid is not None
             ),
         )
 
@@ -117,9 +141,18 @@ class EnsembleParametersAssembler:
         if not restart_chain.ancestors:
             return own_parameters, warnings
 
+        # Without parameters of its own, the ensemble's realizations must be looked up separately
+        own_realizations_task: asyncio.Task[list[int]] | None = None
+
         perf_metrics = PerfMetrics()
         try:
             async with asyncio.TaskGroup() as tg:
+                if not own_parameters:
+                    own_realizations_task = tg.create_task(
+                        CaseInspector(self._sumo_client, self._case_uuid).get_realizations_in_ensemble_async(
+                            self._ensemble_name
+                        )
+                    )
                 ancestor_tasks = [
                     (ancestor, tg.create_task(self._get_ancestor_standard_result_parameters_async(ancestor)))
                     for ancestor in restart_chain.ancestors
@@ -142,8 +175,9 @@ class EnsembleParametersAssembler:
 
         # The chain has ancestors only if the ensemble itself was found, so the fallback is never expected to be used
         own_ensemble_label = restart_chain.ensemble.label if restart_chain.ensemble is not None else self._ensemble_name
+        own_realizations = set(own_realizations_task.result()) if own_realizations_task is not None else None
         merged_parameters, merge_warnings = merge_restart_parameters(
-            own_parameters, ancestors_and_parameters, own_ensemble_label
+            own_parameters, ancestors_and_parameters, own_ensemble_label, own_realizations
         )
         warnings.extend(merge_warnings)
         perf_metrics.record_lap("merge")
