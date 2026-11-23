@@ -74,7 +74,7 @@ logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
 logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
 # logging.getLogger("primary.middleware").setLevel(logging.DEBUG)
-logging.getLogger("primary.auth").setLevel(logging.DEBUG)
+# logging.getLogger("primary.auth").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
 
@@ -217,8 +217,9 @@ if config.PSEUDONYM_HMAC_KEY is not None:
 unprotected_paths = ["/logout", "/alive", "/openapi.json"]
 app.add_middleware(EnforceLoggedInMiddleware, unprotected_paths=unprotected_paths)
 
-# With the default lifetime=0 (browser-session cookie), starsessions uses gc_ttl as the Redis key TTL and resets it on
-# every save. This effectively gives a 1-day server-side idle timeout and ensures abandoned sessions are cleaned up.
+# SessionMiddleware defaults to lifetime=0, creating a browser-session cookie without a fixed expiry.
+# With lifetime=0, gc_ttl specifies the Redis session key's idle timeout in seconds.
+# Each session save resets it to 24 hours, but reading alone does not. Redis deletes the key when it expires.
 encrypted_session_store = EncryptedRedisSessionStore(
     fernet_key=config.SESSION_STORE_FERNET_KEY,
     redis_url=config.REDIS_AUTH_STORE_URL,
