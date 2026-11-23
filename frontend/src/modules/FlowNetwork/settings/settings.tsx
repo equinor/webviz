@@ -135,6 +135,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedEdgeKeyAnnotations = useMakePersistableFixableAtomAnnotations(selectedEdgeKeyAtom);
     const selectedNodeKeyAnnotations = useMakePersistableFixableAtomAnnotations(selectedNodeKeyAtom);
     const selectedDateTimeAnnotations = useMakePersistableFixableAtomAnnotations(selectedDateTimeAtom);
+
     // Keep annotations for the local selection hidden while the field follows a dashboard realization.
     const realizationAnnotations = isRealizationDashboardControlled
         ? []
@@ -147,6 +148,13 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 },
             ]
           : selectedRealizationAnnotations;
+
+    if (isRealizationDashboardControlled && !effectiveRealization.isValidInContext) {
+        statusWriter.flagActionRequired("Dashboard setting value for the realization is not valid here");
+    }
+    if (isDateTimeDashboardControlled && !effectiveDateTime.isLoading && !effectiveDateTime.isValidInContext) {
+        statusWriter.flagActionRequired("Dashboard setting value for the time step is not valid here");
+    }
 
     const handleSettingsAnnotationsChange = React.useCallback(
         function handleSettingsAnnotationsChange(annotations: SettingAnnotation[]) {
