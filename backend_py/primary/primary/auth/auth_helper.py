@@ -270,8 +270,8 @@ class AuthHelper:
         return authenticated_user
 
 
-def _acquire_access_token_for_resource_scopes(
-    cca: msal.ConfidentialClientApplication, resource_name: _ResourceName, account: dict
+def _acquire_access_token_for_resource(
+    cca: msal.ConfidentialClientApplication, resource_name: _ResourceName, account: dict, force_refresh: bool = False
 ) -> _TokenEntry | None:
     scopes_list: list[str] | None = None
     if resource_name == "graph":
@@ -284,14 +284,14 @@ def _acquire_access_token_for_resource_scopes(
 
     # Earlier we used acquire_token_silent() here, but it doesn't give any feedback on why a call failed,
     # so we switched to acquire_token_silent_with_error() instead and log errors.
-    token_dict = cca.acquire_token_silent_with_error(scopes=scopes_list, account=account)
+    token_dict = cca.acquire_token_silent_with_error(scopes=scopes_list, account=account, force_refresh=force_refresh)
     if token_dict is None:
-        LOGGER.error(f"No token found in cache when acquiring token silently ({resource_name=}, {scopes_list=})")
+        LOGGER.error(f"MSAL returned no result for silent token acquisition ({resource_name=}, {scopes_list=})")
         return None
 
     if "error" in token_dict:
         LOGGER.error(
-            f"Error acquiring token silently ({resource_name=}, {scopes_list=}), error: {token_dict['error']}, error_description: {token_dict.get('error_description')}"
+            f"MSAL returned error for silent token acquisition ({resource_name=}, {scopes_list=}), error: {token_dict['error']}, error_description: {token_dict.get('error_description')}"
         )
         return None
 
@@ -303,7 +303,7 @@ def _acquire_access_token_for_resource_scopes(
         LOGGER.error(f"Error extracting access token and lifetime ({resource_name=}, {scopes_list=}) {repr(exc)}")
         return None
 
-    # Approximate the expiration time of the access token
+    # Approximate the expiration time of the access token (yielding a Unix timestamp, seconds since epoch UTC)
     approx_expires_at = int(time.time()) + expires_in
 
     return _TokenEntry(token=access_token, expires_at=approx_expires_at)
@@ -352,7 +352,7 @@ def _build_initial_user_auth_info_from_result(
     # Iterate over the resource names and get the access tokens for each of them
     resource_name: _ResourceName
     for resource_name in get_args(_ResourceName):
-        token_entry = _acquire_access_token_for_resource_scopes(cca, resource_name, account)
+        token_entry = _acquire_access_token_for_resource(cca, resource_name, account)
         if token_entry:
             new_user_auth_info.access_tokens[resource_name] = token_entry
 
@@ -429,7 +429,7 @@ def _acquire_refreshed_identity_and_tokens(
     # Iterate over the resource names and get the access tokens for each of them
     resource_name: _ResourceName
     for resource_name in get_args(_ResourceName):
-        token_entry = _acquire_access_token_for_resource_scopes(cca, resource_name, account)
+        token_entry = _acquire_access_token_for_resource(cca, resource_name, account)
         if token_entry:
             new_auth_info.access_tokens[resource_name] = token_entry
 
