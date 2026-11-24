@@ -448,7 +448,7 @@ export const getDeltaEnsembleRealizationsVectorData = <ThrowOnError extends bool
         responseType: "json",
         url: "/timeseries/delta_ensemble_realizations_vector_data/",
         ...options,
-        query: { ...options.query, _rv: "557d6b" },
+        query: { ...options.query, _rv: "547f8a" },
     });
 
 /**
@@ -511,7 +511,7 @@ export const getDeltaEnsembleStatisticalVectorData = <ThrowOnError extends boole
         responseType: "json",
         url: "/timeseries/delta_ensemble_statistical_vector_data/",
         ...options,
-        query: { ...options.query, _rv: "e5a22f" },
+        query: { ...options.query, _rv: "e95b9d" },
     });
 
 /**
