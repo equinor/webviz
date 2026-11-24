@@ -200,7 +200,6 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
     const timeStepSettingProps = useMakeTimeStepSliderSettingProps({
         isSingleTimeStepMode,
         isDashboardControlled: isTimeDashboardControlled,
-        sortedCompletionDates,
         selectedCompletionDateIndex: effectiveCompletionDateIndex,
         selectedCompletionDateIndexRange,
     });

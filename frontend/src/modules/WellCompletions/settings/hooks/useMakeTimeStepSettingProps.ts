@@ -17,7 +17,6 @@ type UseMakeTimeStepSettingPropsParams = {
     isSingleTimeStepMode: boolean;
     // While the dashboard controls the time step, the module's own selection is neither shown nor validated
     isDashboardControlled: boolean;
-    sortedCompletionDates: string[] | null | undefined;
     selectedCompletionDateIndex: TimeStepSelectionState<number | null>;
     selectedCompletionDateIndexRange: TimeStepSelectionState<[number, number] | null>;
 };
@@ -34,7 +33,6 @@ export function useMakeTimeStepSliderSettingProps(params: UseMakeTimeStepSetting
     const {
         isSingleTimeStepMode,
         isDashboardControlled,
-        sortedCompletionDates,
         selectedCompletionDateIndex,
         selectedCompletionDateIndexRange,
     } = params;
@@ -47,24 +45,7 @@ export function useMakeTimeStepSliderSettingProps(params: UseMakeTimeStepSetting
     );
 
     return React.useMemo(() => {
-        let label = isSingleTimeStepMode ? "Time" : "Time range";
-        // A retained index can be out of range - the field's annotations flag it, the label just leaves the date out
-        if (sortedCompletionDates && !isDashboardControlled) {
-            if (isSingleTimeStepMode && selectedCompletionDateIndex.value !== null) {
-                const date = sortedCompletionDates[selectedCompletionDateIndex.value];
-                if (date !== undefined) {
-                    label = `Time: (${date})`;
-                }
-            }
-
-            if (!isSingleTimeStepMode && selectedCompletionDateIndexRange.value !== null) {
-                const startDate = sortedCompletionDates[selectedCompletionDateIndexRange.value[0]];
-                const endDate = sortedCompletionDates[selectedCompletionDateIndexRange.value[1]];
-                if (startDate !== undefined && endDate !== undefined) {
-                    label = `Time range: (${startDate}, ${endDate})`;
-                }
-            }
-        }
+        const label = isSingleTimeStepMode ? "Time" : "Time range";
 
         return {
             sliderValue: isSingleTimeStepMode
@@ -92,7 +73,6 @@ export function useMakeTimeStepSliderSettingProps(params: UseMakeTimeStepSetting
     }, [
         isSingleTimeStepMode,
         isDashboardControlled,
-        sortedCompletionDates,
         selectedCompletionDateIndex.value,
         selectedCompletionDateIndex.isLoading,
         selectedCompletionDateIndex.depsHaveError,
