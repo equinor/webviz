@@ -10,7 +10,7 @@ export type DashboardControlledSettingProps<TValue> = {
     // The dashboard setting controlling the value - provides the default formatting of it
     controlledBy: DashboardSettingDefinition<TValue, any>;
     // Opt-out of the dashboard setting's formatting with custom formatting function
-    valueToString?: (value: TValue) => string;
+    valueRepresentation?: (value: TValue) => React.ReactNode;
     // The setting's regular component, shown when the setting is not dashboard controlled
     children: React.ReactNode;
 };
@@ -30,7 +30,9 @@ export function DashboardControlledSetting<TValue>(props: DashboardControlledSet
 
     return (
         <span className="text-body-sm">
-            {props.valueToString ? props.valueToString(props.value) : props.controlledBy.valueToString(props.value)}
+            {props.valueRepresentation
+                ? props.valueRepresentation(props.value)
+                : props.controlledBy.valueRepresentation(props.value)}
         </span>
     );
 }

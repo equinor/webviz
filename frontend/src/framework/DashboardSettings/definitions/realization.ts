@@ -9,5 +9,5 @@ export const REALIZATION_DASHBOARD_SETTING = DashboardSettingRegistry.registerDa
         getOptionLabel: (realization) => realization.toString(),
         compareOptions: (a, b) => a - b,
     }),
-    valueToString: (realization) => (realization === null ? "-" : realization.toString()),
+    valueRepresentation: (realization) => (realization === null ? "-" : realization.toString()),
 });
