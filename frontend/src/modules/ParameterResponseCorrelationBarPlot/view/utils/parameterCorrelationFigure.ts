@@ -1,4 +1,4 @@
-import type { PlotData } from "plotly.js";
+import type { BarData, Layout } from "plotly.js";
 
 import type { Size2D } from "@lib/utils/geometry";
 import type { Figure } from "@modules/_shared/Figure";
@@ -53,15 +53,12 @@ export class ParameterCorrelationFigure {
 
         this._figure.updateSubplotTitle(`${title}`, row, column);
 
-        this._figure.updateLayout({
-            [`xaxis${cellIndex + 1}`]: {
-                zeroline: true,
-            },
-            [`yaxis${cellIndex + 1}`]: {
-                autorange: "reversed",
-                visible: false,
-            },
-        });
+        const xAxisKey = `xaxis${cellIndex + 1}` as const;
+        const yAxisKey = `yaxis${cellIndex + 1}` as const;
+        const layoutPatch: Partial<Layout> = {};
+        layoutPatch[xAxisKey] = { zeroline: true };
+        layoutPatch[yAxisKey] = { autorange: "reversed", visible: false };
+        this._figure.updateLayout(layoutPatch);
     }
 
     makePlotData() {
@@ -79,7 +76,7 @@ function createCorrelationTrace(
 
     showLabel: boolean,
     color?: string,
-): Partial<PlotData> {
+): Partial<BarData> {
     const identStrings = rankedParameters.map((p) => p.ident.toString());
     const names = rankedParameters.map((p) => p.ident.name);
     const correlations = rankedParameters.map((p) => p.correlation!);
@@ -95,7 +92,7 @@ function createCorrelationTrace(
         }
         return `${color}80`;
     });
-    let trace: Partial<PlotData> = {
+    let trace: Partial<BarData> = {
         x: correlations,
         y: names,
         customdata: identStrings,

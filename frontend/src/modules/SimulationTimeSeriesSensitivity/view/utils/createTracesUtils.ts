@@ -1,8 +1,8 @@
-import type { PlotData } from "plotly.js";
+import type { ScatterData } from "plotly.js";
 
 import type { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
 
-export interface TimeSeriesPlotlyTrace extends Partial<PlotData> {
+export interface TimeSeriesPlotlyTrace extends Partial<ScatterData> {
     realizationNumber?: number | null;
     legendrank?: number;
 }

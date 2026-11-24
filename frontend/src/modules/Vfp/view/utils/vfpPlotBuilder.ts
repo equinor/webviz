@@ -1,4 +1,4 @@
-import type { Layout, PlotData, PlotMarker } from "plotly.js";
+import type { Layout, ScatterData } from "plotly.js";
 
 import type { ColorScale } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
@@ -34,8 +34,8 @@ export class VfpPlotBuilder {
         selectedAlqIndices: number[] | null,
         pressureOption: PressureOption,
         colorBy: VfpParam,
-    ): Partial<PlotData>[] {
-        const data: Partial<PlotData>[] = [];
+    ): Partial<ScatterData>[] {
+        const data: Partial<ScatterData>[] = [];
 
         if (
             !isValidArrayAndNonEmpty(selectedThpIndices) ||
@@ -92,7 +92,7 @@ export class VfpPlotBuilder {
         }
 
         // Add color scale legend
-        const colorScaleMarker: Partial<PlotMarker> = {
+        const colorScaleMarker: NonNullable<ScatterData["marker"]> = {
             ...this._colorScale.getAsPlotlyColorScaleMarkerObject(),
             colorbar: {
                 title: { text: this._vfpDataAccessor.getVfpParamLabel(colorBy, true), side: "right" },
@@ -100,7 +100,7 @@ export class VfpPlotBuilder {
                 len: 0.75,
             },
         };
-        const parameterColorLegendTrace: Partial<PlotData> = {
+        const parameterColorLegendTrace: Partial<ScatterData> = {
             x: [null],
             y: [null],
             marker: colorScaleMarker,
@@ -111,8 +111,8 @@ export class VfpPlotBuilder {
         return data;
     }
 
-    makeVfpInjTraces(selectedThpIndices: number[] | null, pressureOption: PressureOption): Partial<PlotData>[] {
-        const data: Partial<PlotData>[] = [];
+    makeVfpInjTraces(selectedThpIndices: number[] | null, pressureOption: PressureOption): Partial<ScatterData>[] {
+        const data: Partial<ScatterData>[] = [];
 
         // Invalid or empty selection
         if (!isValidArrayAndNonEmpty(selectedThpIndices)) {
@@ -136,7 +136,7 @@ export class VfpPlotBuilder {
         }
 
         // Add color scale legend
-        const colorScaleMarker: Partial<PlotMarker> = {
+        const colorScaleMarker: NonNullable<ScatterData["marker"]> = {
             ...this._colorScale.getAsPlotlyColorScaleMarkerObject(),
             colorbar: {
                 title: { text: this._vfpDataAccessor.getVfpParamLabel(VfpParam.THP, true), side: "right" },
@@ -144,7 +144,7 @@ export class VfpPlotBuilder {
                 len: 0.75,
             },
         };
-        const parameterColorLegendTrace: Partial<PlotData> = {
+        const parameterColorLegendTrace: Partial<ScatterData> = {
             x: [null],
             y: [null],
             marker: colorScaleMarker,
@@ -162,7 +162,7 @@ export class VfpPlotBuilder {
         alqIndex: number,
         pressureOption: PressureOption,
         color: string,
-    ): Partial<PlotData> {
+    ): Partial<ScatterData> {
         const thpValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.THP)[thpIndex];
         const wfrValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.WFR)[wfrIndex];
         const gfrValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.GFR)[gfrIndex];
@@ -175,7 +175,7 @@ export class VfpPlotBuilder {
             bhpValues = bhpValues.map((bhp) => bhp - thpValue);
         }
 
-        const trace: Partial<PlotData> = {
+        const trace: Partial<ScatterData> = {
             x: this._vfpDataAccessor.getFlowRateValues(),
             y: bhpValues,
             mode: "lines+markers",
@@ -190,7 +190,7 @@ export class VfpPlotBuilder {
         return trace;
     }
 
-    private getSingleVfpInjTrace(thpIndex: number, pressureOption: PressureOption, color: string): Partial<PlotData> {
+    private getSingleVfpInjTrace(thpIndex: number, pressureOption: PressureOption, color: string): Partial<ScatterData> {
         const thpValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.THP)[thpIndex];
 
         const hovertext = `THP=${thpValue}}`;
@@ -200,7 +200,7 @@ export class VfpPlotBuilder {
             bhpValues = bhpValues.map((bhp) => bhp - thpValue);
         }
 
-        const trace: Partial<PlotData> = {
+        const trace: Partial<ScatterData> = {
             x: this._vfpDataAccessor.getFlowRateValues(),
             y: bhpValues,
             mode: "lines+markers",

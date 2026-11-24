@@ -1,4 +1,4 @@
-import type { Layout, PlotData } from "plotly.js";
+import type { Layout, ScatterData } from "plotly.js";
 
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -61,7 +61,7 @@ export class RelPermPlotBuilder {
         this._colorSet = colorSet;
     }
 
-    makeLegendTraces(colorBy: ColorBy, shownLegendColorByValues = new Set<string>()): Partial<PlotData>[] {
+    makeLegendTraces(colorBy: ColorBy, shownLegendColorByValues = new Set<string>()): Partial<ScatterData>[] {
         const colorByValueMap = this.makeColorByValueMap(colorBy);
         const firstEntryByColorByValue = new Map<string, RelPermCurveEntry>();
 
@@ -92,7 +92,7 @@ export class RelPermPlotBuilder {
         colorBy: ColorBy,
         groupBy: GroupBy,
         shownLegendColorByValues = new Set<string>(),
-    ): Partial<PlotData>[] {
+    ): Partial<ScatterData>[] {
         const colorByValueMap = this.makeColorByValueMap(colorBy);
         const subplotIndexMap = this.makeSubplotIndexMap(groupBy);
 
@@ -131,8 +131,8 @@ export class RelPermPlotBuilder {
         groupBy: GroupBy,
         selectedStatistics: RelPermStatistic[],
         shownLegendColorByValues = new Set<string>(),
-    ): Partial<PlotData>[] {
-        const traces: Partial<PlotData>[] = [];
+    ): Partial<ScatterData>[] {
+        const traces: Partial<ScatterData>[] = [];
         const groups = this.makeStatisticGroups(colorBy, groupBy);
         const colorByValueMap = this.makeColorByValueMap(colorBy);
         const subplotIndexMap = this.makeSubplotIndexMap(groupBy);
@@ -180,8 +180,8 @@ export class RelPermPlotBuilder {
         colorBy: ColorBy,
         groupBy: GroupBy,
         shownLegendColorByValues = new Set<string>(),
-    ): Partial<PlotData>[] {
-        const traces: Partial<PlotData>[] = [];
+    ): Partial<ScatterData>[] {
+        const traces: Partial<ScatterData>[] = [];
         const groups = this.makeStatisticGroups(colorBy, groupBy);
         const colorByValueMap = this.makeColorByValueMap(colorBy);
         const subplotIndexMap = this.makeSubplotIndexMap(groupBy);
@@ -536,7 +536,7 @@ function getStatisticValues(statistics: RelPermFanchartStatistics, statistic: Re
     return statistics.maxValues;
 }
 
-function getStatisticLineDash(statistic: RelPermStatistic): PlotData["line"]["dash"] {
+function getStatisticLineDash(statistic: RelPermStatistic): NonNullable<ScatterData["line"]>["dash"] {
     if (statistic === RelPermStatistic.MEAN) return "solid";
     if (statistic === RelPermStatistic.P50) return "dot";
     if (statistic === RelPermStatistic.MIN || statistic === RelPermStatistic.MAX) return "dash";

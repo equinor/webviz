@@ -1,5 +1,5 @@
 import { formatRgb, parse } from "culori";
-import type { PlotData } from "plotly.js";
+import type { ScatterData } from "plotly.js";
 
 import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
@@ -15,8 +15,8 @@ export function makePlotlyConvergenceTraces({
     realValues,
     resultValues,
     color,
-}: PlotlyConvergenceTracesOptions): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
+}: PlotlyConvergenceTracesOptions): Partial<ScatterData>[] {
+    const data: Partial<ScatterData>[] = [];
 
     // Build realization array
     const realizationAndResultArray: RealizationAndResult[] = realValues.map((real, i) => ({

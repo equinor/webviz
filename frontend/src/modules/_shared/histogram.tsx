@@ -1,4 +1,4 @@
-import type { PlotData } from "plotly.js";
+import type { HistogramData } from "plotly.js";
 export enum HistogramType {
     Stack = "stack",
     Group = "group",
@@ -17,7 +17,7 @@ export function makeHistogramTrace({
     color: string;
     showPercentageInBar?: boolean;
     opacity?: number;
-}): Partial<PlotData> {
+}): Partial<HistogramData> & { type: "histogram" } {
     const xMin = xValues.reduce((min, v) => Math.min(min, v), Infinity);
     const xMax = xValues.reduce((max, v) => Math.max(max, v), -Infinity);
     const range = xMax - xMin;
@@ -38,7 +38,7 @@ export function makeHistogramTrace({
 
     // Adjust binSize to maintain exactly numBins
     const adjustedBinSize = (range + epsilon) / numBins;
-    const trace: Partial<PlotData> = {
+    const trace: Partial<HistogramData> & { type: "histogram" } = {
         x: xValues,
         type: "histogram",
 

@@ -1,4 +1,4 @@
-import type { Annotations, Data, Shape } from "plotly.js";
+import type { Annotation, Data, Shape } from "plotly.js";
 
 const APPROX_CHAR_WIDTH_PX = 7;
 const BADGE_HORIZONTAL_PADDING_PX = 8;
@@ -47,7 +47,7 @@ export function makeRoundedBadge(
     y: number,
     colors: BadgeColors = {},
     xExtent?: [number, number] | null,
-): { shape: Partial<Shape>; annotation: Partial<Annotations> } {
+): { shape: Partial<Shape>; annotation: Partial<Annotation> } {
     const { bgColor = "white", textColor = "black", borderColor = "black" } = colors;
     const halfW = (text.length * APPROX_CHAR_WIDTH_PX) / 2 + BADGE_HORIZONTAL_PADDING_PX;
     const halfH = BADGE_HEIGHT_PX / 2;

@@ -9,6 +9,7 @@
     "include": [
         "vite.config.ts",
         "vite-plugin-plotly-webgl-context-release.ts",
+        "tests/unit/plotlyWebglContextRelease.test.ts",
         "aliases.json",
         "tests/ct/_playwright.config.ts",
         "tests/ct/playwright/"

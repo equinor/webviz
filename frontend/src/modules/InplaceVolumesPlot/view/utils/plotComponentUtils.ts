@@ -1,5 +1,5 @@
 import { formatRgb, parse } from "culori";
-import type { PlotData } from "plotly.js";
+import type { BarData, BoxData, HistogramData, ScatterData, ViolinData } from "plotly.js";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -12,6 +12,8 @@ import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
 import type { RealizationAndResult } from "./convergenceCalculation";
 import { calcConvergenceArray } from "./convergenceCalculation";
+
+type PlotTrace = Partial<BarData | BoxData | HistogramData | ScatterData | ViolinData>;
 
 export function makeFormatLabelFunction(
     ensembleSet: EnsembleSet,
@@ -35,20 +37,20 @@ export function makePlotData(
     colorBy: string,
     ensembleSet: EnsembleSet,
     colorSet: ColorSet,
-): (table: Table) => Partial<PlotData>[] {
+): (table: Table) => PlotTrace[] {
     // Maps to store already used colors and position for each key for consistency across subplots
     const keyToColor: Map<string, string> = new Map();
     const boxPlotKeyToPositionMap: Map<string, number> = new Map();
     const NUM_HISTOGRAM_BINS = 10;
 
-    return (table: Table): Partial<PlotData>[] => {
+    return (table: Table): PlotTrace[] => {
         if (table.getColumn(colorBy) === undefined) {
             throw new Error(`Column to color by "${colorBy}" not found in the table.`);
         }
 
         const collection = table.splitByColumn(colorBy);
 
-        const data: Partial<PlotData>[] = [];
+        const data: PlotTrace[] = [];
         let color = colorSet.getFirstColor();
         for (const [key, table] of collection.getCollectionMap()) {
             let title = key.toString();
@@ -102,8 +104,8 @@ function makeBarPlot(
     resultName: string,
     selectorName: string,
     color: string,
-): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
+): Partial<BarData>[] {
+    const data: Partial<BarData>[] = [];
 
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
@@ -127,8 +129,8 @@ function makeBarPlot(
     return data;
 }
 
-function makeConvergencePlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
+function makeConvergencePlot(title: string, table: Table, resultName: string, color: string): Partial<ScatterData>[] {
+    const data: Partial<ScatterData>[] = [];
 
     const realizationAndResultArray: RealizationAndResult[] = [];
     const reals = table.getColumn("REAL");
@@ -218,8 +220,8 @@ function makeHistogram(
     resultName: string,
     color: string,
     numBins: number,
-): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
+): Partial<HistogramData>[] {
+    const data: Partial<HistogramData>[] = [];
 
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
@@ -241,8 +243,8 @@ function makeHistogram(
     return data;
 }
 
-function makeDensityPlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
+function makeDensityPlot(title: string, table: Table, resultName: string, color: string): Partial<ViolinData>[] {
+    const data: Partial<ViolinData>[] = [];
 
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
@@ -259,7 +261,6 @@ function makeDensityPlot(title: string, table: Table, resultName: string, color:
         marker: {
             color,
         },
-        // @ts-expect-error - arguments in the plotly types
         side: "positive",
         y0: 0,
         orientation: "h",
@@ -278,8 +279,8 @@ function makeBoxPlot(
     resultName: string,
     color: string,
     yAxisPosition?: number,
-): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
+): Partial<BoxData>[] {
+    const data: Partial<BoxData>[] = [];
 
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
@@ -294,7 +295,6 @@ function makeBoxPlot(
         marker: {
             color,
         },
-        // @ts-expect-error - missing arguments in the plotly types
         y0: yAxisPosition ?? 0,
     });
 
@@ -307,8 +307,8 @@ function makeScatterPlot(
     firstResultName: string,
     secondResultName: string,
     color: string,
-): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
+): Partial<ScatterData>[] {
+    const data: Partial<ScatterData>[] = [];
 
     const firstResultColumn = table.getColumn(firstResultName);
     if (!firstResultColumn) {

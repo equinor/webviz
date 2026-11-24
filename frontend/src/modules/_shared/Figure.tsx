@@ -1,5 +1,5 @@
 import { merge } from "lodash-es";
-import type { Annotations, AxisType, Data, Layout, PlotData, Shape, XAxisName, YAxisName } from "plotly.js";
+import type { Annotation, AxisType, Data, Layout, Shape, XAxisName, YAxisName } from "plotly.js";
 
 /**
  * Enum for axis coordinate domain.
@@ -32,10 +32,10 @@ export const enum CoordinateDomain {
  * top-left to bottom-right can be changed by providing custom layout linking the axes and domain positions.
  */
 export class Figure {
-    private _plotData: Partial<PlotData>[];
+    private _plotData: Data[];
     private _plotLayout: Partial<Layout>;
     private _gridAxesMapping: number[][];
-    private _axesIndexToSubplotTitleAnnotationMap: Map<number, Partial<Annotations>>;
+    private _axesIndexToSubplotTitleAnnotationMap: Map<number, Partial<Annotation>>;
 
     constructor({
         data,
@@ -43,10 +43,10 @@ export class Figure {
         gridAxesMapping,
         axesIndexToSubplotTitleAnnotationMap,
     }: {
-        data?: PlotData[];
+        data?: Data[];
         layout?: Partial<Layout>;
         gridAxesMapping?: number[][];
-        axesIndexToSubplotTitleAnnotationMap?: Map<number, Partial<Annotations>>;
+        axesIndexToSubplotTitleAnnotationMap?: Map<number, Partial<Annotation>>;
     }) {
         this._plotData = data ?? [];
         this._plotLayout = layout ?? {};
@@ -66,11 +66,11 @@ export class Figure {
         return this._gridAxesMapping[row - 1][column - 1];
     }
 
-    addTraces(traces: Partial<PlotData>[], row?: number, column?: number): void {
+    addTraces(traces: Data[], row?: number, column?: number): void {
         traces.forEach((trace) => this.addTrace(trace, row, column));
     }
 
-    addTrace(trace: Partial<PlotData>, row?: number, column?: number): void {
+    addTrace(trace: Data, row?: number, column?: number): void {
         if (row === undefined) {
             row = 1;
         }
@@ -119,7 +119,7 @@ export class Figure {
     }
 
     addAnnotation(
-        annotation: Partial<Annotations>,
+        annotation: Partial<Annotation>,
         row?: number,
         column?: number,
         xCoordinateDomain = CoordinateDomain.DATA,
@@ -134,7 +134,7 @@ export class Figure {
 
         const axisIndex = this.getAxisIndex(row, column);
 
-        const adjustedAnnotation: Partial<Annotations> = {
+        const adjustedAnnotation: Partial<Annotation> = {
             ...annotation,
             xref: this.makeXAxisRef(axisIndex, xCoordinateDomain),
             yref: this.makeYAxisRef(axisIndex, yCoordinateDomain),
@@ -166,7 +166,7 @@ export class Figure {
         subplotTitleAnnotation.text = title;
     }
 
-    makeData(): Partial<Data>[] {
+    makeData(): Data[] {
         return [...this._plotData];
     }
 
@@ -319,7 +319,7 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
         title: { text: options.title },
     };
 
-    const axesIndexToSubplotTitleAnnotationMap: Map<number, Partial<Annotations>> = new Map();
+    const axesIndexToSubplotTitleAnnotationMap: Map<number, Partial<Annotation>> = new Map();
 
     const gridAxesMapping: number[][] = [];
 

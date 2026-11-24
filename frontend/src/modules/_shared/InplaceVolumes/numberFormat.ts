@@ -1,4 +1,4 @@
-import type { Axis } from "plotly.js";
+import type { LayoutAxis } from "plotly.js";
 
 import { formatWithLargeValuePrefixes } from "@modules/_shared/utils/numberFormatting";
 
@@ -30,7 +30,7 @@ export function formatInplaceVolumesValue(value: string | number | null): string
  * "250m" while the tables show "0.25". Unit metadata should eventually determine this formatting.
  * `hoverformat` covers traces that hover directly on raw `%{x}` / `%{y}` values.
  */
-export function makeInplaceVolumesAxisFormat(resultName: string | null): Partial<Axis> {
+export function makeInplaceVolumesAxisFormat(resultName: string | null): Partial<LayoutAxis> {
     if (isDimensionlessResultName(resultName)) {
         return { exponentformat: "none", hoverformat: "" };
     }

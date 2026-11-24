@@ -1,6 +1,6 @@
 import type React from "react";
 
-import type { Layout, LayoutAxis, PlotData } from "plotly.js";
+import type { Layout, LayoutAxis } from "plotly.js";
 import { describe, expect, test, vi } from "vitest";
 
 import { EnsembleSet } from "@framework/EnsembleSet";
@@ -12,7 +12,7 @@ import { Column, ColumnType, Table } from "@modules/_shared/InplaceVolumes/Table
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 import { GroupedTableData } from "@modules/InplaceVolumesNew/view/utils/GroupedTableData";
 import { PlotBuilder } from "@modules/InplaceVolumesNew/view/utils/PlotBuilder";
-import { makePlotData } from "@modules/InplaceVolumesNew/view/utils/plotComponentUtils";
+import { makePlotData, type PlotTrace } from "@modules/InplaceVolumesNew/view/utils/plotComponentUtils";
 import {
     configurePlotlyLayoutAxisByPlotType,
     makeBoxPlotLayoutOptions,
@@ -67,7 +67,7 @@ function makeTable(): Table {
 function buildBoxPlot(
     subplotBy: string,
     uiRevision?: string,
-): { layout: Partial<Layout> & Record<string, unknown>; data: Partial<PlotData>[] } {
+): { layout: Partial<Layout> & Record<string, unknown>; data: PlotTrace[] } {
     const colorBy = "SENSITIVITY";
     const groupedData = new GroupedTableData({
         table: makeTable(),
@@ -110,7 +110,7 @@ function buildBoxPlot(
     }
     const element = plotBuilder.build(750, 1100) as React.ReactElement<{
         layout: Partial<Layout> & Record<string, unknown>;
-        data: Partial<PlotData>[];
+        data: PlotTrace[];
     }>;
     return { layout: element.props.layout, data: element.props.data };
 }

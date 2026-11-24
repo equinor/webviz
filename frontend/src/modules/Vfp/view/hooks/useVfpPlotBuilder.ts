@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { Layout, PlotData } from "plotly.js";
+import type { Layout, ScatterData } from "plotly.js";
 
 import type { ViewContext } from "@framework/ModuleContext";
 import { useContinuousColorScale, type WorkbenchSettings } from "@framework/WorkbenchSettings";
@@ -15,7 +15,7 @@ export function usePlotBuilder(
     viewContext: ViewContext<Interfaces>,
     workbenchSettings: WorkbenchSettings,
     plotSize: Size2D,
-): { data: Partial<PlotData>[]; layout: Partial<Layout> } | null {
+): { data: Partial<ScatterData>[]; layout: Partial<Layout> } | null {
     const colorScale = useContinuousColorScale(workbenchSettings, { gradientType: ColorScaleGradientType.Sequential });
 
     const { tableDataAccessor } = viewContext.useSettingsToViewInterfaceValue("tableDataAccessorWithStatusFlags");

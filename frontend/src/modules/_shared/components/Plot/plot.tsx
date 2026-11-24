@@ -32,7 +32,7 @@ const DOWNLOAD_ICON: Plotly.Icon = {
 const DEFAULT_CONFIG: Partial<Plotly.Config> = {
     modeBarButtonsToRemove: [
         "toImage",
-        "sendDataToCloud",
+        "sendChartToCloud",
         "autoScale2d",
         "zoomIn2d",
         "zoomOut2d",

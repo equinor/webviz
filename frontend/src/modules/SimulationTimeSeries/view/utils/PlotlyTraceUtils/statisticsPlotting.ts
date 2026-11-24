@@ -1,6 +1,6 @@
-import type { ScatterLine } from "plotly.js";
+import type { ScatterData } from "plotly.js";
 
-import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
+import { makeTimeSeriesLine, type TimeSeriesPlotData } from "../timeSeriesPlotData";
 
 /**
     Definition of line trace data for statistics plot
@@ -96,7 +96,7 @@ export type CreateStatisticsTracesOptions = {
     data: StatisticsData;
     color: string;
     legendGroup: string;
-    lineShape?: ScatterLine["shape"];
+    lineShape?: NonNullable<ScatterData["line"]>["shape"];
     showLegend?: boolean;
     hoverTemplate?: string;
     legendRank?: number;
@@ -162,8 +162,7 @@ export function createStatisticsTraces({
             xaxis: xaxis,
             yaxis: yaxis,
             mode: "lines",
-            type: type,
-            line: { color: color, width: lineWidth, shape: lineShape },
+            ...makeTimeSeriesLine(type, { color: color, width: lineWidth, shape: lineShape }),
             legendgroup: legendGroup,
             showlegend: false,
         };

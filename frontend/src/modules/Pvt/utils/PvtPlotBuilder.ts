@@ -1,4 +1,4 @@
-import type { Layout, PlotData } from "plotly.js";
+import type { Layout, ScatterData } from "plotly.js";
 
 import type { PvtData_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -64,10 +64,9 @@ export class PvtPlotBuilder {
                 subplotTitles.push(title);
                 const xUnit = this._pvtDataAccessor.getPressureUnit();
                 const yUnit = this._pvtDataAccessor.getDependentVariableUnit(dependentVariable);
-                let patch: Partial<Layout> = {
-                    title: { text: title },
-                    [`yaxis${axisIndex}`]: { title: `[${yUnit}]` },
-                };
+                const yAxisKey = `yaxis${axisIndex}` as const;
+                const patch: Partial<Layout> = { title: { text: title } };
+                patch[yAxisKey] = { title: { text: `[${yUnit}]` } };
 
                 // Last plot in vertical direction?
                 const evenNumberOfPlotsAndLastRow = this._numPlots % 2 === 0 && row === numRows;
@@ -80,7 +79,8 @@ export class PvtPlotBuilder {
                     unevenNumberOfPlotsAndFirstRowAndLastColumn ||
                     unevenNumberOfPlotsAndLastRowAndFirstColumn;
                 if (lastPlotInVerticalDirection) {
-                    patch = { ...patch, [`xaxis${axisIndex}`]: { title: "Pressure [" + xUnit + "]" } };
+                    const xAxisKey = `xaxis${axisIndex}` as const;
+                    patch[xAxisKey] = { title: { text: "Pressure [" + xUnit + "]" } };
                 }
 
                 patches.push(patch);
@@ -213,7 +213,7 @@ export class PvtPlotBuilder {
                                 continue;
                             }
 
-                            const trace: Partial<PlotData> = {
+                            const trace: Partial<ScatterData> = {
                                 x: tracePointDataArray.map((el) => el.pressure),
                                 y: tracePointDataArray.map((el) => el.dependentVariableValue),
                                 mode: "lines+markers",
@@ -237,7 +237,7 @@ export class PvtPlotBuilder {
                             borderTracePoints.push(tracePointDataArray[0]);
                         }
 
-                        const borderTrace: Partial<PlotData> = {
+                        const borderTrace: Partial<ScatterData> = {
                             x: borderTracePoints.map((el) => el.pressure),
                             y: borderTracePoints.map((el) => el.dependentVariableValue),
                             mode: "lines",

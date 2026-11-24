@@ -7,7 +7,7 @@ import type { Plugin } from "vite";
 /**
  * TEMPORARY workaround for a WebGL-context leak in plotly.js.
  *
- * plotly.js (3.6.0) removes its `<canvas class="gl-canvas">` elements in `Plots.cleanPlot`
+ * plotly.js (4.3.0) removes its `<canvas class="gl-canvas">` elements in `Plots.cleanPlot`
  * (whenever `Plotly.react` rebuilds the gl layer) and in `Plots.purge` (on unmount), but never
  * releases the underlying WebGL context - no `regl.destroy()`, no `WEBGL_lose_context`. Each
  * teardown orphans two contexts (`context` + `focus` layers); the browser's ~16-context budget
@@ -37,7 +37,7 @@ const PATCHED_BASENAME = "plotly.webviz-webgl-context-release.js";
 // The bundle layout this patch was written against. `plotly.js` is pinned to this exact version in
 // package.json; if you deliberately bump it, re-check the two regexes below against the new
 // `dist/plotly.js` and update this constant.
-const EXPECTED_PLOTLY_VERSION = "3.6.0";
+const EXPECTED_PLOTLY_VERSION = "4.3.0";
 
 // Inserted immediately before each `.gl-canvas` removal: destroy the regl instance and force the
 // browser to reclaim the WebGL context instead of waiting for GC.
@@ -64,7 +64,7 @@ const SITE_CLEAN_PLOT =
     /(if \(hadGl && !hasGl\) \{\s*if \(oldFullLayout\._glcontainer !== void 0\) \{\s*)(oldFullLayout\._glcontainer\.selectAll\(["']\.gl-canvas["']\)\.remove\(\);)/;
 
 const SITE_PURGE =
-    /(plots\.purge = function\(gd\) \{\s*var fullLayout = gd\._fullLayout \|\| \{\};\s*if \(fullLayout\._glcontainer !== void 0\) \{\s*)(fullLayout\._glcontainer\.selectAll\(["']\.gl-canvas["']\)\.remove\(\);)/;
+    /(plots\.purge = function\((gd\d*)\) \{\s*var fullLayout = \2\._fullLayout \|\| \{\};\s*if \(fullLayout\._glcontainer !== void 0\) \{\s*)(fullLayout\._glcontainer\.selectAll\(["']\.gl-canvas["']\)\.remove\(\);)/;
 
 export function patchPlotlySource(code: string): string {
     let patched = code;
@@ -80,7 +80,7 @@ export function patchPlotlySource(code: string): string {
     if (SITE_PURGE.test(patched)) {
         patched = patched.replace(
             SITE_PURGE,
-            (_m, head: string, tail: string) => head + releaseSnippet("fullLayout") + tail,
+            (_m, head: string, _gd: string, tail: string) => head + releaseSnippet("fullLayout") + tail,
         );
         hits++;
     }

@@ -1,5 +1,5 @@
 import { sortBy } from "lodash-es";
-import type { Dash, PlotData } from "plotly.js";
+import type { BarData, Dash, ScatterData } from "plotly.js";
 
 import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { BarSortBy } from "@modules/_shared/InplaceVolumes/plotOptions";
@@ -26,8 +26,8 @@ export function makePlotlyBarTraces({
     color,
     barSortBy,
     showStatisticalMarkers,
-}: PlotlyBarTracesOptions): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
+}: PlotlyBarTracesOptions): (Partial<BarData> | Partial<ScatterData>)[] {
+    const data: (Partial<BarData> | Partial<ScatterData>)[] = [];
 
     // Aggregate data by x-value(group category), and calculate mean of y-values (response) for each unique x.
     // This is safe because the backend always returned data summed over realizations for each group.
@@ -92,14 +92,14 @@ function createStatisticLinesForBarPlot(
     title: string,
     color: string,
     resultName: string,
-): Partial<PlotData>[] {
+): Partial<ScatterData>[] {
     const stats = computeStatistics(yValues);
     const { p10, p90, mean } = stats;
 
     const xStart = xValues[0];
     const xEnd = xValues[xValues.length - 1];
 
-    function createLine(value: number, label: string, dash: Dash): Partial<PlotData> {
+    function createLine(value: number, label: string, dash: Dash): Partial<ScatterData> {
         return {
             x: [xStart, xEnd],
             y: [value, value],

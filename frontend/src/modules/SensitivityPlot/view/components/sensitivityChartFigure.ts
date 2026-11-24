@@ -1,4 +1,4 @@
-import type { PlotData } from "plotly.js";
+import type { BarData } from "plotly.js";
 
 import { SensitivityType } from "@framework/EnsembleSensitivities";
 import { makeSubplots, type Figure } from "@modules/_shared/Figure";
@@ -217,7 +217,7 @@ export class SensitivityChartFigure {
     private _createLowBase(): number[] {
         return this._scaler.createLowBase(this._sensitivityResponses);
     }
-    private _createHighTrace(showLabels: boolean, isTransparent = false): Partial<PlotData> {
+    private _createHighTrace(showLabels: boolean, isTransparent = false): Partial<BarData> {
         return createHighBarTrace({
             xValues: this._calculateHighXValues(),
             yValues: this._createSensitivityNames(),
@@ -230,7 +230,7 @@ export class SensitivityChartFigure {
         });
     }
 
-    private _createLowTrace(showLabels: boolean, isTransparent = false): Partial<PlotData> {
+    private _createLowTrace(showLabels: boolean, isTransparent = false): Partial<BarData> {
         return createLowBarTrace({
             xValues: this._calculateLowXValues(),
             yValues: this._createSensitivityNames(),

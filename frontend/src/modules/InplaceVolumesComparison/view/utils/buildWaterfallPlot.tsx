@@ -1,6 +1,6 @@
 import type React from "react";
 
-import type { PlotData } from "plotly.js";
+import type { Layout, WaterfallData } from "plotly.js";
 
 import { Plot } from "@modules/_shared/components/Plot";
 import type { Figure } from "@modules/_shared/Figure";
@@ -12,15 +12,9 @@ import type { VolumeChangeDecomposition, WaterfallMeasure } from "./computeVolum
 import { computeBarChangePercent, makeBarDisplayLabels } from "./waterfallBarPresentation";
 import { makeYAxisRange } from "./waterfallPlotLayout";
 
-// plotly.js ships no types for the native "waterfall" trace, so describe the subset we set. Keeping
-// the literal typed means a typo in e.g. `measure` or `connector` is still caught.
-type WaterfallTrace = Omit<Partial<PlotData>, "type" | "increasing" | "decreasing"> & {
+type WaterfallTrace = Partial<WaterfallData> & {
     type: "waterfall";
     measure: WaterfallMeasure[];
-    connector?: { mode?: "spanning" | "between" };
-    increasing?: { marker?: { color?: string } };
-    decreasing?: { marker?: { color?: string } };
-    totals?: { marker?: { color?: string } };
 };
 
 // Tab10 blue/orange/grey, matching SensitivityPlot's signed-bar convention. Blue vs orange is the
@@ -74,7 +68,7 @@ function makeWaterfallTrace(
     group: WaterfallGroupDecomposition,
     referenceLabel: string,
     comparisonLabel: string,
-): Partial<PlotData> {
+): WaterfallTrace {
     const { bars } = group.decomposition;
     const labels = makeBarDisplayLabels(group.decomposition, referenceLabel, comparisonLabel);
     const barTexts = makeBarTexts(group.decomposition);
@@ -95,7 +89,7 @@ function makeWaterfallTrace(
         decreasing: { marker: { color: DECREASING_COLOR } },
         totals: { marker: { color: TOTALS_COLOR } },
     };
-    return trace as Partial<PlotData>;
+    return trace;
 }
 
 /**
@@ -162,15 +156,15 @@ export function buildWaterfallPlot(
         figure.addTrace(makeWaterfallTrace(group, options.referenceLabel, options.comparisonLabel), row, col);
 
         const axisIndex = figure.getAxisIndex(row, col);
-        figure.updateLayout({
-            [`yaxis${axisIndex}`]: {
-                range: makeYAxisRange(group.decomposition),
-                gridcolor: "lightgrey",
-            },
-            [`xaxis${axisIndex}`]: {
-                type: "category",
-            },
-        });
+        const yAxisKey = `yaxis${axisIndex}` as const;
+        const xAxisKey = `xaxis${axisIndex}` as const;
+        const layoutPatch: Partial<Layout> = {};
+        layoutPatch[yAxisKey] = {
+            range: makeYAxisRange(group.decomposition),
+            gridcolor: "lightgrey",
+        };
+        layoutPatch[xAxisKey] = { type: "category" };
+        figure.updateLayout(layoutPatch);
     });
 
     figure.updateLayout({ showlegend: false });

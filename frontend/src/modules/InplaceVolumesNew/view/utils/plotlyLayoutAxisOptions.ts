@@ -1,4 +1,4 @@
-import type { Axis, LayoutAxis } from "plotly.js";
+import type { LayoutAxis } from "plotly.js";
 
 import type { HistogramType } from "@modules/_shared/histogram";
 import { makeInplaceVolumesAxisFormat } from "@modules/_shared/InplaceVolumes/numberFormat";
@@ -130,7 +130,7 @@ function configureBarPlot(
 
     plotBuilder.setPlotType(PlotType.BAR);
 
-    const baseOptions: Partial<Axis> = {
+    const baseOptions: Partial<LayoutAxis> = {
         type: "category",
         categoryorder: selectorColumn === colorBy ? "total descending" : undefined,
     };

@@ -1,3 +1,5 @@
+import type { Layout } from "plotly.js";
+
 import type { Size2D } from "@lib/utils/geometry";
 import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
@@ -135,40 +137,42 @@ export class ParameterCorrelationMatrixFigure {
         this.setAxisSettings(cellIndex);
     }
     private setAxisSettings(cellIndex: number): void {
-        this._figure.updateLayout({
-            [`xaxis${cellIndex + 1}`]: {
-                showticklabels: this._showLabels,
-                tickangle: 45,
-                automargin: true,
-                ticks: "",
-                ticksuffix: " ",
-                spikemode: "across",
-                spikesnap: "data",
-                spikethickness: 1,
-                spikedash: "line",
-                spikecolor: "black",
-                showgrid: false,
-                zeroline: false,
-                categoryorder: "trace",
-            },
-            [`yaxis${cellIndex + 1}`]: {
-                showticklabels: this._showLabels || this._forceShowYAxisLabels,
-                tickangle: -45,
-                automargin: true,
-                ticks: "",
-                ticksuffix: " ",
-                showspikes: true,
-                spikemode: "across",
-                spikesnap: "data",
-                spikethickness: 1,
-                spikedash: "line",
-                spikecolor: "black",
-                showgrid: false,
-                zeroline: false,
-                autorange: "reversed",
-                categoryorder: "trace",
-            },
-        });
+        const xAxisKey = `xaxis${cellIndex + 1}` as const;
+        const yAxisKey = `yaxis${cellIndex + 1}` as const;
+        const layoutPatch: Partial<Layout> = {};
+        layoutPatch[xAxisKey] = {
+            showticklabels: this._showLabels,
+            tickangle: 45,
+            automargin: true,
+            ticks: "",
+            ticksuffix: " ",
+            spikemode: "across",
+            spikesnap: "data",
+            spikethickness: 1,
+            spikedash: "dash",
+            spikecolor: "black",
+            showgrid: false,
+            zeroline: false,
+            categoryorder: "trace",
+        };
+        layoutPatch[yAxisKey] = {
+            showticklabels: this._showLabels || this._forceShowYAxisLabels,
+            tickangle: -45,
+            automargin: true,
+            ticks: "",
+            ticksuffix: " ",
+            showspikes: true,
+            spikemode: "across",
+            spikesnap: "data",
+            spikethickness: 1,
+            spikedash: "dash",
+            spikecolor: "black",
+            showgrid: false,
+            zeroline: false,
+            autorange: "reversed",
+            categoryorder: "trace",
+        };
+        this._figure.updateLayout(layoutPatch);
     }
 
     makePlotData() {

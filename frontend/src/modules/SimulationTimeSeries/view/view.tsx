@@ -13,6 +13,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError, ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
+import { getNumericPlotlyPointX } from "@modules/_shared/utils/plotlyPoint";
 
 import type { Interfaces } from "../interfaces";
 import type { VectorHexColorMap } from "../typesAndEnums";
@@ -104,11 +105,9 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
                 return;
             }
 
-            if (clickedPoint.pointIndex >= 0 && clickedPoint.pointIndex < clickedPoint.data.x.length) {
-                const timestampUtcMs = clickedPoint.data.x[clickedPoint.pointIndex];
-                if (typeof timestampUtcMs === "number") {
-                    setActiveTimestampUtcMs(timestampUtcMs);
-                }
+            const timestampUtcMs = getNumericPlotlyPointX(clickedPoint);
+            if (timestampUtcMs !== undefined) {
+                setActiveTimestampUtcMs(timestampUtcMs);
             }
         },
         [setActiveTimestampUtcMs, showTimestampMarker],
@@ -120,8 +119,8 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
             if (!hoveredPoint) {
                 return;
             }
-            const timestampUtcMs = hoveredPoint.data.x[hoveredPoint.pointIndex];
-            if (typeof timestampUtcMs === "number") {
+            const timestampUtcMs = getNumericPlotlyPointX(hoveredPoint);
+            if (timestampUtcMs !== undefined) {
                 setHoveredTimestamp(timestampUtcMs);
             }
         },

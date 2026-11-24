@@ -9,7 +9,7 @@ import { PlotWebglHarness } from "./support/PlotWebglHarness";
  * `playwright.ct.config.ts` (chromium, firefox, webkit) - all three expose real WebGL,
  * `WEBGL_lose_context` and a synchronous `isContextLost()` in the CT runner.
  *
- * plotly 3.6.0 removes its `<canvas class="gl-canvas">` elements (in `Plots.cleanPlot` on the
+ * plotly 4.3.0 removes its `<canvas class="gl-canvas">` elements (in `Plots.cleanPlot` on the
  * has-gl -> no-gl transition, and in `Plots.purge` on unmount) without ever releasing the WebGL
  * context. The patch calls `regl.destroy()` + `WEBGL_lose_context.loseContext()` at those two
  * sites and stamps the canvas so the app's `onWebGlContextLost` handler ignores the self-inflicted
@@ -96,6 +96,12 @@ const afterPlotCount = (page: Page): Promise<number> =>
 
 test.describe("plotly WebGL context release", () => {
     test.slow(); // plotly bundle + repeated react()/purge cycles are heavy, especially on webkit
+
+    test("does not expose Plotly's cloud-sharing button", async ({ mount, page }) => {
+        await mount(<PlotWebglHarness traceType="scattergl" />);
+        await expect(page.locator(".modebar")).toHaveCount(1);
+        await expect(page.getByRole("button", { name: "Share chart...", exact: true, includeHidden: true })).toHaveCount(0);
+    });
 
     test("toggling scattergl traces on/off repeatedly releases contexts instead of leaking", async ({
         mount,
