@@ -187,7 +187,10 @@ export function makeAggregatedStatisticalTableDataQueryOptionsFromSources(
                     sensitivityCase: sources[index].sensitivityCase,
                     data: result.data.value,
                 });
-                warnings.push(...makeSourceWarnings(sources[index], result.data.warnings, makeEnsembleDisplayName));
+                // Disabled queries keep their cached data - only report warnings for the current selection
+                if (queries[index]().enabled) {
+                    warnings.push(...makeSourceWarnings(sources[index], result.data.warnings, makeEnsembleDisplayName));
+                }
             }
             if (result.error) {
                 errors.push(result.error);
@@ -275,9 +278,11 @@ export function makeAggregatedPerRealizationTableDataQueryOptions(
                     tableName: uniqueSources[index].tableName,
                     data: result.data.value,
                 });
-                warnings.push(
-                    ...makeSourceWarnings(uniqueSources[index], result.data.warnings, makeEnsembleDisplayName),
-                );
+                if (queries[index]().enabled) {
+                    warnings.push(
+                        ...makeSourceWarnings(uniqueSources[index], result.data.warnings, makeEnsembleDisplayName),
+                    );
+                }
             }
             if (result.error) {
                 errors.push(result.error);
@@ -408,12 +413,17 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
 
             if (comparisonResult?.data && referenceResult?.data) {
                 const deltaLabel = `${makeEnsembleDisplayName(queryPair.deltaEnsembleIdent)}, table "${queryPair.tableName}"`;
-                warnings.push(
-                    ...comparisonResult.data.warnings.map((warning) => `${deltaLabel}, comparison: ${warning}`),
-                );
-                warnings.push(
-                    ...referenceResult.data.warnings.map((warning) => `${deltaLabel}, reference: ${warning}`),
-                );
+                if (
+                    queries[queryPair.comparisonQueryIndex]().enabled &&
+                    queries[queryPair.referenceQueryIndex]().enabled
+                ) {
+                    warnings.push(
+                        ...comparisonResult.data.warnings.map((warning) => `${deltaLabel}, comparison: ${warning}`),
+                    );
+                    warnings.push(
+                        ...referenceResult.data.warnings.map((warning) => `${deltaLabel}, reference: ${warning}`),
+                    );
+                }
 
                 const deltaResult = subtractPerRealizationTablesMemoized(
                     comparisonResult.data.value,
