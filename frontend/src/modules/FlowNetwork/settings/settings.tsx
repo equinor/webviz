@@ -8,10 +8,6 @@ import { DashboardControlledSetting } from "@framework/DashboardSettings/compone
 import { DashboardControlledSettingLabel } from "@framework/DashboardSettings/components/DashboardControlledSettingLabel";
 import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
 import { TIME_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/time";
-import {
-    realizationToDashboardValueString,
-    timestampUtcMsToDashboardValueString,
-} from "@framework/DashboardSettings/utils/valueToString";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -190,7 +186,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         <DashboardControlledSetting
                             isControlled={isRealizationDashboardControlled}
                             isValueValidHere={effectiveRealization.isValidInContext}
-                            valueRepresentation={realizationToDashboardValueString(effectiveRealization.value)}
+                            controlledBy={REALIZATION_DASHBOARD_SETTING}
+                            value={effectiveRealization.value}
                         >
                             <Combobox
                                 items={availableRealizations.map((real) => {
@@ -297,9 +294,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         <DashboardControlledSetting
                             isControlled={isDateTimeDashboardControlled}
                             isValueValidHere={effectiveDateTime.isValidInContext}
-                            valueRepresentation={timestampUtcMsToDashboardValueString(
-                                effectiveDateTime.value ? isoStringToTimestampUtcMs(effectiveDateTime.value) : null,
-                            )}
+                            controlledBy={TIME_DASHBOARD_SETTING}
+                            value={effectiveDateTime.value ? isoStringToTimestampUtcMs(effectiveDateTime.value) : null}
                         >
                             <div className="gap-sm flex">
                                 <Slider

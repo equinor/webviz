@@ -15,5 +15,7 @@ export const TIME_DASHBOARD_SETTING = DashboardSettingRegistry.registerDashboard
         getOptionLabel: (timestampUtcMs) => timestampUtcMsToCompactIsoString(timestampUtcMs),
         compareOptions: (a, b) => a - b,
     }),
+    valueToString: (timestampUtcMs) =>
+        timestampUtcMs === null ? "-" : timestampUtcMsToCompactIsoString(timestampUtcMs),
     Component: DashboardTimeSlider,
 });
