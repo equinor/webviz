@@ -3,6 +3,7 @@ import type { SettingsToViewInterface } from "@modules/SimulationTimeSeries/inte
 
 import {
     resampleFrequencyAtom,
+    selectedEnsembleIdentsAtom,
     showHistoricalAtom,
     showObservationsAtom,
     vectorSpecificationsAtom,
@@ -10,6 +11,10 @@ import {
 } from "./baseAtoms";
 
 export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInterface> = [
+    (getInterfaceValue, setAtomValue) => {
+        const selectedEnsembleIdents = getInterfaceValue("selectedEnsembleIdents");
+        setAtomValue(selectedEnsembleIdentsAtom, selectedEnsembleIdents);
+    },
     (getInterfaceValue, setAtomValue) => {
         const vectorSpecifications = getInterfaceValue("vectorSpecifications");
         setAtomValue(vectorSpecificationsAtom, vectorSpecifications);

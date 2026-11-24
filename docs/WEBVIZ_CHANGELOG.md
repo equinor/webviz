@@ -10,10 +10,18 @@
 ### Added
 
 - **Session and snapshot management**: You can now select several sessions or snapshots with checkboxes and delete them in one go. When deleting your own snapshots, you can choose to delete them for everyone or only remove them from your list.
+- **Simulation Time Series**: Delta ensemble realization curves can now be colored by parameter values from the comparison ensemble.
 
 ### Changed
 
 - **Session and snapshot management**: The open, edit and delete buttons are now on each row of the session and snapshot tables instead of in the toolbar, and the tables have a new look. The dashboard preview is no longer shown when you edit a session from the session list, only when you edit it from the top bar.
+- **Ensemble selection**: Standard Results, Model and Revision selections are kept when you switch asset. Unavailable selections are shown in red and ignored when filtering. Model and Revision availability reflects the selected Standard Results.
+
+### Fixed
+
+- **Intersection**: Large grids no longer appear cut off partway along the intersection when "Show grid lines" is turned off.
+- **3D Viewer**: Improved trajectory hovering in wellbore layers.
+- **Parameter Distributions**: Parameters with PERT distributions can now be loaded and plotted.
 
 ## October 2026
 

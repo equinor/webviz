@@ -173,7 +173,7 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
                     >
                         <Combobox
                             size="small"
-                            value={comparisonEnsValue ?? ""}
+                            value={comparisonEnsValue}
                             placeholder="Select comparison ensemble..."
                             items={ensembleDropdownOptions}
                             onValueChange={handleComparisonEnsembleChange}
@@ -195,7 +195,7 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
                     >
                         <Combobox
                             size="small"
-                            value={referenceEnsValue ?? ""}
+                            value={referenceEnsValue}
                             placeholder="Select reference ensemble..."
                             items={ensembleDropdownOptions}
                             onValueChange={handleReferenceEnsembleChange}
