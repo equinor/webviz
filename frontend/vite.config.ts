@@ -44,7 +44,8 @@ export default defineConfig(({ command }) => {
             plotlyWebglContextReleasePlugin(),
             tailwindPlugin(),
             react(),
-            vitePluginChecker({ typescript: true }),
+            // Type checking for builds is done explicitly by `tsc` in `npm run build` and by `npm run validate`.
+            vitePluginChecker({ typescript: true, enableBuild: false }),
             babel({ plugins: babelPlugins }),
             glsl({
                 include: "**/*.glsl",
