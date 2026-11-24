@@ -5,7 +5,6 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { NodeType_api, Frequency_api } from "@api";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { DashboardControlledSetting } from "@framework/DashboardSettings/components/DashboardControlledSetting";
-import { DashboardControlledSettingLabel } from "@framework/DashboardSettings/components/DashboardControlledSettingLabel";
 import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
 import { TIME_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/time";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -172,32 +171,29 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             onValueChange={handleEnsembleSelectionChange}
                         />
                     </Setting.Field>
-                    <Setting.Field
-                        label={
-                            <DashboardControlledSettingLabel
-                                label="Realization"
-                                controlledBy={REALIZATION_DASHBOARD_SETTING}
-                                isControlled={isRealizationDashboardControlled}
-                                isValueValidHere={effectiveRealization.isValidInContext}
-                            />
-                        }
-                        annotations={realizationAnnotations}
+                    <DashboardControlledSetting
+                        label="Realization"
+                        value={effectiveRealization.value}
+                        isValueValidHere={effectiveRealization.isValidInContext}
+                        controlledBy={REALIZATION_DASHBOARD_SETTING}
+                        isControlled={isRealizationDashboardControlled}
                     >
-                        <DashboardControlledSetting
-                            isControlled={isRealizationDashboardControlled}
-                            isValueValidHere={effectiveRealization.isValidInContext}
-                            controlledBy={REALIZATION_DASHBOARD_SETTING}
-                            value={effectiveRealization.value}
-                        >
-                            <Combobox
-                                items={availableRealizations.map((real) => {
-                                    return { value: real, label: real.toString() };
-                                })}
-                                value={effectiveRealization.value}
-                                onValueChange={setSelectedRealization}
-                            />
-                        </DashboardControlledSetting>
-                    </Setting.Field>
+                        {function renderRealizationField(label, wrapSetting) {
+                            return (
+                                <Setting.Field label={label} annotations={realizationAnnotations}>
+                                    {wrapSetting(
+                                        <Combobox
+                                            items={availableRealizations.map((real) => {
+                                                return { value: real, label: real.toString() };
+                                            })}
+                                            value={effectiveRealization.value}
+                                            onValueChange={setSelectedRealization}
+                                        />,
+                                    )}
+                                </Setting.Field>
+                            );
+                        }}
+                    </DashboardControlledSetting>
                     <Setting.Field label="Frequency">
                         <Combobox
                             items={Object.values(Frequency_api).map((val: Frequency_api) => {
@@ -278,59 +274,61 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             onValueChange={(v) => v && setSelectedNodeKey(v)}
                         />
                     </Setting.Field>
-                    <Setting.Field
-                        label={
-                            <DashboardControlledSettingLabel
-                                label="Time step"
-                                controlledBy={TIME_DASHBOARD_SETTING}
-                                isControlled={isDateTimeDashboardControlled}
-                                isValueValidHere={effectiveDateTime.isValidInContext}
-                            />
-                        }
-                        loadingOverlay={effectiveDateTime.isLoading}
-                        annotations={isDateTimeDashboardControlled ? [] : selectedDateTimeAnnotations}
-                        errorOverlay={effectiveDateTime.depsHaveError ? "Could not load time steps." : undefined}
+                    <DashboardControlledSetting
+                        label="Time step"
+                        value={effectiveDateTime.value ? isoStringToTimestampUtcMs(effectiveDateTime.value) : null}
+                        isValueValidHere={effectiveDateTime.isValidInContext}
+                        controlledBy={TIME_DASHBOARD_SETTING}
+                        isControlled={isDateTimeDashboardControlled}
                     >
-                        <DashboardControlledSetting
-                            isControlled={isDateTimeDashboardControlled}
-                            isValueValidHere={effectiveDateTime.isValidInContext}
-                            controlledBy={TIME_DASHBOARD_SETTING}
-                            value={effectiveDateTime.value ? isoStringToTimestampUtcMs(effectiveDateTime.value) : null}
-                        >
-                            <div className="gap-sm flex">
-                                <Slider
-                                    layoutClassName="grow w-full"
-                                    valueLabelDisplay="auto"
-                                    disabled={!availableDateTimes.length}
-                                    min={0}
-                                    max={availableDateTimes.length ? availableDateTimes.length - 1 : 0}
-                                    markers={availableDateTimes.map((_, index) => index)}
-                                    markerLabels={(v, i) => {
-                                        if (i === 0 || i === availableDateTimes.length - 1) {
-                                            return createValueLabelFormat(v);
-                                        }
-                                    }}
-                                    // -1 for an invalid time step: the slider shows it at the start, but still treats
-                                    // a click there as a change - so the first time step can be picked
-                                    value={selectedDateTimeIndex}
-                                    valueLabelFormat={createValueLabelFormat}
-                                    onValueChange={handleSelectedTimeStepIndexChange}
-                                />
-                                <div className="relative flex shrink">
-                                    <span className="px-sm pointer-events-none invisible whitespace-nowrap">
-                                        {effectiveDateTime.value ?? "No time step selected"}
-                                    </span>
-                                    <TextInput
-                                        layoutClassName="absolute! inset-0"
-                                        value={effectiveDateTime.value ?? ""}
-                                        placeholder="No time step selected"
-                                        size="small"
-                                        readOnly
-                                    />
-                                </div>
-                            </div>
-                        </DashboardControlledSetting>
-                    </Setting.Field>
+                        {function renderTimeStepField(label, wrapSetting) {
+                            return (
+                                <Setting.Field
+                                    label={label}
+                                    loadingOverlay={effectiveDateTime.isLoading}
+                                    annotations={isDateTimeDashboardControlled ? [] : selectedDateTimeAnnotations}
+                                    errorOverlay={
+                                        effectiveDateTime.depsHaveError ? "Could not load time steps." : undefined
+                                    }
+                                >
+                                    {wrapSetting(
+                                        <div className="gap-sm flex">
+                                            <Slider
+                                                layoutClassName="grow w-full"
+                                                valueLabelDisplay="auto"
+                                                disabled={!availableDateTimes.length}
+                                                min={0}
+                                                max={availableDateTimes.length ? availableDateTimes.length - 1 : 0}
+                                                markers={availableDateTimes.map((_, index) => index)}
+                                                markerLabels={(v, i) => {
+                                                    if (i === 0 || i === availableDateTimes.length - 1) {
+                                                        return createValueLabelFormat(v);
+                                                    }
+                                                }}
+                                                // -1 for an invalid time step: the slider shows it at the start, but still treats
+                                                // a click there as a change - so the first time step can be picked
+                                                value={selectedDateTimeIndex}
+                                                valueLabelFormat={createValueLabelFormat}
+                                                onValueChange={handleSelectedTimeStepIndexChange}
+                                            />
+                                            <div className="relative flex shrink">
+                                                <span className="px-sm pointer-events-none invisible whitespace-nowrap">
+                                                    {effectiveDateTime.value ?? "No time step selected"}
+                                                </span>
+                                                <TextInput
+                                                    layoutClassName="absolute! inset-0"
+                                                    value={effectiveDateTime.value ?? ""}
+                                                    placeholder="No time step selected"
+                                                    size="small"
+                                                    readOnly
+                                                />
+                                            </div>
+                                        </div>,
+                                    )}
+                                </Setting.Field>
+                            );
+                        }}
+                    </DashboardControlledSetting>
                 </Setting.Section>
             </Setting.Panel>
         </Setting.ScrollArea>
