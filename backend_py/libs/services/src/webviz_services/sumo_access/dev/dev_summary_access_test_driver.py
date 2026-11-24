@@ -38,44 +38,52 @@ async def test_summary_access(summary_access: SummaryAccess) -> None:  # pylint:
     # print(vector_meta_list)
 
     print("\n\nTABLE RAW\n-----------------------")
-    vector_table, _vector_meta = await summary_access.get_vector_table_async(
-        vector_name="FOPT", resampling_frequency=None, realizations=None
-    )
+    vector_table, _vector_meta = (
+        await summary_access.get_vector_table_async(vector_name="FOPT", resampling_frequency=None, realizations=None)
+    ).get_value_ignore_warnings()
     print(vector_table.shape)
 
     print("\n\nTABLE DAILY\n-----------------------")
-    vector_table, _vector_meta = await summary_access.get_vector_table_async(
-        vector_name="FOPT", resampling_frequency=Frequency.DAILY, realizations=None
-    )
+    vector_table, _vector_meta = (
+        await summary_access.get_vector_table_async(
+            vector_name="FOPT", resampling_frequency=Frequency.DAILY, realizations=None
+        )
+    ).get_value_ignore_warnings()
     print(vector_table.shape)
 
     print("\n\nTABLE YEARLY\n-----------------------")
-    vector_table, _vector_meta = await summary_access.get_vector_table_async(
-        vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
-    )
+    vector_table, _vector_meta = (
+        await summary_access.get_vector_table_async(
+            vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
+        )
+    ).get_value_ignore_warnings()
     print(vector_table)
     print(vector_table.shape)
 
     print("\n\nTABLE YEARLY - only real 0\n-----------------------")
-    vector_table, _vector_meta = await summary_access.get_vector_table_async(
-        vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=[0, 1]
-    )
+    vector_table, _vector_meta = (
+        await summary_access.get_vector_table_async(
+            vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=[0, 1]
+        )
+    ).get_value_ignore_warnings()
     vector_table = vector_table.filter(pc.equal(vector_table["REAL"], pa.scalar(0)))
     print(vector_table)
     print(vector_table.shape)
 
     print("\n\nYEARLY\n-----------------------")
-    vector_arr: List[RealizationVector] = await summary_access.get_vector_async(
-        "FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
-    )
+    vector_arr: List[RealizationVector] = (
+        await summary_access.get_vector_async("FOPT", resampling_frequency=Frequency.YEARLY, realizations=None)
+    ).get_value_ignore_warnings()
     print(f"{len(vector_arr)=}")
     print(vector_arr[0])
 
     #
     # Fetch table to use when computing statistics first
-    vector_table, _vector_meta = await summary_access.get_vector_table_async(
-        vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
-    )
+    vector_table, _vector_meta = (
+        await summary_access.get_vector_table_async(
+            vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=None
+        )
+    ).get_value_ignore_warnings()
     print("\n\nSTATS table\n-----------------------")
     stat_table = compute_vector_statistics_table(vector_table, "FOPT", None)
     if not stat_table:

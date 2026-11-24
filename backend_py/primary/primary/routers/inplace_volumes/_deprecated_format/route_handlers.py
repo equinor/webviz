@@ -1,4 +1,5 @@
 from webviz_services.utils.authenticated_user import AuthenticatedUser
+from primary.utils.warning_reporter import WarningReporter
 
 from webviz_services.sumo_access.deprecated_inplace_volumetrics_access import DEPRECATED_InplaceVolumetricsAccess
 from webviz_services.deprecated_inplace_volumetrics_assembler.deprecated_inplace_volumetrics_assembler import (
@@ -37,6 +38,7 @@ async def handle_table_definitions_for_deprecated_format_async(
 
 async def handle_aggregated_per_realization_table_data_for_deprecated_format_async(
     authenticated_user: AuthenticatedUser,
+    warning_reporter: WarningReporter,
     case_uuid: str,
     ensemble_name: str,
     table_name: str,
@@ -59,7 +61,7 @@ async def handle_aggregated_per_realization_table_data_for_deprecated_format_asy
         adjusted_group_by_indices = None
 
     assembler = DEPRECATED_InplaceVolumetricsAssembler(access)
-    data = await assembler.create_accumulated_by_selection_per_realization_volumetric_table_data_async(
+    result = await assembler.create_accumulated_by_selection_per_realization_volumetric_table_data_async(
         table_name=table_name,
         result_names=set(result_names),
         fluid_zones=DeprecatedInplaceVolumetricsConverters.convert_schema_to_fluid_zones(indices_with_values),
@@ -73,11 +75,14 @@ async def handle_aggregated_per_realization_table_data_for_deprecated_format_asy
         accumulate_fluid_zones=do_accumulate_fluid_zones,
     )
 
+    data = warning_reporter.unwrap_result_and_report(result)
+
     return DeprecatedInplaceVolumetricsConverters.convert_table_data_per_fluid_selection_to_schema(data)
 
 
 async def handle_aggregated_statistical_table_data_for_deprecated_format_async(
     authenticated_user: AuthenticatedUser,
+    warning_reporter: WarningReporter,
     case_uuid: str,
     ensemble_name: str,
     table_name: str,
@@ -100,7 +105,7 @@ async def handle_aggregated_statistical_table_data_for_deprecated_format_async(
         adjusted_group_by_indices = None
 
     assembler = DEPRECATED_InplaceVolumetricsAssembler(access)
-    data = await assembler.create_accumulated_by_selection_statistical_volumetric_table_data_async(
+    result = await assembler.create_accumulated_by_selection_statistical_volumetric_table_data_async(
         table_name=table_name,
         result_names=set(result_names),
         fluid_zones=DeprecatedInplaceVolumetricsConverters.convert_schema_to_fluid_zones(indices_with_values),
@@ -113,5 +118,7 @@ async def handle_aggregated_statistical_table_data_for_deprecated_format_async(
         realizations=realizations,
         accumulate_fluid_zones=do_accumulate_fluid_zones,
     )
+
+    data = warning_reporter.unwrap_result_and_report(result)
 
     return DeprecatedInplaceVolumetricsConverters.convert_statistical_table_data_per_fluid_selection_to_schema(data)

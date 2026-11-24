@@ -1,6 +1,8 @@
 import { atom } from "jotai";
 
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+import { makeDistinguishableEnsembleDisplayNameFunc } from "@modules/_shared/ensembleNameUtils";
 import {
     makeAggregatedPerRealizationDeltaTableDataQueryOptions,
     makeAggregatedPerRealizationTableDataQueryOptions,
@@ -41,6 +43,7 @@ const regularPerRealizationTableDataResultsAtom = atomWithQueries((get) => {
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
     const areTableDefinitionSelectionsValid = get(areTableDefinitionSelectionsValidAtom);
+    const ensembleSet = get(EnsembleSetAtom);
 
     // In sensitivity mode statistics are computed per case client-side from per-realization data.
     const enableQueries =
@@ -55,6 +58,7 @@ const regularPerRealizationTableDataResultsAtom = atomWithQueries((get) => {
         groupByIndices,
         indicesWithValues,
         enableQueries,
+        makeDistinguishableEnsembleDisplayNameFunc(ensembleSet),
     );
 });
 
@@ -67,6 +71,7 @@ const deltaPerRealizationTableDataResultsAtom = atomWithQueries((get) => {
     const deltaEnsembleIdentsWithRealizations = get(deltaEnsembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
     const areTableDefinitionSelectionsValid = get(areTableDefinitionSelectionsValidAtom);
+    const ensembleSet = get(EnsembleSetAtom);
 
     // Not gated on table type: both tables are derived from this same per-realization data, since
     // the backend cannot aggregate a difference.
@@ -79,6 +84,7 @@ const deltaPerRealizationTableDataResultsAtom = atomWithQueries((get) => {
         groupByIndices,
         indicesWithValues,
         enableQueries,
+        makeDistinguishableEnsembleDisplayNameFunc(ensembleSet),
     );
 });
 
@@ -111,6 +117,7 @@ export const perRealizationTableDataResultsAtom = atom((get) => {
             isFetching: false,
             allQueriesFailed: false,
             errors: [],
+            warnings: [],
             droppedFluidSelections: [],
             unmatchedRows: [],
             numDroppedSensitivityRows: 0,
@@ -124,6 +131,7 @@ export const perRealizationTableDataResultsAtom = atom((get) => {
         isFetching: regular.isFetching || delta.isFetching,
         allQueriesFailed: (regular.allQueriesFailed || delta.allQueriesFailed) && tablesData.length === 0,
         errors: [...regular.errors, ...delta.errors],
+        warnings: [...regular.warnings, ...delta.warnings],
         droppedFluidSelections: delta.droppedFluidSelections,
         unmatchedRows: delta.unmatchedRows,
         numDroppedSensitivityRows: regular.numDroppedSensitivityRows,
@@ -141,6 +149,7 @@ const regularStatisticalTableDataResultsAtom = atomWithQueries((get) => {
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
     const areTableDefinitionSelectionsValid = get(areTableDefinitionSelectionsValidAtom);
+    const ensembleSet = get(EnsembleSetAtom);
 
     const enableQueries =
         tableType === TableType.STATISTICAL &&
@@ -155,6 +164,7 @@ const regularStatisticalTableDataResultsAtom = atomWithQueries((get) => {
         groupByIndices,
         indicesWithValues,
         enableQueries,
+        makeDistinguishableEnsembleDisplayNameFunc(ensembleSet),
     );
 });
 
@@ -173,6 +183,7 @@ export const statisticalTableDataResultsAtom = atom((get) => {
             isFetching: false,
             allQueriesFailed: false,
             errors: [],
+            warnings: [],
             droppedFluidSelections: [],
             unmatchedRows: [],
             numDroppedSensitivityRows: 0,
@@ -193,6 +204,7 @@ export const statisticalTableDataResultsAtom = atom((get) => {
         isFetching: regular.isFetching || delta.isFetching,
         allQueriesFailed: (regular.allQueriesFailed || delta.allQueriesFailed) && tablesData.length === 0,
         errors: [...regular.errors, ...delta.errors],
+        warnings: [...regular.warnings, ...delta.warnings],
         droppedFluidSelections: delta.droppedFluidSelections,
         unmatchedRows: delta.unmatchedRows,
         numDroppedSensitivityRows: regular.numDroppedSensitivityRows,
