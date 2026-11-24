@@ -82,6 +82,34 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
    npm run test:e2e:record --prefix ./frontend
    ```
 
+#### Selecting layers and settings in data provider framework modules
+
+Modules built on the data provider framework (2D Viewer, 3D Viewer, Intersection, Well log viewer)
+expose stable attributes for tests, so stories don't depend on display names that users can edit:
+
+- `data-dpf-manager` on the layer panel root.
+- `data-dpf-item` (`provider`, `group`, `shared-setting`, `context-boundary`, `delta-surface`) and
+  `data-dpf-type` (the data provider type, group type or wrapped setting type, e.g. `DEPTH_SURFACE`,
+  `VIEW`, `surfaceName`) on each item in the layer tree.
+- `data-dpf-header` on the panel's and each item's header row, and `data-dpf-name` on editable names.
+- `data-dpf-setting` (the `Setting` enum value, e.g. `representation`) on each setting's value cell,
+  and `data-dpf-setting-label` on its label cell.
+
+Use the generic helpers in `tests/e2e/support/dpfHelpers.ts` (add menus, settings, renaming,
+expand/collapse, color scales), and keep module specifics in a small per-module file such as
+`tests/e2e/support/twoDViewerHelpers.ts`.
+
+#### GPU rendering
+
+Stories run headless by default, with software WebGL, which is how the published videos were
+recorded. Stories with WebGL maps (2D/3D Viewer, Intersection) are far too slow that way, so they opt
+in to GPU rendering with `test.use(GPU_RENDERING)` from `tests/e2e/support/gpuRendering.ts`. Under
+WSL2, the GPU is only reachable through WSLg's display, so those stories run headed (a window opens
+during the run), with Mesa's D3D12 driver selected (NVIDIA adapter by default; override with
+`MESA_D3D12_DEFAULT_ADAPTER_NAME`). Headed mode changes timings, so only opt in where needed. The e2e
+recordings workflow is disabled until a GPU-enabled runner is available, so tutorial videos are
+currently recorded locally.
+
 #### Running a single story
 
 While working on one story you usually don't want to run the whole suite. Pass a filter through to
