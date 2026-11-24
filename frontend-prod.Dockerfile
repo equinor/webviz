@@ -1,5 +1,5 @@
 ARG NODE_TAG="24.14.1-alpine@sha256:01743339035a5c3c11a373cd7c83aeab6ed1457b55da6a69e014a95ac4e4700b"
-ARG NGINX_TAG="1.23-alpine@sha256:b5fe08305969d68f9d44309ea30f02a7dfbefe6e429f8c3f3f348fa45600f8b2"
+ARG NGINX_TAG="1.31-alpine@sha256:60214a103e6f38e953ff957f34b1f2e97a9db801ab2df3821da955d0fe6cadd6"
 
 ###########################################
 # Build frontend assets and compress them #
@@ -29,7 +29,7 @@ RUN npm run build && node compress_static.cjs
 # Compile brotli extension to nginx image #
 ###########################################
 
-FROM nginxinc/nginx-unprivileged:${NGINX_TAG} AS builder_nginx
+FROM nginx/nginx-unprivileged:${NGINX_TAG} AS builder_nginx
 
 USER root
 RUN apk add abuild musl-dev make gcc git
@@ -53,7 +53,7 @@ RUN make module-brotli \
 # Final image - import artifacts from previous base images #
 ############################################################
 
-FROM nginxinc/nginx-unprivileged:${NGINX_TAG}
+FROM nginx/nginx-unprivileged:${NGINX_TAG}
 
 COPY --from=builder_nginx /tmp/packages /tmp/packages
 COPY --from=builder_frontend /usr/src/app/frontend/dist /usr/share/nginx/dist
