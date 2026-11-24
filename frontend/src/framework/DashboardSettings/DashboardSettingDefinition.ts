@@ -50,6 +50,10 @@ export type DashboardSettingOptions<TValue, TConstraints> = {
     serializeValue?: (value: TValue) => unknown;
     deserializeValue?: (serializedValue: unknown) => TValue;
 
+    // Text representation of a value, e.g. shown by settings controlled by this dashboard setting. Defaults to
+    // `String(value)`, and "-" for `null`/`undefined`.
+    valueRepresentation?: (value: TValue) => React.ReactNode;
+
     // The control rendered for the setting in the dashboard settings panel.
     Component: React.ComponentType<DashboardSettingComponentProps<TValue, TConstraints>>;
 } & DashboardSettingCombineOptions<TConstraints>;
@@ -93,6 +97,7 @@ export class DashboardSettingDefinition<TValue, TConstraints> {
     private readonly _fixupValue?: (value: TValue, constraints: TConstraints) => TValue;
     private readonly _serializeValue?: (value: TValue) => unknown;
     private readonly _deserializeValue?: (serializedValue: unknown) => TValue;
+    private readonly _valueRepresentation?: (value: TValue) => React.ReactNode;
 
     constructor(options: DashboardSettingOptions<TValue, TConstraints>) {
         this.key = options.key;
@@ -105,6 +110,7 @@ export class DashboardSettingDefinition<TValue, TConstraints> {
         this._fixupValue = options.fixupValue;
         this._serializeValue = options.serializeValue;
         this._deserializeValue = options.deserializeValue;
+        this._valueRepresentation = options.valueRepresentation;
 
         // The conditional combine options can't be narrowed for a generic `TConstraints` here.
         const combineOptions = options as Partial<{
@@ -166,5 +172,12 @@ export class DashboardSettingDefinition<TValue, TConstraints> {
             return this._deserializeValue(serializedValue);
         }
         return serializedValue as TValue;
+    }
+
+    valueRepresentation(value: TValue): React.ReactNode {
+        if (this._valueRepresentation) {
+            return this._valueRepresentation(value);
+        }
+        return value === null || value === undefined ? "-" : String(value);
     }
 }
