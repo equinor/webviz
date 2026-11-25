@@ -176,9 +176,8 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     }
 
     // Create delta ensembles
-    // - Delta ensembles does not support parameters and sensitivities yet
+    // - Delta ensembles does not support sensitivities yet
     const outDeltaEnsembleArray: DeltaEnsemble[] = [];
-    const emptyParameterArray: Parameter[] = [];
     const nullSensitivityArray = null;
     const emptyFipRegionsMappingArray: FipRegionMapping[] = [];
     const emptyColor = "";
@@ -238,7 +237,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   comparisonEnsembleApiData.ensembleDetails.name,
                   comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
                   comparisonEnsembleApiData.ensembleDetails.realizations,
-                  emptyParameterArray,
+                  buildParameterArrFromApiResponse(comparisonEnsembleApiData.parameters),
                   nullSensitivityArray,
                   emptyFipRegionsMappingArray,
                   emptyColor,
@@ -255,7 +254,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   referenceEnsembleApiData.ensembleDetails.name,
                   comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
                   referenceEnsembleApiData.ensembleDetails.realizations,
-                  emptyParameterArray,
+                  buildParameterArrFromApiResponse(referenceEnsembleApiData.parameters),
                   nullSensitivityArray,
                   emptyFipRegionsMappingArray,
                   emptyColor,

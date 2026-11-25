@@ -18,7 +18,12 @@ import type { Interfaces } from "../interfaces";
 import type { VectorHexColorMap } from "../typesAndEnums";
 import { GroupBy } from "../typesAndEnums";
 
-import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
+import {
+    queryIsFetchingAtom,
+    realizationsQueryHasErrorAtom,
+    selectedEnsemblesAtom,
+    statisticsQueryHasErrorAtom,
+} from "./atoms/derivedAtoms";
 import { activeTimestampUtcMsAtom } from "./atoms/persistableFixableAtoms";
 import { useDownloadData } from "./hooks/useDownloadData";
 import { useMakeResampleFrequencyWarningMessage } from "./hooks/useMakeResampleFrequencyWarningMessage";
@@ -36,8 +41,7 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
 
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const parameterIdent = viewContext.useSettingsToViewInterfaceValue("parameterIdent");
-    const selectedEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedRegularEnsembles");
-    const selectedDeltaEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedDeltaEnsembles");
+    const selectedEnsembles = useAtomValue(selectedEnsemblesAtom);
     const vectorSpecifications = viewContext.useSettingsToViewInterfaceValue("vectorSpecifications");
     const groupBy = viewContext.useSettingsToViewInterfaceValue("groupBy");
     const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
@@ -83,7 +87,6 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
             ),
         );
         parameterDisplayName = ensemblesParameterColoring.getParameterDisplayName();
-        ensemblesWithoutParameter.push(...selectedDeltaEnsembles);
     }
 
     useMakeViewStatusWriterMessages(statusWriter, parameterDisplayName, ensemblesWithoutParameter);
