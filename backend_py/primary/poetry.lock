@@ -439,14 +439,14 @@ aio = ["azure-core[aio] (>=1.37.0)"]
 
 [[package]]
 name = "certifi"
-version = "2026.1.4"
+version = "2026.10.18"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "certifi-2026.1.4-py3-none-any.whl", hash = "sha256:9943707519e4add1115f44c2bc244f782c0249876bf51b6599fee1ffbedd685c"},
-    {file = "certifi-2026.1.4.tar.gz", hash = "sha256:ac726dd470482006e014ad384921ed6438c457018f4b3d204aea4281258b2120"},
+    {file = "certifi-2026.10.18-py3-none-any.whl", hash = "sha256:73191c47aaa79da394e8fee2dbc2ec827432cab56311122c9e47abf79e390f62"},
+    {file = "certifi-2026.10.18.tar.gz", hash = "sha256:b9995d97b64d0431a5af837d8ca8cd6238104d1f319f04bd93ea43124d6c861e"},
 ]
 
 [[package]]
@@ -928,21 +928,21 @@ standard-no-fastapi-cloud-cli = ["email-validator (>=2.0.0)", "fastapi-cli[stand
 
 [[package]]
 name = "fmu-datamodels"
-version = "0.21.4"
+version = "0.27.0"
 description = "FMU data standard, including models and schemas"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = [
-    {file = "fmu_datamodels-0.21.4-py3-none-any.whl", hash = "sha256:097cd19c4e45dc56bf9d722aba4a33c46472bba7a64bd87e53040f1b5fc9ef2e"},
-    {file = "fmu_datamodels-0.21.4.tar.gz", hash = "sha256:22d2680f25d19e107557c0e7e9d1e5249e5952d9239069994b44840938ca53ab"},
+    {file = "fmu_datamodels-0.27.0-py3-none-any.whl", hash = "sha256:07f49ed089de8f5ecc5f2dc45ec1a3f006e45fda923d38330107c21c59200d55"},
+    {file = "fmu_datamodels-0.27.0.tar.gz", hash = "sha256:c549ab33e980c7cd03f4c1a8622186a8635e915448cb8591c0815f74320cea12"},
 ]
 
 [package.dependencies]
 pydantic = "*"
 
 [package.extras]
-dev = ["coverage (>=4.1)", "hypothesis", "mypy", "pyarrow", "pyarrow-stubs", "pytest", "pytest-cov", "pytest-mock", "pytest-runner", "pytest-xdist", "ruff", "xtgeo (>=2.16)"]
+dev = ["coverage (>=4.1)", "fmu-settings (>=1.5.0)", "hypothesis", "mypy", "pyarrow", "pyarrow-stubs", "pytest", "pytest-cov", "pytest-mock", "pytest-runner", "pytest-xdist", "ruff", "xtgeo (>=2.16)"]
 docs = ["pydocstyle"]
 
 [[package]]
@@ -2241,14 +2241,14 @@ files = [
 
 [[package]]
 name = "oauthlib"
-version = "4.0.0"
+version = "4.0.1"
 description = "A generic, spec-compliant, thorough implementation of the OAuth request-signing logic"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "oauthlib-4.0.0-py3-none-any.whl", hash = "sha256:624c28c13a0a59cabf9747dfa52af63be3e512a7f2714df16e91b5b3a145e6cd"},
-    {file = "oauthlib-4.0.0.tar.gz", hash = "sha256:efb274799819440f95b4ab3b818869f1ce9ae26c5beacba0201d1a1b76b54f86"},
+    {file = "oauthlib-4.0.1-py3-none-any.whl", hash = "sha256:498a298876e996301950a5b053d12c31628bb7b895db03666430c69ce182eb61"},
+    {file = "oauthlib-4.0.1.tar.gz", hash = "sha256:3d73febdb6faa00f277c81fb04be7b7586fb96fc3b7f0b9c772dada69a25ede7"},
 ]
 
 [package.extras]
@@ -4197,10 +4197,10 @@ files = []
 develop = true
 
 [package.dependencies]
-aiohttp = "^3.13.4"
+aiohttp = "^3.14.4"
 azure-identity = "^1.25.3"
 azure-servicebus = "^7.14.3"
-fmu-datamodels = "0.21.4"
+fmu-datamodels = "0.27.0"
 fmu-sumo = "2.15.1"
 httpx = "^0.28.1"
 numpy = "^2.2.0"

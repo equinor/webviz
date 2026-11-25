@@ -13,6 +13,7 @@ import { activeTimestampUtcMsAtom } from "../atoms/persistableFixableAtoms";
 import type { SubplotOwner } from "../utils/PlotBuilder";
 import { getHexColorFromOwner } from "../utils/plotColoring";
 
+
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
 export function usePublishToDataChannels(
@@ -24,7 +25,7 @@ export function usePublishToDataChannels(
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom).value;
     const isQueryFetching = useAtomValue(queryIsFetchingAtom);
 
-    const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
+    const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc();
 
     const vectorSpecificationsAndRealizationData: {
         vectorSpecification: VectorSpec;
