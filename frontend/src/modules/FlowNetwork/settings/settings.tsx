@@ -144,13 +144,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             ]
           : selectedRealizationAnnotations;
 
-    if (isRealizationDashboardControlled && !effectiveRealization.isValidInContext) {
-        statusWriter.flagActionRequired("Dashboard setting value for the realization is not valid here");
-    }
-    if (isDateTimeDashboardControlled && !effectiveDateTime.isLoading && !effectiveDateTime.isValidInContext) {
-        statusWriter.flagActionRequired("Dashboard setting value for the time step is not valid here");
-    }
-
     const handleSettingsAnnotationsChange = React.useCallback(
         function handleSettingsAnnotationsChange(annotations: SettingAnnotation[]) {
             const invalidFieldValueMessages = annotations.filter((a) => a.type === "error").map((a) => a.message);
@@ -277,7 +270,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     <DashboardControlledSetting
                         label="Time step"
                         value={effectiveDateTime.value ? isoStringToTimestampUtcMs(effectiveDateTime.value) : null}
-                        isValueValidHere={effectiveDateTime.isValidInContext}
+                        isValueValidHere={effectiveDateTime.isLoading || effectiveDateTime.isValidInContext}
                         controlledBy={TIME_DASHBOARD_SETTING}
                         isControlled={isDateTimeDashboardControlled}
                     >
