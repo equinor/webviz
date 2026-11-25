@@ -6,7 +6,6 @@ on:
       - main
       - dev
       - review
-      - fix-failing-integration-test-real-vec-data
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * *"
