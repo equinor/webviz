@@ -36,7 +36,7 @@ const BASE_URL = "http://localhost:8080";
 const authenticatedChromiumUse = {
     ...devices["Desktop Chrome"],
     storageState: STORAGE_STATE_PATH,
-    ...(record ? { viewport: { width: 1920, height: 1080 } } : {}),
+    viewport: { width: 1920, height: 1080 },
 };
 
 /**
