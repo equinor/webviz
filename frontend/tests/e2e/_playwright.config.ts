@@ -54,7 +54,8 @@ export default defineConfig({
     fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
     forbidOnly: !!process.env.CI,
-    retries: 0,
+    /* Allow one retry on non-recording CI runs to absorb transient Sumo network hiccups, but keep 0 retries when recording. */
+    retries: !record && process.env.CI ? 1 : 0,
     workers: 1,
     /*
      * Reporter to use. See https://playwright.dev/docs/test-reporters
