@@ -1,4 +1,6 @@
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+import { makeDistinguishableEnsembleDisplayNameFunc } from "@modules/_shared/ensembleNameUtils";
 import { makeAggregatedPerRealizationTableDataQueryOptions } from "@modules/_shared/InplaceVolumes/queryHooks";
 import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
@@ -35,6 +37,7 @@ export const aggregatedTableDataQueriesAtom = atomWithQueries((get) => {
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
     const areTableDefinitionSelectionsValid = get(areTableDefinitionSelectionsValidAtom);
+    const ensembleSet = get(EnsembleSetAtom);
 
     const enableQueries = areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
@@ -45,5 +48,6 @@ export const aggregatedTableDataQueriesAtom = atomWithQueries((get) => {
         groupByIndices,
         indicesWithValues,
         enableQueries,
+        makeDistinguishableEnsembleDisplayNameFunc(ensembleSet),
     );
 });

@@ -421,7 +421,7 @@ export const getRealizationsVectorData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/timeseries/realizations_vector_data/",
         ...options,
-        query: { ...options.query, _rv: "b0f4b7" },
+        query: { ...options.query, _rv: "2c6811" },
     });
 
 /**
@@ -448,7 +448,7 @@ export const getDeltaEnsembleRealizationsVectorData = <ThrowOnError extends bool
         responseType: "json",
         url: "/timeseries/delta_ensemble_realizations_vector_data/",
         ...options,
-        query: { ...options.query, _rv: "557d6b" },
+        query: { ...options.query, _rv: "547f8a" },
     });
 
 /**
@@ -484,7 +484,7 @@ export const getStatisticalVectorData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/timeseries/statistical_vector_data/",
         ...options,
-        query: { ...options.query, _rv: "e5a22f" },
+        query: { ...options.query, _rv: "e95b9d" },
     });
 
 /**
@@ -511,7 +511,7 @@ export const getDeltaEnsembleStatisticalVectorData = <ThrowOnError extends boole
         responseType: "json",
         url: "/timeseries/delta_ensemble_statistical_vector_data/",
         ...options,
-        query: { ...options.query, _rv: "e5a22f" },
+        query: { ...options.query, _rv: "e95b9d" },
     });
 
 /**
@@ -534,7 +534,7 @@ export const getStatisticalVectorDataPerSensitivity = <ThrowOnError extends bool
         responseType: "json",
         url: "/timeseries/statistical_vector_data_per_sensitivity/",
         ...options,
-        query: { ...options.query, _rv: "2e3104" },
+        query: { ...options.query, _rv: "7e0d62" },
     });
 
 /**
@@ -716,7 +716,7 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/surface/surface_data",
         ...options,
-        query: { ...options.query, _rv: "1a245c" },
+        query: { ...options.query, _rv: "dd4465" },
     });
 
 /**
@@ -1077,7 +1077,7 @@ export const getWellCompletionsData = <ThrowOnError extends boolean = false>(
             responseType: "json",
             url: "/well_completions/well_completions_data/",
             ...options,
-            query: { ...options.query, _rv: "3fb75a" },
+            query: { ...options.query, _rv: "706749" },
         },
     );
 
@@ -1530,7 +1530,7 @@ export const getRelpermRealizationData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/relperm/realization_data",
         ...options,
-        query: { ...options.query, _rv: "e06a23" },
+        query: { ...options.query, _rv: "07fcfa" },
     });
 
 /**
@@ -1560,7 +1560,7 @@ export const getRftRealizationData = <ThrowOnError extends boolean = false>(
         responseType: "json",
         url: "/rft/rft_realization_data",
         ...options,
-        query: { ...options.query, _rv: "70557a" },
+        query: { ...options.query, _rv: "737ca0" },
     });
 
 /**

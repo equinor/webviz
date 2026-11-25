@@ -1,5 +1,6 @@
 import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+import { makeDistinguishableEnsembleDisplayNameFunc } from "@modules/_shared/ensembleNameUtils";
 import type { InplaceVolumesSource } from "@modules/_shared/InplaceVolumes/queryHooks";
 import { makeAggregatedStatisticalTableDataQueryOptionsFromSources } from "@modules/_shared/InplaceVolumes/queryHooks";
 import { restrictRealizationsToSensitivityCases } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
@@ -51,5 +52,6 @@ export const waterfallStatisticalDataQueriesAtom = atomWithQueries((get) => {
         groupByIndices,
         indicesWithValues,
         isEnabled,
+        makeDistinguishableEnsembleDisplayNameFunc(ensembleSet),
     );
 });

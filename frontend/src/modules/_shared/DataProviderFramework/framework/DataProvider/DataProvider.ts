@@ -4,7 +4,11 @@ import { clone, isEqual } from "lodash-es";
 
 import { GenericStatusMessageStore } from "@framework/GenericStatusMessageStore";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import { StatusMessageStoreTopic, type StatusMessage as GenericStatusMessage } from "@framework/types/statusWriter";
+import {
+    StatusMessageStoreTopic,
+    StatusMessageType,
+    type StatusMessage as GenericStatusMessage,
+} from "@framework/types/statusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
@@ -407,6 +411,13 @@ export class DataProvider<
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<DataProviderPayloads<TData>> {
         return this._publishSubscribeDelegate;
+    }
+
+    getWarningMessages(): string[] {
+        return this._statusWriter
+            .getMessages()
+            .filter((message) => message.type === StatusMessageType.Warning)
+            .map((message) => `${this.getItemDelegate().getName()}: ${message.message}`);
     }
 
     getError(): StatusMessage | string | null {
