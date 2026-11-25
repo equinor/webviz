@@ -42,28 +42,74 @@ function findSourceVideo(dir) {
     return candidates.length > 0 ? join(dir, candidates[0]) : null;
 }
 
-/** Build the ffmpeg argument list that overlays the delayed clips onto the video. */
-function buildFfmpegArgs(videoPath, clips, outputPath) {
-    // Trim the video's blank/loading lead-in by starting at the first narration clip.
-    const trimStartMs = Math.max(0, Math.min(...clips.map((clip) => clip.startMs)));
-
-    const args = ["-y"];
-    if (trimStartMs > 0) {
-        args.push("-ss", (trimStartMs / 1000).toFixed(3));
+/**
+ * Find the latest video keyframe timestamp (in ms) at or before `targetMs`.
+ *
+ * With `-c:v copy`, ffmpeg starts copying from the keyframe at or before `-ss` and resets that
+ * keyframe to t=0 in the output WebM. Snapping `trimStartMs` to that exact keyframe keeps audio
+ * delays, chapter markers, and captions in sync with the copied video stream.
+ */
+function findKeyframeAtOrBefore(videoPath, targetMs) {
+    if (targetMs <= 0) {
+        return 0;
     }
-    args.push("-i", videoPath);
+    const targetSec = targetMs / 1000;
+    const result = spawnSync(
+        "ffprobe",
+        [
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "packet=pts_time,flags",
+            "-of",
+            "csv=p=0",
+            videoPath,
+        ],
+        { encoding: "utf-8" },
+    );
+    if (result.error || result.status !== 0) {
+        return 0;
+    }
+
+    let lastKeyframeMs = 0;
+    for (const line of result.stdout.split(/\r?\n/)) {
+        if (!line) {
+            continue;
+        }
+        const [ptsStr, flags] = line.split(",");
+        if (!flags?.includes("K")) {
+            continue;
+        }
+        const ptsSec = Number(ptsStr);
+        if (!Number.isFinite(ptsSec)) {
+            continue;
+        }
+        if (ptsSec > targetSec) {
+            break;
+        }
+        lastKeyframeMs = Math.round(ptsSec * 1000);
+    }
+    return lastKeyframeMs;
+}
+
+/** Build the ffmpeg argument list that overlays the delayed clips onto the video. */
+function buildFfmpegArgs(videoPath, clips, trimStartMs, outputPath) {
+    const args = ["-y", "-i", videoPath];
     for (const clip of clips) {
         args.push("-i", join(dirname(videoPath), clip.file));
     }
 
-    // Delay each clip's audio to its start time (relative to the trimmed video), then mix them into
-    // a single track. normalize=0 keeps each clip at full volume; dropout_transition=0 avoids ramps.
+    // Delay each clip's audio to its start time on the original timeline, then mix them into a
+    // single track. Placing `-ss` as an output option trims both the copied video (at the exact
+    // keyframe `trimStartMs` without Matroska fast-seek undershoot) and the mixed audio together.
     const filters = [];
     const mixLabels = [];
     clips.forEach((clip, index) => {
         const inputIndex = index + 1; // 0 is the video
         const label = `a${index}`;
-        const delayMs = Math.max(0, Math.round(clip.startMs - trimStartMs));
+        const delayMs = Math.max(0, Math.round(clip.startMs));
         filters.push(`[${inputIndex}:a]adelay=${delayMs}:all=1[${label}]`);
         mixLabels.push(`[${label}]`);
     });
@@ -78,20 +124,9 @@ function buildFfmpegArgs(videoPath, clips, outputPath) {
         "0:v",
         "-map",
         "[aout]",
+        ...(trimStartMs > 0 ? ["-ss", (trimStartMs / 1000).toFixed(3)] : []),
         "-c:v",
-        "libvpx-vp9",
-        "-crf",
-        "32",
-        "-b:v",
-        "0",
-        "-g",
-        "50",
-        "-deadline",
-        "good",
-        "-cpu-used",
-        "4",
-        "-row-mt",
-        "1",
+        "copy",
         "-c:a",
         "libopus",
         // The seek index is written at the end of a WebM by default,
@@ -167,17 +202,21 @@ function narrateFolder(dir) {
         return false;
     }
 
+    // Trim the video's blank/loading lead-in, snapped to the nearest keyframe at or before the
+    // first narration clip so `-c:v copy` stays in sync with the audio, steps, and captions.
+    const firstClipMs = Math.max(0, Math.min(...clips.map((clip) => clip.startMs)));
+    const trimStartMs = findKeyframeAtOrBefore(videoPath, firstClipMs);
+
     const outputPath = videoPath.replace(/\.webm$/, NARRATED_SUFFIX);
-    const args = buildFfmpegArgs(videoPath, clips, outputPath);
+    const args = buildFfmpegArgs(videoPath, clips, trimStartMs, outputPath);
     const result = spawnSync("ffmpeg", args, { encoding: "utf-8" });
     if (result.error || result.status !== 0) {
         console.error(`  [narration] ffmpeg failed for ${videoPath}:\n${result.stderr ?? result.error}`);
         return false;
     }
-    const trimStartMs = Math.max(0, Math.min(...clips.map((clip) => clip.startMs)));
     writeSteps(videoPath, steps, trimStartMs);
     writeCaptions(videoPath, clips, trimStartMs);
-    console.log(`  [narration] Wrote ${outputPath} (${clips.length} clip(s)).`);
+    console.log(`  [narration] Wrote ${outputPath} (${clips.length} clip(s), trim=${trimStartMs}ms).`);
     return true;
 }
 

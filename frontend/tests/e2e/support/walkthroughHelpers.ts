@@ -65,13 +65,13 @@ async function glideMouseTo(page: Page, x: number, y: number): Promise<void> {
     const distance = Math.hypot(x - from.x, y - from.y);
     const steps = Math.min(CURSOR_MAX_STEPS, Math.max(CURSOR_MIN_STEPS, Math.round(distance / CURSOR_PX_PER_STEP)));
     const durationMs = steps * CURSOR_STEP_MS;
-    const start = Date.now();
+    const start = performance.now();
 
     let stepsDone = 0;
     // Time spent in pointer moves only (excluding pacing waits), to estimate what each step costs.
     let moveMs = 0;
     while (stepsDone < steps) {
-        const elapsedMs = Date.now() - start;
+        const elapsedMs = performance.now() - start;
         const msPerStep = stepsDone > 0 ? Math.max(1, moveMs / stepsDone) : 1;
         const affordableSteps = Math.floor((durationMs - elapsedMs) / msPerStep);
         if (affordableSteps < steps - stepsDone) {
@@ -85,13 +85,13 @@ async function glideMouseTo(page: Page, x: number, y: number): Promise<void> {
         const chunkSteps = Math.min(CURSOR_CHUNK_STEPS, steps - stepsDone);
         stepsDone += chunkSteps;
         const fraction = stepsDone / steps;
-        const moveStart = Date.now();
+        const moveStart = performance.now();
         await page.mouse.move(from.x + (x - from.x) * fraction, from.y + (y - from.y) * fraction, {
             steps: chunkSteps,
         });
-        moveMs += Date.now() - moveStart;
+        moveMs += performance.now() - moveStart;
         // Ahead of schedule: wait so the cursor doesn't outrun the target speed.
-        const aheadMs = start + stepsDone * CURSOR_STEP_MS - Date.now();
+        const aheadMs = start + stepsDone * CURSOR_STEP_MS - performance.now();
         if (aheadMs > 0) {
             await page.waitForTimeout(aheadMs);
         }
@@ -814,9 +814,9 @@ export async function sweepSliderAcross(
     await glideMouseTo(page, fromX, y);
     await page.mouse.down();
     try {
-        const start = Date.now();
+        const start = performance.now();
         for (;;) {
-            const progress = Math.min(1, (Date.now() - start) / durationMs);
+            const progress = Math.min(1, (performance.now() - start) / durationMs);
             await page.mouse.move(fromX + (toX - fromX) * progress, y);
             if (progress >= 1) {
                 break;
