@@ -178,7 +178,8 @@ export async function editColorScale(
     }
     await pace(page, "short");
     await smoothClick(page, dialog.getByRole("button", { name: "Apply" }));
-    await expect(dialog).toBeHidden();
+    // Applying a color scale triggers a WebGL map repaint that can briefly exceed the 5s default on SwiftShader.
+    await expect(dialog).toBeHidden({ timeout: 15_000 });
 }
 
 /**
