@@ -92,6 +92,10 @@ export async function addFromMenu(page: Page, addButton: Locator, menuPath: stri
         await smoothClick(page, item);
         parentItem = item;
     }
+    // Wait for the Base UI menu and its inert backdrop to finish closing before the next interaction.
+    if (parentItem) {
+        await expect(parentItem).toBeHidden();
+    }
 }
 
 function comboboxOption(page: Page, optionLabel: string): Locator {
