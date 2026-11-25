@@ -141,10 +141,6 @@ export class DeltaEnsemble {
         return this._sensitivities;
     }
 
-    getNonDeltaDataSource(): DeltaEnsembleNonDeltaDataSource {
-        return this._nonDeltaDataSource;
-    }
-
     getSourceEnsembleIdentForNonDeltaData(): RegularEnsembleIdent {
         return this._nonDeltaDataSource === "reference"
             ? this._referenceEnsemble.getIdent()

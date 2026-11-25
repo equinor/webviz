@@ -164,7 +164,6 @@ describe("DeltaEnsemble", () => {
 
         test("should default to the comparison ensemble", () => {
             const delta = new DeltaEnsemble(comparison, reference, "red");
-            expect(delta.getNonDeltaDataSource()).toBe("comparison");
             expect(delta.getSourceEnsembleIdentForNonDeltaData().equals(comparison.getIdent())).toBe(true);
         });
 
@@ -177,7 +176,6 @@ describe("DeltaEnsemble", () => {
 
         test("should return the reference ensemble ident when source is reference", () => {
             const delta = new DeltaEnsemble(comparison, reference, "red", null, "reference");
-            expect(delta.getNonDeltaDataSource()).toBe("reference");
             expect(delta.getSourceEnsembleIdentForNonDeltaData().equals(reference.getIdent())).toBe(true);
         });
 
