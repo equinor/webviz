@@ -164,7 +164,7 @@ describe("DeltaEnsemble", () => {
 
         test("should default to the comparison ensemble", () => {
             const delta = new DeltaEnsemble(comparison, reference, "red");
-            expect(delta.getSourceEnsembleIdentForNonDeltaData().equals(comparison.getIdent())).toBe(true);
+            expect(delta.getNonDeltaDataEnsembleIdent().equals(comparison.getIdent())).toBe(true);
         });
 
         test("should take parameters from the comparison ensemble with intersected realizations", () => {
@@ -176,7 +176,7 @@ describe("DeltaEnsemble", () => {
 
         test("should return the reference ensemble ident when source is reference", () => {
             const delta = new DeltaEnsemble(comparison, reference, "red", null, "reference");
-            expect(delta.getSourceEnsembleIdentForNonDeltaData().equals(reference.getIdent())).toBe(true);
+            expect(delta.getNonDeltaDataEnsembleIdent().equals(reference.getIdent())).toBe(true);
         });
 
         test("should take parameters from the reference ensemble with intersected realizations", () => {
