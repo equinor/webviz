@@ -1,15 +1,21 @@
 import type { QueryObserverResult } from "@tanstack/react-query";
 import { atom } from "jotai";
 
-import type { SummaryVectorObservations_api, VectorHistoricalData_api } from "@api";
+import type { ResultWithWarnings, SummaryVectorObservations_api, VectorHistoricalData_api } from "@api";
 import {
     Frequency_api,
+    getDeltaEnsembleRealizationsVectorData,
     getDeltaEnsembleRealizationsVectorDataOptions,
+    getDeltaEnsembleStatisticalVectorData,
     getDeltaEnsembleStatisticalVectorDataOptions,
     getHistoricalVectorDataOptions,
     getSummaryObservationsOptions,
+    getRealizationsVectorData,
     getRealizationsVectorDataOptions,
+    getStatisticalVectorData,
     getStatisticalVectorDataOptions,
+    getQueryResultWarnings,
+    withWarnings,
 } from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
@@ -50,6 +56,34 @@ export const vectorDataQueriesAtom = atom((get) => {
     );
 });
 
+// A disabled query keeps its cached data, so warnings must only be collected from enabled queries
+function makeQueryWarnings(
+    queries: { data: ResultWithWarnings<unknown> | undefined; isEnabled: boolean }[],
+    specs: { item: VectorSpec }[],
+) {
+    return queries.flatMap((query, index) =>
+        query.isEnabled
+            ? getQueryResultWarnings(query).map((warning) => ({
+                  vectorSpecification: specs[index].item,
+                  warning,
+              }))
+            : [],
+    );
+}
+
+export const vectorDataWarningsAtom = atom((get) => {
+    const { regularEnsembleVectorSpecifications, deltaEnsembleVectorSpecifications } = get(
+        categorizedVectorSpecificationsAtom,
+    );
+    const regularQueries = get(regularEnsembleVectorDataQueriesAtom);
+    const deltaQueries = get(deltaEnsembleVectorDataQueriesAtom);
+
+    return [
+        ...makeQueryWarnings(regularQueries, regularEnsembleVectorSpecifications),
+        ...makeQueryWarnings(deltaQueries, deltaEnsembleVectorSpecifications),
+    ];
+});
+
 export const vectorStatisticsQueriesAtom = atom((get) => {
     const { regularEnsembleVectorSpecifications, deltaEnsembleVectorSpecifications } = get(
         categorizedVectorSpecificationsAtom,
@@ -63,6 +97,19 @@ export const vectorStatisticsQueriesAtom = atom((get) => {
         regularEnsembleVectorSpecifications,
         deltaEnsembleVectorSpecifications,
     );
+});
+
+export const vectorStatisticsWarningsAtom = atom((get) => {
+    const { regularEnsembleVectorSpecifications, deltaEnsembleVectorSpecifications } = get(
+        categorizedVectorSpecificationsAtom,
+    );
+    const regularQueries = get(regularEnsembleStatisticsQueriesAtom);
+    const deltaQueries = get(deltaEnsembleStatisticsQueriesAtom);
+
+    return [
+        ...makeQueryWarnings(regularQueries, regularEnsembleVectorSpecifications),
+        ...makeQueryWarnings(deltaQueries, deltaEnsembleVectorSpecifications),
+    ];
 });
 
 /**
@@ -233,16 +280,19 @@ const regularEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
         const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
         const [ensembleIdent, vectorName] = [item.ensembleIdent, item.vectorName];
 
-        const options = getRealizationsVectorDataOptions({
-            query: {
-                case_uuid: ensembleIdent.getCaseUuid(),
-                ensemble_name: ensembleIdent.getEnsembleName(),
-                vector_name: vectorName,
-                resampling_frequency: resampleFrequency,
-                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-                ...makeCacheBustingQueryParam(ensembleIdent),
-            },
-        });
+        const options = withWarnings(
+            getRealizationsVectorDataOptions({
+                query: {
+                    case_uuid: ensembleIdent.getCaseUuid(),
+                    ensemble_name: ensembleIdent.getEnsembleName(),
+                    vector_name: vectorName,
+                    resampling_frequency: resampleFrequency,
+                    realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                    ...makeCacheBustingQueryParam(ensembleIdent),
+                },
+            }),
+            getRealizationsVectorData,
+        );
 
         return () => ({
             ...options,
@@ -269,18 +319,21 @@ const deltaEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
         const comparisonEnsembleIdent = item.ensembleIdent.getComparisonEnsembleIdent();
         const referenceEnsembleIdent = item.ensembleIdent.getReferenceEnsembleIdent();
         const vectorName = item.vectorName;
-        const options = getDeltaEnsembleRealizationsVectorDataOptions({
-            query: {
-                comparison_case_uuid: comparisonEnsembleIdent.getCaseUuid(),
-                comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),
-                reference_case_uuid: referenceEnsembleIdent.getCaseUuid(),
-                reference_ensemble_name: referenceEnsembleIdent.getEnsembleName(),
-                vector_name: vectorName,
-                resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
-                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-                ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
-            },
-        });
+        const options = withWarnings(
+            getDeltaEnsembleRealizationsVectorDataOptions({
+                query: {
+                    comparison_case_uuid: comparisonEnsembleIdent.getCaseUuid(),
+                    comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),
+                    reference_case_uuid: referenceEnsembleIdent.getCaseUuid(),
+                    reference_ensemble_name: referenceEnsembleIdent.getEnsembleName(),
+                    vector_name: vectorName,
+                    resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
+                    realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                    ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
+                },
+            }),
+            getDeltaEnsembleRealizationsVectorData,
+        );
 
         return () => ({
             ...options,
@@ -327,16 +380,19 @@ const regularEnsembleStatisticsQueriesAtom = atomWithQueries((get) => {
         const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
         const [ensembleIdent, vectorName] = [item.ensembleIdent, item.vectorName];
 
-        const options = getStatisticalVectorDataOptions({
-            query: {
-                case_uuid: ensembleIdent.getCaseUuid(),
-                ensemble_name: ensembleIdent.getEnsembleName(),
-                vector_name: vectorName,
-                resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
-                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-                ...makeCacheBustingQueryParam(ensembleIdent),
-            },
-        });
+        const options = withWarnings(
+            getStatisticalVectorDataOptions({
+                query: {
+                    case_uuid: ensembleIdent.getCaseUuid(),
+                    ensemble_name: ensembleIdent.getEnsembleName(),
+                    vector_name: vectorName,
+                    resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
+                    realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                    ...makeCacheBustingQueryParam(ensembleIdent),
+                },
+            }),
+            getStatisticalVectorData,
+        );
 
         return () => ({
             ...options,
@@ -366,18 +422,21 @@ const deltaEnsembleStatisticsQueriesAtom = atomWithQueries((get) => {
         const referenceEnsembleIdent = item.ensembleIdent.getReferenceEnsembleIdent();
         const vectorName = item.vectorName;
 
-        const options = getDeltaEnsembleStatisticalVectorDataOptions({
-            query: {
-                comparison_case_uuid: comparisonEnsembleIdent.getCaseUuid(),
-                comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),
-                reference_case_uuid: referenceEnsembleIdent.getCaseUuid(),
-                reference_ensemble_name: referenceEnsembleIdent.getEnsembleName(),
-                vector_name: vectorName,
-                resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
-                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
-                ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
-            },
-        });
+        const options = withWarnings(
+            getDeltaEnsembleStatisticalVectorDataOptions({
+                query: {
+                    comparison_case_uuid: comparisonEnsembleIdent.getCaseUuid(),
+                    comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),
+                    reference_case_uuid: referenceEnsembleIdent.getCaseUuid(),
+                    reference_ensemble_name: referenceEnsembleIdent.getEnsembleName(),
+                    vector_name: vectorName,
+                    resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
+                    realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                    ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
+                },
+            }),
+            getDeltaEnsembleStatisticalVectorData,
+        );
 
         return () => ({
             ...options,

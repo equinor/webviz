@@ -10,7 +10,7 @@ export const activeTimestampUtcMsAtom = persistableFixableAtom<number | null>({
         if (statisticalVectorSensitivityDataQuery.isFetching) {
             return "loading";
         }
-        return statisticalVectorSensitivityDataQuery.data?.length ? "loaded" : "blocked";
+        return statisticalVectorSensitivityDataQuery.data?.value?.length ? "loaded" : "blocked";
     },
     isValidFunction: ({ get, value }) => {
         const statisticalVectorSensitivityDataQuery = get(statisticalVectorSensitivityDataQueryAtom);
@@ -18,7 +18,7 @@ export const activeTimestampUtcMsAtom = persistableFixableAtom<number | null>({
         if (
             !statisticalVectorSensitivityDataQuery.isFetching &&
             value === null &&
-            Boolean(statisticalVectorSensitivityDataQuery.data?.length)
+            Boolean(statisticalVectorSensitivityDataQuery.data?.value?.length)
         ) {
             return false;
         }
@@ -31,10 +31,10 @@ export const activeTimestampUtcMsAtom = persistableFixableAtom<number | null>({
         if (
             !statisticalVectorSensitivityDataQuery.isFetching &&
             (value === null || value === undefined) &&
-            Boolean(statisticalVectorSensitivityDataQuery.data?.length)
+            Boolean(statisticalVectorSensitivityDataQuery.data?.value?.length)
         ) {
             // Return last timestamp
-            return statisticalVectorSensitivityDataQuery.data?.at(0)?.timestampsUtcMs.slice(-1)[0] ?? null;
+            return statisticalVectorSensitivityDataQuery.data?.value?.at(0)?.timestampsUtcMs.slice(-1)[0] ?? null;
         }
 
         return value ?? null;

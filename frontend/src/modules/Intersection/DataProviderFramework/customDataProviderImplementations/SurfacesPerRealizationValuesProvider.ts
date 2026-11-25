@@ -4,7 +4,9 @@ import type { SurfaceRealizationSampleValues_api } from "@api";
 import {
     SurfaceAttributeType_api,
     getRealizationSurfacesMetadataOptions,
+    postGetSampleSurfaceInPoints,
     postGetSampleSurfaceInPointsOptions,
+    withWarnings,
 } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
@@ -29,6 +31,7 @@ import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { createValidExtensionLength } from "@modules/_shared/DataProviderFramework/settings/utils/extensionLengthUtils";
 import { dedupeSurfaceAttributes, isSameAttribute } from "@modules/_shared/Surface";
+import { propagateWarningsToStatusWriter } from "@modules/_shared/utils/propagateWarningsToStatusWriter";
 
 import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
 
@@ -300,6 +303,7 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
         getSetting,
         getStoredData,
         fetchQuery,
+        getStatusWriter,
     }: FetchDataParams<
         SurfacesPerRealizationValuesSettings,
         SurfacesPerRealizationValuesData,
@@ -322,32 +326,39 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
 
         // Create list of surface name and its fetch promise
         const surfaceNameAndFetchList = surfaceNames.map((surfaceName) => {
-            const queryOptions = postGetSampleSurfaceInPointsOptions({
-                query: {
-                    case_uuid: ensembleIdent.getCaseUuid(),
-                    ensemble_name: ensembleIdent.getEnsembleName(),
-                    surface_name: surfaceName,
-                    realization_nums: realizations ?? [],
-                },
-                body: {
-                    sample_points: {
-                        x_points: requestedPolylineWithCumulatedLengths.xUtmPoints,
-                        y_points: requestedPolylineWithCumulatedLengths.yUtmPoints,
+            const queryOptions = withWarnings(
+                postGetSampleSurfaceInPointsOptions({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                        surface_name: surfaceName,
+                        realization_nums: realizations ?? [],
                     },
-                    surface_attribute: attribute,
-                },
-            });
+                    body: {
+                        sample_points: {
+                            x_points: requestedPolylineWithCumulatedLengths.xUtmPoints,
+                            y_points: requestedPolylineWithCumulatedLengths.yUtmPoints,
+                        },
+                        surface_attribute: attribute,
+                    },
+                }),
+                postGetSampleSurfaceInPoints,
+            );
 
             return { surfaceName: surfaceName, fetchPromise: fetchQuery(queryOptions) };
         });
 
         // Assemble into one promise
-        const promise = Promise.all(surfaceNameAndFetchList.map((elm) => elm.fetchPromise)).then((fetchResults) =>
-            fetchResults.reduce<SurfacesPerRealizationValuesData>((acc, surfaceRealizationSampleValuesArray, i) => {
-                acc[surfaceNameAndFetchList[i].surfaceName] = surfaceRealizationSampleValuesArray;
+        const promise = Promise.all(surfaceNameAndFetchList.map((elm) => elm.fetchPromise)).then((fetchResults) => {
+            propagateWarningsToStatusWriter(
+                fetchResults.flatMap((result) => result.warnings),
+                getStatusWriter(),
+            );
+            return fetchResults.reduce<SurfacesPerRealizationValuesData>((acc, result, i) => {
+                acc[surfaceNameAndFetchList[i].surfaceName] = result.value;
                 return acc;
-            }, {}),
-        );
+            }, {});
+        });
 
         return promise;
     }

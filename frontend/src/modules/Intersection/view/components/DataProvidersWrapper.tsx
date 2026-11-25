@@ -173,6 +173,11 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         statusWriter.addError(error);
     }
 
+    // Retrieve warnings reported by the providers, e.g. warnings sent by the back-end together with the data
+    for (const warning of assemblerProduct.aggregatedWarningMessages) {
+        statusWriter.addWarning(warning);
+    }
+
     // Retrieve action-required messages from assembler (e.g. invalid layer settings)
     for (const message of assemblerProduct.aggregatedActionRequiredMessages) {
         statusWriter.flagActionRequired(message);
