@@ -2,14 +2,9 @@ import { atom } from "jotai";
 
 import type { VectorDefinitionsType } from "@assets/vectorDefinitions";
 
-import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import type { RegularEnsemble } from "@framework/RegularEnsemble";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { createVectorSelectorDataFromVectors } from "@modules/_shared/components/VectorSelector";
 import { isVaryingNumericParameter } from "@modules/_shared/parameterUtils";
 import { simulationVectorDefinition } from "@modules/_shared/reservoirSimulationStringUtils";
@@ -33,53 +28,12 @@ export const statisticsTypeAtom = atom<StatisticsType>((get) => {
     return StatisticsType.INDIVIDUAL;
 });
 
-export const selectedRegularEnsemblesAtom = atom<RegularEnsemble[]>((get) => {
-    // NOTE: Used for view and color by parameter, i.e. not for delta ensembles yet!
-    const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
-
-    const selectedRegularEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, RegularEnsembleIdent);
-
-    const selectedRegularEnsembles: RegularEnsemble[] = [];
-    for (const regularEnsembleIdent of selectedRegularEnsembleIdents) {
-        const ensemble = ensembleSet.findEnsemble(regularEnsembleIdent);
-        if (ensemble) {
-            selectedRegularEnsembles.push(ensemble);
-        }
-    }
-
-    return selectedRegularEnsembles;
-});
-
-export const selectedDeltaEnsemblesAtom = atom<DeltaEnsemble[]>((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
-
-    const selectedDeltaEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, DeltaEnsembleIdent);
-
-    const selectedDeltaEnsembles: DeltaEnsemble[] = [];
-    for (const deltaEnsembleIdent of selectedDeltaEnsembleIdents) {
-        const ensemble = ensembleSet.findEnsemble(deltaEnsembleIdent);
-        if (ensemble) {
-            selectedDeltaEnsembles.push(ensemble);
-        }
-    }
-    return selectedDeltaEnsembles;
-});
-
 export const numericAndNonConstantParametersUnionAtom = atom<Parameter[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
 
-    // Does not support parameters for delta ensembles yet
-    const hasAnyDeltaEnsembles = filterEnsembleIdentsByType(selectedEnsembleIdents, DeltaEnsembleIdent).length > 0;
-    if (hasAnyDeltaEnsembles) {
-        return [];
-    }
-
     const numericAndNonConstantParametersUnion: Parameter[] = [];
-    const regularEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, RegularEnsembleIdent);
-    for (const ensembleIdent of regularEnsembleIdents) {
+    for (const ensembleIdent of selectedEnsembleIdents) {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
         if (!ensemble) {
             continue;

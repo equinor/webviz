@@ -65,16 +65,14 @@ export function WorkbenchWrapper() {
     );
 
     let content: React.ReactNode;
-    const loadingOverlayNote = `Note that the first time an ensemble is loaded in Webviz,
-                it might take a while to collect all parameter values...`;
     if (isEnsembleSetLoading) {
-        content = <LoadingOverlay text="Loading ensemble set..." note={loadingOverlayNote} />;
+        content = <LoadingOverlay text="Loading ensemble set..." />;
     } else if (!isInitialized) {
-        content = <LoadingOverlay text="Initializing application..." note={loadingOverlayNote} />;
+        content = <LoadingOverlay text="Initializing application..." />;
     } else if (isSessionLoading) {
-        content = <LoadingOverlay text="Loading session..." note={loadingOverlayNote} />;
+        content = <LoadingOverlay text="Loading session..." />;
     } else if (isSnapshotLoading) {
-        content = <LoadingOverlay text="Loading snapshot..." note={loadingOverlayNote} />;
+        content = <LoadingOverlay text="Loading snapshot..." />;
     } else if (!hasActiveSession) {
         content = <StartPage workbench={workbench} />;
     }

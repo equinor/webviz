@@ -1,13 +1,17 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 
 import type {
+    ResultWithWarnings,
     InplaceVolumesStatisticalTableDataPerFluidSelection_api,
     InplaceVolumesIndexWithValues_api,
     InplaceVolumesTableDataPerFluidSelection_api,
 } from "@api";
 import {
+    postGetAggregatedPerRealizationInplaceTableData,
     postGetAggregatedPerRealizationInplaceTableDataOptions,
+    postGetAggregatedStatisticalInplaceTableData,
     postGetAggregatedStatisticalInplaceTableDataOptions,
+    withWarnings,
 } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -31,11 +35,28 @@ export type DeltaEnsembleIdentWithRealizations = {
     realizations: readonly number[];
 };
 
+type EnsembleDisplayNameFunc = (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => string;
+
+function getEnsembleName(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent): string {
+    return ensembleIdent.getEnsembleName();
+}
+
+function makeSourceWarnings(
+    source: { ensembleIdent: RegularEnsembleIdent; tableName: string },
+    warnings: string[],
+    makeEnsembleDisplayName: EnsembleDisplayNameFunc,
+) {
+    const ensembleName = makeEnsembleDisplayName(source.ensembleIdent);
+    return warnings.map((warning) => `${ensembleName}, table "${source.tableName}": ${warning}`);
+}
+
 export type AggregatedTableDataResults = {
     tablesData: InplaceVolumesTableData[];
     isFetching: boolean;
     allQueriesFailed: boolean;
     errors: Error[];
+    /** Warnings reported by the back-end, e.g. for requested realizations missing in a table */
+    warnings: string[];
 };
 
 export type AggregatedStatisticalTableDataResults = {
@@ -43,6 +64,8 @@ export type AggregatedStatisticalTableDataResults = {
     isFetching: boolean;
     allQueriesFailed: boolean;
     errors: Error[];
+    /** Warnings reported by the back-end, e.g. for requested realizations missing in a table */
+    warnings: string[];
 };
 
 /** A single data source: one table within one ensemble. */
@@ -80,6 +103,7 @@ export function makeAggregatedStatisticalTableDataQueryOptions(
     groupByIndices: string[],
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
+    makeEnsembleDisplayName: EnsembleDisplayNameFunc = getEnsembleName,
 ) {
     const sources: InplaceVolumesSource[] = [];
     for (const el of ensembleIdentsWithRealizations) {
@@ -94,6 +118,7 @@ export function makeAggregatedStatisticalTableDataQueryOptions(
         groupByIndices,
         indicesWithValues,
         allowEnable,
+        makeEnsembleDisplayName,
     );
 }
 
@@ -110,6 +135,7 @@ export function makeAggregatedStatisticalTableDataQueryOptionsFromSources(
     groupByIndices: string[],
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
+    makeEnsembleDisplayName: EnsembleDisplayNameFunc = getEnsembleName,
 ) {
     const eachIndexHasValues = indicesWithValues.every((index) => index.values.length > 0);
     const validGroupByIndices = groupByIndices.length === 0 ? null : groupByIndices;
@@ -117,19 +143,22 @@ export function makeAggregatedStatisticalTableDataQueryOptionsFromSources(
     const queries = sources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
-        const options = postGetAggregatedStatisticalInplaceTableDataOptions({
-            query: {
-                ensemble_name: source.ensembleIdent.getEnsembleName(),
-                case_uuid: source.ensembleIdent.getCaseUuid(),
-                table_name: source.tableName,
-                result_names: resultNames,
-                group_by_indices: validGroupByIndices,
-                realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
-            },
-            body: {
-                indices_with_values: indicesWithValues,
-            },
-        });
+        const options = withWarnings(
+            postGetAggregatedStatisticalInplaceTableDataOptions({
+                query: {
+                    ensemble_name: source.ensembleIdent.getEnsembleName(),
+                    case_uuid: source.ensembleIdent.getCaseUuid(),
+                    table_name: source.tableName,
+                    result_names: resultNames,
+                    group_by_indices: validGroupByIndices,
+                    realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
+                },
+                body: {
+                    indices_with_values: indicesWithValues,
+                },
+            }),
+            postGetAggregatedStatisticalInplaceTableData,
+        );
         return () => ({
             ...options,
             enabled: Boolean(
@@ -145,18 +174,23 @@ export function makeAggregatedStatisticalTableDataQueryOptionsFromSources(
     });
 
     function combine(
-        results: UseQueryResult<InplaceVolumesStatisticalTableDataPerFluidSelection_api, Error>[],
+        results: UseQueryResult<ResultWithWarnings<InplaceVolumesStatisticalTableDataPerFluidSelection_api>, Error>[],
     ): AggregatedStatisticalTableDataResults {
         const tablesData: InplaceVolumesStatisticalTableData[] = [];
         const errors: Error[] = [];
+        const warnings: string[] = [];
         for (const [index, result] of results.entries()) {
             if (result.data) {
                 tablesData.push({
                     ensembleIdent: sources[index].ensembleIdent,
                     tableName: sources[index].tableName,
                     sensitivityCase: sources[index].sensitivityCase,
-                    data: result.data,
+                    data: result.data.value,
                 });
+                // Disabled queries keep their cached data - only report warnings for the current selection
+                if (queries[index]().enabled) {
+                    warnings.push(...makeSourceWarnings(sources[index], result.data.warnings, makeEnsembleDisplayName));
+                }
             }
             if (result.error) {
                 errors.push(result.error);
@@ -168,6 +202,7 @@ export function makeAggregatedStatisticalTableDataQueryOptionsFromSources(
             isFetching: results.some((result) => result.isFetching),
             allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
             errors: errors,
+            warnings,
         };
     }
 
@@ -184,6 +219,7 @@ export function makeAggregatedPerRealizationTableDataQueryOptions(
     groupByIndices: string[],
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
+    makeEnsembleDisplayName: EnsembleDisplayNameFunc = getEnsembleName,
 ) {
     const uniqueSources: { ensembleIdent: RegularEnsembleIdent; realizations: readonly number[]; tableName: string }[] =
         [];
@@ -199,19 +235,22 @@ export function makeAggregatedPerRealizationTableDataQueryOptions(
     const queries = uniqueSources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
-        const options = postGetAggregatedPerRealizationInplaceTableDataOptions({
-            query: {
-                ensemble_name: source.ensembleIdent.getEnsembleName(),
-                case_uuid: source.ensembleIdent.getCaseUuid(),
-                table_name: source.tableName,
-                result_names: resultNames,
-                group_by_indices: validGroupByIndices,
-                realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
-            },
-            body: {
-                indices_with_values: indicesWithValues,
-            },
-        });
+        const options = withWarnings(
+            postGetAggregatedPerRealizationInplaceTableDataOptions({
+                query: {
+                    ensemble_name: source.ensembleIdent.getEnsembleName(),
+                    case_uuid: source.ensembleIdent.getCaseUuid(),
+                    table_name: source.tableName,
+                    result_names: resultNames,
+                    group_by_indices: validGroupByIndices,
+                    realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
+                },
+                body: {
+                    indices_with_values: indicesWithValues,
+                },
+            }),
+            postGetAggregatedPerRealizationInplaceTableData,
+        );
         return () => ({
             ...options,
             enabled: Boolean(
@@ -227,17 +266,23 @@ export function makeAggregatedPerRealizationTableDataQueryOptions(
     });
 
     function combine(
-        results: UseQueryResult<InplaceVolumesTableDataPerFluidSelection_api, Error>[],
+        results: UseQueryResult<ResultWithWarnings<InplaceVolumesTableDataPerFluidSelection_api>, Error>[],
     ): AggregatedTableDataResults {
         const tablesData: InplaceVolumesTableData[] = [];
         const errors: Error[] = [];
+        const warnings: string[] = [];
         for (const [index, result] of results.entries()) {
             if (result.data) {
                 tablesData.push({
                     ensembleIdent: uniqueSources[index].ensembleIdent,
                     tableName: uniqueSources[index].tableName,
-                    data: result.data,
+                    data: result.data.value,
                 });
+                if (queries[index]().enabled) {
+                    warnings.push(
+                        ...makeSourceWarnings(uniqueSources[index], result.data.warnings, makeEnsembleDisplayName),
+                    );
+                }
             }
             if (result.error) {
                 errors.push(result.error);
@@ -249,6 +294,7 @@ export function makeAggregatedPerRealizationTableDataQueryOptions(
             isFetching: results.some((result) => result.isFetching),
             allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
             errors: errors,
+            warnings,
         };
     }
 
@@ -272,6 +318,7 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
     groupByIndices: string[],
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
+    makeEnsembleDisplayName: EnsembleDisplayNameFunc = getEnsembleName,
 ) {
     const querySpecs: DeltaQuerySpec[] = [];
     const queryPairs: DeltaQueryPair[] = [];
@@ -311,19 +358,22 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
     const queries = querySpecs.map(function makeDeltaSourceQuery(spec) {
         const validRealizations = spec.realizations.length === 0 ? null : [...spec.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
-        const options = postGetAggregatedPerRealizationInplaceTableDataOptions({
-            query: {
-                ensemble_name: spec.ensembleName,
-                case_uuid: spec.caseUuid,
-                table_name: spec.tableName,
-                result_names: resultNames,
-                group_by_indices: validGroupByIndices,
-                realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
-            },
-            body: {
-                indices_with_values: indicesWithValues,
-            },
-        });
+        const options = withWarnings(
+            postGetAggregatedPerRealizationInplaceTableDataOptions({
+                query: {
+                    ensemble_name: spec.ensembleName,
+                    case_uuid: spec.caseUuid,
+                    table_name: spec.tableName,
+                    result_names: resultNames,
+                    group_by_indices: validGroupByIndices,
+                    realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
+                },
+                body: {
+                    indices_with_values: indicesWithValues,
+                },
+            }),
+            postGetAggregatedPerRealizationInplaceTableData,
+        );
         return function getDeltaSourceQueryOptions() {
             return {
                 ...options,
@@ -342,12 +392,13 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
     });
 
     function combine(
-        results: UseQueryResult<InplaceVolumesTableDataPerFluidSelection_api, Error>[],
+        results: UseQueryResult<ResultWithWarnings<InplaceVolumesTableDataPerFluidSelection_api>, Error>[],
     ): AggregatedDeltaTableDataResults {
         const tablesData: InplaceVolumesTableData[] = [];
         const errors: Error[] = [];
         const droppedFluidSelections: DeltaDroppedFluidSelections[] = [];
         const unmatchedRows: DeltaUnmatchedRows[] = [];
+        const warnings: string[] = [];
 
         for (const queryPair of queryPairs) {
             const comparisonResult = results[queryPair.comparisonQueryIndex];
@@ -361,7 +412,23 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
             }
 
             if (comparisonResult?.data && referenceResult?.data) {
-                const deltaResult = subtractPerRealizationTablesMemoized(comparisonResult.data, referenceResult.data);
+                const deltaLabel = `${makeEnsembleDisplayName(queryPair.deltaEnsembleIdent)}, table "${queryPair.tableName}"`;
+                if (
+                    queries[queryPair.comparisonQueryIndex]().enabled &&
+                    queries[queryPair.referenceQueryIndex]().enabled
+                ) {
+                    warnings.push(
+                        ...comparisonResult.data.warnings.map((warning) => `${deltaLabel}, comparison: ${warning}`),
+                    );
+                    warnings.push(
+                        ...referenceResult.data.warnings.map((warning) => `${deltaLabel}, reference: ${warning}`),
+                    );
+                }
+
+                const deltaResult = subtractPerRealizationTablesMemoized(
+                    comparisonResult.data.value,
+                    referenceResult.data.value,
+                );
                 tablesData.push({
                     ensembleIdent: queryPair.deltaEnsembleIdent,
                     tableName: queryPair.tableName,
@@ -395,6 +462,7 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
                         results[comparisonQueryIndex]?.isError || results[referenceQueryIndex]?.isError,
                 ),
             errors: errors,
+            warnings,
             droppedFluidSelections,
             unmatchedRows,
         };

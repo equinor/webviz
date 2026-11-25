@@ -20,6 +20,7 @@ import {
     propagateAllApiErrorsToStatusWriter,
     propagateQueryErrorsToStatusWriter,
 } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
+import { propagateWarningsToStatusWriter } from "@modules/_shared/utils/propagateWarningsToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { RFT_STATISTIC_LABELS, type RftStatistic } from "../typesAndEnums";
@@ -78,6 +79,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const rftRealizationDataResult = useAtomValue(rftRealizationDataQueriesAtom);
     const rftObservationsResult = useAtomValue(rftObservationsQueriesAtom);
     propagateAllApiErrorsToStatusWriter(rftRealizationDataResult.errors, statusWriter);
+    propagateWarningsToStatusWriter(rftRealizationDataResult.warnings, statusWriter);
     propagateAllApiErrorsToStatusWriter(rftObservationsResult.errors, statusWriter);
 
     const availableResponseNames = useAtomValue(availableResponseNamesAtom);

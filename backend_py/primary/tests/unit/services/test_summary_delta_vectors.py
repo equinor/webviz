@@ -125,3 +125,28 @@ def test_create_realization_delta_vector_list_with_empty_table() -> None:
 
     # Validate the result
     assert result == expected_result
+
+
+def test_create_delta_vector_table_sorts_interleaved_rows() -> None:
+    # Inputs as a join could leave them: realizations interleaved and dates out of order
+    comparison_data = {
+        "DATE": [30, 10, 10, 30, 20, 20],
+        "REAL": [2, 1, 2, 1, 2, 1],
+        "vector": [300.0, 10.0, 100.0, 30.0, 200.0, 20.0],
+    }
+    reference_data = {"DATE": [20, 10, 30, 30, 10, 20], "REAL": [1, 2, 2, 1, 1, 2], "vector": [0.0] * 6}
+    comparison_vector_table = pa.table(comparison_data, schema=VECTOR_TABLE_SCHEMA)
+    reference_vector_table = pa.table(reference_data, schema=VECTOR_TABLE_SCHEMA)
+
+    delta_table = create_delta_vector_table(comparison_vector_table, reference_vector_table, "vector")
+
+    assert delta_table.column("REAL").to_pylist() == [1, 1, 1, 2, 2, 2]
+    assert delta_table.column("DATE").to_numpy().astype(int).tolist() == [10, 20, 30, 10, 20, 30]
+    assert create_realization_delta_vector_list(delta_table, "vector", is_rate=False, unit="unit") == [
+        RealizationDeltaVector(
+            realization=1, timestamps_utc_ms=[10, 20, 30], values=[10.0, 20.0, 30.0], is_rate=False, unit="unit"
+        ),
+        RealizationDeltaVector(
+            realization=2, timestamps_utc_ms=[10, 20, 30], values=[100.0, 200.0, 300.0], is_rate=False, unit="unit"
+        ),
+    ]

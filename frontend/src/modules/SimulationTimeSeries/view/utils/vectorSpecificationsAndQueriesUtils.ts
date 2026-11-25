@@ -1,6 +1,6 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 
-import type { VectorStatisticData_api } from "@api";
+import type { ResultWithWarnings, VectorStatisticData_api } from "@api";
 import { StatisticFunction_api } from "@api";
 
 import type { VectorSpec, VectorSpecWithData } from "../../typesAndEnums";
@@ -16,7 +16,7 @@ import { FanchartStatisticOption } from "../../typesAndEnums";
  */
 export function createLoadedVectorSpecificationAndDataArray<T>(
     vectorSpecifications: VectorSpec[],
-    queryResults: UseQueryResult<T | null | undefined>[],
+    queryResults: UseQueryResult<ResultWithWarnings<T> | null | undefined>[],
 ): VectorSpecWithData<T>[] {
     if (vectorSpecifications.length !== queryResults.length) {
         throw new Error(
@@ -33,7 +33,7 @@ export function createLoadedVectorSpecificationAndDataArray<T>(
         const result = queryResults[i];
         if (!result.data) continue;
 
-        output.push({ vectorSpecification: vectorSpecifications[i], data: result.data });
+        output.push({ vectorSpecification: vectorSpecifications[i], data: result.data.value });
     }
 
     return output;
