@@ -51,14 +51,14 @@ jobs:
       - name: 📦 Keep CPU narration audio cache warm
         uses: actions/cache/restore@v4
         with:
-          path: frontend/.narration-cache-cpu
+          path: frontend/.narration-cache
           key: narration-audio-cpu-keepalive
           restore-keys: narration-audio-cpu-
 
       - name: 📦 Keep GPU narration audio cache warm
         uses: actions/cache/restore@v4
         with:
-          path: frontend/.narration-cache-gpu
+          path: frontend/.narration-cache
           key: narration-audio-gpu-keepalive
           restore-keys: narration-audio-gpu-
 
