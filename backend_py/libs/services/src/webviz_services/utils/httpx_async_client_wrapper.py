@@ -25,16 +25,29 @@ class HTTPXAsyncClientWrapper:
         return self._async_client
 
     def start(self) -> None:
-        """Instantiate the client. Call from the FastAPI startup hook."""
-        if self._async_client is None:
-            # Try and increase the maximum number of concurrent connections and the max number of
-            # keep-alive connections from their defualts of 100 and 20 respectively.
-            limits = httpx.Limits(max_connections=300, max_keepalive_connections=100)
-            self._async_client = httpx.AsyncClient(limits=limits)
-            LOGGER.info(f"httpx AsyncClient instantiated: id={id(self._async_client)}, {limits=}")
+        """
+        Instantiate the client. Call from the FastAPI startup hook.
+        This method should be called exactly once during the application startup.
+        """
+        if self._async_client is not None:
+            raise RuntimeError("HTTPXAsyncClientWrapper already started.")
+
+        # Try and increase the maximum number of concurrent connections and the max number of
+        # keep-alive connections from their defualts of 100 and 20 respectively.
+        limits = httpx.Limits(max_connections=300, max_keepalive_connections=100)
+        self._async_client = httpx.AsyncClient(limits=limits)
+
+        LOGGER.info(
+            f"HTTPXAsyncClientWrapper: instantiated shared AsyncClient, {limits=} (id={id(self._async_client)})"
+        )
 
     async def stop_async(self) -> None:
-        """Gracefully shutdown. Call from FastAPI shutdown hook."""
+        """
+        Gracefully shutdown. Call from FastAPI shutdown hook.
+        This method should be called exactly once during the application shutdown.
+        """
+        LOGGER.info(f"HTTPXAsyncClientWrapper: shutting down shared AsyncClient (id={id(self._async_client)})")
+
         if self._async_client is not None:
             LOGGER.info(
                 f"httpx async_client.is_closed: {self._async_client.is_closed}. " f"Id: {id(self._async_client)}"

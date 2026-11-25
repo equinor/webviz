@@ -56,6 +56,7 @@ export type RelPermDataAccessorStatus = {
     isFetching: boolean;
     isError: boolean;
     errors: Error[];
+    warnings: string[];
 };
 
 export type RelPermDataAccessorLike = {

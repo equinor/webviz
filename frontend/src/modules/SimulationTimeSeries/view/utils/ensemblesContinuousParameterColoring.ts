@@ -1,3 +1,5 @@
+import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { ParameterIdent } from "@framework/EnsembleParameters";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -18,20 +20,24 @@ export class EnsemblesParameterColoring {
     private _ensembleParameterMap: Map<string, NumericParameter>;
     private _colorScale: ColorScale;
 
-    constructor(selectedRegularEnsembles: RegularEnsemble[], parameterIdent: ParameterIdent, colorScale: ColorScale) {
+    constructor(selectedEnsembles: (RegularEnsemble | DeltaEnsemble)[], parameterIdent: ParameterIdent, colorScale: ColorScale) {
         this._parameterIdent = parameterIdent;
         this._ensembleParameterMap = new Map<string, NumericParameter>();
         let minMax = MinMax.createInvalid();
-        for (const ensemble of selectedRegularEnsembles) {
+        for (const ensemble of selectedEnsembles) {
             const ensembleParameters = ensemble.getParameters();
             const parameter = ensembleParameters.findParameter(parameterIdent);
-            if (!parameter || !isVaryingNumericParameter(parameter)) continue;
+            if (!parameter || !isVaryingNumericParameter(parameter) || parameter.values.length === 0) continue;
 
             this._ensembleParameterMap.set(ensemble.getIdent().toString(), parameter);
             minMax = minMax.extendedBy(MinMax.fromNumericValues(parameter.values));
         }
 
-        // Consider: Set Range [0,0] if parameterMinMax is invalid?
+        // Fallback to range [0,0] when no ensemble contributes parameter values
+        if (!minMax.isValid()) {
+            minMax = new MinMax(0, 0);
+        }
+
         this._colorScale = colorScale;
         const midValue = minMax.min + (minMax.max - minMax.min) / 2;
         this._colorScale.setRangeAndMidPoint(minMax.min, minMax.max, midValue);
@@ -47,18 +53,18 @@ export class EnsemblesParameterColoring {
         return this._colorScale;
     }
 
-    hasParameterForEnsemble(ensembleIdent: RegularEnsembleIdent): boolean {
+    hasParameterForEnsemble(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent): boolean {
         return this._ensembleParameterMap.has(ensembleIdent.toString());
     }
 
-    hasParameterRealizationValue(ensembleIdent: RegularEnsembleIdent, realization: number): boolean {
+    hasParameterRealizationValue(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent, realization: number): boolean {
         const parameter = this._ensembleParameterMap.get(ensembleIdent.toString());
         if (parameter === undefined) return false;
 
         return parameter.realizations.indexOf(realization) !== -1;
     }
 
-    getParameterRealizationValue(ensembleIdent: RegularEnsembleIdent, realization: number): number {
+    getParameterRealizationValue(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent, realization: number): number {
         if (!this.hasParameterRealizationValue(ensembleIdent, realization)) {
             throw new Error(
                 `Parameter ${this.getParameterDisplayName()} has no numerical value for realization ${realization} in ensemble ${ensembleIdent.toString()}`,

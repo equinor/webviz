@@ -179,6 +179,16 @@ export class ColorScale {
 
     getColorStops(): ColorStop[] {
         const colorStops: ColorStop[] = [];
+
+        // Zero-width range: avoid division by zero when calculating offsets
+        if (this._min === this._max) {
+            const color = this.getColorForValue(this._min);
+            return [
+                { offset: 0, color, value: this._min },
+                { offset: 1, color, value: this._max },
+            ];
+        }
+
         if (this._gradientType === ColorScaleGradientType.Diverging) {
             for (let i = 0; i < 50; i++) {
                 const value = this._min + (this._divMidPoint - this._min) * (i / 50);

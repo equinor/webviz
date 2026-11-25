@@ -16,18 +16,12 @@ export default defineConfig({
         include: ["./tests/unit/**/*.test.ts"],
     },
     resolve: {
-        alias: Object.keys(aliases.compilerOptions.paths).reduce(
-            (prev, current) => ({
-                ...prev,
-                [current.replace("/*", "")]: path.resolve(
-                    __dirname,
-                    aliases.compilerOptions.paths[current as keyof typeof aliases.compilerOptions.paths][0].replace(
-                        "/*",
-                        "",
-                    ),
-                ),
-            }),
-            {},
-        ),
+        // Bare and wildcard aliases of the same name (e.g. "@api" and "@api/*") need separate, anchored matchers
+        alias: Object.entries(aliases.compilerOptions.paths).map(([alias, [target]]) => {
+            const resolvedTarget = path.resolve(__dirname, target.replace("/*", ""));
+            return alias.endsWith("/*")
+                ? { find: new RegExp(`^${alias.replace("/*", "")}/`), replacement: `${resolvedTarget}/` }
+                : { find: new RegExp(`^${alias}$`), replacement: resolvedTarget };
+        }),
     },
 });

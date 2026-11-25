@@ -17,6 +17,7 @@ import {
 } from "@modules/_shared/InplaceVolumes/sensitivityUtils";
 import { FLUID_SPECIFIC_RESULT_NAMES, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
+import { propagateWarningsToStatusWriter } from "@modules/_shared/utils/propagateWarningsToStatusWriter";
 
 import { filterAtom, isSensitivityEnsembleSelectionBlockedAtom } from "../atoms/baseAtoms";
 import { indicesWithValuesAtom, sensitivityCasesWithoutRealizationsAtom } from "../atoms/derivedAtoms";
@@ -39,6 +40,8 @@ export function useMakeViewStatusWriterMessages(
     const sensitivityCasesWithoutRealizations = useAtomValue(sensitivityCasesWithoutRealizationsAtom);
 
     propagateAllApiErrorsToStatusWriter(queriesResult.errors, statusWriter);
+
+    propagateWarningsToStatusWriter(queriesResult.warnings, statusWriter);
 
     if (isSensitivityEnsembleSelectionBlocked) {
         statusWriter.addError(SENSITIVITY_ENSEMBLE_SELECTION_BLOCKED_MESSAGE);

@@ -30,6 +30,7 @@ import {
 } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
+import { propagateWarningsToStatusWriter } from "@modules/_shared/utils/propagateWarningsToStatusWriter";
 
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 import {
@@ -272,6 +273,7 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
             fetchQuery,
             setProgressMessage,
             onFetchCancelOrFinish,
+            getStatusWriter,
         } = params;
 
         const ensembleIdent = requireRegularEnsembleIdent(getSetting(Setting.ENSEMBLE));
@@ -353,7 +355,6 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
                 resample_to_def_str: null,
             },
         };
-        const queryKey = getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs);
 
         // For now use just a fixed delay and max duration in seconds
         // Maybe later extend delay/backoff to include:
@@ -363,7 +364,8 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
         const queryOptions = wrapLongRunningQuery({
             queryFn: getStatisticalSurfaceDataHybrid,
             queryFnArgs: apiFunctionArgs,
-            queryKey: queryKey,
+            queryKey: getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs),
+            withWarnings: true,
             delayBetweenPollsSecs: 1.0,
             maxTotalDurationSecs: 120,
         });
@@ -371,15 +373,18 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
         function handleTaskProgress(progressMessage: string | null) {
             setProgressMessage(progressMessage);
         }
-        const unsubscribe = lroProgressBus.subscribe(hashKey(queryKey), handleTaskProgress);
+        const unsubscribe = lroProgressBus.subscribe(hashKey(queryOptions.queryKey), handleTaskProgress);
         onFetchCancelOrFinish(() => {
             unsubscribe();
         });
 
-        const promise = fetchQuery({ ...queryOptions }).then((data) => ({
-            format: this._dataFormat,
-            surfaceData: transformSurfaceData(data),
-        }));
+        const promise = fetchQuery({ ...queryOptions }).then((data) => {
+            propagateWarningsToStatusWriter(data.warnings, getStatusWriter());
+            return {
+                format: this._dataFormat,
+                surfaceData: transformSurfaceData(data.value),
+            };
+        });
 
         return promise as Promise<SurfaceData>;
     }
