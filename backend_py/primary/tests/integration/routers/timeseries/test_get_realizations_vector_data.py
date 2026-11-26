@@ -33,7 +33,7 @@ async def test_get_realizations_vector_data_dates(
 ) -> None:
 
     realization_data = await router.get_realizations_vector_data(
-        response=None,  # type: ignore
+        response=Response(),
         authenticated_user=test_user,
         warning_reporter=_make_warning_reporter(),
         case_uuid=sumo_test_ensemble_ahm.case_uuid,
@@ -66,7 +66,7 @@ async def test_get_realizations_vector_data_realizations(
 ) -> None:
 
     realization_data = await router.get_realizations_vector_data(
-        response=None,  # type: ignore
+        response=Response(),
         authenticated_user=test_user,
         warning_reporter=_make_warning_reporter(),
         case_uuid=sumo_test_ensemble_ahm.case_uuid,
