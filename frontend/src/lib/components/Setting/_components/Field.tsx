@@ -4,9 +4,9 @@ import { Field as FieldPrimitive } from "@lib/components/Field";
 import { Heading } from "@lib/components/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { SectionStatusContext } from "../_contexts/SectionStatusContext";
 import { useReportFieldAnnotations } from "../_hooks/useReportFieldAnnotations";
 import { useReportFieldOverlay } from "../_hooks/useReportFieldOverlay";
+import { useReportFieldStatus } from "../_hooks/useReportFieldStatus";
 
 import { Annotations } from "./Annotations";
 import { Overlay, type OverlayProps } from "./Overlay";
@@ -135,25 +135,7 @@ export function Field(props: SettingFieldProps) {
     const hasInfo = annotations.some((a) => a.type === "info") || overlay?.type === "info";
     const hasWarning = hasWarningAnnotation || overlay?.type === "warning";
 
-    const sectionStatusContext = React.useContext(SectionStatusContext);
-    React.useEffect(
-        function reportFieldStatus() {
-            if (!sectionStatusContext) {
-                return;
-            }
-            sectionStatusContext.reportField(generatedInputId, {
-                hasInvalidValue: hasErrorAnnotation,
-                hasError: hasErrorOverlay,
-                hasWarning,
-                hasInfo,
-            });
-            return () => {
-                sectionStatusContext.unregisterField(generatedInputId);
-            };
-        },
-        [sectionStatusContext, generatedInputId, hasErrorAnnotation, hasErrorOverlay, hasWarning, hasInfo],
-    );
-
+    useReportFieldStatus({ hasInvalidValue: hasErrorAnnotation, hasError: hasErrorOverlay, hasWarning, hasInfo });
     useReportFieldAnnotations(annotations);
     useReportFieldOverlay(overlay ?? null);
 
