@@ -106,7 +106,7 @@ def test_well_multiple_entries_and_exits() -> None:
 def test_well_with_bottom_surface_enter_from_below() -> None:
     """Test well entering from below (bottom upward) and exiting through bottom (bottom downward)."""
     trajectory = create_well_trajectory([0.0, 100.0, 200.0, 300.0, 400.0])
-    top_picks = []
+    top_picks: list[SurfaceWellPick] = []
     bottom_picks = [
         create_pick(100.0, PickDirection.UPWARD),  # Enter from below at 100
         create_pick(300.0, PickDirection.DOWNWARD),  # Exit through bottom at 300
@@ -124,7 +124,7 @@ def test_well_with_bottom_surface_enter_from_below() -> None:
 def test_well_starts_inside_with_bottom_downward() -> None:
     """Test well starting inside formation, first pick is bottom downward (exiting down)."""
     trajectory = create_well_trajectory([0.0, 100.0, 200.0, 300.0, 400.0])
-    top_picks = []
+    top_picks: list[SurfaceWellPick] = []
     bottom_picks = [
         create_pick(200.0, PickDirection.DOWNWARD),  # Exit down at 200 (started inside)
     ]
@@ -247,8 +247,8 @@ def test_well_starts_inside_ends_inside() -> None:
 def test_well_no_intersection() -> None:
     """Test well with no picks (doesn't intersect formation)."""
     trajectory = create_well_trajectory([0.0, 100.0, 200.0, 300.0, 400.0])
-    top_picks = []
-    bottom_picks = []
+    top_picks: list[SurfaceWellPick] = []
+    bottom_picks: list[SurfaceWellPick] = []
 
     segments = _create_formation_segments_from_well_trajectory_and_picks(
         well_trajectory=trajectory, top_surface_picks=top_picks, bottom_surface_picks=bottom_picks
@@ -400,7 +400,7 @@ def test_single_top_pick_downward_extends_to_end() -> None:
 def test_well_entirely_inside_formation() -> None:
     """Test well that starts and ends inside formation (no picks)."""
     trajectory = create_well_trajectory([0.0, 100.0, 200.0, 300.0])
-    top_picks = []  # No picks means well doesn't cross surfaces
+    top_picks: list[SurfaceWellPick] = []  # No picks means well doesn't cross surfaces
 
     segments = _create_formation_segments_from_well_trajectory_and_picks(
         well_trajectory=trajectory, top_surface_picks=top_picks, bottom_surface_picks=None

@@ -1,6 +1,8 @@
 import { atom } from "jotai";
 
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+import { makeDistinguishableEnsembleDisplayNameFunc } from "@modules/_shared/ensembleNameUtils";
 import {
     makeAggregatedPerRealizationDeltaTableDataQueryOptions,
     makeAggregatedPerRealizationTableDataQueryOptions,
@@ -32,6 +34,7 @@ const regularAggregatedTableDataQueriesAtom = atomWithQueries((get) => {
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
     const areTableDefinitionSelectionsValid = get(areTableDefinitionSelectionsValidAtom);
+    const ensembleSet = get(EnsembleSetAtom);
 
     const enableQueries = areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
@@ -42,6 +45,7 @@ const regularAggregatedTableDataQueriesAtom = atomWithQueries((get) => {
         groupByIndices,
         indicesWithValues,
         enableQueries,
+        makeDistinguishableEnsembleDisplayNameFunc(ensembleSet),
     );
 });
 
@@ -59,6 +63,7 @@ const deltaAggregatedTableDataQueriesAtom = atomWithQueries((get) => {
     const deltaEnsembleIdentsWithRealizations = get(deltaEnsembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
     const areTableDefinitionSelectionsValid = get(areTableDefinitionSelectionsValidAtom);
+    const ensembleSet = get(EnsembleSetAtom);
 
     const enableQueries = areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
@@ -69,6 +74,7 @@ const deltaAggregatedTableDataQueriesAtom = atomWithQueries((get) => {
         groupByIndices,
         indicesWithValues,
         enableQueries,
+        makeDistinguishableEnsembleDisplayNameFunc(ensembleSet),
     );
 });
 
@@ -89,6 +95,7 @@ export const aggregatedTableDataQueriesAtom = atom((get) => {
             isFetching: false,
             allQueriesFailed: false,
             errors: [],
+            warnings: [],
             droppedFluidSelections: [],
             unmatchedRows: [],
             numDroppedSensitivityRows: 0,
@@ -108,6 +115,7 @@ export const aggregatedTableDataQueriesAtom = atom((get) => {
         // Only surface an "all failed" state when there is genuinely no data to show.
         allQueriesFailed: (regular.allQueriesFailed || delta.allQueriesFailed) && tablesData.length === 0,
         errors: [...regular.errors, ...delta.errors],
+        warnings: [...regular.warnings, ...delta.warnings],
         droppedFluidSelections: delta.droppedFluidSelections,
         unmatchedRows: delta.unmatchedRows,
         numDroppedSensitivityRows,

@@ -2,11 +2,17 @@
 
 import pytest
 import numpy as np
+from fastapi import Request, Response
 
 from primary.routers.timeseries import router
 from primary.routers.timeseries import schemas
 from primary.utils.query_string_utils import encode_as_uint_list_str
+from primary.utils.warning_reporter import WarningReporter
 from tests.integration.conftest import SumoTestEnsemble
+
+
+def _make_warning_reporter() -> WarningReporter:
+    return WarningReporter(Request({"type": "http", "headers": []}), Response())
 
 
 @pytest.mark.parametrize(
@@ -27,12 +33,13 @@ async def test_get_realizations_vector_data_dates(
 ) -> None:
 
     realization_data = await router.get_realizations_vector_data(
-        None,  # type: ignore
-        test_user,
-        sumo_test_ensemble_ahm.case_uuid,
-        sumo_test_ensemble_ahm.ensemble_name,
-        "FOPT",
-        frequency,
+        response=Response(),
+        authenticated_user=test_user,
+        warning_reporter=_make_warning_reporter(),
+        case_uuid=sumo_test_ensemble_ahm.case_uuid,
+        ensemble_name=sumo_test_ensemble_ahm.ensemble_name,
+        vector_name="FOPT",
+        resampling_frequency=frequency,
     )
 
     # check the first realization
@@ -59,13 +66,14 @@ async def test_get_realizations_vector_data_realizations(
 ) -> None:
 
     realization_data = await router.get_realizations_vector_data(
-        None,  # type: ignore
-        test_user,
-        sumo_test_ensemble_ahm.case_uuid,
-        sumo_test_ensemble_ahm.ensemble_name,
-        "FOPT",
-        schemas.Frequency.YEARLY,
-        realizations,
+        response=Response(),
+        authenticated_user=test_user,
+        warning_reporter=_make_warning_reporter(),
+        case_uuid=sumo_test_ensemble_ahm.case_uuid,
+        ensemble_name=sumo_test_ensemble_ahm.ensemble_name,
+        vector_name="FOPT",
+        resampling_frequency=schemas.Frequency.YEARLY,
+        realizations_encoded_as_uint_list_str=realizations,
     )
 
     assert len(realization_data) == real_count
