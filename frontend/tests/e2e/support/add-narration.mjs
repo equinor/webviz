@@ -42,14 +42,21 @@ function findSourceVideo(dir) {
     return candidates.length > 0 ? join(dir, candidates[0]) : null;
 }
 
+/** Run ffmpeg with `args`, returning true on success and logging stderr on failure. */
+function runFfmpeg(args, label) {
+    const result = spawnSync("ffmpeg", args, { encoding: "utf-8" });
+    if (result.error || result.status !== 0) {
+        console.error(`  [narration] ffmpeg failed (${label}):\n${result.stderr ?? result.error}`);
+        return false;
+    }
+    return true;
+}
+
 /**
- * Find the latest video keyframe timestamp (in ms) at or before `targetMs`.
- *
- * With `-c:v copy`, ffmpeg starts copying from the keyframe at or before `-ss` and resets that
- * keyframe to t=0 in the output WebM. Snapping `trimStartMs` to that exact keyframe keeps audio
- * delays, chapter markers, and captions in sync with the copied video stream.
+ * Find the earliest video keyframe timestamp (in ms) at or after `targetMs`, or null if none
+ * exists (e.g. `targetMs` falls after the last keyframe, or `ffprobe` is unavailable).
  */
-function findKeyframeAtOrBefore(videoPath, targetMs) {
+function findKeyframeAtOrAfter(videoPath, targetMs) {
     if (targetMs <= 0) {
         return 0;
     }
@@ -70,10 +77,9 @@ function findKeyframeAtOrBefore(videoPath, targetMs) {
         { encoding: "utf-8" },
     );
     if (result.error || result.status !== 0) {
-        return 0;
+        return null;
     }
 
-    let lastKeyframeMs = 0;
     for (const line of result.stdout.split(/\r?\n/)) {
         if (!line) {
             continue;
@@ -86,56 +92,206 @@ function findKeyframeAtOrBefore(videoPath, targetMs) {
         if (!Number.isFinite(ptsSec)) {
             continue;
         }
-        if (ptsSec > targetSec) {
-            break;
+        if (ptsSec >= targetSec - 0.001) {
+            return Math.round(ptsSec * 1000);
         }
-        lastKeyframeMs = Math.round(ptsSec * 1000);
     }
-    return lastKeyframeMs;
+    return null;
 }
 
-/** Build the ffmpeg argument list that overlays the delayed clips onto the video. */
-function buildFfmpegArgs(videoPath, clips, trimStartMs, outputPath) {
-    const args = ["-y", "-i", videoPath];
-    for (const clip of clips) {
-        args.push("-i", join(dirname(videoPath), clip.file));
-    }
-
-    // Delay each clip's audio to its start time on the original timeline, then mix them into a
-    // single track. Placing `-ss` as an output option trims both the copied video (at the exact
-    // keyframe `trimStartMs` without Matroska fast-seek undershoot) and the mixed audio together.
+/**
+ * Build the `-filter_complex` expression that delays each narration clip relative to `trimStartMs`
+ * and mixes them into a single `[aout]` stream.
+ */
+function buildAudioFilter(clips, trimStartMs) {
     const filters = [];
     const mixLabels = [];
     clips.forEach((clip, index) => {
-        const inputIndex = index + 1; // 0 is the video
+        const inputIndex = index + 1; // 0 is the video input
         const label = `a${index}`;
-        const delayMs = Math.max(0, Math.round(clip.startMs));
+        const delayMs = Math.max(0, Math.round(clip.startMs - trimStartMs));
         filters.push(`[${inputIndex}:a]adelay=${delayMs}:all=1[${label}]`);
         mixLabels.push(`[${label}]`);
     });
     filters.push(
         `${mixLabels.join("")}amix=inputs=${clips.length}:normalize=0:dropout_transition=0[aout]`,
     );
+    return filters.join(";");
+}
 
-    args.push(
-        "-filter_complex",
-        filters.join(";"),
-        "-map",
-        "0:v",
-        "-map",
-        "[aout]",
-        ...(trimStartMs > 0 ? ["-ss", (trimStartMs / 1000).toFixed(3)] : []),
-        "-c:v",
-        "copy",
-        "-c:a",
-        "libopus",
-        // The seek index is written at the end of a WebM by default,
-        // which a streaming player never reaches unless it downloads the whole file
-        "-cues_to_front",
-        "1",
-        outputPath,
-    );
-    return args;
+/**
+ * Smart-cut and mux `videoPath` starting at exact `trimStartMs`:
+ *  - If `trimStartMs` is already on a keyframe (or 0), stream-copy the whole video directly.
+ *  - Otherwise, re-encode ONLY the short opening slice `[trimStartMs, nextKeyframeMs)` (<= 5.12s
+ *    for Playwright's VP8 recordings) and stream-copy the remaining 99% from `nextKeyframeMs` onward,
+ *    then concat + mux the narration audio in one fast pass.
+ */
+function muxWithSmartCut(videoPath, clips, trimStartMs, outputPath) {
+    const dir = dirname(videoPath);
+    const audioInputs = clips.flatMap((clip) => ["-i", join(dir, clip.file)]);
+    const nextKeyframeMs = trimStartMs > 0 ? findKeyframeAtOrAfter(videoPath, trimStartMs) : 0;
+
+    // Case 1: Already aligned to a keyframe (or no trim needed) -> single-pass stream copy.
+    // Output `-ss` trims both the video and the original-timeline audio mix together.
+    if (nextKeyframeMs !== null && Math.abs(nextKeyframeMs - trimStartMs) <= 1) {
+        return runFfmpeg(
+            [
+                "-y",
+                "-i",
+                videoPath,
+                ...audioInputs,
+                "-filter_complex",
+                buildAudioFilter(clips, 0),
+                "-map",
+                "0:v",
+                "-map",
+                "[aout]",
+                ...(trimStartMs > 0 ? ["-ss", (trimStartMs / 1000).toFixed(3)] : []),
+                "-c:v",
+                "copy",
+                "-c:a",
+                "libopus",
+                "-cues_to_front",
+                "1",
+                outputPath,
+            ],
+            videoPath,
+        );
+    }
+
+    // Case 2: No keyframe after `trimStartMs` (very short tail) -> re-encode the short remainder directly.
+    if (nextKeyframeMs === null) {
+        return runFfmpeg(
+            [
+                "-y",
+                "-i",
+                videoPath,
+                ...audioInputs,
+                "-filter_complex",
+                buildAudioFilter(clips, 0),
+                "-map",
+                "0:v",
+                "-map",
+                "[aout]",
+                "-ss",
+                (trimStartMs / 1000).toFixed(3),
+                "-c:v",
+                "libvpx",
+                "-crf",
+                "10",
+                "-b:v",
+                "2M",
+                "-deadline",
+                "realtime",
+                "-cpu-used",
+                "5",
+                "-pix_fmt",
+                "yuv420p",
+                "-c:a",
+                "libopus",
+                "-cues_to_front",
+                "1",
+                outputPath,
+            ],
+            videoPath,
+        );
+    }
+
+    // Case 3: Smart cut -> re-encode [trimStartMs, nextKeyframeMs), copy [nextKeyframeMs, end), concat + mux.
+    // The concatenated video already starts at t=0 (= trimStartMs), so audio delays are relative to trimStartMs.
+    const audioFilter = buildAudioFilter(clips, trimStartMs);
+    const headPath = join(dir, ".smartcut-head.webm");
+    const tailPath = join(dir, ".smartcut-tail.webm");
+    const concatListPath = join(dir, ".smartcut-concat.txt");
+
+    try {
+        const headDurationSec = ((nextKeyframeMs - trimStartMs) / 1000).toFixed(3);
+        const headOk = runFfmpeg(
+            [
+                "-y",
+                "-i",
+                videoPath,
+                "-ss",
+                (trimStartMs / 1000).toFixed(3),
+                "-t",
+                headDurationSec,
+                "-an",
+                "-c:v",
+                "libvpx",
+                "-crf",
+                "10",
+                "-b:v",
+                "2M",
+                "-deadline",
+                "realtime",
+                "-cpu-used",
+                "5",
+                "-pix_fmt",
+                "yuv420p",
+                headPath,
+            ],
+            `${videoPath} (head)`,
+        );
+        if (!headOk) {
+            return false;
+        }
+
+        const tailOk = runFfmpeg(
+            [
+                "-y",
+                "-i",
+                videoPath,
+                "-ss",
+                (nextKeyframeMs / 1000).toFixed(3),
+                "-an",
+                "-c:v",
+                "copy",
+                tailPath,
+            ],
+            `${videoPath} (tail)`,
+        );
+        if (!tailOk) {
+            return false;
+        }
+
+        writeFileSync(
+            concatListPath,
+            `file '${headPath.replace(/'/g, "'\\''")}'\nfile '${tailPath.replace(/'/g, "'\\''")}'\n`,
+        );
+
+        return runFfmpeg(
+            [
+                "-y",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                concatListPath,
+                ...audioInputs,
+                "-filter_complex",
+                audioFilter,
+                "-map",
+                "0:v",
+                "-map",
+                "[aout]",
+                "-c:v",
+                "copy",
+                "-c:a",
+                "libopus",
+                // The seek index is written at the end of a WebM by default,
+                // which a streaming player never reaches unless it downloads the whole file
+                "-cues_to_front",
+                "1",
+                outputPath,
+            ],
+            `${videoPath} (concat+mux)`,
+        );
+    } finally {
+        rmSync(headPath, { force: true });
+        rmSync(tailPath, { force: true });
+        rmSync(concatListPath, { force: true });
+    }
 }
 
 function writeSteps(videoPath, steps, trimStartMs) {
@@ -202,16 +358,11 @@ function narrateFolder(dir) {
         return false;
     }
 
-    // Trim the video's blank/loading lead-in, snapped to the nearest keyframe at or before the
-    // first narration clip so `-c:v copy` stays in sync with the audio, steps, and captions.
-    const firstClipMs = Math.max(0, Math.min(...clips.map((clip) => clip.startMs)));
-    const trimStartMs = findKeyframeAtOrBefore(videoPath, firstClipMs);
+    // Trim the video's blank/loading lead-in at the exact timestamp of the first narration clip.
+    const trimStartMs = Math.max(0, Math.min(...clips.map((clip) => clip.startMs)));
 
     const outputPath = videoPath.replace(/\.webm$/, NARRATED_SUFFIX);
-    const args = buildFfmpegArgs(videoPath, clips, trimStartMs, outputPath);
-    const result = spawnSync("ffmpeg", args, { encoding: "utf-8" });
-    if (result.error || result.status !== 0) {
-        console.error(`  [narration] ffmpeg failed for ${videoPath}:\n${result.stderr ?? result.error}`);
+    if (!muxWithSmartCut(videoPath, clips, trimStartMs, outputPath)) {
         return false;
     }
     writeSteps(videoPath, steps, trimStartMs);
