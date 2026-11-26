@@ -1,3 +1,7 @@
+import React from "react";
+
+import { SettingPanelAnnotationsContext, SettingSectionStatusContext } from "@lib/components/Setting";
+
 import type { DashboardSettingDefinition } from "../DashboardSettingDefinition";
 
 import { DashboardSettingIndicator } from "./DashboardSettingIndicator";
@@ -26,6 +30,50 @@ export type DashboardControlledSettingProps<TValue> = {
  * valid here) while controlled.
  */
 export function DashboardControlledSetting<TValue>(props: DashboardControlledSettingProps<TValue>): React.ReactNode {
+    const fieldId = React.useId();
+    const isInvalidDashboardValue = props.isControlled && !props.isValueValidHere;
+    const reportAnnotations = React.useContext(SettingPanelAnnotationsContext);
+    const sectionStatus = React.useContext(SettingSectionStatusContext);
+
+    // Report invalid dashboard setting to setting panel annotations
+    React.useEffect(
+        function reportSettingAnnotation() {
+            if (!reportAnnotations || !isInvalidDashboardValue) {
+                return;
+            }
+
+            reportAnnotations(fieldId, [
+                { type: "error", message: `Dashboard setting value for "${props.label}" is not valid here` },
+            ]);
+
+            return function retractSettingAnnotation() {
+                reportAnnotations(fieldId, []);
+            };
+        },
+        [reportAnnotations, fieldId, isInvalidDashboardValue, props.label],
+    );
+
+    // Reports invalid dashboard setting to setting section status
+    React.useEffect(
+        function reportFieldStatus() {
+            if (!sectionStatus || !isInvalidDashboardValue) {
+                return;
+            }
+
+            sectionStatus.reportField(fieldId, {
+                hasInvalidValue: true,
+                hasError: false,
+                hasWarning: false,
+                hasInfo: false,
+            });
+
+            return function retractFieldStatus() {
+                sectionStatus.unregisterField(fieldId);
+            };
+        },
+        [sectionStatus, fieldId, isInvalidDashboardValue],
+    );
+
     const label = props.isControlled ? (
         <span className="gap-x-2xs flex items-center">
             {props.label}
