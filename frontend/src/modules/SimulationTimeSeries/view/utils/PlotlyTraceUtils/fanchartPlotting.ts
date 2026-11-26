@@ -1,7 +1,7 @@
 import { formatRgb, modeRgb, useMode } from "culori";
-import type { ScatterLine } from "plotly.js";
+import type { ScatterData } from "plotly.js";
 
-import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
+import { makeTimeSeriesLine, type TimeSeriesPlotData } from "../timeSeriesPlotData";
 
 /**
     Definition of statistics data for free line trace in fanchart
@@ -116,7 +116,7 @@ export type CreateFanchartTracesOptions = {
     data: FanchartData;
     hexColor: string;
     legendGroup: string;
-    lineShape?: ScatterLine["shape"];
+    lineShape?: NonNullable<ScatterData["line"]>["shape"];
     showLegend?: boolean;
     hoverTemplate?: string;
     legendRank?: number;
@@ -205,8 +205,7 @@ export function createFanchartTraces({
             xaxis: xaxis,
             yaxis: yaxis,
             mode: "lines",
-            type: type,
-            line: { width: 0, color: lineColor, shape: lineShape },
+            ...makeTimeSeriesLine(type, { width: 0, color: lineColor, shape: lineShape }),
             legendgroup: legendGroup,
             showlegend: false,
         };
@@ -265,7 +264,7 @@ export function createFanchartTraces({
     // Free line - solid line
     if (data.freeLine !== undefined) {
         const lineTrace = getDefaultTrace(data.freeLine.name, data.freeLine.data);
-        lineTrace.line = { color: lineColor, shape: lineShape };
+        lineTrace.line = makeTimeSeriesLine(type, { color: lineColor, shape: lineShape }).line;
         traces.push(lineTrace);
     }
 

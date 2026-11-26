@@ -17,7 +17,7 @@
         "jsx": "react-jsx"
     },
     "include": ["src", "tests", "../docs"],
-    "exclude": ["tests/ct/playwright/", "**/_playwright.config.ts"],
+    "exclude": ["tests/ct/playwright/", "**/_playwright.config.ts", "tests/unit/plotlyWebglContextRelease.test.ts"],
     "references": [{ "path": "./tsconfig.node.json" }],
     "extends": "./aliases.json"
 }

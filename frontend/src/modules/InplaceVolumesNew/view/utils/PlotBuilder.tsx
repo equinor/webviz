@@ -1,6 +1,6 @@
 import type React from "react";
 
-import type { Axis, LayoutAxis, PlotData } from "plotly.js";
+import type { LayoutAxis } from "plotly.js";
 
 import { Plot } from "@modules/_shared/components/Plot";
 import type { Figure, MakeSubplotOptions } from "@modules/_shared/Figure";
@@ -9,10 +9,10 @@ import type { HistogramType } from "@modules/_shared/histogram";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
 import type { ColorEntry, GroupedTableData } from "./GroupedTableData";
-import { hideRepeatedLegendEntries } from "./plotComponentUtils";
+import { hideRepeatedLegendEntries, type PlotTrace } from "./plotComponentUtils";
 import { computeSubplotXAxisSpacing } from "./subplotSpacing";
 
-export type PlotFunction = (colorEntries: ColorEntry[], subplotLabel: string) => Partial<PlotData>[];
+export type PlotFunction = (colorEntries: ColorEntry[], subplotLabel: string) => PlotTrace[];
 
 export type PlotBuilderOptions = Pick<
     MakeSubplotOptions,
@@ -29,8 +29,8 @@ const DEFAULT_AXIS_TITLE_STANDOFF = 10;
 export class PlotBuilder {
     private _groupedData: GroupedTableData;
     private _plotFunction: PlotFunction;
-    private _axesOptions: { x: Partial<Axis> | null; y: Partial<Axis> | null } = { x: null, y: null };
-    private _numberFormatAxisOptions: { x: Partial<Axis>; y: Partial<Axis> } = { x: {}, y: {} };
+    private _axesOptions: { x: Partial<LayoutAxis> | null; y: Partial<LayoutAxis> | null } = { x: null, y: null };
+    private _numberFormatAxisOptions: { x: Partial<LayoutAxis>; y: Partial<LayoutAxis> } = { x: {}, y: {} };
     private _highlightedSubPlotNames: string[] = [];
     private _histogramType: HistogramType | null = null;
     private _plotType: PlotType | null = null;
@@ -42,19 +42,19 @@ export class PlotBuilder {
         this._plotFunction = plotFunction;
     }
 
-    setXAxisOptions(options: Partial<Axis>): void {
+    setXAxisOptions(options: Partial<LayoutAxis>): void {
         this._axesOptions.x = options;
     }
 
-    setYAxisOptions(options: Partial<Axis>): void {
+    setYAxisOptions(options: Partial<LayoutAxis>): void {
         this._axesOptions.y = options;
     }
 
-    setXAxisNumberFormatOptions(options: Partial<Axis>): void {
+    setXAxisNumberFormatOptions(options: Partial<LayoutAxis>): void {
         this._numberFormatAxisOptions.x = options;
     }
 
-    setYAxisNumberFormatOptions(options: Partial<Axis>): void {
+    setYAxisNumberFormatOptions(options: Partial<LayoutAxis>): void {
         this._numberFormatAxisOptions.y = options;
     }
 
@@ -137,7 +137,6 @@ export class PlotBuilder {
         // Anchored to the figure bottom, the legend reserves its own margin below the x axes.
         // Long legends (e.g. many sensitivity cases) scroll instead of shrinking the plots.
         figure.updateLayout({
-            // @ts-expect-error - maxheight is missing in the plotly types
             legend: { yref: "container", y: 0, yanchor: "bottom", maxheight: LEGEND_MAX_HEIGHT_FRACTION },
         });
         if (!this._showLegend) {
@@ -182,7 +181,7 @@ export class PlotBuilder {
 
         const { numRows, numCols } = calcNumRowsAndCols(numSubplots);
 
-        const traces: { row: number; col: number; trace: Partial<PlotData> }[] = [];
+        const traces: { row: number; col: number; trace: PlotTrace }[] = [];
         const subplotTitles: string[] = Array(numRows * numCols).fill("");
         const highlightedSubplots: { row: number; col: number }[] = [];
 

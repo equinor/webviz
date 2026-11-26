@@ -6,7 +6,7 @@ import type {
 } from "@api";
 import { DerivedVectorType_api, StatisticFunction_api } from "@api";
 
-import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
+import { makeTimeSeriesLine, type TimeSeriesPlotData } from "../timeSeriesPlotData";
 
 import type { FanchartData, FreeLineData, LowHighData, MinMaxData } from "./fanchartPlotting";
 import { createFanchartTraces } from "./fanchartPlotting";
@@ -84,16 +84,15 @@ export function createVectorRealizationTrace({
     return {
         x: vectorRealizationData.timestampsUtcMs,
         y: vectorRealizationData.values,
-        line: { width: 1, color: color, shape: lineShape },
+        ...makeTimeSeriesLine(type, { width: 1, color: color, shape: lineShape }),
         mode: "lines",
-        type: type,
         hovertemplate: `${hoverTemplate}Realization: ${vectorRealizationData.realization}`,
         name: name,
         legendgroup: legendGroup,
         showlegend: vectorRealizationData.realization === 0 && showLegend ? true : false,
         yaxis: yaxis,
         xaxis: xaxis,
-    } as Partial<TimeSeriesPlotData>;
+    };
 }
 
 /**
@@ -158,9 +157,8 @@ export function createHistoricalVectorTrace({
 }: CreateHistoricalVectorTraceOptions): Partial<TimeSeriesPlotData> {
     const hoverText = name ? `History: ${name}` : "History";
     return {
-        line: { shape: lineShape, color: color },
+        ...makeTimeSeriesLine(type, { shape: lineShape, color: color }),
         mode: "lines",
-        type: type,
         x: vectorHistoricalData.timestampsUtcMs,
         y: vectorHistoricalData.values,
         hovertext: hoverText,

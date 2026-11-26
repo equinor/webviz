@@ -1,14 +1,12 @@
-import type { PlotData } from "plotly.js";
+import type { HeatmapData } from "plotly.js";
 
 import type { CorrelationMatrix } from "@modules/_shared/utils/math/correlationMatrix";
-
-type HeatMapPlotData = Partial<PlotData> & { hoverongaps: boolean };
 
 export function createTriangularCorrelationMatrixTrace(
     matrix: CorrelationMatrix,
     colorScaleWithGradient: [number, string][],
     useFixedColorRange: boolean,
-): Partial<HeatMapPlotData> {
+): Partial<HeatmapData> {
     const triangularMatrix = matrix.matrix.map((row, i) => {
         return row.map((val, j) => {
             const includeValue = j <= i;
@@ -16,7 +14,7 @@ export function createTriangularCorrelationMatrixTrace(
         });
     });
 
-    const trace: Partial<HeatMapPlotData> = {
+    const trace: Partial<HeatmapData> = {
         x: matrix.xLabels,
         y: matrix.yLabels,
         z: triangularMatrix,
@@ -39,10 +37,9 @@ export function createTriangularCorrelationMatrixTrace(
         const textMatrix = triangularMatrix.map((row) =>
             row.map((value) => (value !== null && !isNaN(value) ? value.toFixed(2) : "")),
         );
-        trace.text = textMatrix as any;
+        trace.text = textMatrix;
         trace.texttemplate = "%{text}";
         trace.textfont = { size: 10, color: "black" };
-        trace.textposition = "middle center";
     }
     return trace;
 }
@@ -50,8 +47,8 @@ export function createFullCorrelationMatrixTrace(
     matrix: CorrelationMatrix,
     colorScaleWithGradient: [number, string][],
     useFixedColorRange: boolean,
-): Partial<HeatMapPlotData> {
-    const trace: Partial<HeatMapPlotData> = {
+): Partial<HeatmapData> {
+    const trace: Partial<HeatmapData> = {
         x: matrix.xLabels,
         y: matrix.yLabels,
         z: matrix.matrix,
@@ -71,10 +68,9 @@ export function createFullCorrelationMatrixTrace(
 
     if (showText) {
         const textMatrix = matrix.matrix.map((row) => row.map((value) => (value !== null ? value.toFixed(2) : "")));
-        trace.text = textMatrix as any;
+        trace.text = textMatrix;
         trace.texttemplate = "%{text}";
         trace.textfont = { size: 10, color: "black" };
-        trace.textposition = "middle center";
     }
 
     return trace;

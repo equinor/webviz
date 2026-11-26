@@ -1,4 +1,4 @@
-import type { PlotData } from "plotly.js";
+import type { ScatterData, ViolinData } from "plotly.js";
 
 import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { computeStatistics } from "@modules/_shared/utils/math/statistics";
@@ -22,8 +22,8 @@ export function makePlotlyDensityTraces({
     showRealizationPoints,
     showStatisticalMarkers,
     showStatisticalLabels,
-}: PlotlyDensityTracesOptions): Partial<PlotData>[] {
-    const data: Partial<PlotData>[] = [];
+}: PlotlyDensityTracesOptions): (Partial<ViolinData> | Partial<ScatterData>)[] {
+    const data: (Partial<ViolinData> | Partial<ScatterData>)[] = [];
 
     data.push({
         x: values,
@@ -38,7 +38,6 @@ export function makePlotlyDensityTraces({
         customdata: realizations,
         hovertemplate: `<b>${title}</b><br>Value: %{x}<br>Realization: %{customdata}<extra></extra>`,
         // KDE hovers ignore the template; they name the trace via hoverinfo, uncut for long case names.
-        // @ts-expect-error - violin attributes are missing in the plotly types
         hoveron: "points+kde",
         hoverinfo: "x+name",
         hoverlabel: { namelength: -1 },
@@ -63,7 +62,7 @@ function createStatisticMarkersForDistribution(
     color: string,
     resultName: string,
     showLabels: boolean,
-): Partial<PlotData> {
+): Partial<ScatterData> {
     const stats = computeStatistics(values);
     const { p10, p90, mean } = stats;
 

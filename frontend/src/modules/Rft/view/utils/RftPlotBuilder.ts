@@ -1,5 +1,5 @@
 import { formatRgb, parse } from "culori";
-import type { Layout, PlotData } from "plotly.js";
+import type { Layout, ScatterData } from "plotly.js";
 
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -44,7 +44,7 @@ export class RftPlotBuilder {
         this._selectedEnsembles = selectedEnsembles;
     }
 
-    makeLegendTraces(shownLegendEnsembles = new Set<string>()): Partial<PlotData>[] {
+    makeLegendTraces(shownLegendEnsembles = new Set<string>()): Partial<ScatterData>[] {
         const firstEntryByEnsemble = new Map<string, RftRealizationCurve>();
 
         for (const entry of this._dataAccessor.getEntries()) {
@@ -78,7 +78,7 @@ export class RftPlotBuilder {
     makeIndividualRealizationTraces(
         responseName: string,
         shownLegendEnsembles = new Set<string>(),
-    ): Partial<PlotData>[] {
+    ): Partial<ScatterData>[] {
         return this._dataAccessor.getEntries().map((entry) => {
             const ensembleKey = entry.ensembleIdent.toString();
             const ensembleDisplayName = this.makeEnsembleDisplayName(entry.ensembleIdent);
@@ -107,8 +107,8 @@ export class RftPlotBuilder {
         responseName: string,
         selectedStatistics: RftStatistic[],
         shownLegendEnsembles = new Set<string>(),
-    ): Partial<PlotData>[] {
-        const traces: Partial<PlotData>[] = [];
+    ): Partial<ScatterData>[] {
+        const traces: Partial<ScatterData>[] = [];
 
         for (const group of this.makeStatisticGroups()) {
             const statistics = calculateFanchartStatistics(group.entries);
@@ -148,8 +148,8 @@ export class RftPlotBuilder {
         return traces;
     }
 
-    makeStatisticFanTraces(shownLegendEnsembles = new Set<string>()): Partial<PlotData>[] {
-        const traces: Partial<PlotData>[] = [];
+    makeStatisticFanTraces(shownLegendEnsembles = new Set<string>()): Partial<ScatterData>[] {
+        const traces: Partial<ScatterData>[] = [];
 
         for (const group of this.makeStatisticGroups()) {
             const statistics = calculateFanchartStatistics(group.entries);
@@ -217,8 +217,8 @@ export class RftPlotBuilder {
         observationsPerEnsemble: RftEnsembleObservationRows[],
         responseName: string,
         shownLegendEnsembles = new Set<string>(),
-    ): Partial<PlotData>[] {
-        const traces: Partial<PlotData>[] = [];
+    ): Partial<ScatterData>[] {
+        const traces: Partial<ScatterData>[] = [];
 
         for (const ensembleObservations of observationsPerEnsemble) {
             const observations = ensembleObservations.observations;
@@ -414,7 +414,7 @@ function getStatisticValues(statistics: RftFanchartStatistics, statistic: RftSta
     return statistics.maxValues;
 }
 
-function getStatisticLineDash(statistic: RftStatistic): PlotData["line"]["dash"] {
+function getStatisticLineDash(statistic: RftStatistic): NonNullable<ScatterData["line"]>["dash"] {
     if (statistic === RftStatistic.MEAN) return "solid";
     if (statistic === RftStatistic.P50) return "dot";
     if (statistic === RftStatistic.MIN || statistic === RftStatistic.MAX) return "dash";

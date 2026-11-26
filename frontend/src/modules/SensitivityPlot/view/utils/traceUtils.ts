@@ -1,4 +1,4 @@
-import type { PlotData } from "plotly.js";
+import type { BarData, ScatterData } from "plotly.js";
 
 export enum TraceGroup {
     LOW = "Low",
@@ -9,7 +9,7 @@ export type SelectedBar = {
     index: number;
 };
 
-export interface TornadoChartTraceData extends Partial<PlotData> {
+export interface TornadoChartTraceData extends Partial<BarData> {
     base: number[];
     insidetextanchor: "middle" | "start" | "end";
 }
@@ -51,7 +51,6 @@ export const createLowBarTrace = (props: TornadoBarTraceProps): TornadoChartTrac
                         : "transparent",
                 ),
             },
-            width: 1,
         },
     };
 };
@@ -81,7 +80,6 @@ export const createHighBarTrace = (props: TornadoBarTraceProps): TornadoChartTra
                         : "transparent",
                 ),
             },
-            width: 1,
         },
     };
 };
@@ -91,7 +89,7 @@ export const createLowRealizationPointsTrace = (
     yLabels: string[],
     colors: string[],
     realizations: number[],
-): Partial<PlotData> => {
+): Partial<ScatterData> => {
     return {
         x: xValues,
         y: yLabels,
@@ -119,7 +117,7 @@ export const createHighRealizationPointsTrace = (
     yLabels: string[],
     colors: string[],
     realizations: number[],
-): Partial<PlotData> => {
+): Partial<ScatterData> => {
     return {
         x: xValues,
         y: yLabels,
@@ -146,7 +144,7 @@ export const createSensitivityMeanPointsTrace = (
     xValues: number[],
     yLabels: string[],
     meanValues: string[],
-): Partial<PlotData> => {
+): Partial<ScatterData> => {
     return {
         x: xValues,
         y: yLabels,

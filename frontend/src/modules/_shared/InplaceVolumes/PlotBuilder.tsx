@@ -1,6 +1,6 @@
 import type React from "react";
 
-import type { Axis, PlotData } from "plotly.js";
+import type { BarData, BoxData, HistogramData, LayoutAxis, ScatterData, ViolinData } from "plotly.js";
 
 import { Plot } from "../components/Plot";
 import type { Figure, MakeSubplotOptions } from "../Figure";
@@ -8,18 +8,20 @@ import { calcNumRowsAndCols, CoordinateDomain, makeSubplots } from "../Figure";
 
 import type { Table } from "./Table";
 
+type PlotTrace = Partial<BarData | BoxData | HistogramData | ScatterData | ViolinData>;
+
 export class PlotBuilder {
     private _table: Table;
-    private _plotFunction: (table: Table) => Partial<PlotData>[];
+    private _plotFunction: (table: Table) => PlotTrace[];
     private _formatLabelFunction: (columnName: string, label: string | number) => string = (_, value) =>
         value.toString();
     private _groupByColumn: string | null = null;
     private _subplotByColumn: string | null = null;
-    private _axesOptions: { x: Partial<Axis> | null; y: Partial<Axis> | null } = { x: null, y: null };
-    private _numberFormatAxisOptions: { x: Partial<Axis>; y: Partial<Axis> } = { x: {}, y: {} };
+    private _axesOptions: { x: Partial<LayoutAxis> | null; y: Partial<LayoutAxis> | null } = { x: null, y: null };
+    private _numberFormatAxisOptions: { x: Partial<LayoutAxis>; y: Partial<LayoutAxis> } = { x: {}, y: {} };
     private _highlightedSubPlotNames: string[] = [];
 
-    constructor(table: Table, plotFunction: (table: Table) => Partial<PlotData>[]) {
+    constructor(table: Table, plotFunction: (table: Table) => PlotTrace[]) {
         this._table = table;
         this._plotFunction = plotFunction;
     }
@@ -38,19 +40,19 @@ export class PlotBuilder {
         this._subplotByColumn = columnName;
     }
 
-    setXAxisOptions(options: Partial<Axis>): void {
+    setXAxisOptions(options: Partial<LayoutAxis>): void {
         this._axesOptions.x = options;
     }
 
-    setYAxisOptions(options: Partial<Axis>): void {
+    setYAxisOptions(options: Partial<LayoutAxis>): void {
         this._axesOptions.y = options;
     }
 
-    setXAxisNumberFormatOptions(options: Partial<Axis>): void {
+    setXAxisNumberFormatOptions(options: Partial<LayoutAxis>): void {
         this._numberFormatAxisOptions.x = options;
     }
 
-    setYAxisNumberFormatOptions(options: Partial<Axis>): void {
+    setYAxisNumberFormatOptions(options: Partial<LayoutAxis>): void {
         this._numberFormatAxisOptions.y = options;
     }
 
@@ -154,7 +156,7 @@ export class PlotBuilder {
         const tables = tableCollection.getTables();
         const keys = tableCollection.getKeys();
 
-        const traces: { row: number; col: number; trace: Partial<PlotData> }[] = [];
+        const traces: { row: number; col: number; trace: PlotTrace }[] = [];
         const subplotTitles: string[] = Array(numRows * numCols).fill("");
 
         const highlightedSubplots: { row: number; col: number }[] = [];

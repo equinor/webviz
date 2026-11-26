@@ -1,4 +1,4 @@
-import type { Annotations, Data, Layout, PlotMarker, Shape } from "plotly.js";
+import type { Annotation, Data, Layout, ScatterData, Shape } from "plotly.js";
 
 import type {
     DerivedVectorInfo_api,
@@ -678,10 +678,10 @@ export class PlotBuilder {
 
     private createTimeBadges(xExtent: [number, number] | null): {
         shapes: Partial<Shape>[];
-        annotations: Partial<Annotations>[];
+        annotations: Partial<Annotation>[];
     } {
         const shapes: Partial<Shape>[] = [];
-        const annotations: Partial<Annotations>[] = [];
+        const annotations: Partial<Annotation>[] = [];
 
         for (const timestampUtcMs of this._timeAnnotationTimestamps) {
             // y is in domain coordinates [0, 1]
@@ -876,7 +876,7 @@ export class PlotBuilder {
 
         // Add color scale for color by parameter below the legends
         if (this._hasRealizationsTracesColoredByParameter && this._ensemblesParameterColoring) {
-            const colorScaleMarker: Partial<PlotMarker> = {
+            const colorScaleMarker: NonNullable<ScatterData["marker"]> = {
                 ...this._ensemblesParameterColoring.getColorScale().getAsPlotlyColorScaleMarkerObject(),
                 colorbar: {
                     title: {

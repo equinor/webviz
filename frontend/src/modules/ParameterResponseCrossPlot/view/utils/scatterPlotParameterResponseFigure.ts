@@ -1,4 +1,4 @@
-import type { Layout, PlotData } from "plotly.js";
+import type { Layout, ScatterData } from "plotly.js";
 
 import type { Size2D } from "@lib/utils/geometry";
 import type { Figure } from "@modules/_shared/Figure";
@@ -56,14 +56,11 @@ export class ScatterPlotParameterResponseFigure {
         this.setAxisSettings(cellIndex);
     }
     private setAxisSettings(cellIndex: number) {
-        const layoutPatch: Partial<Layout> = {
-            [`xaxis${cellIndex}`]: {
-                zeroline: false,
-            },
-            [`yaxis${cellIndex}`]: {
-                zeroline: false,
-            },
-        };
+        const xAxisKey = `xaxis${cellIndex}` as const;
+        const yAxisKey = `yaxis${cellIndex}` as const;
+        const layoutPatch: Partial<Layout> = {};
+        layoutPatch[xAxisKey] = { zeroline: false };
+        layoutPatch[yAxisKey] = { zeroline: false };
         this._figure.updateLayout(layoutPatch);
     }
 
@@ -83,12 +80,12 @@ export type scatterPlotParameterResponseData = {
     color: string;
 };
 
-function createPlotlyParameterResponseScatterTrace(data: scatterPlotParameterResponseData): Partial<PlotData> {
+function createPlotlyParameterResponseScatterTrace(data: scatterPlotParameterResponseData): Partial<ScatterData> {
     const markerColor = `${data.color}80`;
     const lineColor = `${data.color}FF`;
 
     const { responseValues, parameterValues, realizationValues, parameterName, responseName } = data;
-    const scatterTrace: Partial<PlotData> = {
+    const scatterTrace: Partial<ScatterData> = {
         x: parameterValues,
         y: responseValues,
         mode: "markers",
@@ -113,7 +110,7 @@ function createPlotlyParameterResponseScatterTrace(data: scatterPlotParameterRes
     };
     return scatterTrace;
 }
-function createPlotlyTrendLineTrace(xValues: number[], yValues: number[]): Partial<PlotData> {
+function createPlotlyTrendLineTrace(xValues: number[], yValues: number[]): Partial<ScatterData> {
     const { slope, intercept } = linearRegression(xValues, yValues);
     const minX = Math.min(...xValues);
     const maxX = Math.max(...xValues);
