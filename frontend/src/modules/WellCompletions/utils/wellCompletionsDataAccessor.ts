@@ -16,15 +16,14 @@ import type {
 } from "@api";
 import type { ColorSet } from "@lib/utils/ColorSet";
 
-import { TimeAggregationMode } from "../typesAndEnums";
+import { TimeAggregationFunction } from "../typesAndEnums";
 
 /**
  * Util methods for providing data result based on selected time aggregation
  */
 export const TimeAggregationTypeFunction = {
-    [TimeAggregationMode.NONE]: (arr: number[]): number => arr[arr.length - 1],
-    [TimeAggregationMode.MAX]: (arr: number[]): number => Math.max(...arr),
-    [TimeAggregationMode.AVERAGE]: (arr: number[]): number => arr.reduce((a, b) => a + b) / arr.length,
+    [TimeAggregationFunction.MAX]: (arr: number[]): number => Math.max(...arr),
+    [TimeAggregationFunction.AVERAGE]: (arr: number[]): number => arr.reduce((a, b) => a + b) / arr.length,
 };
 
 export class WellCompletionsDataAccessor {
@@ -97,7 +96,7 @@ export class WellCompletionsDataAccessor {
 
     createPlotData(
         completionDateIndexSelection: number | [number, number],
-        timeAggregation: TimeAggregationMode,
+        timeAggregation: TimeAggregationFunction | null,
     ): PlotData | null {
         if (!this._data) return null;
 
@@ -174,7 +173,7 @@ export class WellCompletionsDataAccessor {
         subzones: Zone[],
         wells: WellCompletionsWell_api[],
         dateIndexRange: [number, number],
-        timeAggregation: TimeAggregationMode,
+        timeAggregation: TimeAggregationFunction | null,
         sortWellsBy: SortWellsBy | null,
         sortDirection: SortDirection,
         hideZeroCompletions: boolean,
@@ -220,7 +219,9 @@ export class WellCompletionsDataAccessor {
                         khMaxValues[rangeI] = currentkhMaxValue;
                     }
                 }
-                const aggregateValues = TimeAggregationTypeFunction[timeAggregation];
+                const aggregateValues = timeAggregation
+                    ? TimeAggregationTypeFunction[timeAggregation]
+                    : (arr: number[]) => arr[arr.length - 1];
                 const zoneCompletion = {
                     zoneIndex,
                     open: aggregateValues(openValues),

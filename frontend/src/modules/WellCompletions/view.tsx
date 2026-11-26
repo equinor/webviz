@@ -34,7 +34,7 @@ export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
                         <CircularProgress />
                     </ContentInfo>
                 ) : (
-                    <></>
+                    <ContentInfo>No data to visualize. Check the settings.</ContentInfo>
                 )
             ) : (
                 <WellCompletionsPlot

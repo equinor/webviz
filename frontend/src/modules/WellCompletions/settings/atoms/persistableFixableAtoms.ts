@@ -9,6 +9,7 @@ import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtil
 import { computeQueryDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 import { isoStringToTimestampUtcMs } from "@framework/utils/timestampUtils";
 
+import { isTimeAggregationEnabledAtom } from "./baseAtoms";
 import { availableRealizationsAtom, sortedCompletionDatesAtom, wellCompletionsDataAccessorAtom } from "./derivedAtoms";
 import { wellCompletionsQueryAtom } from "./queryAtoms";
 
@@ -97,8 +98,11 @@ export const {
     isDashboardControlledAtom: isCompletionDateIndexDashboardControlledAtom,
 } = makeDashboardPersistableFixableAtoms(selectedCompletionDateIndexAtom, {
     definition: TIME_DASHBOARD_SETTING,
-    // Without completion dates there is no opinion, rather than "no time steps available"
+    // Without completion dates, or when aggregating, there is no opinion rather than "no time steps available"
     getConstraints: (get) => {
+        if (get(isTimeAggregationEnabledAtom)) {
+            return null;
+        }
         const sortedCompletionDates = get(sortedCompletionDatesAtom);
         return sortedCompletionDates && sortedCompletionDates.length > 0
             ? sortedCompletionDates.map(isoStringToTimestampUtcMs)
