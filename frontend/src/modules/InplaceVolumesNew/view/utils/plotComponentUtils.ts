@@ -1,4 +1,4 @@
-import type { PlotData } from "plotly.js";
+import type { BarData, BoxData, HistogramData, ScatterData, ViolinData } from "plotly.js";
 
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
@@ -9,6 +9,8 @@ import { makePlotlyBoxPlotTraces } from "./plotly/box";
 import { makePlotlyConvergenceTraces } from "./plotly/convergence";
 import { makePlotlyDensityTraces } from "./plotly/distribution";
 import { makePlotlyHistogramTraces } from "./plotly/histogram";
+
+export type PlotTrace = Partial<BarData | BoxData | HistogramData | ScatterData | ViolinData>;
 
 export type MakePlotDataOptions = {
     plotType: PlotType;
@@ -39,9 +41,9 @@ export function makePlotData({
     showPercentageInBar,
     showStatisticalLabels,
     showSubplotLabelInHover = false,
-}: MakePlotDataOptions): (colorEntries: ColorEntry[], subplotLabel?: string) => Partial<PlotData>[] {
-    return (colorEntries: ColorEntry[], subplotLabel?: string): Partial<PlotData>[] => {
-        const data: Partial<PlotData>[] = [];
+}: MakePlotDataOptions): (colorEntries: ColorEntry[], subplotLabel?: string) => PlotTrace[] {
+    return (colorEntries: ColorEntry[], subplotLabel?: string): PlotTrace[] => {
+        const data: PlotTrace[] = [];
 
         for (const entry of colorEntries) {
             const { colorLabel: title, color, table } = entry;
@@ -108,7 +110,7 @@ export function makePlotData({
 /**
  * Box statistics and density curves hover from the trace name instead, which is also the legend name.
  */
-function prependHoverLine(trace: Partial<PlotData>, line: string): void {
+function prependHoverLine(trace: PlotTrace, line: string): void {
     const prepend = (text: string) => `${line}<br>${text}`;
     if (typeof trace.hovertemplate === "string") {
         trace.hovertemplate = prepend(trace.hovertemplate);
@@ -123,7 +125,7 @@ function prependHoverLine(trace: Partial<PlotData>, line: string): void {
 /**
  * Keeps a single legend entry per legendgroup: the first trace, across all subplots, that wants one.
  */
-export function hideRepeatedLegendEntries(traces: Partial<PlotData>[]): void {
+export function hideRepeatedLegendEntries(traces: PlotTrace[]): void {
     const groupsWithLegendEntry = new Set<string | undefined>();
     for (const trace of traces) {
         if (trace.showlegend === false) {
@@ -145,7 +147,7 @@ function makeBarPlot(
     color: string,
     barSortBy: BarSortBy,
     showStatisticalMarkers: boolean,
-): Partial<PlotData>[] {
+): PlotTrace[] {
     const resultColumn = table.getColumn(resultName);
 
     if (!resultColumn) {
@@ -168,7 +170,7 @@ function makeBarPlot(
     });
 }
 
-function makeConvergencePlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
+function makeConvergencePlot(title: string, table: Table, resultName: string, color: string): PlotTrace[] {
     const realColumn = table.getColumn("REAL");
     const resultColumn = table.getColumn(resultName);
     if (!realColumn) {
@@ -193,7 +195,7 @@ function makeHistogram(
     showRealizationPoints: boolean,
     showPercentageInBar: boolean,
     showStatisticalLabels: boolean,
-): Partial<PlotData>[] {
+): PlotTrace[] {
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
         return [];
@@ -221,7 +223,7 @@ function makeDensityPlot(
     showRealizationPoints: boolean,
     showStatisticalMarkers: boolean,
     showStatisticalLabels: boolean,
-): Partial<PlotData>[] {
+): PlotTrace[] {
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
         return [];
@@ -248,7 +250,7 @@ function makeBoxPlot(
     color: string,
     showStatisticalMarkers: boolean,
     showRealizationPoints: boolean,
-): Partial<PlotData>[] {
+): PlotTrace[] {
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
         return [];

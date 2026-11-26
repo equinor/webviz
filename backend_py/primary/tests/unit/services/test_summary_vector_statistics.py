@@ -9,7 +9,7 @@ from webviz_services.service_exceptions import InvalidParameterError
 
 class TestComputeVectorStatisticsTable:
 
-    def test_empty_table_returns_none(self):
+    def test_empty_table_returns_none(self) -> None:
         """Test that empty table returns None"""
         empty_table = pa.table(
             {"DATE": pa.array([], type=pa.timestamp("ms")), "VECTOR": pa.array([], type=pa.float64())}
@@ -19,7 +19,7 @@ class TestComputeVectorStatisticsTable:
 
         assert result is None
 
-    def test_empty_statistic_functions_raises_error(self):
+    def test_empty_statistic_functions_raises_error(self) -> None:
         """Test that empty statistic functions list raises InvalidParameterError"""
         table = pa.table(
             {
@@ -33,7 +33,7 @@ class TestComputeVectorStatisticsTable:
 
         assert "At least one statistic must be requested" in str(exc_info.value)
 
-    def test_none_statistic_functions_computes_all_defaults(self):
+    def test_none_statistic_functions_computes_all_defaults(self) -> None:
         """Test that None statistic_functions computes all default statistics"""
         dates = [datetime(2020, 1, 1), datetime(2020, 1, 1), datetime(2020, 1, 1)]
         values = [1.0, 2.0, 3.0]
@@ -52,7 +52,7 @@ class TestComputeVectorStatisticsTable:
         assert "P50" in result.column_names
         assert "P90" in result.column_names
 
-    def test_specific_statistic_functions(self):
+    def test_specific_statistic_functions(self) -> None:
         """Test computing specific statistic functions"""
         dates = [datetime(2020, 1, 1), datetime(2020, 1, 1), datetime(2020, 1, 1)]
         values = [1.0, 2.0, 3.0]
@@ -69,7 +69,7 @@ class TestComputeVectorStatisticsTable:
         assert "MEAN" not in result.column_names
         assert result.num_rows == 1
 
-    def test_min_statistic_computation(self):
+    def test_min_statistic_computation(self) -> None:
         """Test MIN statistic computation"""
         dates = [datetime(2020, 1, 1)] * 3
         values = [1.0, 2.0, 3.0]
@@ -79,9 +79,10 @@ class TestComputeVectorStatisticsTable:
 
         result = compute_vector_statistics_table(table, "VECTOR", [StatisticFunction.MIN])
 
+        assert result is not None
         assert result["MIN"][0].as_py() == 1.0
 
-    def test_max_statistic_computation(self):
+    def test_max_statistic_computation(self) -> None:
         """Test MAX statistic computation"""
         dates = [datetime(2020, 1, 1)] * 3
         values = [1.0, 2.0, 3.0]
@@ -91,9 +92,10 @@ class TestComputeVectorStatisticsTable:
 
         result = compute_vector_statistics_table(table, "VECTOR", [StatisticFunction.MAX])
 
+        assert result is not None
         assert result["MAX"][0].as_py() == 3.0
 
-    def test_mean_statistic_computation(self):
+    def test_mean_statistic_computation(self) -> None:
         """Test MEAN statistic computation"""
         dates = [datetime(2020, 1, 1)] * 3
         values = [1.0, 2.0, 3.0]
@@ -103,9 +105,10 @@ class TestComputeVectorStatisticsTable:
 
         result = compute_vector_statistics_table(table, "VECTOR", [StatisticFunction.MEAN])
 
+        assert result is not None
         assert result["MEAN"][0].as_py() == pytest.approx(2.0)
 
-    def test_handles_nan_and_null_values(self):
+    def test_handles_nan_and_null_values(self) -> None:
         """Test that NaN and null values are properly excluded"""
         dates = [datetime(2020, 1, 1)] * 5
         values = [1.0, 2.0, float("nan"), None, 3.0]
@@ -116,9 +119,10 @@ class TestComputeVectorStatisticsTable:
         result = compute_vector_statistics_table(table, "VECTOR", [StatisticFunction.MEAN])
 
         # Mean should be (1.0 + 2.0 + 3.0) / 3 = 2.0
+        assert result is not None
         assert result["MEAN"][0].as_py() == pytest.approx(2.0)
 
-    def test_multiple_dates_grouped_correctly(self):
+    def test_multiple_dates_grouped_correctly(self) -> None:
         """Test that statistics are computed per date group"""
         dates = [datetime(2020, 1, 1), datetime(2020, 1, 1), datetime(2020, 1, 2), datetime(2020, 1, 2)]
         values = [1.0, 2.0, 3.0, 4.0]
@@ -128,11 +132,12 @@ class TestComputeVectorStatisticsTable:
 
         result = compute_vector_statistics_table(table, "VECTOR", [StatisticFunction.MEAN])
 
+        assert result is not None
         assert result.num_rows == 2
         assert result["MEAN"][0].as_py() == pytest.approx(1.5)
         assert result["MEAN"][1].as_py() == pytest.approx(3.5)
 
-    def test_p10_p50_p90_percentiles(self):
+    def test_p10_p50_p90_percentiles(self) -> None:
         """Test percentile calculations (P10, P50, P90)"""
         dates = [datetime(2020, 1, 1)] * 10
         values = list(range(1, 11))  # 1 to 10
@@ -147,10 +152,11 @@ class TestComputeVectorStatisticsTable:
         # P10 = 90th percentile (oil industry convention)
         # P50 = 50th percentile (median)
         # P90 = 10th percentile (oil industry convention)
+        assert result is not None
         assert result["P10"][0].as_py() > result["P50"][0].as_py()
         assert result["P50"][0].as_py() > result["P90"][0].as_py()
 
-    def test_float_downcasting_applied(self):
+    def test_float_downcasting_applied(self) -> None:
         """Test that float64 statistics are downcast to float32"""
         dates = [datetime(2020, 1, 1)] * 3
         values = [1.0, 2.0, 3.0]

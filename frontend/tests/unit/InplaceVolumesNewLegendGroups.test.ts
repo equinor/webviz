@@ -1,11 +1,10 @@
-import type { PlotData } from "plotly.js";
 import { describe, expect, test } from "vitest";
 
 import { BarSortBy } from "@modules/_shared/InplaceVolumes/plotOptions";
 import { Column, ColumnType, Table } from "@modules/_shared/InplaceVolumes/Table";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 import type { ColorEntry } from "@modules/InplaceVolumesNew/view/utils/GroupedTableData";
-import { hideRepeatedLegendEntries, makePlotData } from "@modules/InplaceVolumesNew/view/utils/plotComponentUtils";
+import { hideRepeatedLegendEntries, makePlotData, type PlotTrace } from "@modules/InplaceVolumesNew/view/utils/plotComponentUtils";
 
 function makeEntry(colorKey: string, colorLabel: string): ColorEntry {
     return {
@@ -24,7 +23,7 @@ function makeTraces(
     plotType: PlotType,
     entries: ColorEntry[],
     subplot?: { label: string; showInHover: boolean },
-): Partial<PlotData>[] {
+): PlotTrace[] {
     return makePlotData({
         plotType,
         firstResultName: "STOIIP",
@@ -39,7 +38,7 @@ function makeTraces(
     })(entries, subplot?.label);
 }
 
-function legendTrace(legendgroup: string, showlegend?: boolean): Partial<PlotData> {
+function legendTrace(legendgroup: string, showlegend?: boolean): PlotTrace {
     return { legendgroup, showlegend };
 }
 
@@ -61,7 +60,7 @@ describe("makePlotData legend groups", () => {
 });
 
 describe("makePlotData subplot label in hovers", () => {
-    function hoverTexts(trace: Partial<PlotData>): string[] {
+    function hoverTexts(trace: PlotTrace): string[] {
         const templates = trace.hovertemplate === undefined ? [] : [trace.hovertemplate].flat();
         const boxTexts = trace.type === "box" ? [trace.text ?? []].flat() : [];
         return [...templates, ...boxTexts].map(String);

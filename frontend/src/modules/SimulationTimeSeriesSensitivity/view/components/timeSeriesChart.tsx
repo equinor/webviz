@@ -5,6 +5,7 @@ import type { Layout, PlotDatum, PlotHoverEvent, PlotMouseEvent } from "plotly.j
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { Plot } from "@modules/_shared/components/Plot";
 import { getNumericXExtent, makeRoundedBadge } from "@modules/_shared/utils/plotlyBadge";
+import { getNumericPlotlyPointX } from "@modules/_shared/utils/plotlyPoint";
 
 import type { TimeSeriesPlotlyTrace } from "../utils/createTracesUtils";
 
@@ -34,11 +35,9 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
             return;
         }
 
-        if (clickedPoint.pointIndex >= 0 && clickedPoint.pointIndex < clickedPoint.data.x.length) {
-            const timestampUtcMs = clickedPoint.data.x[clickedPoint.pointIndex];
-            if (typeof timestampUtcMs === "number") {
-                props.onClick(timestampUtcMs);
-            }
+        const timestampUtcMs = getNumericPlotlyPointX(clickedPoint);
+        if (timestampUtcMs !== undefined) {
+            props.onClick(timestampUtcMs);
         }
     }
 
@@ -48,22 +47,20 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
             return;
         }
 
-        if (hoveredPoint.pointIndex >= 0 && hoveredPoint.pointIndex < hoveredPoint.data.x.length) {
-            const timestampUtcMs = hoveredPoint.data.x[hoveredPoint.pointIndex];
-            if (typeof timestampUtcMs === "number") {
-                let maybeRealizationNumber: number | undefined;
-                const traceData = hoveredPoint.data as TimeSeriesPlotlyTrace;
-                if (typeof traceData.realizationNumber === "number") {
-                    maybeRealizationNumber = traceData.realizationNumber;
-                }
-
-                const hoverInfo: TimeSeriesChartHoverInfo = {
-                    timestampUtcMs: timestampUtcMs,
-                    realization: maybeRealizationNumber,
-                    shiftKeyIsDown: e.event.shiftKey,
-                };
-                props.onHover(hoverInfo);
+        const timestampUtcMs = getNumericPlotlyPointX(hoveredPoint);
+        if (timestampUtcMs !== undefined) {
+            let maybeRealizationNumber: number | undefined;
+            const traceData = hoveredPoint.data as TimeSeriesPlotlyTrace;
+            if (typeof traceData.realizationNumber === "number") {
+                maybeRealizationNumber = traceData.realizationNumber;
             }
+
+            const hoverInfo: TimeSeriesChartHoverInfo = {
+                timestampUtcMs: timestampUtcMs,
+                realization: maybeRealizationNumber,
+                shiftKeyIsDown: e.event.shiftKey,
+            };
+            props.onHover(hoverInfo);
         }
     }
 

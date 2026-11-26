@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { Layout, PlotData } from "plotly.js";
+import type { Layout, ScatterData } from "plotly.js";
 
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { Size2D } from "@lib/utils/geometry";
@@ -10,7 +10,7 @@ import { extractObservationRowsPerEnsemble, makeValueRange } from "../utils/plot
 import { RftPlotBuilder } from "../utils/RftPlotBuilder";
 
 export type RftPlotContent = {
-    plotData: Partial<PlotData>[];
+    plotData: Partial<ScatterData>[];
     layout: Partial<Layout>;
 };
 
@@ -46,7 +46,7 @@ export function useRftPlotBuilder(params: UseRftPlotBuilderParams): RftPlotConte
     // layout means resizing the plot (which only changes `size`) re-runs the cheap layout memo
     // without rebuilding all traces.
     const plotResult = React.useMemo(
-        function buildPlotData(): { plotData: Partial<PlotData>[]; valueRange: [number, number] | null } | null {
+        function buildPlotData(): { plotData: Partial<ScatterData>[]; valueRange: [number, number] | null } | null {
             if (!dataAccessor || !wellName || !responseName || timestampUtcMs === null) {
                 return null;
             }

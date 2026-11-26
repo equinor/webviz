@@ -1,7 +1,10 @@
-import type { PlotData } from "plotly.js";
+import type { BoxData, ScatterData } from "plotly.js";
 
 import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { computeStatistics } from "@modules/_shared/utils/math/statistics";
+
+type BoxTrace = Partial<BoxData> & { type: "box" };
+type MarkerTrace = Partial<ScatterData> & { type: "scatter" };
 
 export type PlotlyBoxPlotTracesOptions = {
     title: string;
@@ -15,9 +18,9 @@ export type PlotlyBoxPlotTracesOptions = {
 /**
  * A horizontal box in the category row named `title`.
  */
-export function makePlotlyBoxPlotTraces(options: PlotlyBoxPlotTracesOptions): Partial<PlotData>[] {
+export function makePlotlyBoxPlotTraces(options: PlotlyBoxPlotTracesOptions): (BoxTrace | MarkerTrace)[] {
     const { title, values, realizations, resultName, color, showStatisticalMarkers, showRealizationPoints } = options;
-    const data: Partial<PlotData>[] = [];
+    const data: (BoxTrace | MarkerTrace)[] = [];
 
     data.push({
         x: values,
@@ -27,11 +30,9 @@ export function makePlotlyBoxPlotTraces(options: PlotlyBoxPlotTracesOptions): Pa
         orientation: "h",
         marker: { color },
         // Plotly ignores hovertemplate on the box statistics, so use hoverinfo; points get their realization as text.
-        // @ts-expect-error - box hoveron values are missing in the plotly types
         hoveron: "boxes+points",
         boxpoints: showRealizationPoints ? "all" : false,
         text: realizations.map((realization) => `Realization: ${realization}`),
-        // @ts-expect-error - this hoverinfo combination is missing in the plotly types
         hoverinfo: "x+text+name",
         // Plotly cuts the name tag at 15 characters by default; sensitivity case names are longer.
         hoverlabel: { namelength: -1 },
@@ -49,11 +50,11 @@ function createQuantileAndMeanMarkerTracesForBoxPlot(
     resultName: string,
     values: number[],
     ensembleColor: string | undefined,
-): Partial<PlotData>[] {
+): MarkerTrace[] {
     const stats = computeStatistics(values);
     const { p10, p90, mean } = stats;
 
-    const createMarker = (value: number, label: string) => ({
+    const createMarker = (value: number, label: string): MarkerTrace => ({
         x: [value],
         y: [title],
         type: "scatter" as const,

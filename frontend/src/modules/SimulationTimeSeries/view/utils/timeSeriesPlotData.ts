@@ -1,9 +1,16 @@
-import type { PlotData } from "plotly.js";
+import type { ScatterData, ScatterglData } from "plotly.js";
 
-export interface TimeSeriesPlotData extends Partial<PlotData> {
-    // TODO: Have realizationNumber?
-    //realizationNumber?: number | null;
+export type TimeSeriesPlotData = ScatterData | ScatterglData;
 
-    // Did they forget to expose this one
-    legendrank?: number;
+type ScatterLine = Pick<NonNullable<ScatterData["line"]>, "color" | "shape" | "width">;
+type ScatterglLine = Pick<NonNullable<ScatterglData["line"]>, "color" | "shape" | "width">;
+
+export function makeTimeSeriesLine(
+    type: "scatter" | "scattergl",
+    line: ScatterLine,
+): { type: "scatter"; line: ScatterLine } | { type: "scattergl"; line: ScatterglLine } {
+    if (type === "scattergl") {
+        return { type, line: { ...line, shape: line.shape === "spline" ? "linear" : line.shape } };
+    }
+    return { type, line };
 }

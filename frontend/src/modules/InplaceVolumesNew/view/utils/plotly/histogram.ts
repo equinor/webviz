@@ -1,8 +1,11 @@
-import type { Dash, PlotData } from "plotly.js";
+import type { Dash, HistogramData, ScatterData } from "plotly.js";
 
 import { makeHistogramTrace } from "@modules/_shared/histogram";
 import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { computeStatistics } from "@modules/_shared/utils/math/statistics";
+
+type HistogramTrace = Partial<HistogramData> & { type: "histogram" };
+type ScatterTrace = Partial<ScatterData> & { type: "scatter" };
 
 export type PlotlyHistogramTracesOptions = {
     title: string;
@@ -27,12 +30,12 @@ export function makePlotlyHistogramTraces({
     showRealizationPoints,
     showStatisticalLabels,
     showPercentageInBar,
-}: PlotlyHistogramTracesOptions): Partial<PlotData>[] {
+}: PlotlyHistogramTracesOptions): (HistogramTrace | ScatterTrace)[] {
     const finiteValues = values.filter(Number.isFinite);
     if (finiteValues.length === 0) {
         return [];
     }
-    const data: Partial<PlotData>[] = [];
+    const data: (HistogramTrace | ScatterTrace)[] = [];
 
     const histogram = makeHistogramTrace({
         xValues: finiteValues,
@@ -76,7 +79,7 @@ function createStatisticLinesForHistogram(
     numBins: number,
     resultName: string,
     showLabels: boolean,
-): Partial<PlotData>[] {
+): ScatterTrace[] {
     const stats = computeStatistics(xValues);
     const { p10, p90, mean, min, max } = stats;
 
@@ -97,8 +100,8 @@ function createStatisticLinesForHistogram(
     const maxPercentage = Math.max(...binPercentages);
     const lineHeight = maxPercentage * 1.05;
 
-    function createLine(value: number, label: string, dash: Dash): Partial<PlotData> {
-        const trace: Partial<PlotData> = {
+    function createLine(value: number, label: string, dash: Dash): ScatterTrace {
+        const trace: ScatterTrace = {
             x: [value, value],
             y: [0, lineHeight],
             type: "scatter" as const,
@@ -128,7 +131,7 @@ function createRugTraceForHistogram(
     realizations: number[],
     title: string,
     color: string,
-): Partial<PlotData> {
+): ScatterTrace {
     return {
         x: xValues,
         y: new Array(xValues.length).fill(-2),

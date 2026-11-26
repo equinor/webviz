@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Warning } from "@mui/icons-material";
-import type { Layout, PlotData } from "plotly.js";
+import type { BarData, Layout, ScatterData } from "plotly.js";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -234,17 +234,17 @@ function renderHistogramPlot(options: HistogramPlotOptions): React.ReactElement 
             colIndex + 1,
         );
 
-        figure.updateLayout({
-            [`xaxis${cellIndex + 1}`]: {
-                title: { text: makeTitleFromChannelContent(data) },
-                tickangle: 0,
-                tickson: "boundaries",
-                ticklabeloverflow: "hide past div",
-            },
-            [`yaxis${cellIndex + 1}`]: {
-                title: { text: "Percentage (%)" },
-            },
-        } as Partial<Layout>);
+        const xAxisKey = `xaxis${cellIndex + 1}` as const;
+        const yAxisKey = `yaxis${cellIndex + 1}` as const;
+        const layoutPatch: Partial<Layout> = {};
+        layoutPatch[xAxisKey] = {
+            title: { text: makeTitleFromChannelContent(data) },
+            tickangle: 0,
+            tickson: "boundaries",
+            ticklabeloverflow: "hide past div",
+        };
+        layoutPatch[yAxisKey] = { title: { text: "Percentage (%)" } };
+        figure.updateLayout(layoutPatch);
     });
 
     return <Plot data={figure.makeData()} layout={figure.makeLayout()} />;
@@ -292,10 +292,10 @@ function renderBarChart(options: BarChartOptions): React.ReactElement {
         const isHorizontal = orientation === "h";
         const sortByValue = barSortBy === BarSortBy.Value;
 
-        const trace: Partial<PlotData> = {
+        const trace: Partial<BarData> = {
             x: isHorizontal ? valueData : keyData,
             y: isHorizontal ? keyData : valueData,
-            marker: { size: 5, color: colorSet.getFirstColor() },
+            marker: { color: colorSet.getFirstColor() },
             showlegend: false,
             type: "bar",
             orientation,
@@ -311,20 +311,22 @@ function renderBarChart(options: BarChartOptions): React.ReactElement {
         const xSortDescending = !isHorizontal && sortByValue;
         const ySortDescending = isHorizontal && sortByValue;
 
-        figure.updateLayout({
-            [`xaxis${cellIndex + 1}`]: {
-                title: { text: isHorizontal ? dataTitle : `${kindOfKeyTitle} (hover to see values)` },
-                type: xSortDescending ? "category" : "linear",
-                categoryorder: xSortDescending ? "total descending" : "trace",
-                showticklabels: !xSortDescending,
-            },
-            [`yaxis${cellIndex + 1}`]: {
-                title: { text: isHorizontal ? `${kindOfKeyTitle} (hover to see values)` : dataTitle },
-                type: ySortDescending ? "category" : "linear",
-                categoryorder: ySortDescending ? "total descending" : "trace",
-                showticklabels: !ySortDescending,
-            },
-        } as Partial<Layout>);
+        const xAxisKey = `xaxis${cellIndex + 1}` as const;
+        const yAxisKey = `yaxis${cellIndex + 1}` as const;
+        const layoutPatch: Partial<Layout> = {};
+        layoutPatch[xAxisKey] = {
+            title: { text: isHorizontal ? dataTitle : `${kindOfKeyTitle} (hover to see values)` },
+            type: xSortDescending ? "category" : "linear",
+            categoryorder: xSortDescending ? "total descending" : "trace",
+            showticklabels: !xSortDescending,
+        };
+        layoutPatch[yAxisKey] = {
+            title: { text: isHorizontal ? `${kindOfKeyTitle} (hover to see values)` : dataTitle },
+            type: ySortDescending ? "category" : "linear",
+            categoryorder: ySortDescending ? "total descending" : "trace",
+            showticklabels: !ySortDescending,
+        };
+        figure.updateLayout(layoutPatch);
     });
 
     return <Plot data={figure.makeData()} layout={figure.makeLayout()} />;
@@ -390,7 +392,7 @@ function renderScatterPlot(options: ScatterPlotOptions): React.ReactElement {
             const markerFillColor = `${markerColor}80`;
             const markerLineColor = `${markerColor}FF`;
 
-            const trace: Partial<PlotData> = {
+            const trace: Partial<ScatterData> = {
                 x: traceData.xValues,
                 y: traceData.yValues,
                 mode: "markers",
@@ -526,14 +528,16 @@ function updateScatterAxisLayout(figure: Figure, cellIndex: number, opts: AxisLa
     const showXTickLabels = !sharedXAxes || !singleXValue || isBottomRow;
     const showYTickLabels = !sharedYAxes || !singleYValue || isLeftColumn;
 
-    figure.updateLayout({
-        [`xaxis${cellIndex}`]: {
-            title: showXTitle ? { text: makeTitleFromChannelContent(contentX), font } : undefined,
-            showticklabels: showXTickLabels,
-        },
-        [`yaxis${cellIndex}`]: {
-            title: showYTitle ? { text: makeTitleFromChannelContent(contentY), font } : undefined,
-            showticklabels: showYTickLabels,
-        },
-    } as Partial<Layout>);
+    const xAxisKey = `xaxis${cellIndex}` as const;
+    const yAxisKey = `yaxis${cellIndex}` as const;
+    const layoutPatch: Partial<Layout> = {};
+    layoutPatch[xAxisKey] = {
+        title: showXTitle ? { text: makeTitleFromChannelContent(contentX), font } : undefined,
+        showticklabels: showXTickLabels,
+    };
+    layoutPatch[yAxisKey] = {
+        title: showYTitle ? { text: makeTitleFromChannelContent(contentY), font } : undefined,
+        showticklabels: showYTickLabels,
+    };
+    figure.updateLayout(layoutPatch);
 }
