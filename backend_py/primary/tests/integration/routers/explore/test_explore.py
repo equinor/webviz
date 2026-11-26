@@ -4,13 +4,15 @@ from primary.routers.explore import schemas
 from tests.integration.conftest import SumoTestEnsemble
 
 
-async def get_asset_names(test_user: router.AuthenticatedUser, sumo_test_ensemble_ahm: SumoTestEnsemble) -> None:
+async def test_get_asset_infos(test_user: router.AuthenticatedUser, sumo_test_ensemble_ahm: SumoTestEnsemble) -> None:
     asset_names = await router.get_asset_infos(test_user)
     assert all(isinstance(a, schemas.AssetInfo) for a in asset_names)
     assert any(a.name == sumo_test_ensemble_ahm.asset_name for a in asset_names)
 
 
-async def get_field_identifiers(test_user: router.AuthenticatedUser, sumo_test_ensemble_ahm: SumoTestEnsemble) -> None:
+async def test_get_field_identifiers(
+    test_user: router.AuthenticatedUser, sumo_test_ensemble_ahm: SumoTestEnsemble
+) -> None:
     fields = await router.get_field_identifiers(test_user)
     assert all(isinstance(f, schemas.FieldInfo) for f in fields)
     assert any(f.fieldIdentifier == sumo_test_ensemble_ahm.field_identifiers[0] for f in fields)
