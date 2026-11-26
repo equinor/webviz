@@ -92,6 +92,10 @@ export async function addFromMenu(page: Page, addButton: Locator, menuPath: stri
         await smoothClick(page, item);
         parentItem = item;
     }
+    // Wait for the Base UI menu and its inert backdrop to finish closing before the next interaction.
+    if (parentItem) {
+        await expect(parentItem).toBeHidden();
+    }
 }
 
 function comboboxOption(page: Page, optionLabel: string): Locator {
@@ -178,7 +182,8 @@ export async function editColorScale(
     }
     await pace(page, "short");
     await smoothClick(page, dialog.getByRole("button", { name: "Apply" }));
-    await expect(dialog).toBeHidden();
+    // Applying a color scale triggers a WebGL map repaint that can briefly exceed the 5s default on SwiftShader.
+    await expect(dialog).toBeHidden({ timeout: 15_000 });
 }
 
 /**

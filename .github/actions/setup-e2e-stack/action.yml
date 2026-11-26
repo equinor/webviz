@@ -1,0 +1,32 @@
+name: Setup e2e stack
+description: Install frontend dependencies, Playwright Chromium, and start the Docker Compose stack.
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        cache: npm
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: 📦 Install frontend dependencies
+      shell: bash
+      working-directory: ./frontend
+      run: npm ci --include=dev --onnxruntime-node-install-cuda=skip
+
+    - name: 🎭 Install Playwright browser (chromium)
+      shell: bash
+      working-directory: ./frontend
+      run: npx playwright install --with-deps chromium
+
+    - name: 🐳 Build and start the full stack
+      shell: bash
+      run: docker compose up --build --detach
+
+    - name: ⏳ Wait for the stack to become responsive
+      shell: bash
+      run: |
+        curl --retry 90 --retry-delay 5 --retry-connrefused --retry-all-errors -f http://localhost:5000/alive
+        curl --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors -f http://localhost:8080

@@ -27,7 +27,7 @@ test.describe("Data channels", () => {
         narrate,
         markStep,
     }) => {
-        test.setTimeout(360_000);
+        test.setTimeout(480_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         const SIMULATION_TIME_SERIES = "Simulation Time Series";
@@ -204,9 +204,11 @@ test.describe("Data channels", () => {
         await crossModuleNarration;
 
         // Configure the volumes module to publish the total gas initially in place (GIIP_TOTAL) per
-        // realization.
+        // realization. Wait for the response combobox to receive its default value so we know
+        // `resultNameOptions` has finished loading from Sumo before filtering for GIIP_TOTAL.
         const responseCombobox = page.getByTestId("inplace-volumes-response-select").getByRole("combobox");
         await responseCombobox.waitFor({ state: "visible", timeout: 20_000 });
+        await expect(responseCombobox).not.toHaveValue("", { timeout: 60_000 });
         await responseCombobox.evaluate((el) => el.scrollIntoView({ block: "center" }));
         await smoothMoveToLocator(page, responseCombobox);
         await responseCombobox.fill("GIIP_TOTAL");

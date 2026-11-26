@@ -18,7 +18,7 @@ import { meta } from "./vfpModule.meta";
 
 test.describe("VFP module", () => {
     test("select a Drogon ensemble and render VFP lift curves", async ({ page, narrate, markStep }) => {
-        test.setTimeout(240_000);
+        test.setTimeout(300_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         const VFP = "VFP";

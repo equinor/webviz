@@ -1,52 +1,82 @@
 name: e2e recordings
 
 on:
-  # Temporarily disabled until a GPU-enabled GitHub runner is available.
-  # push:
-  #   branches:
-  #     - main
+  schedule:
+    # Weekly on Sunday at 02:00 UTC
+    - cron: "0 2 * * 0"
   workflow_dispatch:
+    inputs:
+      suite:
+        description: "Which suite to run"
+        type: choice
+        options:
+          - all
+          - cpu
+          - gpu
+        default: all
+      upload:
+        description: "Upload recordings to Azure Blob Storage"
+        type: boolean
+        default: true
+
+concurrency:
+  group: e2e-recordings-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
 
+env:
+  COMPOSE_FILE: docker-compose.yml:docker-compose-cosmos-db.yml:docker-compose-service-bus.yml
+  WEBVIZ_SKIP_AZURE_CREDENTIAL_CREATION: true
+  WEBVIZ_LOCAL_DEVELOPER_QUALIFIER: NoDeveloper
+  WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
+  WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY: 0
+  WEBVIZ_VDS_HOST_ADDRESS: 0
+  WEBVIZ_PSEUDONYM_HMAC_KEY: 0
+  WEBVIZ_SESSION_STORE_FERNET_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+  WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+  WEBVIZ_REDIS_AUTH_STORE_PASSWORD: 0
+  WEBVIZ_REDIS_CACHE_PASSWORD: 0
+  WEBVIZ_SUMO_ENV: prod
+
 jobs:
-  e2e_recordings:
+  select_suites:
     # The Sumo shared key secret is only available on the upstream repo, so skip on forks.
     if: github.repository == 'equinor/webviz'
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        env:
+          SUITE: ${{ github.event_name == 'workflow_dispatch' && inputs.suite || 'all' }}
+        run: |
+          node -e '
+            const suites = [
+              { name: "cpu", runner: "ubuntu-24.04", project: "authenticated-chromium", job_timeout: 135, test_timeout: 120 },
+              { name: "gpu", runner: "linux-gpu", project: "authenticated-chromium-gpu", job_timeout: 50, test_timeout: 35 },
+            ];
+            const selected = process.env.SUITE === "all" ? suites : suites.filter((s) => s.name === process.env.SUITE);
+            console.log(`matrix=${JSON.stringify(selected)}`);
+          ' >> "$GITHUB_OUTPUT"
 
-    env:
-      COMPOSE_FILE: docker-compose.yml:docker-compose-cosmos-db.yml:docker-compose-service-bus.yml
-      WEBVIZ_SKIP_AZURE_CREDENTIAL_CREATION: true
-      WEBVIZ_LOCAL_DEVELOPER_QUALIFIER: NoDeveloper
-      WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
-      WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY: 0
-      WEBVIZ_VDS_HOST_ADDRESS: 0
-      WEBVIZ_PSEUDONYM_HMAC_KEY: 0
-      WEBVIZ_SESSION_STORE_FERNET_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-      WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-      WEBVIZ_REDIS_AUTH_STORE_PASSWORD: 0
-      WEBVIZ_REDIS_CACHE_PASSWORD: 0
-      WEBVIZ_SUMO_ENV: prod
+  e2e_recordings:
+    needs: select_suites
+    name: e2e recordings (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: ${{ matrix.job_timeout }}
+
+    # Stories tagged @gpu run on the (billed) GPU runner; everything else runs on a standard runner.
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.select_suites.outputs.matrix) }}
 
     steps:
       - name: 📖 Checkout commit locally
         uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: 📦 Install frontend dependencies
-        working-directory: ./frontend
-        run: npm ci --include=dev --onnxruntime-node-install-cuda=skip
-
-      - name: 🎭 Install Playwright browser (chromium)
-        working-directory: ./frontend
-        run: npx playwright install --with-deps chromium
 
       - name: 🎙️ Ensure ffmpeg is available (for voiceover muxing)
         run: ffmpeg -version >/dev/null 2>&1 || (sudo apt-get update && sudo apt-get install -y ffmpeg)
@@ -56,28 +86,29 @@ jobs:
         with:
           path: ~/.cache/huggingface
           key: huggingface-kokoro-82m-v1.0-onnx
+          save-always: true
 
       - name: 📦 Cache synthesized narration audio
         uses: actions/cache@v4
         with:
           path: frontend/.narration-cache
-          key: narration-audio-${{ github.run_id }}
-          restore-keys: narration-audio-
+          key: narration-audio-${{ matrix.name }}-${{ github.run_id }}
+          restore-keys: |
+            narration-audio-${{ matrix.name }}-
+            narration-audio-
+          save-always: true
 
-      - name: 🐳 Build and start the full stack
-        run: docker compose up --build --detach
-
-      - name: ⏳ Wait for the stack to become responsive
-        run: |
-          curl --retry 90 --retry-delay 5 --retry-connrefused --retry-all-errors -f http://localhost:5000/alive
-          curl --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors -f http://localhost:8080
+      - name: 🐳 Setup e2e stack
+        timeout-minutes: 25
+        uses: ./.github/actions/setup-e2e-stack
 
       - name: 🎥 Run e2e tests with recording
         working-directory: ./frontend
+        timeout-minutes: ${{ matrix.test_timeout }}
         env:
           CI: "true"
           SHARED_KEY_DROGON_READ_PROD: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
-        run: npm run test:e2e:record
+        run: npm run test:e2e:record -- --project=${{ matrix.project }} --max-failures=1
 
       - name: 🐳 Dump docker compose logs on failure
         if: failure()
@@ -87,12 +118,13 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-traces
+          name: playwright-traces-${{ matrix.name }}
           path: frontend/test-results/**/trace.zip
           retention-days: 1
           if-no-files-found: ignore
 
-      - name: ☁️ Upload recordings to Azure Blob Storage  
+      - name: ☁️ Upload recordings to Azure Blob Storage
+        if: github.event_name != 'workflow_dispatch' || inputs.upload
         env:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.E2E_RECORDINGS_STORAGE_CONNECTION_STRING }}
         run: |

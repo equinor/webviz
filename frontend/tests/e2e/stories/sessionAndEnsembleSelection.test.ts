@@ -19,7 +19,7 @@ import { meta } from "./sessionAndEnsembleSelection.meta";
 
 test.describe("Session and ensemble selection", () => {
     test("create a session and select and apply an ensemble", async ({ page, narrate, markStep }) => {
-        test.setTimeout(360_000);
+        test.setTimeout(420_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         const SESSION_TITLE = "Drogon walkthrough session";

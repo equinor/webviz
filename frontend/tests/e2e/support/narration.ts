@@ -192,7 +192,7 @@ export async function terminateNarrationWorker(): Promise<void> {
  * recording, and writes a manifest that the post-run muxer consumes.
  */
 export class Narrator {
-    private recordingStartMs = Date.now();
+    private recordingStartMs = performance.now();
     private readonly entries: NarrationEntry[] = [];
     private readonly steps: TutorialStep[] = [];
     private readonly outputDir: string;
@@ -208,7 +208,7 @@ export class Narrator {
 
     /** Reset the timeline zero-point to now — call as close as possible to the video's first frame. */
     markRecordingStart(): void {
-        this.recordingStartMs = Date.now();
+        this.recordingStartMs = performance.now();
     }
 
     /** Add a named step at the current position in the recording. */
@@ -219,7 +219,7 @@ export class Narrator {
         }
         this.steps.push({
             title: trimmedTitle,
-            startMs: Date.now() - this.recordingStartMs + this.offsetMs,
+            startMs: Math.round(performance.now() - this.recordingStartMs + this.offsetMs),
         });
     }
 
@@ -233,15 +233,15 @@ export class Narrator {
      *    only sync up before the next step.
      */
     narrate(text: string): Promise<void> {
-        const callWallMs = Date.now();
-        const startMs = callWallMs - this.recordingStartMs + this.offsetMs;
+        const callMonotonicMs = performance.now();
+        const startMs = Math.round(callMonotonicMs - this.recordingStartMs + this.offsetMs);
         const file = `narration-${String(this.nextIndex++).padStart(3, "0")}.wav`;
         const outPath = join(this.outputDir, file);
 
         return (async () => {
             const durationMs = await synthesize(text, outPath);
             this.entries.push({ startMs, file, durationMs, text });
-            const generationMs = Date.now() - callWallMs;
+            const generationMs = performance.now() - callMonotonicMs;
             const remainingMs = durationMs - generationMs;
             if (remainingMs > 0) {
                 await new Promise((resolve) => setTimeout(resolve, remainingMs));
