@@ -8,7 +8,7 @@ from webviz_services.sumo_access.sumo_client_factory import SENTINEL_ACCESS_TOKE
 from webviz_services.utils.authenticated_user import AuthenticatedUser, AccessTokens
 
 
-def pytest_sessionstart(session):
+def pytest_sessionstart(session: pytest.Session) -> None:
     print("Global test initialization...")
 
     services_config = ServicesConfig(
@@ -57,6 +57,10 @@ def fixture_sumo_test_ensemble_design() -> SumoTestEnsemble:
 def fixture_test_user() -> AuthenticatedUser:
     token = SENTINEL_ACCESS_TOKEN_FOR_TESTING
     tokens = AccessTokens(
-        sumo_access_token=token, graph_access_token=None, smda_access_token=None, ssdl_access_token=None
+        sumo_access_token=token,
+        graph_access_token=None,
+        smda_access_token=None,
+        ssdl_access_token=None,
+        pdm_access_token=None,
     )
     return AuthenticatedUser(user_id="test_user", username="test_user", access_tokens=tokens)

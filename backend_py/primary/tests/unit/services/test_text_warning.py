@@ -4,7 +4,7 @@ from webviz_core_utils.result_with_warning import ResultWithWarning, UnhandledWa
 from webviz_core_utils.text_warning import TextWarning
 
 
-def _warning(reals: list[int]):
+def _warning(reals: list[int]) -> TextWarning:
     return TextWarning.from_message_and_realizations("Missing realizations in Sumo vector data", reals)
 
 

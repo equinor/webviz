@@ -5,7 +5,7 @@ from tests.integration.conftest import SumoTestEnsemble
 
 
 async def get_asset_names(test_user: router.AuthenticatedUser, sumo_test_ensemble_ahm: SumoTestEnsemble) -> None:
-    asset_names = await router.get_asset_names(test_user)
+    asset_names = await router.get_asset_infos(test_user)
     assert all(isinstance(a, schemas.AssetInfo) for a in asset_names)
     assert any(a.name == sumo_test_ensemble_ahm.asset_name for a in asset_names)
 
