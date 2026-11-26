@@ -1,13 +1,21 @@
+from collections.abc import Awaitable, Callable
+from contextvars import ContextVar
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
-from contextvars import ContextVar
-from typing import Any, Callable
+from typing import Any, Protocol
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Scope, Receive, Send, Message
+
+
+class _SignaturePreservingDecorator(Protocol):
+    """Decorator that preserves the signature and return type of async endpoints."""
+
+    def __call__[**P, R](self, func: Callable[P, Awaitable[R]], /) -> Callable[P, Awaitable[R]]: ...
+
 
 # Name of the OpenAPI operation field that marks an endpoint whose responses browsers may cache
 BROWSER_CACHED_OPENAPI_FIELD = "x-browser-cached"
@@ -58,7 +66,7 @@ _cache_context: ContextVar[CacheSettings | None] = ContextVar("_cache_context", 
 
 def custom_cache_time(
     max_age_s: int, stale_while_revalidate_s: int | None, result_version: int | None = None
-) -> Callable:
+) -> _SignaturePreservingDecorator:
     """
     Decorator that sets a custom browser cache time for the endpoint response.
 
@@ -83,9 +91,9 @@ def custom_cache_time(
     ):
         raise ValueError("result_version must be a positive integer")
 
-    def decorator(func: Callable) -> Callable:
+    def decorator[**P, R](func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         @wraps(func)
-        async def wrapper_async(*args: Any, **kwargs: Any) -> Any:
+        async def wrapper_async(*args: P.args, **kwargs: P.kwargs) -> R:
             _cache_context.set(CacheSettings(max_age_s=max_age_s, stale_while_revalidate_s=stale_while_revalidate_s))
             return await func(*args, **kwargs)
 
@@ -100,7 +108,7 @@ def custom_cache_time(
 
 def cache_time(
     duration: CacheTime, stale_while_revalidate: StaleTime | None = None, result_version: int | None = None
-) -> Callable:
+) -> _SignaturePreservingDecorator:
     """
     Decorator that sets browser cache time for the endpoint response using a preset duration.
 
