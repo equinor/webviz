@@ -1,7 +1,11 @@
+import React from "react";
+
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { xor } from "lodash";
 
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
+import { DashboardControlledSetting } from "@framework/DashboardSettings/components/DashboardControlledSetting";
+import { TIME_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/time";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -15,11 +19,9 @@ import { Select } from "@lib/components/Select";
 import { Setting, type SettingAnnotation } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
+import { useFlagActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import {
-    propagateAllApiErrorsToStatusWriter,
-    propagateQueryErrorsToStatusWriter,
-} from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
+import { propagateQueryErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { RFT_STATISTIC_LABELS, type RftStatistic } from "../typesAndEnums";
@@ -33,6 +35,7 @@ import {
     showStatisticalFanAtom,
     showStatisticalLinesAtom,
 } from "./atoms/baseAtoms";
+import { effectiveTimestampUtcMsAtom, isTimestampDashboardControlledAtom } from "./atoms/dashboardSettingAtoms";
 import {
     availableResponseNamesAtom,
     availableTimestampsUtcMsAtom,
@@ -45,15 +48,12 @@ import {
     selectedTimestampUtcMsAtom,
     selectedWellNameAtom,
 } from "./atoms/persistableFixableAtoms";
-import {
-    rftObservationsQueriesAtom,
-    rftRealizationDataQueriesAtom,
-    rftTableDefinitionQueriesAtom,
-} from "./atoms/queryAtoms";
+import { rftTableDefinitionQueriesAtom } from "./atoms/queryAtoms";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
+    const flagActionRequiredToStatusWriter = useFlagActionRequiredToStatusWriter(statusWriter);
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value;
@@ -75,11 +75,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const tableDefinitionQueries = useAtomValue(rftTableDefinitionQueriesAtom);
     propagateQueryErrorsToStatusWriter(tableDefinitionQueries, statusWriter);
 
-    const rftRealizationDataResult = useAtomValue(rftRealizationDataQueriesAtom);
-    const rftObservationsResult = useAtomValue(rftObservationsQueriesAtom);
-    propagateAllApiErrorsToStatusWriter(rftRealizationDataResult.errors, statusWriter);
-    propagateAllApiErrorsToStatusWriter(rftObservationsResult.errors, statusWriter);
-
     const availableResponseNames = useAtomValue(availableResponseNamesAtom);
     const selectedResponseName = useAtomValue(selectedResponseNameAtom).value;
     const setSelectedResponseName = useSetAtom(selectedResponseNameAtom);
@@ -89,7 +84,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const setSelectedWellName = useSetAtom(selectedWellNameAtom);
 
     const availableTimestampsUtcMs = useAtomValue(availableTimestampsUtcMsAtom);
-    const selectedTimestampUtcMs = useAtomValue(selectedTimestampUtcMsAtom).value;
+    const effectiveTimestamp = useAtomValue(effectiveTimestampUtcMsAtom);
+    const isTimestampDashboardControlled = useAtomValue(isTimestampDashboardControlledAtom);
     const setSelectedTimestampUtcMs = useSetAtom(selectedTimestampUtcMsAtom);
 
     const ensembleTableDefinitions = useAtomValue(ensembleTableDefinitionsAtom);
@@ -153,6 +149,14 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             },
     ].filter(Boolean) as SettingAnnotation[];
 
+    const handlePanelAnnotationsChange = React.useCallback(
+        function handlePanelAnnotationsChange(annotations: SettingAnnotation[]) {
+            const invalidFieldValueMessages = annotations.filter((a) => a.type === "error").map((a) => a.message);
+            flagActionRequiredToStatusWriter(invalidFieldValueMessages);
+        },
+        [flagActionRequiredToStatusWriter],
+    );
+
     const timestampSetsPerEnsemble = selectedWellName
         ? ensembleTableDefinitions.map((definition) => {
               const wellInfo = definition.tableDefinition.well_infos.find(
@@ -170,8 +174,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         Boolean(selectedWellName) &&
         isSelectedWellNameValid &&
         availableTimestampsUtcMs.length === 0;
+    // While the dashboard controls the time, the module's own selection is not used
+    const effectiveTimestampAnnotations = isTimestampDashboardControlled ? [] : selectedTimestampAnnotations;
     const timestampAnnotations: SettingAnnotation[] = [
-        ...selectedTimestampAnnotations,
+        ...effectiveTimestampAnnotations,
         commonTimestampsAreMissing && {
             type: "error" as const,
             message: "Selected ensembles have no dates in common for this well.",
@@ -185,7 +191,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     return (
         <Setting.ScrollArea>
-            <Setting.Panel>
+            <Setting.Panel onAnnotationsChange={handlePanelAnnotationsChange}>
                 <Setting.Section title="Data" defaultOpen>
                     <Setting.Field label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
                         <EnsemblePicker
@@ -228,21 +234,35 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             size={Math.max(1, Math.min(availableWellNames.length, 10))}
                         />
                     </Setting.Field>
-                    <Setting.Field
+                    <DashboardControlledSetting
                         label="Date"
-                        annotations={timestampAnnotations}
-                        loadingOverlay={tableDefinitionsArePending}
-                        errorOverlay={tableDefinitionsErrorMessage}
-                        stacked
+                        value={effectiveTimestamp.value}
+                        isValueValidHere={effectiveTimestamp.value === null || effectiveTimestamp.isValidInContext}
+                        controlledBy={TIME_DASHBOARD_SETTING}
+                        isControlled={isTimestampDashboardControlled}
                     >
-                        <Select<number>
-                            options={makeTimestampOptions(availableTimestampsUtcMs)}
-                            value={selectedTimestampUtcMs !== null ? [selectedTimestampUtcMs] : []}
-                            onValueChange={handleTimestampChange}
-                            filter={availableTimestampsUtcMs.length > 6}
-                            size={Math.max(3, Math.min(availableTimestampsUtcMs.length, 6))}
-                        />
-                    </Setting.Field>
+                        {function renderDateField(label, wrapSetting) {
+                            return (
+                                <Setting.Field
+                                    label={label}
+                                    annotations={timestampAnnotations}
+                                    loadingOverlay={tableDefinitionsArePending}
+                                    errorOverlay={tableDefinitionsErrorMessage}
+                                    stacked
+                                >
+                                    {wrapSetting(
+                                        <Select<number>
+                                            options={makeTimestampOptions(availableTimestampsUtcMs)}
+                                            value={effectiveTimestamp.value !== null ? [effectiveTimestamp.value] : []}
+                                            onValueChange={handleTimestampChange}
+                                            filter={availableTimestampsUtcMs.length > 6}
+                                            size={Math.max(3, Math.min(availableTimestampsUtcMs.length, 6))}
+                                        />,
+                                    )}
+                                </Setting.Field>
+                            );
+                        }}
+                    </DashboardControlledSetting>
                 </Setting.Section>
                 <Setting.Section title="Plot" defaultOpen>
                     <Setting.Field label="Display" stacked contentClassName="flex flex-col gap-y-xs">
