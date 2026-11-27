@@ -34,6 +34,7 @@ export type VisualizationSettings = {
 export type TimestampInfoForView = {
     value: number | null;
     isValidInContext: boolean;
+    isLoading: boolean;
 };
 
 export type RftEnsembleRealizationData = {

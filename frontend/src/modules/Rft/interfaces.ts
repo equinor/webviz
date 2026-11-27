@@ -47,8 +47,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     responseName: (get) => get(selectedResponseNameAtom).value,
     isResponseNameValid: (get) => get(selectedResponseNameAtom).isValidInContext,
     timestamp: (get) => {
-        const { value, isValidInContext } = get(effectiveTimestampUtcMsAtom);
-        return { value, isValidInContext };
+        const { value, isValidInContext, isLoading } = get(effectiveTimestampUtcMsAtom);
+        return { value, isValidInContext, isLoading };
     },
     validRealizationNumbers: (get) => get(validRealizationNumbersAtom),
     highlightedRealization: (get) => get(highlightedRealizationAtom),

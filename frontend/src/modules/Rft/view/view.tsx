@@ -36,7 +36,11 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
 
     const wellName = viewContext.useSettingsToViewInterfaceValue("wellName");
     const responseName = viewContext.useSettingsToViewInterfaceValue("responseName");
-    const { value: timestampUtcMs, isValidInContext: isTimestampValid } =
+    const {
+        value: timestampUtcMs,
+        isValidInContext: isTimestampValid,
+        isLoading: isTimestampLoading,
+    } =
         viewContext.useSettingsToViewInterfaceValue("timestamp");
     const highlightedRealization = viewContext.useSettingsToViewInterfaceValue("highlightedRealization");
     const visualizationSettings = viewContext.useSettingsToViewInterfaceValue("visualizationSettings");
@@ -127,6 +131,14 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
     function makeContent() {
         if (!wellName || !responseName || timestampUtcMs === null) {
             return <ContentMessage type={ContentMessageType.INFO}>No RFT selection.</ContentMessage>;
+        }
+
+        if (isTimestampLoading) {
+            return (
+                <ContentMessage type={ContentMessageType.INFO}>
+                    <CircularProgress />
+                </ContentMessage>
+            );
         }
 
         if (!isTimestampValid) {

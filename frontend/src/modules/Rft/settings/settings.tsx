@@ -237,7 +237,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     <DashboardControlledSetting
                         label="Date"
                         value={effectiveTimestamp.value}
-                        isValueValidHere={effectiveTimestamp.value === null || effectiveTimestamp.isValidInContext}
+                        isValueValidHere={
+                            effectiveTimestamp.value === null ||
+                            effectiveTimestamp.isLoading ||
+                            effectiveTimestamp.isValidInContext
+                        }
                         controlledBy={TIME_DASHBOARD_SETTING}
                         isControlled={isTimestampDashboardControlled}
                     >

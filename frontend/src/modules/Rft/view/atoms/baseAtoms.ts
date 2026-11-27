@@ -10,5 +10,5 @@ export const wellNameAtom = atom<string | null>(null);
 export const isWellNameValidAtom = atom<boolean>(false);
 export const responseNameAtom = atom<string | null>(null);
 export const isResponseNameValidAtom = atom<boolean>(false);
-export const timestampAtom = atom<TimestampInfoForView>({ value: null, isValidInContext: false });
+export const timestampAtom = atom<TimestampInfoForView>({ value: null, isValidInContext: false, isLoading: false });
 export const validRealizationNumbersAtom = atom<number[]>([]);
