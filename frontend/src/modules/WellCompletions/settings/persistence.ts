@@ -5,13 +5,14 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { RealizationMode, TimeAggregationMode } from "../typesAndEnums";
+import { RealizationMode, TimeAggregationFunction } from "../typesAndEnums";
 
 import {
     isZeroCompletionsHiddenAtom,
     realizationModeAtom,
     sortWellsByAtom,
-    timeAggregationModeAtom,
+    isTimeAggregationEnabledAtom,
+    timeAggregationFunctionAtom,
     wellExclusionTextAtom,
     wellSearchTextAtom,
     wellSortDirectionAtom,
@@ -23,11 +24,17 @@ import {
     selectedRealizationAtom,
 } from "./atoms/persistableFixableAtoms";
 
+// Optional for backward compat – awaiting schema versioning (#1807)
+enum LegacyTimeAggregationMode {
+    NONE = "none",
+    MAX = "max",
+    AVERAGE = "average",
+}
+
 export type SerializedSettings = {
     ensembleIdentString: string | null;
     realizationMode: RealizationMode;
     realizationNumber: number | null;
-    timeAggregationMode: TimeAggregationMode;
     selectedCompletionDateIndex: number | null;
     selectedCompletionDateIndexRange: { start: number; end: number } | null;
     isZeroCompletionsHidden: boolean;
@@ -35,6 +42,11 @@ export type SerializedSettings = {
     wellSearchText: string;
     sortWellsBy: SortWellsBy;
     wellSortDirection: SortDirection;
+
+    // Optional for backward compat – awaiting schema versioning (#1807)
+    isTimeAggregationEnabled?: boolean; // New setting
+    timeAggregationFunction?: TimeAggregationFunction; // New setting
+    timeAggregationMode?: LegacyTimeAggregationMode; // Old setting, only read and never written
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
@@ -42,7 +54,6 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         ensembleIdentString: { type: "string", nullable: true },
         realizationMode: { enum: Object.values(RealizationMode) },
         realizationNumber: { type: "int16", nullable: true },
-        timeAggregationMode: { enum: Object.values(TimeAggregationMode) },
         selectedCompletionDateIndex: { type: "int16", nullable: true },
         selectedCompletionDateIndexRange: {
             properties: {
@@ -57,6 +68,12 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         sortWellsBy: { enum: Object.values(SortWellsBy) },
         wellSortDirection: { enum: Object.values(SortDirection) },
     },
+    optionalProperties: {
+        // Optional for backward compat – awaiting schema versioning (#1807)
+        isTimeAggregationEnabled: { type: "boolean" }, // New setting
+        timeAggregationFunction: { enum: Object.values(TimeAggregationFunction) }, // New setting
+        timeAggregationMode: { enum: Object.values(LegacyTimeAggregationMode) }, // Old setting, only read and never written
+    },
 }));
 
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
@@ -70,7 +87,8 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         ensembleIdentString: selectedEnsembleIdentString,
         realizationMode: get(realizationModeAtom),
         realizationNumber: get(selectedRealizationAtom).value,
-        timeAggregationMode: get(timeAggregationModeAtom),
+        isTimeAggregationEnabled: get(isTimeAggregationEnabledAtom),
+        timeAggregationFunction: get(timeAggregationFunctionAtom),
         selectedCompletionDateIndex: get(selectedCompletionDateIndexAtom).value,
         selectedCompletionDateIndexRange: formattedDateIndexRange,
         isZeroCompletionsHidden: get(isZeroCompletionsHiddenAtom),
@@ -89,7 +107,8 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedEnsembleIdentAtom, ensembleIdent);
     setIfDefined(set, realizationModeAtom, raw.realizationMode);
     setIfDefined(set, selectedRealizationAtom, raw.realizationNumber);
-    setIfDefined(set, timeAggregationModeAtom, raw.timeAggregationMode);
+    setIfDefined(set, isTimeAggregationEnabledAtom, raw.isTimeAggregationEnabled);
+    setIfDefined(set, timeAggregationFunctionAtom, raw.timeAggregationFunction);
     setIfDefined(set, selectedCompletionDateIndexAtom, raw.selectedCompletionDateIndex);
     setIfDefined(set, selectedCompletionDateIndexRangeAtom, completionDateIndexRange);
     setIfDefined(set, isZeroCompletionsHiddenAtom, raw.isZeroCompletionsHidden);
@@ -97,4 +116,14 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, wellSearchTextAtom, raw.wellSearchText);
     setIfDefined(set, sortWellsByAtom, raw.sortWellsBy);
     setIfDefined(set, wellSortDirectionAtom, raw.wellSortDirection);
+
+    // Optional for backward compat – awaiting schema versioning (#1807)
+    // Old setting: sessions stored a single mode where "none" meant no aggregation
+    if (raw.isTimeAggregationEnabled === undefined && raw.timeAggregationMode !== undefined) {
+        const isLegacyAggregated = raw.timeAggregationMode !== LegacyTimeAggregationMode.NONE;
+        set(isTimeAggregationEnabledAtom, isLegacyAggregated);
+        if (isLegacyAggregated) {
+            set(timeAggregationFunctionAtom, raw.timeAggregationMode as unknown as TimeAggregationFunction);
+        }
+    }
 };

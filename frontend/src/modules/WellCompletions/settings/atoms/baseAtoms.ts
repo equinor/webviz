@@ -2,12 +2,13 @@ import { SortDirection, SortWellsBy } from "@webviz/well-completions-plot";
 import { atom } from "jotai";
 
 import type { ColorSet } from "@lib/utils/ColorSet";
-import { RealizationMode, TimeAggregationMode } from "@modules/WellCompletions/typesAndEnums";
+import { RealizationMode, TimeAggregationFunction } from "@modules/WellCompletions/typesAndEnums";
 
 export const selectedStratigraphyColorSetAtom = atom<ColorSet | null>(null);
 
 export const realizationModeAtom = atom<RealizationMode>(RealizationMode.SINGLE);
-export const timeAggregationModeAtom = atom<TimeAggregationMode>(TimeAggregationMode.NONE);
+export const isTimeAggregationEnabledAtom = atom<boolean>(false);
+export const timeAggregationFunctionAtom = atom<TimeAggregationFunction>(TimeAggregationFunction.MAX);
 export const isZeroCompletionsHiddenAtom = atom<boolean>(false);
 export const wellExclusionTextAtom = atom<string>("");
 export const wellSearchTextAtom = atom<string>("");

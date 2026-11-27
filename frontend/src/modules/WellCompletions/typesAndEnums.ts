@@ -14,19 +14,12 @@ export const RealizationModeEnumToStringMapping = {
     [RealizationMode.SINGLE]: "Single",
 };
 
-export enum TimeAggregationMode {
-    NONE = "none",
+export enum TimeAggregationFunction {
     MAX = "max",
     AVERAGE = "average",
 }
 
-export const TimeAggregationModeEnumToStringMapping = {
-    [TimeAggregationMode.NONE]: "None",
-    [TimeAggregationMode.MAX]: "Max",
-    [TimeAggregationMode.AVERAGE]: "Average",
+export const TimeAggregationFunctionEnumToStringMapping = {
+    [TimeAggregationFunction.MAX]: "Max",
+    [TimeAggregationFunction.AVERAGE]: "Average",
 };
-
-export interface CompletionDateSelections {
-    completionDateIndexSelection: number | [number, number]; // Note: Not possible with null
-    timeAggregationMode: TimeAggregationMode;
-}

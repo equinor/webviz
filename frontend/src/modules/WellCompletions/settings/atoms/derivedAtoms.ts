@@ -2,7 +2,7 @@ import type { PlotData } from "@webviz/well-completions-plot";
 import { atom } from "jotai";
 
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
-import { DataLoadingStatus, TimeAggregationMode } from "@modules/WellCompletions/typesAndEnums";
+import { DataLoadingStatus } from "@modules/WellCompletions/typesAndEnums";
 import { WellCompletionsDataAccessor } from "@modules/WellCompletions/utils/wellCompletionsDataAccessor";
 
 import {
@@ -12,10 +12,11 @@ import {
     isZeroCompletionsHiddenAtom,
     sortWellsByAtom,
     wellSortDirectionAtom,
-    timeAggregationModeAtom,
+    isTimeAggregationEnabledAtom,
+    timeAggregationFunctionAtom,
 } from "./baseAtoms";
 import {
-    selectedCompletionDateIndexAtom,
+    effectiveCompletionDateIndexAtom,
     selectedCompletionDateIndexRangeAtom,
     selectedEnsembleIdentAtom,
 } from "./persistableFixableAtoms";
@@ -30,6 +31,7 @@ export const availableRealizationsAtom = atom<number[]>((get) => {
         : [];
     return validRealizationNumbers;
 });
+
 
 export const dataLoadingStatusAtom = atom<DataLoadingStatus>((get) => {
     const wellCompletionsQuery = get(wellCompletionsQueryAtom);
@@ -71,11 +73,12 @@ export const plotDataAtom = atom<PlotData | null>((get) => {
     const wellExclusionText = get(wellExclusionTextAtom);
     const wellSearchText = get(wellSearchTextAtom);
     const isZeroCompletionsHidden = get(isZeroCompletionsHiddenAtom);
-    const timeAggregationMode = get(timeAggregationModeAtom);
+    const isTimeAggregationEnabled = get(isTimeAggregationEnabledAtom);
+    const timeAggregationFunction = get(timeAggregationFunctionAtom);
     const sortWellsBy = get(sortWellsByAtom);
     const wellSortDirection = get(wellSortDirectionAtom);
 
-    const selectedCompletionDateIndex = get(selectedCompletionDateIndexAtom);
+    const effectiveCompletionDateIndex = get(effectiveCompletionDateIndexAtom);
     const selectedCompletionDateIndexRange = get(selectedCompletionDateIndexRangeAtom);
 
     if (!wellCompletionsDataAccessor) {
@@ -85,9 +88,7 @@ export const plotDataAtom = atom<PlotData | null>((get) => {
     // An invalid selection is kept as-is (e.g. an out-of-range index or an inverted persisted range) and must not be
     // plotted
     const completionDateIndexSelection =
-        timeAggregationMode === TimeAggregationMode.NONE
-            ? selectedCompletionDateIndex
-            : selectedCompletionDateIndexRange;
+        isTimeAggregationEnabled ? selectedCompletionDateIndexRange : effectiveCompletionDateIndex;
     if (completionDateIndexSelection.value === null || !completionDateIndexSelection.isValidInContext) {
         return null;
     }
@@ -98,5 +99,7 @@ export const plotDataAtom = atom<PlotData | null>((get) => {
     wellCompletionsDataAccessor.setSortWellsBy(sortWellsBy);
     wellCompletionsDataAccessor.setSortDirection(wellSortDirection);
 
-    return wellCompletionsDataAccessor.createPlotData(completionDateIndexSelection.value, timeAggregationMode);
+    return wellCompletionsDataAccessor.createPlotData(completionDateIndexSelection.value,
+        isTimeAggregationEnabled ? timeAggregationFunction : null,
+    );
 });

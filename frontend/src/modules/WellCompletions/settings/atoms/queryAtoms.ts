@@ -7,11 +7,11 @@ import { RealizationMode } from "@modules/WellCompletions/typesAndEnums";
 
 import { realizationModeAtom } from "./baseAtoms";
 import { availableRealizationsAtom } from "./derivedAtoms";
-import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./persistableFixableAtoms";
+import { effectiveRealizationAtom, selectedEnsembleIdentAtom } from "./persistableFixableAtoms";
 
 export const wellCompletionsQueryAtom = atomWithQuery((get) => {
     const { value: selectedEnsembleIdent, isValidInContext: ensembleIdentValid } = get(selectedEnsembleIdentAtom);
-    const { value: selectedRealization, isValidInContext: realizationValid } = get(selectedRealizationAtom);
+    const { value: selectedRealization, isValidInContext: realizationValid } = get(effectiveRealizationAtom);
     const realizationMode = get(realizationModeAtom);
     const validRealizationNumbers = get(availableRealizationsAtom);
 

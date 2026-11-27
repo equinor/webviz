@@ -5,16 +5,21 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash-es";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { DashboardControlledSetting } from "@framework/DashboardSettings/components/DashboardControlledSetting";
+import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
+import { TIME_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/time";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { useStableAtomGetter } from "@framework/utils/atomUtils";
+import { isoStringToTimestampUtcMs } from "@framework/utils/timestampUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
 import { Combobox } from "@lib/components/Combobox";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
+import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
@@ -22,10 +27,11 @@ import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
 import { SortAscendingIcon, SortDescendingIcon } from "@lib/icons";
 import type { ColorSet } from "@lib/utils/ColorSet";
+import { useFlagActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import type { Interfaces } from "../interfaces";
-import { RealizationMode, TimeAggregationMode, TimeAggregationModeEnumToStringMapping } from "../typesAndEnums";
+import { RealizationMode, TimeAggregationFunction, TimeAggregationFunctionEnumToStringMapping } from "../typesAndEnums";
 
 import {
     selectedStratigraphyColorSetAtom,
@@ -35,10 +41,15 @@ import {
     realizationModeAtom,
     sortWellsByAtom,
     wellSortDirectionAtom,
-    timeAggregationModeAtom,
+    isTimeAggregationEnabledAtom,
+    timeAggregationFunctionAtom,
 } from "./atoms/baseAtoms";
-import { sortedCompletionDatesAtom, availableRealizationsAtom } from "./atoms/derivedAtoms";
+import { availableRealizationsAtom, sortedCompletionDatesAtom } from "./atoms/derivedAtoms";
 import {
+    effectiveCompletionDateIndexAtom,
+    effectiveRealizationAtom,
+    isCompletionDateIndexDashboardControlledAtom,
+    isRealizationDashboardControlledAtom,
     selectedCompletionDateIndexAtom,
     selectedCompletionDateIndexRangeAtom,
     selectedEnsembleIdentAtom,
@@ -59,10 +70,15 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useAtom(selectedEnsembleIdentAtom);
     const [realizationMode, setRealizationMode] = useAtom(realizationModeAtom);
-    const [selectedRealization, setSelectedRealization] = useAtom(selectedRealizationAtom);
+    const setSelectedRealization = useSetAtom(selectedRealizationAtom);
+    const effectiveRealization = useAtomValue(effectiveRealizationAtom);
+    const isRealizationDashboardSettingActive = useAtomValue(isRealizationDashboardControlledAtom);
 
-    const [timeAggregationMode, setTimeAggregationMode] = useAtom(timeAggregationModeAtom);
-    const [selectedCompletionDateIndex, setSelectedCompletionDateIndex] = useAtom(selectedCompletionDateIndexAtom);
+    const [isTimeAggregationEnabled, setIsTimeAggregationEnabled] = useAtom(isTimeAggregationEnabledAtom);
+    const [timeAggregationFunction, setTimeAggregationFunction] = useAtom(timeAggregationFunctionAtom);
+    const setSelectedCompletionDateIndex = useSetAtom(selectedCompletionDateIndexAtom);
+    const effectiveCompletionDateIndex = useAtomValue(effectiveCompletionDateIndexAtom);
+    const isTimeDashboardSettingActive = useAtomValue(isCompletionDateIndexDashboardControlledAtom);
     const [selectedCompletionDateIndexRange, setSelectedCompletionDateIndexRange] = useAtom(
         selectedCompletionDateIndexRangeAtom,
     );
@@ -163,7 +179,19 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
     );
 
     const isSingleRealizationMode = realizationMode === RealizationMode.SINGLE;
-    const isSingleTimeStepMode = timeAggregationMode === TimeAggregationMode.NONE;
+    const isSingleTimeStepMode = !isTimeAggregationEnabled;
+    // The dashboard realization and time only apply to a single realization and a single time step
+    const isRealizationDashboardControlled = isRealizationDashboardSettingActive && isSingleRealizationMode;
+    const isTimeDashboardControlled = isTimeDashboardSettingActive && isSingleTimeStepMode;
+
+    const flagActionRequiredToStatusWriter = useFlagActionRequiredToStatusWriter(statusWriter);
+    const handlePanelAnnotationsChange = React.useCallback(
+        function handlePanelAnnotationsChange(annotations: SettingAnnotation[]) {
+            const invalidFieldValueMessages = annotations.filter((a) => a.type === "error").map((a) => a.message);
+            flagActionRequiredToStatusWriter(invalidFieldValueMessages);
+        },
+        [flagActionRequiredToStatusWriter],
+    );
 
     const selectedEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentAtom);
     const selectedRealizationAnnotations = useMakePersistableFixableAtomAnnotations(selectedRealizationAtom);
@@ -171,14 +199,14 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
     // Props for setting wrapper and slider based on selected TimeAggregationMode
     const timeStepSettingProps = useMakeTimeStepSliderSettingProps({
         isSingleTimeStepMode,
-        sortedCompletionDates,
-        selectedCompletionDateIndex,
+        isDashboardControlled: isTimeDashboardControlled,
+        selectedCompletionDateIndex: effectiveCompletionDateIndex,
         selectedCompletionDateIndexRange,
     });
 
     return (
         <Setting.ScrollArea>
-            <Setting.Panel>
+            <Setting.Panel onAnnotationsChange={handlePanelAnnotationsChange}>
                 <Setting.Section title="Data" defaultOpen>
                     <Setting.Field label="Ensemble" annotations={selectedEnsembleIdentAnnotations}>
                         <EnsembleDropdown
@@ -188,91 +216,143 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                             onValueChange={handleEnsembleSelectionChange}
                         />
                     </Setting.Field>
-                    <Setting.Field
+                    <DashboardControlledSetting
                         label="Realization"
-                        stacked
-                        annotations={
-                            // Without realizations (e.g. all excluded by the realization filter), nothing is loaded in
-                            // either mode and the time steps are blocked - so point at the cause
-                            selectedEnsembleIdent.isValidInContext && availableRealizations.length === 0
-                                ? [
-                                      {
-                                          type: "warning",
-                                          message: "No realizations available. Check the realization filter.",
-                                      },
-                                  ]
-                                : undefined
-                        }
+                        value={effectiveRealization.value}
+                        isValueValidHere={effectiveRealization.isValidInContext}
+                        controlledBy={REALIZATION_DASHBOARD_SETTING}
+                        isControlled={isRealizationDashboardSettingActive}
+                        isDisabled={!isSingleRealizationMode}
                     >
-                        <SwitchCompositions.WithLabel
-                            label="Aggregate over all realizations"
-                            checked={realizationMode === RealizationMode.AGGREGATED}
-                            onCheckedChange={(checked) =>
-                                setRealizationMode(checked ? RealizationMode.AGGREGATED : RealizationMode.SINGLE)
-                            }
-                        />
-                        <Setting.Field
-                            annotations={
-                                // The selected realization is only used (and validated) in single realization mode
-                                isSingleRealizationMode
-                                    ? selectedRealizationAnnotations
-                                    : [{ type: "info", message: "Only available in single realization mode." }]
-                            }
-                        >
-                            <Combobox
-                                items={availableRealizations.map((real) => {
-                                    return { label: real.toString(), value: real };
-                                })}
-                                value={selectedRealization.value ?? null}
-                                onValueChange={(v) => v !== null && setSelectedRealization(v)}
-                                disabled={!isSingleRealizationMode}
-                                placeholder="Select realization..."
-                            />
-                        </Setting.Field>
-                    </Setting.Field>
+                        {function renderRealizationField(label, wrapSetting) {
+                            return (
+                                <Setting.Field
+                                    label={label}
+                                    stacked
+                                    annotations={
+                                        // Without realizations (e.g. all excluded by the realization filter), nothing is loaded in
+                                        // either mode and the time steps are blocked - so point at the cause
+                                        selectedEnsembleIdent.isValidInContext && availableRealizations.length === 0
+                                            ? [
+                                                  {
+                                                      type: "warning",
+                                                      message:
+                                                          "No realizations available. Check the realization filter.",
+                                                  },
+                                              ]
+                                            : undefined
+                                    }
+                                >
+                                    <SwitchCompositions.WithLabel
+                                        label="Aggregate over all realizations"
+                                        checked={realizationMode === RealizationMode.AGGREGATED}
+                                        onCheckedChange={(checked) =>
+                                            setRealizationMode(
+                                                checked ? RealizationMode.AGGREGATED : RealizationMode.SINGLE,
+                                            )
+                                        }
+                                    />
+                                    <Setting.Field
+                                        annotations={
+                                            // The selected realization is only used (and validated) in single realization mode
+                                            isSingleRealizationMode
+                                                ? isRealizationDashboardControlled
+                                                    ? []
+                                                    : selectedRealizationAnnotations
+                                                : [
+                                                      {
+                                                          type: "info",
+                                                          message: "Only available in single realization mode.",
+                                                      },
+                                                  ]
+                                        }
+                                    >
+                                        {wrapSetting(
+                                            <Combobox
+                                                items={availableRealizations.map((real) => {
+                                                    return { label: real.toString(), value: real };
+                                                })}
+                                                value={effectiveRealization.value ?? null}
+                                                onValueChange={(v) => v !== null && setSelectedRealization(v)}
+                                                disabled={!isSingleRealizationMode}
+                                                placeholder="Select realization..."
+                                            />,
+                                        )}
+                                    </Setting.Field>
+                                </Setting.Field>
+                            );
+                        }}
+                    </DashboardControlledSetting>
                 </Setting.Section>
                 <Setting.Section title="Plot settings" defaultOpen>
-                    <Setting.Field label="Time Aggregation" stacked>
+                    <Setting.Field stacked>
+                        <SwitchCompositions.WithLabel
+                            label="Time aggregation"
+                            checked={isTimeAggregationEnabled}
+                            onCheckedChange={setIsTimeAggregationEnabled}
+                        />
                         <RadioCompositions.GroupWithLabels
-                            value={timeAggregationMode}
-                            options={Object.values(TimeAggregationMode).map((elm: TimeAggregationMode) => {
-                                return { value: elm, label: TimeAggregationModeEnumToStringMapping[elm] };
+                            value={timeAggregationFunction}
+                            options={Object.values(TimeAggregationFunction).map((elm) => {
+                                return { value: elm, label: TimeAggregationFunctionEnumToStringMapping[elm] };
                             })}
-                            onValueChange={setTimeAggregationMode}
+                            onValueChange={setTimeAggregationFunction}
+                            disabled={!isTimeAggregationEnabled}
+                            layoutClassName="mt-xs"
                             size="small"
                             layout="horizontal"
                         />
                     </Setting.Field>
-                    <Setting.Field
-                        stacked
+                    <DashboardControlledSetting
                         label={timeStepSettingProps.settingWrapper.label}
-                        annotations={timeStepSettingProps.settingWrapper.annotations}
-                        loadingOverlay={timeStepSettingProps.settingWrapper.loadingOverlay}
-                        errorOverlay={timeStepSettingProps.settingWrapper.errorOverlay}
+                        value={
+                            effectiveCompletionDateIndex.value !== null &&
+                            sortedCompletionDates?.[effectiveCompletionDateIndex.value]
+                                ? isoStringToTimestampUtcMs(sortedCompletionDates[effectiveCompletionDateIndex.value])
+                                : null
+                        }
+                        isValueValidHere={effectiveCompletionDateIndex.isLoading || effectiveCompletionDateIndex.isValidInContext}
+                        controlledBy={TIME_DASHBOARD_SETTING}
+                        isControlled={isTimeDashboardControlled}
                     >
-                        <Slider
-                            valueLabelDisplay="auto"
-                            value={timeStepSettingProps.sliderValue}
-                            min={0}
-                            max={sortedCompletionDates?.length ? sortedCompletionDates.length - 1 : 0}
-                            markers={sortedCompletionDates?.map((_, index) => index) ?? undefined}
-                            markerLabels={(v, i) =>
-                                (i === 0 || i === sortedCompletionDates!.length - 1) && createValueLabelFormat(v)
-                            }
-                            valueLabelFormat={createValueLabelFormat}
-                            onValueChange={(value, eventDetails) => {
-                                // Bounds changes (e.g. while completion data loads) make the slider emit a
-                                // clamped value; ignore it so retained selections survive until the user edits them
-                                if (eventDetails.reason === "clamp-value") return;
+                        {function renderTimeStepField(label, wrapSetting) {
+                            return (
+                                <Setting.Field
+                                    stacked
+                                    label={label}
+                                    annotations={timeStepSettingProps.settingWrapper.annotations}
+                                    loadingOverlay={timeStepSettingProps.settingWrapper.loadingOverlay}
+                                    errorOverlay={timeStepSettingProps.settingWrapper.errorOverlay}
+                                >
+                                    {wrapSetting(
+                                        <Slider
+                                            valueLabelDisplay="auto"
+                                            value={timeStepSettingProps.sliderValue}
+                                            min={0}
+                                            max={sortedCompletionDates?.length ? sortedCompletionDates.length - 1 : 0}
+                                            markers={sortedCompletionDates?.map((_, index) => index) ?? undefined}
+                                            markerLabels={(v, i) =>
+                                                (i === 0 || i === sortedCompletionDates!.length - 1) &&
+                                                createValueLabelFormat(v)
+                                            }
+                                            valueLabelFormat={createValueLabelFormat}
+                                            onValueChange={(value, eventDetails) => {
+                                                // Bounds changes (e.g. while completion data loads) make the slider emit a
+                                                // clamped value; ignore it so retained selections survive until the user edits them
+                                                if (eventDetails.reason === "clamp-value") return;
 
-                                if (isSingleTimeStepMode) {
-                                    handleDateIndexSelectionChange(value);
-                                } else {
-                                    handleDateIndexRangeSelectionChange(value);
-                                }
-                            }}
-                        />
-                    </Setting.Field>
+                                                if (isSingleTimeStepMode) {
+                                                    handleDateIndexSelectionChange(value);
+                                                } else {
+                                                    handleDateIndexRangeSelectionChange(value);
+                                                }
+                                            }}
+                                        />,
+                                    )}
+                                </Setting.Field>
+                            );
+                        }}
+                    </DashboardControlledSetting>
                     <Setting.Field>
                         <SwitchCompositions.WithLabel
                             label="Filter by completions"
