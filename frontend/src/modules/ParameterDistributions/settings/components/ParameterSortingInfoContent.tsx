@@ -17,16 +17,7 @@ export function ParameterSortingInfoContent(): React.ReactElement {
                     <Heading as="h4">Uncertainty reduction</Heading>
                     <Paragraph size="sm" layoutClassName="mt-4xs">
                         Ranks parameters by how much uncertainty decreased from prior to posterior. Computed as the
-                        relative reduction in Shannon entropy H:{" "}
-                        <math>
-                            <mo stretchy="false">(</mo>
-                            <Entropy of="prior" />
-                            <mo>−</mo>
-                            <Entropy of="post" />
-                            <mo stretchy="false">)</mo>
-                            <mo>/</mo>
-                            <Entropy of="prior" />
-                        </math>
+                        relative reduction in Shannon entropy.
                     </Paragraph>
                 </div>
 
@@ -35,16 +26,7 @@ export function ParameterSortingInfoContent(): React.ReactElement {
                     <Paragraph size="sm" layoutClassName="mt-4xs">
                         Ranks parameters by how much the distribution changed from prior to posterior (location, spread
                         or shape). Captures what the observations taught us, even if uncertainty did not decrease.
-                        Computed as the Kullback-Leibler divergence{" "}
-                        <math>
-                            <mi>KL</mi>
-                            <mo stretchy="false">(</mo>
-                            <mi mathvariant="normal">post</mi>
-                            <mo>‖</mo>
-                            <mi mathvariant="normal">prior</mi>
-                            <mo stretchy="false">)</mo>
-                        </math>
-                        .
+                        Computed as the Kullback-Leibler divergence from prior to posterior.
                     </Paragraph>
                 </div>
 
@@ -55,16 +37,5 @@ export function ParameterSortingInfoContent(): React.ReactElement {
                 </div>
             </div>
         </>
-    );
-}
-
-function Entropy(props: { of: "prior" | "post" }): React.ReactElement {
-    return (
-        <mrow>
-            <mi>H</mi>
-            <mo stretchy="false">(</mo>
-            <mi mathvariant="normal">{props.of}</mi>
-            <mo stretchy="false">)</mo>
-        </mrow>
     );
 }
