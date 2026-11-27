@@ -123,6 +123,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedRealizationNumberAnnotations =
         useMakePersistableFixableAtomAnnotations(selectedRealizationNumberAtom);
     const flagActionRequiredToStatusWriter = useFlagActionRequiredToStatusWriter(statusWriter);
+
     const handlePanelAnnotationsChange = React.useCallback(
         function handlePanelAnnotationsChange(annotations: SettingAnnotation[]) {
             const invalidFieldValueMessages = annotations.filter((a) => a.type === "error").map((a) => a.message);
@@ -131,18 +132,14 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         [flagActionRequiredToStatusWriter],
     );
 
-    // Keep annotations for the local selection hidden while the field follows a dashboard realization
-    const realizationAnnotations: SettingAnnotation[] = isRealizationDashboardControlled
+    // Not in effect while the dashboard controls the realization. No realizations to choose blocks the settings below
+    const hasNoRealizationsToChoose = selectedEnsembleIdent.isValidInContext && availableRealizationNumbers.length === 0;
+    const noRealizationsAnnotations: SettingAnnotation[] = hasNoRealizationsToChoose
+        ? [{ type: "warning", message: "No realizations available. Check the realization filter." }]
+        : [];
+    const realizationAnnotations = isRealizationDashboardControlled
         ? []
-        : [...selectedRealizationNumberAnnotations];
-    // Without a realization to choose (e.g. all excluded by the realization filter), the settings below are
-    // blocked - so point at the cause
-    if (selectedEnsembleIdent.isValidInContext && availableRealizationNumbers.length === 0) {
-        realizationAnnotations.push({
-            type: "warning",
-            message: "No realizations available. Check the realization filter.",
-        });
-    }
+        : [...selectedRealizationNumberAnnotations, ...noRealizationsAnnotations];
 
     const selectedVfpTypeAnnotations = useMakePersistableFixableAtomAnnotations(selectedVfpTypeAtom);
     const selectedVfpTableNumberAnnotations = useMakePersistableFixableAtomAnnotations(selectedVfpTableNumberAtom);
