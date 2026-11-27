@@ -44,7 +44,6 @@ export class ScatterPlotParameterResponseFigure {
         traceTitle: string,
     ) {
         const scatterTrace = createPlotlyParameterResponseScatterTrace(data);
-
         this._figure.addTrace(scatterTrace, row, column);
 
         // Log scale is only possible when all parameter values are positive
@@ -66,8 +65,10 @@ export class ScatterPlotParameterResponseFigure {
             zeroline: false,
             type: useLogX ? "log" : "linear",
             exponentformat: "power",
+            // Log ticks are pure powers of ten, so every tick needs its exponent
+            showexponent: useLogX ? "all" : "last",
         };
-        layoutPatch[yAxisKey] = { zeroline: false, exponentformat: "power" };
+        layoutPatch[yAxisKey] = { zeroline: false, exponentformat: "power", showexponent: "last" };
         this._figure.updateLayout(layoutPatch);
     }
 
