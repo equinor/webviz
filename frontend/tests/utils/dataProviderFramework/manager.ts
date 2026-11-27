@@ -14,7 +14,7 @@ export const GROUP_COLORS = ["#group-color-1", "#group-color-2", "#group-color-3
 function makeFakeWorkbenchSession(): WorkbenchSession {
     return {
         getPublishSubscribeDelegate: () => new PublishSubscribeDelegate(),
-        getEnsembleSet: () => ({ getRegularEnsembleArray: () => [] }),
+        getEnsembleSet: () => ({ getRegularEnsembleArray: () => [], getDeltaEnsembleArray: () => [] }),
         getUserCreatedItems: () => ({
             getIntersectionPolylines: () => ({ subscribe: () => () => {}, getPolylines: () => [] }),
         }),

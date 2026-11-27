@@ -20,6 +20,8 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
+    narrowToRegularEnsembleIdent,
+    requireRegularEnsembleIdent,
 } from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 import { representationToApiRepresentation } from "./representationUtils";
@@ -136,7 +138,7 @@ export class SeismicSlicesProvider implements CustomDataProviderImplementation<
         getStoredData,
         fetchQuery,
     }: FetchDataParams<SeismicSlicesSettings, SeismicSlicesData>): Promise<SeismicSlicesData> {
-        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const ensembleIdent = requireRegularEnsembleIdent(getSetting(Setting.ENSEMBLE));
         const realizationNum = getSetting(Setting.REALIZATION);
         const attribute = getSetting(Setting.ATTRIBUTE);
         const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
@@ -228,7 +230,8 @@ export class SeismicSlicesProvider implements CustomDataProviderImplementation<
                     ensembleIdent: read.localSetting(Setting.ENSEMBLE),
                 };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
+                const ensembleIdent = narrowToRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }

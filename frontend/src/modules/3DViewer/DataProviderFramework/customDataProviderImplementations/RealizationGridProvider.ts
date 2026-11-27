@@ -17,6 +17,8 @@ import {
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
+    narrowToRegularEnsembleIdent,
+    requireRegularEnsembleIdent,
 } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
 import type {
@@ -108,7 +110,7 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
         gridSurfaceData: GridSurface_trans;
         gridParameterData: GridMappedProperty_trans;
     }> {
-        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const ensembleIdent = requireRegularEnsembleIdent(getSetting(Setting.ENSEMBLE));
         const realizationNum = getSetting(Setting.REALIZATION);
         const gridName = getSetting(Setting.GRID_NAME);
         const attribute = getSetting(Setting.ATTRIBUTE);
@@ -232,7 +234,8 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                     realization: read.localSetting(Setting.REALIZATION),
                 };
             },
-            async resolve({ ensembleIdent, realization }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent, realization }, { abortSignal }) {
+                const ensembleIdent = narrowToRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent || realization === null) {
                     return null;
                 }

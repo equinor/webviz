@@ -36,6 +36,8 @@ import { Representation } from "../../../settings/implementations/Representation
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
+    narrowToRegularEnsembleIdent,
+    requireRegularEnsembleIdent,
 } from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 import { resolveSensitivityConstraints, resolveStatisticFunctionConstraints } from "./_commonSettingsUpdaters";
@@ -160,7 +162,7 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
             resolve({ ensembleIdent }) {
-                return resolveSensitivityConstraints(ensembleIdent, workbenchSession);
+                return resolveSensitivityConstraints(narrowToRegularEnsembleIdent(ensembleIdent), workbenchSession);
             },
         });
 
@@ -169,7 +171,8 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
             read(read) {
                 return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
+            async resolve({ ensembleIdent: selectedEnsembleIdent }, { abortSignal }) {
+                const ensembleIdent = narrowToRegularEnsembleIdent(selectedEnsembleIdent);
                 if (!ensembleIdent) {
                     return null;
                 }
@@ -273,7 +276,7 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
             getStatusWriter,
         } = params;
 
-        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const ensembleIdent = requireRegularEnsembleIdent(getSetting(Setting.ENSEMBLE));
         let filteredRealizations = getStoredData("realizations") ?? [];
         const surfaceName = getSetting(Setting.SURFACE_NAME);
         const attribute = getSetting(Setting.DEPTH_ATTRIBUTE);
