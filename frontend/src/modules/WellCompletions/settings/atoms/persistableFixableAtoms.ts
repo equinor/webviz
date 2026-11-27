@@ -9,7 +9,9 @@ import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtil
 import { computeQueryDependenciesState, persistableFixableAtom } from "@framework/utils/atomUtils";
 import { isoStringToTimestampUtcMs } from "@framework/utils/timestampUtils";
 
-import { isTimeAggregationEnabledAtom } from "./baseAtoms";
+import { RealizationMode } from "../../typesAndEnums";
+
+import { isTimeAggregationEnabledAtom, realizationModeAtom } from "./baseAtoms";
 import { availableRealizationsAtom, sortedCompletionDatesAtom, wellCompletionsDataAccessorAtom } from "./derivedAtoms";
 import { wellCompletionsQueryAtom } from "./queryAtoms";
 
@@ -48,15 +50,20 @@ export const selectedRealizationAtom = persistableFixableAtom<number | null>({
 /**
  * `effectiveRealizationAtom` is the realization in effect: the dashboard setting's realization while that
  * is active (see `isRealizationDashboardControlledAtom`), otherwise the module's own selection. It contributes the
- * realizations of the selected ensemble to the dashboard setting.
+ * realizations of the selected ensemble to the dashboard setting - except when aggregating over realizations.
  *
  * Read `effectiveRealizationAtom` - but persist `selectedRealizationAtom`, the module's own selection.
  */
 export const { valueAtom: effectiveRealizationAtom, isDashboardControlledAtom: isRealizationDashboardControlledAtom } =
     makeDashboardPersistableFixableAtoms(selectedRealizationAtom, {
         definition: REALIZATION_DASHBOARD_SETTING,
-        // No ensemble selected yet means no opinion, rather than "no realizations available"
-        getConstraints: (get) => (get(selectedEnsembleIdentAtom).value ? get(availableRealizationsAtom) : null),
+        // Do not contribute with constraints to dashboard settings when aggregating over realizations or without an ensemble
+        getConstraints: (get) => {
+            if (get(realizationModeAtom) === RealizationMode.AGGREGATED || !get(selectedEnsembleIdentAtom).value) {
+                return null;
+            }
+            return get(availableRealizationsAtom);
+        },
     });
 
 export const selectedCompletionDateIndexAtom = persistableFixableAtom<number | null>({
