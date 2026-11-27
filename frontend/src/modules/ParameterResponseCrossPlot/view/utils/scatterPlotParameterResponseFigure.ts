@@ -62,8 +62,12 @@ export class ScatterPlotParameterResponseFigure {
         const xAxisKey = `xaxis${cellIndex}` as const;
         const yAxisKey = `yaxis${cellIndex}` as const;
         const layoutPatch: Partial<Layout> = {};
-        layoutPatch[xAxisKey] = { zeroline: false, type: useLogX ? "log" : "linear" };
-        layoutPatch[yAxisKey] = { zeroline: false };
+        layoutPatch[xAxisKey] = {
+            zeroline: false,
+            type: useLogX ? "log" : "linear",
+            exponentformat: "power",
+        };
+        layoutPatch[yAxisKey] = { zeroline: false, exponentformat: "power" };
         this._figure.updateLayout(layoutPatch);
     }
 
