@@ -47,19 +47,22 @@ export class ScatterPlotParameterResponseFigure {
 
         this._figure.addTrace(scatterTrace, row, column);
 
+        // Log scale is only possible when all parameter values are positive
+        const useLogX = data.parameterIsLogarithmic && data.parameterValues.every((v) => v > 0);
+
         if (this._showTrendline) {
             const { responseValues, parameterValues } = data;
-            const trendLineTrace = createPlotlyTrendLineTrace(parameterValues, responseValues);
+            const trendLineTrace = createPlotlyTrendLineTrace(parameterValues, responseValues, useLogX);
             this._figure.addTrace(trendLineTrace, row, column);
         }
         this._figure.updateSubplotTitle(`${traceTitle}`, row, column);
-        this.setAxisSettings(cellIndex);
+        this.setAxisSettings(cellIndex, useLogX);
     }
-    private setAxisSettings(cellIndex: number) {
+    private setAxisSettings(cellIndex: number, useLogX: boolean) {
         const xAxisKey = `xaxis${cellIndex}` as const;
         const yAxisKey = `yaxis${cellIndex}` as const;
         const layoutPatch: Partial<Layout> = {};
-        layoutPatch[xAxisKey] = { zeroline: false };
+        layoutPatch[xAxisKey] = { zeroline: false, type: useLogX ? "log" : "linear" };
         layoutPatch[yAxisKey] = { zeroline: false };
         this._figure.updateLayout(layoutPatch);
     }
@@ -76,6 +79,7 @@ export type scatterPlotParameterResponseData = {
     parameterValues: number[];
     realizationValues: number[];
     parameterName: string;
+    parameterIsLogarithmic: boolean;
     responseName: string;
     color: string;
 };
@@ -110,12 +114,14 @@ function createPlotlyParameterResponseScatterTrace(data: scatterPlotParameterRes
     };
     return scatterTrace;
 }
-function createPlotlyTrendLineTrace(xValues: number[], yValues: number[]): Partial<ScatterData> {
-    const { slope, intercept } = linearRegression(xValues, yValues);
+function createPlotlyTrendLineTrace(xValues: number[], yValues: number[], useLogX: boolean): Partial<ScatterData> {
+    // On a log axis, fit against log10(x) so the trendline is straight in the displayed space
+    const transform = useLogX ? Math.log10 : (x: number) => x;
+    const { slope, intercept } = linearRegression(xValues.map(transform), yValues);
     const minX = Math.min(...xValues);
     const maxX = Math.max(...xValues);
     const trendlineX = [minX, maxX];
-    const trendlineY = [intercept + slope * minX, intercept + slope * maxX];
+    const trendlineY = [intercept + slope * transform(minX), intercept + slope * transform(maxX)];
     return {
         x: trendlineX,
         y: trendlineY,
