@@ -46,7 +46,7 @@
         "- `@webviz/subsurface-viewer` has been locked to 2.2 due to a crash introduced in 2.3"
     ],
     "dependencies": {
-        "@base-ui/react": "^1.6.0",
+        "@base-ui/react": "^1.8.0",
         "@deck.gl/core": "^9.3.7",
         "@deck.gl/extensions": "^9.3.7",
         "@deck.gl/layers": "^9.3.7",
