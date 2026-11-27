@@ -3,7 +3,7 @@ import React from "react";
 import { Input, Warning } from "@mui/icons-material";
 
 import type { Parameter } from "@framework/EnsembleParameters";
-import { ParameterIdent } from "@framework/EnsembleParameters";
+import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { KeyKind } from "@framework/types/dataChannnel";
@@ -185,6 +185,8 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                         parameterValues,
                         realizationValues,
                         parameterName,
+                        parameterIsLogarithmic:
+                            parameterData.type === ParameterType.CONTINUOUS && parameterData.isLogarithmic,
                         responseName,
                         color,
                     };
