@@ -2,6 +2,9 @@ import type { PlotData } from "plotly.js";
 
 import type { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
 
+// Opacity for dimmed realization traces
+const DIMMED_REALIZATION_OPACITY = 0.2;
+
 export interface TimeSeriesPlotlyTrace extends Partial<PlotData> {
     realizationNumber?: number | null;
     legendrank?: number;
@@ -44,9 +47,7 @@ export function createRealizationLineTraces(
     const traces: TimeSeriesPlotlyTrace[] = [];
     let highlightedTrace: TimeSeriesPlotlyTrace | null = null;
     realizationData.forEach((vec) => {
-        const curveColor = highlightedRealization === vec.realization ? "red" : color;
-        const lineWidth = highlightedRealization === vec.realization ? 2 : 1;
-        const lineShape = highlightedRealization === vec.realization ? "spline" : "linear";
+        const lineWidth = highlightedRealization === vec.realization ? 3 : 1;
         const isHighlighted = vec.realization === highlightedRealization ? true : false;
 
         const trace = createLineTrace({
@@ -54,11 +55,12 @@ export function createRealizationLineTraces(
             values: vec.values,
             name: `real-${vec.realization}`,
             legendGroup: `${sensitivityName}`,
-            lineShape: lineShape,
+            lineShape: "linear",
             lineDash: "solid",
             showLegend: false,
-            lineColor: curveColor,
+            lineColor: color,
             lineWidth: lineWidth,
+            opacity: highlightedRealization !== undefined && !isHighlighted ? DIMMED_REALIZATION_OPACITY : undefined,
             hoverTemplate: `Sensitivity:<b>${sensitivityName}</b>  <br> Value: %{y} <br> Date: %{x}<extra></extra>`,
         });
 
@@ -102,6 +104,7 @@ export type LineTraceData = {
     showLegend: boolean;
     lineColor: string;
     lineWidth: number;
+    opacity?: number;
 };
 export function createLineTrace(data: LineTraceData): TimeSeriesPlotlyTrace {
     return {
@@ -110,6 +113,7 @@ export function createLineTrace(data: LineTraceData): TimeSeriesPlotlyTrace {
         name: data.name,
         showlegend: data.showLegend,
         hovertemplate: data.hoverTemplate,
+        opacity: data.opacity,
         legendgroup: data.legendGroup,
         type: "scatter",
         mode: "lines",

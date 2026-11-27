@@ -25,7 +25,7 @@ import type {
     VectorSpec,
     VisualizationMode,
 } from "./typesAndEnums";
-import { effectiveActiveTimestampUtcMsAtom } from "./view/atoms/dashboardSettingAtoms";
+import { effectiveTimestampUtcMsAtom } from "./view/atoms/dashboardSettingAtoms";
 
 export type SettingsToViewInterface = {
     groupBy: GroupBy;
@@ -46,7 +46,7 @@ export type SettingsToViewInterface = {
 };
 
 export type ViewToSettingsInterface = {
-    selectedTimestampUtcMs: number | null;
+    effectiveTimestampUtcMs: number | null;
 };
 
 export type Interfaces = {
@@ -98,7 +98,7 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
 };
 
 export const viewToSettingsInterfaceInitialization: InterfaceInitialization<ViewToSettingsInterface> = {
-    selectedTimestampUtcMs: (get) => {
-        return get(effectiveActiveTimestampUtcMsAtom).value;
+    effectiveTimestampUtcMs: (get) => {
+        return get(effectiveTimestampUtcMsAtom).value;
     },
 };

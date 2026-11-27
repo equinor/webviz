@@ -11,7 +11,7 @@ import {
 import { vectorSpecificationAtom } from "./settings/atoms/derivedAtoms";
 import { selectedSensitivityNamesAtom } from "./settings/atoms/persistableFixableAtoms";
 import type { VectorSpec } from "./typesAndEnums";
-import { activeTimestampUtcMsAtom } from "./view/atoms/persistableFixableAtoms";
+import { effectiveTimestampUtcMsAtom, isTimestampDashboardControlledAtom } from "./view/atoms/dashboardSettingAtoms";
 
 export type SettingsToViewInterface = {
     vectorSpecification: VectorSpec | null;
@@ -24,7 +24,8 @@ export type SettingsToViewInterface = {
 };
 
 export type ViewToSettingsInterface = {
-    selectedTimestampUtcMs: number | null;
+    effectiveTimestampUtcMs: number | null;
+    isTimestampDashboardControlled: boolean;
 };
 
 export type Interfaces = {
@@ -57,7 +58,10 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
 };
 
 export const viewToSettingsInterfaceInitialization: InterfaceInitialization<ViewToSettingsInterface> = {
-    selectedTimestampUtcMs: (get) => {
-        return get(activeTimestampUtcMsAtom).value;
+    effectiveTimestampUtcMs: (get) => {
+        return get(effectiveTimestampUtcMsAtom).value;
+    },
+    isTimestampDashboardControlled: (get) => {
+        return get(isTimestampDashboardControlledAtom);
     },
 };

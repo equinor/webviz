@@ -43,7 +43,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
-    const selectedTimestampUtcMs = props.settingsContext.useViewToSettingsInterfaceValue("selectedTimestampUtcMs");
+    const effectiveTimestampUtcMs = props.settingsContext.useViewToSettingsInterfaceValue("effectiveTimestampUtcMs");
+    const isTimestampDashboardControlled = props.settingsContext.useViewToSettingsInterfaceValue(
+        "isTimestampDashboardControlled",
+    );
 
     const [selectedRegularEnsembleIdent, setSelectedRegularEnsembleIdent] = useAtom(selectedRegularEnsembleIdentAtom);
     const [selectedSensitivityNames, setSelectedSensitivityNamesAtom] = useAtom(selectedSensitivityNamesAtom);
@@ -211,7 +214,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                 <Setting.Section title="Data channel">
                     <Setting.Field
                         infoAnnotation={
-                            !showTimestampMarker ? "Enable the marker to select a new timestamp in plot." : undefined
+                            !showTimestampMarker && !isTimestampDashboardControlled
+                                ? "Enable the marker to select a new timestamp in plot."
+                                : undefined
                         }
                     >
                         <SwitchCompositions.WithLabel
@@ -225,14 +230,15 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                         label="Selected timestamp"
                         contentClassName="flex"
                         help={{
-                            content:
-                                "The timestamp currently selected in the view (read-only). Enable the marker and click in the plot to select a new one.",
+                            content: isTimestampDashboardControlled
+                                ? "The timestamp is controlled by the dashboard Time setting (read-only). Remove the dashboard setting to select a timestamp in the plot."
+                                : "The timestamp currently active in the view, from a click in the plot. Enable the marker and click in the plot to select a new one.",
                         }}
                     >
                         <span className="text-sm">
-                            {selectedTimestampUtcMs === null
+                            {effectiveTimestampUtcMs === null
                                 ? "None"
-                                : timestampUtcMsToCompactIsoString(selectedTimestampUtcMs)}
+                                : timestampUtcMsToCompactIsoString(effectiveTimestampUtcMs)}
                         </span>
                     </Setting.Field>
                 </Setting.Section>

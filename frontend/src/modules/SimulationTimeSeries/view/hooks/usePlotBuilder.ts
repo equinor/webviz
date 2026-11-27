@@ -8,7 +8,7 @@ import { isInvalidStatisticsResampleFrequency } from "@modules/SimulationTimeSer
 import type { VectorHexColorMap } from "../../typesAndEnums";
 import { VisualizationMode } from "../../typesAndEnums";
 import { resampleFrequencyAtom } from "../atoms/baseAtoms";
-import { effectiveActiveTimestampUtcMsAtom, highlightedRealizationAtom } from "../atoms/dashboardSettingAtoms";
+import { effectiveTimestampUtcMsAtom, highlightedRealizationAtom } from "../atoms/dashboardSettingAtoms";
 import {
     loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     loadedVectorSpecificationsAndObservationDataAtom,
@@ -53,7 +53,7 @@ export function usePlotBuilder(
 
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
-    const activeTimestampUtcMs = useAtomValue(effectiveActiveTimestampUtcMsAtom).value;
+    const effectiveTimestampUtcMs = useAtomValue(effectiveTimestampUtcMsAtom).value;
     const highlightedRealization = useAtomValue(highlightedRealizationAtom);
 
 
@@ -129,9 +129,9 @@ export function usePlotBuilder(
         plotBuilder.addObservationsTraces(loadedVectorSpecificationsAndObservationData);
     }
 
-    // Add time annotation if active timestamp is set
-    if (showTimestampMarker && activeTimestampUtcMs) {
-        plotBuilder.addTimeAnnotation(activeTimestampUtcMs);
+    // Add time annotation if effective timestamp is set
+    if (showTimestampMarker && effectiveTimestampUtcMs) {
+        plotBuilder.addTimeAnnotation(effectiveTimestampUtcMs);
     }
 
     plotBuilder.setHoveredTimestamp(hoveredTimestampUtcMs, isHoverExternal);
