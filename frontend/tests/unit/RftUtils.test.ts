@@ -4,7 +4,11 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { makeRftDepthDataGenerator } from "@modules/Rft/dataGenerators";
 import { RftDataAccessor } from "@modules/Rft/utils/RftDataAccessor";
 import { makeRftPlotTitle } from "@modules/Rft/view/utils/createTitle";
-import { calculateFanchartStatistics, calculateStatisticValues } from "@modules/Rft/view/utils/RftPlotBuilder";
+import {
+    calculateFanchartStatistics,
+    calculateStatisticValues,
+    RftPlotBuilder,
+} from "@modules/Rft/view/utils/RftPlotBuilder";
 
 import type { RftEnsembleRealizationData, RftRealizationCurve } from "../../src/modules/Rft/typesAndEnums";
 
@@ -181,5 +185,37 @@ describe("RftDataAccessor", () => {
         expect(ensembleIdents).toHaveLength(2);
         expect(ensembleIdents[0].toString()).toBe(ENSEMBLE_IDENT.toString());
         expect(ensembleIdents[1].toString()).toBe(otherEnsembleIdent.toString());
+    });
+});
+
+describe("RftPlotBuilder.makeIndividualRealizationTraces", () => {
+    const curves = [makeCurve(0, [1, 2]), makeCurve(1, [3, 4]), makeCurve(2, [5, 6])];
+    const builder = new RftPlotBuilder({ getEntries: () => curves, getEnsembleIdents: () => [ENSEMBLE_IDENT] }, []);
+
+    function getRealizationOf(trace: { hovertemplate?: string | string[] }): number {
+        return Number(String(trace.hovertemplate).match(/Realization: (\d+)/)![1]);
+    }
+
+    it("draws every realization with the regular opacity when nothing is highlighted", () => {
+        const traces = builder.makeIndividualRealizationTraces("Pressure");
+        expect(traces.map(getRealizationOf)).toEqual([0, 1, 2]);
+        expect(traces.every((trace) => trace.opacity === 0.35)).toBe(true);
+    });
+
+    it("treats realization 0 as a highlight and dims the others", () => {
+        const traces = builder.makeIndividualRealizationTraces("Pressure", new Set(), 0);
+        const highlighted = traces.filter((trace) => trace.opacity === 1);
+        expect(highlighted.map(getRealizationOf)).toEqual([0]);
+        expect(traces.filter((trace) => trace.opacity === 0.15)).toHaveLength(2);
+    });
+
+    it("only returns the highlighted realization in highlighted-only mode", () => {
+        const traces = builder.makeIndividualRealizationTraces("Pressure", new Set(), 1, true);
+        expect(traces.map(getRealizationOf)).toEqual([1]);
+    });
+
+    it("places the highlighted trace after the regular traces", () => {
+        const traces = builder.makeIndividualRealizationTraces("Pressure", new Set(), 0);
+        expect(traces.map(getRealizationOf)).toEqual([1, 2, 0]);
     });
 });
