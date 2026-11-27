@@ -1,6 +1,7 @@
 import React from "react";
 
 import { SettingPanelAnnotationsContext, SettingSectionStatusContext } from "@lib/components/Setting";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { DashboardSettingDefinition } from "../DashboardSettingDefinition";
 
@@ -15,6 +16,9 @@ export type DashboardControlledSettingProps<TValue> = {
     isValueValidHere: boolean;
     // Whether the setting is currently controlled by the dashboard setting
     isControlled: boolean;
+    // Whether the setting is disabled (e.g. not applicable in the current mode) - the dashboard value is still shown,
+    // muted, but an invalid value is not reported
+    isDisabled?: boolean;
     // The dashboard setting controlling the value - provides the default representation of it
     controlledBy: DashboardSettingDefinition<TValue, any>;
     // Opt-out of the dashboard setting's value representation
@@ -31,7 +35,7 @@ export type DashboardControlledSettingProps<TValue> = {
  */
 export function DashboardControlledSetting<TValue>(props: DashboardControlledSettingProps<TValue>): React.ReactNode {
     const fieldId = React.useId();
-    const isInvalidDashboardValue = props.isControlled && !props.isValueValidHere;
+    const isInvalidDashboardValue = props.isControlled && !props.isValueValidHere && !props.isDisabled;
     const reportAnnotations = React.useContext(SettingPanelAnnotationsContext);
     const sectionStatus = React.useContext(SettingSectionStatusContext);
 
@@ -92,11 +96,15 @@ export function DashboardControlledSetting<TValue>(props: DashboardControlledSet
         }
 
         if (!props.isValueValidHere) {
-            return <i className="text-warning-subtle text-body-sm">Dashboard value not valid here</i>;
+            return (
+                <i className={resolveClassNames("text-warning-subtle text-body-sm", { "opacity-50": props.isDisabled })}>
+                    Dashboard value not valid here
+                </i>
+            );
         }
 
         return (
-            <span className="text-body-sm">
+            <span className={resolveClassNames("text-body-sm", { "opacity-50": props.isDisabled })}>
                 {props.valueRepresentation
                     ? props.valueRepresentation(props.value)
                     : props.controlledBy.valueRepresentation(props.value)}

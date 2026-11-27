@@ -221,7 +221,8 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                         value={effectiveRealization.value}
                         isValueValidHere={effectiveRealization.isValidInContext}
                         controlledBy={REALIZATION_DASHBOARD_SETTING}
-                        isControlled={isRealizationDashboardControlled}
+                        isControlled={isRealizationDashboardSettingActive}
+                        isDisabled={!isSingleRealizationMode}
                     >
                         {function renderRealizationField(label, wrapSetting) {
                             return (
