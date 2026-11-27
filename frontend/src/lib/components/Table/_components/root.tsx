@@ -16,11 +16,10 @@ import type { TableSortState } from "../typesAndEnums";
 import { SortDirection } from "../typesAndEnums";
 
 import { Body } from "./body";
-import type { ColumnMetaData } from "./column";
+import type { ColumnMetaData, TableColumnProps } from "./column";
 import { Column } from "./column";
 import { Foot } from "./foot";
 import { Head } from "./head";
-import type { TableCellProps } from "./types";
 
 type BaseProps = ComponentWrapperProps<React.HTMLAttributes<HTMLTableElement>>;
 
@@ -131,20 +130,25 @@ export const Root = React.forwardRef<HTMLTableElement, TableRootProps>(function 
     );
     const { className: wrapperClassName, style: wrapperStyle, ...tableBaseProps } = baseProps;
 
-    let headColumnMetaData: TableColumnContextType = {
-        columns: [],
-        leafColumns: [],
-        content: null,
-        maxDepth: 0,
-        leafCount: 0,
-    };
-
     const headChild = recursivelyFindHeadChild(props.children);
 
-    if (headChild) {
-        const rootMetaData = recursivelyProcessColumnChildren(headChild);
-        headColumnMetaData = { ...rootMetaData, leafColumns: collectLeafColumns(rootMetaData.columns) };
-    }
+    const headColumnMetaData = React.useMemo<TableColumnContextType>(() => {
+        let colMeta: TableColumnContextType = {
+            columns: [],
+            leafColumns: [],
+            content: null,
+            maxDepth: 0,
+            leafCount: 0,
+        };
+
+        if (headChild) {
+            const rootMetaData = recursivelyProcessColumnChildren(headChild);
+
+            colMeta = { ...rootMetaData, leafColumns: collectLeafColumns(rootMetaData.columns) };
+        }
+
+        return colMeta;
+    }, [headChild]);
 
     // Calculate available body height if the table was to fill the wrapper. This is used for the PendingRows "fill" option to automatically fill the remaining space in the table body.
     // ! This assumes that header and footer sizes are static, and only re-triggers if the wrapper size changes
@@ -308,34 +312,47 @@ function doRecursivelyFindHeadChild(children: React.ReactNode, depth = 0): React
     return null;
 }
 
-function recursivelyProcessColumnChildren(columnParent: React.ReactNode, depth = -1): ColumnMetaData {
+function recursivelyProcessColumnChildren(
+    columnParent: React.ReactElement<TableColumnProps>,
+    depth = -1,
+    inheritedValues: Partial<Pick<ColumnMetaData, "isPinned" | "pinLeftOffset">> = {},
+): ColumnMetaData {
     if (depth > 100) throw new Error("Maximum column depth exceeded. Check for circular references");
     if (!React.isValidElement(columnParent)) throw new Error("Expected a valid React element as column parent");
 
-    const { children: colChildren, ...cellProps } = columnParent.props ?? {};
+    const { children: colChildren, pinned, ...cellProps } = columnParent.props ?? {};
 
     const headerContent: React.ReactNode[] = [];
     const columns: ColumnMetaData[] = [];
     let leafCount = 0;
     let maxDepth = depth;
 
+    const isPinned = pinned ?? inheritedValues.isPinned;
+    let pinOffset = inheritedValues.pinLeftOffset ?? 0;
+
     // eslint-disable-next-line @eslint-react/no-children-for-each -- Special case to find nested children of specific types
     React.Children.forEach(colChildren, (child) => {
         if (!child || !React.isValidElement(child) || child.type !== Column) {
             headerContent.push(child);
         } else {
-            const childColumn = recursivelyProcessColumnChildren(child, depth + 1);
+            const childColumn = recursivelyProcessColumnChildren(
+                child as React.ReactElement<TableColumnProps>,
+                depth + 1,
+                {
+                    isPinned: isPinned,
+                    pinLeftOffset: pinOffset,
+                },
+            );
 
             leafCount += childColumn.leafCount;
             maxDepth = Math.max(maxDepth, childColumn.maxDepth);
 
+            if (childColumn.isPinned) pinOffset += getColumnWidthPx(childColumn) ?? 0;
             columns.push(childColumn);
         }
     });
 
     if (!columns.length) leafCount = 1;
-
-    inheritStickyPropsFromParent(cellProps, columns);
 
     return {
         columns: columns,
@@ -344,33 +361,9 @@ function recursivelyProcessColumnChildren(columnParent: React.ReactNode, depth =
         leafCount: leafCount,
         content: headerContent,
         cellProps: cellProps,
+        isPinned: Boolean(isPinned),
+        pinLeftOffset: inheritedValues.pinLeftOffset ?? 0,
     };
-}
-
-/**
- * A pinned group column pins its sub-columns too: each child gets the cumulative offset of its preceding siblings
- * and the last child inherits `stickyEdge`. Explicit child props win. Requires numeric `width`s to derive offsets.
- */
-function inheritStickyPropsFromParent(parentProps: TableCellProps, columns: ColumnMetaData[]): void {
-    if (parentProps.stickyLeftPx === undefined || columns.length === 0) return;
-
-    let offsetPx: number | undefined = parentProps.stickyLeftPx;
-    columns.forEach((column, index) => {
-        const isLast = index === columns.length - 1;
-
-        if (column.cellProps.stickyLeftPx === undefined && offsetPx !== undefined) {
-            column.cellProps.stickyLeftPx = offsetPx;
-        }
-        if (column.cellProps.stickyEdge === undefined && isLast) {
-            column.cellProps.stickyEdge = parentProps.stickyEdge;
-        }
-
-        // Sub-columns were processed before the parent, so re-run with the now-populated props
-        inheritStickyPropsFromParent(column.cellProps, column.columns);
-
-        const widthPx = getColumnWidthPx(column);
-        offsetPx = offsetPx !== undefined && widthPx !== undefined ? offsetPx + widthPx : undefined;
-    });
 }
 
 function getColumnWidthPx(column: ColumnMetaData): number | undefined {

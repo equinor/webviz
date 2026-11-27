@@ -394,7 +394,7 @@ export const PinnedColumns: Story = {
     parameters: {
         docs: {
             description: {
-                story: "Columns with `stickyLeftPx` stay pinned while scrolling horizontally; body cells inherit it from their column, and a pinned group column pins its sub-columns with derived offsets. `stickyEdge` marks the last pinned column.",
+                story: "Columns with `pinned` stay pinned while scrolling horizontally; body cells inherit it from their column, and a pinned group column pins its sub-columns with derived offsets. **Note:** when pinning multiple columns, column widths must be specified to ensure correct positioning!",
             },
         },
     },
@@ -404,7 +404,7 @@ export const PinnedColumns: Story = {
         return (
             <Table.Root layoutClassName="w-full" height="50vh" {...args} fixed>
                 <Table.Head sticky>
-                    <Table.Column width={220} stickyLeftPx={0} stickyEdge>
+                    <Table.Column width={220} pinned>
                         Identity
                         <Table.Column width={60} colKey="id">
                             ID

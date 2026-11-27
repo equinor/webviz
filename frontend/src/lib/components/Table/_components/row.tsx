@@ -10,7 +10,6 @@ import { useTableSectionContext } from "../_contexts/tableSectionContext";
 
 import type { ColumnMetaData } from "./column";
 import type { TableRootProps } from "./root";
-import type { TableCellProps } from "./types";
 
 export type TableRowProps = {
     /** When true, makes this row selectable, overriding the table-level `selectable` setting. */
@@ -26,6 +25,9 @@ export type TableRowProps = {
     inheritColumnProps?: boolean;
     /** The table cells to render. */
     children?: React.ReactNode;
+
+    /** Internal: Specifies what columns to use for each cell in the set. Defaults to the leaf columns */
+    _columns?: ColumnMetaData[];
 } & ComponentWrapperProps<React.TableHTMLAttributes<HTMLTableRowElement>>;
 
 export const Row = React.forwardRef<HTMLTableRowElement, TableRowProps>(function Row(props, ref): React.ReactNode {
@@ -38,10 +40,7 @@ export const Row = React.forwardRef<HTMLTableRowElement, TableRowProps>(function
     const isSelectable = (props.selectable ?? rootContext.selectable) && sectionContext === "body";
     const isSelected = !!props.rowKey && isSelectable && rootContext.rowSelection.includes(props.rowKey);
 
-    const children =
-        (props.inheritColumnProps ?? true)
-            ? provideLeafColumns(props.children, columnContext.leafColumns)
-            : props.children;
+    const childrenWithContext = provideLeafColumns(props.children, props._columns ?? columnContext.leafColumns);
 
     // TODO: Nicely allow text selection AND click select. See old table
 
@@ -69,7 +68,7 @@ export const Row = React.forwardRef<HTMLTableRowElement, TableRowProps>(function
             }}
         >
             <TableRootContext.Provider value={{ ...rootContext, sortable: props.sortable ?? rootContext.sortable }}>
-                {children}
+                {childrenWithContext}
             </TableRootContext.Provider>
         </tr>
     );
@@ -88,10 +87,10 @@ function provideLeafColumns(children: React.ReactNode, leafColumns: ColumnMetaDa
         // Empty nodes render nothing, so they do not occupy a column
         if (child === null || child === undefined || typeof child === "boolean") return child;
 
-        const colSpan = React.isValidElement<TableCellProps>(child) ? (child.props.colSpan ?? 1) : 1;
         // A cell spanning several columns belongs to none of them, so it inherits nothing
-        const leafColumn = colSpan === 1 ? (leafColumns[cellIndex] ?? null) : null;
-        cellIndex += colSpan;
+        const leafColumn = leafColumns[cellIndex] ?? null;
+
+        cellIndex += 1;
 
         return <TableCellColumnContext.Provider value={leafColumn}>{child}</TableCellColumnContext.Provider>;
     });

@@ -38,7 +38,7 @@ export type ColumnWidths = {
 
 export type ColumnPinning = {
     /** Present only for pinned leaf keys */
-    stickyLeftPxByKey: Map<string, number>;
+    pinnedColumns: Set<string>;
     lastPinnedKey: string | null;
 };
 
@@ -114,28 +114,25 @@ export function computeColumnWidths(
 export function computeColumnPinning(columnWidths: ColumnWidths, wrapperWidthPx: number): ColumnPinning {
     const { visibleLeaves, widthPxByKey } = columnWidths;
 
-    // Only a leading run of identifier columns can be pinned with cumulative offsets
-    const pinnableLeaves: LeafColumn[] = [];
-    for (const leaf of visibleLeaves) {
-        if (isResultLeaf(leaf)) break;
-        pinnableLeaves.push(leaf);
-    }
-
-    const stickyLeftPxByKey = new Map<string, number>();
     let lastPinnedKey: string | null = null;
 
     const maxPinnedWidthPx = wrapperWidthPx * MAX_PINNED_WIDTH_FRACTION;
-    let offsetPx = 0;
-    for (const leaf of pinnableLeaves) {
-        const widthPx = widthPxByKey.get(leaf.key) ?? 0;
-        if (offsetPx + widthPx > maxPinnedWidthPx) break;
 
-        stickyLeftPxByKey.set(leaf.key, offsetPx);
+    const pinnedColumns = new Set<string>();
+    let totalPinnedWidth = 0;
+
+    for (const leaf of visibleLeaves) {
+        const widthPx = widthPxByKey.get(leaf.key) ?? 0;
+
+        if (isResultLeaf(leaf)) break;
+        if (totalPinnedWidth + widthPx > maxPinnedWidthPx) break;
+
+        pinnedColumns.add(leaf.key);
         lastPinnedKey = leaf.key;
-        offsetPx += widthPx;
+        totalPinnedWidth += widthPx;
     }
 
-    return { stickyLeftPxByKey, lastPinnedKey };
+    return { pinnedColumns, lastPinnedKey };
 }
 
 export type FilterState = { [columnKey: string]: string | null };

@@ -21,7 +21,7 @@ export const Head = React.forwardRef<HTMLTableSectionElement, TableHeadProps>(
     function Head(props, ref): React.ReactNode {
         const columnContext = useTableColumnContext();
 
-        const tableRows = React.useMemo(
+        const headerRows = React.useMemo(
             () => recursivelyBuildHeaderRows(columnContext.columns, columnContext.maxDepth),
             [columnContext.columns, columnContext.maxDepth],
         );
@@ -34,10 +34,10 @@ export const Head = React.forwardRef<HTMLTableSectionElement, TableHeadProps>(
                         "z-sticky sticky top-0": props.sticky,
                     })}
                 >
-                    {tableRows.map((row, rowIndex) => (
+                    {headerRows.map((row, rowIndex) => (
                         // eslint-disable-next-line @eslint-react/no-array-index-key -- Once built, we assume this as stable
-                        <Row key={rowIndex} inheritColumnProps={false}>
-                            {row.map((cell, cellIndex) => (
+                        <Row key={rowIndex} _columns={row.cols}>
+                            {row.cells.map((cell, cellIndex) => (
                                 <Cell
                                     // eslint-disable-next-line @eslint-react/no-array-index-key -- Once built, we assume this as stable
                                     key={`${rowIndex}-${cellIndex}`}
@@ -59,6 +59,11 @@ export const Head = React.forwardRef<HTMLTableSectionElement, TableHeadProps>(
     },
 );
 
+type HeaderRowDef = {
+    cols: ColumnMetaData[];
+    cells: HeaderCellDef[];
+};
+
 type HeaderCellDef = {
     colSpan: number;
     rowSpan: number;
@@ -76,19 +81,24 @@ function doRecursivelyBuildHeaderRows(
     maxDepth: number,
     currentDepth: number,
     // ! Object is mutated as the method runs
-    headerCellAcc: HeaderCellDef[][],
-): HeaderCellDef[][] {
+    headerCellAcc: HeaderRowDef[],
+): HeaderRowDef[] {
     if (!tableColumns.length) return headerCellAcc;
 
     if (!headerCellAcc[currentDepth]) {
-        headerCellAcc[currentDepth] = [];
+        headerCellAcc[currentDepth] = {
+            cols: [],
+            cells: [],
+        };
     }
 
     for (const column of tableColumns) {
+        headerCellAcc[currentDepth].cols.push(column);
+
         if (column.columns.length) {
             doRecursivelyBuildHeaderRows(column.columns, maxDepth, currentDepth + 1, headerCellAcc);
 
-            headerCellAcc[currentDepth].push({
+            headerCellAcc[currentDepth].cells.push({
                 isLeaf: false,
                 rowSpan: 1,
                 colSpan: column.leafCount,
@@ -96,7 +106,7 @@ function doRecursivelyBuildHeaderRows(
                 cellProps: column.cellProps,
             });
         } else {
-            headerCellAcc[currentDepth].push({
+            headerCellAcc[currentDepth].cells.push({
                 isLeaf: true,
                 rowSpan: maxDepth - currentDepth + 1,
                 colSpan: 1,

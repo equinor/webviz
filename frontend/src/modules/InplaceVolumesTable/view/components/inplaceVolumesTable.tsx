@@ -124,13 +124,7 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
                 widthPx,
                 node: (
                     // ! To make sorting logic easy, the col-keys should match the property key path in the data object
-                    <Table.Column
-                        key={key}
-                        colKey={key}
-                        width={widthPx}
-                        stickyLeftPx={layout.stickyLeftPxByKey.get(key)}
-                        stickyEdge={layout.lastPinnedKey === key}
-                    >
+                    <Table.Column key={key} colKey={key} width={widthPx} pinned={layout.pinnedColumns.has(key)}>
                         {heading.label}
                     </Table.Column>
                 ),
@@ -195,7 +189,7 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
                 </Button>
             </div>
             {constantColumnsCaption && (
-                <p className="px-3xs pb-3xs text-body-sm text-neutral-subtle shrink-0 break-words">
+                <p className="px-3xs pb-3xs text-body-sm text-neutral-subtle shrink-0 wrap-break-word">
                     {constantColumnsCaption}
                 </p>
             )}
@@ -337,6 +331,8 @@ function TableFilterCell(props: {
                         layoutClassName="my-4xs -mr-4xs"
                         iconOnly
                         variant="ghost"
+                        tone="neutral"
+                        size="small"
                         onClick={() => debouncedHandleFilterChange(null)}
                     >
                         <Clear />
