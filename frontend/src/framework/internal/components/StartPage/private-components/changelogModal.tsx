@@ -4,7 +4,7 @@ import { Icon } from "@equinor/eds-core-react";
 import { file_description } from "@equinor/eds-icons";
 import { Circle } from "@mui/icons-material";
 
-import { extractMarkdownMetadata, MarkdownWrapper } from "@framework/internal/MarkdownWrapper";
+import { extractMarkdownMetadata, MarkdownWrapper } from "@framework/components/MarkdownWrapper";
 import { useUserSettings } from "@framework/internal/providers/UserSettingsProvider";
 import { Button } from "@lib/components/Button";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";

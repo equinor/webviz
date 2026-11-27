@@ -110,7 +110,7 @@ test.describe("Parameter Distributions module", () => {
         await sortNarration;
         await expect(plot).toBeVisible({ timeout: 90_000 });
 
-        await smoothClick(page, sortRow.getByRole("button", { name: "More information", exact: true }));
+        await smoothClick(page, sortRow.getByRole("button", { name: "Parameter Sorting Methods", exact: true }));
         await expect(page.getByText("Parameter Sorting Methods", { exact: true })).toBeVisible();
         await narrate(
             "Entropy reduction measures the overall drop in uncertainty. KL divergence also responds to redistribution: if the spread stays about the same but probability mass shifts, entropy can stay similar while KL divergence changes.",

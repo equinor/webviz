@@ -26,6 +26,9 @@ export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(func
     const defaultedProps = withDefaults(props, DEFAULT_PROPS);
     const { label, children, direction, layoutClassName, layoutStyle, ...radioProps } = defaultedProps;
     const size = useComponentSize(defaultedProps);
+    const textId = React.useId();
+    // Names the radio by its own text; inside a field it would otherwise take the field label.
+    const hasExplicitName = radioProps["aria-label"] !== undefined || radioProps["aria-labelledby"] !== undefined;
 
     return (
         <label
@@ -38,8 +41,9 @@ export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(func
             data-selectable-wrapper
             {...getDataAttributesForSelectableSize(size, true)}
         >
-            <Radio {...radioProps} size={size} />
+            <Radio {...radioProps} {...(!hasExplicitName && { "aria-labelledby": textId })} size={size} />
             <Typography
+                id={textId}
                 size={getTextSizeForSelectableSize(size)}
                 family="body"
                 data-baseline="center"
