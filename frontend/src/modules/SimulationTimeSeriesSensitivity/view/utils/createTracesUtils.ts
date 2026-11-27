@@ -48,7 +48,6 @@ export function createRealizationLineTraces(
     let highlightedTrace: TimeSeriesPlotlyTrace | null = null;
     realizationData.forEach((vec) => {
         const lineWidth = highlightedRealization === vec.realization ? 3 : 1;
-        const lineShape = highlightedRealization === vec.realization ? "spline" : "linear";
         const isHighlighted = vec.realization === highlightedRealization ? true : false;
 
         const trace = createLineTrace({
@@ -56,7 +55,7 @@ export function createRealizationLineTraces(
             values: vec.values,
             name: `real-${vec.realization}`,
             legendGroup: `${sensitivityName}`,
-            lineShape: lineShape,
+            lineShape: "linear",
             lineDash: "solid",
             showLegend: false,
             lineColor: color,
