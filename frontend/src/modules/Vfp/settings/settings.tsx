@@ -1,7 +1,11 @@
-import { useAtom, useAtomValue } from "jotai";
+import React from "react";
+
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { VfpType_api } from "@api";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { DashboardControlledSetting } from "@framework/DashboardSettings/components/DashboardControlledSetting";
+import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
@@ -9,7 +13,9 @@ import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItems } from "@lib/components/Combobox/types";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { Select, type SelectOption } from "@lib/components/Select";
+import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
+import { useFlagActionRequiredToStatusWriter } from "@modules/_shared/hooks/useAddStatusWriterMessages";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
@@ -29,6 +35,8 @@ import {
     selectedColorByAtom,
     selectedEnsembleIdentAtom,
     selectedGfrIndicesAtom,
+    effectiveRealizationNumberAtom,
+    isRealizationDashboardControlledAtom,
     selectedRealizationNumberAtom,
     selectedThpIndicesAtom,
     selectedVfpTableNumberAtom,
@@ -50,7 +58,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [userSelectedPressureOption, setUserSelectedPressureOption] = useAtom(selectedPressureOptionAtom);
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useAtom(selectedEnsembleIdentAtom);
-    const [selectedRealizationNumber, setSelectedRealizationNumber] = useAtom(selectedRealizationNumberAtom);
+    const setSelectedRealizationNumber = useSetAtom(selectedRealizationNumberAtom);
+    const effectiveRealizationNumber = useAtomValue(effectiveRealizationNumberAtom);
+    const isRealizationDashboardControlled = useAtomValue(isRealizationDashboardControlledAtom);
     const [selectedVfpType, setSelectedVfpType] = useAtom(selectedVfpTypeAtom);
     const [selectedVfpTableNumber, setSelectedVfpTableNumber] = useAtom(selectedVfpTableNumberAtom);
     const [selectedThpIndices, setSelectedThpIndices] = useAtom(selectedThpIndicesAtom);
@@ -112,6 +122,25 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentAtom);
     const selectedRealizationNumberAnnotations =
         useMakePersistableFixableAtomAnnotations(selectedRealizationNumberAtom);
+    const flagActionRequiredToStatusWriter = useFlagActionRequiredToStatusWriter(statusWriter);
+
+    const handlePanelAnnotationsChange = React.useCallback(
+        function handlePanelAnnotationsChange(annotations: SettingAnnotation[]) {
+            const invalidFieldValueMessages = annotations.filter((a) => a.type === "error").map((a) => a.message);
+            flagActionRequiredToStatusWriter(invalidFieldValueMessages);
+        },
+        [flagActionRequiredToStatusWriter],
+    );
+
+    // Not in effect while the dashboard controls the realization. No realizations to choose blocks the settings below
+    const hasNoRealizationsToChoose = selectedEnsembleIdent.isValidInContext && availableRealizationNumbers.length === 0;
+    const noRealizationsAnnotations: SettingAnnotation[] = hasNoRealizationsToChoose
+        ? [{ type: "warning", message: "No realizations available. Check the realization filter." }]
+        : [];
+    const realizationAnnotations = isRealizationDashboardControlled
+        ? []
+        : [...selectedRealizationNumberAnnotations, ...noRealizationsAnnotations];
+
     const selectedVfpTypeAnnotations = useMakePersistableFixableAtomAnnotations(selectedVfpTypeAtom);
     const selectedVfpTableNumberAnnotations = useMakePersistableFixableAtomAnnotations(selectedVfpTableNumberAtom);
     const selectedThpIndicesAnnotations = useMakePersistableFixableAtomAnnotations(selectedThpIndicesAtom);
@@ -122,7 +151,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     return (
         <Setting.ScrollArea>
-            <Setting.Panel>
+            <Setting.Panel onAnnotationsChange={handlePanelAnnotationsChange}>
                 <Setting.Section title="Data" defaultOpen>
                     <Setting.Field label="Ensemble" annotations={selectedEnsembleIdentAnnotations}>
                         <EnsembleDropdown
@@ -132,30 +161,29 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             onValueChange={setSelectedEnsembleIdent}
                         />
                     </Setting.Field>
-                    <Setting.Field
+                    <DashboardControlledSetting
                         label="Realization"
-                        annotations={
-                            // Without a realization to choose (e.g. all excluded by the realization filter), the
-                            // settings below are blocked - so point at the cause
-                            selectedEnsembleIdent.isValidInContext && availableRealizationNumbers.length === 0
-                                ? [
-                                      ...selectedRealizationNumberAnnotations,
-                                      {
-                                          type: "warning",
-                                          message: "No realizations available. Check the realization filter.",
-                                      },
-                                  ]
-                                : selectedRealizationNumberAnnotations
-                        }
+                        value={effectiveRealizationNumber.value}
+                        isValueValidHere={effectiveRealizationNumber.isValidInContext}
+                        controlledBy={REALIZATION_DASHBOARD_SETTING}
+                        isControlled={isRealizationDashboardControlled}
                     >
-                        <Combobox<number>
-                            items={availableRealizationNumbers.map((real) => {
-                                return { value: real, label: real.toString() };
-                            })}
-                            value={selectedRealizationNumber.value}
-                            onValueChange={setSelectedRealizationNumber}
-                        />
-                    </Setting.Field>
+                        {function renderRealizationField(label, wrapSetting) {
+                            return (
+                                <Setting.Field label={label} annotations={realizationAnnotations}>
+                                    {wrapSetting(
+                                        <Combobox<number>
+                                            items={availableRealizationNumbers.map((real) => {
+                                                return { value: real, label: real.toString() };
+                                            })}
+                                            value={effectiveRealizationNumber.value}
+                                            onValueChange={setSelectedRealizationNumber}
+                                        />,
+                                    )}
+                                </Setting.Field>
+                            );
+                        }}
+                    </DashboardControlledSetting>
                     <Setting.Field
                         label="VFP Type"
                         annotations={selectedVfpTypeAnnotations}
