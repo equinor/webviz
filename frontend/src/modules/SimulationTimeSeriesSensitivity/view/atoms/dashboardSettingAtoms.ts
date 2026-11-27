@@ -33,7 +33,5 @@ export const { valueAtom: highlightedRealizationAtom } = makeDashboardSettingAto
  * The timestamp of the time marker: the dashboard setting's time while that is active, otherwise the
  * module's own (clicked) timestamp. Read-only - persist `activeTimestampUtcMsAtom`.
  */
-export const { valueAtom: effectiveTimestampUtcMsAtom } = makeDashboardPersistableFixableAtoms(
-    activeTimestampUtcMsAtom,
-    { definition: TIME_DASHBOARD_SETTING },
-);
+export const { valueAtom: effectiveTimestampUtcMsAtom, isDashboardControlledAtom: isTimestampDashboardControlledAtom } =
+    makeDashboardPersistableFixableAtoms(activeTimestampUtcMsAtom, { definition: TIME_DASHBOARD_SETTING });

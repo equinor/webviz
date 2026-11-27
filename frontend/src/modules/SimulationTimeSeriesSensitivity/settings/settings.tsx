@@ -44,6 +44,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
 
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
     const effectiveTimestampUtcMs = props.settingsContext.useViewToSettingsInterfaceValue("effectiveTimestampUtcMs");
+    const isTimestampDashboardControlled = props.settingsContext.useViewToSettingsInterfaceValue(
+        "isTimestampDashboardControlled",
+    );
 
     const [selectedRegularEnsembleIdent, setSelectedRegularEnsembleIdent] = useAtom(selectedRegularEnsembleIdentAtom);
     const [selectedSensitivityNames, setSelectedSensitivityNamesAtom] = useAtom(selectedSensitivityNamesAtom);
@@ -211,7 +214,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                 <Setting.Section title="Data channel">
                     <Setting.Field
                         infoAnnotation={
-                            !showTimestampMarker ? "Enable the marker to select a new timestamp in plot." : undefined
+                            !showTimestampMarker && !isTimestampDashboardControlled
+                                ? "Enable the marker to select a new timestamp in plot."
+                                : undefined
                         }
                     >
                         <SwitchCompositions.WithLabel
@@ -225,8 +230,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                         label="Selected timestamp"
                         contentClassName="flex"
                         help={{
-                            content:
-                                "The timestamp currently active in the view, from a click in the plot or the dashboard setting (read-only). Enable the marker and click in the plot to select a new one.",
+                            content: isTimestampDashboardControlled
+                                ? "The timestamp is controlled by the dashboard Time setting (read-only). Remove the dashboard setting to select a timestamp in the plot."
+                                : "The timestamp currently active in the view, from a click in the plot. Enable the marker and click in the plot to select a new one.",
                         }}
                     >
                         <span className="text-sm">

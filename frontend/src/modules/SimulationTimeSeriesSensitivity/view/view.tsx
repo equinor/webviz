@@ -12,7 +12,7 @@ import { simulationVectorDescription } from "@modules/_shared/reservoirSimulatio
 import type { Interfaces } from "../interfaces";
 
 import { vectorSpecificationAtom } from "./atoms/baseAtoms";
-import { effectiveTimestampUtcMsAtom } from "./atoms/dashboardSettingAtoms";
+import { effectiveTimestampUtcMsAtom, isTimestampDashboardControlledAtom } from "./atoms/dashboardSettingAtoms";
 import { activeTimestampUtcMsAtom } from "./atoms/persistableFixableAtoms";
 import type { TimeSeriesChartHoverInfo } from "./components/timeSeriesChart";
 import { TimeSeriesChart } from "./components/timeSeriesChart";
@@ -29,8 +29,11 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
     const showTimestampMarker = viewContext.useSettingsToViewInterfaceValue("showTimestampMarker");
     const setActiveTimestampUtcMs = useSetAtom(activeTimestampUtcMsAtom);
     const effectiveTimestampUtcMs = useAtomValue(effectiveTimestampUtcMsAtom);
-
+    const isTimestampDashboardControlled = useAtomValue(isTimestampDashboardControlledAtom);
     const vectorSpecification = useAtomValue(vectorSpecificationAtom);
+
+    // A selection in the plot has no effect while the dashboard controls the time
+    const canSelectTimestampInPlot = showTimestampMarker && !isTimestampDashboardControlled;
 
     const descriptiveVectorName = vectorSpecification
         ? simulationVectorDescription(vectorSpecification?.vectorName)
@@ -48,7 +51,7 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
 
     function handleHoverInChart(hoverInfo: TimeSeriesChartHoverInfo | null) {
         if (hoverInfo) {
-            if (hoverInfo.shiftKeyIsDown && showTimestampMarker) {
+            if (hoverInfo.shiftKeyIsDown && canSelectTimestampInPlot) {
                 setActiveTimestampUtcMs(hoverInfo.timestampUtcMs);
             }
 
@@ -64,7 +67,7 @@ export const View = ({ viewContext, workbenchSettings, hoverService }: ModuleVie
     }
 
     function handleClickInChart(timestampUtcMs: number) {
-        if (!showTimestampMarker) {
+        if (!canSelectTimestampInPlot) {
             return;
         }
         setActiveTimestampUtcMs(timestampUtcMs);
