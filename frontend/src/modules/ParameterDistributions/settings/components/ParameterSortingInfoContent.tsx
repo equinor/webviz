@@ -1,20 +1,21 @@
 import type React from "react";
 
-import { Heading, Paragraph } from "@lib/components/Typography/compositions";
+import { Typography } from "@lib/components/Typography";
+import { Paragraph } from "@lib/components/Typography/compositions";
 
 export function ParameterSortingInfoContent(): React.ReactElement {
     return (
         <>
             <div className="space-y-2xs p-2xs">
                 <div>
-                    <Heading as="h4">Alphabetical</Heading>
+                    <SectionTitle>Alphabetical</SectionTitle>
                     <Paragraph size="sm" layoutClassName="mt-4xs">
                         Sorts parameters by name in alphabetical order (A-Z).
                     </Paragraph>
                 </div>
 
                 <div>
-                    <Heading as="h4">Uncertainty reduction</Heading>
+                    <SectionTitle>Uncertainty reduction</SectionTitle>
                     <Paragraph size="sm" layoutClassName="mt-4xs">
                         Ranks parameters by how much uncertainty decreased from prior to posterior. Computed as the
                         relative reduction in Shannon entropy.
@@ -22,7 +23,7 @@ export function ParameterSortingInfoContent(): React.ReactElement {
                 </div>
 
                 <div>
-                    <Heading as="h4">Information gain</Heading>
+                    <SectionTitle>Information gain</SectionTitle>
                     <Paragraph size="sm" layoutClassName="mt-4xs">
                         Ranks parameters by how much the distribution changed from prior to posterior (location, spread
                         or shape). Captures what the observations taught us, even if uncertainty did not decrease.
@@ -37,5 +38,13 @@ export function ParameterSortingInfoContent(): React.ReactElement {
                 </div>
             </div>
         </>
+    );
+}
+
+function SectionTitle(props: { children: React.ReactNode }): React.ReactElement {
+    return (
+        <Typography as="h6" family="header" size="sm" weight="bolder">
+            {props.children}
+        </Typography>
     );
 }
