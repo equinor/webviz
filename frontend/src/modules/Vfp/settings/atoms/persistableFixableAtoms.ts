@@ -1,4 +1,6 @@
 import type { VfpType_api } from "@api";
+import { makeDashboardPersistableFixableAtoms } from "@framework/DashboardSettings/adapters/jotai";
+import { REALIZATION_DASHBOARD_SETTING } from "@framework/DashboardSettings/definitions/realization";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
@@ -43,6 +45,22 @@ export const selectedRealizationNumberAtom = persistableFixableAtom<number | nul
         // When value is invalid number, enforce user to reselect
         return null;
     },
+});
+
+/**
+ * `effectiveRealizationNumberAtom` is the realization in effect: the dashboard setting's realization while that is
+ * active (see `isRealizationDashboardControlledAtom`), otherwise the module's own selection. It contributes the
+ * realizations of the selected ensemble to the dashboard setting.
+ *
+ * Read `effectiveRealizationNumberAtom` - but persist `selectedRealizationNumberAtom`, the module's own selection.
+ */
+export const {
+    valueAtom: effectiveRealizationNumberAtom,
+    isDashboardControlledAtom: isRealizationDashboardControlledAtom,
+} = makeDashboardPersistableFixableAtoms(selectedRealizationNumberAtom, {
+    definition: REALIZATION_DASHBOARD_SETTING,
+    // No ensemble selected yet means no opinion, rather than "no realizations available"
+    getConstraints: (get) => (get(selectedEnsembleIdentAtom).value ? get(availableRealizationNumbersAtom) : null),
 });
 
 function computeVfpTablesQueryDependenciesState({

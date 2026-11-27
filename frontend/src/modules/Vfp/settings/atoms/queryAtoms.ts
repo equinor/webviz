@@ -5,19 +5,19 @@ import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import {
     selectedEnsembleIdentAtom,
-    selectedRealizationNumberAtom,
+    effectiveRealizationNumberAtom,
     selectedVfpTableNumberAtom,
     selectedVfpTypeAtom,
 } from "./persistableFixableAtoms";
 
 export const vfpTableQueryAtom = atomWithQuery((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
-    const selectedRealizationNumber = get(selectedRealizationNumberAtom);
+    const effectiveRealizationNumber = get(effectiveRealizationNumberAtom);
     const selectedVfpType = get(selectedVfpTypeAtom);
     const selectedVfpTableNumber = get(selectedVfpTableNumberAtom);
 
     const ensembleIdent = selectedEnsembleIdent.value;
-    const realizationNumber = selectedRealizationNumber.value;
+    const realizationNumber = effectiveRealizationNumber.value;
     const vfpType = selectedVfpType.value;
     const vfpTableNumber = selectedVfpTableNumber.value;
 
@@ -36,7 +36,7 @@ export const vfpTableQueryAtom = atomWithQuery((get) => {
             ensembleIdent?.getCaseUuid() &&
                 ensembleIdent?.getEnsembleName() &&
                 selectedEnsembleIdent.isValidInContext &&
-                selectedRealizationNumber.isValidInContext &&
+                effectiveRealizationNumber.isValidInContext &&
                 realizationNumber !== null &&
                 selectedVfpType.isValidInContext &&
                 vfpType !== null &&
@@ -49,10 +49,10 @@ export const vfpTableQueryAtom = atomWithQuery((get) => {
 
 export const vfpTablesQueryAtom = atomWithQuery((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
-    const selectedRealizationNumber = get(selectedRealizationNumberAtom);
+    const effectiveRealizationNumber = get(effectiveRealizationNumberAtom);
 
     const ensembleIdent = selectedEnsembleIdent.value;
-    const realizationNumber = selectedRealizationNumber.value;
+    const realizationNumber = effectiveRealizationNumber.value;
 
     const query = {
         ...getVfpTablesOptions({
@@ -68,7 +68,7 @@ export const vfpTablesQueryAtom = atomWithQuery((get) => {
             ensembleIdent?.getCaseUuid() &&
                 ensembleIdent?.getEnsembleName() &&
                 selectedEnsembleIdent.isValidInContext &&
-                selectedRealizationNumber.isValidInContext &&
+                effectiveRealizationNumber.isValidInContext &&
                 realizationNumber !== null,
         ),
     };
