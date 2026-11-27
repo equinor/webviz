@@ -27,6 +27,16 @@ export type VisualizationSettings = {
     selectedStatistics: RftStatistic[];
 };
 
+/**
+ * The effective timestamp (the dashboard setting's time while it is active, otherwise the module's own
+ * selection) together with whether it is valid in the current context.
+ */
+export type TimestampInfoForView = {
+    value: number | null;
+    isValidInContext: boolean;
+    isLoading: boolean;
+};
+
 export type RftEnsembleRealizationData = {
     ensembleIdent: RegularEnsembleIdent;
     data: RftRealizationData_api[];

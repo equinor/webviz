@@ -1,3 +1,4 @@
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
@@ -9,22 +10,29 @@ import {
     showStatisticalLinesAtom,
 } from "./settings/atoms/baseAtoms";
 import {
+    effectiveTimestampUtcMsAtom,
+    highlightedRealizationAtom,
+} from "./settings/atoms/dashboardSettingAtoms";
+import { validRealizationNumbersAtom } from "./settings/atoms/derivedAtoms";
+import {
+    selectedEnsembleIdentsAtom,
     selectedResponseNameAtom,
-    selectedTimestampUtcMsAtom,
     selectedWellNameAtom,
 } from "./settings/atoms/persistableFixableAtoms";
-import { rftObservationsQueriesAtom, rftRealizationDataQueriesAtom } from "./settings/atoms/queryAtoms";
-import type { RftDataAccessorLike, RftEnsembleObservationsData, VisualizationSettings } from "./typesAndEnums";
+import type { TimestampInfoForView, VisualizationSettings } from "./typesAndEnums";
 
-type SettingsToViewInterface = {
+export type SettingsToViewInterface = {
+    ensembleIdents: RegularEnsembleIdent[];
+    isEnsembleSelectionValid: boolean;
     wellName: string | null;
+    isWellNameValid: boolean;
     responseName: string | null;
-    timestampUtcMs: number | null;
+    isResponseNameValid: boolean;
+    timestamp: TimestampInfoForView;
+    validRealizationNumbers: number[];
+    highlightedRealization: number | null;
     visualizationSettings: VisualizationSettings;
     showDepthLine: boolean;
-    dataAccessor: RftDataAccessorLike | null;
-    observationsData: RftEnsembleObservationsData[];
-    isFetching: boolean;
 };
 
 export type Interfaces = {
@@ -32,9 +40,18 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
+    ensembleIdents: (get) => get(selectedEnsembleIdentsAtom).value,
+    isEnsembleSelectionValid: (get) => get(selectedEnsembleIdentsAtom).isValidInContext,
     wellName: (get) => get(selectedWellNameAtom).value,
+    isWellNameValid: (get) => get(selectedWellNameAtom).isValidInContext,
     responseName: (get) => get(selectedResponseNameAtom).value,
-    timestampUtcMs: (get) => get(selectedTimestampUtcMsAtom).value,
+    isResponseNameValid: (get) => get(selectedResponseNameAtom).isValidInContext,
+    timestamp: (get) => {
+        const { value, isValidInContext, isLoading } = get(effectiveTimestampUtcMsAtom);
+        return { value, isValidInContext, isLoading };
+    },
+    validRealizationNumbers: (get) => get(validRealizationNumbersAtom),
+    highlightedRealization: (get) => get(highlightedRealizationAtom),
     visualizationSettings: (get) => ({
         showIndividualRealizations: get(showIndividualRealizationsAtom),
         showStatisticalLines: get(showStatisticalLinesAtom),
@@ -43,8 +60,4 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         selectedStatistics: get(selectedStatisticsAtom),
     }),
     showDepthLine: (get) => get(showDepthLineAtom),
-    dataAccessor: (get) => get(rftRealizationDataQueriesAtom).dataAccessor,
-    observationsData: (get) => get(rftObservationsQueriesAtom).observationsData,
-    isFetching: (get) =>
-        get(rftRealizationDataQueriesAtom).isFetching || get(rftObservationsQueriesAtom).isFetching,
 };
