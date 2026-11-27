@@ -28,8 +28,8 @@ export enum EnsembleMode {
 
 export const ParameterDistributionSortingMethodEnumToStringMapping = {
     [ParameterSortMethod.ALPHABETICAL]: "Alphabetical",
-    [ParameterSortMethod.ENTROPY]: "Prior-Posterior Entropy Reduction",
-    [ParameterSortMethod.KL_DIVERGENCE]: "Prior-Posterior KL Divergence",
+    [ParameterSortMethod.ENTROPY]: "Uncertainty reduction",
+    [ParameterSortMethod.KL_DIVERGENCE]: "Information gain",
 };
 export const EnsembleModeEnumToStringMapping = {
     [EnsembleMode.INDEPENDENT]: "Independent",
