@@ -6,8 +6,9 @@ import { ExpandMore } from "@mui/icons-material";
 import { Banner as BaseBanner } from "@lib/components/Banner";
 import { Typography } from "@lib/components/Typography";
 
-import { SectionStatusContext, type FieldStatusSummary } from "../_contexts/SectionStatusContext";
+import type { FieldStatusSummary } from "../_contexts/SectionStatusContext";
 import { useReportBannerMessage } from "../_hooks/useReportBannerMessage";
+import { useReportFieldStatus } from "../_hooks/useReportFieldStatus";
 
 export type BannerType = "info" | "warning" | "error";
 
@@ -46,23 +47,11 @@ const SECTION_STATUS_BY_TYPE: Record<BannerType, FieldStatusSummary> = {
 export function Banner(props: BannerProps) {
     const { type, title, defaultOpen = true, report = false, children } = props;
 
-    const id = React.useId();
-    const sectionStatusContext = React.useContext(SectionStatusContext);
+    const fieldStatus = report ? SECTION_STATUS_BY_TYPE[type] : null;
+    const bannerMessage = report ? { type, message: title } : null;
 
-    React.useEffect(
-        function reportToSection() {
-            if (!report || !sectionStatusContext) {
-                return;
-            }
-            sectionStatusContext.reportField(id, SECTION_STATUS_BY_TYPE[type]);
-            return function unregisterFromSection() {
-                sectionStatusContext.unregisterField(id);
-            };
-        },
-        [report, type, sectionStatusContext, id],
-    );
-
-    useReportBannerMessage(report ? { type, message: title } : null);
+    useReportFieldStatus(fieldStatus);
+    useReportBannerMessage(bannerMessage);
 
     const titleElement = (
         <Typography family="body" as="span" size="sm" weight="bolder">
