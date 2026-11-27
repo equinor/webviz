@@ -217,10 +217,14 @@ if config.PSEUDONYM_HMAC_KEY is not None:
 unprotected_paths = ["/logout", "/alive", "/openapi.json"]
 app.add_middleware(EnforceLoggedInMiddleware, unprotected_paths=unprotected_paths)
 
+# SessionMiddleware defaults to lifetime=0, creating a browser-session cookie without a fixed expiry.
+# With lifetime=0, gc_ttl specifies the Redis session key's idle timeout in seconds.
+# Each session save resets it to 24 hours, but reading alone does not. Redis deletes the key when it expires.
 encrypted_session_store = EncryptedRedisSessionStore(
     fernet_key=config.SESSION_STORE_FERNET_KEY,
     redis_url=config.REDIS_AUTH_STORE_URL,
     prefix=config.AUTH_SESSION_STORE_PREFIX,
+    gc_ttl=24 * 3600,
 )
 app.add_middleware(SessionMiddleware, store=encrypted_session_store)
 
