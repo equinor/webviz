@@ -26,8 +26,8 @@ export function ParameterSortingInfoContent(): React.ReactElement {
                     <SectionTitle>Information gain</SectionTitle>
                     <Paragraph size="sm" layoutClassName="mt-4xs">
                         Ranks parameters by how much the distribution changed from prior to posterior (location, spread
-                        or shape). Captures what the observations taught us, even if uncertainty did not decrease.
-                        Computed as the Kullback-Leibler divergence from prior to posterior.
+                        or shape). Measures the information gained from the observations, even if uncertainty did not
+                        decrease. Computed as the Kullback-Leibler divergence from prior to posterior.
                     </Paragraph>
                 </div>
 
